@@ -1,0 +1,3 @@
+services:
+  better-angels:
+    build: .
