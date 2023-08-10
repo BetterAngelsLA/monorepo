@@ -4,7 +4,8 @@
     "**/*"
   ],
   "plugins": [
-    "@nx"
+    "@nx",
+    "simple-import-sort"
   ],
   "overrides": [
     {
@@ -15,6 +16,10 @@
         "*.jsx"
       ],
       "rules": {
+        "import/export": "error",
+        "no-unused-vars": "off",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error",
         "no-multiple-empty-lines": [
           "error",
           {
@@ -35,7 +40,8 @@
               }
             ]
           }
-        ]
+        ],
+        "jsx-a11y/accessible-emoji": "off"
       }
     },
     {
@@ -46,7 +52,9 @@
       "extends": [
         "plugin:@nx/typescript"
       ],
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "error"
+      }
     },
     {
       "files": [
