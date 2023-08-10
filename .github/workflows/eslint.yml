@@ -16,6 +16,6 @@ jobs:
     - name: Install dependencies
       run: yarn install
     - name: Run ESLint for App 1
-      run: nx lint undefined
+      run: yarn nx lint undefined
     - name: Run ESLint for App 2
-      run: nx lint undefined-e2e
+      run: yarn nx lint undefined-e2e

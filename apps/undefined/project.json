@@ -2,7 +2,7 @@
   "name": "undefined",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/undefined/src",
-  "projectType": "application",
+  "projectType": "monorepo",
   "targets": {
     "start": {
       "executor": "@nx/expo:start",
