@@ -3,9 +3,13 @@
   "ignorePatterns": [
     "**/*"
   ],
+  "extends": [
+    "plugin:prettier/recommended"
+  ],
   "plugins": [
     "@nx",
-    "simple-import-sort"
+    "simple-import-sort",
+    "prettier"
   ],
   "overrides": [
     {
@@ -16,6 +20,23 @@
         "*.jsx"
       ],
       "rules": {
+        "prettier/prettier": [
+          "error",
+          {
+            "singleQuote": true,
+            "useTabs": true,
+            "bracketSpacing": false,
+            "trailingComma": "es5",
+            "tabWidth": 4,
+            "endOfLine": "lf",
+            "arrowParens": "avoid",
+            "printWidth": 80
+          }
+        ],
+        "eol-last": [
+          "error",
+          "always"
+        ],
         "import/export": "error",
         "no-unused-vars": "off",
         "simple-import-sort/imports": "error",
@@ -65,6 +86,24 @@
         "plugin:@nx/javascript"
       ],
       "rules": {}
+    },
+    {
+      "files": [
+        "*.json"
+      ],
+      "parserOptions": {
+        "parser": "jsonc-eslint-parser",
+        "sourceType": "module"
+      },
+      "rules": {
+        "prettier/prettier": [
+          "error",
+          {
+            "endOfLine": "auto",
+            "parser": "json"
+          }
+        ]
+      }
     }
   ]
 }
