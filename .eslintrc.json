@@ -1,0 +1,66 @@
+{
+	"root": true,
+	"ignorePatterns": ["**/*"],
+	"extends": ["plugin:prettier/recommended"],
+	"plugins": ["@nx", "simple-import-sort", "prettier"],
+	"overrides": [
+		{
+			"files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+			"rules": {
+				"eol-last": ["error", "always"],
+				"import/export": "error",
+				"no-unused-vars": "off",
+				"simple-import-sort/imports": "error",
+				"simple-import-sort/exports": "error",
+				"no-multiple-empty-lines": [
+					"error",
+					{
+						"max": 1
+					}
+				],
+				"@nx/enforce-module-boundaries": [
+					"error",
+					{
+						"enforceBuildableLibDependency": true,
+						"allow": [],
+						"depConstraints": [
+							{
+								"sourceTag": "*",
+								"onlyDependOnLibsWithTags": ["*"]
+							}
+						]
+					}
+				],
+				"jsx-a11y/accessible-emoji": "off"
+			}
+		},
+		{
+			"files": ["*.ts", "*.tsx"],
+			"extends": ["plugin:@nx/typescript"],
+			"rules": {
+				"@typescript-eslint/no-unused-vars": "error"
+			}
+		},
+		{
+			"files": ["*.js", "*.jsx"],
+			"extends": ["plugin:@nx/javascript"],
+			"rules": {}
+		},
+		{
+			"files": ["*.json"],
+			"parserOptions": {
+				"parser": "jsonc-eslint-parser",
+				"sourceType": "module"
+			},
+			"rules": {
+				"prettier/prettier": [
+					"error",
+					{
+						"endOfLine": "auto",
+						"parser": "json"
+					}
+				]
+			}
+		}
+	]
+}
