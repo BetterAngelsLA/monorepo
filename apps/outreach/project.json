@@ -1,12 +1,15 @@
 {
-  "name": "undefined",
+  "name": "outreach",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/undefined/src",
+  "sourceRoot": "apps/outreach/src",
   "projectType": "application",
   "targets": {
     "start": {
       "executor": "@nx/expo:start",
-      "dependsOn": ["ensure-symlink", "sync-deps"],
+      "dependsOn": [
+        "ensure-symlink",
+        "sync-deps"
+      ],
       "options": {
         "port": 8081
       }
@@ -19,14 +22,20 @@
     },
     "run-ios": {
       "executor": "@nx/expo:run",
-      "dependsOn": ["ensure-symlink", "sync-deps"],
+      "dependsOn": [
+        "ensure-symlink",
+        "sync-deps"
+      ],
       "options": {
         "platform": "ios"
       }
     },
     "run-android": {
       "executor": "@nx/expo:run",
-      "dependsOn": ["ensure-symlink", "sync-deps"],
+      "dependsOn": [
+        "ensure-symlink",
+        "sync-deps"
+      ],
       "options": {
         "platform": "android"
       }
@@ -46,7 +55,7 @@
     "download": {
       "executor": "@nx/expo:download",
       "options": {
-        "output": "apps/undefined/dist"
+        "output": "apps/outreach/dist"
       }
     },
     "sync-deps": {
@@ -59,7 +68,10 @@
     },
     "prebuild": {
       "executor": "@nx/expo:prebuild",
-      "dependsOn": ["ensure-symlink", "sync-deps"],
+      "dependsOn": [
+        "ensure-symlink",
+        "sync-deps"
+      ],
       "options": {}
     },
     "install": {
@@ -72,10 +84,13 @@
     },
     "export": {
       "executor": "@nx/expo:export",
-      "dependsOn": ["ensure-symlink", "sync-deps"],
+      "dependsOn": [
+        "ensure-symlink",
+        "sync-deps"
+      ],
       "options": {
         "platform": "all",
-        "outputDir": "../../dist/apps/undefined"
+        "outputDir": "../../dist/apps/outreach"
       }
     },
     "export-web": {
@@ -86,16 +101,22 @@
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["apps/undefined/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": [
+          "apps/outreach/**/*.{ts,tsx,js,jsx}"
+        ]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
-        "jestConfig": "apps/undefined/jest.config.ts",
+        "jestConfig": "apps/outreach/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

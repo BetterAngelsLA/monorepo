@@ -68,12 +68,18 @@
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["apps/undefined-e2e/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": [
+          "apps/undefined-e2e/**/*.{ts,tsx,js,jsx}"
+        ]
       }
     }
   },
   "tags": [],
-  "implicitDependencies": ["undefined"]
+  "implicitDependencies": [
+    "outreach"
+  ]
 }

@@ -1,5 +1,5 @@
 module.exports = {
-	displayName: 'undefined',
+	displayName: 'outreach',
 	resolver: '@nx/jest/plugins/resolver',
 	preset: 'jest-expo',
 	transformIgnorePatterns: [
