@@ -32,7 +32,7 @@ export const App = () => {
 							style={[styles.textXL, styles.appTitleText]}
 							testID="heading"
 						>
-							Welcome Undefined 👋
+							Welcome Outreach 👋
 						</Text>
 					</View>
 					<View style={styles.section}>
