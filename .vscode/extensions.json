@@ -1,8 +1,10 @@
 {
-  "recommendations": [
-    "nrwl.angular-console",
-    "esbenp.prettier-vscode",
-    "firsttris.vscode-jest-runner",
-    "dbaeumer.vscode-eslint"
-  ]
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"firsttris.vscode-jest-runner",
+		"ms-azuretools.vscode-docker",
+		"ms-vscode-remote.remote-containers",
+		"nrwl.angular-console"
+	]
 }

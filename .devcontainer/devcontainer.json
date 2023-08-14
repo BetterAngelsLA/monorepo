@@ -43,11 +43,11 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"ms-azuretools.vscode-docker",
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
-				"nrwl.angular-console",
-				"firsttris.vscode-jest-runner"
+				"firsttris.vscode-jest-runner",
+				"ms-azuretools.vscode-docker",
+				"nrwl.angular-console"
 			]
 		}
 	}
