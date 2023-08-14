@@ -1,10 +1,11 @@
 {
-	"recommendations": [
-		"dbaeumer.vscode-eslint",
-		"esbenp.prettier-vscode",
-		"firsttris.vscode-jest-runner",
-		"ms-azuretools.vscode-docker",
-		"ms-vscode-remote.remote-containers",
-		"nrwl.angular-console"
-	]
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "firsttris.vscode-jest-runner",
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "nrwl.angular-console",
+    "arcanis.vscode-zipfs"
+  ]
 }
