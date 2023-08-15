@@ -14,7 +14,6 @@ services:
     volumes:
       # Update this to wherever you want VS Code to mount the folder of your project
       - .:/workspace:cached
-      - ${HOME}/.ssh:/home/pn/.ssh
       - node_modules:/workspace/node_modules
       - venv:/workspace/.venv
 
