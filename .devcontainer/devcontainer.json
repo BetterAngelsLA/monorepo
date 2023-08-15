@@ -50,7 +50,9 @@
 		"nrwl.angular-console",
 		"arcanis.vscode-zipfs",
 		"ms-python.python",
-		"tamasfe.even-better-toml"
+		"tamasfe.even-better-toml",
+		"ms-python.black-formatter",
+		"ms-python.isort"
 	]
     }
   }
