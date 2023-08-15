@@ -43,13 +43,15 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
-        "firsttris.vscode-jest-runner",
-        "ms-azuretools.vscode-docker",
-        "nrwl.angular-console",
-        "arcanis.vscode-zipfs"
-      ]
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"firsttris.vscode-jest-runner",
+		"ms-azuretools.vscode-docker",
+		"nrwl.angular-console",
+		"arcanis.vscode-zipfs",
+		"ms-python.python",
+		"tamasfe.even-better-toml"
+	]
     }
   }
 

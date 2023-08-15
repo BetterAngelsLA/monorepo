@@ -4,6 +4,8 @@
     "esbenp.prettier-vscode",
     "firsttris.vscode-jest-runner",
     "dbaeumer.vscode-eslint",
-    "arcanis.vscode-zipfs"
+    "arcanis.vscode-zipfs",
+    "ms-python.python",
+    "tamasfe.even-better-toml"
   ]
 }
