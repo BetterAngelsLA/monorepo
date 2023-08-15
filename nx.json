@@ -2,11 +2,11 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx-cloud"
-      // "options": {
-      //   "cacheableOperations": ["build", "lint", "test", "e2e"],
-      //   "accessToken": "OGMzMjQxMzItM2FhMi00MGI4LWFmZmQtMzBmYjMxYWUyOGIzfHJlYWQtd3JpdGU="
-      // }
+      "runner": "nx-cloud",
+      "options": {
+        "cacheableOperations": ["build", "lint", "test", "e2e"],
+        "accessToken": "OGMzMjQxMzItM2FhMi00MGI4LWFmZmQtMzBmYjMxYWUyOGIzfHJlYWQtd3JpdGU="
+      }
     }
   },
   "targetDefaults": {
