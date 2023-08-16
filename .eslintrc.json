@@ -1,62 +1,62 @@
 {
-	"root": true,
-	"plugins": ["@nx"],
-	"overrides": [
-		{
-			"files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-			"rules": {
-				"@nx/enforce-module-boundaries": [
-					"error",
-					{
-						"enforceBuildableLibDependency": true,
-						"allow": [],
-						"depConstraints": [
-							{
-								"sourceTag": "*",
-								"onlyDependOnLibsWithTags": ["*"]
-							}
-						]
-					}
-				]
-			}
-		},
-		{
-			"files": ["*.ts", "*.tsx"],
-			"extends": ["plugin:@nx/typescript"],
-			"rules": {
-				"@typescript-eslint/no-unused-vars": "error",
-				"no-multiple-empty-lines": [
-					"error",
-					{
-						"max": 1
-					}
-				],
-				"eol-last": ["error", "always"],
-				"import/export": "error",
-				"quotes": [
-					"error",
-					"single",
-					{"allowTemplateLiterals": true, "avoidEscape": true}
-				]
-			}
-		},
-		{
-			"files": ["*.js", "*.jsx"],
-			"extends": ["plugin:@nx/javascript"],
-			"rules": {
-				"no-unused-vars": "error",
-				"quotes": [
-					"error",
-					"single",
-					{"allowTemplateLiterals": true, "avoidEscape": true}
-				],
-				"no-multiple-empty-lines": [
-					"error",
-					{
-						"max": 1
-					}
-				]
-			}
-		}
-	]
+  "root": true,
+  "plugins": ["@nx"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": ["plugin:@nx/typescript"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "error",
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ],
+        "eol-last": ["error", "always"],
+        "import/export": "error",
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ]
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "extends": ["plugin:@nx/javascript"],
+      "rules": {
+        "no-unused-vars": "error",
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ],
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ]
+      }
+    }
+  ]
 }
