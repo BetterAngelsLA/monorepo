@@ -62,4 +62,4 @@ cache/
 !.yarn/sdks
 !.yarn/versions
 
-apps/undefined-e2e/artifacts
+apps/outreach-e2e/artifacts

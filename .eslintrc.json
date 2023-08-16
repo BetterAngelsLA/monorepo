@@ -1,6 +1,5 @@
 {
   "root": true,
-  "ignorePatterns": ["**/*"],
   "plugins": ["@nx"],
   "overrides": [
     {
@@ -24,12 +23,40 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "error",
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ],
+        "eol-last": ["error", "always"],
+        "import/export": "error",
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],
       "extends": ["plugin:@nx/javascript"],
-      "rules": {}
+      "rules": {
+        "no-unused-vars": "error",
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ],
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ]
+      }
     }
   ]
 }
