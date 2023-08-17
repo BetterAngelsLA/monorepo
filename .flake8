@@ -1,0 +1,17 @@
+[flake8]
+exclude =
+	.git,
+	__pycache__,
+	build,
+	dist,
+	node_modules,
+	.tox,
+	venv,
+	.venv,
+	.yarn,
+	.pytest_cache
+
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#flake8
+max-line-length = 80
+select = C,E,F,W,B,B950
+extend-ignore = E203, E501

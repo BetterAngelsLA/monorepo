@@ -33,6 +33,7 @@
     "@nx/js": "16.6.0",
     "@nx/linter": "16.6.0",
     "@nx/workspace": "16.6.0",
+    "@nxlv/python": "^16.1.2",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/jest-native": "5.4.2",
     "@testing-library/react-native": "12.1.2",

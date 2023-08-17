@@ -25,9 +25,9 @@ __metadata:
   linkType: hard
 
 "@adobe/css-tools@npm:^4.0.1":
-  version: 4.3.0
-  resolution: "@adobe/css-tools@npm:4.3.0"
-  checksum: 63c9702a91bfda13767fcb3107056ed19463e9a4dcb3b5918d64c8eb7e609357c59b1355c0226765b60323adbb0abd88564acfa1e2b20067219c3ad23576c0b3
+  version: 4.3.1
+  resolution: "@adobe/css-tools@npm:4.3.1"
+  checksum: ad43456379ff391132aff687ece190cb23ea69395e23c9b96690eeabe2468da89a4aaf266e4f8b6eaab53db3d1064107ce0f63c3a974e864f4a04affc768da3f
   languageName: node
   linkType: hard
 
@@ -2556,6 +2556,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@iarna/toml@npm:^2.2.5":
+  version: 2.2.5
+  resolution: "@iarna/toml@npm:2.2.5"
+  checksum: b63b2b2c4fd67969a6291543ada0303d45593801ee744b60f5390f183c03d9192bc67a217abb24be945158f1935f02840d9ffff40c0142aa171b5d3b6b6a3ea5
+  languageName: node
+  linkType: hard
+
 "@isaacs/cliui@npm:^8.0.2":
   version: 8.0.2
   resolution: "@isaacs/cliui@npm:8.0.2"
@@ -2938,6 +2945,7 @@ __metadata:
     "@nx/js": 16.6.0
     "@nx/linter": 16.6.0
     "@nx/workspace": 16.6.0
+    "@nxlv/python": ^16.1.2
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/jest-native": 5.4.2
     "@testing-library/react-native": 12.1.2
@@ -3110,12 +3118,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nrwl/nx-cloud@npm:16.3.0":
-  version: 16.3.0
-  resolution: "@nrwl/nx-cloud@npm:16.3.0"
+"@nrwl/nx-cloud@npm:16.4.0-beta.1":
+  version: 16.4.0-beta.1
+  resolution: "@nrwl/nx-cloud@npm:16.4.0-beta.1"
   dependencies:
-    nx-cloud: 16.3.0
-  checksum: 2a2c1d3c60eb9add85d078f957c6d76cd9a819f80bc48ff9f339df17a3d18d13616cf4f595b853d3d52d1ecdbeb85709592a6b478ebe526050694da4303438e4
+    nx-cloud: 16.4.0-beta.1
+  checksum: c06f320806f6f63071d8c989f01cc58f43aa15d9a5c29e5c9126e13e81d1db7b030dc9655bbe2adef4e186828e7fd3c2a5edba55c7fc466d4a61592266bf6cdc
   languageName: node
   linkType: hard
 
@@ -3500,6 +3508,25 @@ __metadata:
     tslib: ^2.3.0
     yargs-parser: 21.1.1
   checksum: 0850918c06fd4167ae041d50b1d89f55a8dd751be0d9932a524767f6a8bfdea6963005f93742cc0af2f2591355988c94a56d6bc9794db73f4a964e1944927e58
+  languageName: node
+  linkType: hard
+
+"@nxlv/python@npm:^16.1.2":
+  version: 16.1.2
+  resolution: "@nxlv/python@npm:16.1.2"
+  dependencies:
+    "@iarna/toml": ^2.2.5
+    chalk: ^4.1.1
+    command-exists: ^1.2.9
+    cross-spawn: ^7.0.3
+    file-uri-to-path: ^2.0.0
+    fs-extra: ^11.1.0
+    lodash: 4.17.21
+    uuid: ^9.0.0
+  peerDependencies:
+    "@nx/devkit": ^16.0.0
+    tslib: 2.5.0
+  checksum: 2055e7811531317de76401bb9d8def9303e62340fbb931647e122bc7bed25256a7f92bfc4cec5d7746c30da0b934e07829420c380554851e484e29bd8920eff0
   languageName: node
   linkType: hard
 
@@ -4160,12 +4187,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/babel-plugin-transform-react-native-svg@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@svgr/babel-plugin-transform-react-native-svg@npm:8.0.0"
+"@svgr/babel-plugin-transform-react-native-svg@npm:8.1.0":
+  version: 8.1.0
+  resolution: "@svgr/babel-plugin-transform-react-native-svg@npm:8.1.0"
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 14e3f8ef27bb3215aa8914ea44831eb43decde4a131e4302480f23d6e75aa8c4ea9e1f8888d479b7a8ac63b828e590c03df6d72a6964676612c015f4a967fc74
+  checksum: 85b434a57572f53bd2b9f0606f253e1fcf57b4a8c554ec3f2d43ed17f50d8cae200cb3aaf1ec9d626e1456e8b135dce530ae047eb0bed6d4bf98a752d6640459
   languageName: node
   linkType: hard
 
@@ -4196,9 +4223,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/babel-preset@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@svgr/babel-preset@npm:8.0.0"
+"@svgr/babel-preset@npm:8.1.0":
+  version: 8.1.0
+  resolution: "@svgr/babel-preset@npm:8.1.0"
   dependencies:
     "@svgr/babel-plugin-add-jsx-attribute": 8.0.0
     "@svgr/babel-plugin-remove-jsx-attribute": 8.0.0
@@ -4206,11 +4233,11 @@ __metadata:
     "@svgr/babel-plugin-replace-jsx-attribute-value": 8.0.0
     "@svgr/babel-plugin-svg-dynamic-title": 8.0.0
     "@svgr/babel-plugin-svg-em-dimensions": 8.0.0
-    "@svgr/babel-plugin-transform-react-native-svg": 8.0.0
+    "@svgr/babel-plugin-transform-react-native-svg": 8.1.0
     "@svgr/babel-plugin-transform-svg-component": 8.0.0
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: c8a4497f3fe8338831be275e9e9534b265d22c8ecd75eec0ed82cff8d287506d38fc1963ac3b1a3a27abe0582bcba73f7a76798d23cce586e840bf65a87ba990
+  checksum: 3a67930f080b8891e1e8e2595716b879c944d253112bae763dce59807ba23454d162216c8d66a0a0e3d4f38a649ecd6c387e545d1e1261dd69a68e9a3392ee08
   languageName: node
   linkType: hard
 
@@ -4232,16 +4259,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/core@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@svgr/core@npm:8.0.0"
+"@svgr/core@npm:8.1.0":
+  version: 8.1.0
+  resolution: "@svgr/core@npm:8.1.0"
   dependencies:
     "@babel/core": ^7.21.3
-    "@svgr/babel-preset": 8.0.0
+    "@svgr/babel-preset": 8.1.0
     camelcase: ^6.2.0
     cosmiconfig: ^8.1.3
     snake-case: ^3.0.4
-  checksum: ce83ecbab185db72d16dbd9650f5a66c6e2705627722e593b0eaf23bfafe49cf8bb55f216016a11b8a546822c7387887d218aab8697f7b31e3d1a97d94fa0593
+  checksum: da4a12865c7dc59829d58df8bd232d6c85b7115fda40da0d2f844a1a51886e2e945560596ecfc0345d37837ac457de86a931e8b8d8550e729e0c688c02250d8a
   languageName: node
   linkType: hard
 
@@ -4278,17 +4305,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/plugin-jsx@npm:8.0.1":
-  version: 8.0.1
-  resolution: "@svgr/plugin-jsx@npm:8.0.1"
+"@svgr/plugin-jsx@npm:8.1.0":
+  version: 8.1.0
+  resolution: "@svgr/plugin-jsx@npm:8.1.0"
   dependencies:
     "@babel/core": ^7.21.3
-    "@svgr/babel-preset": 8.0.0
+    "@svgr/babel-preset": 8.1.0
     "@svgr/hast-util-to-babel-ast": 8.0.0
     svg-parser: ^2.0.4
   peerDependencies:
     "@svgr/core": "*"
-  checksum: c6a0fc3e757e79837cd88f41f18b35594f8c4efe1b87e673514fa7add0912388b7dc79fa2738d629c2f945395ea568fa901c9c5ca5fce827a004c03867c1c482
+  checksum: 0418a9780753d3544912ee2dad5d2cf8d12e1ba74df8053651b3886aeda54d5f0f7d2dece0af5e0d838332c4f139a57f0dabaa3ca1afa4d1a765efce6a7656f2
   languageName: node
   linkType: hard
 
@@ -4306,16 +4333,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/plugin-svgo@npm:8.0.1":
-  version: 8.0.1
-  resolution: "@svgr/plugin-svgo@npm:8.0.1"
+"@svgr/plugin-svgo@npm:8.1.0":
+  version: 8.1.0
+  resolution: "@svgr/plugin-svgo@npm:8.1.0"
   dependencies:
     cosmiconfig: ^8.1.3
     deepmerge: ^4.3.1
     svgo: ^3.0.2
   peerDependencies:
     "@svgr/core": "*"
-  checksum: c5008c5dd8467f8f8b3a173462773fc37f2a8fa53989934ea802fc7a9db2147f6fee68736610a117751f2ab94773373e807d21e74db5f93b98040f1479845ec6
+  checksum: 59d9d214cebaacca9ca71a561f463d8b7e5a68ca9443e4792a42d903acd52259b1790c0680bc6afecc3f00a255a6cbd7ea278a9f625bac443620ea58a590c2d0
   languageName: node
   linkType: hard
 
@@ -4333,18 +4360,27 @@ __metadata:
   linkType: hard
 
 "@svgr/webpack@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@svgr/webpack@npm:8.0.1"
+  version: 8.1.0
+  resolution: "@svgr/webpack@npm:8.1.0"
   dependencies:
     "@babel/core": ^7.21.3
     "@babel/plugin-transform-react-constant-elements": ^7.21.3
     "@babel/preset-env": ^7.20.2
     "@babel/preset-react": ^7.18.6
     "@babel/preset-typescript": ^7.21.0
-    "@svgr/core": 8.0.0
-    "@svgr/plugin-jsx": 8.0.1
-    "@svgr/plugin-svgo": 8.0.1
-  checksum: e5e28be53ecf049056ea959040edabfc2d2e717e9ec7f4a549fa262cd1e2d9c6479836ea2eb1586196b9fee74855a0087dbb88257e872fe6b31157c5c0a52dcc
+    "@svgr/core": 8.1.0
+    "@svgr/plugin-jsx": 8.1.0
+    "@svgr/plugin-svgo": 8.1.0
+  checksum: c6eec5b0cf2fb2ecd3a7a362d272eda35330b17c76802a3481f499b5d07ff8f87b31d2571043bff399b051a1767b1e2e499dbf186104d1c06d76f9f1535fac01
+  languageName: node
+  linkType: hard
+
+"@swc/helpers@npm:0.5.1":
+  version: 0.5.1
+  resolution: "@swc/helpers@npm:0.5.1"
+  dependencies:
+    tslib: ^2.4.0
+  checksum: 71e0e27234590435e4c62b97ef5e796f88e786841a38c7116a5e27a3eafa7b9ead7cdec5249b32165902076de78446945311c973e59bddf77c1e24f33a8f272a
   languageName: node
   linkType: hard
 
@@ -6776,9 +6812,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001517, caniuse-lite@npm:^1.0.30001520":
-  version: 1.0.30001520
-  resolution: "caniuse-lite@npm:1.0.30001520"
-  checksum: 59991ad8f36cf282f81abbcc6074c3097c21914cdd54bd2b3f73ac9462f57fc74e90371cd22bcdff4d085d09da42a07dcea384cb81e4ac260496e1bd79e1fe7c
+  version: 1.0.30001521
+  resolution: "caniuse-lite@npm:1.0.30001521"
+  checksum: be2a2b2cd3be03401887aaa31b89f3e7c6230289e6ef704e224268389cc136480fca502ac9e5001a65ff1e50459d3d95f8c4b2d39f878ab9843af3d6f372c8bb
   languageName: node
   linkType: hard
 
@@ -6794,7 +6830,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:4.1.2, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.2":
+"chalk@npm:4.1.2, chalk@npm:^4.0.0, chalk@npm:^4.0.2, chalk@npm:^4.1.0, chalk@npm:^4.1.1, chalk@npm:^4.1.2":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
   dependencies:
@@ -7167,7 +7203,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-exists@npm:^1.2.4, command-exists@npm:^1.2.8":
+"command-exists@npm:^1.2.4, command-exists@npm:^1.2.8, command-exists@npm:^1.2.9":
   version: 1.2.9
   resolution: "command-exists@npm:1.2.9"
   checksum: 729ae3d88a2058c93c58840f30341b7f82688a573019535d198b57a4d8cb0135ced0ad7f52b591e5b28a90feb2c675080ce916e56254a0f7c15cb2395277cac3
@@ -8486,9 +8522,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.477":
-  version: 1.4.490
-  resolution: "electron-to-chromium@npm:1.4.490"
-  checksum: c81bf177ff64ceb54fa90f715f1d52fb9106b0ef4426b816c4ae0471c562d8f4d110531df1a164ce17eda13ad9481f6bcd15f1368b6d5442a1d2f93102ef221a
+  version: 1.4.492
+  resolution: "electron-to-chromium@npm:1.4.492"
+  checksum: 39ae22dd651a3daa210e8e8e42c9725c7019d95667413423da48253dd0a14dfd070ddb53a97eb98a60003a7790978b9093ab5c530671562f2d3e65888e1451f6
   languageName: node
   linkType: hard
 
@@ -9625,6 +9661,13 @@ __metadata:
   peerDependencies:
     webpack: ^4.0.0 || ^5.0.0
   checksum: faf43eecf233f4897b0150aaa874eeeac214e4f9de49738a9e0ef734a30b5260059e85b7edadf852b98e415f875bd5f12587768a93fd52aaf2e479ecf95fab20
+  languageName: node
+  linkType: hard
+
+"file-uri-to-path@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "file-uri-to-path@npm:2.0.0"
+  checksum: 4a71a99ddaa6ae7ae7bffe2948c34da59982ed465d930a0af9cb59fcc10fcd93366cc356ec3337c18373fde5df7ac52afda4558f155febd1799d135552207edb
   languageName: node
   linkType: hard
 
@@ -11468,15 +11511,15 @@ __metadata:
   linkType: hard
 
 "jackspeak@npm:^2.0.3":
-  version: 2.2.3
-  resolution: "jackspeak@npm:2.2.3"
+  version: 2.3.0
+  resolution: "jackspeak@npm:2.3.0"
   dependencies:
     "@isaacs/cliui": ^8.0.2
     "@pkgjs/parseargs": ^0.11.0
   dependenciesMeta:
     "@pkgjs/parseargs":
       optional: true
-  checksum: 8add557045eb51f619d247ac9786dbfa7ee4d52a0eb3fb488c2637aecfd15d12c284a4ff7dead2c1aba34d6228d9452e4509fb771daae87793a48786b095ee07
+  checksum: 71bf716f4b5793226d4aeb9761ebf2605ee093b59f91a61451d57d998dd64bbf2b54323fb749b8b2ae8b6d8a463de4f6e3fedab50108671f247bbc80195a6306
   languageName: node
   linkType: hard
 
@@ -14070,11 +14113,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nx-cloud@npm:16.3.0, nx-cloud@npm:latest":
-  version: 16.3.0
-  resolution: "nx-cloud@npm:16.3.0"
+"nx-cloud@npm:16.4.0-beta.1, nx-cloud@npm:latest":
+  version: 16.4.0-beta.1
+  resolution: "nx-cloud@npm:16.4.0-beta.1"
   dependencies:
-    "@nrwl/nx-cloud": 16.3.0
+    "@nrwl/nx-cloud": 16.4.0-beta.1
+    "@swc/helpers": 0.5.1
     axios: 1.1.3
     chalk: ^4.1.0
     dotenv: ~10.0.0
@@ -14086,7 +14130,7 @@ __metadata:
     yargs-parser: ">=21.1.1"
   bin:
     nx-cloud: bin/nx-cloud.js
-  checksum: dd4b1a5aa379212db7c0a0d5bfa34785306fec9eaac477792a4888849ced190db84c3e60abc9aa4bdd8443f08ab10ac0c0168e85bcd9e0a621e3c32e71c15605
+  checksum: 5a7d02578b51f31369e8b32b541a88e3493c6ad3d3214edc1751ece543b0c283fbb568c94fc6bfeeb26e5c1ccd1173f283de392d26b242d2283d47fb3027804d
   languageName: node
   linkType: hard
 
@@ -15207,13 +15251,13 @@ __metadata:
   linkType: hard
 
 "postcss@npm:^8.4.14, postcss@npm:^8.4.21, postcss@npm:^8.4.24, postcss@npm:~8.4.21":
-  version: 8.4.27
-  resolution: "postcss@npm:8.4.27"
+  version: 8.4.28
+  resolution: "postcss@npm:8.4.28"
   dependencies:
     nanoid: ^3.3.6
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
-  checksum: 1cdd0c298849df6cd65f7e646a3ba36870a37b65f55fd59d1a165539c263e9b4872a402bf4ed1ca1bc31f58b68b2835545e33ea1a23b161a1f8aa6d5ded81e78
+  checksum: f605c24a36f7e400bad379735fbfc893ccb8d293ad6d419bb824db77cdcb69f43d614ef35f9f7091f32ca588d130ec60dbcf53b366e6bf88a8a64bbeb3c05f6d
   languageName: node
   linkType: hard
 
