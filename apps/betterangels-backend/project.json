@@ -33,6 +33,20 @@
         "bundleLocalDependencies": true
       }
     },
+    "migrate": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py migrate",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py runserver",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "install": {
       "executor": "@nxlv/python:install",
       "options": {
@@ -59,7 +73,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "poetry run python manage.py test",
         "cwd": "apps/betterangels-backend"
       }
     }
