@@ -1,7 +1,23 @@
 services:
   better-angels:
     build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - '8000:8000'
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      - db
   db:
     image: postgres:15
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
     environment:
-      - "POSTGRES_HOST_AUTH_METHOD=trust"
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres

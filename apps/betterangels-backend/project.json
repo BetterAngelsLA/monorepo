@@ -36,14 +36,14 @@
     "migrate": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python manage.py migrate",
+        "command": "python manage.py migrate",
         "cwd": "apps/betterangels-backend"
       }
     },
     "start": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python manage.py runserver",
+        "command": "python manage.py runserver",
         "cwd": "apps/betterangels-backend"
       }
     },
@@ -73,7 +73,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "poetry run python manage.py test",
+        "command": "python manage.py test",
         "cwd": "apps/betterangels-backend"
       }
     }

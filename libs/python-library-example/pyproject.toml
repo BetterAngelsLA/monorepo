@@ -21,6 +21,9 @@ group = {}
 [[tool.poetry.packages]]
 include = "python_library_example"
 
+[tool.poetry.dependencies]
+python = "3.11.4"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
