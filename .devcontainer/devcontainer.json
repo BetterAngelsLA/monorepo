@@ -37,25 +37,25 @@
   // "shutdownAction": "none",
 
   // Uncomment the next line to run commands after the container is created.
-  // "postCreateCommand": "echo test",
+  "postCreateCommand": "yarn install && poetry install",
 
   // Configure tool-specific properties.
   "customizations": {
     "vscode": {
       "extensions": [
-		"dbaeumer.vscode-eslint",
-		"esbenp.prettier-vscode",
-		"firsttris.vscode-jest-runner",
-		"arcanis.vscode-zipfs",
-		"ms-azuretools.vscode-docker",
-		"ms-python.black-formatter",
-		"ms-python.isort",
-		"ms-python.python",
-		"nrwl.angular-console",
-		"tamasfe.even-better-toml",
-		"wix.vscode-import-cost",
-		"ms-python.flake8"
-	]
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "firsttris.vscode-jest-runner",
+        "arcanis.vscode-zipfs",
+        "ms-azuretools.vscode-docker",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.python",
+        "nrwl.angular-console",
+        "tamasfe.even-better-toml",
+        "wix.vscode-import-cost",
+        "ms-python.flake8"
+      ]
     }
   },
   // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
