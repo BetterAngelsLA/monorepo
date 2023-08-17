@@ -12,7 +12,14 @@
     "react-native-web": "*",
     "@nx/expo": "*",
     "@expo/metro-config": "*",
-    "react": "*"
+    "react": "*",
+    "@expo/vector-icons": "*",
+    "expo-font": "*",
+    "expo-status-bar": "*",
+    "react-test-renderer": "*",
+    "expo-router": "*",
+    "@react-navigation/native": "*",
+    "expo-web-browser": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp package-lock.json apps/outreach",
