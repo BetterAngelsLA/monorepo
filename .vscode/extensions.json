@@ -4,6 +4,12 @@
     "esbenp.prettier-vscode",
     "firsttris.vscode-jest-runner",
     "dbaeumer.vscode-eslint",
-    "arcanis.vscode-zipfs"
+    "arcanis.vscode-zipfs",
+    "ms-python.python",
+    "tamasfe.even-better-toml",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.isort",
+    "wix.vscode-import-cost"
   ]
 }

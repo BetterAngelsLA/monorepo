@@ -1,0 +1,89 @@
+{
+  "name": "betterangels-backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/betterangels-backend/betterangels_backend",
+  "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "outputPath": "apps/betterangels-backend/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "manage": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python manage.py",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "migrate": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python manage.py migrate",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python manage.py runserver",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:flake8",
+      "outputs": [
+        "{workspaceRoot}/reports/apps/betterangels-backend/pylint.txt"
+      ],
+      "options": {
+        "outputFile": "reports/apps/betterangels-backend/pylint.txt"
+      }
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/apps/betterangels-backend/unittests",
+        "{workspaceRoot}/coverage/apps/betterangels-backend"
+      ],
+      "options": {
+        "command": "python manage.py test",
+        "cwd": "apps/betterangels-backend"
+      }
+    }
+  },
+  "tags": []
+}
