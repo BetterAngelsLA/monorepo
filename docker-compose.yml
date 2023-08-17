@@ -9,7 +9,7 @@ services:
   db:
     image: postgres:15
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     ports:
       - '5432:5432'
     environment:
@@ -17,3 +17,5 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+volumes:
+  pgdata:
