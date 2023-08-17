@@ -33,6 +33,13 @@
         "bundleLocalDependencies": true
       }
     },
+    "manage": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "python manage.py",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "migrate": {
       "executor": "@nxlv/python:run-commands",
       "options": {
