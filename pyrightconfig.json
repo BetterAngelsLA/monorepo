@@ -1,0 +1,16 @@
+{
+  "include": ["apps"],
+
+  "exclude": ["**/node_modules", "**/__pycache__", "**/dist", "**/.venv"],
+
+  "defineConstant": {
+    "DEBUG": true
+  },
+
+  // "stubPath": "src/stubs",
+  "venv": "@monorepo/source-py3.11",
+  "strict": ["apps"],
+
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": true
+}
