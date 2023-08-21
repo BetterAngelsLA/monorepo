@@ -64,10 +64,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
-TEMPLATES = [  # type:ignore
+TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": cast(list[str], []),
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
