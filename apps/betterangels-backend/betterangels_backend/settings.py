@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+from typing import cast
 
 import django_stubs_ext
 import environ
@@ -26,13 +27,13 @@ env = environ.Env(
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))  # type: ignore
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = cast(str, env("SECRET_KEY"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -63,7 +64,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
-TEMPLATES = [
+TEMPLATES = [  # type:ignore
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
@@ -88,9 +89,9 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_NAME"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "NAME": cast(str, env("POSTGRES_NAME")),
+        "USER": cast(str, env("POSTGRES_USER")),
+        "PASSWORD": cast(str, env("POSTGRES_PASSWORD")),
         "HOST": "db",
         "PORT": "5432",
     }
