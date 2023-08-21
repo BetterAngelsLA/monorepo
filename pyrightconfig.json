@@ -7,9 +7,8 @@
     "DEBUG": true
   },
 
-  // "stubPath": "src/stubs",
-  "venv": "@monorepo/source-py3.11",
-  "strict": ["apps"],
+  "stubPath": "stubs",
+  "typeCheckingMode": "basic",
 
   "reportMissingImports": true,
   "reportMissingTypeStubs": true
