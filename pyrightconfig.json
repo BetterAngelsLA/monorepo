@@ -8,8 +8,5 @@
   },
 
   "stubPath": "stubs",
-  "typeCheckingMode": "strict",
-
-  "reportMissingImports": true,
-  "reportMissingTypeStubs": true
+  "typeCheckingMode": "strict"
 }
