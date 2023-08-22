@@ -20,8 +20,11 @@ import environ
 django_stubs_ext.monkeypatch()
 
 env = environ.Env(
-    # set casting, default value
-    DEBUG=(bool, False)
+    DEBUG=(bool, False),
+    SECRET_KEY=(str, "secret_key"),
+    POSTGRES_NAME=(str, "postgres"),
+    POSTGRES_USER=(str, "postgres"),
+    POSTGRES_PASSWORD=(str, "postgres"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
