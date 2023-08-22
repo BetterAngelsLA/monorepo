@@ -20,7 +20,7 @@ import environ
 django_stubs_ext.monkeypatch()
 
 env = environ.Env(
-    DEBUG=(bool, False),
+    DEBUG=(bool, True),
     SECRET_KEY=(str, "secret_key"),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
@@ -35,11 +35,8 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))  # type: ignore
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = cast(str, env("SECRET_KEY"))
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = cast(bool, env("DEBUG"))
 
 ALLOWED_HOSTS = []
 
