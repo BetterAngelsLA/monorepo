@@ -171,17 +171,6 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
-name = "django-types"
-version = "0.17.0"
-description = "Type stubs for Django"
-optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "django-types-0.17.0.tar.gz", hash = "sha256:c1c42ab78876c57c728342d5ab060725ab371fc8dc83bb85bae0be06846aad70"},
-    {file = "django_types-0.17.0-py3-none-any.whl", hash = "sha256:43d4931159524c1a08b25c1b9a4db2512b7c1234b64b1d4db4aff78881d6afd0"},
-]
-
-[[package]]
 name = "flake8"
 version = "6.1.0"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -425,4 +414,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.4"
-content-hash = "56459b25a4a7fdfb08cfed7e8cdb06809828616fb6eb20653a2a0e01bd43092a"
+content-hash = "06f97b1687ecbbff2884d4916f0a5e7001b3f558c184aacc45a9c19b1ee03b2e"
