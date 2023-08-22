@@ -1,0 +1,12 @@
+{
+  "include": ["apps"],
+
+  "exclude": ["**/node_modules", "**/__pycache__", "**/dist", "**/.venv"],
+
+  "defineConstant": {
+    "DEBUG": true
+  },
+
+  "stubPath": "stubs",
+  "typeCheckingMode": "strict"
+}

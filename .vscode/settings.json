@@ -23,5 +23,6 @@
     "**/.pnp.*": true,
     "**/.yarn": true,
     "**/.venv": true
-  }
+  },
+  "python.analysis.typeCheckingMode": "strict"
 }
