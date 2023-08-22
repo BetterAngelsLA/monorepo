@@ -67,7 +67,7 @@ class Env:
     def __init__(self, **scheme) -> None: ...
     def __call__(self, var, cast=..., default=..., parse_default=...): ...
     def __contains__(self, var): ...
-    def str(self, var, default=..., multiline=...):  # -> str:
+    def str(self, var: str, default=..., multiline=...) -> str:
         """
         :rtype: str
         """
@@ -77,7 +77,7 @@ class Env:
         :rtype: bytes
         """
         ...
-    def bool(self, var, default=...):
+    def bool(self, var: str, default=...) -> bool:
         """
         :rtype: bool
         """
@@ -97,7 +97,7 @@ class Env:
         :returns: Json parsed
         """
         ...
-    def list(self, var, cast=..., default=...):
+    def list(self, var, cast=..., default=...) -> list[str]:
         """
         :rtype: list
         """

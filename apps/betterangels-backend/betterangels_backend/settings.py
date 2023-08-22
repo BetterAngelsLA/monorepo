@@ -35,8 +35,8 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))  # type: ignore
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-SECRET_KEY = cast(str, env("SECRET_KEY"))
-DEBUG = cast(bool, env("DEBUG"))
+SECRET_KEY = env.str("SECRET_KEY")
+DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -85,13 +85,12 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": cast(str, env("POSTGRES_NAME")),
-        "USER": cast(str, env("POSTGRES_USER")),
-        "PASSWORD": cast(str, env("POSTGRES_PASSWORD")),
+        "NAME": env.str("POSTGRES_NAME"),
+        "USER": env.str("POSTGRES_USER"),
+        "PASSWORD": env.str("POSTGRES_PASSWORD"),
         "HOST": "db",
         "PORT": "5432",
     }
