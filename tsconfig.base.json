@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@providers/*": ["libs/providers/*"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
