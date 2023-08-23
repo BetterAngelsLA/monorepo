@@ -1,4 +1,4 @@
-import { Button } from '@ba/expo/components';
+import { Button } from '@monorepo/expo/ui-components';
 import { Stack } from 'expo-router';
 import { Text, View } from 'react-native';
 

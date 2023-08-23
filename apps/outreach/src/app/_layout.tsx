@@ -1,4 +1,3 @@
-import UserProvider from '@ba/expo/providers/user/UserProvider';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   DarkTheme,
@@ -9,6 +8,7 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import UserProvider from '../libs/providers/user/UserProvider';
 
 export { ErrorBoundary } from 'expo-router';
 
