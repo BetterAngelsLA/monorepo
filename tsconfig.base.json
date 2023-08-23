@@ -16,7 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@providers/*": ["libs/providers/*"]
+      "@ba/expo/providers/*": ["libs/expo/providers/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]

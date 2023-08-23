@@ -1,5 +1,5 @@
+import UserProvider from '@ba/expo/providers/user/UserProvider';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import UserProvider from '@providers/user/UserProvider';
 import {
   DarkTheme,
   DefaultTheme,
