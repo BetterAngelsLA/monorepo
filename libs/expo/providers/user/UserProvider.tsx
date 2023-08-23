@@ -1,5 +1,5 @@
 import { router, useRootNavigationState, useSegments } from 'expo-router';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import UserContext, { TUser } from './UserContext';
 
