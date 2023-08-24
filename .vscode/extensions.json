@@ -5,6 +5,7 @@
     "firsttris.vscode-jest-runner",
     "dbaeumer.vscode-eslint",
     "arcanis.vscode-zipfs",
+    "ms-python.mypy-type-checker",
     "ms-python.python",
     "tamasfe.even-better-toml",
     "ms-python.black-formatter",

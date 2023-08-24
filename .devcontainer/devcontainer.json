@@ -49,12 +49,13 @@
         "arcanis.vscode-zipfs",
         "ms-azuretools.vscode-docker",
         "ms-python.black-formatter",
+        "ms-python.flake8",
         "ms-python.isort",
+        "ms-python.mypy-type-checker",
         "ms-python.python",
         "nrwl.angular-console",
         "tamasfe.even-better-toml",
-        "wix.vscode-import-cost",
-        "ms-python.flake8"
+        "wix.vscode-import-cost"
       ]
     }
   },
