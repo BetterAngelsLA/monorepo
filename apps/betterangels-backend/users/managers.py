@@ -1,10 +1,11 @@
-from typing import TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar, Union
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .models import CustomUser
+if TYPE_CHECKING:
+    from .models import CustomUser
 
 ModelType = TypeVar("ModelType", bound="CustomUser")
 
@@ -20,7 +21,7 @@ class CustomUserQuerySet(models.QuerySet["CustomUser"]):
         email: str = "",
         password: str = "",
         **extra_fields: Union[str, bool, int, float, None]
-    ) -> CustomUser:
+    ):
         """
         Create and save a user with the given email and password.
         """
