@@ -23,7 +23,7 @@ black = "^23.7.0"
 flake8-bugbear = "^23.7.10"
 pyright = "^1.1.323"
 django-stubs-ext = "^4.2.2"
-django-stubs = "^4.2.3"
+django-types = "^0.17.0"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import TypeVar, Union
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
@@ -6,15 +6,20 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import CustomUser
 
+ModelType = TypeVar("ModelType", bound="CustomUser")
 
-class CustomerUserQuerySet(models.QuerySet):
+
+class CustomUserQuerySet(models.QuerySet["CustomUser"]):
     """
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
 
     def create_user(
-        self, email: str = "", password: str = "", **extra_fields: Any
+        self,
+        email: str = "",
+        password: str = "",
+        **extra_fields: Union[str, bool, int, float, None]
     ) -> CustomUser:
         """
         Create and save a user with the given email and password.
@@ -25,15 +30,14 @@ class CustomerUserQuerySet(models.QuerySet):
         return user
 
     def create_superuser(
-        self, email: str, password: str, **extra_fields: dict[str, Any | bool]
+        self,
+        email: str,
+        password: str,
+        **extra_fields: Union[str, bool, int, float, None]
     ):
         """
         Create and save a SuperUser with the given email and password.
         """
-        import pdb
-
-        pdb.set_trace()
-
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -45,18 +49,32 @@ class CustomerUserQuerySet(models.QuerySet):
         return self.create_user(email, password, **extra_fields)
 
 
-class CustomUserManager(BaseUserManager):
-    def get_queryset(self) -> CustomerUserQuerySet:
-        return CustomerUserQuerySet(self.model)
+Custom = models.Manager.from_queryset(CustomUserQuerySet)
 
-    def create_user(self, email: str = "", password: str = "", **extra_fields):
+
+class CustomUserManager(BaseUserManager[ModelType]):
+    def create_user(
+        self,
+        email: str = "",
+        password: str = "",
+        **extra_fields: Union[str, bool, int, float, None]
+    ):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return self.get_queryset().create_user(email, password, **extra_fields)
+        return CustomUserQuerySet(self.model).create_user(
+            email, password, **extra_fields
+        )
 
-    def create_superuser(self, email: str = "", password: str = "", **extra_fields):
+    def create_superuser(
+        self,
+        email: str = "",
+        password: str = "",
+        **extra_fields: Union[str, bool, int, float, None]
+    ):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return self.get_queryset().create_superuser(email, password, **extra_fields)
+        return CustomUserQuerySet(self.model).create_superuser(
+            email, password, **extra_fields
+        )
