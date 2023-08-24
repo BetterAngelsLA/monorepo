@@ -1,29 +1,31 @@
 from django.test import TestCase
-from users.models import CustomUser
+
+from .models import BAUser
 
 
-class UsersManagersTests(TestCase):
+class BAUsersManagersTests(TestCase):
     def test_create_user(self):
-        user = CustomUser.objects.create_user(email="normal@user.com", password="foo")
+        user = BAUser.objects.create_user(email="normal@user.com", password="foo")
         self.assertEqual(user.email, "normal@user.com")
         self.assertTrue(user.is_active)
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
+
         try:
-            # username is None for the AbstractUser option
-            # username does not exist for the AbstractBaseUser option
-            self.assertIsNone(user.username)
+            # username is None for the AbstractBAUser option
+            # username does not exist for the AbstractBaseBAUser option
+            self.assertIsNone(user.get_username())
         except AttributeError:
             pass
         with self.assertRaises(ValueError):
-            CustomUser.objects.create_user()
+            BAUser.objects.create_user()
         with self.assertRaises(ValueError):
-            CustomUser.objects.create_user(email="")
+            BAUser.objects.create_user(email="")
         with self.assertRaises(ValueError):
-            CustomUser.objects.create_user(email="", password="foo")
+            BAUser.objects.create_user(email="", password="foo")
 
     def test_create_superuser(self):
-        admin_user = CustomUser.objects.create_superuser(
+        admin_user = BAUser.objects.create_superuser(
             email="super@user.com", password="foo"
         )
         self.assertEqual(admin_user.email, "super@user.com")
@@ -31,12 +33,12 @@ class UsersManagersTests(TestCase):
         self.assertTrue(admin_user.is_staff)
         self.assertTrue(admin_user.is_superuser)
         try:
-            # username is None for the AbstractUser option
-            # username does not exist for the AbstractBaseUser option
-            self.assertIsNone(admin_user.username)
+            # username is None for the AbstractBAUser option
+            # username does not exist for the AbstractBaseBAUser option
+            self.assertIsNone(admin_user.get_username())
         except AttributeError:
             pass
         with self.assertRaises(ValueError):
-            CustomUser.objects.create_superuser(
+            BAUser.objects.create_superuser(
                 email="super@user.com", password="foo", is_superuser=False
             )
