@@ -4,6 +4,7 @@ from gevent import monkey  # type: ignore
 
 monkey.patch_all()  # type: ignore
 
+# flake8: noqa: F401
 import os
 import sys
 
