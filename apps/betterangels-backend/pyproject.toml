@@ -22,7 +22,7 @@ group = {}
 include = "betterangels_backend"
 
 [tool.poetry.dependencies]
-python = "3.11.4"
+python = "3.10.12"
 psycopg = "3.1.10"
 django = "^4.2.4"
 django-environ = "^0.10.0"
