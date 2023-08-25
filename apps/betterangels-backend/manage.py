@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+from gevent import monkey  # type: ignore
+
+monkey.patch_all()  # type: ignore
+
 import os
 import sys
 
