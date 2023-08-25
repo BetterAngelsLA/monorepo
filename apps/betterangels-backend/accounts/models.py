@@ -1,20 +1,17 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 
 from .managers import BAUserManager
 
 
-class BAUser(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(_("email address"), unique=True)
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(default=timezone.now)
-    objects: BAUserManager["BAUser"] = BAUserManager()
+class BAUser(AbstractUser, PermissionsMixin):
+    pass
+    email = models.EmailField(("email address"), unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    objects: BAUserManager["BAUser"] = BAUserManager()
+
     def __str__(self):
-        return self.email
+        return self.username

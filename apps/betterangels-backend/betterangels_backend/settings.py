@@ -68,7 +68,7 @@ ROOT_URLCONF = "betterangels_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": cast(list[str], []),
+        "DIRS": cast(list[str], [BASE_DIR / "templates"]),
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -105,7 +105,7 @@ AUTH_USER_MODEL = "accounts.BAUser"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.BAUserAttributeSimilarityValidator",  # noqa: B950
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: B950
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -140,3 +140,6 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"

@@ -14,7 +14,7 @@ class BAUsersManagersTests(TestCase):
         try:
             # username is None for the AbstractBAUser option
             # username does not exist for the AbstractBaseBAUser option
-            self.assertIsNone(user.get_username())
+            self.assertIsNone(user.username)  # type: ignore
         except AttributeError:
             pass
         with self.assertRaises(ValueError):
@@ -35,7 +35,7 @@ class BAUsersManagersTests(TestCase):
         try:
             # username is None for the AbstractBAUser option
             # username does not exist for the AbstractBaseBAUser option
-            self.assertIsNone(admin_user.get_username())
+            self.assertIsNone(admin_user.username)  # type: ignore
         except AttributeError:
             pass
         with self.assertRaises(ValueError):
