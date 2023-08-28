@@ -1,16 +1,16 @@
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
 
-from .managers import BetterAngelsUserManager
+from .managers import UserManager
 
 
-class BetterAngelsUser(AbstractUser, PermissionsMixin):
-    email = models.EmailField(("email address"), unique=True)
+class User(AbstractUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    objects: BetterAngelsUserManager["BetterAngelsUser"] = BetterAngelsUserManager()
+    objects: UserManager["User"] = UserManager()
 
     def __str__(self):
-        return self.username
+        return self.email

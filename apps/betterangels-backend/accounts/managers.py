@@ -5,14 +5,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
-    from .models import BetterAngelsUser
+    from .models import User
 
-ModelType = TypeVar("ModelType", bound="BetterAngelsUser")
+ModelType = TypeVar("ModelType", bound="User")
 
 
-class BetterAngelsUserQuerySet(models.QuerySet["BetterAngelsUser"]):
+class UserQuerySet(models.QuerySet["User"]):
     """
-    Custom user model manager where email is the unique identifiers
+    User model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
 
@@ -37,7 +37,7 @@ class BetterAngelsUserQuerySet(models.QuerySet["BetterAngelsUser"]):
         **extra_fields: Union[str, bool, int, float, None]
     ):
         """
-        Create and save a SuperBetterAngelsUser with the given email and password.
+        Create and save a SuperUser with the given email and password.
         """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -50,10 +50,10 @@ class BetterAngelsUserQuerySet(models.QuerySet["BetterAngelsUser"]):
         return self.create_user(email, password, **extra_fields)
 
 
-Custom = models.Manager.from_queryset(BetterAngelsUserQuerySet)
+Custom = models.Manager.from_queryset(UserQuerySet)
 
 
-class BetterAngelsUserManager(BaseUserManager[ModelType]):
+class UserManager(BaseUserManager[ModelType]):
     def create_user(
         self,
         email: str = "",
@@ -63,9 +63,7 @@ class BetterAngelsUserManager(BaseUserManager[ModelType]):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return BetterAngelsUserQuerySet(self.model).create_user(
-            email, password, **extra_fields
-        )
+        return UserQuerySet(self.model).create_user(email, password, **extra_fields)
 
     def create_superuser(
         self,
@@ -76,6 +74,6 @@ class BetterAngelsUserManager(BaseUserManager[ModelType]):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return BetterAngelsUserQuerySet(self.model).create_superuser(
+        return UserQuerySet(self.model).create_superuser(
             email, password, **extra_fields
         )
