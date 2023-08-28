@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
@@ -16,12 +16,7 @@ class UserQuerySet(models.QuerySet["User"]):
     for authentication instead of usernames.
     """
 
-    def create_user(
-        self,
-        email: str = "",
-        password: str = "",
-        **extra_fields: Union[str, bool, int, float, None]
-    ):
+    def create_user(self, email: str = "", password: str = "", **extra_fields: Any):
         """
         Create and save a user with the given email and password.
         """
@@ -30,12 +25,7 @@ class UserQuerySet(models.QuerySet["User"]):
         user.save()
         return user
 
-    def create_superuser(
-        self,
-        email: str,
-        password: str,
-        **extra_fields: Union[str, bool, int, float, None]
-    ):
+    def create_superuser(self, email: str, password: str, **extra_fields: Any):
         """
         Create and save a SuperUser with the given email and password.
         """
@@ -54,22 +44,14 @@ Custom = models.Manager.from_queryset(UserQuerySet)
 
 
 class UserManager(BaseUserManager[ModelType]):
-    def create_user(
-        self,
-        email: str = "",
-        password: str = "",
-        **extra_fields: Union[str, bool, int, float, None]
-    ):
+    def create_user(self, email: str = "", password: str = "", **extra_fields: Any):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
         return UserQuerySet(self.model).create_user(email, password, **extra_fields)
 
     def create_superuser(
-        self,
-        email: str = "",
-        password: str = "",
-        **extra_fields: Union[str, bool, int, float, None]
+        self, email: str = "", password: str = "", **extra_fields: Any
     ):
         if not email:
             raise ValueError(_("The Email must be set"))
