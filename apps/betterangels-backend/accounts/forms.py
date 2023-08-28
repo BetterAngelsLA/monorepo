@@ -4,12 +4,12 @@ from .models import BAUser
 
 
 class BAUserCreationForm(UserCreationForm):
-    class Meta:  # type: ignore
+    class Meta(UserCreationForm.Meta):
         model = BAUser
         fields = ("username", "email")
 
 
 class BAUserChangeForm(UserChangeForm):
-    class Meta:  # type: ignore
+    class Meta(UserChangeForm.Meta):
         model = BAUser
         fields = ("username", "email")
