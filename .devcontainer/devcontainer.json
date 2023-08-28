@@ -54,7 +54,9 @@
         "nrwl.angular-console",
         "tamasfe.even-better-toml",
         "wix.vscode-import-cost",
-        "ms-python.flake8"
+        "ms-python.flake8",
+        "batisteo.vscode-django",
+        "monosans.djlint"
       ]
     }
   },
