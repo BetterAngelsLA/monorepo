@@ -5,12 +5,12 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
-    from .models import BAUser
+    from .models import BetterAngelsUser
 
-ModelType = TypeVar("ModelType", bound="BAUser")
+ModelType = TypeVar("ModelType", bound="BetterAngelsUser")
 
 
-class BAUserQuerySet(models.QuerySet["BAUser"]):
+class BetterAngelsUserQuerySet(models.QuerySet["BetterAngelsUser"]):
     """
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
@@ -37,7 +37,7 @@ class BAUserQuerySet(models.QuerySet["BAUser"]):
         **extra_fields: Union[str, bool, int, float, None]
     ):
         """
-        Create and save a SuperBAUser with the given email and password.
+        Create and save a SuperBetterAngelsUser with the given email and password.
         """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -50,10 +50,10 @@ class BAUserQuerySet(models.QuerySet["BAUser"]):
         return self.create_user(email, password, **extra_fields)
 
 
-Custom = models.Manager.from_queryset(BAUserQuerySet)
+Custom = models.Manager.from_queryset(BetterAngelsUserQuerySet)
 
 
-class BAUserManager(BaseUserManager[ModelType]):
+class BetterAngelsUserManager(BaseUserManager[ModelType]):
     def create_user(
         self,
         email: str = "",
@@ -63,7 +63,9 @@ class BAUserManager(BaseUserManager[ModelType]):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return BAUserQuerySet(self.model).create_user(email, password, **extra_fields)
+        return BetterAngelsUserQuerySet(self.model).create_user(
+            email, password, **extra_fields
+        )
 
     def create_superuser(
         self,
@@ -74,6 +76,6 @@ class BAUserManager(BaseUserManager[ModelType]):
         if not email:
             raise ValueError(_("The Email must be set"))
         email = self.normalize_email(email)
-        return BAUserQuerySet(self.model).create_superuser(
+        return BetterAngelsUserQuerySet(self.model).create_superuser(
             email, password, **extra_fields
         )

@@ -1,17 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .forms import BAUserChangeForm, BAUserCreationForm
-from .models import BAUser
+from .forms import BetterAngelsUserChangeForm, BetterAngelsUserCreationForm
+from .models import BetterAngelsUser
 
 
-class BAUserAdmin(UserAdmin):
-    add_form = BAUserCreationForm
-    form = BAUserChangeForm
-    model = BAUser
+class BetterAngelsUserAdmin(UserAdmin):
+    add_form = BetterAngelsUserCreationForm
+    form = BetterAngelsUserChangeForm
+    model = BetterAngelsUser
     list_display = [
         "email",
     ]
 
 
-admin.site.register(BAUser, BAUserAdmin)
+admin.site.register(BetterAngelsUser, BetterAngelsUserAdmin)
