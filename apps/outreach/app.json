@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "org.betterangels.outreach"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -37,6 +38,15 @@
         }
       ],
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4b9b9da2-8d47-4865-81ac-1582b3b8e714"
+      }
+    },
+    "owner": "better-angels"
   }
 }
