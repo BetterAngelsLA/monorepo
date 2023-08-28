@@ -14,9 +14,7 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
@@ -25,7 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.betterangels.outreach"
+      "package": "org.betterangels.outreach"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -36,10 +34,7 @@
         "@config-plugins/detox",
         {
           "skipProguard": false,
-          "subdomains": [
-            "10.0.2.2",
-            "localhost"
-          ]
+          "subdomains": ["10.0.2.2", "localhost"]
         }
       ],
       "expo-router"
