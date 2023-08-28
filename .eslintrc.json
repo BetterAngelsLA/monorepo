@@ -5,6 +5,7 @@
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
+        "import/export": "error",
         "@nx/enforce-module-boundaries": [
           "error",
           {
@@ -32,7 +33,6 @@
           }
         ],
         "eol-last": ["error", "always"],
-        "import/export": "error",
         "quotes": [
           "error",
           "single",
