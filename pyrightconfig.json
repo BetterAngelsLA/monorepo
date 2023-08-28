@@ -8,5 +8,5 @@
   },
 
   "stubPath": "stubs",
-  "typeCheckingMode": "strict",
+  "typeCheckingMode": "strict"
 }
