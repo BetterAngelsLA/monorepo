@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
-from gevent import monkey  # type: ignore
 
-monkey.patch_all()  # type: ignore
+# TODO: Delete our generated type stubs once the below PR has been merged.
+# https://github.com/python/typeshed/pull/10527
+from gevent import monkey
+
+monkey.patch_all()
 
 # flake8: noqa: F401
 import os
