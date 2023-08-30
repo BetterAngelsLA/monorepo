@@ -1,7 +1,13 @@
 {
   "include": ["apps"],
 
-  "exclude": ["**/node_modules", "**/__pycache__", "**/dist", "**/.venv"],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/dist",
+    "**/.venv",
+    "**/stubs"
+  ],
 
   "defineConstant": {
     "DEBUG": true

@@ -65,14 +65,24 @@
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/apps/betterangels-backend/pylint.txt"
-      ],
+      "executor": "@nxlv/python:run-commands",
       "options": {
-        "outputFile": "reports/apps/betterangels-backend/pylint.txt"
+        "commands": [
+          "flake8 --exit-zero --output-file reports/apps/betterangels-backend/pylint.txt",
+          "pyright -p ../../pyrightconfig.json"
+        ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
       }
     },
+    "type-check": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "pyright -p ../../pyrightconfig.json"
+      }
+    },
+
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
