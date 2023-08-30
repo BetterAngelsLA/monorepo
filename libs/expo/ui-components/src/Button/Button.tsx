@@ -5,7 +5,7 @@ interface IButtonProps {
   onPress: () => void;
 }
 
-export default function Button(props: IButtonProps) {
+export function Button(props: IButtonProps) {
   const { onPress, title = 'Save' } = props;
   return (
     <Pressable style={styles.button} onPress={onPress}>
