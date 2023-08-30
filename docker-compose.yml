@@ -7,11 +7,10 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:15
+    image: postgis/postgis:15-3.4
     ports:
       - '5432:5432'
     environment:
-      - 'POSTGRES_HOST_AUTH_METHOD=trust'
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
