@@ -36,21 +36,21 @@
     "manage": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py",
+        "command": "poetry run python manage.py",
         "cwd": "apps/betterangels-backend"
       }
     },
     "migrate": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py migrate",
+        "command": "poetry run python manage.py migrate",
         "cwd": "apps/betterangels-backend"
       }
     },
     "start": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py runserver 0.0.0.0:8000",
+        "command": "poetry run python manage.py runserver 0.0.0.0:8000",
         "cwd": "apps/betterangels-backend"
       }
     },
@@ -68,9 +68,17 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "flake8 --exit-zero --output-file reports/apps/betterangels-backend/pylint.txt",
-          "pyright -p ../../pyrightconfig.json"
+          "poetry run flake8 --exit-zero --output-file reports/apps/betterangels-backend/pylint.txt",
+          "poetry run pyright -p ../../pyrightconfig.json"
         ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    },
+    "scratch": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": ["pyright -p ../../pyrightconfig.json"],
         "cwd": "apps/betterangels-backend",
         "parallel": false
       }
@@ -79,7 +87,7 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "cwd": "apps/betterangels-backend",
-        "command": "pyright -p ../../pyrightconfig.json"
+        "command": "poetry run pyright -p ../../pyrightconfig.json"
       }
     },
 
@@ -90,7 +98,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "python manage.py test",
+        "command": "poetry run python manage.py test",
         "cwd": "apps/betterangels-backend"
       }
     }
