@@ -27,6 +27,10 @@ django = "^4.2.4"
 django-environ = "^0.10.0"
 gunicorn = {extras = ["gevent"], version = "^21.2.0"}
 
+[tool.poetry.group.dev.dependencies]
+django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
+django-stubs-ext = "^4.2.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

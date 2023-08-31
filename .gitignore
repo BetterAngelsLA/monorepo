@@ -65,3 +65,6 @@ cache/
 !.yarn/versions
 
 apps/outreach-e2e/artifacts
+
+# MyPy
+.mypy_cache
