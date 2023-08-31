@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
@@ -15,7 +15,7 @@ class User(AbstractBaseUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: List[str] = []
 
-    objects: UserManager = UserManager()
+    objects = UserManager()
 
     def __str__(self: "User") -> str:
         return self.email
