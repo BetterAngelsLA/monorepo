@@ -68,7 +68,7 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run flake8 --exit-zero --output-file reports/apps/betterangels-backend/pylint.txt",
+          "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
           "poetry run mypy --config-file=../../mypy.ini ."
         ],
         "cwd": "apps/betterangels-backend",
