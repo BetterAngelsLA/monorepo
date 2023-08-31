@@ -3,7 +3,7 @@
 
 # TODO: Delete our generated type stubs once the below PR has been merged.
 # https://github.com/python/typeshed/pull/10527
-from gevent import monkey  # type ignore
+from gevent import monkey
 
 monkey.patch_all()
 
