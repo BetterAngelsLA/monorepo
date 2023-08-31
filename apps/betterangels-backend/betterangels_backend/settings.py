@@ -10,14 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+
 import os
 from pathlib import Path
 from typing import List, cast
 
 import django_stubs_ext
-import environ  # type: ignore
+import environ
 
 django_stubs_ext.monkeypatch()
+
 
 env = environ.Env(
     DEBUG=(bool, True),

@@ -24,6 +24,7 @@ flake8-bugbear = "^23.7.10"
 django-stubs-ext = "^4.2.2"
 djlint = "^1.32.1"
 django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
+mypy = "1.4.1"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]

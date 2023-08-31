@@ -1,4 +1,4 @@
-from typing import cast
+from typing import List, cast
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
@@ -13,9 +13,9 @@ class User(AbstractBaseUser):
     is_superuser = models.BooleanField()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: List[str] = []
 
-    objects = UserManager()
+    objects: UserManager = UserManager()
 
     def __str__(self: "User") -> str:
-        return cast(str, self.email)
+        return self.email

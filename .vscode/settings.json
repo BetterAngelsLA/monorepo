@@ -27,6 +27,5 @@
   },
   "python.analysis.typeCheckingMode": "off",
   "mypy.enabled": true,
-  "mypy.runUsingActiveInterpreter": true,
-  "mypy.dmypyExecutable": "dmypy"
+  "mypy.runUsingActiveInterpreter": true
 }
