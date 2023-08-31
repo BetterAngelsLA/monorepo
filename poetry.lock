@@ -288,17 +288,6 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
-name = "django-types"
-version = "0.17.0"
-description = "Type stubs for Django"
-optional = false
-python-versions = ">=3.7,<4.0"
-files = [
-    {file = "django-types-0.17.0.tar.gz", hash = "sha256:c1c42ab78876c57c728342d5ab060725ab371fc8dc83bb85bae0be06846aad70"},
-    {file = "django_types-0.17.0-py3-none-any.whl", hash = "sha256:43d4931159524c1a08b25c1b9a4db2512b7c1234b64b1d4db4aff78881d6afd0"},
-]
-
-[[package]]
 name = "djlint"
 version = "1.32.1"
 description = "HTML Template Linter and Formatter"
@@ -1076,4 +1065,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.4"
-content-hash = "4a4aaabf8623dbc5eaf01b13dc795c6f7af8b477c69f17fd19d87f8237bfe255"
+content-hash = "e4313c7e0f30e5c4da0d1b13046987e77ee2cda757ee5b5e182d436b53b292c7"
