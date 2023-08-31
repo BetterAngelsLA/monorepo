@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import cast
+from typing import List, cast
 
 import django_stubs_ext
-import environ
+import environ  # type: ignore
 
 django_stubs_ext.monkeypatch()
 
@@ -35,10 +35,10 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-SECRET_KEY = env.str("SECRET_KEY")
-DEBUG = env.bool("DEBUG")
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
-    "dwelling"
+    "dwelling",
 ]
 
 MIDDLEWARE = [
@@ -90,9 +90,9 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str("POSTGRES_NAME"),
-        "USER": env.str("POSTGRES_USER"),
-        "PASSWORD": env.str("POSTGRES_PASSWORD"),
+        "NAME": env("POSTGRES_NAME"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": "db",
         "PORT": "5432",
     }
