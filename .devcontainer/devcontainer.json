@@ -34,22 +34,22 @@
   "customizations": {
     "vscode": {
       "extensions": [
-		"dbaeumer.vscode-eslint",
-		"esbenp.prettier-vscode",
-		"firsttris.vscode-jest-runner",
-		"arcanis.vscode-zipfs",
-		"ms-azuretools.vscode-docker",
-		"ms-python.black-formatter",
-		"ms-python.isort",
-		"ms-python.python",
-		"nrwl.angular-console",
-		"tamasfe.even-better-toml",
-		"wix.vscode-import-cost",
-		"ms-python.flake8",
-		"batisteo.vscode-django",
-		"monosans.djlint",
-		"matangover.mypy"
-	]
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "firsttris.vscode-jest-runner",
+        "arcanis.vscode-zipfs",
+        "ms-azuretools.vscode-docker",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.python",
+        "nrwl.angular-console",
+        "tamasfe.even-better-toml",
+        "wix.vscode-import-cost",
+        "ms-python.flake8",
+        "batisteo.vscode-django",
+        "monosans.djlint",
+        "matangover.mypy"
+      ]
     }
   },
   // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
