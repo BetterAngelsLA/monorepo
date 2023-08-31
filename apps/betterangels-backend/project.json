@@ -36,21 +36,21 @@
     "manage": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py",
+        "command": "poetry run python manage.py",
         "cwd": "apps/betterangels-backend"
       }
     },
     "migrate": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py migrate",
+        "command": "poetry run python manage.py migrate",
         "cwd": "apps/betterangels-backend"
       }
     },
     "start": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "python manage.py runserver 0.0.0.0:8000",
+        "command": "poetry run python manage.py runserver 0.0.0.0:8000",
         "cwd": "apps/betterangels-backend"
       }
     },
@@ -65,12 +65,21 @@
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/apps/betterangels-backend/pylint.txt"
-      ],
+      "executor": "@nxlv/python:run-commands",
       "options": {
-        "outputFile": "reports/apps/betterangels-backend/pylint.txt"
+        "commands": [
+          "poetry run flake8 --exit-zero --output-file reports/apps/betterangels-backend/pylint.txt",
+          "poetry run mypy --config-file=../../mypy.ini ."
+        ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    },
+    "type-check": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "cwd": "apps/betterangels-backend",
+        "command": "poetry run mypy --config-file=../../mypy.ini ."
       }
     },
     "test": {
@@ -80,7 +89,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "python manage.py test",
+        "command": "poetry run python manage.py test",
         "cwd": "apps/betterangels-backend"
       }
     }
