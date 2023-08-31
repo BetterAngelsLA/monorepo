@@ -47,7 +47,8 @@
         "wix.vscode-import-cost",
         "ms-python.flake8",
         "batisteo.vscode-django",
-        "monosans.djlint"
+        "monosans.djlint",
+        "matangover.mypy"
       ]
     }
   },
