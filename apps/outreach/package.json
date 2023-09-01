@@ -19,7 +19,12 @@
     "react-test-renderer": "*",
     "expo-router": "*",
     "@react-navigation/native": "*",
-    "expo-web-browser": "*"
+    "expo-web-browser": "*",
+    "@storybook/react-webpack5": "*",
+    "@storybook/react-native": "*",
+    "@fortawesome/react-native-fontawesome": "*",
+    "@fortawesome/fontawesome-svg-core": "*",
+    "@fortawesome/pro-regular-svg-icons": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",

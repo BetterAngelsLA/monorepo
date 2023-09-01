@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
+    "@fortawesome/fontawesome-svg-core": "^6.4.2",
+    "@fortawesome/pro-regular-svg-icons": "^6.4.2",
+    "@fortawesome/react-native-fontawesome": "^0.3.0",
     "expo": "49.0.8",
     "expo-constants": "~14.4.2",
     "expo-linking": "^5.0.2",
