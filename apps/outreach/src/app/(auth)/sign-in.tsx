@@ -1,6 +1,6 @@
 import { faHouse } from '@fortawesome/pro-regular-svg-icons/faHouse';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { Button } from '@monorepo/expo/ui-components';
+import { Button } from '@monorepo/expo/shared/ui-components';
 import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
