@@ -2668,15 +2668,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/pro-duotone-svg-icons@npm:^6.4.2":
-  version: 6.4.2
-  resolution: "@fortawesome/pro-duotone-svg-icons@npm:6.4.2::__archiveUrl=https%3A%2F%2Fnpm.fontawesome.com%2F%40fortawesome%2Fpro-duotone-svg-icons%2F-%2F6.4.2%2Fpro-duotone-svg-icons-6.4.2.tgz"
-  dependencies:
-    "@fortawesome/fontawesome-common-types": 6.4.2
-  checksum: 2667bf314400cef61af0642cf392b5ea88706f3c87a019da301dfae69d3c86060ee201b6d465067fb35708b8030217a8fdc2e4fcf0cebac7ec3eb659f46c9b89
-  languageName: node
-  linkType: hard
-
 "@fortawesome/pro-regular-svg-icons@npm:^6.4.2":
   version: 6.4.2
   resolution: "@fortawesome/pro-regular-svg-icons@npm:6.4.2::__archiveUrl=https%3A%2F%2Fnpm.fontawesome.com%2F%40fortawesome%2Fpro-regular-svg-icons%2F-%2F6.4.2%2Fpro-regular-svg-icons-6.4.2.tgz"
@@ -3152,7 +3143,6 @@ __metadata:
     "@expo/cli": ~0.10.10
     "@expo/metro-config": ~0.10.6
     "@fortawesome/fontawesome-svg-core": ^6.4.2
-    "@fortawesome/pro-duotone-svg-icons": ^6.4.2
     "@fortawesome/pro-regular-svg-icons": ^6.4.2
     "@fortawesome/react-native-fontawesome": ^0.3.0
     "@nx/detox": 16.6.0
@@ -3173,7 +3163,7 @@ __metadata:
     "@testing-library/jest-native": 5.4.2
     "@testing-library/react-native": 12.1.2
     "@types/jest": ^29.4.0
-    "@types/node": 16.11.7
+    "@types/node": 18.7.1
     "@types/react": ~18.2.14
     "@typescript-eslint/eslint-plugin": ^5.60.1
     "@typescript-eslint/parser": ^5.60.1
@@ -7280,10 +7270,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:16.11.7":
-  version: 16.11.7
-  resolution: "@types/node@npm:16.11.7"
-  checksum: 2706403e6efc4aa40fdce8f0b5d9884d5600c3c8610aedc7fa5e7e298d30366f7e8b7296028d52898dca3edef4c3e827b03bf20952c4780f13fa4e79864f7a86
+"@types/node@npm:18.7.1":
+  version: 18.7.1
+  resolution: "@types/node@npm:18.7.1"
+  checksum: f1e2b701b107f97be01da4c46845cd23bcdcb2865f9abbb2847546d09587e726ea207daca6f0d1e72196875ef8c62feeeff5f1c1f2070445acd6d1a61d815c7c
   languageName: node
   linkType: hard
 

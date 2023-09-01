@@ -1,0 +1,16 @@
+{
+  "name": "expo-shared-icons",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/shared/icons/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/expo/shared/icons/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
