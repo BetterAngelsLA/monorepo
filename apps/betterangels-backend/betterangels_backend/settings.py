@@ -47,6 +47,9 @@ ALLOWED_HOSTS: List[str] = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -54,6 +57,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "dwelling",
+    # TODO: AK uncomment once google account is set up
+    # "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -64,14 +69,28 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "allauth.account.middleware.AccountMiddleware",
 ]
+
+
+# Provider specific settings
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         # For each OAuth based provider, either add a ``SocialApp``
+#         # (``socialaccount`` app) containing the required client
+#         # credentials, or list them here:
+#         "APP": {"client_id": "123", "secret": "456", "key": ""}
+#     }
+# }
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": cast(list[str], [BASE_DIR / "templates"]),
+        "DIRS": [
+            os.path.normpath(os.path.join(BASE_DIR, "templates")),
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -79,9 +98,16 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.request",
             ],
         },
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    # `allauth` specific authentication methods, such as login by email
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
@@ -146,3 +172,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+
+
+# ALL AUTH SETTINGS
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
