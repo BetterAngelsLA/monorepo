@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",
     "accounts",
     "dwelling",
     # TODO: AK uncomment once google account is set up
@@ -172,9 +173,28 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+LOGIN_URL = "accounts/login"
 
 
 # ALL AUTH SETTINGS
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7
+"""
+ACCOUNT_EMAIL_REQUIRED (default: False)
+The user is required to hand over an email address when signing up.
+"""
 # ACCOUNT_EMAIL_REQUIRED = True
+"""
+ACCOUNT_EMAIL_VERIFICATION (default: "optional")
+Determines the email verification method during signup 
+– choose one of "mandatory", "optional", or "none".
+
+Setting this to "mandatory" requires ACCOUNT_EMAIL_REQUIRED to be True.
+
+When set to "mandatory" the user is blocked
+from logging in until the email address is
+verified. Choose "optional"
+or "none" to allow logins with an unverified
+email address. In case of "optional", the email verification mail is
+still sent, whereas in case of “none” no email verification mails are sent.
+"""
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
