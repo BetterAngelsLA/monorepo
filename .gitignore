@@ -67,7 +67,7 @@ cache/
 apps/outreach-e2e/artifacts
 
 # Python
-poetry.lock
-!/poetry.lock
 __pycache__
 .mypy_cache
+poetry.lock
+!/poetry.lock
