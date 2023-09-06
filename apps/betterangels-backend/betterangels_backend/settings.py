@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     "accounts",
     "dwelling",
     # TODO: AK uncomment once google account is set up
-    # "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -74,14 +74,23 @@ MIDDLEWARE = [
 
 
 # Provider specific settings
-# SOCIALACCOUNT_PROVIDERS = {
-#     "google": {
-#         # For each OAuth based provider, either add a ``SocialApp``
-#         # (``socialaccount`` app) containing the required client
-#         # credentials, or list them here:
-#         "APP": {"client_id": "123", "secret": "456", "key": ""}
-#     }
-# }
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "EMAIL_AUTHENTICATION": True,
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        "APP": {
+            "client_id": env("SOCIALACCOUNT_GOOGLE_CLIENT_ID"),
+            "secret": env("SOCIALACCOUNT_GOOGLE_SECRET"),
+            "key": "",
+        },
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
