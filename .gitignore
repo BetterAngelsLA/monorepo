@@ -66,5 +66,6 @@ cache/
 
 apps/outreach-e2e/artifacts
 
-# MyPy
+# Python
+__pycache__
 .mypy_cache
