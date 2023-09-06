@@ -26,6 +26,8 @@ psycopg = "3.1.10"
 django = "^4.2.4"
 django-environ = "^0.10.0"
 gunicorn = {extras = ["gevent"], version = "^21.2.0"}
+django-allauth = "^0.55.2"
+django-extensions = "^3.2.3"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
