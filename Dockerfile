@@ -1,13 +1,12 @@
 FROM python:3.11.5-bullseye
 
 ENV PYTHONUNBUFFERED=1
-ENV NODE_VERSION 18.17.1
-
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
+ENV NODE_VERSION 18.17.1
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && case "${dpkgArch##*-}" in \
       amd64) ARCH='x64';; \
@@ -90,6 +89,7 @@ RUN set -ex \
   # smoke test
   && yarn --version
 
+# Python
 RUN pip install poetry==1.6.1
 
 RUN apt-get update \
