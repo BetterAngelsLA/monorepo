@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import List, cast
+from typing import List
 
 import django_stubs_ext
 import environ  # type: ignore
@@ -47,19 +47,24 @@ ALLOWED_HOSTS: List[str] = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "django_extensions",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "dj_rest_auth",
+    "allauth",
+    "allauth.account",
+    "dj_rest_auth.registration",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    # apps
     "accounts",
     "dwelling",
-    # TODO: AK uncomment once google account is set up
-    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -206,3 +211,5 @@ email address. In case of "optional", the email verification mail is
 still sent, whereas in case of “none” no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+SITE_ID = 1
