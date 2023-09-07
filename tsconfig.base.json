@@ -16,7 +16,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@monorepo/expo/ui-components": ["libs/expo/ui-components/src/index.ts"]
+      "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
+      "@monorepo/expo/shared/ui-components": [
+        "libs/expo/shared/ui-components/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'expo-ui-components',
+  displayName: 'expo-shared-ui-components',
   resolver: '@nx/jest/plugins/resolver',
   preset: 'jest-expo',
   transformIgnorePatterns: [
