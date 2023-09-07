@@ -82,6 +82,5 @@
   "engines": {
     "node": "18.17.1"
   },
-  "engineStrict": true,
   "packageManager": "yarn@3.6.3"
 }
