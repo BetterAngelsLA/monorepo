@@ -1,7 +1,7 @@
 {
-  "name": "expo-ui-components",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/expo/ui-components/src",
+  "name": "expo-shared-ui-components",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/shared/ui-components/src",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -9,14 +9,16 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["libs/expo/ui-components/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": [
+          "libs/expo/shared/ui-components/**/*.{ts,tsx,js,jsx}"
+        ]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/expo/ui-components/jest.config.ts",
+        "jestConfig": "libs/expo/shared/ui-components/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {
@@ -30,7 +32,7 @@
       "executor": "@nx/storybook:storybook",
       "options": {
         "port": 4400,
-        "configDir": "libs/expo/ui-components/.storybook"
+        "configDir": "libs/expo/shared/ui-components/.storybook"
       },
       "configurations": {
         "ci": {
@@ -43,7 +45,7 @@
       "outputs": ["{options.outputDir}"],
       "options": {
         "outputDir": "dist/storybook/expo-ui-components",
-        "configDir": "libs/expo/ui-components/.storybook"
+        "configDir": "libs/expo/shared/ui-components/.storybook"
       },
       "configurations": {
         "ci": {
