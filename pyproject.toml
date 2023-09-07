@@ -10,7 +10,7 @@ license = "Proprietary"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11.4"
+python = "3.11.5"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
@@ -23,7 +23,7 @@ black = "^23.7.0"
 flake8-bugbear = "^23.7.10"
 django-stubs-ext = "^4.2.2"
 djlint = "^1.32.1"
-django-stubs = {extras = ["compatible-mypy"], version = "^4.2.3"}
+django-stubs = { extras = ["compatible-mypy"], version = "^4.2.3" }
 mypy = "1.4.1"
 
 [build-system]
