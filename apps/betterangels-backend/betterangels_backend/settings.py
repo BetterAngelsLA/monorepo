@@ -87,7 +87,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "key": "",
         },
         "AUTH_PARAMS": {
-            "access_type": "online",
+            "access_type": "offline",
         },
     }
 }
