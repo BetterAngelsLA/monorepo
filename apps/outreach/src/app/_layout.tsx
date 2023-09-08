@@ -24,6 +24,8 @@ SplashScreen.preventAutoHideAsync();
 GoogleSignin.configure({
   webClientId:
     '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com',
+  iosClientId:
+    '488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb.apps.googleusercontent.com',
   offlineAccess: true,
 });
 
