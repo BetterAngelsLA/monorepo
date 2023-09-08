@@ -1,4 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   DarkTheme,
   DefaultTheme,
@@ -8,6 +9,7 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+
 import UserProvider from '../libs/providers/user/UserProvider';
 
 export { ErrorBoundary } from 'expo-router';
@@ -19,6 +21,11 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+GoogleSignin.configure({
+  webClientId:
+    '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com',
+  offlineAccess: true,
+});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({

@@ -5,10 +5,13 @@
   "private": true,
   "scripts": {
     "storybook": "nx run expo-ui-components:storybook",
-    "storybook:build": "nx build-storybook expo-ui-components"
+    "storybook:build": "nx build-storybook expo-ui-components",
+    "server": "nx start betterangels-backend",
+    "outreach": "nx start outreach"
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
+    "@react-native-google-signin/google-signin": "^10.0.1",
     "expo": "49.0.8",
     "expo-constants": "~14.4.2",
     "expo-linking": "^5.0.2",

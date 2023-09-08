@@ -3112,6 +3112,7 @@ __metadata:
     "@nx/storybook": 16.7.4
     "@nx/workspace": 16.6.0
     "@nxlv/python": ^16.1.2
+    "@react-native-google-signin/google-signin": ^10.0.1
     "@storybook/addon-essentials": 7.4.0
     "@storybook/addon-react-native-web": ^0.0.21
     "@storybook/core-server": 7.4.0
@@ -4913,6 +4914,20 @@ __metadata:
   bin:
     react-native: build/bin.js
   checksum: 06b81dc118020285caefa9a47ff94f2494679745686643f49e5feb1a8a193e13129ffc3a4fe831dfea6570bd300d3bef26cb2bb718950171d3ca111e80966a91
+  languageName: node
+  linkType: hard
+
+"@react-native-google-signin/google-signin@npm:^10.0.1":
+  version: 10.0.1
+  resolution: "@react-native-google-signin/google-signin@npm:10.0.1"
+  peerDependencies:
+    expo: ">=47.0.0"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: d147a7ca4fbcc877efd21510670499a0be9f91b43d2b02bfee00f43d27ffe0920bbebc24b95f07443e375f4fd42f9403f91290541e120b1e9c26171b0796210a
   languageName: node
   linkType: hard
 

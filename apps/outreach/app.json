@@ -37,7 +37,8 @@
           "subdomains": ["10.0.2.2", "localhost"]
         }
       ],
-      "expo-router"
+      "expo-router",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "router": {
