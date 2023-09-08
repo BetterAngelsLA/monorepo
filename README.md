@@ -60,3 +60,11 @@ Nx comes with local caching already built-in (check your `nx.json`). On CI you m
 
 to run `yarn storybook`
 to build `yarn storybook:build`
+
+## google sign in
+
+notice: google sign in is not working on expo go.
+
+to run google sign in
+`nx prebuild 'app-name'`
+`nx run-ios(run-android) 'app-name'`
