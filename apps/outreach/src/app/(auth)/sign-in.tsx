@@ -10,7 +10,7 @@ export default function SignIn() {
       <View>
         <Text>This is sign in</Text>
         <Button title="Sign In" onPress={() => console.log('signed in')} />
-        <HomeIcon w={40} h={40} />
+        <HomeIcon size="lg" />
       </View>
     </>
   );
