@@ -1,4 +1,4 @@
-import { HomeIcon } from '@monorepo/expo/shared/icons';
+import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import { Stack } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -10,7 +10,7 @@ export default function SignIn() {
       <View>
         <Text>This is sign in</Text>
         <Button title="Sign In" onPress={() => console.log('signed in')} />
-        <HomeIcon size="lg" />
+        <HouseIcon size="lg" />
       </View>
     </>
   );
