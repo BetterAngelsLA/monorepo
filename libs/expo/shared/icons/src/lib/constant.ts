@@ -8,11 +8,11 @@ export const ICON_SIZE = {
     h: 24,
   },
   md: {
-    w: 30,
-    h: 30,
+    w: 32,
+    h: 32,
   },
   lg: {
-    w: 34,
-    h: 34,
+    w: 48,
+    h: 48,
   },
 };
