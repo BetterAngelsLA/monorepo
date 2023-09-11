@@ -4,8 +4,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "storybook": "nx run expo-ui-components:storybook",
-    "storybook:build": "nx build-storybook expo-ui-components"
+    "storybook": "nx run expo-shared-ui-components:storybook",
+    "storybook:build": "nx build-storybook expo-shared-ui-components"
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
