@@ -99,12 +99,6 @@ SOCIALACCOUNT_PROVIDERS = {
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-    ]
-}
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -219,4 +213,3 @@ still sent, whereas in case of “none” no email verification mails are sent.
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 SITE_ID = 1
-LOGIN_REDIRECT_URL = "/"
