@@ -123,7 +123,7 @@ REST_AUTH = {
     "OLD_PASSWORD_FIELD_ENABLED": False,
     "LOGOUT_ON_PASSWORD_CHANGE": False,
     "SESSION_LOGIN": True,
-    "USE_JWT": False,
+    "USE_JWT": True,
     "JWT_AUTH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE_PATH": "/",
