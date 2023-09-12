@@ -1,5 +1,4 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   DarkTheme,
   DefaultTheme,
@@ -15,19 +14,11 @@ import UserProvider from '../libs/providers/user/UserProvider';
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-GoogleSignin.configure({
-  webClientId:
-    '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com',
-  iosClientId:
-    '488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb.apps.googleusercontent.com',
-  offlineAccess: true,
-});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -62,6 +53,7 @@ function RootLayoutNav() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="sign-in" options={{ title: 'sign in' }} />
         </Stack>
       </ThemeProvider>
     </UserProvider>

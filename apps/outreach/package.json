@@ -27,7 +27,9 @@
     "@babel/core": "*",
     "react-native-gesture-handler": "*",
     "react-native-safe-area-context": "*",
-    "react-native-screens": "*"
+    "react-native-screens": "*",
+    "expo-auth-session": "*",
+    "@react-native-async-storage/async-storage": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",

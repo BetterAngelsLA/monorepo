@@ -1,12 +1,30 @@
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import useUser from '../../libs/hooks/user/useUser';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
 export default function TabOneScreen() {
+  const { user } = useUser();
+  const router = useRouter();
   return (
     <View style={styles.container}>
+      <Pressable
+        onPress={async () => {
+          await AsyncStorage.removeItem('@user');
+          router.replace('/sign-in');
+        }}
+      >
+        <Text>sign out</Text>
+      </Pressable>
+
       <Text style={styles.title}>Tab One</Text>
+      <Text>
+        Welcome, {user?.firstName} {user?.lastName}
+      </Text>
+      <Text>{user?.email}</Text>
       <View
         style={styles.separator}
         lightColor="#eee"
