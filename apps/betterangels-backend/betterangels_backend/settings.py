@@ -105,6 +105,7 @@ REST_FRAMEWORK = {
     ]
 }
 
+# TODO add link to defaults dj-rest-auth
 REST_AUTH = {
     "LOGIN_SERIALIZER": "dj_rest_auth.serializers.LoginSerializer",
     "TOKEN_SERIALIZER": "dj_rest_auth.serializers.TokenSerializer",
@@ -123,7 +124,7 @@ REST_AUTH = {
     "OLD_PASSWORD_FIELD_ENABLED": False,
     "LOGOUT_ON_PASSWORD_CHANGE": False,
     "SESSION_LOGIN": True,
-    "USE_JWT": True,
+    "USE_JWT": False,
     "JWT_AUTH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE_PATH": "/",
