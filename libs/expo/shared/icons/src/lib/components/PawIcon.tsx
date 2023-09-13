@@ -1,11 +1,6 @@
 import PawIconSVG from '../../assets/paw.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const PawIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <PawIconSVG width={w} height={h} fill={colorHex} />;
-};
+const PawIcon = createSvgIcon(PawIconSVG);
 
 export default PawIcon;

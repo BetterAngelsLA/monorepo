@@ -1,11 +1,6 @@
 import PrescriptionIconSVG from '../../assets/prescription.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const PrescriptionIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <PrescriptionIconSVG width={w} height={h} fill={colorHex} />;
-};
+const PrescriptionIcon = createSvgIcon(PrescriptionIconSVG);
 
 export default PrescriptionIcon;

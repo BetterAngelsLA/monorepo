@@ -1,11 +1,6 @@
 import FaceSadCryIconSVG from '../../assets/face-sad-cry.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceSadCryIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceSadCryIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceSadCryIcon = createSvgIcon(FaceSadCryIconSVG);
 
 export default FaceSadCryIcon;

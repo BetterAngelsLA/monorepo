@@ -1,11 +1,6 @@
 import FaceSwearIconSVG from '../../assets/face-swear.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceSwearIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceSwearIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceSwearIcon = createSvgIcon(FaceSwearIconSVG);
 
 export default FaceSwearIcon;

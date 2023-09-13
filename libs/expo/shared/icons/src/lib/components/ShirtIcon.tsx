@@ -1,11 +1,6 @@
 import ShirtIconSVG from '../../assets/shirt.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const ShirtIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <ShirtIconSVG width={w} height={h} fill={colorHex} />;
-};
+const ShirtIcon = createSvgIcon(ShirtIconSVG);
 
 export default ShirtIcon;

@@ -1,11 +1,6 @@
 import StethoscopeIconSVG from '../../assets/stethoscope.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const StethoscopeIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <StethoscopeIconSVG width={w} height={h} fill={colorHex} />;
-};
+const StethoscopeIcon = createSvgIcon(StethoscopeIconSVG);
 
 export default StethoscopeIcon;

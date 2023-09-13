@@ -1,11 +1,6 @@
 import FaceUnamusedIconSVG from '../../assets/face-unamused.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceUnamusedIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceUnamusedIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceUnamusedIcon = createSvgIcon(FaceUnamusedIconSVG);
 
 export default FaceUnamusedIcon;

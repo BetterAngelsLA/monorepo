@@ -1,11 +1,6 @@
 import FaceMeltingIconSVG from '../../assets/face-melting.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceMeltingIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceMeltingIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceMeltingIcon = createSvgIcon(FaceMeltingIconSVG);
 
 export default FaceMeltingIcon;

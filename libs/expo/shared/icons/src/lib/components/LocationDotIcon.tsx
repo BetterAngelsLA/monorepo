@@ -1,11 +1,6 @@
 import LocationDotIconSVG from '../../assets/location-dot.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const LocationDotIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <LocationDotIconSVG width={w} height={h} fill={colorHex} />;
-};
+const LocationDotIcon = createSvgIcon(LocationDotIconSVG);
 
 export default LocationDotIcon;

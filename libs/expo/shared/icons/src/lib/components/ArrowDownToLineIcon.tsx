@@ -1,12 +1,6 @@
 import ArrowDownToLineIconSVG from '../../assets/arrow-down-to-line.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const ArrowDownToLineIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-
-  const colorHex = extractColor(color);
-  return <ArrowDownToLineIconSVG width={w} height={h} fill={colorHex} />;
-};
+const ArrowDownToLineIcon = createSvgIcon(ArrowDownToLineIconSVG);
 
 export default ArrowDownToLineIcon;

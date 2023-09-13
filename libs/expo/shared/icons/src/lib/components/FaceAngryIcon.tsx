@@ -1,11 +1,6 @@
 import FaceAngryIconSVG from '../../assets/face-angry.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceAngryIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceAngryIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceAngryIcon = createSvgIcon(FaceAngryIconSVG);
 
 export default FaceAngryIcon;

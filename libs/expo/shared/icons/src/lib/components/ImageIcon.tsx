@@ -1,11 +1,6 @@
 import ImageIconSVG from '../../assets/image.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const ImageIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <ImageIconSVG width={w} height={h} fill={colorHex} />;
-};
+const ImageIcon = createSvgIcon(ImageIconSVG);
 
 export default ImageIcon;

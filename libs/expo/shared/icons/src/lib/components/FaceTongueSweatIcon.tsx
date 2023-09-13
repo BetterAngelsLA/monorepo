@@ -1,11 +1,6 @@
 import FaceTongueSweatIconSVG from '../../assets/face-tongue-sweat.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceTongueSweatIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceTongueSweatIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceTongueSweatIcon = createSvgIcon(FaceTongueSweatIconSVG);
 
 export default FaceTongueSweatIcon;

@@ -1,11 +1,6 @@
 import FaceEyesXmarksIconSVG from '../../assets/face-eyes-xmarks.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceEyesXmarksIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceEyesXmarksIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceEyesXmarksIcon = createSvgIcon(FaceEyesXmarksIconSVG);
 
 export default FaceEyesXmarksIcon;

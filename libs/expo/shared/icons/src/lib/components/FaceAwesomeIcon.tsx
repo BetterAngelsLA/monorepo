@@ -1,11 +1,6 @@
 import FaceAwesomeIconSVG from '../../assets/face-awesome.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceAwesomeIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceAwesomeIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceAwesomeIcon = createSvgIcon(FaceAwesomeIconSVG);
 
 export default FaceAwesomeIcon;

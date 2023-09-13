@@ -1,11 +1,6 @@
 import FaceZipperIconSVG from '../../assets/face-zipper.svg';
-import { IIconProps } from '../types';
-import { extractColor, extractSize } from '../utils';
+import createSvgIcon from '../createSvgIcon';
 
-const FaceZipperIcon = ({ size = 'md', color = 'black' }: IIconProps) => {
-  const { w, h } = extractSize(size);
-  const colorHex = extractColor(color);
-  return <FaceZipperIconSVG width={w} height={h} fill={colorHex} />;
-};
+const FaceZipperIcon = createSvgIcon(FaceZipperIconSVG);
 
 export default FaceZipperIcon;
