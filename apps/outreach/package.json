@@ -22,14 +22,13 @@
     "expo-web-browser": "*",
     "@storybook/react-webpack5": "*",
     "@storybook/react-native": "*",
-    "@react-native-google-signin/google-signin": "*",
     "expo-splash-screen": "~0.20.5",
     "@babel/core": "*",
     "react-native-gesture-handler": "*",
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
     "expo-auth-session": "*",
-    "@react-native-async-storage/async-storage": "*"
+    "@react-native-google-signin/google-signin": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",

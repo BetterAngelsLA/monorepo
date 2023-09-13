@@ -17,7 +17,16 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.betterangels.outreach"
+      "bundleIdentifier": "org.betterangels.outreach",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
