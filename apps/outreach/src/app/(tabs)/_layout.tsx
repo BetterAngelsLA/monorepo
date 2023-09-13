@@ -1,5 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Redirect, Tabs } from 'expo-router';
+import { Link, Tabs } from 'expo-router';
 import { Pressable, Text, useColorScheme } from 'react-native';
 
 import useUser from '../../libs/hooks/user/useUser';
@@ -22,9 +22,9 @@ export default function TabLayout() {
 
   if (isLoading) return <Text>Loading</Text>;
 
-  if (!user) {
-    return <Redirect href="/sign-in" />;
-  }
+  // if (!user) {
+  //   return <Redirect href="/sign-in" />;
+  // }
 
   return (
     <Tabs

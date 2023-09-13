@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import UserContext, { TUser } from './UserContext';
 
 interface UserProviderProps {
@@ -13,13 +12,12 @@ function useProtectedRoute() {
 
   useEffect(() => {
     async function getUserAndNavigate() {
-      const storedUser = await AsyncStorage.getItem('@user');
-      let currentUser = user;
+      const currentUser = user;
 
-      if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-        setUser(currentUser);
-      }
+      // if (storedUser) {
+      //   currentUser = JSON.parse(storedUser);
+      //   setUser(currentUser);
+      // }
 
       setIsLoading(false);
     }

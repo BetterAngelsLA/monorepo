@@ -2,7 +2,7 @@
   "expo": {
     "name": "Outreach",
     "slug": "outreach",
-    "scheme": "outreach",
+    "scheme": "org.betterangels.outreach",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,21 +17,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.betterangels.outreach",
-      "config": {
-        "googleSignIn": {
-          "reservedClientId": "488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb.apps.googleusercontent.com"
-        }
-      },
-      "infoPlist": {
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb"
-            ]
-          }
-        ]
-      }
+      "bundleIdentifier": "org.betterangels.outreach"
     },
     "android": {
       "adaptiveIcon": {

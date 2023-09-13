@@ -11,11 +11,10 @@
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
-    "@react-native-async-storage/async-storage": "^1.19.3",
     "expo": "49.0.8",
-    "expo-auth-session": "^5.0.2",
+    "expo-auth-session": "^5.2.0",
     "expo-constants": "~14.4.2",
-    "expo-crypto": "^12.4.1",
+    "expo-crypto": "~12.4.1",
     "expo-linking": "^5.0.2",
     "expo-router": "2.0.0",
     "expo-splash-screen": "~0.20.5",

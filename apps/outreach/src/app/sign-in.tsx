@@ -1,54 +1,42 @@
 import { HomeIcon } from '@monorepo/expo/shared/icons';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
-import { getUserInfo } from '../libs/helper';
 import useUser from '../libs/hooks/user/useUser';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const redirectUri = AuthSession.makeRedirectUri({
+  native: 'outreach://redirect',
+});
+
+const googleClientId =
+  '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com';
 
 export default function SignIn() {
   const { setUser } = useUser();
   const router = useRouter();
+  const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
 
-  const [, respons, promptAsync] = Google.useAuthRequest({
-    androidClientId:
-      '488261458560-hlgmqbr48ig4csuucsvcbqoues4f6lls.apps.googleusercontent.com',
-    iosClientId:
-      '488261458560-rn7oe3rklvuqps03bndepp3v5g2goegb.apps.googleusercontent.com',
-    webClientId:
-      '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com',
-    scopes: ['profile', 'email'],
-  });
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: googleClientId,
+      redirectUri,
+      scopes: ['profile', 'email'],
+      responseType: 'code',
+    },
+    discovery
+  );
 
   useEffect(() => {
-    if (respons?.type === 'success') {
-      const token = respons?.authentication?.accessToken;
-      if (token) {
-        getUserInfo(token)
-          .then(async (data) => {
-            await AsyncStorage.setItem(
-              '@user',
-              JSON.stringify({
-                id: data.id,
-                email: data.email,
-                firstName: data.given_name,
-                lastName: data.family_name,
-              })
-            );
-            setUser({
-              id: data.id,
-              email: data.email,
-              firstName: data.given_name,
-              lastName: data.family_name,
-            });
-            router.replace('/');
-          })
-          .catch((e) => console.log(e));
-      }
+    if (response?.type === 'success') {
+      const data = response.params;
+      console.log(data);
     }
-  }, [respons]);
+  }, [response]);
 
   return (
     <View>
