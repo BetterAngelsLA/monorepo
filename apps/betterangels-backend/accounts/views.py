@@ -1,5 +1,6 @@
 import base64
 import json
+from urllib.parse import unquote
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from dj_rest_auth.registration.views import SocialLoginView
@@ -41,7 +42,7 @@ def is_exp_or_safe_url(url, allowed_hosts, require_https=False):
 class AuthRedirectView(APIView):
     def get(self, request, *args, **kwargs):
         # Extract the code or error from Google's OAuth
-        state = json.loads(request.query_params.get("state", None))
+        state = json.loads(unquote(request.query_params.get("state", None)))
         path_back = state.get("path_back")
         print(state)
 

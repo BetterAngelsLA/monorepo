@@ -41,7 +41,8 @@ export default function App() {
       clientId,
       redirectUri: 'http://localhost:8000/auth-redirect',
       scopes: ['profile', 'email'],
-      state: JSON.stringify(statePayload),
+      state: encodeURIComponent(JSON.stringify(statePayload)),
+      prompt: 'select_account' as any, // This line prompts the user for account selection
     },
     discovery
   );
@@ -73,6 +74,8 @@ export default function App() {
     <SafeAreaView
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
     >
+      <Text> fftawft </Text>
+
       {token ? (
         <>
           <Text>Token: {token}</Text>
