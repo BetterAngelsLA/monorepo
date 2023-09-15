@@ -71,3 +71,4 @@ __pycache__
 .mypy_cache
 poetry.lock
 !/poetry.lock
+apps/simple-app-e2e/artifacts

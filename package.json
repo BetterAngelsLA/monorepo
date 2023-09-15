@@ -10,6 +10,7 @@
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
     "expo": "49.0.8",
+    "expo-auth-session": "^5.2.0",
     "expo-constants": "~14.4.2",
     "expo-linking": "^5.0.2",
     "expo-router": "2.0.0",
@@ -50,6 +51,7 @@
     "@types/jest": "^29.4.0",
     "@types/node": "18.17.1",
     "@types/react": "~18.2.14",
+    "@types/react-native": "0.72.2",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "@yarnpkg/sdks": "^3.0.0-rc.48",

@@ -70,6 +70,7 @@ RUN apt-get update \
     && apt-get install -y \
        wget \
        git \
+       build-essential \
     # Install Python Lib Requirements
     && apt-get install -y libpq5 \
     && apt-get clean \
