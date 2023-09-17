@@ -3,12 +3,11 @@ import json
 from urllib.parse import unquote
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.db import models
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic.edit import CreateView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,59 +16,63 @@ from .forms import UserCreationForm
 
 
 class SignUpView(CreateView[models.Model, UserCreationForm]):
+    authentication_classes = (
+        []
+    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
 
 class GoogleLogin(SocialLoginView):
+    authentication_classes = (
+        []
+    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
     adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+
+    def dispatch(self, request, *args, **kwargs):
+        # Get callback_url from the URL parameters, if not provided use a default
+        self.callback_url = request.GET.get("redirect_uri")
+
+        return super(GoogleLogin, self).dispatch(request, *args, **kwargs)
 
 
-def is_exp_or_safe_url(url, allowed_hosts, require_https=False):
-    # Allow exp:// scheme
-    print(url)
-    if url.startswith("exp://") or url.startswith(
-        "com.paul-betterangels.simple-app://"
-    ):
-        return True
-    return True
-    return url_has_allowed_host_and_scheme(
-        url, allowed_hosts, require_https=require_https
-    )
+def base64url_decode(input_str):
+    # Transform base64url string to regular base64 string
+    remainder = len(input_str) % 4
+    if remainder == 2:
+        input_str += "=="
+    elif remainder == 3:
+        input_str += "="
+
+    return base64.urlsafe_b64decode(input_str).decode("utf-8")
 
 
 class AuthRedirectView(APIView):
+    authentication_classes = (
+        []
+    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
+
     def get(self, request, *args, **kwargs):
-        # Extract the code or error from Google's OAuth
-        state = json.loads(unquote(request.query_params.get("state", None)))
-        path_back = state.get("path_back")
-        print(state)
-
-        code = request.query_params.get("code", None)
-        error = request.query_params.get("error", None)
-
-        if not path_back:
+        # # Extract the code or error from Google's OAuth
+        state = json.loads(
+            unquote(base64url_decode(request.query_params.get("state", None)))
+        )
+        redirect_uri = state.get("path_back")
+        if not redirect_uri:
             # Handle the case where no redirect URI is provided.
             # Respond with an error or provide a default URI.
             return Response({"detail": "path_back not provided."}, status=400)
 
         # Forward the code (or error) to your app.
-        # Assuming your app needs the code to obtain tokens.
-        if code:
-            path_back += f"?code={code}"
-        elif error:
-            path_back += f"?error={error}"
+        # Assuming your app needs the code to obtain tokens.'
+        if request.query_params:
+            redirect_uri += "?"
+            redirect_uri += "&".join(
+                f"{key}={value}" for key, value in request.query_params.items()
+            )
 
-        # Check if path_back starts with the custom scheme
-        print(path_back)
-        if not (
-            path_back.startswith("com.paul-betterangels.simple-app")
-            or path_back.startswith("exp")
-        ):
-            return Response({"detail": "Unsafe redirect."}, status=400)
-
-        # Manually perform the redirect
         response = HttpResponse(status=302)  # 302 is for temporary redirect
-        response["Location"] = path_back
+        response["Location"] = redirect_uri
         return response

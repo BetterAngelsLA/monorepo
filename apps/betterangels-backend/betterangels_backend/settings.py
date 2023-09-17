@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "corsheaders",
     # apps
     "accounts",
     "dwelling",
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 
@@ -92,8 +94,9 @@ SOCIALACCOUNT_PROVIDERS = {
             "key": "",
         },
         "AUTH_PARAMS": {
-            "access_type": "offline",
+            "access_type": "online",
         },
+        "OAUTH_PKCE_ENABLED": True,
     }
 }
 
@@ -213,3 +216,8 @@ still sent, whereas in case of “none” no email verification mails are sent.
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 SITE_ID = 1
+
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False

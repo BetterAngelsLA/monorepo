@@ -6,83 +6,116 @@ import {
 } from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useState } from 'react';
-import { Button, SafeAreaView, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Button, Platform, SafeAreaView, Text } from 'react-native';
+
 WebBrowser.maybeCompleteAuthSession();
 
 const discoveryUrl = 'https://accounts.google.com';
-// Function to generate a secure CSRF token
-function generateSecureToken(length = 32) {
-  const randomBytes = Crypto.getRandomBytes(length);
-  return Buffer.from(randomBytes).toString('hex');
+
+function base64urlEncode(data: string) {
+  const base64 = Buffer.from(data).toString('base64');
+  return base64.replace('+', '-').replace('/', '_').replace(/=+$/, '');
+}
+
+async function generateStatePayload(length = 32) {
+  const randomBytes = await Crypto.getRandomBytes(length);
+  const payload = {
+    csrfToken: Buffer.from(randomBytes).toString('hex'),
+    path_back: makeRedirectUri(),
+  };
+  return base64urlEncode(JSON.stringify(payload));
 }
 
 export default function App() {
-  // Fetch the discovery
   const [discovery, setDiscovery] = useState(null);
-  const fetchDiscovery = async () => {
-    try {
-      const result = await fetchDiscoveryAsync(discoveryUrl);
-      setDiscovery(result);
-    } catch (error) {
-      console.error('Error fetching the discovery document', error);
-    }
-  };
+  const [authKey, setAuthKey] = useState<string | null>(null);
+  // Is this a hack, can we get rid of this approach??
+  // I needed to do this so that we got around the race condition on first login
+  const [generatedState, setGeneratedState] = useState<string | null>(() => {
+    let state = '';
+    (async () => {
+      state = await generateStatePayload();
+      setGeneratedState(state);
+    })();
+    return state;
+  });
 
-  const statePayload = {
-    csrfToken: generateSecureToken(),
-    path_back: makeRedirectUri(),
-  };
+  useEffect(() => {
+    (async () => {
+      const discoveryData = await fetchDiscoveryAsync(discoveryUrl);
+      setDiscovery(discoveryData);
+    })();
+  }, []);
 
   const clientId =
     '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com';
-  const [request, , promptAsync] = useAuthRequest(
+  const redirectUri =
+    Platform.OS === 'web'
+      ? makeRedirectUri()
+      : 'http://localhost:8000/auth-redirect';
+
+  const [request, response, promptAsync] = useAuthRequest(
     {
       clientId,
-      redirectUri: 'http://localhost:8000/auth-redirect',
+      redirectUri,
       scopes: ['profile', 'email'],
-      state: encodeURIComponent(JSON.stringify(statePayload)),
-      prompt: 'select_account' as any, // This line prompts the user for account selection
+      usePKCE: false,
+      state: generatedState,
+      prompt: 'select_account',
     },
     discovery
   );
 
-  // State to store token
-  const [token, setToken] = useState(null);
-
-  // Function to trigger the auth flow
-  const handleLogin = async () => {
-    if (!request) return;
-
-    const result = await promptAsync();
-    if (result.type === 'success') {
-      setToken(result.params.access_token);
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { code } = response.params;
+      if (discovery && code) {
+        (async () => {
+          try {
+            const tokenResponse = await fetch(
+              `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
+                redirectUri
+              )}`,
+              {
+                method: 'POST',
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: code }),
+              }
+            );
+            const tokenData = await tokenResponse.json();
+            console.log(tokenData);
+            setAuthKey(tokenData['key']);
+          } catch (error) {
+            console.error('Error fetching access token', error);
+          }
+        })();
+      }
     }
-  };
+  }, [response, discovery, redirectUri]);
 
-  const handleLogout = async () => {
-    // Clear token from local state
-    setToken(null);
+  const handleLogin = async () => {
+    await promptAsync();
   };
-
-  // Initially fetch the discovery document
-  React.useEffect(() => {
-    fetchDiscovery();
-  }, []);
 
   return (
     <SafeAreaView
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
     >
-      <Text> fftawft </Text>
-
-      {token ? (
+      {authKey ? (
         <>
-          <Text>Token: {token}</Text>
-          <Button title="Logout" onPress={handleLogout} />
+          <Text>Token: {authKey}</Text>
+          <Button title="Logout" onPress={() => setAuthKey(null)} />
         </>
       ) : (
-        <Button title="Login with Google" onPress={handleLogin} />
+        <Button
+          title="Login with Google"
+          onPress={handleLogin}
+          disabled={!generatedState}
+        />
       )}
     </SafeAreaView>
   );
