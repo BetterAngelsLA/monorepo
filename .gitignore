@@ -72,3 +72,5 @@ __pycache__
 poetry.lock
 !/poetry.lock
 apps/simple-app-e2e/artifacts
+
+.scripts/
