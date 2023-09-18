@@ -87,7 +87,6 @@ export default function App() {
                 credentials: 'include',
               }
             );
-            const tokenData = await tokenResponse.json();
             console.log(tokenResponse.headers.get('set-cookie'));
             setAuthKey(tokenResponse.headers.get('set-cookie'));
           } catch (error) {
