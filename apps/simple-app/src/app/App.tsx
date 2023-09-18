@@ -31,9 +31,12 @@ async function generateStatePayload(length = 32) {
 
 export default function App() {
   const [discovery, setDiscovery] = useState(null);
+
+  // TODO: I don't think we want to set the auth key here.  We want to use use expo secure storage
+  // it does not need to be stored on web since it stores it in the cookie.
   const [authKey, setAuthKey] = useState<string | null>(null);
   // TODO: Fix this please
-  // Is this a hack, can we get rid of this approach??
+  // This seems to be a bad hack, can we get rid of this approach??
   // I needed to do this so that we got around the race condition on first login
   const [generatedState, setGeneratedState] = useState<string | null>(() => {
     let state = '';
