@@ -30,6 +30,7 @@ async function generateStatePayload(length = 32) {
 export default function App() {
   const [discovery, setDiscovery] = useState(null);
   const [authKey, setAuthKey] = useState<string | null>(null);
+  // TODO: Fix this please
   // Is this a hack, can we get rid of this approach??
   // I needed to do this so that we got around the race condition on first login
   const [generatedState, setGeneratedState] = useState<string | null>(() => {
@@ -48,12 +49,14 @@ export default function App() {
     })();
   }, []);
 
+  // TODO: this needs to be an environment variable.
   const clientId =
     '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com';
   const redirectUri =
     Platform.OS === 'web'
       ? makeRedirectUri()
-      : 'http://localhost:8000/auth-redirect';
+      : // TODO: this path needs to be an environment variable.
+        'http://localhost:8000/auth-redirect';
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -74,6 +77,7 @@ export default function App() {
         (async () => {
           try {
             const tokenResponse = await fetch(
+              // TODO: this path needs to be an environment variable.
               `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
                 redirectUri
               )}`,
@@ -87,7 +91,6 @@ export default function App() {
                 credentials: 'include',
               }
             );
-            console.log(tokenResponse.headers.get('set-cookie'));
             setAuthKey(tokenResponse.headers.get('set-cookie'));
           } catch (error) {
             console.error('Error fetching access token', error);
