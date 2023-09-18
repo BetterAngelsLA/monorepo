@@ -1,4 +1,3 @@
-import { router, useRootNavigationState, useSegments } from 'expo-router';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import UserContext, { TUser } from './UserContext';
@@ -7,34 +6,36 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-function useProtectedRoute(user: TUser | undefined) {
-  const segments = useSegments();
-  const navigationState = useRootNavigationState();
-
-  useEffect(() => {
-    if (!navigationState?.key) return;
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!user && !inAuthGroup) {
-      router.replace('/sign-in');
-    } else if (user && inAuthGroup) {
-      router.replace('/');
-    }
-  }, [user, segments, navigationState]);
-}
-
-export default function UserProvider({ children }: UserProviderProps) {
+function useProtectedRoute() {
   const [user, setUser] = useState<TUser | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useProtectedRoute(user);
+  useEffect(() => {
+    async function getUserAndNavigate() {
+      // const currentUser = user;
+
+      // if (storedUser) {
+      //   currentUser = JSON.parse(storedUser);
+      //   setUser(currentUser);
+      // }
+
+      setIsLoading(false);
+    }
+
+    getUserAndNavigate();
+  }, []);
+
+  return { user, setUser, isLoading };
+}
+
+export default function UserProvider({ children }: UserProviderProps) {
+  const { isLoading, user, setUser } = useProtectedRoute();
 
   const value = useMemo(
     () => ({
       user,
       setUser,
       isLoading,
-      setIsLoading,
     }),
     [user, isLoading]
   );
