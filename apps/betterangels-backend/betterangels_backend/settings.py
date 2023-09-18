@@ -44,7 +44,6 @@ ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,7 +54,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django_extensions",
     "rest_framework",
-    "rest_framework.authtoken",
     "dj_rest_auth",
     "allauth",
     "allauth.account",
@@ -130,7 +128,11 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
-    )
+    ),
+    # Tokens by default are not unique accross devices.
+    # We want to use session auth by default for now.
+    "TOKEN_CREATOR": None,
+    "TOKEN_MODEL": None,
 }
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
