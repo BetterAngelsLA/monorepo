@@ -3117,6 +3117,7 @@ __metadata:
     "@storybook/core-server": 7.4.0
     "@storybook/react-native": ^6.5.6
     "@storybook/react-webpack5": 7.4.0
+    "@svgr/webpack": ^8.1.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/jest-native": 5.4.2
     "@testing-library/react-native": 12.1.2
@@ -3162,7 +3163,7 @@ __metadata:
     react-native-screens: ~3.22.0
     react-native-svg: 13.9.0
     react-native-svg-transformer: 1.0.0
-    react-native-web: ~0.19.6
+    react-native-web: ^0.19.8
     react-test-renderer: 18.2.0
     ts-jest: ^29.1.0
     ts-node: 10.9.1
@@ -6621,7 +6622,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@svgr/webpack@npm:^8.0.1":
+"@svgr/webpack@npm:^8.0.1, @svgr/webpack@npm:^8.1.0":
   version: 8.1.0
   resolution: "@svgr/webpack@npm:8.1.0"
   dependencies:
@@ -19507,7 +19508,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-web@npm:~0.19.6":
+"react-native-web@npm:^0.19.8":
   version: 0.19.8
   resolution: "react-native-web@npm:0.19.8"
   dependencies:
