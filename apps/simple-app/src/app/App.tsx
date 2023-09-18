@@ -66,8 +66,8 @@ export default function App() {
       redirectUri,
       scopes: ['profile', 'email'],
       usePKCE: false,
-      state: generatedState,
-      prompt: 'select_account',
+      state: generatedState, //TODO: figure out why typescript is complaining about the state
+      prompt: 'select_account', //TODO: figure out why typescript is compliaing about the prompt value
     },
     discovery
   );
@@ -94,6 +94,9 @@ export default function App() {
                 credentials: 'include',
               }
             );
+            // TODO: we only need to do this on iOS & Android
+            // We actually should be storing this information in Expo Secure storage
+            // We don't need to store anything on Web as the cookie is set automatically.
             setAuthKey(tokenResponse.headers.get('set-cookie'));
           } catch (error) {
             console.error('Error fetching access token', error);
