@@ -12,6 +12,7 @@ import { Button, Platform, SafeAreaView, Text } from 'react-native';
 WebBrowser.maybeCompleteAuthSession();
 
 const discoveryUrl = 'https://accounts.google.com';
+// const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 function base64urlEncode(data: string) {
   const base64 = Buffer.from(data).toString('base64');
@@ -23,6 +24,7 @@ async function generateStatePayload(length = 32) {
   const payload = {
     csrfToken: Buffer.from(randomBytes).toString('hex'),
     path_back: makeRedirectUri(),
+    // expiresAt: Date.now() + STATE_EXPIRATION_TIME,
   };
   return base64urlEncode(JSON.stringify(payload));
 }
@@ -73,6 +75,7 @@ export default function App() {
   useEffect(() => {
     if (response?.type === 'success') {
       const { code } = response.params;
+      // TODO: Add logic to validate state with the stored/generated state and its expiration
       if (discovery && code) {
         (async () => {
           try {
@@ -117,7 +120,7 @@ export default function App() {
         <Button
           title="Login with Google"
           onPress={handleLogin}
-          disabled={!generatedState}
+          disabled={!generatedState} // TODO: dirty hack consider another approach.
         />
       )}
     </SafeAreaView>
