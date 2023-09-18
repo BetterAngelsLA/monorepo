@@ -84,11 +84,12 @@ export default function App() {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ code: code }),
+                credentials: 'include',
               }
             );
             const tokenData = await tokenResponse.json();
-            console.log(tokenData);
-            setAuthKey(tokenData['key']);
+            console.log(tokenResponse.headers.get('set-cookie'));
+            setAuthKey(tokenResponse.headers.get('set-cookie'));
           } catch (error) {
             console.error('Error fetching access token', error);
           }

@@ -127,6 +127,12 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    )
+}
+
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
 
@@ -217,6 +223,7 @@ still sent, whereas in case of “none” no email verification mails are sent.
 
 SITE_ID = 1
 
+CORS_ALLOW_CREDENTIALS = True
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
