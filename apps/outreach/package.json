@@ -24,7 +24,9 @@
     "@storybook/react-native": "*",
     "buffer": "*",
     "expo-auth-session": "*",
-    "expo-crypto": "*"
+    "expo-crypto": "*",
+    "expo-secure-store": "*",
+    "axios": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",
