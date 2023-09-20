@@ -30,7 +30,8 @@ class GoogleLogin(SocialLoginView):
     authentication_classes: List[Any] = []
 
     def post(self, request: Request, *args: T, **kwargs: Union[str, Any]) -> Response:
-        # Get callback_url from the POST data or URL parameters, if not provided use a default
+        # Get callback_url from the POST data or URL parameters,
+        # if not provided use a default
         self.callback_url = request.query_params.get("redirect_uri")
         return super(GoogleLogin, self).post(request, *args, **kwargs)  # type: ignore
 
