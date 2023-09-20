@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { getSessionId, useStore } from '@monorepo/expo/outreach/libs';
+import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import {
   Prompt,
@@ -11,8 +13,6 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Platform, SafeAreaView, Text } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
-import getSessionId from '../libs/helpers/getSessionId';
-import { useStore } from '../libs/hooks';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -119,6 +119,7 @@ export default function SignIn() {
     <SafeAreaView
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
     >
+      <HouseIcon color="#ffffff" size="md" />
       <Button title="Login with Google" onPress={handleLogin} />
     </SafeAreaView>
   );

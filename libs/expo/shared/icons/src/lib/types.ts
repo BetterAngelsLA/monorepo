@@ -1,9 +1,9 @@
 export interface IIconProps {
-  size: IconSizes;
+  size: TIconSizes;
   color?: string;
 }
 
-export type IconSizes = 'xs' | 'sm' | 'md' | 'lg';
+export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg';
 
 // TODO: AK type color strings here once they are available
-export type IconColors = string;
+export type TIconColors = string;
