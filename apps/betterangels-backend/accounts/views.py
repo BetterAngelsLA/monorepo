@@ -16,18 +16,12 @@ from .forms import UserCreationForm
 
 
 class SignUpView(CreateView[models.Model, UserCreationForm]):
-    authentication_classes = (
-        []
-    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
 
 class GoogleLogin(SocialLoginView):
-    authentication_classes = (
-        []
-    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
 
@@ -49,10 +43,6 @@ def base64url_decode(input_str):
 
 
 class AuthRedirectView(APIView):
-    authentication_classes = (
-        []
-    )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
-
     def get(self, request, *args, **kwargs):
         # # Extract the code or error from Google's OAuth
         state = json.loads(
