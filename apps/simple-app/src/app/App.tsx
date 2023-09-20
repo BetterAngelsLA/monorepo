@@ -56,7 +56,7 @@ export default function App() {
       clientId,
       redirectUri,
       scopes: ['profile', 'email'],
-      usePKCE: false, //TODO: Explain why we don't want to use PKCE and why it is fine
+      usePKCE: true,
       state: generatedState, //TODO: figure out why typescript is complaining about the state
       // prompt: 'select_account', //TODO: figure out why typescript is compliaing about the prompt value
     },
@@ -104,7 +104,10 @@ export default function App() {
               Accept: 'application/json',
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ code: code }),
+            body: JSON.stringify({
+              code: code,
+              code_verifier: request?.codeVerifier,
+            }),
             credentials: 'include',
           }
         );
