@@ -76,4 +76,3 @@ apps/simple-app-e2e/artifacts
 .scripts/
 
 .env
-config.ts
