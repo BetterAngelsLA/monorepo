@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "simple-app",
+    "scheme": "com.paulbetterangels.simpleapp",
     "platforms": ["ios", "android", "web"],
     "splash": {
       "image": "./assets/splash.png",
@@ -25,7 +25,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.paulbetterangels.simpleapp"
+      "package": "com.paulbetterangels.simpleapp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "http",
+            "host": "e505-2605-e000-5fc0-8e-f96a-b7ad-8b6-6965.ngrok-free.app",
+            "pathPrefix": "/oauthredirect"
+          },
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -39,6 +50,12 @@
           "subdomains": ["10.0.2.2", "localhost"]
         }
       ]
-    ]
+    ],
+    "owner": "better-angels",
+    "extra": {
+      "eas": {
+        "projectId": "52386c38-d90f-46c3-be78-475d9dbf0eee"
+      }
+    }
   }
 }

@@ -19,7 +19,8 @@
     "expo-web-browser": "*",
     "expo-auth-session": "*",
     "buffer": "*",
-    "expo-crypto": "*"
+    "expo-crypto": "*",
+    "expo-application": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/simple-app && cp yarn.lock apps/simple-app",

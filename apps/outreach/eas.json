@@ -24,5 +24,6 @@
   },
   "cli": {
     "version": "~5.0.0"
-  }
+  },
+  "owner": "better-angels"
 }

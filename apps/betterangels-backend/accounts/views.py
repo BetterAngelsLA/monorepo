@@ -30,12 +30,7 @@ class GoogleLogin(SocialLoginView):
     )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
-
-    def dispatch(self, request, *args, **kwargs):
-        # Get callback_url from the URL parameters, if not provided use a default
-        self.callback_url = request.GET.get("redirect_uri")
-
-        return super(GoogleLogin, self).dispatch(request, *args, **kwargs)
+    callback_url = "http://localhost:8000/rest-auth/google/"
 
 
 def base64url_decode(input_str):
@@ -55,11 +50,11 @@ class AuthRedirectView(APIView):
     )  # TODO: REMOVE!!!!!! this is a hack to get around CSRF for now
 
     def get(self, request, *args, **kwargs):
-        # # Extract the code or error from Google's OAuth
-        state = json.loads(
-            unquote(base64url_decode(request.query_params.get("state", None)))
-        )
-        redirect_uri = state.get("path_back")
+        # # # Extract the code or error from Google's OAuth
+        # state = json.loads(
+        #     unquote(base64url_decode(request.query_params.get("state", None)))
+        # )
+        redirect_uri = "exp+simple-app://expo-development-client/?url=http%3A%2F%2F192.168.1.123%3A8081"
         if not redirect_uri:
             # Handle the case where no redirect URI is provided.
             # Respond with an error or provide a default URI.
@@ -74,5 +69,6 @@ class AuthRedirectView(APIView):
             )
 
         response = HttpResponse(status=302)  # 302 is for temporary redirect
+        # print(redirect_uri)
         response["Location"] = redirect_uri
         return response
