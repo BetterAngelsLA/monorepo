@@ -1,5 +1,13 @@
-# https://github.com/iMerica/dj-rest-auth/blob/9945397195b0903831229a83d78f7cede34d26c8/dj_rest_auth/registration/serializers.py
-# https://github.com/iMerica/dj-rest-auth/pull/470/files
+"""
+Adds PKCE to dj-rest-auth:
+The maintainer rejected a PR which would have added these capabilities. 
+For details, see: https://github.com/iMerica/dj-rest-auth/pull/470#issuecomment-1407782884
+
+References:
+- https://github.com/iMerica/dj-rest-auth/blob/9945397195b0903831229a83d78f7cede34d26c8/dj_rest_auth/registration/serializers.py
+- https://github.com/iMerica/dj-rest-auth/pull/470/files
+"""
+
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from dj_rest_auth.registration.serializers import (
