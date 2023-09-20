@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { getSessionId, useStore } from '@monorepo/expo/outreach/libs';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
@@ -63,12 +62,14 @@ export default function SignIn() {
     }
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      const state = await generateStatePayload();
-      setGeneratedState(state);
-    })();
+  const initialize = useCallback(async () => {
+    const state = await generateStatePayload();
+    setGeneratedState(state);
   }, [generateStatePayload]);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   useEffect(() => {
     if (response?.type === 'success') {

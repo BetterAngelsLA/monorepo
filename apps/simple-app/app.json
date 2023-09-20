@@ -5,8 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "simple-app",
-    "platforms": ["ios", "android", "web"],
+    "scheme": "com.paulbetterangels.simpleapp",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -15,7 +19,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.paul-betterangels.simple-app"
@@ -36,9 +42,17 @@
         "@config-plugins/detox",
         {
           "skipProguard": false,
-          "subdomains": ["10.0.2.2", "localhost"]
+          "subdomains": [
+            "10.0.2.2",
+            "localhost"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5129341a-6f53-43dd-ae3b-9e12516d34ac"
+      }
+    }
   }
 }

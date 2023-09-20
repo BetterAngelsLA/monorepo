@@ -1,19 +1,21 @@
 import base64
 import json
-from typing import Any, List
+from typing import Any, List, TypeVar, Union
 from urllib.parse import unquote
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.db import models
-from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .forms import UserCreationForm
+
+T = TypeVar("T")
 
 
 class SignUpView(CreateView[models.Model, UserCreationForm]):
@@ -25,15 +27,15 @@ class SignUpView(CreateView[models.Model, UserCreationForm]):
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
-    authentication_classes = ()
+    authentication_classes: List[Any] = []
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: T, **kwargs: Union[str, Any]) -> Response:
         # Get callback_url from the POST data or URL parameters, if not provided use a default
         self.callback_url = request.query_params.get("redirect_uri")
-        return super(GoogleLogin, self).post(request, *args, **kwargs)
+        return super(GoogleLogin, self).post(request, *args, **kwargs)  # type: ignore
 
 
-def base64url_decode(input_str):
+def base64url_decode(input_str: str) -> str:
     # Transform base64url string to regular base64 string
     remainder = len(input_str) % 4
     if remainder == 2:
@@ -45,11 +47,14 @@ def base64url_decode(input_str):
 
 
 class AuthRedirectView(APIView):
-    def get(self, request, *args, **kwargs):
-        # # Extract the code or error from Google's OAuth
-        state = json.loads(
-            unquote(base64url_decode(request.query_params.get("state", None)))
-        )
+    def get(self, request: Request) -> Response:
+        state_param = request.query_params.get("state")
+        if state_param:
+            decoded_state = unquote(base64url_decode(state_param))
+            state = json.loads(decoded_state)
+        else:
+            state = None
+
         redirect_uri = state.get("path_back")
         if not redirect_uri:
             # Handle the case where no redirect URI is provided.
@@ -64,6 +69,6 @@ class AuthRedirectView(APIView):
                 f"{key}={value}" for key, value in request.query_params.items()
             )
 
-        response = HttpResponse(status=302)  # 302 is for temporary redirect
+        response = Response(status=302)  # 302 is for temporary redirect
         response["Location"] = redirect_uri
         return response
