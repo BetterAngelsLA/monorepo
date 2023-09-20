@@ -1,6 +1,6 @@
 """
 Adds PKCE to dj-rest-auth:
-The maintainer rejected a PR which would have added these capabilities. 
+The maintainer rejected a PR which would have added these capabilities.
 For details, see: https://github.com/iMerica/dj-rest-auth/pull/470#issuecomment-1407782884
 
 References:
