@@ -126,7 +126,7 @@ export default function App() {
     return () => {
       subscription.remove();
     };
-  }, [response]);
+  }, [redirectUri, response]);
 
   return (
     <SafeAreaView
