@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .forms import UserCreationForm
-from .serializers import SocialLoginSerializer as CustomSerializer
+from .serializers import SocialLoginSerializer
 
 T = TypeVar("T")
 
@@ -28,7 +28,7 @@ class SignUpView(CreateView[models.Model, UserCreationForm]):
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
-    serializer_class: CustomSerializer = CustomSerializer
+    serializer_class = SocialLoginSerializer
     authentication_classes: List[Any] = []
 
     def post(self, request: Request, *args: T, **kwargs: Union[str, Any]) -> Response:
