@@ -34,7 +34,6 @@ class GoogleLogin(SocialLoginView):
     def dispatch(self, request, *args, **kwargs):
         # Get callback_url from the URL parameters, if not provided use a default
         self.callback_url = request.GET.get("redirect_uri")
-
         return super(GoogleLogin, self).dispatch(request, *args, **kwargs)
 
 
