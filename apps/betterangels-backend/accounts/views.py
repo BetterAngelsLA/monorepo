@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .forms import UserCreationForm
+from .serializers import SocialLoginSerializer
 
 T = TypeVar("T")
 
