@@ -2,68 +2,24 @@
 # https://github.com/iMerica/dj-rest-auth/pull/470/files
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+from dj_rest_auth.registration.serializers import (
+    SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
+)
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.http import HttpRequest, HttpResponseBadRequest
-from django.urls.exceptions import NoReverseMatch
+from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
 from rest_framework import serializers
-from rest_framework.reverse import reverse
 
 try:
     from allauth.account import app_settings as allauth_account_settings
-    from allauth.account.adapter import get_adapter
-    from allauth.account.utils import setup_user_email
     from allauth.socialaccount.helpers import complete_social_login
-    from allauth.socialaccount.models import EmailAddress
-    from allauth.socialaccount.providers.base import AuthProcess
-    from allauth.utils import get_username_max_length
 except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
 
 
-class SocialLoginSerializer(serializers.Serializer):
-    access_token = serializers.CharField(required=False, allow_blank=True)
-    code = serializers.CharField(required=False, allow_blank=True)
+class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
     code_verifier = serializers.CharField(required=False, allow_blank=True)
-    id_token = serializers.CharField(required=False, allow_blank=True)
-
-    def _get_request(self):
-        request = self.context.get("request")
-        if not isinstance(request, HttpRequest):
-            request = request._request
-        return request
-
-    def get_social_login(self, adapter, app, token, response):
-        """
-        :param adapter: allauth.socialaccount Adapter subclass.
-            Usually OAuthAdapter or Auth2Adapter
-        :param app: `allauth.socialaccount.SocialApp` instance
-        :param token: `allauth.socialaccount.SocialToken` instance
-        :param response: Provider's response for OAuth1. Not used in the
-        :returns: A populated instance of the
-            `allauth.socialaccount.SocialLoginView` instance
-        """
-        request = self._get_request()
-        social_login = adapter.complete_login(request, app, token, response=response)
-        social_login.token = token
-        return social_login
-
-    def set_callback_url(self, view, adapter_class):
-        # first set url from view
-        self.callback_url = getattr(view, "callback_url", None)
-        if not self.callback_url:
-            # auto generate base on adapter and request
-            try:
-                self.callback_url = reverse(
-                    viewname=adapter_class.provider_id + "_callback",
-                    request=self._get_request(),
-                )
-            except NoReverseMatch:
-                raise serializers.ValidationError(
-                    _("Define callback_url in view"),
-                )
 
     def validate(self, attrs):
         view = self.context.get("view")
@@ -181,99 +137,3 @@ class SocialLoginSerializer(serializers.Serializer):
         attrs["user"] = login.account.user
 
         return attrs
-
-    def post_signup(self, login, attrs):
-        """
-        Inject behavior when the user signs up with a social account.
-
-        :param login: The social login instance being registered.
-        :type login: allauth.socialaccount.models.SocialLogin
-        :param attrs: The attributes of the serializer.
-        :type attrs: dict
-        """
-        pass
-
-
-class SocialConnectMixin:
-    def get_social_login(self, *args, **kwargs):
-        """
-        Set the social login process state to connect rather than login
-        Refer to the implementation of get_social_login in base class and to the
-        allauth.socialaccount.helpers module complete_social_login function.
-        """
-        social_login = super().get_social_login(*args, **kwargs)
-        social_login.state["process"] = AuthProcess.CONNECT
-        return social_login
-
-
-class SocialConnectSerializer(SocialConnectMixin, SocialLoginSerializer):
-    pass
-
-
-class RegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        max_length=get_username_max_length(),
-        min_length=allauth_account_settings.USERNAME_MIN_LENGTH,
-        required=allauth_account_settings.USERNAME_REQUIRED,
-    )
-    email = serializers.EmailField(required=allauth_account_settings.EMAIL_REQUIRED)
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
-
-    def validate_username(self, username):
-        username = get_adapter().clean_username(username)
-        return username
-
-    def validate_email(self, email):
-        email = get_adapter().clean_email(email)
-        if allauth_account_settings.UNIQUE_EMAIL:
-            if email and EmailAddress.objects.is_verified(email):
-                raise serializers.ValidationError(
-                    _("A user is already registered with this e-mail address."),
-                )
-        return email
-
-    def validate_password1(self, password):
-        return get_adapter().clean_password(password)
-
-    def validate(self, data):
-        if data["password1"] != data["password2"]:
-            raise serializers.ValidationError(
-                _("The two password fields didn't match.")
-            )
-        return data
-
-    def custom_signup(self, request, user):
-        pass
-
-    def get_cleaned_data(self):
-        return {
-            "username": self.validated_data.get("username", ""),
-            "password1": self.validated_data.get("password1", ""),
-            "email": self.validated_data.get("email", ""),
-        }
-
-    def save(self, request):
-        adapter = get_adapter()
-        user = adapter.new_user(request)
-        self.cleaned_data = self.get_cleaned_data()
-        user = adapter.save_user(request, user, self, commit=False)
-        if "password1" in self.cleaned_data:
-            try:
-                adapter.clean_password(self.cleaned_data["password1"], user=user)
-            except DjangoValidationError as exc:
-                raise serializers.ValidationError(
-                    detail=serializers.as_serializer_error(exc)
-                )
-        user.save()
-        self.custom_signup(request, user)
-        setup_user_email(request, user, [])
-        return user
-
-
-class VerifyEmailSerializer(serializers.Serializer):
-    key = serializers.CharField(write_only=True)
-
-
-class ResendEmailVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=allauth_account_settings.EMAIL_REQUIRED)
