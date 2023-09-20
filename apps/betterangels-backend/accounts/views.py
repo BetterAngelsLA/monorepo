@@ -1,5 +1,6 @@
 import base64
 import json
+from typing import Any, List
 from urllib.parse import unquote
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -24,11 +25,12 @@ class SignUpView(CreateView[models.Model, UserCreationForm]):
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
+    authentication_classes = ()
 
-    def dispatch(self, request, *args, **kwargs):
-        # Get callback_url from the URL parameters, if not provided use a default
-        self.callback_url = request.GET.get("redirect_uri")
-        return super(GoogleLogin, self).dispatch(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        # Get callback_url from the POST data or URL parameters, if not provided use a default
+        self.callback_url = request.query_params.get("redirect_uri")
+        return super(GoogleLogin, self).post(request, *args, **kwargs)
 
 
 def base64url_decode(input_str):
