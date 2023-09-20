@@ -7,10 +7,7 @@
     },
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "android": {
-        "credentialsSource": "remote"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
@@ -26,6 +23,6 @@
     "production": {}
   },
   "cli": {
-    "version": "~5.0.0"
+    "version": "~3.15.1"
   }
 }
