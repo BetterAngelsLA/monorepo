@@ -64,7 +64,13 @@ export default function App() {
   );
 
   useEffect(() => {
-    // console.log(response);
+    /* 
+      Explanation why this is needed
+      Please explain more
+      https://github.com/expo/expo/issues/12044#issuecomment-1401357869
+      https://github.com/expo/expo/issues/12044#issuecomment-1431310529
+    */
+
     const handleDeepLinking = async (url: string | null): Promise<void> => {
       // If no URL and no successful response, exit early.
       if (!url && (!response || response.type !== 'success')) return;
