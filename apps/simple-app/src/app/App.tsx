@@ -64,7 +64,6 @@ export default function App() {
     },
     discovery
   );
-  console.log('promp async: ', promptAsync);
 
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
@@ -88,7 +87,6 @@ export default function App() {
       // If we still don't have a code, then we can't proceed.
       if (!code) return;
       try {
-        console.log('handle deeplinking fired');
         const tokenResponse = await fetch(
           // TODO: this path needs to be an environment variable.
           `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
