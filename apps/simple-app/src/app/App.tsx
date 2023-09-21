@@ -129,6 +129,7 @@ export default function App() {
     */
     const listener = (event: { url: string }) => {
       void handleDeepLinking(event.url);
+      subscription.remove();
     };
     const subscription = Linking.addEventListener('url', listener);
     return () => {
