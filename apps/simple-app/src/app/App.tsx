@@ -88,6 +88,7 @@ export default function App() {
       // If we still don't have a code, then we can't proceed.
       if (!code) return;
       try {
+        console.log('handle deeplinking fired');
         const tokenResponse = await fetch(
           // TODO: this path needs to be an environment variable.
           `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
@@ -117,7 +118,7 @@ export default function App() {
     [redirectUri, request?.codeVerifier, response]
   );
   useEffect(() => {
-    /* 
+    /*
       Explanation why this is needed
       Please explain more
       https://github.com/expo/expo/issues/12044#issuecomment-1401357869
