@@ -54,19 +54,16 @@ export default function App() {
       : // TODO: this path needs to be an environment variable.
         'http://localhost:8000/auth-redirect';
 
-  console.log(redirectUri);
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId,
       redirectUri,
       scopes: ['profile', 'email'],
       usePKCE: true,
-      state: generatedState, //TODO: figure out why typescript is complaining about the state
-      // prompt: 'select_account', //TODO: figure out why typescript is compliaing about the prompt value
+      state: generatedState,
     },
     discovery
   );
-  console.log('promp async: ', promptAsync);
 
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
@@ -89,9 +86,7 @@ export default function App() {
 
       // If we still don't have a code, then we can't proceed.
       if (!code) return;
-      console.log(code);
       try {
-        console.log('handle deeplinking fired');
         const tokenResponse = await fetch(
           // TODO: this path needs to be an environment variable.
           `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
