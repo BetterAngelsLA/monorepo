@@ -9,20 +9,17 @@ References:
 """
 
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from dj_rest_auth.registration.serializers import (
     SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
 )
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
 from rest_framework import serializers
-
-if TYPE_CHECKING:
-    from stubs.allauth.socialaccount.models import SocialApp, SocialLogin, SocialToken
 
 try:
     from allauth.account import app_settings as allauth_account_settings
@@ -31,17 +28,7 @@ except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
 
 
-class AdditionalTypesMixin:
-    def _get_request(self) -> Any | HttpRequest:
-        pass
-
-    def get_social_login(
-        self, adapter: "Any", app: "SocialApp", token: "SocialToken", response: dict
-    ) -> "SocialLogin":
-        pass
-
-
-class SocialLoginSerializer(AdditionalTypesMixin, DjRestAuthSocialLoginSerializer):
+class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
     code_verifier = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
