@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Linking, Platform, SafeAreaView, Text } from 'react-native';
 WebBrowser.maybeCompleteAuthSession();
 
@@ -13,8 +13,8 @@ function base64urlEncode(data: string) {
   return base64.replace('+', '-').replace('/', '_').replace(/=+$/, '');
 }
 
-async function generateStatePayload(length = 32) {
-  const randomBytes = await Crypto.getRandomBytes(length);
+function generateStatePayload(length = 32) {
+  const randomBytes = Crypto.getRandomBytes(length);
   const payload = {
     csrfToken: Buffer.from(randomBytes).toString('hex'),
     path_back: AuthSession.makeRedirectUri(),
@@ -32,14 +32,18 @@ export default function App() {
   // TODO: Fix this please
   // This seems to be a bad hack, can we get rid of this approach??
   // I needed to do this so that we got around the race condition on first login
-  const [generatedState, setGeneratedState] = useState<string | null>(() => {
-    let state = '';
-    (async () => {
-      state = await generateStatePayload();
-      setGeneratedState(state);
-    })();
-    return state;
-  });
+  const [generatedState, setGeneratedState] = useState<string | undefined>(
+    undefined
+  );
+
+  const initialize = useCallback(() => {
+    const state = generateStatePayload();
+    setGeneratedState(state);
+  }, []);
+
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
 
   // TODO: this needs to be an environment variable.
   const clientId =
@@ -62,16 +66,11 @@ export default function App() {
     },
     discovery
   );
+  console.log('promp async: ', promptAsync);
 
-  useEffect(() => {
-    /* 
-      Explanation why this is needed
-      Please explain more
-      https://github.com/expo/expo/issues/12044#issuecomment-1401357869
-      https://github.com/expo/expo/issues/12044#issuecomment-1431310529
-    */
-
-    const handleDeepLinking = async (url: string | null): Promise<void> => {
+  const handleDeepLinking = useCallback(
+    async (url: string | null): Promise<void> => {
+      console.log('handle deeplinking fired');
       // If no URL and no successful response, exit early.
       if (!url && (!response || response.type !== 'success')) return;
 
@@ -118,18 +117,28 @@ export default function App() {
       } catch (error) {
         console.error('Error fetching access token', error);
       }
-
-      if (!code) return;
-    };
+    },
+    [redirectUri, request?.codeVerifier, response]
+  );
+  useEffect(() => {
+    /* 
+      Explanation why this is needed
+      Please explain more
+      https://github.com/expo/expo/issues/12044#issuecomment-1401357869
+      https://github.com/expo/expo/issues/12044#issuecomment-1431310529
+    */
     const listener = (event: { url: string }) => {
       void handleDeepLinking(event.url);
     };
     const subscription = Linking.addEventListener('url', listener);
-    void Linking.getInitialURL().then((url) => handleDeepLinking(url));
     return () => {
       subscription.remove();
     };
-  }, [redirectUri, response]);
+  }, [handleDeepLinking]);
+
+  useEffect(() => {
+    void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
+  }, [response, handleDeepLinking]);
 
   return (
     <SafeAreaView
@@ -143,7 +152,7 @@ export default function App() {
       ) : (
         <Button
           title="Login with Google"
-          onPress={() => promptAsync()}
+          onPress={async () => await promptAsync()}
           disabled={!generatedState && !request} // TODO: dirty hack consider another approach.
         />
       )}
