@@ -57,8 +57,9 @@ class AuthRedirectView(APIView):
             state = json.loads(decoded_state)
         else:
             state = None
-
         redirect_uri = state.get("path_back")
+        print(redirect_uri)
+
         if not redirect_uri:
             # Handle the case where no redirect URI is provided.
             # Respond with an error or provide a default URI.
@@ -71,7 +72,7 @@ class AuthRedirectView(APIView):
             redirect_uri += "&".join(
                 f"{key}={value}" for key, value in request.query_params.items()
             )
-
+        print(redirect_uri)
         response = Response(status=302)  # 302 is for temporary redirect
         response["Location"] = redirect_uri
         return response

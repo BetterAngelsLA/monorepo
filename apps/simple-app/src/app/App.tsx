@@ -17,7 +17,7 @@ function generateStatePayload(length = 32) {
   const randomBytes = Crypto.getRandomBytes(length);
   const payload = {
     csrfToken: Buffer.from(randomBytes).toString('hex'),
-    path_back: AuthSession.makeRedirectUri(),
+    path_back: 'exp://192.168.1.123:8081',
     // expiresAt: Date.now() + STATE_EXPIRATION_TIME,
   };
   return base64urlEncode(JSON.stringify(payload));
@@ -32,18 +32,11 @@ export default function App() {
   // TODO: Fix this please
   // This seems to be a bad hack, can we get rid of this approach??
   // I needed to do this so that we got around the race condition on first login
-  const [generatedState, setGeneratedState] = useState<string | undefined>(
-    undefined
-  );
-
-  const initialize = useCallback(() => {
-    const state = generateStatePayload();
-    setGeneratedState(state);
-  }, []);
+  const [generatedState, setGeneratedState] = useState<string>();
 
   useEffect(() => {
-    void initialize();
-  }, [initialize]);
+    setGeneratedState(generateStatePayload());
+  }, []);
 
   // TODO: this needs to be an environment variable.
   const clientId =
