@@ -64,6 +64,7 @@ export default function App() {
     },
     discovery
   );
+  console.log('promp async: ', promptAsync);
 
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
@@ -116,7 +117,7 @@ export default function App() {
     [redirectUri, request?.codeVerifier, response]
   );
   useEffect(() => {
-    /*
+    /* 
       Explanation why this is needed
       Please explain more
       https://github.com/expo/expo/issues/12044#issuecomment-1401357869
