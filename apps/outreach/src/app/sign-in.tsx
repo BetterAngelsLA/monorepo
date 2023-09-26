@@ -65,6 +65,7 @@ export default function SignIn() {
       scopes: ['profile', 'email'],
       usePKCE: true,
       state: generatedState,
+      prompt: 'select_account',
     },
     discovery
   );
