@@ -47,7 +47,6 @@ django = "^4.2.4"
 django-cors-headers = "^4.2.0"
 django-environ = "^0.10.0"
 django-extensions = "^3.2.3"
-djangorestframework-stubs = {version = "^3.14.2", extras = ["compatible-mypy"]}
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 psycopg = "3.1.10"
 
@@ -544,33 +543,6 @@ files = [
 [package.dependencies]
 django = ">=3.0"
 pytz = "*"
-
-[[package]]
-name = "djangorestframework-stubs"
-version = "3.14.2"
-description = "PEP-484 stubs for django-rest-framework"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "djangorestframework-stubs-3.14.2.tar.gz", hash = "sha256:4a9169253d2d46885a007c085d64e96efc8a78bd938c747e9ad0654725c4e7d0"},
-    {file = "djangorestframework_stubs-3.14.2-py3-none-any.whl", hash = "sha256:38f078cdf80228bd73e3ff5dcf00263f847da37c30d113e0fc8fda09f9dbc89a"},
-]
-
-[package.dependencies]
-django-stubs = ">=4.2.2"
-mypy = [
-    {version = ">=0.991"},
-    {version = "==1.4.*", optional = true, markers = "extra == \"compatible-mypy\""},
-]
-requests = ">=2.0.0"
-types-PyYAML = ">=5.4.3"
-types-requests = ">=0.1.12"
-typing-extensions = ">=3.10.0"
-
-[package.extras]
-compatible-mypy = ["mypy (==1.4.*)"]
-coreapi = ["coreapi (>=2.0.0)"]
-markdown = ["types-Markdown (>=0.1.5)"]
 
 [[package]]
 name = "djlint"
@@ -1376,31 +1348,6 @@ python-versions = "*"
 files = [
     {file = "types-PyYAML-6.0.12.11.tar.gz", hash = "sha256:7d340b19ca28cddfdba438ee638cd4084bde213e501a3978738543e27094775b"},
     {file = "types_PyYAML-6.0.12.11-py3-none-any.whl", hash = "sha256:a461508f3096d1d5810ec5ab95d7eeecb651f3a15b71959999988942063bf01d"},
-]
-
-[[package]]
-name = "types-requests"
-version = "2.31.0.3"
-description = "Typing stubs for requests"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-requests-2.31.0.3.tar.gz", hash = "sha256:d5d7a08965fca12bedf716eaf5430c6e3d0da9f3164a1dba2a7f3885f9ebe3c0"},
-    {file = "types_requests-2.31.0.3-py3-none-any.whl", hash = "sha256:938f51653c757716aeca5d72c405c5e2befad8b0d330e3b385ce7f148e1b10dc"},
-]
-
-[package.dependencies]
-types-urllib3 = "*"
-
-[[package]]
-name = "types-urllib3"
-version = "1.26.25.14"
-description = "Typing stubs for urllib3"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-urllib3-1.26.25.14.tar.gz", hash = "sha256:229b7f577c951b8c1b92c1bc2b2fdb0b49847bd2af6d1cc2a2e3dd340f3bda8f"},
-    {file = "types_urllib3-1.26.25.14-py3-none-any.whl", hash = "sha256:9683bbb7fb72e32bfe9d2be6e04875fbe1b3eeec3cbb4ea231435aa7fd6b4f0e"},
 ]
 
 [[package]]
