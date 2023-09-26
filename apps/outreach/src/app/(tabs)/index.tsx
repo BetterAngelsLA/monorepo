@@ -1,12 +1,19 @@
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { useSignOut, useUser } from '@monorepo/expo/outreach/libs';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
 export default function TabOneScreen() {
+  const { user } = useUser();
+  const { signOut } = useSignOut();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
+      <Text style={styles.title}>Tab One: user id: {user?.id}</Text>
+      <Pressable onPress={signOut}>
+        <Text>Sign Out</Text>
+      </Pressable>
       <View
         style={styles.separator}
         lightColor="#eee"

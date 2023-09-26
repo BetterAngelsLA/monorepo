@@ -1,24 +1,19 @@
-import { getSessionId, useStore } from '@monorepo/expo/outreach/libs';
+import { getSessionId, useStore, useUser } from '@monorepo/expo/outreach/libs';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import { useAutoDiscovery } from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Linking, Platform, SafeAreaView, Text } from 'react-native';
+import { apiUrl, clientId, redirectUri } from '../../config';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const discoveryUrl = 'https://accounts.google.com';
 // const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
-
-// if (!clientId || !redirectUri) {
-//   throw new Error(
-//     'Environment variables EXPO_PUBLIC_CLIENT_ID and EXPO_PUBLIC_REDIRECT_URL are not defined'
-//   );
-// }
 
 function base64urlEncode(data: string) {
   const base64 = Buffer.from(data).toString('base64');
@@ -42,21 +37,18 @@ export default function SignIn() {
   const discovery = useAutoDiscovery(discoveryUrl);
   const { saveStore } = useStore();
   const { getState } = useNavigation();
+  const { setUser } = useUser();
   const [authKey, setAuthKey] = useState<string | null>(null);
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
 
-  // TODO: this needs to be an environment variable.
-  const clientId =
-    '488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com';
-  // console.log(Linking.makeUrl());
-  const redirectUri =
-    Platform.OS === 'web'
-      ? AuthSession.makeRedirectUri({ scheme: 'outreach' })
-      : // TODO: this path needs to be an environment variable.
-        'http://localhost:8000/auth-redirect';
+  if (!clientId || !redirectUri) {
+    throw new Error(
+      'Environment variables EXPO_PUBLIC_CLIENT_ID and EXPO_PUBLIC_REDIRECT_URL are not defined'
+    );
+  }
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -65,7 +57,7 @@ export default function SignIn() {
       scopes: ['profile', 'email'],
       usePKCE: true,
       state: generatedState,
-      prompt: 'select_account',
+      prompt: AuthSession.Prompt.SelectAccount,
     },
     discovery
   );
@@ -91,11 +83,10 @@ export default function SignIn() {
       }
 
       // If we still don't have a code, then we can't proceed.
-      if (!code) return;
+      if (!code || !redirectUri) return;
       try {
         const tokenResponse = await fetch(
-          // TODO: this path needs to be an environment variable.
-          `http://localhost:8000/rest-auth/google/?redirect_uri=${encodeURIComponent(
+          `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
             redirectUri
           )}`,
           {
@@ -111,15 +102,15 @@ export default function SignIn() {
             credentials: 'include',
           }
         );
-        // TODO: we only need to do this on iOS & Android
-        // We actually should be storing this information in Expo Secure storage
-        // We don't need to store anything on Web as the cookie is set automatically.
+
         if (Platform.OS === 'ios' || Platform.OS === 'android') {
           const setCookieHeader = tokenResponse.headers.get('set-cookie');
           if (setCookieHeader) {
             const { sessionId } = getSessionId(setCookieHeader);
             setAuthKey(sessionId);
-            // saveStore('sessionid', sessionId);
+            saveStore('sessionid', sessionId);
+            setUser({ id: sessionId });
+            router.replace('/');
           }
         }
       } catch (error) {

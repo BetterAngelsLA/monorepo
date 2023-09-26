@@ -14,8 +14,13 @@ export default function useStore() {
     }
   }
 
+  async function deleteStore(key: string) {
+    return await SecureStore.deleteItemAsync(key);
+  }
+
   return {
     saveStore,
     getStore,
+    deleteStore,
   };
 }
