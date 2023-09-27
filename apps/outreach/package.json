@@ -21,7 +21,13 @@
     "@react-navigation/native": "*",
     "expo-web-browser": "*",
     "@storybook/react-webpack5": "*",
-    "@storybook/react-native": "*"
+    "@storybook/react-native": "*",
+    "buffer": "*",
+    "expo-auth-session": "*",
+    "expo-crypto": "*",
+    "expo-secure-store": "*",
+    "axios": "*",
+    "react-native-url-polyfill": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",

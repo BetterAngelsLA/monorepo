@@ -27,6 +27,8 @@ env = environ.Env(
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
+    TRUSTED_ORIGINS=(list, []),
+    CORS_ALLOW_ALL_ORIGINS=(bool, False),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,7 +46,6 @@ ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,13 +56,13 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django_extensions",
     "rest_framework",
-    "rest_framework.authtoken",
     "dj_rest_auth",
     "allauth",
     "allauth.account",
     "dj_rest_auth.registration",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "corsheaders",
     # apps
     "accounts",
     "dwelling",
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 
@@ -92,7 +94,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "key": "",
         },
         "AUTH_PARAMS": {
-            "access_type": "offline",
+            "access_type": "online",
         },
     }
 }
@@ -123,6 +125,16 @@ AUTHENTICATION_BACKENDS = [
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    # Tokens by default are not unique accross devices.
+    # We want to use session auth by default for now.
+    "TOKEN_CREATOR": None,
+    "TOKEN_MODEL": None,
+}
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
@@ -213,3 +225,7 @@ still sent, whereas in case of “none” no email verification mails are sent.
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 SITE_ID = 1
+
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = env("TRUSTED_ORIGINS")
+CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
