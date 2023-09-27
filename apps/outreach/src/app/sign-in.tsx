@@ -13,7 +13,7 @@ import { apiUrl, clientId, redirectUri } from '../../config';
 WebBrowser.maybeCompleteAuthSession();
 
 const discoveryUrl = 'https://accounts.google.com';
-// const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
+const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 function base64urlEncode(data: string) {
   const base64 = Buffer.from(data).toString('base64');
@@ -25,7 +25,7 @@ function generateStatePayload(length = 32) {
   const payload = {
     csrfToken: Buffer.from(randomBytes).toString('hex'),
     path_back: AuthSession.makeRedirectUri({ path: 'oauthredirect' }),
-    // expiresAt: Date.now() + STATE_EXPIRATION_TIME,
+    expiresAt: Date.now() + STATE_EXPIRATION_TIME,
   };
   return base64urlEncode(JSON.stringify(payload));
 }
@@ -68,21 +68,38 @@ export default function SignIn() {
       if (!url && (!response || response.type !== 'success')) return;
 
       let code;
+      let state;
 
       // If there's a URL, check if it has a code.
       if (url) {
         const correctUrl = url.includes('#') ? url.replace('#', '?') : url;
         const urlObject = new URL(correctUrl);
         code = urlObject.searchParams.get('code');
+        state = urlObject.searchParams.get('state');
       }
 
       // If code is still not set (meaning it wasn't in the URL), and there's a successful response, get the code from the response.
       if (!code && response && response.type === 'success') {
         code = response.params?.code;
+        state = response.params?.state;
       }
 
       // If we still don't have a code, then we can't proceed.
       if (!code || !redirectUri) return;
+
+      // Ensure the state is not invalid or tampered with
+      if (!state || state !== request?.state) {
+        console.error('State is invalid. Please try logging in again.');
+      } else {
+        const decodedState = JSON.parse(
+          Buffer.from(state, 'base64').toString('utf8')
+        );
+        if (decodedState.expiresAt < Date.now()) {
+          console.error('State has expired. Please try logging in again.');
+          return;
+        }
+      }
+
       try {
         const tokenResponse = await fetch(
           `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
@@ -158,7 +175,7 @@ export default function SignIn() {
         <Button
           title="Login with Google"
           onPress={() => promptAsync({ showInRecents: false })}
-          disabled={!generatedState && !request} // TODO: dirty hack consider another approach.
+          disabled={!generatedState && !request}
         />
       )}
     </SafeAreaView>
