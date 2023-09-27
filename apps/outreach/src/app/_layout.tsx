@@ -1,4 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { UserProvider } from '@monorepo/expo/outreach/libs';
 import {
   DarkTheme,
   DefaultTheme,
@@ -8,7 +9,6 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import UserProvider from '../libs/providers/user/UserProvider';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -53,6 +53,7 @@ function RootLayoutNav() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          {/* <Stack.Screen name="sign-in" options={{ title: 'sign in' }} /> */}
         </Stack>
       </ThemeProvider>
     </UserProvider>
