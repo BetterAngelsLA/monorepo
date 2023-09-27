@@ -4,7 +4,7 @@ import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import { useAutoDiscovery } from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Linking, Platform, SafeAreaView, Text } from 'react-native';
@@ -36,19 +36,12 @@ export default function SignIn() {
   );
   const discovery = useAutoDiscovery(discoveryUrl);
   const { saveStore } = useStore();
-  const { getState } = useNavigation();
   const { setUser } = useUser();
   const [authKey, setAuthKey] = useState<string | null>(null);
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
-
-  if (!clientId || !redirectUri) {
-    throw new Error(
-      'Environment variables EXPO_PUBLIC_CLIENT_ID and EXPO_PUBLIC_REDIRECT_URL are not defined'
-    );
-  }
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -133,13 +126,13 @@ export default function SignIn() {
         console.error('Error fetching access token', error);
       }
     },
-    [getState, redirectUri, request?.codeVerifier, response]
+    [request?.codeVerifier, request?.state, response, saveStore, setUser]
   );
 
   useEffect(() => {
     /*
-      Explanation why this is neede
-      Please explain more
+      Android does not properly handle AuthSession redirects; so we work around it.
+      See the following issues for detail:
       https://github.com/expo/expo/issues/12044#issuecomment-1401357869
       https://github.com/expo/expo/issues/12044#issuecomment-1431310529
     */
