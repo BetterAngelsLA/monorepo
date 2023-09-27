@@ -65,7 +65,6 @@ export default function SignIn() {
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
       // If no URL and no successful response, exit early.
-      console.log(getState().routes.at(-1)?.name);
       if (!url && (!response || response.type !== 'success')) return;
 
       let code;

@@ -73,5 +73,3 @@ poetry.lock
 !/poetry.lock
 
 .scripts/
-
-.env
