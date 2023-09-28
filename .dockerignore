@@ -1,0 +1,8 @@
+node_modules
+.venv
+.vscode
+.devcontainer
+.yarn
+.mypy_cache
+dist
+reports

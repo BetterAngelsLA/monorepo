@@ -1,4 +1,4 @@
-FROM python:3.11.5-bullseye
+FROM python:3.11.5-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -76,9 +76,21 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+FROM base as development
 # TODO: This is only for dev so we can likely make this a dev target instead of global
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
 VOLUME ["/workspace/node_modules", "/workspace/.venv"]
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
+
+FROM base as production
+
+USER betterangels
+ENV PATH $PATH:$HOME/.local/bin
+
+COPY --chown=betterangels . /app/
+
+WORKDIR /app/
+
+RUN poetry install --no-interaction --no-ansi
