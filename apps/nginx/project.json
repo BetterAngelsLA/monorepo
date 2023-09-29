@@ -1,0 +1,23 @@
+{
+  "name": "nginx",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/nginx/src",
+  "targets": {
+    "build": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "context": "apps/nginx",
+        "push": true,
+        "platforms": ["linux/amd64"],
+        "metadata": {
+          "images": ["784154756963.dkr.ecr.us-west-2.amazonaws.com/nginx"],
+          "tags": ["type=sha"]
+        }
+      }
+    },
+    "lint": {},
+    "test": {}
+  },
+  "tags": []
+}
