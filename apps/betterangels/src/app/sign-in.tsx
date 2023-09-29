@@ -43,6 +43,10 @@ export default function SignIn() {
     setGeneratedState(generateStatePayload());
   }, []);
 
+  if (!clientId || !redirectUri) {
+    throw new Error('env required');
+  }
+
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId,

@@ -9,9 +9,12 @@ function getRequiredEnvVar(name: string): string {
   return value;
 }
 
-export const clientId = getRequiredEnvVar('EXPO_PUBLIC_CLIENT_ID');
+export const clientId = process.env.EXPO_PUBLIC_CLIENT_ID;
+// getRequiredEnvVar('EXPO_PUBLIC_CLIENT_ID');
 export const redirectUri =
   Platform.OS === 'web'
     ? makeRedirectUri()
-    : getRequiredEnvVar('EXPO_PUBLIC_REDIRECT_URL');
-export const apiUrl = getRequiredEnvVar('EXPO_PUBLIC_API_URL');
+    : process.env.EXPO_PUBLIC_REDIRECT_URL;
+// getRequiredEnvVar('EXPO_PUBLIC_REDIRECT_URL');
+export const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+// getRequiredEnvVar('EXPO_PUBLIC_API_URL');
