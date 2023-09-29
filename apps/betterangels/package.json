@@ -27,7 +27,10 @@
     "expo-crypto": "*",
     "expo-secure-store": "*",
     "axios": "*",
-    "react-native-url-polyfill": "*"
+    "react-native-url-polyfill": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
