@@ -29,6 +29,7 @@ env = environ.Env(
     POSTGRES_PASSWORD=(str, "postgres"),
     TRUSTED_ORIGINS=(list, []),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
+    ALLOWED_HOSTS=(list, ["*"]),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,7 +43,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS: List[str] = []
+ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
 
 
 # Application definition
