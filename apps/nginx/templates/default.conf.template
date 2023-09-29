@@ -2,7 +2,10 @@ server {
     listen 80;
     server_name _;
     client_max_body_size 4G;
-
+    
+    # TODO: We probably want to forward the real ip instead of the ALB ip
+    # Logs current look like
+    # [29/Sep/2023:17:53:13 +0000] "GET / HTTP/1.1" 200 292 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/118.0" "172.115.220.93:56319"
     location / {
         proxy_pass ${PROXY_PASS};
         proxy_set_header Host $host;
