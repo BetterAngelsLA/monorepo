@@ -1,4 +1,4 @@
-import { getSessionId, useStore, useUser } from '@monorepo/expo/outreach/libs';
+import { getSessionId, useStore, useUser } from '@monorepo/expo/betterangels';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';

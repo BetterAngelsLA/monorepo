@@ -61,7 +61,7 @@ Nx comes with local caching already built-in (check your `nx.json`). On CI you m
 to run `yarn storybook`
 to build `yarn storybook:build`
 
-# Nx Workspace with Expo Application: Outreach
+# Nx Workspace with Expo Application: BetterAngels
 
 ### 1. Set Up Google OAuth Locally:
 
@@ -73,22 +73,22 @@ adb reverse tcp:8000 tcp:8000
 
 Note: This might require you to install adb (Android Debug Bridge) [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
 
-- **Build** the "outreach" application:
+- **Build** the "betterangels" application:
 
 ```
-yarn nx build outreach
+yarn nx build betterangels
 ```
 
-- **Lint** the "outreach" application:
+- **Lint** the "betterangels" application:
 
 ```
-yarn nx lint outreach
+yarn nx lint betterangels
 ```
 
-- **Test** the "outreach" application:
+- **Test** the "betterangels" application:
 
 ```
-nx test outreach
+nx test betterangels
 ```
 
 ### Relevant documentation

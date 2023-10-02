@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
-import { useSignOut, useUser } from '@monorepo/expo/outreach/libs';
+import { useSignOut, useUser } from '@monorepo/expo/betterangels';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
