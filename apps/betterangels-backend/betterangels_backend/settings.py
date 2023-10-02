@@ -27,6 +27,7 @@ env = environ.Env(
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
+    POSTGRES_HOST=(str, "postgres"),
     TRUSTED_ORIGINS=(list, []),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     ALLOWED_HOSTS=(list, ["*"]),
@@ -149,7 +150,7 @@ DATABASES = {
         "NAME": env("POSTGRES_NAME"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": "db",
+        "HOST": env("POSTGRES_HOST"),
         "PORT": "5432",
     }
 }
