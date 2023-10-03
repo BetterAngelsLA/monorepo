@@ -1,5 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { UserProvider } from '@monorepo/expo/outreach/libs';
+import { UserProvider } from '@monorepo/expo/betterangels';
 import {
   DarkTheme,
   DefaultTheme,

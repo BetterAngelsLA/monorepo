@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Outreach",
-    "slug": "outreach",
-    "scheme": "outreach",
-    "version": "1.0.0",
+    "name": "BetterAngels",
+    "slug": "betterangels",
+    "scheme": "betterangels",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./src/app/assets/images/icon.png",
     "splash": {
@@ -16,14 +16,15 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "la.betterangels.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/app/assets/images/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "org.betterangels.outreach"
+      "package": "la.betterangels.app"
     },
     "web": {
       "favicon": "./src/app/assets/images/favicon.png",
@@ -44,7 +45,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "4b9b9da2-8d47-4865-81ac-1582b3b8e714"
+        "projectId": "53171ba4-60ca-40cb-b3e6-b0c2393677b8"
       }
     },
     "owner": "better-angels"

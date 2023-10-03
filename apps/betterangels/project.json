@@ -1,7 +1,7 @@
 {
-  "name": "outreach",
+  "name": "betterangels",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/outreach/src",
+  "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
   "targets": {
     "start": {
@@ -14,7 +14,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx start outreach"
+        "command": "nx start betterangels"
       }
     },
     "run-ios": {
@@ -46,7 +46,7 @@
     "download": {
       "executor": "@nx/expo:download",
       "options": {
-        "output": "apps/outreach/dist"
+        "output": "apps/betterangels/dist"
       }
     },
     "sync-deps": {
@@ -75,7 +75,7 @@
       "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {
         "platform": "all",
-        "outputDir": "../../dist/apps/outreach"
+        "outputDir": "../../dist/apps/betterangels"
       }
     },
     "export-web": {
@@ -88,14 +88,14 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/outreach/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": ["apps/betterangels/**/*.{ts,tsx,js,jsx}"]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/outreach/jest.config.ts",
+        "jestConfig": "apps/betterangels/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {

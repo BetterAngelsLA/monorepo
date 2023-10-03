@@ -1,4 +1,4 @@
-import { getSessionId, useStore, useUser } from '@monorepo/expo/outreach/libs';
+import { getSessionId, useStore, useUser } from '@monorepo/expo/betterangels';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
@@ -42,6 +42,10 @@ export default function SignIn() {
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
+
+  if (!clientId || !redirectUri) {
+    throw new Error('env required');
+  }
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {

@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'outreach',
+  displayName: 'betterangels',
   resolver: '@nx/jest/plugins/resolver',
   preset: 'jest-expo',
   transformIgnorePatterns: [

@@ -64,7 +64,7 @@ cache/
 !.yarn/sdks
 !.yarn/versions
 
-apps/outreach-e2e/artifacts
+apps/betterangels-e2e/artifacts
 
 # Python
 __pycache__

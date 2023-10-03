@@ -1,0 +1,43 @@
+{
+  "build": {
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://productionapi.example.com",
+        "EXPO_PUBLIC_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REDIRECT_URL": "http://localhost:8000/auth-redirect"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REDIRECT_URL": "http://localhost:8000/auth-redirect"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REDIRECT_URL": "http://localhost:8000/auth-redirect"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  },
+  "cli": {
+    "version": "~5.0.0"
+  }
+}
