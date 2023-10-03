@@ -11,7 +11,7 @@
         "push": true,
         "platforms": ["linux/amd64"],
         "metadata": {
-          "images": ["784154756963.dkr.ecr.us-west-2.amazonaws.com/nginx"],
+          "images": ["174477281453.dkr.ecr.us-west-2.amazonaws.com/nginx"],
           "tags": ["type=sha"]
         }
       }
