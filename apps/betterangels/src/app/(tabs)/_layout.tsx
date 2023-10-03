@@ -2,7 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Redirect, Tabs } from 'expo-router';
 import { Pressable, Text, useColorScheme } from 'react-native';
 
-import { useUser } from '@monorepo/expo/outreach/libs';
+import { useUser } from '@monorepo/expo/betterangels';
 import Colors from '../constants/Colors';
 
 function TabBarIcon(props: {

@@ -1,3 +1,3 @@
-# expo-outreach-libs
+# expo-betterangels
 
 This library was generated with [Nx](https://nx.dev).

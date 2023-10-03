@@ -1,5 +1,5 @@
 {
-  "name": "@monorepo/outreach",
+  "name": "@monorepo/betterangels",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
@@ -27,10 +27,13 @@
     "expo-crypto": "*",
     "expo-secure-store": "*",
     "axios": "*",
-    "react-native-url-polyfill": "*"
+    "react-native-url-polyfill": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/outreach && cp yarn.lock apps/outreach",
-    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/outreach"
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
+    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels"
   }
 }
