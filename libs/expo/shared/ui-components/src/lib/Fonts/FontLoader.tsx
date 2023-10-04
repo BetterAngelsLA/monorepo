@@ -1,25 +1,7 @@
-import { UserProvider } from '@monorepo/expo/betterangels';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { Fragment, ReactNode, useEffect } from 'react';
 
-export { ErrorBoundary } from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
+export default function FontLoader({ children }: { children: ReactNode }) {
   const [loaded, error] = useFonts({
     IBM: require('./fonts/IBMPlexSans-Regular.ttf'),
     'IBM-italic': require('./fonts/IBMPlexSans-Italic.ttf'),
@@ -51,36 +33,12 @@ export default function RootLayout() {
     'Pragmatica-extra-bold-italic': require('./fonts/Pragmatica-ExtraBoldOblique.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+  if (!loaded) return null;
 
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <UserProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          {/* <Stack.Screen name="sign-in" options={{ title: 'sign in' }} /> */}
-        </Stack>
-      </ThemeProvider>
-    </UserProvider>
-  );
+  // eslint-disable-next-line react/jsx-no-useless-fragment
+  return <Fragment>{children}</Fragment>;
 }
