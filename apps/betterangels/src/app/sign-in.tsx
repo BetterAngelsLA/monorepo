@@ -1,4 +1,9 @@
-import { getSessionId, useStore, useUser } from '@monorepo/expo/betterangels';
+import {
+  fetchUser,
+  getSessionId,
+  useStore,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
@@ -122,9 +127,15 @@ export default function SignIn() {
             const { sessionId } = getSessionId(setCookieHeader);
             setAuthKey(sessionId);
             saveStore('sessionid', sessionId);
+
+            const userData = await fetchUser(sessionId);
+            console.log('user data: ', userData);
             setUser({ id: sessionId });
             router.replace('/');
           }
+        } else {
+          const userData = await fetchUser();
+          console.log('user data: ', userData);
         }
       } catch (error) {
         console.error('Error fetching access token', error);
