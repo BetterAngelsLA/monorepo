@@ -23,6 +23,7 @@ django_stubs_ext.monkeypatch()
 
 env = environ.Env(
     DEBUG=(bool, False),
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
     SECRET_KEY=(str, "secret_key"),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
@@ -44,9 +45,6 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-
-ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -237,6 +235,9 @@ still sent, whereas in case of “none” no email verification mails are sent.
 
 SITE_ID = 1
 
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
+ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env("TRUSTED_ORIGINS")
 CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
