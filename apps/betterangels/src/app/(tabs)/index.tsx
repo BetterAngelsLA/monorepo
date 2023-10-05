@@ -15,6 +15,11 @@ export default function TabOneScreen() {
     console.log(user);
   }
 
+  async function getUser() {
+    if (!user) return;
+    console.log(user);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One: user id: {user?.id}</Text>

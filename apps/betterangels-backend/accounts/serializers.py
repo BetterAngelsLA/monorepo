@@ -16,6 +16,7 @@ from dj_rest_auth.registration.serializers import (
     SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
 )
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
