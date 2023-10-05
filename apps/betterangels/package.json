@@ -1,0 +1,39 @@
+{
+  "name": "@monorepo/betterangels",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-native": "*",
+    "@testing-library/react-native": "*",
+    "metro-config": "*",
+    "react-native": "*",
+    "expo": "*",
+    "react-native-svg": "*",
+    "react-native-web": "*",
+    "@nx/expo": "*",
+    "@expo/metro-config": "*",
+    "react": "*",
+    "@expo/vector-icons": "*",
+    "expo-font": "*",
+    "expo-status-bar": "*",
+    "react-test-renderer": "*",
+    "expo-router": "*",
+    "@react-navigation/native": "*",
+    "expo-web-browser": "*",
+    "@storybook/react-webpack5": "*",
+    "@storybook/react-native": "*",
+    "buffer": "*",
+    "expo-auth-session": "*",
+    "expo-crypto": "*",
+    "expo-secure-store": "*",
+    "axios": "*",
+    "react-native-url-polyfill": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*"
+  },
+  "scripts": {
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
+    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels"
+  }
+}

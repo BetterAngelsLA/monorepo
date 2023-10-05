@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "BetterAngels",
+    "slug": "betterangels",
+    "scheme": "betterangels",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./src/app/assets/images/icon.png",
+    "splash": {
+      "image": "./src/app/assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "la.betterangels.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/app/assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "la.betterangels.app"
+    },
+    "web": {
+      "favicon": "./src/app/assets/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "@config-plugins/detox",
+        {
+          "skipProguard": false,
+          "subdomains": ["10.0.2.2", "localhost"]
+        }
+      ],
+      "expo-router"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "53171ba4-60ca-40cb-b3e6-b0c2393677b8"
+      }
+    },
+    "owner": "better-angels"
+  }
+}
