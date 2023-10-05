@@ -25,7 +25,7 @@ function useProtectedRoute() {
     }
 
     getUserAndNavigate();
-  }, [getStore]);
+  }, []);
 
   return { user, setUser, isLoading };
 }
