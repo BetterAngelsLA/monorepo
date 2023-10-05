@@ -161,7 +161,6 @@ if env("USE_IAM_AUTH"):
     DATABASES["default"]["OPTIONS"] = {
         "use_iam_auth": True,
         "sslmode": "require",
-        "resolve_cname_enabled": True,
     }
 
 AUTH_USER_MODEL = "accounts.User"
