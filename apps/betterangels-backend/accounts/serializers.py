@@ -16,6 +16,7 @@ from dj_rest_auth.registration.serializers import (
     SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
 )
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
@@ -26,6 +27,12 @@ try:
     from allauth.socialaccount.helpers import complete_social_login
 except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username", "email")
 
 
 class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
