@@ -129,7 +129,7 @@ export default function SignIn() {
             saveStore('sessionid', sessionId);
             const userData = await fetchUser();
             console.log('user data: ', userData);
-            setUser({ id: sessionId });
+            setUser(userData);
             router.replace('/');
           }
         } else {

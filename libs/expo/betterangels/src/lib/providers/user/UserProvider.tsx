@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
+import { fetchUser } from '../../helpers';
 import { useStore } from '../../hooks';
 import UserContext, { TUser } from './UserContext';
 
@@ -16,7 +17,9 @@ function useProtectedRoute() {
     async function getUserAndNavigate() {
       try {
         const sessionId = await getStore('sessionid');
-        setUser({ id: sessionId });
+        const user = await fetchUser(sessionId);
+        console.log('fetched user: ', user);
+        setUser(user);
       } catch (e) {
         console.log(e);
       } finally {

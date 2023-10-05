@@ -10,11 +10,6 @@ export default function TabOneScreen() {
   // not sure why but this constantly fires over and over again probably a bug w/ how context was set up
   console.log('user', user);
 
-  function getUser() {
-    if (!user) return;
-    console.log(user);
-  }
-
   async function getUser() {
     if (!user) return;
     console.log(user);
@@ -22,7 +17,9 @@ export default function TabOneScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One: user id: {user?.id}</Text>
+      <Text style={styles.title}>
+        Tab One: user id: {user?.id} username: {user?.username}
+      </Text>
       <Pressable onPress={() => signOut()}>
         <Text>Sign Out</Text>
       </Pressable>
