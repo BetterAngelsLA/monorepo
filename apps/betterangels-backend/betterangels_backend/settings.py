@@ -17,6 +17,7 @@ from typing import List
 
 import django_stubs_ext
 import environ  # type: ignore
+from betterangels_backend.utils import is_running_on_aws
 
 django_stubs_ext.monkeypatch()
 
@@ -31,6 +32,7 @@ env = environ.Env(
     TRUSTED_ORIGINS=(list, []),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     ALLOWED_HOSTS=(list, ["*"]),
+    USE_IAM_AUTH=(bool, False),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -146,7 +148,7 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "backends.iam_dbauth.postgis",
         "NAME": env("POSTGRES_NAME"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
@@ -155,6 +157,13 @@ DATABASES = {
     }
 }
 
+# USE IAM Auth if enabled
+if env("USE_IAM_AUTH"):
+    DATABASES["default"]["OPTIONS"] = {
+        "use_iam_auth": True,
+        "sslmode": "require",
+        "resolve_cname_enabled": True,
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 
