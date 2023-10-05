@@ -8,11 +8,19 @@ export default function TabOneScreen() {
   const { user } = useUser();
   const { signOut } = useSignOut();
 
+  function getUser() {
+    if (!user) return;
+    console.log(user);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One: user id: {user?.id}</Text>
-      <Pressable onPress={signOut}>
+      <Pressable onPress={() => signOut()}>
         <Text>Sign Out</Text>
+      </Pressable>
+      <Pressable onPress={() => getUser()}>
+        <Text>Fetch User</Text>
       </Pressable>
       <View
         style={styles.separator}

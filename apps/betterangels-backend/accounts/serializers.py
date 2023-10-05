@@ -28,6 +28,12 @@ except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ("id", "username", "email")
+
+
 class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
     code_verifier = serializers.CharField(required=False, allow_blank=True)
 
