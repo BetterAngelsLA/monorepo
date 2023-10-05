@@ -72,7 +72,9 @@ RUN apt-get update \
        git \
        build-essential \
     # Install Python Lib Requirements
-    && apt-get install -y libpq5 \
+    && apt-get install -y \
+    libpq5 \
+    gdal-bin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

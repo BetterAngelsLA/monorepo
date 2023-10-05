@@ -9,12 +9,11 @@ RUN pip install poetry==1.6.1
 
 RUN apt-get update \
     # Install Python Lib Requirements
-    && apt-get install -y libpq5 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN apt-get update \
-    && apt-get install -y postgresql-client \
+    && apt-get install -y \
+    libpq5 \
+    gdal-bin \
+    # Probably want to remove the client before we merge this
+    postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

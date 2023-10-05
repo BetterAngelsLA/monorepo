@@ -17,7 +17,6 @@ from typing import List
 
 import django_stubs_ext
 import environ  # type: ignore
-from betterangels_backend.utils import is_running_on_aws
 
 django_stubs_ext.monkeypatch()
 
@@ -28,10 +27,10 @@ env = environ.Env(
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
-    POSTGRES_HOST=(str, "postgres"),
+    POSTGRES_HOST=(str, "db"),
     TRUSTED_ORIGINS=(list, []),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
-    ALLOWED_HOSTS=(list, ["*"]),
+    ALLOWED_HOSTS=(list, []),
     USE_IAM_AUTH=(bool, False),
 )
 
