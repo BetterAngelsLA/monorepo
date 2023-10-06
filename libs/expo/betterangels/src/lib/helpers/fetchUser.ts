@@ -1,24 +1,18 @@
-import { Platform } from 'react-native';
-
-export default async function fetchUser(sessionId?: string) {
-  const headers: HeadersInit = new Headers();
-
-  // Set the Cookie header for mobile platforms
-  if (Platform.OS !== 'web' && sessionId) {
-    headers.append('Cookie', `sessionid=${sessionId}`);
-  }
-
+export default async function fetchUser() {
   try {
-    const response = await fetch('http://localhost:8000/current-user/', {
-      headers: headers,
-      credentials: Platform.OS === 'web' ? 'include' : undefined,
-    });
+    const response = await fetch(
+      `${process.env['EXPO_PUBLIC_API_URL']}/current-user/`,
+      {
+        credentials: 'include',
+      }
+    );
 
     const data = await response.json();
+
     if (response.ok) {
       return data;
     } else {
-      console.log('Failed to fetch user data:', response.statusText);
+      console.log('Failed to fetch user data:', response);
     }
   } catch (e) {
     console.log('Error getting user:', e);
