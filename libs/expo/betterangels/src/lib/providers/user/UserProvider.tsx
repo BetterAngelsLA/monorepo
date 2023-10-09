@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { useStore } from '../../hooks';
+import { fetchUser } from '../../helpers';
 import UserContext, { TUser } from './UserContext';
 
 interface UserProviderProps {
@@ -10,13 +10,13 @@ interface UserProviderProps {
 function useProtectedRoute() {
   const [user, setUser] = useState<TUser | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { getStore } = useStore();
 
   useEffect(() => {
     async function getUserAndNavigate() {
       try {
-        const sessionId = await getStore('sessionid');
-        setUser({ id: sessionId });
+        const user = await fetchUser();
+        console.log('fetched user: ', user);
+        setUser(user);
       } catch (e) {
         console.log(e);
       } finally {
@@ -25,7 +25,7 @@ function useProtectedRoute() {
     }
 
     getUserAndNavigate();
-  }, [getStore]);
+  }, []);
 
   return { user, setUser, isLoading };
 }
