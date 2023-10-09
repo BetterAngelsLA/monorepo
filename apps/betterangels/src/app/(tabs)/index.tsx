@@ -7,8 +7,6 @@ import { Text, View } from '../components/Themed';
 export default function TabOneScreen() {
   const { user } = useUser();
   const { signOut } = useSignOut();
-  // not sure why but this constantly fires over and over again probably a bug w/ how context was set up
-  console.log('user', user);
 
   async function getUser() {
     if (!user) return;
