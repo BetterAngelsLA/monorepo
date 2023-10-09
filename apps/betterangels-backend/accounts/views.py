@@ -9,14 +9,26 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.db import models
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .forms import UserCreationForm
-from .serializers import SocialLoginSerializer
+from .serializers import SocialLoginSerializer, UserSerializer
 
 T = TypeVar("T")
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """
+    Return details of the currently authenticated user.
+    """
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
 
 
 class SignUpView(CreateView[models.Model, UserCreationForm]):
