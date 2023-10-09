@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "storybook": "nx run expo-shared-ui-components:storybook",
-    "storybook:build": "nx build-storybook expo-shared-ui-components"
+    "storybook:build": "nx build-storybook expo-shared-ui-components",
+    "server": "nx start betterangels-backend",
+    "ba": "nx start betterangels"
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",

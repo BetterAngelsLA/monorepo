@@ -1,13 +1,12 @@
-import { getSessionId, useStore, useUser } from '@monorepo/expo/betterangels';
+import { fetchUser, useStore, useUser } from '@monorepo/expo/betterangels';
 import { HouseIcon } from '@monorepo/expo/shared/icons';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
-import { useAutoDiscovery } from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Linking, Platform, SafeAreaView, Text } from 'react-native';
+import { Button, Linking, SafeAreaView, Text } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -34,10 +33,9 @@ export default function SignIn() {
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
-  const discovery = useAutoDiscovery(discoveryUrl);
+  const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { saveStore } = useStore();
   const { setUser } = useUser();
-  const [authKey, setAuthKey] = useState<string | null>(null);
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -98,7 +96,7 @@ export default function SignIn() {
       }
 
       try {
-        const tokenResponse = await fetch(
+        await fetch(
           `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
             redirectUri
           )}`,
@@ -116,16 +114,10 @@ export default function SignIn() {
           }
         );
 
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-          const setCookieHeader = tokenResponse.headers.get('set-cookie');
-          if (setCookieHeader) {
-            const { sessionId } = getSessionId(setCookieHeader);
-            setAuthKey(sessionId);
-            saveStore('sessionid', sessionId);
-            setUser({ id: sessionId });
-            router.replace('/');
-          }
-        }
+        const userData = await fetchUser();
+        console.log('user data: ', userData);
+        setUser(userData);
+        router.replace('/');
       } catch (error) {
         console.error('Error fetching access token', error);
       }
@@ -163,18 +155,11 @@ export default function SignIn() {
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
     >
       <HouseIcon color="#ffffff" size="md" />
-      {authKey ? (
-        <>
-          <Text>Token: {authKey}</Text>
-          <Button title="Logout" onPress={() => setAuthKey(null)} />
-        </>
-      ) : (
-        <Button
-          title="Login with Google"
-          onPress={() => promptAsync({ showInRecents: false })}
-          disabled={!generatedState && !request}
-        />
-      )}
+      <Button
+        title="Login with Google"
+        onPress={() => promptAsync({ showInRecents: false })}
+        disabled={!generatedState && !request}
+      />
     </SafeAreaView>
   );
 }

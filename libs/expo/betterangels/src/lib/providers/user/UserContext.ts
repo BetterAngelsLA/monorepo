@@ -2,6 +2,8 @@ import { createContext, Dispatch, SetStateAction } from 'react';
 
 export type TUser = {
   id: string;
+  username?: string;
+  email?: string;
 };
 
 export interface IUserProviderValue {
