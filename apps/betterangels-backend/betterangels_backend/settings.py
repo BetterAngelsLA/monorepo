@@ -22,16 +22,18 @@ django_stubs_ext.monkeypatch()
 
 
 env = environ.Env(
-    DEBUG=(bool, False),
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
-    SECRET_KEY=(str, "secret_key"),
+    CSRF_TRUSTED_ORIGINS=(list, []),
+    CORS_ALLOW_ALL_ORIGINS=(bool, False),
+    CORS_ALLOWED_ORIGINS=(list, []),
+    DEBUG=(bool, False),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
     POSTGRES_HOST=(str, "db"),
-    CSRF_TRUSTED_ORIGINS=(list, []),
-    CORS_ALLOW_ALL_ORIGINS=(bool, False),
-    CORS_ALLOWED_ORIGINS=(list, []),
+    SECRET_KEY=(str, "secret_key"),
+    SESSION_COOKIE_HTTPONLY=(bool, True),
+    SESSION_COOKIE_SECURE=(bool, False),
     ALLOWED_HOSTS=(list, []),
     USE_IAM_AUTH=(bool, False),
 )
@@ -243,3 +245,5 @@ CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
