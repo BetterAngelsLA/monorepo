@@ -20,6 +20,6 @@ RUN apt-get update \
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
 # TODO copy the poetry files first
-COPY --chown=betterangels . /app/
 WORKDIR /app/
+COPY --chown=betterangels . /app/
 RUN poetry install --no-interaction --no-ansi
