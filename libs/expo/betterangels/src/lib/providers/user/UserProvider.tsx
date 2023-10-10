@@ -5,16 +5,17 @@ import UserContext, { TUser } from './UserContext';
 
 interface UserProviderProps {
   children: ReactNode;
+  apiUrl: string | undefined;
 }
 
-function useProtectedRoute() {
+function useProtectedRoute(apiUrl: string) {
   const [user, setUser] = useState<TUser | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function getUserAndNavigate() {
       try {
-        const user = await fetchUser();
+        const user = await fetchUser(apiUrl);
         console.log('fetched user: ', user);
         setUser(user);
       } catch (e) {
@@ -30,8 +31,9 @@ function useProtectedRoute() {
   return { user, setUser, isLoading };
 }
 
-export default function UserProvider({ children }: UserProviderProps) {
-  const { isLoading, user, setUser } = useProtectedRoute();
+export default function UserProvider({ children, apiUrl }: UserProviderProps) {
+  if (!apiUrl) throw new Error('env apiUrl is not defined');
+  const { isLoading, user, setUser } = useProtectedRoute(apiUrl);
 
   const value = useMemo(
     () => ({

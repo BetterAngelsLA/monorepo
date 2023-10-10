@@ -1,6 +1,6 @@
-const apiUrl = process.env['NX_API_URL'];
+type TApiUrl = string | undefined;
 
-export default async function fetchUser() {
+export default async function fetchUser(apiUrl: TApiUrl) {
   try {
     const response = await fetch(`${apiUrl}/current-user/`, {
       credentials: 'include',
