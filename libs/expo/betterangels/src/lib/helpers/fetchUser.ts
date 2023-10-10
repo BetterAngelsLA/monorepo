@@ -1,11 +1,10 @@
-export default async function fetchUser() {
+type TApiUrl = string | undefined;
+
+export default async function fetchUser(apiUrl: TApiUrl) {
   try {
-    const response = await fetch(
-      `${process.env['EXPO_PUBLIC_API_URL']}/current-user/`,
-      {
-        credentials: 'include',
-      }
-    );
+    const response = await fetch(`${apiUrl}/current-user/`, {
+      credentials: 'include',
+    });
 
     const data = await response.json();
 

@@ -3,7 +3,7 @@
     "name": "BetterAngels",
     "slug": "betterangels",
     "scheme": "betterangels",
-    "version": "1.0.4",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./src/app/assets/images/icon.png",
     "splash": {
@@ -12,7 +12,8 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -48,6 +49,9 @@
         "projectId": "53171ba4-60ca-40cb-b3e6-b0c2393677b8"
       }
     },
-    "owner": "better-angels"
+    "owner": "better-angels",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
