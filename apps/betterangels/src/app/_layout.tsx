@@ -71,9 +71,10 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   return (
-    <UserProvider>
+    <UserProvider apiUrl={apiUrl}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

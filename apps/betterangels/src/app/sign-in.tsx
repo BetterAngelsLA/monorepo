@@ -41,7 +41,7 @@ export default function SignIn() {
     setGeneratedState(generateStatePayload());
   }, []);
 
-  if (!clientId || !redirectUri) {
+  if (!clientId || !redirectUri || !apiUrl) {
     throw new Error('env required');
   }
 
@@ -114,7 +114,7 @@ export default function SignIn() {
           }
         );
 
-        const userData = await fetchUser();
+        const userData = await fetchUser(apiUrl);
         console.log('user data: ', userData);
         setUser(userData);
         router.replace('/');
