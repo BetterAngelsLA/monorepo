@@ -1,5 +1,5 @@
-const apiUrl = 'https://api.dev.betterangels.la';
 export default async function fetchUser() {
+  const apiUrl = process.env['EXPO_PUBLIC_API_URL'];
   try {
     const response = await fetch(`${apiUrl}/current-user/`, {
       credentials: 'include',
