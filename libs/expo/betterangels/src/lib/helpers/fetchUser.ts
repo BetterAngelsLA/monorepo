@@ -1,4 +1,4 @@
-const apiUrl = 'https://api.dev.betterangels.la';
+const apiUrl = process.env['NX_API_URL'];
 
 export default async function fetchUser() {
   try {
