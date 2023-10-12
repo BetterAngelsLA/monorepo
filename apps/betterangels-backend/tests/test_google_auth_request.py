@@ -11,7 +11,6 @@ class GoogleAuthTestCase(TestCase):
         )
         code_verifier = "uKzvSFmSLRvtkyi7GOEOCfSqir8rsPHEdzlz0fnTynPdjo0osS5GsORJoj4aFYRjtNISDPbvRJeS4Q7BLvvjP4PZ127KfSoTwjrUMfA47xgZ3UHVSpczS8fe3lAehdUN"
 
-        # # mock_google_token = "TOKEN"
         final_response = client.post(
             "/rest-auth/google/?redirect_uri=http%3A%2F%2Flocalhost%3A8081",
             content_type="application/json",
@@ -20,5 +19,4 @@ class GoogleAuthTestCase(TestCase):
                 "code_verifier": code_verifier,
             },
         )
-        print("FINAL RESPONSE: ", final_response.content)
         assert final_response.status_code == 204
