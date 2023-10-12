@@ -31,6 +31,7 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    CONN_MAX_AGE=(int, 300),
     LANGUAGE_COOKIE_HTTPONLY=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, False),
     POSTGRES_NAME=(str, "postgres"),
@@ -163,7 +164,7 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("POSTGRES_HOST"),
         "PORT": "5432",
-        "CONN_MAX_AGE": None,
+        "CONN_MAX_AGE": env("CONN_MAX_AGE"),
         "IAM_SETTINGS": {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
