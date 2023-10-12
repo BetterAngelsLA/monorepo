@@ -163,6 +163,7 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("POSTGRES_HOST"),
         "PORT": "5432",
+        "CONN_MAX_AGE": None,
         "IAM_SETTINGS": {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
