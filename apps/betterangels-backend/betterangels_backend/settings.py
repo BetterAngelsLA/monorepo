@@ -22,13 +22,29 @@ django_stubs_ext.monkeypatch()
 
 
 env = environ.Env(
-    DEBUG=(bool, True),
-    SECRET_KEY=(str, "secret_key"),
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
+    ALLOWED_HOSTS=(list, []),
+    AWS_REGION=(str, ""),
+    CSRF_TRUSTED_ORIGINS=(list, []),
+    CSRF_COOKIE_HTTPONLY=(bool, False),
+    CSRF_COOKIE_SECURE=(bool, False),
+    CORS_ALLOW_ALL_ORIGINS=(bool, False),
+    CORS_ALLOWED_ORIGINS=(list, []),
+    DEBUG=(bool, False),
+    CONN_MAX_AGE=(int, 300),
+    LANGUAGE_COOKIE_HTTPONLY=(bool, False),
+    LANGUAGE_COOKIE_SECURE=(bool, False),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
-    TRUSTED_ORIGINS=(list, []),
-    CORS_ALLOW_ALL_ORIGINS=(bool, False),
+    POSTGRES_HOST=(str, "db"),
+    SECRET_KEY=(str, "secret_key"),
+    SESSION_COOKIE_HTTPONLY=(bool, True),
+    SESSION_COOKIE_SECURE=(bool, False),
+    SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
+    SECURE_HSTS_PRELOAD=(bool, False),
+    SECURE_HSTS_SECONDS=(int, 0),
+    USE_IAM_AUTH=(bool, False),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,9 +57,6 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-
-ALLOWED_HOSTS: List[str] = []
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -70,6 +83,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -96,6 +110,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "AUTH_PARAMS": {
             "access_type": "online",
         },
+        "OAUTH_PKCE_ENABLED": True,
     }
 }
 
@@ -143,15 +158,19 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "backends.iam_dbauth.postgis",
         "NAME": env("POSTGRES_NAME"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": "db",
+        "HOST": env("POSTGRES_HOST"),
         "PORT": "5432",
+        "CONN_MAX_AGE": env("CONN_MAX_AGE"),
+        "IAM_SETTINGS": {
+            "ENABLED": env("USE_IAM_AUTH"),
+            "REGION_NAME": env("AWS_REGION"),
+        },
     }
 }
-
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -190,6 +209,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -226,7 +246,19 @@ still sent, whereas in case of “none” no email verification mails are sent.
 
 SITE_ID = 1
 
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
+ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = env("TRUSTED_ORIGINS")
-# CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CSRF_COOKIE_HTTPONLY = env("CSRF_COOKIE_HTTPONLY")
+CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+LANGUAGE_COOKIE_HTTPONLY = env("LANGUAGE_COOKIE_HTTPONLY")
+LANGUAGE_COOKIE_SECURE = env("LANGUAGE_COOKIE_SECURE")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
+SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
+SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")

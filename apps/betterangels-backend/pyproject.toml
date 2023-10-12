@@ -27,10 +27,7 @@ django-extensions = "^3.2.3"
 dj-rest-auth = { extras = ["with-social"], version = "^5.0.0" }
 django-cors-headers = "^4.2.0"
 whitenoise = "^6.5.0"
-django-iam-dbauth = "^0.1.4"
-vcrpy = "^5.1.0"
-pytest-vcr = "^1.0.2"
-pytest-django = "^4.5.2"
+boto3 = "^1.28.62"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = { extras = ["compatible-mypy"], version = "^4.2.3" }
