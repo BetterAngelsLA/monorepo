@@ -11,6 +11,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "3.11.5"
+vcrpy = "^5.1.0"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
