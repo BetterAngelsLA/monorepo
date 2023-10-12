@@ -24,13 +24,16 @@
       "options": {}
     },
     "build": {
-      "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "executor": "@nx-tools/nx-container:build",
       "options": {
-        "outputPath": "apps/betterangels-backend/dist",
-        "publish": false,
-        "lockedVersions": true,
-        "bundleLocalDependencies": true
+        "push": true,
+        "platforms": ["linux/amd64"],
+        "metadata": {
+          "images": [
+            "784154756963.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend"
+          ],
+          "tags": ["type=sha"]
+        }
       }
     },
     "manage": {
