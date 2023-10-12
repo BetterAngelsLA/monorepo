@@ -1,19 +1,24 @@
-import pytest
-import requests
-from conftest import my_vcr
-from django.test import Client
+import vcr
+from django.test import Client, TestCase
 
 
-@pytest.mark.django_db
-@my_vcr.use_cassette("tests/cassettes/google_auth_call_invalid_token.yaml")
-def test_google_auth_call_invalid_token():
-    client = Client()
+class GoogleAuthTestCase(TestCase):
+    @vcr.use_cassette("tests/cassettes/google_auth_call_valid_token.yaml")
+    def test_google_auth_call_invalid_token(self) -> None:
+        client = Client()
+        code = (
+            "4/0AfJohXlDGMj4l4dgmRhM9IHSGpUdYqzux8f9vT3AIgxC2c52oXUQKZ8xdmaSOhwPNhnfBA"
+        )
+        code_verifier = "uKzvSFmSLRvtkyi7GOEOCfSqir8rsPHEdzlz0fnTynPdjo0osS5GsORJoj4aFYRjtNISDPbvRJeS4Q7BLvvjP4PZ127KfSoTwjrUMfA47xgZ3UHVSpczS8fe3lAehdUN"
 
-    # mock_google_token = "TOKEN"
-    response = client.post(
-        "/rest-auth/google/?redirect_uri=http%3A%2F%2Flocalhost%3A8081",
-        content_type="application/json",
-    )
-    print("<<<<<<")
-    print(response.content)
-    assert response.status_code == 200
+        # # mock_google_token = "TOKEN"
+        final_response = client.post(
+            "/rest-auth/google/?redirect_uri=http%3A%2F%2Flocalhost%3A8081",
+            content_type="application/json",
+            data={
+                "code": code,
+                "code_verifier": code_verifier,
+            },
+        )
+        print("FINAL RESPONSE: ", final_response.content)
+        assert final_response.status_code == 204

@@ -6,9 +6,6 @@ source = ["betterangels_backend"]
 exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.pytest.ini_options]
-addopts = "--cov --cov-report html:'../../coverage/apps/betterangels-backend/html' --cov-report xml:'../../coverage/apps/betterangels-backend/coverage.xml' --html='../../reports/apps/betterangels-backend/unittests/html/index.html' --junitxml='../../reports/apps/betterangels-backend/unittests/junit.xml'"
-
 [tool.poetry]
 name = "betterangels-backend"
 version = "1.0.0"
