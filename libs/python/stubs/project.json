@@ -1,16 +1,8 @@
 {
   "name": "python-stubs",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/python/stubs/src",
+  "sourceRoot": "libs/python/stubs",
   "projectType": "library",
-  "targets": {
-    "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["libs/python/stubs/**/*.ts"]
-      }
-    }
-  },
+  "targets": {},
   "tags": []
 }
