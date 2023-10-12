@@ -10,10 +10,11 @@ class DatabaseWrapper(PostGISDatabaseWrapper):
     def get_connection_params(self) -> Dict[str, Any]:
         # Original connection parameters
         conn_params: Dict[str, Any] = super().get_connection_params()
+        iam_settings = self.settings_dict.get("IAM_SETTINGS", {})
 
         # If IAM authentication is enabled in settings, generate an authentication token
-        if self.settings_dict.get("IAM_AUTH", False):
-            region_name: str = self.settings_dict["REGION_NAME"]
+        if iam_settings.get("ENABLED", False):
+            region_name: str = iam_settings["REGION_NAME"]
             db_hostname: str = self.settings_dict["HOST"]
             db_port: str = self.settings_dict["PORT"]
             db_username: str = self.settings_dict["USER"]
