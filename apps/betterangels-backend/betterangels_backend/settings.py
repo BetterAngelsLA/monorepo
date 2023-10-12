@@ -23,6 +23,8 @@ django_stubs_ext.monkeypatch()
 
 env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
+    ALLOWED_HOSTS=(list, []),
+    AWS_REGION=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_HTTPONLY=(bool, False),
     CSRF_COOKIE_SECURE=(bool, False),
@@ -41,7 +43,6 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
-    ALLOWED_HOSTS=(list, []),
     USE_IAM_AUTH=(bool, False),
 )
 
@@ -162,15 +163,12 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("POSTGRES_HOST"),
         "PORT": "5432",
+        "IAM_SETTINGS": {
+            "ENABLED": env("USE_IAM_AUTH"),
+            "REGION_NAME": env("AWS_REGION"),
+        },
     }
 }
-
-# USE IAM Auth if enabled
-if env("USE_IAM_AUTH"):
-    DATABASES["default"]["OPTIONS"] = {
-        "use_iam_auth": True,
-        "sslmode": "require",
-    }
 
 AUTH_USER_MODEL = "accounts.User"
 
