@@ -2,14 +2,16 @@ import vcr
 from django.test import Client, TestCase
 
 
-class GoogleAuthTestCase(TestCase):
-    @vcr.use_cassette("tests/cassettes/google_auth_call_valid_token.yaml")
-    def test_google_auth_call_invalid_token(self) -> None:
+class DjRestAuthTestCase(TestCase):
+    @vcr.use_cassette(
+        "tests/cassettes/google_pcke_authentication_flow.yaml"
+    )  # type:ignore
+    def test_google_pcke_authentication_flow(self) -> None:
         client = Client()
         code = (
-            "4/0AfJohXlDGMj4l4dgmRhM9IHSGpUdYqzux8f9vT3AIgxC2c52oXUQKZ8xdmaSOhwPNhnfBA"
+            "4/0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA"
         )
-        code_verifier = "uKzvSFmSLRvtkyi7GOEOCfSqir8rsPHEdzlz0fnTynPdjo0osS5GsORJoj4aFYRjtNISDPbvRJeS4Q7BLvvjP4PZ127KfSoTwjrUMfA47xgZ3UHVSpczS8fe3lAehdUN"
+        code_verifier = "7VGpxs4u64mTyhh719aji60LwPOSn48dDUi4KmkrwcDC9CEuLM23aSOWf2tEmmNmK9fASrMp8o9Rx9LRkBEVvHIBk0HYItZiN6XSwKEnEXAFfI69dpF0M7JyAVU4QFOD"
 
         final_response = client.post(
             "/rest-auth/google/?redirect_uri=http%3A%2F%2Flocalhost%3A8081",
