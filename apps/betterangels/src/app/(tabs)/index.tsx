@@ -1,12 +1,15 @@
 import { Pressable, StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
+import { Input } from '@monorepo/expo/shared/ui-components';
+import { useForm } from 'react-hook-form';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
 export default function TabOneScreen() {
   const { user } = useUser();
   const { signOut } = useSignOut();
+  const { control } = useForm();
 
   async function getUser() {
     if (!user) return;
@@ -18,6 +21,13 @@ export default function TabOneScreen() {
       <Text style={styles.title}>
         Tab One: user id: {user?.id} username: {user?.username}
       </Text>
+      <Input
+        componentStyle={{ marginVertical: 10 }}
+        label="Test"
+        height={56}
+        name="test"
+        control={control}
+      />
       <Pressable onPress={() => signOut()}>
         <Text>Sign Out</Text>
       </Pressable>
@@ -39,6 +49,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 20,
