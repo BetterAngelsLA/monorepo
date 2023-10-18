@@ -1,4 +1,5 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { colors } from '@monorepo/expo/shared/static';
 import {
   Control,
   Controller,
@@ -74,14 +75,14 @@ export function Input(props: IInputProps) {
             style={[
               styles.input,
               {
-                borderColor: error ? 'red' : '#102C55',
-                height,
+                borderColor: error ? 'red' : colors.darkBlue,
               },
             ]}
           >
             <TextInput
               style={{
-                color: disabled ? 'gray' : 'black',
+                color: disabled ? colors.gray : 'black',
+                height,
                 ...Platform.select({
                   web: {
                     outline: 'none',
@@ -96,7 +97,7 @@ export function Input(props: IInputProps) {
             />
             {value && (
               <Pressable onPress={() => onChange('')} style={styles.icon}>
-                <XmarkIcon size="xs" />
+                <XmarkIcon color={colors.darkBlue} size="xs" />
               </Pressable>
             )}
           </View>
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   input: {
     position: 'relative',
     fontFamily: 'Pragmatica-medium',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
     borderWidth: 1,
     paddingLeft: 16,
     paddingRight: 38,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontSize: 14,
-    color: '#1E3342',
+    color: colors.darkBlue,
     textTransform: 'capitalize',
     fontFamily: 'Pragmatica-medium',
   },
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     right: 16,
     height: 16,
     width: 16,
-    backgroundColor: 'gray',
+    backgroundColor: colors.gray,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
