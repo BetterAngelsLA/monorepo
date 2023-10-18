@@ -82,6 +82,8 @@ export function Input(props: IInputProps) {
             <TextInput
               style={{
                 color: disabled ? colors.gray : 'black',
+                paddingLeft: 16,
+                paddingRight: 38,
                 height,
                 ...Platform.select({
                   web: {
@@ -118,8 +120,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Pragmatica-medium',
     backgroundColor: colors.white,
     borderWidth: 1,
-    paddingLeft: 16,
-    paddingRight: 38,
     borderRadius: 3,
     justifyContent: 'center',
   },
