@@ -31,7 +31,9 @@
     "react-native-gesture-handler": "*",
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "@storybook/react": "*",
+    "react-hook-form": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
