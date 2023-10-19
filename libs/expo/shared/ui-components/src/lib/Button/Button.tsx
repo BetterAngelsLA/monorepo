@@ -1,3 +1,4 @@
+import { colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -10,9 +11,9 @@ import {
 
 type TVariants = {
   [key in 'primary' | 'secondary' | 'negative']: {
-    bg: '#00B3EB' | '#F1F3F3' | '#ffffff';
-    color: '#ffffff' | '#102C55' | '#CB0808';
-    border: '#F1F3F3' | '#DE2F2F' | '#00B3EB';
+    bg: string;
+    color: string;
+    border: string;
   };
 };
 
@@ -23,19 +24,19 @@ const SIZES: Record<'sm' | 'full', DimensionValue> = {
 
 const VARIANTS: TVariants = {
   primary: {
-    bg: '#00B3EB', // skyBlue
-    color: '#ffffff', // white
-    border: '#00B3EB', // skyBlue
+    bg: colors.skyBlue,
+    color: colors.white,
+    border: colors.skyBlue,
   },
   secondary: {
-    bg: '#F1F3F3', // smoke
-    color: '#102C55', // darBlue
-    border: '#F1F3F3', // smoke
+    bg: colors.smoke,
+    color: colors.darkBlue,
+    border: colors.smoke,
   },
   negative: {
-    bg: '#ffffff', // white
-    color: '#CB0808', // red
-    border: '#DE2F2F', // borderRed
+    bg: colors.white,
+    color: colors.red,
+    border: colors.borderRed,
   },
 };
 
@@ -70,8 +71,8 @@ export function Button(props: IButtonProps) {
         {
           width: SIZES[size],
           alignItems: align,
-          backgroundColor: disabled ? '#cbd0d7' : VARIANTS[variant].bg, // disabled
-          borderColor: disabled ? '#cbd0d7' : VARIANTS[variant].border, // disabled
+          backgroundColor: disabled ? colors.disabled : VARIANTS[variant].bg,
+          borderColor: disabled ? colors.disabled : VARIANTS[variant].border,
         },
       ]}
       onPress={onPress}
@@ -82,7 +83,7 @@ export function Button(props: IButtonProps) {
           style={[
             styles.text,
             {
-              color: disabled ? '#697A87' : VARIANTS[variant].color, // darkGray
+              color: disabled ? colors.darkGray : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
             },
           ]}
@@ -97,7 +98,6 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     height: 46,
-
     justifyContent: 'center',
     borderRadius: 3,
     borderWidth: 1,
