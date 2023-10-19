@@ -29,6 +29,8 @@ django-cors-headers = "^4.2.0"
 whitenoise = "^6.5.0"
 boto3 = "^1.28.62"
 vcrpy = "^5.1.0"
+django-post-office = "^3.7.1"
+celery-redbeat = "^2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = { extras = ["compatible-mypy"], version = "^4.2.3" }
