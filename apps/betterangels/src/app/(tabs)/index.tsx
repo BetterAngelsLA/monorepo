@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
-import { Input } from '@monorepo/expo/shared/ui-components';
+import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
+import { Button, Input } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
@@ -11,16 +12,18 @@ export default function TabOneScreen() {
   const { signOut } = useSignOut();
   const { control } = useForm();
 
-  async function getUser() {
-    if (!user) return;
-    console.log(user);
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
         Tab One: user id: {user?.id} username: {user?.username}
       </Text>
+      <Button
+        icon={<ArrowLeftToArcIcon size="xs" />}
+        size="sm"
+        onPress={signOut}
+        variant="negative"
+        title="Sign Out"
+      />
       <Input
         componentStyle={{ marginVertical: 10 }}
         label="Test"
@@ -28,12 +31,6 @@ export default function TabOneScreen() {
         name="test"
         control={control}
       />
-      <Pressable onPress={() => signOut()}>
-        <Text>Sign Out</Text>
-      </Pressable>
-      <Pressable onPress={() => getUser()}>
-        <Text>Fetch User</Text>
-      </Pressable>
       <View
         style={styles.separator}
         lightColor="#eee"
