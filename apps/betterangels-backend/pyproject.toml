@@ -38,6 +38,7 @@ django-stubs-ext = "^4.2.2"
 djangorestframework-stubs = { extras = [
   "compatible-mypy",
 ], version = "^3.14.2" }
+vcrpy = "^5.1.0"
 
 [build-system]
 requires = ["poetry-core"]
