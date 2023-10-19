@@ -17,7 +17,7 @@ export default function AuthContainer({
   return (
     <ImageBackground
       resizeMode="cover"
-      style={{ backgroundColor: colors.background, flex: 1 }}
+      style={{ backgroundColor: colors.brandDarkBlue, flex: 1 }}
       source={imageSource}
     >
       <View style={styles.container}>{children}</View>
@@ -28,5 +28,6 @@ export default function AuthContainer({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 16,
   },
 });

@@ -4,13 +4,14 @@ import {
   useStore,
   useUser,
 } from '@monorepo/expo/betterangels';
+import { Button } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Linking, SafeAreaView, Text } from 'react-native';
+import { Linking, SafeAreaView, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 import Logo from './assets/images/logo.svg';
 
@@ -158,14 +159,31 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <SafeAreaView
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
       >
+        <View />
         <Logo width={200} height={30} />
-        <Button
-          title="Login with Google"
-          onPress={() => promptAsync({ showInRecents: false })}
-          disabled={!generatedState && !request}
-        />
+        <View style={{ width: '100%', paddingBottom: 113 }}>
+          <Button
+            style={{ marginBottom: 8 }}
+            title="Sign In"
+            size="full"
+            variant="sky"
+            onPress={() => promptAsync({ showInRecents: false })}
+            disabled={!generatedState && !request}
+          />
+          <Button
+            size="full"
+            title="Sign Up"
+            variant="sky"
+            onPress={() => promptAsync({ showInRecents: false })}
+            disabled={!generatedState && !request}
+          />
+        </View>
       </SafeAreaView>
     </AuthContainer>
   );

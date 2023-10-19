@@ -1,9 +1,10 @@
 export default {
-  skyBlue: '#00B3EB',
+  brandLightBlue: '#9CDCED',
+  brandBlue: '#375C76',
+  brandDarkBlue: '#1E3342',
   blue: '#00B3EB',
   darkBlue: '#102C55',
   white: '#ffffff',
-  background: '#1E3342',
   lightGray: '#F1F3F3',
   gray: '#9FAAB2',
   darkGray: '#697A87',

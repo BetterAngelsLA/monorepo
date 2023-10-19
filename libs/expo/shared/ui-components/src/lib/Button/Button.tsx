@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative']: {
+  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
     bg: string;
     color: string;
     border: string;
@@ -23,15 +23,25 @@ const SIZES: Record<'sm' | 'full', DimensionValue> = {
 };
 
 const VARIANTS: TVariants = {
-  primary: {
-    bg: colors.skyBlue,
+  dark: {
+    bg: colors.darkBlue,
     color: colors.white,
-    border: colors.skyBlue,
+    border: colors.darkBlue,
+  },
+  sky: {
+    bg: colors.brandLightBlue,
+    color: colors.brandDarkBlue,
+    border: colors.brandLightBlue,
+  },
+  primary: {
+    bg: colors.blue,
+    color: colors.white,
+    border: colors.blue,
   },
   secondary: {
-    bg: colors.smoke,
-    color: colors.darkBlue,
-    border: colors.smoke,
+    bg: colors.lightGray,
+    color: colors.blue,
+    border: colors.lightGray,
   },
   negative: {
     bg: colors.white,
@@ -44,7 +54,7 @@ interface IButtonProps {
   title: string;
   size: 'sm' | 'full';
   onPress: () => void;
-  variant: 'primary' | 'secondary' | 'negative';
+  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
