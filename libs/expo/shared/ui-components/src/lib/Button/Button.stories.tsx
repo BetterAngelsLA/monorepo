@@ -1,3 +1,4 @@
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { Button } from './Button';
@@ -7,6 +8,8 @@ const ButtonMeta: ComponentMeta<typeof Button> = {
   component: Button,
   args: {
     title: 'Hello world',
+    variant: 'primary',
+    icon: <PlusIcon size="xs" />,
   },
   decorators: [
     (Story) => (
