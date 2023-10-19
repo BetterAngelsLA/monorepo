@@ -1,17 +1,21 @@
 export const ICON_SIZE = {
   xs: {
+    w: 8,
+    h: 8,
+  },
+  sm: {
     w: 16,
     h: 16,
   },
-  sm: {
+  md: {
     w: 24,
     h: 24,
   },
-  md: {
+  lg: {
     w: 32,
     h: 32,
   },
-  lg: {
+  xl: {
     w: 48,
     h: 48,
   },

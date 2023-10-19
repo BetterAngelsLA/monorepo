@@ -2,13 +2,15 @@ import { StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
 import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { Button, Input } from '@monorepo/expo/shared/ui-components';
+import { useForm } from 'react-hook-form';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
 export default function TabOneScreen() {
   const { user } = useUser();
   const { signOut } = useSignOut();
+  const { control } = useForm();
 
   return (
     <View style={styles.container}>
@@ -21,6 +23,13 @@ export default function TabOneScreen() {
         onPress={signOut}
         variant="negative"
         title="Sign Out"
+      />
+      <Input
+        componentStyle={{ marginVertical: 10 }}
+        label="Test"
+        height={56}
+        name="test"
+        control={control}
       />
       <View
         style={styles.separator}
@@ -37,6 +46,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 20,

@@ -1,0 +1,16 @@
+{
+  "name": "expo-shared-static",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/shared/static/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/expo/shared/static/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
