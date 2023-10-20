@@ -1,13 +1,19 @@
-import { fetchUser, useStore, useUser } from '@monorepo/expo/betterangels';
-import { HouseIcon } from '@monorepo/expo/shared/icons';
+import {
+  AuthContainer,
+  fetchUser,
+  useStore,
+  useUser,
+} from '@monorepo/expo/betterangels';
+import { Button } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Linking, SafeAreaView, Text } from 'react-native';
+import { Linking, SafeAreaView, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
+import Logo from './assets/images/logo.svg';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -151,15 +157,36 @@ export default function SignIn() {
   }
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-    >
-      <HouseIcon color="#ffffff" size="md" />
-      <Button
-        title="Login with Google"
-        onPress={() => promptAsync({ showInRecents: false })}
-        disabled={!generatedState && !request}
-      />
-    </SafeAreaView>
+    <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <View />
+        <Logo width={200} height={30} />
+        <View style={{ width: '100%', paddingBottom: 113 }}>
+          <Button
+            style={{ marginBottom: 8 }}
+            title="Sign in with Google"
+            size="full"
+            variant="dark"
+            align="flex-start"
+            onPress={() => promptAsync({ showInRecents: false })}
+            disabled={!generatedState && !request}
+          />
+          <Button
+            size="full"
+            title="Sign in with Google"
+            align="flex-start"
+            variant="dark"
+            onPress={() => promptAsync({ showInRecents: false })}
+            disabled={!generatedState && !request}
+          />
+        </View>
+      </SafeAreaView>
+    </AuthContainer>
   );
 }
