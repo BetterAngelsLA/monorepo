@@ -71,6 +71,7 @@ RUN apt-get update \
        wget \
        git \
        build-essential \
+       awscli \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
