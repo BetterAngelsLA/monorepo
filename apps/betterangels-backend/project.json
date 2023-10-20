@@ -60,7 +60,7 @@
     "start-worker": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "celery -A betterangels_backend worker -l INFO",
+        "command": "poetry run celery -A betterangels_backend worker -l INFO",
         "cwd": "apps/betterangels-backend"
       }
     },
