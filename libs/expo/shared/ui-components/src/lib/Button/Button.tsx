@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative']: {
+  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
     bg: string;
     color: string;
     border: string;
@@ -23,15 +23,25 @@ const SIZES: Record<'sm' | 'full', DimensionValue> = {
 };
 
 const VARIANTS: TVariants = {
-  primary: {
-    bg: colors.skyBlue,
+  dark: {
+    bg: colors.brandBlue,
     color: colors.white,
-    border: colors.skyBlue,
+    border: colors.brandBlue,
+  },
+  sky: {
+    bg: colors.brandLightBlue,
+    color: colors.brandDarkBlue,
+    border: colors.brandLightBlue,
+  },
+  primary: {
+    bg: colors.blue,
+    color: colors.white,
+    border: colors.blue,
   },
   secondary: {
-    bg: colors.smoke,
-    color: colors.darkBlue,
-    border: colors.smoke,
+    bg: colors.lightGray,
+    color: colors.blue,
+    border: colors.lightGray,
   },
   negative: {
     bg: colors.white,
@@ -43,8 +53,8 @@ const VARIANTS: TVariants = {
 interface IButtonProps {
   title: string;
   size: 'sm' | 'full';
-  onPress: () => void;
-  variant: 'primary' | 'secondary' | 'negative';
+  onPress?: () => void;
+  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
@@ -101,10 +111,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 3,
     borderWidth: 1,
+    paddingHorizontal: 16,
   },
   text: {
     fontSize: 16,
-    textTransform: 'capitalize',
     letterSpacing: 0.4,
     fontFamily: 'Pragmatica-medium',
   },

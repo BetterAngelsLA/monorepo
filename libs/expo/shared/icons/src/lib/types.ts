@@ -1,5 +1,5 @@
 export interface IIconProps {
-  size: TIconSizes;
+  size?: TIconSizes;
   color?: string;
 }
 
