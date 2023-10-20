@@ -244,6 +244,7 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     paddingTop: 170,
+    flex: 1,
   },
   welcome: {
     fontFamily: 'IBM-semibold',
