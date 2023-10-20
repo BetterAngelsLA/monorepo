@@ -170,16 +170,18 @@ export default function SignIn() {
         <View style={{ width: '100%', paddingBottom: 113 }}>
           <Button
             style={{ marginBottom: 8 }}
-            title="Sign In"
+            title="Sign in with Google"
             size="full"
-            variant="sky"
+            variant="dark"
+            align="flex-start"
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
           />
           <Button
             size="full"
-            title="Sign Up"
-            variant="sky"
+            title="Sign in with Google"
+            align="flex-start"
+            variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
           />

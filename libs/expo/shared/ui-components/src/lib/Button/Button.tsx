@@ -24,9 +24,9 @@ const SIZES: Record<'sm' | 'full', DimensionValue> = {
 
 const VARIANTS: TVariants = {
   dark: {
-    bg: colors.darkBlue,
+    bg: colors.brandBlue,
     color: colors.white,
-    border: colors.darkBlue,
+    border: colors.brandBlue,
   },
   sky: {
     bg: colors.brandLightBlue,
@@ -53,7 +53,7 @@ const VARIANTS: TVariants = {
 interface IButtonProps {
   title: string;
   size: 'sm' | 'full';
-  onPress: () => void;
+  onPress?: () => void;
   variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
@@ -111,10 +111,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 3,
     borderWidth: 1,
+    paddingHorizontal: 16,
   },
   text: {
     fontSize: 16,
-    textTransform: 'capitalize',
     letterSpacing: 0.4,
     fontFamily: 'Pragmatica-medium',
   },
