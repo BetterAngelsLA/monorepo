@@ -9,7 +9,7 @@
     "splash": {
       "image": "./src/app/assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1E3342"
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
@@ -23,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/app/assets/images/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#1E3342"
       },
       "package": "la.betterangels.app"
     },
