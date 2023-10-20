@@ -57,7 +57,7 @@
         "cwd": "apps/betterangels-backend"
       }
     },
-    "start-celery": {
+    "start-worker": {
       "executor": "@nxlv/python:run-commands",
       "options": {
         "command": "celery -A betterangels_backend worker -l INFO",
