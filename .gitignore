@@ -71,5 +71,6 @@ __pycache__
 .mypy_cache
 poetry.lock
 !/poetry.lock
+tmp
 
 .scripts/

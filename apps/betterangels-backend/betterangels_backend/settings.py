@@ -25,6 +25,7 @@ env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
     ALLOWED_HOSTS=(list, []),
     AWS_REGION=(str, ""),
+    CELERY_BROKER_URL=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_HTTPONLY=(bool, False),
     CSRF_COOKIE_SECURE=(bool, False),
@@ -34,6 +35,7 @@ env = environ.Env(
     CONN_MAX_AGE=(int, 300),
     LANGUAGE_COOKIE_HTTPONLY=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, False),
+    POST_OFFICE_EMAIL_BACKEND=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
@@ -68,15 +70,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     "django_extensions",
-    "rest_framework",
-    "dj_rest_auth",
+    # 3rd Party
     "allauth",
     "allauth.account",
-    "dj_rest_auth.registration",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "corsheaders",
-    # apps
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "post_office",
+    "rest_framework",
+    # Our Apps
     "accounts",
     "dwelling",
 ]
@@ -153,6 +157,8 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
+# Celary
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -243,6 +249,17 @@ email address. In case of "optional", the email verification mail is
 still sent, whereas in case of “none” no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# EMAIL Backend
+EMAIL_BACKEND = "post_office.EmailBackend"
+POST_OFFICE = {
+    "BACKENDS": {
+        "default": env("POST_OFFICE_EMAIL_BACKEND"),
+    },
+    "CELERY_ENABLED": True,
+}
+EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+
 
 SITE_ID = 1
 
