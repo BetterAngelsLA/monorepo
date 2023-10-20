@@ -26,6 +26,7 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     AWS_REGION=(str, ""),
     CELERY_BROKER_URL=(str, ""),
+    CELERY_REDBEAT_REDIS_URL=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_HTTPONLY=(bool, False),
     CSRF_COOKIE_SECURE=(bool, False),
@@ -159,6 +160,7 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
 # Celary
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_REDBEAT_REDIS_URL = env("CELERY_REDBEAT_REDIS_URL")
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
