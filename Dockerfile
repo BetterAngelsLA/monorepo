@@ -76,6 +76,7 @@ RUN apt-get update \
     && apt-get install -y \
     libpq5 \
     gdal-bin \
+    # Add session manager to allow Fargate sshing
     && curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb" \
     && dpkg -i session-manager-plugin.deb \
     && rm session-manager-plugin.deb \
