@@ -24,7 +24,9 @@ django_stubs_ext.monkeypatch()
 env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
     ALLOWED_HOSTS=(list, []),
-    AWS_REGION=(str, ""),
+    AWS_REGION=(str, "us-west-2"),
+    AWS_SES_REGION_NAME=(str, ""),
+    AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
@@ -253,6 +255,11 @@ still sent, whereas in case of “none” no email verification mails are sent.
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 # EMAIL Backend
+AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
+AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME")
+AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
+USE_SES_V2 = True
+
 EMAIL_BACKEND = "post_office.EmailBackend"
 POST_OFFICE = {
     "BACKENDS": {

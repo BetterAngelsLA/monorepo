@@ -31,9 +31,7 @@ boto3 = "^1.28.62"
 django-post-office = "^3.7.1"
 celery-redbeat = "^2.1.1"
 celery = {extras = ["redis"], version = "^5.3.4"}
-
-[tool.poetry.group.dev.dependencies]
-
+django-ses = "^3.5.0"
 
 [build-system]
 requires = ["poetry-core"]

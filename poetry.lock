@@ -65,6 +65,7 @@ django-cors-headers = "^4.2.0"
 django-environ = "^0.10.0"
 django-extensions = "^3.2.3"
 django-post-office = "^3.7.1"
+django-ses = "^3.5.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 psycopg = "3.1.10"
 whitenoise = "^6.5.0"
@@ -708,6 +709,26 @@ pytz = "*"
 [package.extras]
 prevent-xss = ["bleach"]
 test = ["tox (>=2.3)"]
+
+[[package]]
+name = "django-ses"
+version = "3.5.0"
+description = "A Django email backend for Amazon's Simple Email Service"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "django_ses-3.5.0-py3-none-any.whl", hash = "sha256:3522fe531155eb06bb015b3b36324c059194450633b33f9bd5bc9d1328822fe2"},
+    {file = "django_ses-3.5.0.tar.gz", hash = "sha256:dc1644f50608fbf3a64f085a371c61d56d68eba3c5efa69651f13dc3ba05049d"},
+]
+
+[package.dependencies]
+boto3 = ">=1.0.0"
+django = ">=2.2"
+pytz = ">=2016.10"
+
+[package.extras]
+bounce = ["cryptography (>=36.0.2)", "requests (>=2.27.1)"]
+events = ["cryptography (>=36.0.2)", "requests (>=2.27.1)"]
 
 [[package]]
 name = "django-stubs"
@@ -2180,4 +2201,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "413e0be3b4616e31dc8a97772c49f827b84b968ec081478538e59d9edff087e4"
+content-hash = "69bd29278366319b9c3c09eb59d2b4d39f7e02f9ed2c75db72564a4331d1f207"
