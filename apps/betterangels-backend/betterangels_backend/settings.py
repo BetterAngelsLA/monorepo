@@ -35,6 +35,7 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    DJANGO_CACHE_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
     LANGUAGE_COOKIE_HTTPONLY=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, False),
@@ -164,6 +165,15 @@ WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_REDBEAT_REDIS_URL = env("CELERY_REDBEAT_REDIS_URL")
 
+# Caches
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("DJANGO_CACHE_URL"),
+    }
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
@@ -256,7 +266,6 @@ still sent, whereas in case of “none” no email verification mails are sent.
 
 # EMAIL Backend
 AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
-AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME")
 AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
@@ -285,6 +294,8 @@ LANGUAGE_COOKIE_SECURE = env("LANGUAGE_COOKIE_SECURE")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
 SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_SAVE_EVERY_REQUEST = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
