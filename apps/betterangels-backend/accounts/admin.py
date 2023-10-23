@@ -17,7 +17,6 @@ class UserAdmin(BaseUserAdmin):
     ]
 
 
-admin.site.register(Session)
 admin.site.register(User, UserAdmin)
 
 admin.site.login = staff_member_required(  # type: ignore
