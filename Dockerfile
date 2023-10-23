@@ -68,16 +68,21 @@ RUN pip install poetry==1.6.1
 RUN apt-get update \
     # Install Systems Packages
     && apt-get install -y \
-       wget \
-       git \
-       build-essential \
-       awscli \
+      build-essential \
+      curl \
+      git \
+      wget \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
     gdal-bin \
+    && curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb" \
+    && dpkg -i session-manager-plugin.deb \
+    && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN 
 
 FROM base as development
 # TODO: This is only for dev so we can likely make this a dev target instead of global
