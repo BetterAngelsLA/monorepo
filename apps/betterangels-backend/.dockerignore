@@ -1,9 +1,0 @@
-node_modules
-.venv
-.env
-.vscode
-.devcontainer
-.yarn
-.mypy_cache
-dist
-reports
