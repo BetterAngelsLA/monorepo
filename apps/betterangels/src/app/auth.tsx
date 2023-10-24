@@ -25,7 +25,7 @@ export default function Auth() {
               router.push({
                 pathname: '/sign-in',
                 params: {
-                  signIn: true,
+                  type: 'sign-in',
                 },
               })
             }
@@ -34,7 +34,14 @@ export default function Auth() {
             variant="sky"
           />
           <Button
-            onPress={() => router.push('/sign-in')}
+            onPress={() =>
+              router.push({
+                pathname: '/sign-in',
+                params: {
+                  type: 'sign-up',
+                },
+              })
+            }
             title="SIGN UP"
             size="full"
             variant="sky"

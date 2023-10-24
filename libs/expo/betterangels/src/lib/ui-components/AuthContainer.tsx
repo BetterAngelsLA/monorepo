@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import {
   ImageBackground,
   ImageSourcePropType,
+  StatusBar,
   StyleSheet,
   View,
 } from 'react-native';
@@ -15,13 +16,16 @@ export default function AuthContainer({
   children: ReactNode;
 }) {
   return (
-    <ImageBackground
-      resizeMode="cover"
-      style={{ backgroundColor: colors.brandDarkBlue, flex: 1 }}
-      source={imageSource}
-    >
-      <View style={styles.container}>{children}</View>
-    </ImageBackground>
+    <>
+      <StatusBar barStyle="light-content" />
+      <ImageBackground
+        resizeMode="cover"
+        style={{ backgroundColor: colors.brandDarkBlue, flex: 1 }}
+        source={imageSource}
+      >
+        <View style={styles.container}>{children}</View>
+      </ImageBackground>
+    </>
   );
 }
 
