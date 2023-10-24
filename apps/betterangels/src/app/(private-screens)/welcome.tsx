@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 
+import { handleEmailPress } from '@monorepo/expo/betterangels';
 import { colors } from '@monorepo/expo/shared/static';
 import { Text, View } from '../components/Themed';
 
@@ -16,12 +17,24 @@ export default function Welcome() {
         might qualify for or contribute to reporting immediate needs here.
       </Text>
       <Text style={styles.text}>
-        For now, please wait for an email sent to your work email address from
-        NewAccounts@betterangels.la that will give you the link to your work
-        area.
+        For now, please wait for an email sent to your work email address from{' '}
+        <Text
+          onPress={() => handleEmailPress('newaccounts@betterangels.la')}
+          style={styles.email}
+        >
+          NewAccounts@betterangels.la
+        </Text>{' '}
+        that will give you the link to your work area.
       </Text>
       <Text style={styles.text}>
-        Please contact support@betterangels.la with any concerns
+        Please contact{' '}
+        <Text
+          onPress={() => handleEmailPress('support@betterangels.la')}
+          style={styles.email}
+        >
+          support@betterangels.la
+        </Text>{' '}
+        with any concerns
       </Text>
     </View>
   );
@@ -51,5 +64,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     lineHeight: 24,
+    color: colors.darkBlue,
+  },
+  email: {
+    textDecorationLine: 'underline',
+    fontFamily: 'Pragmatica-book',
+    fontSize: 16,
+    marginBottom: 20,
+    lineHeight: 24,
+    color: colors.darkBlue,
   },
 });
