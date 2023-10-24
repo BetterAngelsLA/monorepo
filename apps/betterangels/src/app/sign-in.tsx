@@ -263,13 +263,13 @@ const styles = StyleSheet.create({
     marginBottom: 56,
   },
   message: {
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     color: colors.white,
     fontSize: 16,
     marginBottom: 24,
   },
   question: {
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     color: colors.white,
     fontSize: 16,
   },

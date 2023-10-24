@@ -59,7 +59,7 @@ interface IButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   icon?: ReactNode;
-  fontFamily?: 'Pragmatica-medium' | 'IBM-bold';
+  fontFamily?: 'Pragmatica-book' | 'IBM-bold';
 }
 
 export function Button(props: IButtonProps) {
@@ -72,7 +72,7 @@ export function Button(props: IButtonProps) {
     disabled,
     style,
     icon,
-    fontFamily = 'Pragmatica-medium',
+    fontFamily = 'Pragmatica-book',
   } = props;
   return (
     <Pressable

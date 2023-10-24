@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     marginBottom: 56,
   },
   text: {
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     fontSize: 16,
     marginBottom: 20,
     lineHeight: 24,
