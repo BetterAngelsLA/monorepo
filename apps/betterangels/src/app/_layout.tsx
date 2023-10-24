@@ -1,13 +1,17 @@
 import { UserProvider } from '@monorepo/expo/betterangels';
+import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
+import { colors } from '@monorepo/expo/shared/static';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
+import { SplashScreen, Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { View, useColorScheme } from 'react-native';
+import Logo from './assets/images/logo.svg';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -72,6 +76,7 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const router = useRouter();
 
   return (
     <UserProvider apiUrl={apiUrl}>
@@ -79,7 +84,26 @@ function RootLayoutNav() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="sign-in"
+            options={{
+              headerTransparent: true,
+              headerLeft: () => (
+                <IconButton
+                  style={{ marginLeft: -17 }}
+                  variant="transparent"
+                  onPress={() => router.back()}
+                >
+                  <ArrowLeftIcon color={colors.white} size="sm" />
+                </IconButton>
+              ),
+              headerTitle: () => (
+                <View>
+                  <Logo color={colors.white} width={130} height={19.5} />
+                </View>
+              ),
+            }}
+          />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>

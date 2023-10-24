@@ -59,6 +59,7 @@ interface IButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   icon?: ReactNode;
+  fontFamily?: 'Pragmatica-medium' | 'IBM-bold';
 }
 
 export function Button(props: IButtonProps) {
@@ -71,6 +72,7 @@ export function Button(props: IButtonProps) {
     disabled,
     style,
     icon,
+    fontFamily = 'Pragmatica-medium',
   } = props;
   return (
     <Pressable
@@ -95,6 +97,7 @@ export function Button(props: IButtonProps) {
             {
               color: disabled ? colors.darkGray : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
+              fontFamily,
             },
           ]}
         >
@@ -116,7 +119,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     letterSpacing: 0.4,
-    fontFamily: 'Pragmatica-medium',
   },
   wrapper: {
     flexDirection: 'row',
