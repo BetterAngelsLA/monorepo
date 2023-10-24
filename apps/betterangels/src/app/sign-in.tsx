@@ -13,7 +13,7 @@ import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
@@ -173,19 +173,21 @@ export default function SignIn() {
       https://github.com/expo/expo/issues/12044#issuecomment-1401357869
       https://github.com/expo/expo/issues/12044#issuecomment-1431310529
     */
-    const listener = (event: { url: string }) => {
-      void handleDeepLinking(event.url);
-      subscription.remove();
-    };
-    const subscription = Linking.addEventListener('url', listener);
-    return () => {
-      subscription.remove();
-    };
+
+    if (AppState.currentState === 'active') {
+      const listener = (event: { url: string }) => {
+        void handleDeepLinking(event.url);
+      };
+      const subscription = Linking.addEventListener('url', listener);
+      return () => {
+        subscription.remove();
+      };
+    }
   }, [handleDeepLinking]);
 
   useEffect(() => {
     void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
-  }, [response, handleDeepLinking]);
+  }, [response]);
 
   useEffect(() => {
     setFlow(type);
