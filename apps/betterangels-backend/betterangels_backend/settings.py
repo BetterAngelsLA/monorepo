@@ -51,6 +51,7 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     USE_IAM_AUTH=(bool, False),
 )
 

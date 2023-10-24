@@ -1,11 +1,12 @@
-**/node_modules
+node_modules
+.vscode
+.devcontainer
+.yarn
+dist
+reports
+
 **/.venv
 **/.env
-**/.vscode
-**/.devcontainer
-**/.yarn
 **/.mypy_cache
-**/dist
-**/reports
 **/tmp
 
