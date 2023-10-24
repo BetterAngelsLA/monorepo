@@ -1,42 +1,45 @@
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { handleEmailPress } from '@monorepo/expo/betterangels';
-import { colors } from '@monorepo/expo/shared/static';
-import { Text, View } from '../components/Themed';
+import { H1, H2, P } from '@monorepo/expo/shared/ui-components';
 
 export default function Welcome() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Thank you,</Text>
-      <Text style={styles.subtitle}>
-        for signing up and creating your Better Angels Account!
-      </Text>
-      <Text style={styles.text}>Welcome!</Text>
-      <Text style={styles.text}>
+    <ScrollView contentContainerStyle={styles.container}>
+      <H1 mb={16} textTransform="uppercase">
+        Thank you,
+      </H1>
+      <H2 mb={56}>for signing up and creating your Better Angels Account!</H2>
+      <P mb={20}>Welcome!</P>
+      <P mb={20}>
         In the future, you'll be able to request resources for yourself that you
         might qualify for or contribute to reporting immediate needs here.
-      </Text>
-      <Text style={styles.text}>
+      </P>
+      <P mb={20}>
+        In the future, you'll be able to request resources for yourself that you
+        might qualify for or contribute to reporting immediate needs here.
+      </P>
+      <P>
         For now, please wait for an email sent to your work email address from{' '}
-        <Text
+        <P
+          textDecorationLine="underline"
           onPress={() => handleEmailPress('newaccounts@betterangels.la')}
-          style={styles.email}
         >
           NewAccounts@betterangels.la
-        </Text>{' '}
+        </P>{' '}
         that will give you the link to your work area.
-      </Text>
-      <Text style={styles.text}>
+      </P>
+      <P>
         Please contact{' '}
-        <Text
+        <P
+          textDecorationLine="underline"
           onPress={() => handleEmailPress('support@betterangels.la')}
-          style={styles.email}
         >
           support@betterangels.la
-        </Text>{' '}
+        </P>{' '}
         with any concerns
-      </Text>
-    </View>
+      </P>
+    </ScrollView>
   );
 }
 
@@ -45,33 +48,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'IBM-bold',
-    textTransform: 'uppercase',
-    color: colors.darkBlue,
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 24,
-    fontFamily: 'IBM-light',
-    color: colors.darkBlue,
-    marginBottom: 56,
-  },
-  text: {
-    fontFamily: 'Pragmatica-book',
-    fontSize: 16,
-    marginBottom: 20,
-    lineHeight: 24,
-    color: colors.darkBlue,
-  },
-  email: {
-    textDecorationLine: 'underline',
-    fontFamily: 'Pragmatica-book',
-    fontSize: 16,
-    marginBottom: 20,
-    lineHeight: 24,
-    color: colors.darkBlue,
   },
 });

@@ -60,6 +60,12 @@ interface IButtonProps {
   style?: ViewStyle;
   icon?: ReactNode;
   fontFamily?: 'Pragmatica-book' | 'IBM-bold';
+  mb?: number;
+  mt?: number;
+  my?: number;
+  mx?: number;
+  ml?: number;
+  mr?: number;
 }
 
 export function Button(props: IButtonProps) {
@@ -73,6 +79,12 @@ export function Button(props: IButtonProps) {
     style,
     icon,
     fontFamily = 'Pragmatica-book',
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
   } = props;
   return (
     <Pressable
@@ -85,6 +97,12 @@ export function Button(props: IButtonProps) {
           alignItems: align,
           backgroundColor: disabled ? colors.disabled : VARIANTS[variant].bg,
           borderColor: disabled ? colors.disabled : VARIANTS[variant].border,
+          marginBottom: mb,
+          marginTop: mt,
+          marginLeft: ml,
+          marginRight: mr,
+          marginHorizontal: mx,
+          marginVertical: my,
         },
       ]}
       onPress={onPress}

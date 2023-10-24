@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { Button, H1, H4, P } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
@@ -200,14 +200,25 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
-        <Text style={styles.welcome}>{FLOW[flow].welcome}</Text>
-        <Text style={styles.title}>{FLOW[flow].title}</Text>
+        <H4 textTransform="uppercase" mb={8} color={colors.brandYellow}>
+          {FLOW[flow].welcome}
+        </H4>
+        <H1
+          mb={56}
+          color={colors.brandAngelBlue}
+          fontSize={32}
+          textTransform="uppercase"
+        >
+          {FLOW[flow].title}
+        </H1>
         {FLOW[flow].message && (
-          <Text style={styles.message}>{FLOW[flow].message}</Text>
+          <P mb={24} color={colors.white}>
+            {FLOW[flow].message}
+          </P>
         )}
         <View style={{ width: '100%', marginBottom: 24 }}>
           <Button
-            style={{ marginBottom: 8 }}
+            mb={8}
             title={`${FLOW[flow].link} with Microsoft`}
             disabled
             icon={<Windowsicon size="sm" />}
@@ -229,14 +240,15 @@ export default function SignIn() {
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={styles.question}>{FLOW[flow].question}</Text>
-          <Text
-            style={styles.link}
+          <P color={colors.white}>{FLOW[flow].question}</P>
+          <P
+            color={colors.brandLightBlue}
+            textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
           >
             {' '}
             {FLOW[flow].link}
-          </Text>
+          </P>
         </View>
       </View>
     </AuthContainer>
@@ -247,13 +259,6 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 170,
     flex: 1,
-  },
-  welcome: {
-    fontFamily: 'IBM-semibold',
-    fontSize: 16,
-    textTransform: 'uppercase',
-    color: colors.brandYellow,
-    marginBottom: 8,
   },
   title: {
     fontFamily: 'IBM-semibold',
