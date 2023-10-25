@@ -4,6 +4,12 @@ const { mergeConfig } = require('metro-config');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const defaultConfig = getDefaultConfig(__dirname);
+defaultConfig.transformer.minifierConfig.compress.drop_console = true;
+defaultConfig.resolver.sourceExts = [
+  ...defaultConfig.resolver.sourceExts,
+  'mjs',
+  'cjs',
+];
 const { assetExts, sourceExts } = defaultConfig.resolver;
 
 /**
