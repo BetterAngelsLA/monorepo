@@ -20,7 +20,7 @@ export default function Auth() {
         <Logo width={200} height={30} />
         <View style={styles.buttonsContainer}>
           <Button
-            style={styles.button}
+            mb={8}
             onPress={() =>
               router.push({
                 pathname: '/sign-in',
@@ -56,8 +56,5 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     width: '100%',
     paddingBottom: 113,
-  },
-  button: {
-    marginBottom: 8,
   },
 });
