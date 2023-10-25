@@ -10,6 +10,23 @@ from .models import User
 class UserAdmin(BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        (("Personal info"), {"fields": ("first_name", "last_name")}),
+        (
+            ("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (("Important dates"), {"fields": ("last_login",)}),
+    )
     model = User
     list_display = [
         "email",
