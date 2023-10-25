@@ -5,10 +5,11 @@ import { BodyText } from './BodyText';
 const BodyTextMeta: ComponentMeta<typeof BodyText> = {
   title: 'BodyText',
   component: BodyText,
+  args: { children: 'Paragraph' },
   decorators: [
     (Story) => (
       <View style={{ padding: 26 }}>
-        <Story>Paragraph</Story>
+        <Story />
       </View>
     ),
   ],

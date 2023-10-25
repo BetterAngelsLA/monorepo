@@ -5,10 +5,11 @@ import { H3 } from './H3';
 const H3Meta: ComponentMeta<typeof H3> = {
   title: 'H3',
   component: H3,
+  args: { children: 'Heading 3' },
   decorators: [
     (Story) => (
       <View style={{ padding: 26 }}>
-        <Story>Header 3</Story>
+        <Story />
       </View>
     ),
   ],
