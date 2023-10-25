@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   },
   input: {
     position: 'relative',
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderRadius: 3,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.darkBlue,
     textTransform: 'capitalize',
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
   },
   required: {
     marginLeft: 2,

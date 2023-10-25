@@ -6,14 +6,14 @@ import {
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
@@ -173,19 +173,21 @@ export default function SignIn() {
       https://github.com/expo/expo/issues/12044#issuecomment-1401357869
       https://github.com/expo/expo/issues/12044#issuecomment-1431310529
     */
-    const listener = (event: { url: string }) => {
-      void handleDeepLinking(event.url);
-      subscription.remove();
-    };
-    const subscription = Linking.addEventListener('url', listener);
-    return () => {
-      subscription.remove();
-    };
+
+    if (AppState.currentState === 'active') {
+      const listener = (event: { url: string }) => {
+        void handleDeepLinking(event.url);
+      };
+      const subscription = Linking.addEventListener('url', listener);
+      return () => {
+        subscription.remove();
+      };
+    }
   }, [handleDeepLinking]);
 
   useEffect(() => {
     void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
-  }, [response, handleDeepLinking]);
+  }, [response]);
 
   useEffect(() => {
     setFlow(type);
@@ -198,14 +200,25 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
-        <Text style={styles.welcome}>{FLOW[flow].welcome}</Text>
-        <Text style={styles.title}>{FLOW[flow].title}</Text>
+        <H4 textTransform="uppercase" mb={8} color={colors.brandYellow}>
+          {FLOW[flow].welcome}
+        </H4>
+        <H1
+          mb={56}
+          color={colors.brandAngelBlue}
+          fontSize={32}
+          textTransform="uppercase"
+        >
+          {FLOW[flow].title}
+        </H1>
         {FLOW[flow].message && (
-          <Text style={styles.message}>{FLOW[flow].message}</Text>
+          <BodyText mb={24} color={colors.white}>
+            {FLOW[flow].message}
+          </BodyText>
         )}
         <View style={{ width: '100%', marginBottom: 24 }}>
           <Button
-            style={{ marginBottom: 8 }}
+            mb={8}
             title={`${FLOW[flow].link} with Microsoft`}
             disabled
             icon={<Windowsicon size="sm" />}
@@ -227,14 +240,15 @@ export default function SignIn() {
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={styles.question}>{FLOW[flow].question}</Text>
-          <Text
-            style={styles.link}
+          <BodyText color={colors.white}>{FLOW[flow].question}</BodyText>
+          <BodyText
+            color={colors.brandLightBlue}
+            textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
           >
             {' '}
             {FLOW[flow].link}
-          </Text>
+          </BodyText>
         </View>
       </View>
     </AuthContainer>
@@ -246,13 +260,6 @@ const styles = StyleSheet.create({
     paddingTop: 170,
     flex: 1,
   },
-  welcome: {
-    fontFamily: 'IBM-semibold',
-    fontSize: 16,
-    textTransform: 'uppercase',
-    color: colors.brandYellow,
-    marginBottom: 8,
-  },
   title: {
     fontFamily: 'IBM-semibold',
     fontSize: 32,
@@ -261,13 +268,13 @@ const styles = StyleSheet.create({
     marginBottom: 56,
   },
   message: {
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     color: colors.white,
     fontSize: 16,
     marginBottom: 24,
   },
   question: {
-    fontFamily: 'Pragmatica-medium',
+    fontFamily: 'Pragmatica-book',
     color: colors.white,
     fontSize: 16,
   },

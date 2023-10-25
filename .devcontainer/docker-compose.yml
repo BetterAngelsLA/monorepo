@@ -10,6 +10,8 @@ services:
     # build:
     #   context: .
     #   dockerfile: .devcontainer/Dockerfile
+    environment:
+      - AWS_CONFIG_FILE=/workspace/.aws/config
 
     volumes:
       # Update this to wherever you want VS Code to mount the folder of your project

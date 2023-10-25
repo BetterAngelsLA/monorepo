@@ -23,6 +23,11 @@ export default function TabLayout() {
     return <Redirect href="/auth" />;
   }
 
+  if (user && !user.hasOrganization) {
+    // TODO: this part is only for testing and should be changed
+    return <Redirect href="/welcome" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

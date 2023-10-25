@@ -28,14 +28,11 @@ dj-rest-auth = { extras = ["with-social"], version = "^5.0.0" }
 django-cors-headers = "^4.2.0"
 whitenoise = "^6.5.0"
 boto3 = "^1.28.62"
-vcrpy = "^5.1.0"
-
-[tool.poetry.group.dev.dependencies]
-django-stubs = { extras = ["compatible-mypy"], version = "^4.2.3" }
-django-stubs-ext = "^4.2.2"
-djangorestframework-stubs = { extras = [
-  "compatible-mypy",
-], version = "^3.14.2" }
+django-post-office = "^3.7.1"
+celery-redbeat = "^2.1.1"
+celery = {extras = ["redis"], version = "^5.3.4"}
+django-ses = "^3.5.0"
+hiredis = "^2.2.3"
 
 [build-system]
 requires = ["poetry-core"]

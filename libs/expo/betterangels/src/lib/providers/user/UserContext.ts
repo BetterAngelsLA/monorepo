@@ -4,6 +4,7 @@ export type TUser = {
   id: string;
   username?: string;
   email?: string;
+  hasOrganization: boolean;
 };
 
 export interface IUserProviderValue {
