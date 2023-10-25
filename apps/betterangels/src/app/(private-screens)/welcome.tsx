@@ -15,10 +15,6 @@ export default function Welcome() {
         In the future, you'll be able to request resources for yourself that you
         might qualify for or contribute to reporting immediate needs here.
       </BodyText>
-      <BodyText mb={20}>
-        In the future, you'll be able to request resources for yourself that you
-        might qualify for or contribute to reporting immediate needs here.
-      </BodyText>
       <BodyText>
         For now, please wait for an email sent to your work email address from{' '}
         <BodyText
