@@ -24,26 +24,35 @@ django_stubs_ext.monkeypatch()
 env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
     ALLOWED_HOSTS=(list, []),
-    AWS_REGION=(str, ""),
+    AWS_REGION=(str, "us-west-2"),
+    AWS_SES_REGION_NAME=(str, ""),
+    AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
+    CELERY_BROKER_URL=(str, ""),
+    CELERY_REDBEAT_REDIS_URL=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_HTTPONLY=(bool, False),
     CSRF_COOKIE_SECURE=(bool, False),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    DJANGO_CACHE_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
     LANGUAGE_COOKIE_HTTPONLY=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, False),
+    POST_OFFICE_EMAIL_BACKEND=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
     POSTGRES_HOST=(str, "db"),
     SECRET_KEY=(str, "secret_key"),
+    SESSION_COOKIE_AGE=(int, 1209600),  # Defaults to two weeks in seconds
     SESSION_COOKIE_HTTPONLY=(bool, True),
     SESSION_COOKIE_SECURE=(bool, False),
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
+    SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
 )
 
@@ -68,15 +77,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     "django_extensions",
-    "rest_framework",
-    "dj_rest_auth",
+    # 3rd Party
     "allauth",
     "allauth.account",
-    "dj_rest_auth.registration",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "corsheaders",
-    # apps
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "post_office",
+    "rest_framework",
+    # Our Apps
     "accounts",
     "dwelling",
 ]
@@ -152,6 +163,18 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
+
+# Celary
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_REDBEAT_REDIS_URL = env("CELERY_REDBEAT_REDIS_URL")
+
+# Caches
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("DJANGO_CACHE_URL"),
+    }
+}
 
 
 # Database
@@ -244,6 +267,21 @@ still sent, whereas in case of “none” no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
+# EMAIL Backend
+AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
+AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
+USE_SES_V2 = True
+
+EMAIL_BACKEND = "post_office.EmailBackend"
+POST_OFFICE = {
+    "BACKENDS": {
+        "default": env("POST_OFFICE_EMAIL_BACKEND"),
+    },
+    "CELERY_ENABLED": True,
+}
+EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+
+
 SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
@@ -257,8 +295,11 @@ CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 LANGUAGE_COOKIE_HTTPONLY = env("LANGUAGE_COOKIE_HTTPONLY")
 LANGUAGE_COOKIE_SECURE = env("LANGUAGE_COOKIE_SECURE")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_AGE = env("SESSION_COOKIE_AGE")
 SESSION_COOKIE_HTTPONLY = env("SESSION_COOKIE_HTTPONLY")
 SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_SAVE_EVERY_REQUEST = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")

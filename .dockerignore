@@ -1,9 +1,11 @@
 node_modules
-.venv
-.env
 .vscode
 .devcontainer
 .yarn
-.mypy_cache
 dist
 reports
+
+**/.venv
+**/.env
+**/.mypy_cache
+**/tmp
