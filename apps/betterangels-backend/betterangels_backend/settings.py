@@ -164,7 +164,7 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
-# Celary
+# Celery
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_REDBEAT_REDIS_URL = env("CELERY_REDBEAT_REDIS_URL")
 
