@@ -80,3 +80,35 @@ nx run betterangels-backend:start-worker
 ```
 
 Note: While workers can run independently of the scheduler, the scheduler requires at least one worker to process the scheduled tasks.
+
+### Testing Emails
+
+Django provides a flexible way to handle email backends. By default, our configuration uses the file-based email backend to capture sent emails as files. This is helpful for local development and testing without actually sending real emails.
+
+### Using the File-based Email Backend
+
+Configure the .env File: Set the email backend in your .env file to use the file-based backend:
+
+```bash
+POST_OFFICE_EMAIL_BACKEND=django.core.mail.backends.filebased.EmailBackend
+```
+
+Checking Sent Emails: After configuring the backend, any email sent from the application will be stored as a file under tmp/app-emails in the project's directory.
+
+Reading Emails: Navigate to the tmp/app-emails directory and open the email files to view the rendered HTML content. Each file represents an individual email sent from the application.
+
+#### Switching to SES (Amazon Simple Email Service)
+
+Before switching to SES, ensure that you're authenticated to AWS using Single Sign-On (SSO).
+
+```bash
+aws sso login
+```
+
+Configure the .env File: Update the email backend in your .env file to use the django_ses backend:
+
+```bash
+    POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
+```
+
+Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
