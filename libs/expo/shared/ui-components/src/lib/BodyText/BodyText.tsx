@@ -2,7 +2,7 @@ import { colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
 
-export function P({
+export function BodyText({
   children,
   textTransform,
   mb,

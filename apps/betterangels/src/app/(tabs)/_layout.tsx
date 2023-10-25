@@ -24,6 +24,7 @@ export default function TabLayout() {
   }
 
   if (user && !user.hasOrganization) {
+    // TODO: this part is only for testing and should be changed
     return <Redirect href="/welcome" />;
   }
 

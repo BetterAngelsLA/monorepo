@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
-import { Button, H1, H4, P } from '@monorepo/expo/shared/ui-components';
+import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
@@ -212,9 +212,9 @@ export default function SignIn() {
           {FLOW[flow].title}
         </H1>
         {FLOW[flow].message && (
-          <P mb={24} color={colors.white}>
+          <BodyText mb={24} color={colors.white}>
             {FLOW[flow].message}
-          </P>
+          </BodyText>
         )}
         <View style={{ width: '100%', marginBottom: 24 }}>
           <Button
@@ -240,15 +240,15 @@ export default function SignIn() {
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <P color={colors.white}>{FLOW[flow].question}</P>
-          <P
+          <BodyText color={colors.white}>{FLOW[flow].question}</BodyText>
+          <BodyText
             color={colors.brandLightBlue}
             textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
           >
             {' '}
             {FLOW[flow].link}
-          </P>
+          </BodyText>
         </View>
       </View>
     </AuthContainer>
