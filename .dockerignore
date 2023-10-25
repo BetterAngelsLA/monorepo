@@ -9,4 +9,3 @@ reports
 **/.env
 **/.mypy_cache
 **/tmp
-
