@@ -1,74 +1,58 @@
 interactions:
-- request:
-    body: redirect_uri=http%3A%2F%2Flocalhost%3A8081&grant_type=authorization_code&code=4%2F0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA&client_id=488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com&client_secret=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&code_verifier=7VGpxs4u64mTyhh719aji60LwPOSn48dDUi4KmkrwcDC9CEuLM23aSOWf2tEmmNmK9fASrMp8o9Rx9LRkBEVvHIBk0HYItZiN6XSwKEnEXAFfI69dpF0M7JyAVU4QFOD
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '429'
-      Content-Type:
-      - application/x-www-form-urlencoded
-      User-Agent:
-      - python-requests/2.31.0
-    method: POST
-    uri: https://oauth2.googleapis.com/token
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAC/72SSZOjRhSE7/MrOvps9QASkpibALFIUIhdcFEAxVJQLC1ALA7/d0N3OMZHn3yD
-        epDfy8z688fb23sQRXHbPrq6iKv3X2/vU0AxHwFxSthHOLHPxDA/N0V/M03uIY+zWn6e+lMSbSdk
-        h36fkrcd3r+Osp8SRrTVqyoOyTtPPhov5Hf+DqKcbQ6xGVaBfRyUQs4Wie3BNm7D9uESLROf9JdZ
-        Hiq67WpVidJXd/acHLSzajkqz1onVO0HGMUPjODtkikb68b29MVI9TATAy71rqeoME/G2RR0UYtA
-        xUWca9wKHj5qKEz2sZ4IRjumBHkg3/9Y/cZjg55x+0Cr2y3NMF+nbVQ38Wo/67qm/fXz5zAMH2ld
-        pzgOGtR+RHX5M+i77Gffxk9UJfVH86wThOO3//xDXAYIvy2YCsHvVb4yf3TTN5mNg2f8/J4g+LuQ
-        eLpkoRghDV1Me5ZJgORWLrvG5+S9XKqUmnuzz59oMOukl9uDOl8wsGDpWT5WXX0AvIDADDNgLc+5
-        X3iljhTuQsT306p5dUgdJfrHgmmirboe1VAyhmiuXwol5B7FkGFlzEoJXyEFW9+k85AiVoksrlYJ
-        mdD4dAL5mQBWSoL81AUu7IFl4MAFLygSk8YLYygOo7r1G0DBEWzZGYgwU6m09+7sEE10FVJMFYoO
-        GVHOtDB7KDo95H6zoKv/X6wZuvLKGlU+IlU+pdRZpVWrGMG8cHl5p1rp+l39XcEFL3nhqBR6n3La
-        Rb/1zLUip/Nc3Mp5jTyXJgKR6WObRf7dIPz7UmkJcSipfSieVy0cukITCgy1zBq/xHjVhtKF9M0B
-        eXcjCURhDlZe4YwOJXAW0Q6+CEs/z4KAPE56MUxQilat3nNJvHL1f7gmqwTul7dhyYmA98vXPJAM
-        IpLUvTIxbcCry/7My6dGDO9g8QNeS+84rPR+yahTqPNLt0GliUxuWpiLqob3Zzws7w6oYOG59eAW
-        TqvOgmJQGR2LmAMk66rupY4q3DlbYX+7qzRAZC6jAfkUpnyXTsJS6Hxz9SUsPWQLs1j3LBcPTSjh
-        f827JvzKdXx5lNB+nZVOv2oFrkAsfkaQF1vVsgcwR7s101ha7md+pjQrGpfrP4M5Yz7uCijqVyFX
-        Yvy5EZ7z5RCYwHcLkMOc7U7RrG2ELrzJqURZx3Iu0w3zIPpakHyk6pMSc9fdDpWnVwi8m3YsSFzS
-        8pAVqTZpL01qr9IruJXISQDHu2OVborsk7hjrBUmYhgboVaLc5MRDkczkTWl6hhlLPcRabtDaxDn
-        G4440gaaKOf3Wtld2eQyAiinWsYnWCGx1wsyOCbmxD/k6+UotBZbJztTOWSbdkoK8UAKJIU7G9Dj
-        lZO3OvPcOrd5tgP/wMX1ID9FK/MyE/OiCftbcyIk0xjLpzRn1yfqaO5Q7WlwA7sDgVvstI1n72nG
-        8vYETZfqwXOrrg4USpTJFPcO13/qfjSfD2T6/uOvvwG81yBPTwYAAA==
-    headers:
-      Alt-Svc:
-      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json; charset=utf-8
-      Date:
-      - Thu, 12 Oct 2023 22:46:18 GMT
-      Expires:
-      - Mon, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - scaffolding on HTTPServer2
-      Transfer-Encoding:
-      - chunked
-      Vary:
-      - Origin
-      - X-Origin
-      - Referer
-      X-Content-Type-Options:
-      - nosniff
-      X-Frame-Options:
-      - SAMEORIGIN
-      X-XSS-Protection:
-      - '0'
-    status:
-      code: 200
-      message: OK
+  - request:
+      body: redirect_uri=http%3A%2F%2Flocalhost%3A8081&grant_type=authorization_code&code=4%2F0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA&client_id=488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com&client_secret=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&code_verifier=7VGpxs4u64mTyhh719aji60LwPOSn48dDUi4KmkrwcDC9CEuLM23aSOWf2tEmmNmK9fASrMp8o9Rx9LRkBEVvHIBk0HYItZiN6XSwKEnEXAFfI69dpF0M7JyAVU4QFOD
+      headers:
+        Accept:
+          - '*/*'
+        Accept-Encoding:
+          - gzip, deflate
+        Connection:
+          - keep-alive
+        Content-Length:
+          - '429'
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - python-requests/2.31.0
+      method: POST
+      uri: https://oauth2.googleapis.com/token
+    response:
+      body:
+        string: '{
+          "access_token": "ya29.a0AfB_byBrfRSq-kuPSSC_IxzMmqAuAfc3yiUbZug1P4l6v8IZg0Rc3Qnneb1XD1_pYbD4Z4dijBp7eSbnaU8wLkIhxzM37URPw3_W0s9eAQvSm7n5stoMLcgvtEYVjNszMTVMDBTAin6wdce_lidPJhL-TPBu5JRgQbhGaCgYKAckSARESFQGOcNnCcCWRPkDd_odFyU8oy09O8g0171",
+          "expires_in": 3497055754,
+          "scope": "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid",
+          "token_type": "Bearer",
+          "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI0ODgyNjE0NTg1NjAtaWduNTRlaWNvdG0yODFxbGwxM3ZpN2dxN3BzNGdhM2guYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI0ODgyNjE0NTg1NjAtaWduNTRlaWNvdG0yODFxbGwxM3ZpN2dxN3BzNGdhM2guYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDc1MDg2MzM5MTkxNzE0NDI4MTgiLCJoZCI6ImJldHRlcmFuZ2Vscy5sYSIsImVtYWlsIjoiYW50aG9ueUBiZXR0ZXJhbmdlbHMubGEiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkVxV2FCT0swZGdmZjhaa18yQkwydHciLCJuYW1lIjoiQW50aG9ueSBLaW0iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTlCcnpDZzlwOG9VNndkYWowWkVsMzFLR2h5eGlCN1BWMWJocnltV3F6PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6IkFudGhvbnkiLCJmYW1pbHlfbmFtZSI6IktpbSIsImxvY2FsZSI6ImVuIiwiaWF0IjoxNjk3MTUwNzc4LCJleHAiOjM0OTcwNTU3NTR9.WB01cHr92gzDbFsZ1CjzWWSznDRdFRY6yyQ4Y6EMJcc"
+        }'
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - no-cache, no-store, max-age=0, must-revalidate
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 12 Oct 2023 22:46:18 GMT
+        Expires:
+          - Mon, 01 Jan 1990 00:00:00 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - scaffolding on HTTPServer2
+        Transfer-Encoding:
+          - chunked
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-XSS-Protection:
+          - '0'
+      status:
+        code: 200
+        message: OK
 version: 1
