@@ -83,8 +83,6 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN 
-
 FROM base as development
 # TODO: This is only for dev so we can likely make this a dev target instead of global
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
