@@ -39,9 +39,11 @@ yarn nx lint betterangels
 nx test betterangels
 ```
 
-### Relevant documentation
+### Versioning
 
-- About Expo: [Expo Documentation](https://docs.expo.dev/)
+- Production - x.y.z
+- Development - x.y.z-beta.t
+
 
 ## Backend Development
 

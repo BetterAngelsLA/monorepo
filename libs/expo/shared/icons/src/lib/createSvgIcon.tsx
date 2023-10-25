@@ -1,23 +1,22 @@
 import { memo } from 'react';
 import { IIconProps } from './types';
-import { extractColor, extractSize } from './utils';
+import { extractSize } from './utils';
 
 interface ISVGProps {
   width?: string | number;
   height?: string | number;
-  fill?: string;
+  fill?: '#ffffff';
 }
 
 // Higher Order Component to create SVG icons
 const createSvgIcon = (SvgComponent: React.ComponentType<ISVGProps>) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
-    color = 'black',
+    color = '#ffffff',
     ...props // we should avoid passing all props
   }) => {
     const { w, h } = extractSize(size);
-    const colorHex = extractColor(color);
-    return <SvgComponent width={w} height={h} fill={colorHex} {...props} />;
+    return <SvgComponent width={w} height={h} fill={color} {...props} />;
   };
   return memo(IconComponent);
 };

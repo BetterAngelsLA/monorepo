@@ -1,34 +1,145 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { colors } from '@monorepo/expo/shared/static';
+import { ReactNode } from 'react';
+import {
+  DimensionValue,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
+
+type TVariants = {
+  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
+    bg: string;
+    color: string;
+    border: string;
+  };
+};
+
+const SIZES: Record<'sm' | 'full', DimensionValue> = {
+  sm: 132,
+  full: '100%',
+};
+
+const VARIANTS: TVariants = {
+  dark: {
+    bg: colors.brandBlue,
+    color: colors.white,
+    border: colors.brandBlue,
+  },
+  sky: {
+    bg: colors.brandLightBlue,
+    color: colors.brandDarkBlue,
+    border: colors.brandLightBlue,
+  },
+  primary: {
+    bg: colors.blue,
+    color: colors.white,
+    border: colors.blue,
+  },
+  secondary: {
+    bg: colors.lightGray,
+    color: colors.blue,
+    border: colors.lightGray,
+  },
+  negative: {
+    bg: colors.white,
+    color: colors.red,
+    border: colors.borderRed,
+  },
+};
 
 interface IButtonProps {
   title: string;
-  onPress: () => void;
+  size: 'sm' | 'full';
+  onPress?: () => void;
+  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
+  align?: 'flex-start' | 'center';
+  disabled?: boolean;
+  style?: ViewStyle;
+  icon?: ReactNode;
+  fontFamily?: 'Pragmatica-book' | 'IBM-bold';
+  mb?: number;
+  mt?: number;
+  my?: number;
+  mx?: number;
+  ml?: number;
+  mr?: number;
 }
 
 export function Button(props: IButtonProps) {
-  const { onPress, title = 'Save' } = props;
+  const {
+    onPress,
+    title,
+    size,
+    align = 'center',
+    variant,
+    disabled,
+    style,
+    icon,
+    fontFamily = 'Pragmatica-book',
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+  } = props;
   return (
-    <Pressable style={styles.button} onPress={onPress}>
-      <Text style={styles.text}>{title}</Text>
+    <Pressable
+      disabled={disabled}
+      style={[
+        styles.button,
+        style,
+        {
+          width: SIZES[size],
+          alignItems: align,
+          backgroundColor: disabled ? colors.disabled : VARIANTS[variant].bg,
+          borderColor: disabled ? colors.disabled : VARIANTS[variant].border,
+          marginBottom: mb,
+          marginTop: mt,
+          marginLeft: ml,
+          marginRight: mr,
+          marginHorizontal: mx,
+          marginVertical: my,
+        },
+      ]}
+      onPress={onPress}
+    >
+      <View style={styles.wrapper}>
+        {icon && icon}
+        <Text
+          style={[
+            styles.text,
+            {
+              color: disabled ? colors.darkGray : VARIANTS[variant].color,
+              marginLeft: icon ? 10 : 0,
+              fontFamily,
+            },
+          ]}
+        >
+          {title}
+        </Text>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    alignItems: 'center',
+    height: 46,
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: 'black',
+    borderRadius: 3,
+    borderWidth: 1,
+    paddingHorizontal: 16,
   },
   text: {
     fontSize: 16,
-    lineHeight: 21,
-    fontWeight: 'bold',
-    letterSpacing: 0.25,
-    color: 'white',
+    letterSpacing: 0.4,
+  },
+  wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

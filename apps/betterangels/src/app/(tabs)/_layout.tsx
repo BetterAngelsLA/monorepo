@@ -20,7 +20,12 @@ export default function TabLayout() {
   if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
-    return <Redirect href="/sign-in" />;
+    return <Redirect href="/auth" />;
+  }
+
+  if (user && !user.hasOrganization) {
+    // TODO: this part is only for testing and should be changed
+    return <Redirect href="/welcome" />;
   }
 
   return (
