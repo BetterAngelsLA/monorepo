@@ -108,7 +108,7 @@ aws sso login
 Configure the .env File: Update the email backend in your .env file to use the django_ses backend:
 
 ```bash
-    POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
+POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 ```
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
