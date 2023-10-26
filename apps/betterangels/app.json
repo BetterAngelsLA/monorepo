@@ -3,7 +3,7 @@
     "name": "BetterAngels",
     "slug": "betterangels",
     "scheme": "betterangels",
-    "version": "1.0.11-beta.1",
+    "version": "1.0.12",
     "orientation": "portrait",
     "icon": "./src/app/assets/images/icon.png",
     "splash": {

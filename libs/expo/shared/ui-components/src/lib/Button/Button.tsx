@@ -40,7 +40,7 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: colors.lightGray,
-    color: colors.blue,
+    color: colors.darkBlue,
     border: colors.lightGray,
   },
   negative: {
