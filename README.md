@@ -44,7 +44,6 @@ nx test betterangels
 - Production - x.y.z
 - Development - x.y.z-beta.t
 
-
 ## Backend Development
 
 The betterangels_backend is built on Django, a high-level Python web framework. It also utilizes Celery for distributed task processing, enabling the scheduling and execution of tasks.
@@ -87,7 +86,7 @@ Note: While workers can run independently of the scheduler, the scheduler requir
 
 Django provides a flexible way to handle email backends. By default, our configuration uses the file-based email backend to capture sent emails as files. This is helpful for local development and testing without actually sending real emails.
 
-### Using the File-based Email Backend
+#### Using the File-based Email Backend
 
 Configure the .env File: Set the email backend in your .env file to use the file-based backend:
 
