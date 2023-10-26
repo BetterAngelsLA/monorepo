@@ -6,6 +6,8 @@ from urllib.parse import unquote
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from django.contrib.auth import logout
+from django.core.cache import cache
 from django.db import models
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
@@ -23,12 +25,28 @@ T = TypeVar("T")
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def current_user(request):
+def current_user(request: Request) -> Response:
     """
     Return details of the currently authenticated user.
     """
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request: Request) -> Response:
+    """
+    Invalidates session and logouts the user
+    """
+    session_cache_key = "django.contrib.sessions.cache" + (
+        request.session.session_key or ""
+    )
+    cache.delete(session_cache_key)
+
+    logout(request)
+
+    return Response({"detail": "Successfully logged out user."}, status=204)
 
 
 class SignUpView(CreateView[models.Model, UserCreationForm]):
