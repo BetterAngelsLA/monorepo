@@ -7,7 +7,7 @@ interface IColors {
   blue: '#00B3EB';
   darkBlue: '#102C55';
   white: '#ffffff';
-  lightGray: '#F1F3F3';
+  lightGray: '#E2E6EE';
   gray: '#9FAAB2';
   darkGray: '#697A87';
   disabled: '#cbd0d7';
@@ -24,7 +24,7 @@ export default {
   blue: '#00B3EB',
   darkBlue: '#102C55',
   white: '#ffffff',
-  lightGray: '#F1F3F3',
+  lightGray: '#E2E6EE',
   gray: '#9FAAB2',
   darkGray: '#697A87',
   disabled: '#cbd0d7',

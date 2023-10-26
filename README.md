@@ -94,8 +94,3 @@ nx test betterangels
 ### Relevant documentation
 
 - About Expo: [Expo Documentation](https://docs.expo.dev/)
-
-## Versioning
-
-- Production - x.y.z
-- Development - x.y.z-beta.t

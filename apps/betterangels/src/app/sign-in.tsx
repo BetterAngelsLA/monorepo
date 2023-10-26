@@ -1,9 +1,4 @@
-import {
-  AuthContainer,
-  fetchUser,
-  useStore,
-  useUser,
-} from '@monorepo/expo/betterangels';
+import { AuthContainer, fetchUser, useUser } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
@@ -70,7 +65,6 @@ export default function SignIn() {
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
-  const { saveStore } = useStore();
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
 
@@ -158,12 +152,16 @@ export default function SignIn() {
         const userData = await fetchUser(apiUrl);
         console.log('user data: ', userData);
         setUser(userData);
-        router.replace('/');
+        if (userData.hasOrganization) {
+          router.replace('/');
+        } else {
+          router.replace('/welcome');
+        }
       } catch (error) {
         console.error('Error fetching access token', error);
       }
     },
-    [request?.codeVerifier, request?.state, response, saveStore, setUser]
+    [request?.codeVerifier, request?.state, response, setUser]
   );
 
   useEffect(() => {
