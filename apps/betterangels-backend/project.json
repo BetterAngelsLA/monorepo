@@ -57,6 +57,20 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "start-scheduler": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run celery -A betterangels_backend beat -S redbeat.RedBeatScheduler",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start-worker": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run celery -A betterangels_backend worker -l INFO",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "install": {
       "executor": "@nxlv/python:install",
       "options": {

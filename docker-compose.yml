@@ -15,3 +15,5 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     command: postgres -c log_statement=all -c log_destination=stderr
+  redis:
+    image: redis:7.2.2
