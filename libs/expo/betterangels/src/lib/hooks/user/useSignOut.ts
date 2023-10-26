@@ -8,7 +8,7 @@ export default function useSignOut() {
   async function signOut() {
     await deleteStore('sessionid');
     setUser(undefined);
-    router.replace('sign-in');
+    router.replace('/auth');
   }
 
   return { signOut };
