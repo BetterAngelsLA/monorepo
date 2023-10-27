@@ -33,6 +33,7 @@ celery-redbeat = "^2.1.1"
 celery = {extras = ["redis"], version = "^5.3.4"}
 django-ses = "^3.5.0"
 hiredis = "^2.2.3"
+django-jazzmin = "^2.6.0"
 
 [build-system]
 requires = ["poetry-core"]
