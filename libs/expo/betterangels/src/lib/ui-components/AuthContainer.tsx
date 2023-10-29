@@ -1,9 +1,9 @@
 import { colors } from '@monorepo/expo/shared/static';
+import { StatusBar } from 'expo-status-bar';
 import { ReactNode } from 'react';
 import {
   ImageBackground,
   ImageSourcePropType,
-  StatusBar,
   StyleSheet,
   View,
 } from 'react-native';
@@ -17,7 +17,7 @@ export default function AuthContainer({
 }) {
   return (
     <>
-      <StatusBar barStyle="light-content" />
+      <StatusBar style="dark" />
       <ImageBackground
         resizeMode="cover"
         style={{ backgroundColor: colors.brandDarkBlue, flex: 1 }}
