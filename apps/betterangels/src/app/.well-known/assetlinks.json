@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "la.betterangels.app",
+      "sha256_cert_fingerprints": [
+        "2F:DC:4B:70:9C:56:0D:9A:8D:CD:BE:3A:56:EF:07:6F:AD:63:2A:9D:50:F4:47:73:EF:C9:4F:2D:E5:3A:95:1C"
+      ]
+    }
+  }
+]
