@@ -34,7 +34,7 @@ def current_user(request: Request) -> Response:
 
 
 @api_view(["POST"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def logout_view(request: Request) -> Response:
     """
     Invalidates session and logouts the user
