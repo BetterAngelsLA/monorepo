@@ -10,7 +10,7 @@ class LogoutTestCase(TestCase):
         self.email = "testuser@test.com"
         self.password = "testpassword123"
         self.user = User.objects.create_user(email=self.email, password=self.password)
-        self.logout_url = reverse("logout")
+        self.logout_url = reverse("rest_logout")
 
     def test_logout_clears_session(self) -> None:
         self.client.login(email=self.email, password=self.password)
