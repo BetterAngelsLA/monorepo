@@ -34,16 +34,11 @@ def current_user(request: Request) -> Response:
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def logout_view(request: Request) -> Response:
     """
     Invalidates session and logouts the user
     """
-    session_cache_key = "django.contrib.sessions.cache" + (
-        request.session.session_key or ""
-    )
-    cache.delete(session_cache_key)
-
     logout(request)
 
     return Response({"detail": "Successfully logged out user."}, status=204)
