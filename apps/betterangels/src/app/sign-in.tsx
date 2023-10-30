@@ -150,7 +150,6 @@ export default function SignIn() {
         );
 
         const userData = await fetchUser(apiUrl);
-        console.log('user data: ', userData);
         setUser(userData);
         if (userData.hasOrganization) {
           router.replace('/');
