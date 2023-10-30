@@ -1,14 +1,24 @@
 import { router } from 'expo-router';
-import useStore from '../useStore';
 import useUser from './useUser';
 
 export default function useSignOut() {
-  const { deleteStore } = useStore();
   const { setUser } = useUser();
-  async function signOut() {
-    await deleteStore('sessionid');
-    setUser(undefined);
-    router.replace('sign-in');
+  async function signOut(apiUrl: string) {
+    try {
+      const response = await fetch(`${apiUrl}/logout/`, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        credentials: 'include', // include, *same-origin, omit
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const resp = await response.json();
+      console.log('response: ', resp);
+      setUser(undefined);
+      router.replace('/');
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return { signOut };
