@@ -20,5 +20,5 @@ class LogoutTestCase(TestCase):
 
         self.assertIsNotNone(cache.get(session_cache_key))
         response = self.client.post(self.logout_url)
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
         self.assertIsNone(cache.get(session_cache_key))

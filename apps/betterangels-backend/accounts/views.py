@@ -33,17 +33,6 @@ def current_user(request: Request) -> Response:
     return Response(serializer.data)
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def logout_view(request: Request) -> Response:
-    """
-    Invalidates session and logouts the user
-    """
-    logout(request)
-
-    return Response({"detail": "Successfully logged out user."}, status=204)
-
-
 class SignUpView(CreateView[models.Model, UserCreationForm]):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
