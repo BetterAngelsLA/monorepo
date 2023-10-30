@@ -20,7 +20,7 @@ export default function TabOneScreen() {
       <Button
         icon={<ArrowLeftToArcIcon size="xs" />}
         size="sm"
-        onPress={signOut}
+        onPress={() => signOut(apiUrl)}
         variant="negative"
         title="Sign Out"
       />
