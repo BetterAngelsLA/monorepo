@@ -9,7 +9,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  AppState,
+  Linking,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
@@ -150,21 +157,15 @@ export default function SignIn() {
           }
         );
         // TODO: refactor and move this elsewhere.  A bit too much login here for cookie extraction
-        const cookies = response.headers.get('Set-Cookie');
-        console.log(cookies);
-        if (cookies) {
-          const matches = /csrftoken=([^;]+);/.exec(cookies);
-          const csrfToken = matches ? matches[1] : null;
+        if (Platform.OS !== 'web') {
+          const cookies = response.headers.get('Set-Cookie');
+          const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
 
           if (csrfToken) {
-            // Store the token using SecureStore
             await SecureStore.setItemAsync('csrftoken', csrfToken);
-            console.log('CSRF token stored securely.');
           } else {
-            console.log('CSRF token not found in the response headers.');
+            console.error('CSRF token not found in the response headers.');
           }
-        } else {
-          console.log('Set-Cookie header is not found or is not exposed.');
         }
         const userData = await fetchUser(apiUrl);
         setUser(userData);

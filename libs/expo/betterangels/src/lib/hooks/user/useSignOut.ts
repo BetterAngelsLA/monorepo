@@ -4,24 +4,19 @@ import { Platform } from 'react-native';
 import useUser from './useUser';
 
 // TODO: this should be a function that is elsewhere, also needs to check SecureStorage if it is native
-async function getCsrfToken(): Promise<string> {
-  // Check if running in a web environment
+async function getCsrfToken() {
   if (Platform.OS === 'web') {
-    // Parse the document.cookie string
-    const cookies = document.cookie.split('; ');
-    const csrfCookie = cookies.find((cookie) =>
-      cookie.startsWith('csrftoken=')
-    );
-    if (csrfCookie) {
-      return csrfCookie.split('=')[1]; // Return the value part of the cookie
-    }
+    // Look for the 'csrftoken' within the browser cookies
+    const token = document.cookie
+      .split('; ')
+      .find((c) => c.includes('csrftoken='));
+    return token ? token.split('=')[1] : '';
   } else {
-    // Check SecureStore for the csrfToken when not on web
-    const csrfToken = await SecureStore.getItemAsync('csrftoken');
-    return csrfToken || '';
+    // Retrieve the token from SecureStore on non-web platforms
+    return (await SecureStore.getItemAsync('csrftoken')) || '';
   }
-  return '';
 }
+
 export default function useSignOut() {
   const { setUser } = useUser();
   async function signOut(apiUrl: string) {

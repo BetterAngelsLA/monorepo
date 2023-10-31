@@ -16,7 +16,6 @@ function useProtectedRoute(apiUrl: string) {
     async function getUserAndNavigate() {
       try {
         const user = await fetchUser(apiUrl);
-        console.log('fetched user: ', user);
         setUser(user);
       } catch (e) {
         console.log(e);
