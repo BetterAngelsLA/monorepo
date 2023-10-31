@@ -131,7 +131,7 @@ export default function SignIn() {
       }
 
       try {
-        await fetch(
+        const response = await fetch(
           `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
             redirectUri
           )}`,
@@ -148,7 +148,7 @@ export default function SignIn() {
             credentials: 'include',
           }
         );
-
+        console.log(response.headers);
         const userData = await fetchUser(apiUrl);
         setUser(userData);
         if (userData.hasOrganization) {
