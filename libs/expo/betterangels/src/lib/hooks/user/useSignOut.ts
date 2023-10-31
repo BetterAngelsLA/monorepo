@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import useUser from './useUser';
 
 // TODO: this should be a function that is elsewhere, also needs to check SecureStorage if it is native
 async function getCsrfToken(): Promise<string> {
   // Check if running in a web environment
-  if (typeof document === 'object') {
+  if (Platform.OS === 'web') {
     // Parse the document.cookie string
     const cookies = document.cookie.split('; ');
     const csrfCookie = cookies.find((cookie) =>
