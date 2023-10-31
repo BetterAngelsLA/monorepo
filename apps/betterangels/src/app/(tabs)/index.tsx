@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
