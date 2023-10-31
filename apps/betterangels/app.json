@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "la.betterangels.app",
-      "associatedDomains": ["applinks:www.betterangels.la"]
+      "associatedDomains": ["applinks:app.dev.betterangels.la"]
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +33,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "www.betterangels.la",
+              "host": "app.dev.betterangels.la",
               "pathPrefix": "/"
             }
           ],
