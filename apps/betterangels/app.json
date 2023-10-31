@@ -18,14 +18,28 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "la.betterangels.app"
+      "bundleIdentifier": "la.betterangels.app",
+      "associatedDomains": ["applinks:app.dev.betterangels.la"]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/app/assets/images/adaptive-icon.png",
         "backgroundColor": "#1E3342"
       },
-      "package": "la.betterangels.app"
+      "package": "la.betterangels.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "app.dev.betterangels.la",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./src/app/assets/images/favicon.png",
