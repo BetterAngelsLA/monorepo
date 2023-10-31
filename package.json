@@ -8,7 +8,8 @@
     "storybook:build": "nx build-storybook expo-shared-ui-components",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
-    "ba:build-dev": "nx build betterangels --profile development"
+    "config:dev": "nx run betterangels:generate-config --env=dev",
+    "config:prod": "nx run betterangels:generate-config --env=prod"
   },
   "dependencies": {
     "@expo/metro-config": "~0.10.6",
