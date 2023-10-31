@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { CSRF_TOKEN } from '../constants';
 
 /**
  * This store is used mainly to handle csrf token management between react native and
@@ -13,7 +14,7 @@ export default function useAuthStore() {
       const cookies = response.headers.get('Set-Cookie');
       const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
       if (csrfToken) {
-        await setItem('csrftoken', csrfToken);
+        await setItem(CSRF_TOKEN, csrfToken);
       } else {
         console.error('CSRF token not found in the response headers.');
       }
