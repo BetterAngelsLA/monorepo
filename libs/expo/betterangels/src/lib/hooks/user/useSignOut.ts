@@ -4,7 +4,7 @@ import useUser from './useUser';
 
 export default function useSignOut() {
   const { setUser } = useUser();
-  const { getItem } = useAuthStore();
+  const { getItem, deleteItem } = useAuthStore();
 
   async function signOut(apiUrl: string) {
     try {
@@ -17,7 +17,8 @@ export default function useSignOut() {
         },
       });
       setUser(undefined);
-      router.replace('/');
+      router.replace('/auth');
+      deleteItem('csrftoken');
     } catch (err) {
       console.error(err);
     }

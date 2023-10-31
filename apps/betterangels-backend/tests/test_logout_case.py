@@ -14,8 +14,8 @@ class LogoutTestCase(TestCase):
 
     def test_logout_clears_session(self) -> None:
         self.client.login(email=self.email, password=self.password)
-        session_cache_key = "django.contrib.sessions.cache" + (
-            self.client.session.session_key or ""
+        session_cache_key = (
+            f"django.contrib.sessions.cache{self.client.session.session_key}"
         )
 
         self.assertIsNotNone(cache.get(session_cache_key))

@@ -4,6 +4,7 @@ import { handleEmailPress, useSignOut } from '@monorepo/expo/betterangels';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H2 } from '@monorepo/expo/shared/ui-components';
 import { StatusBar } from 'expo-status-bar';
+import { apiUrl } from '../../../config';
 
 export default function Welcome() {
   const { signOut } = useSignOut();
@@ -39,7 +40,7 @@ export default function Welcome() {
         </BodyText>
       </ScrollView>
       <Button
-        onPress={signOut}
+        onPress={() => signOut(apiUrl as string)}
         mb={51}
         size="full"
         title="Close"

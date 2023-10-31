@@ -165,7 +165,7 @@ export default function SignIn() {
           const cookies = response.headers.get('Set-Cookie');
           const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
           if (csrfToken) {
-            await setItem('csrfToken', csrfToken);
+            await setItem('csrftoken', csrfToken);
           } else {
             console.error('CSRF token not found in the response headers.');
           }
