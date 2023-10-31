@@ -1,7 +1,17 @@
-const fs = require('fs');
+import { config as dotenvConfig } from 'dotenv';
+import { writeFileSync } from 'fs';
+
+const [workspaceRoot, projectRoot] = process.argv.slice(2);
+if (!workspaceRoot) {
+  throw new Error('Missing workspace root');
+}
+if (!projectRoot) {
+  throw new Error('Missing project root');
+}
+
 const env = process.argv[2] || 'dev';
 
-require('dotenv').config({ path: `${env}.env` });
+dotenvConfig({ path: `apps/betterangels/.env.${env}` });
 
 const appConfig = {
   expo: {
@@ -88,5 +98,8 @@ const easConfig = {
   },
 };
 
-fs.writeFileSync('app.json', JSON.stringify(appConfig, null, 2));
-fs.writeFileSync('eas.json', JSON.stringify(easConfig, null, 2));
+const appConfigPath = 'apps/betterangels/app.json';
+const easConfigPath = 'apps/betterangels/eas.json';
+
+writeFileSync(appConfigPath, JSON.stringify(appConfig, null, 2));
+writeFileSync(easConfigPath, JSON.stringify(easConfig, null, 2));

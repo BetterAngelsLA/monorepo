@@ -104,6 +104,15 @@
           "codeCoverage": true
         }
       }
+    },
+    "generate-config": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "node tools/scripts/generate-config.js . apps/betterangels"
+        ],
+        "parallel": false
+      }
     }
   },
   "tags": []
