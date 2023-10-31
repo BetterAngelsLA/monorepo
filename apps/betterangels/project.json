@@ -109,7 +109,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "node tools/scripts/generate-config.js . apps/betterangels"
+          "node tools/scripts/generate-config.mjs . apps/betterangels"
         ],
         "parallel": false
       }

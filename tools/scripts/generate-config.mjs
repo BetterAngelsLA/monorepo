@@ -9,7 +9,8 @@ if (!projectRoot) {
   throw new Error('Missing project root');
 }
 
-const env = process.argv[2] || 'dev';
+const envArg = process.argv.find((arg) => arg.startsWith('--env='));
+const env = envArg ? envArg.split('=')[1] : 'dev';
 
 dotenvConfig({ path: `apps/betterangels/.env.${env}` });
 

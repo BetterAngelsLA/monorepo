@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "BetterAngels",
-    "slug": "betterangels",
-    "scheme": "betterangels",
+    "name": "BetterAngels-dev",
+    "slug": "betterangels-dev",
+    "scheme": "betterangels-dev",
     "version": "1.0.14",
     "orientation": "portrait",
     "icon": "./src/app/assets/images/icon.png",
@@ -11,14 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#1E3342"
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8"
-    },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "la.betterangels.app"
+      "bundleIdentifier": "la.dev.betterangels.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +34,10 @@
         "@config-plugins/detox",
         {
           "skipProguard": false,
-          "subdomains": ["10.0.2.2", "localhost"]
+          "subdomains": [
+            "10.0.2.2",
+            "localhost"
+          ]
         }
       ],
       "expo-router"
