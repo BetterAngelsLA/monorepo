@@ -4,6 +4,7 @@ import { useSignOut, useUser } from '@monorepo/expo/betterangels';
 import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
 import { Button, Input } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
+import { apiUrl } from '../../../config';
 import EditScreenInfo from '../components/EditScreenInfo';
 import { Text, View } from '../components/Themed';
 
@@ -20,7 +21,7 @@ export default function TabOneScreen() {
       <Button
         icon={<ArrowLeftToArcIcon size="xs" />}
         size="sm"
-        onPress={signOut}
+        onPress={() => signOut(apiUrl as string)}
         variant="negative"
         title="Sign Out"
       />
