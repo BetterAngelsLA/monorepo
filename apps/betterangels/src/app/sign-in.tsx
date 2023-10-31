@@ -1,4 +1,9 @@
-import { AuthContainer, fetchUser, useUser } from '@monorepo/expo/betterangels';
+import {
+  AuthContainer,
+  fetchUser,
+  useAuthStore,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
@@ -6,7 +11,6 @@ import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -75,6 +79,7 @@ export default function SignIn() {
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
+  const { setItem } = useAuthStore();
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -156,13 +161,11 @@ export default function SignIn() {
             credentials: 'include',
           }
         );
-        // TODO: refactor and move this elsewhere.  A bit too much login here for cookie extraction
         if (Platform.OS !== 'web') {
           const cookies = response.headers.get('Set-Cookie');
           const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
-
           if (csrfToken) {
-            await SecureStore.setItemAsync('csrftoken', csrfToken);
+            await setItem('csrfToken', csrfToken);
           } else {
             console.error('CSRF token not found in the response headers.');
           }
