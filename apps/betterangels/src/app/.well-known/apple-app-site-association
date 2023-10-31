@@ -1,0 +1,27 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "RGTCDT76UX.la.betterangels.app"
+        ],
+        "components": [
+          {
+            "/": "*",
+            "comment": "Matches all routes"
+          }
+        ]
+      }
+    ]
+  },
+  "activitycontinuation": {
+    "apps": [
+      "RGTCDT76UX.la.betterangels.app"
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "RGTCDT76UX.la.betterangels.app"
+    ]
+  }
+}
