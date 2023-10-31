@@ -1,4 +1,9 @@
-import { AuthContainer, fetchUser, useUser } from '@monorepo/expo/betterangels';
+import {
+  AuthContainer,
+  fetchUser,
+  useAuthStore,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
@@ -67,6 +72,7 @@ export default function SignIn() {
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
+  const { setCsrfCookieFromResponse } = useAuthStore();
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -131,7 +137,7 @@ export default function SignIn() {
       }
 
       try {
-        await fetch(
+        const response = await fetch(
           `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
             redirectUri
           )}`,
@@ -148,9 +154,8 @@ export default function SignIn() {
             credentials: 'include',
           }
         );
-
+        setCsrfCookieFromResponse(response);
         const userData = await fetchUser(apiUrl);
-        console.log('user data: ', userData);
         setUser(userData);
         if (userData.hasOrganization) {
           router.replace('/');
@@ -161,7 +166,13 @@ export default function SignIn() {
         console.error('Error fetching access token', error);
       }
     },
-    [request?.codeVerifier, request?.state, response, setUser]
+    [
+      request?.codeVerifier,
+      request?.state,
+      response,
+      setCsrfCookieFromResponse,
+      setUser,
+    ]
   );
 
   useEffect(() => {

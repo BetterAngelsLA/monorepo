@@ -23,7 +23,7 @@ T = TypeVar("T")
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def current_user(request):
+def current_user(request: Request) -> Response:
     """
     Return details of the currently authenticated user.
     """

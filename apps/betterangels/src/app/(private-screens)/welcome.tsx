@@ -1,12 +1,12 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { handleEmailPress, useSignOut } from '@monorepo/expo/betterangels';
+import { handleEmailPress } from '@monorepo/expo/betterangels';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H2 } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 export default function Welcome() {
-  const { signOut } = useSignOut();
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -39,7 +39,9 @@ export default function Welcome() {
         </BodyText>
       </ScrollView>
       <Button
-        onPress={signOut}
+        // Temporarily reroute to the screen page with username and logout so that current user can be verified
+        // and the logout functionality can be tested.
+        onPress={() => router.replace('/')}
         mb={51}
         size="full"
         title="Close"
