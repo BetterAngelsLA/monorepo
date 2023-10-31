@@ -13,14 +13,7 @@ import * as Crypto from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  AppState,
-  Linking,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
@@ -79,7 +72,7 @@ export default function SignIn() {
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
-  const { setItem } = useAuthStore();
+  const { setCsrfCookieFromResponse } = useAuthStore();
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -161,15 +154,7 @@ export default function SignIn() {
             credentials: 'include',
           }
         );
-        if (Platform.OS !== 'web') {
-          const cookies = response.headers.get('Set-Cookie');
-          const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
-          if (csrfToken) {
-            await setItem('csrftoken', csrfToken);
-          } else {
-            console.error('CSRF token not found in the response headers.');
-          }
-        }
+        setCsrfCookieFromResponse(response);
         const userData = await fetchUser(apiUrl);
         setUser(userData);
         if (userData.hasOrganization) {
@@ -181,7 +166,13 @@ export default function SignIn() {
         console.error('Error fetching access token', error);
       }
     },
-    [request?.codeVerifier, request?.state, response, setUser]
+    [
+      request?.codeVerifier,
+      request?.state,
+      response,
+      setCsrfCookieFromResponse,
+      setUser,
+    ]
   );
 
   useEffect(() => {

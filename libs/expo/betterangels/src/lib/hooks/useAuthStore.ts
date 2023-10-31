@@ -8,6 +8,18 @@ import { Platform } from 'react-native';
  * React native will use expo secure store
  */
 export default function useAuthStore() {
+  async function setCsrfCookieFromResponse(response: Response) {
+    if (Platform.OS !== 'web') {
+      const cookies = response.headers.get('Set-Cookie');
+      const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
+      if (csrfToken) {
+        await setItem('csrftoken', csrfToken);
+      } else {
+        console.error('CSRF token not found in the response headers.');
+      }
+    }
+  }
+
   async function setItem(key: string, value: string) {
     if (Platform.OS === 'web') {
       return setCookie(key, value);
@@ -40,6 +52,7 @@ export default function useAuthStore() {
   }
 
   return {
+    setCsrfCookieFromResponse,
     setItem,
     getItem,
     deleteItem,
