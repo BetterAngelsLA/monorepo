@@ -4,6 +4,7 @@ interface IColors {
   brandBlue: '#375C76';
   brandDarkBlue: '#1E3342';
   brandYellow: '#FFF82E';
+  extraLightBlue: '#72CAE1';
   blue: '#00B3EB';
   darkBlue: '#102C55';
   white: '#ffffff';
@@ -21,6 +22,7 @@ export default {
   brandBlue: '#375C76',
   brandDarkBlue: '#1E3342',
   brandYellow: '#FFF82E',
+  extraLightBlue: '#72CAE1',
   blue: '#00B3EB',
   darkBlue: '#102C55',
   white: '#ffffff',

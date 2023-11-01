@@ -19,6 +19,7 @@ export { default as BurgerSodaIcon } from './components/BurgerSodaIcon';
 export { default as CalendarDaysIcon } from './components/CalendarDaysIcon';
 export { default as CalendarIcon } from './components/CalendarIcon';
 export { default as CarIcon } from './components/CarIcon';
+export { default as ChartIcon } from './components/ChartIcon';
 export { default as CheckIcon } from './components/CheckIcon';
 export { default as CircleXmarkIcon } from './components/CircleXmarkIcon';
 export { default as EyeIcon } from './components/EyeIcon';

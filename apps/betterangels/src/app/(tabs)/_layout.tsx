@@ -1,16 +1,17 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Redirect, Tabs } from 'expo-router';
-import { Pressable, Text, useColorScheme } from 'react-native';
+import { Pressable, Text, View, useColorScheme } from 'react-native';
 
 import { useUser } from '@monorepo/expo/betterangels';
+import {
+  CalendarIcon,
+  ChartIcon,
+  HouseIcon,
+  PlusIcon,
+} from '@monorepo/expo/shared/icons';
+import { colors } from '@monorepo/expo/shared/static';
+import { StyleSheet } from 'react-native';
 import Colors from '../constants/Colors';
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -32,14 +33,22 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: colors.darkBlue,
+        tabBarInactiveTintColor: colors.darkGray,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily: 'Pragmatica-book',
+        },
+        tabBarStyle: {
+          borderTopWidth: 0,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <HouseIcon color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -57,12 +66,76 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="appointment"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Appointment',
+          tabBarIcon: ({ color }) => <CalendarIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="drawerPlaceholder"
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+          },
+        }}
+        options={{
+          title: '',
+          tabBarIcon: () => (
+            <View style={styles.middleButton}>
+              <PlusIcon />
+            </View>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="teams"
+        options={{
+          title: 'Teams',
+          tabBarIcon: ({ color }) => <ChartIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: () => (
+            <View style={styles.profileContainer}>
+              <Text style={styles.profileText}>
+                {user.username?.slice(0, 2)}
+              </Text>
+            </View>
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  profileContainer: {
+    backgroundColor: colors.extraLightBlue,
+    height: 24,
+    width: 24,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileText: {
+    textTransform: 'uppercase',
+    color: colors.white,
+    fontFamily: 'Pragmatica-bold',
+    fontSize: 11,
+  },
+  middleButton: {
+    height: 66,
+    width: 66,
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: colors.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    bottom: 6,
+  },
+});
