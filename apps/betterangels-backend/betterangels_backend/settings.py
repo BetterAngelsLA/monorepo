@@ -149,6 +149,7 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
+    "sesame.backends.ModelBackend",
 ]
 
 REST_FRAMEWORK = {
