@@ -10,11 +10,14 @@ import {
   PlusIcon,
 } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
+import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../constants/Colors';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   const { user, isLoading } = useUser();
 
@@ -33,13 +36,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        tabBarShowLabel: false,
         tabBarActiveTintColor: colors.darkBlue,
         tabBarInactiveTintColor: colors.darkGray,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontFamily: 'Pragmatica-book',
-        },
         tabBarStyle: {
+          height: 70 + insets.bottom,
+          alignItems: 'center',
+          justifyContent: 'center',
           borderTopWidth: 0,
         },
       }}
@@ -48,7 +51,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <HouseIcon color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center' }}>
+              <HouseIcon color={color} />
+              <BodyText color={color} fontSize="xs">
+                Home
+              </BodyText>
+            </View>
+          ),
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -69,7 +79,14 @@ export default function TabLayout() {
         name="appointment"
         options={{
           title: 'Appointment',
-          tabBarIcon: ({ color }) => <CalendarIcon color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center' }}>
+              <CalendarIcon color={color} />
+              <BodyText color={color} fontSize="xs">
+                Appointment
+              </BodyText>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -82,8 +99,10 @@ export default function TabLayout() {
         options={{
           title: '',
           tabBarIcon: () => (
-            <View style={styles.middleButton}>
-              <PlusIcon />
+            <View style={styles.wrapper}>
+              <View style={styles.middleButton}>
+                <PlusIcon />
+              </View>
             </View>
           ),
         }}
@@ -93,18 +112,30 @@ export default function TabLayout() {
         name="teams"
         options={{
           title: 'Teams',
-          tabBarIcon: ({ color }) => <ChartIcon color={color} />,
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center' }}>
+              <ChartIcon color={color} />
+              <BodyText color={color} fontSize="xs">
+                Teams
+              </BodyText>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: () => (
-            <View style={styles.profileContainer}>
-              <Text style={styles.profileText}>
-                {user.username?.slice(0, 2)}
-              </Text>
+          tabBarIcon: ({ color }) => (
+            <View style={{ alignItems: 'center' }}>
+              <View style={styles.profileContainer}>
+                <Text style={styles.profileText}>
+                  {user.username?.slice(0, 2)}
+                </Text>
+              </View>
+              <BodyText color={color} fontSize="xs">
+                Profile
+              </BodyText>
             </View>
           ),
         }}
@@ -131,11 +162,19 @@ const styles = StyleSheet.create({
   middleButton: {
     height: 66,
     width: 66,
-    position: 'absolute',
     borderRadius: 100,
     backgroundColor: colors.blue,
     alignItems: 'center',
     justifyContent: 'center',
-    bottom: 6,
+  },
+  wrapper: {
+    height: 80,
+    width: 80,
+    position: 'relative',
+    bottom: 36,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
   },
 });
