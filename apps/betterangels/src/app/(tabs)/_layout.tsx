@@ -5,9 +5,12 @@ import { Pressable, Text, View, useColorScheme } from 'react-native';
 import { useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
-  ChartIcon,
   HouseIcon,
   PlusIcon,
+  SitemapIcon,
+  SolidCalendarIcon,
+  SolidHouseIcon,
+  SolidSitemapIcon,
 } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
@@ -51,9 +54,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
-              <HouseIcon color={color} />
+              {focused ? (
+                <SolidHouseIcon color={color} />
+              ) : (
+                <HouseIcon color={color} />
+              )}
+
               <BodyText color={color} fontSize="xs">
                 Home
               </BodyText>
@@ -79,9 +87,13 @@ export default function TabLayout() {
         name="appointment"
         options={{
           title: 'Appointment',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ focused, color }) => (
             <View style={{ alignItems: 'center' }}>
-              <CalendarIcon color={color} />
+              {focused ? (
+                <SolidCalendarIcon color={color} />
+              ) : (
+                <CalendarIcon color={color} />
+              )}
               <BodyText color={color} fontSize="xs">
                 Appointment
               </BodyText>
@@ -112,9 +124,13 @@ export default function TabLayout() {
         name="teams"
         options={{
           title: 'Teams',
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
-              <ChartIcon color={color} />
+              {focused ? (
+                <SolidSitemapIcon color={color} />
+              ) : (
+                <SitemapIcon color={color} />
+              )}
               <BodyText color={color} fontSize="xs">
                 Teams
               </BodyText>
