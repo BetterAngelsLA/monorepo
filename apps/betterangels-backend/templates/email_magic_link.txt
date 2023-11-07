@@ -1,0 +1,3 @@
+Please login through the link below.
+
+Using this link: {{ activation_url }}

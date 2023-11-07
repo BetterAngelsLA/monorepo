@@ -142,7 +142,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
             ],
         },
-    },
+    }
 ]
 
 AUTHENTICATION_BACKENDS = [
