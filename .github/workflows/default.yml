@@ -62,6 +62,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        # https://github.com/gperdomor/nx-tools/issues/728
+        with:
+          version: v0.9.1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
