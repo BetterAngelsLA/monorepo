@@ -8,7 +8,7 @@ on:
 
 env:
   AWS_REGION: us-west-2
-  AWS_ACCOUNT: 
+  AWS_ACCOUNT_ID: 174477281453
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Ensure deploy only runs on the main branch
+    # if: github.ref == 'refs/heads/main' # Ensure deploy only runs on the main branch
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -49,9 +49,6 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/your-repo:$IMAGE_TAG
-          docker build -t $IMAGE_URI .
-          docker push $IMAGE_URI
+          yarn nx affected -t build
         env:
-          AWS_ACCOUNT_ID: <ACCOUNT_ID> # Define account ID here
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
