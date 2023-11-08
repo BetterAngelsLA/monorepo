@@ -77,7 +77,7 @@ function RootLayoutNav() {
     <UserProvider apiUrl={apiUrl}>
       <AutocompleteDropdownContextProvider>
         {/* <ThemeProvider
-          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+          value={Colorscheme === 'dark' ? DarkTheme : DefaultTheme}
         > */}
         <Stack>
           <Stack.Screen
@@ -99,12 +99,12 @@ function RootLayoutNav() {
                   variant="transparent"
                   onPress={() => router.back()}
                 >
-                  <ArrowLeftIcon color={colors.white} size="sm" />
+                  <ArrowLeftIcon color={Colors.WHITE} size="sm" />
                 </IconButton>
               ),
               headerTitle: () => (
                 <View>
-                  <Logo color={colors.white} width={130} height={19.5} />
+                  <Logo color={Colors.WHITE} width={130} height={19.5} />
                 </View>
               ),
             }}

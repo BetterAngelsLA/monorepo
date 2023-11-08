@@ -1,5 +1,5 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactElement, ReactNode, memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
@@ -50,7 +50,7 @@ export const SearchableDropdown = memo((props: ISearchableDropdownProps) => {
       )}
       <AutocompleteDropdown
         clearOnFocus={false}
-        closeOnBlur={true}
+        closeOnBlur={false}
         closeOnSubmit={false}
         suggestionsListMaxHeight={256}
         renderItem={(item) => renderItem(item)}
@@ -60,17 +60,17 @@ export const SearchableDropdown = memo((props: ISearchableDropdownProps) => {
         inputContainerStyle={styles.container}
         textInputProps={{
           placeholder,
-          placeholderTextColor: colors.darkGray,
+          placeholderTextColor: Colors.DARK_GRAY,
           style: {
             fontFamily: 'Pragmatica-book',
             fontSize: 16,
-            color: colors.darkBlue,
+            color: Colors.DARK_BLUE,
           },
         }}
         showChevron={false}
         ClearIconComponent={
           <View style={styles.removeIcon}>
-            <XmarkIcon color={colors.darkBlue} size="xs" />
+            <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
           </View>
         }
         onSelectItem={(e) => {
@@ -88,15 +88,15 @@ const styles = StyleSheet.create({
     height: 58,
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: colors.lightGray,
+    borderColor: Colors.LIGHT_GRAY,
     borderWidth: 1,
     borderRadius: 3,
-    backgroundColor: colors.white,
+    backgroundColor: Colors.WHITE,
   },
   removeIcon: {
     height: 16,
     width: 16,
-    backgroundColor: colors.lightGray,
+    backgroundColor: Colors.LIGHT_GRAY,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderRadius: 3,
-    borderColor: colors.lightGray,
+    borderColor: Colors.LIGHT_GRAY,
     elevation: 0,
     shadowOpacity: 0,
   },

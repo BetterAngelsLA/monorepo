@@ -1,5 +1,5 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { Pressable, View } from 'react-native';
 import { AutocompleteDropdownContextProvider } from 'react-native-autocomplete-dropdown';
@@ -40,14 +40,14 @@ export const Basic: SearchableDropdownStory = (args, context) => {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              borderTopColor: colors.lightGray,
+              borderTopColor: Colors.LIGHT_GRAY,
               borderTopWidth: 1,
               paddingVertical: 16,
               paddingHorizontal: 16,
             }}
             onPress={() => console.log('test')}
           >
-            <PlusIcon size="md" color={colors.darkBlue} />
+            <PlusIcon size="md" color={Colors.DARK_BLUE} />
             <BodyText ml={8}>Create a Team</BodyText>
           </Pressable>
         }
