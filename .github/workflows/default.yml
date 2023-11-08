@@ -32,6 +32,10 @@ jobs:
   #       run: echo "Add your test commands here"
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
+
     # if: github.ref == 'refs/heads/main' # Ensure deploy only runs on the main branch
     steps:
       - name: Check out the repo
