@@ -40,6 +40,12 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+        with:
+          # Fetches all history for the current branch only
+          fetch-depth: 0
+
+      - name: Fetch the latest commit of the base branch
+        run: git fetch --no-tags --depth=1 origin main:main
 
       - name: Configure Node
         uses: actions/setup-node@v3
@@ -56,11 +62,6 @@ jobs:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
-
-      # Hello from AWS: WhoAmI
-      - name: Sts GetCallerIdentity
-        run: |
-          aws sts get-caller-identity
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
