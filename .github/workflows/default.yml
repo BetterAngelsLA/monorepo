@@ -35,6 +35,7 @@ jobs:
     permissions:
       id-token: write # This is required for requesting the JWT
       contents: read  # This is required for actions/checkout
+      actions: 'read' # This is required to find the last successful workflow run
 
     # if: github.ref == 'refs/heads/main' # Ensure deploy only runs on the main branch
     steps:
@@ -43,10 +44,7 @@ jobs:
         with:
           # Fetches all history for the current branch only
           fetch-depth: 0
-
-      - name: Fetch the latest commit of the base branch
-        run: git fetch --no-tags --depth=1 origin main:main
-
+  
       - name: Configure Node
         uses: actions/setup-node@v3
         with:
@@ -55,6 +53,10 @@ jobs:
 
       - name: Install Dependencies
         run: yarn install
+
+      - uses: nrwl/nx-set-shas@v4
+      # This line is needed for nx affected to work when CI is running on a PR
+      - run: git branch --track main origin/main
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
