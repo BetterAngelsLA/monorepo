@@ -1,4 +1,4 @@
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   GestureResponderEvent,
@@ -6,6 +6,21 @@ import {
   Text,
   TextStyle,
 } from 'react-native';
+
+const SIZES = {
+  md: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  sm: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  xs: {
+    fontSize: 11,
+    lineHeight: 16.5,
+  },
+};
 
 export function BodyText({
   children,
@@ -20,8 +35,9 @@ export function BodyText({
   px,
   onPress,
   textDecorationLine,
-  color = colors.darkBlue,
   style,
+  color = Colors.DARK_BLUE,
+  size = 'md',
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
@@ -41,7 +57,8 @@ export function BodyText({
     | 'line-through'
     | 'underline line-through'
     | undefined;
-  color?: '#ffffff' | '#102C55' | '#9CDCED';
+  color?: string;
+  size?: 'md' | 'sm' | 'xs';
 }) {
   return (
     <Text
@@ -61,6 +78,8 @@ export function BodyText({
           paddingVertical: py,
           textDecorationLine,
           color,
+          fontSize: SIZES[size].fontSize,
+          lineHeight: SIZES[size].lineHeight,
         },
       ]}
     >
@@ -72,7 +91,5 @@ export function BodyText({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Pragmatica-book',
-    fontSize: 16,
-    lineHeight: 24,
   },
 });

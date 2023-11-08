@@ -1,6 +1,6 @@
 import { UserProvider } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack, useRouter } from 'expo-router';

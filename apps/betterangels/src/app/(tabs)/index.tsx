@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
 import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
@@ -14,7 +14,7 @@ export default function TabOneScreen() {
   const { control } = useForm();
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>
         Tab One: user id: {user?.id} username: {user?.username}
       </Text>
@@ -38,7 +38,7 @@ export default function TabOneScreen() {
         darkColor="rgba(255,255,255,0.1)"
       />
       <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    </ScrollView>
   );
 }
 

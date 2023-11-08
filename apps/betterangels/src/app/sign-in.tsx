@@ -5,7 +5,7 @@ import {
   useUser,
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
@@ -209,19 +209,19 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
-        <H4 textTransform="uppercase" mb={8} color={colors.brandYellow}>
+        <H4 textTransform="uppercase" mb={8} color={Colors.BRAND_YELLOW}>
           {FLOW[flow].welcome}
         </H4>
         <H1
           mb={56}
-          color={colors.brandAngelBlue}
+          color={Colors.BRAND_ANGEL_BLUE}
           fontSize={32}
           textTransform="uppercase"
         >
           {FLOW[flow].title}
         </H1>
         {FLOW[flow].message && (
-          <BodyText mb={24} color={colors.white}>
+          <BodyText mb={24} color={Colors.WHITE}>
             {FLOW[flow].message}
           </BodyText>
         )}
@@ -249,9 +249,9 @@ export default function SignIn() {
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <BodyText color={colors.white}>{FLOW[flow].question}</BodyText>
+          <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
           <BodyText
-            color={colors.brandLightBlue}
+            color={Colors.BRAND_LIGHT_BLUE}
             textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
           >
@@ -273,23 +273,23 @@ const styles = StyleSheet.create({
     fontFamily: 'IBM-semibold',
     fontSize: 32,
     textTransform: 'uppercase',
-    color: colors.brandAngelBlue,
+    color: Colors.BRAND_ANGEL_BLUE,
     marginBottom: 56,
   },
   message: {
     fontFamily: 'Pragmatica-book',
-    color: colors.white,
+    color: Colors.WHITE,
     fontSize: 16,
     marginBottom: 24,
   },
   question: {
     fontFamily: 'Pragmatica-book',
-    color: colors.white,
+    color: Colors.WHITE,
     fontSize: 16,
   },
   link: {
     fontFamily: 'Pragmatica-bold',
     textDecorationLine: 'underline',
-    color: colors.brandLightBlue,
+    color: Colors.BRAND_LIGHT_BLUE,
   },
 });
