@@ -11,27 +11,25 @@ env:
   AWS_ACCOUNT_ID: 174477281453
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v3
 
-      - name: Build the project
-        run: echo "Add your build commands here"
+  #     - name: Build the project
+  #       run: echo "Add your build commands here"
 
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
+  # test:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v3
 
-      - name: Test the project
-        run: echo "Add your test commands here"
-
+  #     - name: Test the project
+  #       run: echo "Add your test commands here"
   deploy:
-    needs: test
     runs-on: ubuntu-latest
     # if: github.ref == 'refs/heads/main' # Ensure deploy only runs on the main branch
     steps:
