@@ -1,7 +1,7 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { TouchableOpacity, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { AutocompleteDropdownContextProvider } from 'react-native-autocomplete-dropdown';
 import BodyText from '../BodyText';
 import { SearchableDropdown } from './SearchableDropdown';
@@ -36,7 +36,7 @@ export const Basic: SearchableDropdownStory = (args, context) => {
     <AutocompleteDropdownContextProvider>
       <SearchableDropdown
         extraItem={
-          <TouchableOpacity
+          <Pressable
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -49,7 +49,7 @@ export const Basic: SearchableDropdownStory = (args, context) => {
           >
             <PlusIcon size="md" color={colors.darkBlue} />
             <BodyText ml={8}>Create a Team</BodyText>
-          </TouchableOpacity>
+          </Pressable>
         }
         label="Label"
         setSelectedItem={(item) => console.log(item)}
