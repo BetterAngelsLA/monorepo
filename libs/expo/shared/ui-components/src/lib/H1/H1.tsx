@@ -1,4 +1,4 @@
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
@@ -17,7 +17,7 @@ export function H1({
   ml,
   my,
   mx,
-  color = colors.darkBlue,
+  color = Colors.DARK_BLUE,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;

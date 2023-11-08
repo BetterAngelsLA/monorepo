@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { handleEmailPress } from '@monorepo/expo/betterangels';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H2 } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -57,6 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingTop: 40,
-    backgroundColor: colors.white,
+    backgroundColor: Colors.WHITE,
   },
 });

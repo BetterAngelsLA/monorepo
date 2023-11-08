@@ -5,7 +5,7 @@ import { extractSize } from './utils';
 interface ISVGProps {
   width?: string | number;
   height?: string | number;
-  fill?: '#ffffff';
+  fill?: string;
 }
 
 // Higher Order Component to create SVG icons
