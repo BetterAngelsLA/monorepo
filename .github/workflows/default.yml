@@ -9,6 +9,7 @@ on:
 env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
 
 jobs:
   # build:
@@ -37,10 +38,16 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
-          role-to-assume: arn:aws:iam::174477281453:role/github-actions-oidc-role
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
+
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
