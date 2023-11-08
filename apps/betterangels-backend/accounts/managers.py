@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
@@ -33,3 +33,9 @@ class UserManager(BaseUserManager["User"]):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser must have is_superuser=True."))
         return self.create_user(email, password, **extra_fields)
+
+    def find_by_email(self, email: str) -> Union["User", None]:
+        try:
+            return self.get(email__iexact=email)
+        except self.model.DoesNotExist:
+            return None

@@ -1,7 +1,8 @@
+from accounts.views.api_views import current_user, generate_magic_link
+from accounts.views.auth_views import AuthRedirectView, GoogleLogin
+from accounts.views.class_views import SignUpView
 from django.urls import include, path
 from sesame.views import LoginView
-
-from .views import AuthRedirectView, GoogleLogin, SignUpView, current_user
 
 urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
@@ -9,7 +10,8 @@ urlpatterns = [
     path("auth-redirect", AuthRedirectView.as_view(), name="auth_redirect"),
     path("current-user/", current_user, name="current-user"),
     # magic link login urls
-    path("magic-auth/login/", LoginView.as_view(), name="sesame-login"),
+    path("magic-auth/generate-link", generate_magic_link, name="generate-magic-link"),
+    path("magic-auth/login/", LoginView.as_view(), name="magic-auth-login"),
     # dj-rest-auth urls
     path("rest-auth/", include("dj_rest_auth.urls")),
 ]
