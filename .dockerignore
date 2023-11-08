@@ -8,4 +8,4 @@ reports
 **/.venv
 **/.env
 **/.mypy_cache
-
+**/tmp
