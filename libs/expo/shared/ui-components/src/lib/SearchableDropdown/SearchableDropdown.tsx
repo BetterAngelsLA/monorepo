@@ -1,7 +1,7 @@
-import { PlusIcon, XmarkIcon } from '@monorepo/expo/shared/icons';
+import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
-import { memo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ReactElement, ReactNode, memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import {
   AutocompleteDropdown,
   TAutocompleteDropdownItem,
@@ -9,40 +9,37 @@ import {
 import BodyText from '../BodyText';
 
 interface ISearchableDropdownProps {
-  placeholder: string;
+  placeholder?: string;
   setSelectedItem: (item: TAutocompleteDropdownItem) => void;
   label: string;
+  extraItem?: ReactNode;
+  data: {
+    id: string;
+    title: string;
+  }[];
 }
 
 export const SearchableDropdown = memo((props: ISearchableDropdownProps) => {
-  const { placeholder, setSelectedItem, label } = props;
+  const { placeholder, setSelectedItem, label, data, extraItem } = props;
 
   const renderItem = (item: { title: string | null }) => {
     if (item.title === 'extraItem') {
-      return (
-        <TouchableOpacity
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderTopColor: colors.lightGray,
-            borderTopWidth: 1,
-            paddingVertical: 16,
-            paddingHorizontal: 16,
-          }}
-          onPress={() => console.log('test')}
-        >
-          <PlusIcon size="md" color={colors.darkBlue} />
-          <BodyText ml={8}>Create a Team</BodyText>
-        </TouchableOpacity>
-      );
+      return extraItem as ReactElement;
     }
-    // Return the default rendering for normal items
+
     return (
       <BodyText px={16} py={16}>
         {item.title}
       </BodyText>
     );
   };
+
+  const dataWithExtraItem = useMemo(() => {
+    if (extraItem) {
+      return [...data, { id: 'extraItem', title: 'extraItem' }];
+    }
+    return data;
+  }, [extraItem, data]);
 
   return (
     <View>
@@ -79,12 +76,7 @@ export const SearchableDropdown = memo((props: ISearchableDropdownProps) => {
         onSelectItem={(e) => {
           setSelectedItem(e);
         }}
-        dataSet={[
-          { id: '1', title: 'Alpha' },
-          { id: '2', title: 'Beta' },
-          { id: '3', title: 'Gamma' },
-          { id: 'extraItem', title: 'extraItem' },
-        ]}
+        dataSet={dataWithExtraItem}
       />
     </View>
   );
@@ -111,6 +103,9 @@ const styles = StyleSheet.create({
   },
   suggested: {
     padding: 16,
+    borderWidth: 1,
+    borderRadius: 3,
+    borderColor: colors.lightGray,
     elevation: 0,
     shadowOpacity: 0,
   },

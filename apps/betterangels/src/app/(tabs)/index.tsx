@@ -2,11 +2,7 @@ import { StyleSheet } from 'react-native';
 
 import { useSignOut, useUser } from '@monorepo/expo/betterangels';
 import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
-import {
-  Button,
-  Input,
-  SearchableDropdown,
-} from '@monorepo/expo/shared/ui-components';
+import { Button, Input } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { apiUrl } from '../../../config';
 import EditScreenInfo from '../components/EditScreenInfo';
@@ -35,11 +31,6 @@ export default function TabOneScreen() {
         height={56}
         name="test"
         control={control}
-      />
-      <SearchableDropdown
-        label="Label"
-        setSelectedItem={(item) => console.log(item)}
-        placeholder="h"
       />
       <View
         style={styles.separator}
