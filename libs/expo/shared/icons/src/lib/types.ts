@@ -1,6 +1,6 @@
 export interface IIconProps {
   size?: TIconSizes;
-  color?: '#ffffff' | '#102C55';
+  color?: string;
 }
 
 export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg' | 'xl';

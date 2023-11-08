@@ -1,4 +1,4 @@
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
@@ -44,7 +44,7 @@ export function H2({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'IBM-light',
-    color: colors.darkBlue,
+    color: Colors.DARK_BLUE,
     fontSize: 24,
     lineHeight: 31,
   },
