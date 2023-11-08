@@ -31,9 +31,9 @@
         "platforms": ["linux/amd64"],
         "cache-from": [
           "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-main",
-          "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${GITHUB_REF_NAME}"
+          "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${BRANCH_NAME}"
         ],
-        "cache-to": ["type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${GITHUB_REF_NAME},mode=max"],
+        "cache-to": ["type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${BRANCH_NAME},mode=max"],
         "metadata": {
           "images": [
             "174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend"

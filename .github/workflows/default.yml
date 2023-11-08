@@ -11,6 +11,7 @@ env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
   # build:
