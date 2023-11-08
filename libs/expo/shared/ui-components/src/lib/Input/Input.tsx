@@ -75,7 +75,7 @@ export function Input(props: IInputProps) {
             style={[
               styles.input,
               {
-                borderColor: error ? 'red' : colors.darkBlue,
+                borderColor: error ? 'red' : colors.lightGray,
               },
             ]}
           >
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     right: 16,
     height: 16,
     width: 16,
-    backgroundColor: colors.gray,
+    backgroundColor: colors.lightGray,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',

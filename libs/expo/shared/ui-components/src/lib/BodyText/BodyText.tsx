@@ -1,6 +1,11 @@
 import { colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
+import {
+  GestureResponderEvent,
+  StyleSheet,
+  Text,
+  TextStyle,
+} from 'react-native';
 
 export function BodyText({
   children,
@@ -11,9 +16,12 @@ export function BodyText({
   ml,
   my,
   mx,
+  py,
+  px,
   onPress,
   textDecorationLine,
   color = colors.darkBlue,
+  style,
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
@@ -23,7 +31,10 @@ export function BodyText({
   my?: number;
   mx?: number;
   ml?: number;
+  py?: number;
+  px?: number;
   mr?: number;
+  style?: TextStyle;
   textDecorationLine?:
     | 'none'
     | 'underline'
@@ -37,6 +48,7 @@ export function BodyText({
       onPress={onPress}
       style={[
         styles.text,
+        style,
         {
           textTransform,
           marginBottom: mb,
@@ -45,6 +57,8 @@ export function BodyText({
           marginRight: mr,
           marginHorizontal: mx,
           marginVertical: my,
+          paddingHorizontal: px,
+          paddingVertical: py,
           textDecorationLine,
           color,
         },
