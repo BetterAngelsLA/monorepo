@@ -6,6 +6,7 @@ on:
       - main
   pull_request:
 
+# TODO: these should probably be GitHub Env vars
 env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
