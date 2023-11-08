@@ -1,10 +1,12 @@
 from accounts.services import send_magic_link
 from django.contrib.auth import SESSION_KEY, get_user_model
+from django.middleware.csrf import CsrfViewMiddleware, get_token
 from django.template import loader
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from post_office import mail
 from post_office.models import Email
+from rest_framework.test import APIClient, APITestCase
 from sesame.utils import get_query_string
 
 
@@ -64,3 +66,17 @@ class SesameLoginTests(TestCase):
         found = Email.objects.get(id=sent.id)
         self.assertIn(query_string, found.html_message)
         self.assertIn(query_string, found.message)
+
+
+class MagicLinkTest(APITestCase):
+    def setUp(self) -> None:
+        # Set up any objects you need for the tests
+        # For example, create a user in the test database
+        self.user = get_user_model().objects.create_user(
+            email="test@example.com", password="testpassword"
+        )
+
+    def test_generate_magic_link_request(self) -> None:
+        url = reverse("magic-auth-login")
+        self.client.login(email=self.user.email, password=self.user.password)
+        response = self.client.post(url, {"email": self.user.email})
