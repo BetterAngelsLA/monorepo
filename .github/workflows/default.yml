@@ -73,3 +73,4 @@ jobs:
           yarn nx affected -t build
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
