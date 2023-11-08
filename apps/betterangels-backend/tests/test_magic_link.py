@@ -34,7 +34,7 @@ class SesameLoginTests(TestCase):
         # Generate a magic login URL for the test user
         base_login_url = reverse("sesame-login")
         magic_login_url = base_login_url + get_query_string(self.user)
-        context = {"activation_url": magic_login_url}
+        context = {"magic_login_link_url": magic_login_url}
 
         template = loader.get_template("email_magic_link.html")
         html_message = template.render(context)
