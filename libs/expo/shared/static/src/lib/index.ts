@@ -1,1 +1,1 @@
-export { default as colors } from './colors';
+export { Colors } from './colors';

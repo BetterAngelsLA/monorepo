@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Redirect, Tabs } from 'expo-router';
-import { Pressable, Text, View, useColorScheme } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useUser } from '@monorepo/expo/betterangels';
 import {
@@ -12,14 +12,12 @@ import {
   SolidHouseIcon,
   SolidSitemapIcon,
 } from '@monorepo/expo/shared/icons';
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '../constants/Colors';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
 
   const { user, isLoading } = useUser();
@@ -40,8 +38,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarShowLabel: false,
-        tabBarActiveTintColor: colors.darkBlue,
-        tabBarInactiveTintColor: colors.darkGray,
+        tabBarActiveTintColor: Colors.DARK_BLUE,
+        tabBarInactiveTintColor: Colors.DARK_GRAY,
         tabBarStyle: {
           height: 70 + insets.bottom,
           alignItems: 'center',
@@ -74,7 +72,7 @@ export default function TabLayout() {
                   <FontAwesome
                     name="info-circle"
                     size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
+                    color="black"
                     style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
@@ -162,7 +160,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   profileContainer: {
-    backgroundColor: colors.extraLightBlue,
+    backgroundColor: Colors.EXTRA_LIGHT_BLUE,
     height: 24,
     width: 24,
     borderRadius: 100,
@@ -171,7 +169,7 @@ const styles = StyleSheet.create({
   },
   profileText: {
     textTransform: 'uppercase',
-    color: colors.white,
+    color: Colors.WHITE,
     fontFamily: 'Pragmatica-bold',
     fontSize: 11,
   },
@@ -179,7 +177,7 @@ const styles = StyleSheet.create({
     height: 66,
     width: 66,
     borderRadius: 100,
-    backgroundColor: colors.blue,
+    backgroundColor: Colors.BLUE,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -191,6 +189,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: Colors.WHITE,
   },
 });

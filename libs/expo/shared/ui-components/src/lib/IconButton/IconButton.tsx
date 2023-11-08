@@ -1,4 +1,4 @@
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
@@ -16,19 +16,19 @@ type TVariants = {
 
 const VARIANTS: TVariants = {
   dark: {
-    bg: colors.brandBlue,
+    bg: Colors.BRAND_BLUE,
   },
   sky: {
-    bg: colors.brandLightBlue,
+    bg: Colors.BRAND_LIGHT_BLUE,
   },
   primary: {
-    bg: colors.blue,
+    bg: Colors.BLUE,
   },
   secondary: {
-    bg: colors.lightGray,
+    bg: Colors.LIGHT_GRAY,
   },
   negative: {
-    bg: colors.white,
+    bg: Colors.WHITE,
   },
   transparent: {
     bg: 'transparent',
@@ -58,7 +58,7 @@ export function IconButton(props: IIconButtonProps) {
         styles.button,
         style,
         {
-          backgroundColor: disabled ? colors.disabled : VARIANTS[variant].bg,
+          backgroundColor: disabled ? Colors.DISABLED : VARIANTS[variant].bg,
         },
       ]}
       onPress={onPress}

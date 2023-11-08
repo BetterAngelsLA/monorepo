@@ -1,35 +1,17 @@
-interface IColors {
-  brandAngelBlue: '#F2FAFC';
-  brandLightBlue: '#9CDCED';
-  brandBlue: '#375C76';
-  brandDarkBlue: '#1E3342';
-  brandYellow: '#FFF82E';
-  extraLightBlue: '#72CAE1';
-  blue: '#00B3EB';
-  darkBlue: '#102C55';
-  white: '#ffffff';
-  lightGray: '#E2E6EE';
-  gray: '#9FAAB2';
-  darkGray: '#697A87';
-  disabled: '#cbd0d7';
-  red: '#CB0808';
-  borderRed: '#DE2F2F';
+export enum Colors {
+  BRAND_ANGEL_BLUE = '#F2FAFC',
+  BRAND_LIGHT_BLUE = '#9CDCED',
+  BRAND_BLUE = '#375C76',
+  BRAND_DARK_BLUE = '#1E3342',
+  BRAND_YELLOW = '#FFF82E',
+  EXTRA_LIGHT_BLUE = '#72CAE1',
+  BLUE = '#00B3EB',
+  DARK_BLUE = '#102C55',
+  WHITE = '#ffffff',
+  LIGHT_GRAY = '#E2E6EE',
+  GRAY = '#9FAAB2',
+  DARK_GRAY = '#697A87',
+  DISABLED = '#cbd0d7',
+  RED = '#CB0808',
+  BORDER_RED = '#DE2F2F',
 }
-
-export default {
-  brandAngelBlue: '#F2FAFC',
-  brandLightBlue: '#9CDCED',
-  brandBlue: '#375C76',
-  brandDarkBlue: '#1E3342',
-  brandYellow: '#FFF82E',
-  extraLightBlue: '#72CAE1',
-  blue: '#00B3EB',
-  darkBlue: '#102C55',
-  white: '#ffffff',
-  lightGray: '#E2E6EE',
-  gray: '#9FAAB2',
-  darkGray: '#697A87',
-  disabled: '#cbd0d7',
-  red: '#CB0808',
-  borderRed: '#DE2F2F',
-} as IColors;
