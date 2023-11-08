@@ -3311,6 +3311,7 @@ __metadata:
     react-dom: 18.2.0
     react-hook-form: ^7.47.0
     react-native: 0.72.6
+    react-native-autocomplete-dropdown: ^3.1.0
     react-native-gesture-handler: ~2.12.0
     react-native-safe-area-context: 4.6.3
     react-native-screens: ~3.22.0
@@ -16523,7 +16524,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.debounce@npm:^4.0.8":
+"lodash.debounce@npm:*, lodash.debounce@npm:^4.0.8":
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
   checksum: a3f527d22c548f43ae31c861ada88b2637eb48ac6aa3eb56e82d44917971b8aa96fbb37aa60efea674dc4ee8c42074f90f7b1f772e9db375435f6c83a19b3bc6
@@ -20182,6 +20183,41 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-animatable@npm:^1.3.3":
+  version: 1.4.0
+  resolution: "react-native-animatable@npm:1.4.0"
+  dependencies:
+    prop-types: ^15.8.1
+  checksum: a1b211aff745b97351d78643d641fa298f7d71524eaf22fee8a69257ce52e85d6b3caf8e7fd26a521af34984fba7402b7c632c35ea69d618769387d1dcb6b32a
+  languageName: node
+  linkType: hard
+
+"react-native-autocomplete-dropdown@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "react-native-autocomplete-dropdown@npm:3.1.0"
+  dependencies:
+    lodash.debounce: "*"
+    react-native-animatable: ^1.3.3
+    react-native-feather: ^1.1.2
+    react-native-size-matters: ^0.4.0
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.60.0"
+    react-native-svg: ^13.0.0
+  checksum: b490c5d3f02ac619ecea2e95175aa0467f56c3b6662a1b2bbf2c55d5c35c212740d203b29964a8abbff056df37e301889cf51f093f2e29583e3a243e505e94cf
+  languageName: node
+  linkType: hard
+
+"react-native-feather@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "react-native-feather@npm:1.1.2"
+  peerDependencies:
+    react-native: ">=0.46"
+    react-native-svg: ">=5.3"
+  checksum: a83d421a4629d9f3afd54f96d90fe2370108e9dbc62b62e9ecc8db235533ccdd2a0edd063492f7070640666a62707b420dbd0e5eefc21b0172ded11e5a05b7b5
+  languageName: node
+  linkType: hard
+
 "react-native-gesture-handler@npm:~2.12.0":
   version: 2.12.1
   resolution: "react-native-gesture-handler@npm:2.12.1"
@@ -20218,6 +20254,15 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 3b592ff31d9dfde5e2ce967f85f3ad17a94f4f3bee2248a3dad9ec791e7cda72a431f86b468b3b2a70ebeffb49b462f8162668a58fb9ddabb10b5a369816850d
+  languageName: node
+  linkType: hard
+
+"react-native-size-matters@npm:^0.4.0":
+  version: 0.4.2
+  resolution: "react-native-size-matters@npm:0.4.2"
+  peerDependencies:
+    react-native: "*"
+  checksum: 65dac50cad8d03bd046c62e327edf1c162c650fa3320613343bb978ca4b83c8e4e61b0f528502a154a1d4e4baa6dc296799a57737177e3d3c77b64750f5d8076
   languageName: node
   linkType: hard
 

@@ -2,15 +2,11 @@ import { UserProvider } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
 import { colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View, useColorScheme } from 'react-native';
+import { AutocompleteDropdownContextProvider } from 'react-native-autocomplete-dropdown';
 import Logo from './assets/images/logo.svg';
 
 export { ErrorBoundary } from 'expo-router';
@@ -80,7 +76,10 @@ function RootLayoutNav() {
 
   return (
     <UserProvider apiUrl={apiUrl}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <AutocompleteDropdownContextProvider>
+        {/* <ThemeProvider
+          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+        > */}
         <Stack>
           <Stack.Screen
             name="(tabs)"
@@ -113,7 +112,8 @@ function RootLayoutNav() {
           />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
         </Stack>
-      </ThemeProvider>
+        {/* </ThemeProvider> */}
+      </AutocompleteDropdownContextProvider>
     </UserProvider>
   );
 }

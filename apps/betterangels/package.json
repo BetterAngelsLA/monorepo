@@ -33,7 +33,8 @@
     "react-native-screens": "*",
     "expo-updates": "*",
     "@storybook/react": "*",
-    "react-hook-form": "*"
+    "react-hook-form": "*",
+    "react-native-autocomplete-dropdown": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
