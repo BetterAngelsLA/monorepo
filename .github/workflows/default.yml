@@ -64,7 +64,12 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          yarn nx affected -t deploy --configuration=ci
+          yarn nx affected -t build
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update ECS Service
+        # if: ${{ env.BRANCH_NAME }} == 'main'
+        run: |
+          yarn nx affected -t deploy
