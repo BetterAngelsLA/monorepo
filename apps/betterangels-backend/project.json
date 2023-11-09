@@ -40,7 +40,9 @@
           "images": [
             "174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend"
           ],
-          "tags": ["${DOCKER_TAG}"]
+          "tags": [
+            "${DOCKER_TAG}"
+          ]
         }
       }
     },

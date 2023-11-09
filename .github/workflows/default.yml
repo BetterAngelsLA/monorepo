@@ -28,15 +28,22 @@ jobs:
           # Fetches all history for the current branch only
           fetch-depth: 0
 
-      - name: Set short SHA environment variable
-        run: echo "BRANCH_NAME=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV  
+      - name: Set Branch Name and Short SHA
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)" >> $GITHUB_ENV
 
-      - name: Set short SHA environment variable
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      - name: Set Image Tag Prefix
+        run: |
+          if [[ "${{ env.BRANCH_NAME }}" == "main" ]]; then
+            echo "IMAGE_TAG_PREFIX=main" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG_PREFIX=dev-${{ env.BRANCH_NAME }}" >> $GITHUB_ENV
+          fi
 
       - name: Set Docker Tag
-        run: echo "DOCKER_TAG=${{ env.BRANCH_NAME }}-${{ env.SHORT_SHA }}" >> $GITHUB_ENV
-
+        run: |
+          echo "DOCKER_TAG=${{ env.IMAGE_TAG_PREFIX }}-${{ env.SHORT_SHA }}" >> $GITHUB_ENV
 
       - name: Configure Node
         uses: actions/setup-node@v3
