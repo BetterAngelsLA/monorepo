@@ -12,7 +12,7 @@ env:
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
-  DOCKER_TAG: ${{ env.BRANCH_NAME }}-${{ github.sha[:7] }}"
+  DOCKER_TAG: ${{ github.head_ref || github.ref_name }}-${{ github.sha[:7] }}"
 
 jobs:
   build:
