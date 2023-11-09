@@ -34,7 +34,7 @@
           "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-main"
         ],
         "cache-to": [
-          "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${BRANCH_NAME}"
+          "type=registry,ref=174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
         ],
         "metadata": {
           "images": [
