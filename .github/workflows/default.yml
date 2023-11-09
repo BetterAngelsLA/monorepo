@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0 # Fetches all history for the current branch only
       - uses: nrwl/nx-set-shas@v4
-      - run: git branch --track main origin/main
+      - run: git branch --track main origin/main # This line is needed for nx affected to work when CI is running on a PR
 
       - name: Set Environment Variables
         run: |
@@ -58,6 +58,9 @@ jobs:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and Push Docker image
         run: |
