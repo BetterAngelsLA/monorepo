@@ -29,7 +29,7 @@ export function BodyText({
   onPress,
   textDecorationLine,
   color = Colors.DARK_BLUE,
-  fontSize = 'md',
+  size = 'md',
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
@@ -47,7 +47,7 @@ export function BodyText({
     | 'underline line-through'
     | undefined;
   color?: string;
-  fontSize?: 'md' | 'sm' | 'xs';
+  size?: 'md' | 'sm' | 'xs';
 }) {
   return (
     <Text
@@ -64,8 +64,8 @@ export function BodyText({
           marginVertical: my,
           textDecorationLine,
           color,
-          fontSize: SIZES[fontSize].fontSize,
-          lineHeight: SIZES[fontSize].lineHeight,
+          fontSize: SIZES[size].fontSize,
+          lineHeight: SIZES[size].lineHeight,
         },
       ]}
     >
