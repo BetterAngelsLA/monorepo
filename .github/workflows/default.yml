@@ -64,7 +64,7 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          yarn nx affected -t build --configuration=ci
+          yarn nx affected -t deploy --configuration=ci
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
