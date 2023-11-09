@@ -46,12 +46,12 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "echo 'Creating ${IMAGE_JSON_NAME} file'",
+          "echo \"Creating ${IMAGE_JSON_NAME} file\"",
           "mkdir -p ${DIST_PATH}",
-          "echo '[{\"name\": \"app\", \"imageUri\": \"${ECR_REPO}:${DOCKER_TAG}\"}]' > ${IMAGE_JSON_PATH}",
-          "echo 'Zipping ${IMAGE_JSON_NAME}'",
-          "zip -j ${ZIP_PATH} ${IMAGE_JSON_PATH}",
-          "aws s3 cp ${DIST_PATH} ${S3_BUCKET}/${ZIP_NAME}"
+          "echo \"[{\\\"name\\\": \\\"app\\\", \\\"imageUri\\\": \\\"${ECR_REPO}:${DOCKER_TAG}\\\"}]\" > ${DIST_PATH}/${IMAGE_JSON_NAME}",
+          "echo \"Zipping ${IMAGE_JSON_NAME}\"",
+          "zip -j ${DIST_PATH}/${ZIP_NAME} ${DIST_PATH}/${IMAGE_JSON_NAME}",
+          "aws s3 cp ${DIST_PATH}/${ZIP_NAME} ${S3_BUCKET}/${ZIP_NAME}"
         ],
         "parallel": false
       }

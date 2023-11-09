@@ -72,6 +72,7 @@ RUN apt-get update \
       curl \
       git \
       wget \
+      zip \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
