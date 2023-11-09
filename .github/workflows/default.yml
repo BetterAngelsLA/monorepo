@@ -11,8 +11,6 @@ env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
-  DOCKER_TAG: ${{ github.head_ref || github.ref_name }}-${{ github.sha[:7] }}"
 
 jobs:
   build:
@@ -29,7 +27,17 @@ jobs:
         with:
           # Fetches all history for the current branch only
           fetch-depth: 0
-  
+
+      - name: Set short SHA environment variable
+        run: echo "BRANCH_NAME=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV  
+
+      - name: Set short SHA environment variable
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+
+      - name: Set Docker Tag
+        run: echo "DOCKER_TAG=${{ env.BRANCH_NAME }}-${{ env.SHORT_SHA }}" >> $GITHUB_ENV
+
+
       - name: Configure Node
         uses: actions/setup-node@v3
         with:
