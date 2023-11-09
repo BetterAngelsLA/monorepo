@@ -64,6 +64,12 @@ function generateStatePayload(length = 32) {
   return base64urlEncode(JSON.stringify(payload));
 }
 
+const magicLink = async () => {
+  await fetch(`${apiUrl}/magic-auth/generate-link`, {
+    method: 'POST',
+  });
+};
+
 export default function SignIn() {
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
@@ -226,6 +232,12 @@ export default function SignIn() {
           </BodyText>
         )}
         <View style={{ width: '100%', marginBottom: 24 }}>
+          <Button
+            title="hello"
+            size="full"
+            variant="dark"
+            onPress={async () => await magicLink()}
+          />
           <Button
             mb={8}
             title={`${FLOW[flow].link} with Microsoft`}
