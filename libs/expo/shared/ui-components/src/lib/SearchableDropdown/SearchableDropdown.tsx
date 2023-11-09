@@ -15,6 +15,9 @@ import {
 } from 'react-native';
 import BodyText from '../BodyText';
 
+const MIN_FITABLE_HEIGHT = 300;
+const DROPDOWN_MAX_HEIGHT = 256;
+
 export function SearchableDropdown({
   extraTitle,
   label,
@@ -49,7 +52,7 @@ export function SearchableDropdown({
       inputRef.current.measure((fx, fy, width, height, px, py) => {
         const screenHeight = Dimensions.get('window').height;
         const bottomSpace = screenHeight - (py + height);
-        if (bottomSpace < 300) {
+        if (bottomSpace < MIN_FITABLE_HEIGHT) {
           setDropdownPosition('top');
         } else {
           setDropdownPosition('bottom');
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     width: '100%',
-    maxHeight: 256,
+    maxHeight: DROPDOWN_MAX_HEIGHT,
     position: 'absolute',
     overflow: 'scroll',
     zIndex: 100,
