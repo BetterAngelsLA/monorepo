@@ -15,15 +15,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      actions: 'read'
+      actions: read    # Required to find the last successful workflow run
+      contents: read   # Required for actions/checkout
+      id-token: write  # Required for requesting the JWT
 
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Fetches all history for the current branch only
       - uses: nrwl/nx-set-shas@v4
       - run: git branch --track main origin/main
 
@@ -58,9 +58,11 @@ jobs:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and Push Docker image
+        run: |
+          yarn nx affected -t build
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker image
-        run: yarn nx affected --target=build
