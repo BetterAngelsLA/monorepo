@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "post_office",
     "rest_framework",
+    "organizations",
     # Our Apps
     "accounts",
     "dwelling",
@@ -246,6 +247,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 LOGIN_URL = "/accounts/login/"
+
+# django-organizations settings
+ORGS_SLUGFIELD = "django_extensions.db.fields.AutoSlugField"
 
 
 # ALL AUTH SETTINGS
