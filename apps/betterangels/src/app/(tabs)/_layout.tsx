@@ -60,7 +60,7 @@ export default function TabLayout() {
                 <HouseIcon color={color} />
               )}
 
-              <BodyText color={color} fontSize="xs">
+              <BodyText color={color} size="xs">
                 Home
               </BodyText>
             </View>
@@ -92,7 +92,7 @@ export default function TabLayout() {
               ) : (
                 <CalendarIcon color={color} />
               )}
-              <BodyText color={color} fontSize="xs">
+              <BodyText color={color} size="xs">
                 Appointment
               </BodyText>
             </View>
@@ -129,7 +129,7 @@ export default function TabLayout() {
               ) : (
                 <SitemapIcon color={color} />
               )}
-              <BodyText color={color} fontSize="xs">
+              <BodyText color={color} size="xs">
                 Teams
               </BodyText>
             </View>
@@ -147,7 +147,7 @@ export default function TabLayout() {
                   {user.username?.slice(0, 2)}
                 </Text>
               </View>
-              <BodyText color={color} fontSize="xs">
+              <BodyText color={color} size="xs">
                 Profile
               </BodyText>
             </View>
