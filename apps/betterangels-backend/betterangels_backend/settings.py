@@ -52,6 +52,10 @@ env = environ.Env(
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
+    SESAME_TOKEN_NAME=(str, "token"),
+    SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
+    SESAME_ONE_TIME=(bool, True),
+    SESAME_SALT=(str, "sesame"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,13 +146,14 @@ TEMPLATES = [
                 "django.template.context_processors.request",
             ],
         },
-    },
+    }
 ]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
+    "sesame.backends.ModelBackend",
 ]
 
 REST_FRAMEWORK = {
@@ -300,3 +305,9 @@ SESSION_SAVE_EVERY_REQUEST = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
+
+# Django Sesame settings
+SESAME_TOKEN_NAME = env("SESAME_TOKEN_NAME")
+SESAME_MAX_AGE = env("SESAME_MAX_AGE")
+SESAME_ONE_TIME = env("SESAME_ONE_TIME")
+SESAME_SALT = env("SESAME_SALT")

@@ -77,7 +77,7 @@ Workers handle task execution. They can run without the scheduler if you're not 
 To start a worker:
 
 ```bash
-nx run betterangels-backend:start-worker
+yarn nx run betterangels-backend:start-worker
 ```
 
 Note: While workers can run independently of the scheduler, the scheduler requires at least one worker to process the scheduled tasks.

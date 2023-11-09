@@ -67,6 +67,7 @@ django-extensions = "^3.2.3"
 django-jazzmin = "^2.6.0"
 django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
+django-sesame = "^3.2.1"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -745,6 +746,23 @@ pytz = ">=2016.10"
 [package.extras]
 bounce = ["cryptography (>=36.0.2)", "requests (>=2.27.1)"]
 events = ["cryptography (>=36.0.2)", "requests (>=2.27.1)"]
+
+[[package]]
+name = "django-sesame"
+version = "3.2.1"
+description = "Frictionless authentication with \"Magic Links\" for your Django project."
+optional = false
+python-versions = ">=3.6.2"
+files = [
+    {file = "django_sesame-3.2.1-py3-none-any.whl", hash = "sha256:b7a8466ba34b6f6910e3b7287d4762fefc27e75809c7ffecd17cb5f2261450a4"},
+    {file = "django_sesame-3.2.1.tar.gz", hash = "sha256:86ccfce17d0520289f62df0ea4ce97d72239f89b87a215d9d09aeeb83e05d4fe"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+
+[package.extras]
+ua = ["ua-parser (>=0.15)"]
 
 [[package]]
 name = "django-stubs"

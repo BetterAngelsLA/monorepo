@@ -1,40 +1,18 @@
-import base64
 import json
 from typing import Any, List, TypeVar, Union
 from urllib.parse import unquote
 
+from accounts.serializers import SocialLoginSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
-from django.db import models
-from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .forms import UserCreationForm
-from .serializers import SocialLoginSerializer, UserSerializer
+from .utils import base64url_decode
 
 T = TypeVar("T")
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def current_user(request: Request) -> Response:
-    """
-    Return details of the currently authenticated user.
-    """
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
-
-
-class SignUpView(CreateView[models.Model, UserCreationForm]):
-    form_class = UserCreationForm
-    success_url = reverse_lazy("login")
-    template_name = "registration/signup.html"
 
 
 class GoogleLogin(SocialLoginView):
@@ -48,17 +26,6 @@ class GoogleLogin(SocialLoginView):
         # if not provided use a default
         self.callback_url = request.query_params.get("redirect_uri")
         return super(GoogleLogin, self).post(request, *args, **kwargs)  # type: ignore
-
-
-def base64url_decode(input_str: str) -> str:
-    # Transform base64url string to regular base64 string
-    remainder = len(input_str) % 4
-    if remainder == 2:
-        input_str += "=="
-    elif remainder == 3:
-        input_str += "="
-
-    return base64.urlsafe_b64decode(input_str).decode("utf-8")
 
 
 class AuthRedirectView(APIView):

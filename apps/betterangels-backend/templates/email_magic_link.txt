@@ -1,0 +1,3 @@
+Please login through the link below.
+
+Using this link: {{ magic_login_link_url }}
