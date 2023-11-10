@@ -72,32 +72,38 @@ RUN apt-get update \
       curl \
       git \
       wget \
+      zip \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
     gdal-bin \
-    # Add session manager to allow Fargate sshing
-    && curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb" \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Development Build
+FROM base as development
+# Add session manager to allow Fargate sshing
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_arm64/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
+    else \
+      echo "Unsupported architecture"; \
+      exit 1; \
+    fi \
     && dpkg -i session-manager-plugin.deb \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-FROM base as development
-# TODO: This is only for dev so we can likely make this a dev target instead of global
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
-VOLUME ["/workspace/node_modules", "/workspace/.venv"]
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
 
+# Production Build
 FROM base as production
-
 USER betterangels
-ENV PATH $PATH:$HOME/.local/bin
-
-COPY --chown=betterangels . /app/
-
-WORKDIR /app/
-
+ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
+COPY --chown=betterangels . /workspace/
+WORKDIR /workspace/
 RUN poetry install --no-interaction --no-ansi
