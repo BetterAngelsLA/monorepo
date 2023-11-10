@@ -101,19 +101,19 @@ Login using creds: `admin@ba.la`/`admin`
 
 ### Starting a Shell
 
+1. Start a poetry shell
+
+   ```bash
+   poetry shell
+   ```
+
 1. First `cd` into the `betterangels-backend` app directory
 
    ```bash
    cd apps/betters-angelsbackend/
    ```
 
-2. Start a poetry shell
-
-   ```bash
-   poetry shell
-   ```
-
-3. Start django admin shell
+1. Start django admin shell
 
    ```bash
    django-admin shell --settings betterangels_backend.settings
