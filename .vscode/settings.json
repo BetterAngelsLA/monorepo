@@ -28,6 +28,5 @@
   },
   "python.analysis.typeCheckingMode": "off",
   "mypy.enabled": true,
-  "mypy.runUsingActiveInterpreter": true,
-  "eslint.validate": ["json"]
+  "mypy.runUsingActiveInterpreter": true
 }
