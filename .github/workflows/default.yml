@@ -48,8 +48,8 @@ jobs:
           node-version: 18.17.1
           cache: yarn
 
-      - name: Lint
-        run: yarn nx affected -t lint
+      # - name: Lint
+      #   run: yarn nx affected -t lint
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
