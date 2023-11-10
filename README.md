@@ -141,6 +141,8 @@ To run tests with breakpoints via the terminal, you'll need to use a `poetry she
 
 To use VSCode's debugger:
 
+<img width="1230" alt="image" src="https://github.com/BetterAngelsLA/monorepo/assets/4707640/2d8d6351-1cf3-44cb-912c-7d069e597095">
+
 1. Select the test tube icon on the left
 1. Add a breakpoint (red dot) on the line you would like to break at
 1. Click the "Run and Debug" button next to the test you want to run
