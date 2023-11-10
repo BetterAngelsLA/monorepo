@@ -92,7 +92,6 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "post_office",
     "rest_framework",
-    # Our Config
     # Our Apps
     "accounts",
     "dwelling",
