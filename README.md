@@ -73,10 +73,10 @@ Dependencies/Tools
 ```
 
 1. Clone the monorepo repo from github
-2. Open it in a VSCode workspace
-3. Cmd + Shift + P and select "Dev Containers: Rebuild Container"
-4. Reopen a new VSCode workspace
-5. Apply migrations:
+1. Open it in a VSCode workspace
+1. Cmd + Shift + P and select "Dev Containers: Rebuild Container"
+1. Reopen a new VSCode workspace
+1. Apply migrations:
    ```bash
    yarn nx run betterangels-backend:migrate
    ```
@@ -92,29 +92,9 @@ yarn nx start betterangels-backend
 Once started, you can access the Django development server at the default address: [http://localhost:8000/admin/](http://localhost:8000/admin/) or the port you've configured.
 Login using creds: `admin@ba.la`/`admin`
 
-### Running Tests
-
-To run the test suite:
-
-```bash
-yarn nx test betterangels-backend
-```
-
-To run individual tests:
-
-```bash
-yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
-```
-
-To run tests without rebuilding the database each time, add `--keepdb` flag:
-
-```bash
-yarn nx test betterangels-backend --keepdb
-```
-
 ### Starting a Shell
 
-1. First `cd` into the `betterangels/backend` dir.
+1. First `cd` into the `betterangels/backend` directory
 
 ```bash
 cd apps/betters-angelsbackend/
@@ -124,13 +104,51 @@ cd apps/betters-angelsbackend/
 
 ```bash
 poetry shell
-
 ```
 
 3. Start django admin shell
 
 ```bash
 django-admin shell --settings betterangels_backend.settings
+```
+
+### Running Tests
+
+To run the full test suite:
+
+```bash
+yarn nx test betterangels-backend
+```
+
+To run tests with breakpoints, you'll need to use a `poetry shell` as described in the section above:
+
+1. Add any breakpoint to your code/tests:
+   Example (using `IPython` which is already in the dev dependencies):
+
+   ```
+   from IPython import embed; embed()
+   ```
+
+2. Run tests using `python manage.py test`
+
+#### Test Options
+
+After the `yarn nx test betterangels-backend` or `python manage.py test` command, add options below:
+
+To run individual an test, add the full path of the test in dot notation:
+
+Example:
+
+```bash
+python manage.py test accounts.tests.UsersManagersTests.test_create_user
+```
+
+To run tests without rebuilding the database each time, add `--keepdb` flag.
+
+Example:
+
+```bash
+python manage.py test --keepdb
 ```
 
 ### Starting the Celery Beat Scheduler
