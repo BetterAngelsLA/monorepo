@@ -97,7 +97,6 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
-VOLUME ["/workspace/node_modules", "/workspace/.venv"]
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
 
