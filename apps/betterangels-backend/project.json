@@ -26,14 +26,35 @@
     "build": {
       "executor": "@nx-tools/nx-container:build",
       "options": {
+        "file": "Dockerfile",
         "push": true,
         "platforms": ["linux/amd64"],
+        "cache-from": [
+          "type=registry,ref=${ECR_REPO}:buildcache-${BRANCH_NAME}",
+          "type=registry,ref=${ECR_REPO}:buildcache-main"
+        ],
+        "cache-to": [
+          "type=registry,ref=${ECR_REPO}:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
+        ],
         "metadata": {
-          "images": [
-            "174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend"
-          ],
-          "tags": ["type=sha"]
+          "images": ["${ECR_REPO}"],
+          "tags": ["${DOCKER_TAG}"]
         }
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "echo \"Creating ${IMAGE_JSON_NAME} file\"",
+          "mkdir -p ${DIST_PATH}",
+          "echo \"[{\\\"name\\\": \\\"app\\\", \\\"imageUri\\\": \\\"${ECR_REPO}:${DOCKER_TAG:-dev}\\\"}]\" > ${DIST_PATH}/${IMAGE_JSON_NAME}",
+          "echo \"Zipping ${IMAGE_JSON_NAME}\"",
+          "zip -j ${DIST_PATH}/${ZIP_NAME} ${DIST_PATH}/${IMAGE_JSON_NAME}",
+          "echo \"Pusihing ${ZIP_NAME} to S3\"",
+          "aws s3 cp ${DIST_PATH}/${ZIP_NAME} ${S3_BUCKET}/${ZIP_NAME}"
+        ],
+        "parallel": false
       }
     },
     "manage": {
@@ -86,6 +107,8 @@
       "options": {
         "commands": [
           "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
+          "poetry run black --check .",
+          "poetry run isort . --check-only",
           "poetry run mypy --config-file=../../mypy.ini ."
         ],
         "cwd": "apps/betterangels-backend",
