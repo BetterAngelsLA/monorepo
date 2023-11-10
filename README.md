@@ -90,7 +90,7 @@ yarn nx start betterangels-backend
 ```
 
 Once started, you can access the Django development server at the default address: [http://localhost:8000/admin/](http://localhost:8000/admin/) or the port you've configured.
-Login using creds: `admin`/`admin`
+Login using creds: `admin@ba.la`/`admin`
 
 ### Running Tests
 

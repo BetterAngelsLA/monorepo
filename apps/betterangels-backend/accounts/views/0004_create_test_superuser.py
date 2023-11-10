@@ -19,7 +19,7 @@ def create_test_superuser(apps: "Apps", _: Any) -> None:
 
     User = get_user_model()
     admin = User.objects.create_superuser(
-        username="admin", email="admin@admin.admin", password="admin"
+        username="admin", email="admin@ba.la", password="admin"
     )
     admin.save()
 
