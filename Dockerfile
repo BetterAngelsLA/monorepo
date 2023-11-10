@@ -104,7 +104,7 @@ ENV PATH $PATH:$HOME/.local/bin
 # Production Build
 FROM base as production
 USER betterangels
-ENV PATH $PATH:$HOME/.local/bin
+ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 COPY --chown=betterangels . /workspace/
 WORKDIR /workspace/
 RUN poetry install --no-interaction --no-ansi
