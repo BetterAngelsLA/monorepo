@@ -7,9 +7,10 @@ services:
     # docker-compose.yml file (the first in the devcontainer.json "dockerComposeFile"
     # array). The sample below assumes your primary file is in the root of your project.
     #
-    # build:
-    #   context: .
-    #   dockerfile: .devcontainer/Dockerfile
+    build:
+      context: .
+      target: development
+      # dockerfile: .devcontainer/Dockerfile
     environment:
       - AWS_CONFIG_FILE=/workspace/.aws/config
 
