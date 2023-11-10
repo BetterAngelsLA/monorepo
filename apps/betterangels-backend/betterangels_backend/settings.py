@@ -68,6 +68,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+IS_LOCAL_DEV = env("ENVIRONMENT") == "local"
 
 # Application definition
 INSTALLED_APPS = [
