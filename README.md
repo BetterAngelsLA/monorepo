@@ -127,6 +127,12 @@ To run the full test suite:
 yarn nx test betterangels-backend
 ```
 
+To run an individual test, add the full path of the test in dot notation. Example:
+
+```bash
+yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
+```
+
 To run tests with breakpoints via the terminal, you'll need to use a `poetry shell` as described in the section above, then:
 
 1. Add any breakpoint to your code/tests:
@@ -137,7 +143,11 @@ To run tests with breakpoints via the terminal, you'll need to use a `poetry she
    from IPython import embed; embed()
    ```
 
-2. Run tests using `python manage.py test`
+1. Run tests using `python manage.py test`. Example:
+
+   ```bash
+   python manage.py test accounts.tests.UsersManagersTests.test_create_user
+   ```
 
 To use VSCode's debugger:
 
@@ -146,17 +156,7 @@ To use VSCode's debugger:
 1. Select the test tube icon on the left
 1. Add a breakpoint (red dot) on the line you would like to break at
 1. Click the "Run and Debug" button next to the test you want to run
-1. Go to the Debug Console on the bottom to access the interactive shell
-
-#### Test Options
-
-After the `yarn nx test betterangels-backend` or `python manage.py test` command, add options below:
-
-To run an individual test, add the full path of the test in dot notation. Example:
-
-```bash
-python manage.py test accounts.tests.UsersManagersTests.test_create_user
-```
+1. Go to the `Debug Console` on the bottom to access the interactive shell
 
 ### Starting the Celery Beat Scheduler
 
