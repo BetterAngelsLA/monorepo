@@ -51,6 +51,7 @@
           "echo \"[{\\\"name\\\": \\\"app\\\", \\\"imageUri\\\": \\\"${ECR_REPO}:${DOCKER_TAG:-dev}\\\"}]\" > ${DIST_PATH}/${IMAGE_JSON_NAME}",
           "echo \"Zipping ${IMAGE_JSON_NAME}\"",
           "zip -j ${DIST_PATH}/${ZIP_NAME} ${DIST_PATH}/${IMAGE_JSON_NAME}",
+          "echo \"Pusihing ${ZIP_NAME} to S3\"",
           "aws s3 cp ${DIST_PATH}/${ZIP_NAME} ${S3_BUCKET}/${ZIP_NAME}"
         ],
         "parallel": false
