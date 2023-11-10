@@ -94,23 +94,23 @@ Login using creds: `admin@ba.la`/`admin`
 
 ### Starting a Shell
 
-1. First `cd` into the `betterangels/backend` directory
+1. First `cd` into the `betterangels-backend` app directory
 
-```bash
-cd apps/betters-angelsbackend/
-```
+   ```bash
+   cd apps/betters-angelsbackend/
+   ```
 
 2. Start a poetry shell
 
-```bash
-poetry shell
-```
+   ```bash
+   poetry shell
+   ```
 
 3. Start django admin shell
 
-```bash
-django-admin shell --settings betterangels_backend.settings
-```
+   ```bash
+   django-admin shell --settings betterangels_backend.settings
+   ```
 
 ### Running Tests
 
@@ -120,9 +120,10 @@ To run the full test suite:
 yarn nx test betterangels-backend
 ```
 
-To run tests with breakpoints, you'll need to use a `poetry shell` as described in the section above:
+To run tests with breakpoints, you'll need to use a `poetry shell` as described in the section above, then:
 
 1. Add any breakpoint to your code/tests:
+
    Example (using `IPython` which is already in the dev dependencies):
 
    ```
@@ -135,17 +136,13 @@ To run tests with breakpoints, you'll need to use a `poetry shell` as described 
 
 After the `yarn nx test betterangels-backend` or `python manage.py test` command, add options below:
 
-To run individual an test, add the full path of the test in dot notation:
-
-Example:
+To run individual an test, add the full path of the test in dot notation. Example:
 
 ```bash
 python manage.py test accounts.tests.UsersManagersTests.test_create_user
 ```
 
-To run tests without rebuilding the database each time, add `--keepdb` flag.
-
-Example:
+To run tests without rebuilding the database each time, add `--keepdb` flag. Example:
 
 ```bash
 python manage.py test --keepdb
