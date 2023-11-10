@@ -70,6 +70,6 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy Changes
-        # if: ${{ env.BRANCH_NAME }} == 'main'
+        if: ${{ env.BRANCH_NAME }} == 'main'
         run: |
           yarn nx affected -t deploy
