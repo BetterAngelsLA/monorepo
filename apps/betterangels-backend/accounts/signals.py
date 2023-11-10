@@ -9,8 +9,7 @@ from django.dispatch import receiver
 @receiver(post_migrate)
 def create_superuser(sender: Any, **kwargs: Any) -> None:
     User = get_user_model()
-    if settings.IS_LOCAL_DEV:
-        if not User.objects.filter(username="admin").exists():
-            User.objects.create_superuser(
-                username="admin", email="admin@ba.la", password="admin"
-            )
+    if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
+        User.objects.create_superuser(
+            username="admin", email="admin@ba.la", password="admin"
+        )
