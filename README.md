@@ -39,11 +39,6 @@ yarn nx lint betterangels
 nx test betterangels
 ```
 
-### Versioning
-
-- Production - x.y.z
-- Development - x.y.z-beta.t
-
 ## Backend Development
 
 The betterangels_backend is built on Django, a high-level Python web framework. It also utilizes Celery for distributed task processing, enabling the scheduling and execution of tasks.

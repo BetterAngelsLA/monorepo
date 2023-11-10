@@ -16,7 +16,7 @@ import {
 import BodyText from '../BodyText';
 
 const MIN_FITABLE_HEIGHT = 300;
-const DROPDOWN_MAX_HEIGHT = 256;
+const DROPDOWN_MAX_HEIGHT = 200;
 
 export function SearchableDropdown({
   extraTitle,
@@ -25,6 +25,7 @@ export function SearchableDropdown({
   setExternalValue,
   height = 56,
   disabled,
+  placeholder,
   onExtraPress,
 }: {
   extraTitle?: string;
@@ -34,6 +35,7 @@ export function SearchableDropdown({
   height?: 56 | 40;
   disabled?: boolean;
   onExtraPress?: () => void;
+  placeholder?: string;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
@@ -81,6 +83,7 @@ export function SearchableDropdown({
         </BodyText>
         <View style={styles.textInput}>
           <TextInput
+            placeholder={placeholder}
             style={{
               color: disabled ? Colors.GRAY : 'black',
               paddingLeft: 16,
@@ -99,7 +102,13 @@ export function SearchableDropdown({
             onFocus={handleFocus}
           />
           {value && (
-            <Pressable onPress={() => setValue('')} style={styles.icon}>
+            <Pressable
+              onPress={() => {
+                setExternalValue('');
+                setValue('');
+              }}
+              style={styles.icon}
+            >
               <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
             </Pressable>
           )}
@@ -107,7 +116,7 @@ export function SearchableDropdown({
 
         {showDropdown && (
           <ScrollView
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: 8 }}
             keyboardShouldPersistTaps="handled"
             style={[
               styles.dropdown,
@@ -118,7 +127,7 @@ export function SearchableDropdown({
           >
             {data.map((item, idx) => (
               <TouchableOpacity
-                style={{ padding: 16 }}
+                style={{ padding: 8 }}
                 key={idx}
                 onPress={() => handlePress(item)}
               >
