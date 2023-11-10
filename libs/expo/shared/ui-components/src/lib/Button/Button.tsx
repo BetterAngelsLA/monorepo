@@ -1,4 +1,4 @@
-import { colors } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -24,29 +24,29 @@ const SIZES: Record<'sm' | 'full', DimensionValue> = {
 
 const VARIANTS: TVariants = {
   dark: {
-    bg: colors.brandBlue,
-    color: colors.white,
-    border: colors.brandBlue,
+    bg: Colors.BRAND_BLUE,
+    color: Colors.WHITE,
+    border: Colors.BRAND_BLUE,
   },
   sky: {
-    bg: colors.brandLightBlue,
-    color: colors.brandDarkBlue,
-    border: colors.brandLightBlue,
+    bg: Colors.BRAND_LIGHT_BLUE,
+    color: Colors.BRAND_DARK_BLUE,
+    border: Colors.BRAND_LIGHT_BLUE,
   },
   primary: {
-    bg: colors.blue,
-    color: colors.white,
-    border: colors.blue,
+    bg: Colors.BLUE,
+    color: Colors.WHITE,
+    border: Colors.BLUE,
   },
   secondary: {
-    bg: colors.lightGray,
-    color: colors.darkBlue,
-    border: colors.lightGray,
+    bg: Colors.LIGHT_GRAY,
+    color: Colors.DARK_BLUE,
+    border: Colors.LIGHT_GRAY,
   },
   negative: {
-    bg: colors.white,
-    color: colors.red,
-    border: colors.borderRed,
+    bg: Colors.WHITE,
+    color: Colors.RED,
+    border: Colors.BORDER_RED,
   },
 };
 
@@ -95,8 +95,8 @@ export function Button(props: IButtonProps) {
         {
           width: SIZES[size],
           alignItems: align,
-          backgroundColor: disabled ? colors.disabled : VARIANTS[variant].bg,
-          borderColor: disabled ? colors.disabled : VARIANTS[variant].border,
+          backgroundColor: disabled ? Colors.DISABLED : VARIANTS[variant].bg,
+          borderColor: disabled ? Colors.DISABLED : VARIANTS[variant].border,
           marginBottom: mb,
           marginTop: mt,
           marginLeft: ml,
@@ -113,7 +113,7 @@ export function Button(props: IButtonProps) {
           style={[
             styles.text,
             {
-              color: disabled ? colors.darkGray : VARIANTS[variant].color,
+              color: disabled ? Colors.DARK_GRAY : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
               fontFamily,
             },
