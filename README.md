@@ -64,14 +64,15 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
 
 ### Installation Guide
 
-```
-Dependencies/Tools
+**Prerequisites:**
 
-- VSCode
+- Visual Studio Code (VSCode)
 - Docker
-- Dev containers
-```
+- Development containers
 
+**Setup:**
+
+1. Run Docker
 1. Clone the monorepo repo from github
 1. Open it in a VSCode workspace
 1. Cmd + Shift + P and select "Dev Containers: Rebuild Container"
@@ -88,7 +89,9 @@ Dependencies/Tools
    poetry install
    ```
 
-### Starting Django
+### Running the Backend
+
+#### Starting Django
 
 To start the Django backend server:
 
@@ -99,27 +102,29 @@ yarn nx start betterangels-backend
 Once started, you can access the Django development server at the default address: [http://localhost:8000/admin/](http://localhost:8000/admin/) or the port you've configured.
 Login using creds: `admin@ba.la`/`admin`
 
-### Starting a Shell
+#### Starting a Django Shell
 
-1. Start a poetry shell
+1. Activate a poetry shell
 
    ```bash
    poetry shell
    ```
 
-1. First `cd` into the `betterangels-backend` app directory
+1. Navigate to `betterangels-backend` app directory
 
    ```bash
-   cd apps/betters-angelsbackend/
+   cd apps/betterangels-backend/
    ```
 
-1. Start django admin shell
+1. Start Django admin shell
 
    ```bash
    django-admin shell --settings betterangels_backend.settings
    ```
 
-### Running Tests
+### Testing
+
+#### Running Tests
 
 To run the full test suite:
 
@@ -132,6 +137,8 @@ To run an individual test, add the full path of the test in dot notation. Exampl
 ```bash
 yarn nx test betterangels-backend accounts.tests.UsersManagersTests.test_create_user
 ```
+
+#### Debugging Tests
 
 To run tests with breakpoints via the terminal, you'll need to use a `poetry shell` as described in the section above, then:
 
@@ -158,7 +165,9 @@ To use VSCode's debugger:
 1. Click the "Run and Debug" button next to the test you want to run
 1. Go to the `Debug Console` on the bottom to access the interactive shell
 
-### Starting the Celery Beat Scheduler
+### Celery Integration
+
+#### Starting the Celery Beat Scheduler
 
 The scheduler, powered by Celery Beat, is responsible for triggering scheduled tasks. If you'd like to test the scheduled tasks, you will need to run the scheduler.
 
@@ -170,7 +179,7 @@ To start the scheduler:
 yarn nx run betterangels-backend:start-scheduler
 ```
 
-### Starting the Worker
+#### Starting the Worker
 
 Workers handle task execution. They can run without the scheduler if you're not testing scheduled tasks.
 
@@ -182,11 +191,11 @@ yarn nx run betterangels-backend:start-worker
 
 Note: While workers can run independently of the scheduler, the scheduler requires at least one worker to process the scheduled tasks.
 
-### Testing Emails
+### Email Testing
 
 Django provides a flexible way to handle email backends. By default, our configuration uses the file-based email backend to capture sent emails as files. This is helpful for local development and testing without actually sending real emails.
 
-#### Using the File-based Email Backend
+#### File-based Email Backend (Local Testing):
 
 Configure the .env File: Set the email backend in your .env file to use the file-based backend:
 
