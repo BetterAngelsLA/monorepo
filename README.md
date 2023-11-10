@@ -112,6 +112,27 @@ To run tests without rebuilding the database each time, add `--keepdb` flag:
 yarn nx test betterangels-backend --keepdb
 ```
 
+### Starting a Shell
+
+1. First `cd` into the `betterangels/backend` dir.
+
+```bash
+cd apps/betters-angelsbackend/
+```
+
+2. Start a poetry shell
+
+```bash
+poetry shell
+
+```
+
+3. Start django admin shell
+
+```bash
+django-admin shell --settings betterangels_backend.settings
+```
+
 ### Starting the Celery Beat Scheduler
 
 The scheduler, powered by Celery Beat, is responsible for triggering scheduled tasks. If you'd like to test the scheduled tasks, you will need to run the scheduler.
