@@ -62,14 +62,14 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push Docker image
+      - name: Build and Push Artifacts
         run: |
           yarn nx affected -t build
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update ECS Service
+      - name: Deploy Changes
         # if: ${{ env.BRANCH_NAME }} == 'main'
         run: |
           yarn nx affected -t deploy
