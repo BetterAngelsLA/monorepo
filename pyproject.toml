@@ -11,6 +11,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "3.11.5"
+django-simple-history = "^3.4.0"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
