@@ -2,12 +2,14 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from simple_history.admin import SimpleHistoryAdmin  # type: ignore
+from simple_history.models import HistoricalRecords  # type: ignore
 
 from .forms import UserChangeForm, UserCreationForm
 from .models import User
 
 
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
     fieldsets = (
@@ -31,6 +33,8 @@ class UserAdmin(BaseUserAdmin):
     list_display = [
         "email",
     ]
+
+    history = HistoricalRecords()
 
 
 admin.site.register(User, UserAdmin)
