@@ -97,6 +97,7 @@ django-jazzmin = "^2.6.0"
 django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
+django-simple-history = "^3.4.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -830,7 +831,7 @@ files = [
 django = "*"
 django-stubs-ext = ">=4.2.5"
 mypy = [
-    {version = ">=1.0.0", optional = true, markers = "extra != \"compatible-mypy\""},
+    {version = ">=1.0.0"},
     {version = ">=1.6.0,<1.7.0", optional = true, markers = "extra == \"compatible-mypy\""},
 ]
 types-pytz = "*"
@@ -884,7 +885,7 @@ files = [
 [package.dependencies]
 django-stubs = ">=4.2.5"
 mypy = [
-    {version = ">=0.991", optional = true, markers = "extra != \"compatible-mypy\""},
+    {version = ">=0.991"},
     {version = ">=1.6.0,<1.7.0", optional = true, markers = "extra == \"compatible-mypy\""},
 ]
 requests = ">=2.0.0"
@@ -2633,4 +2634,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "867cc0bddf40e6ee286d082dac4b223017abaadd89d2dc0d6b509b45c564760f"
+content-hash = "8054594825d4e1bb20e2d041d53aa38bc9fbded08ed65b242f09b7f38a7152c4"
