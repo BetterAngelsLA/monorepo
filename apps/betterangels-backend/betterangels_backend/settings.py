@@ -29,13 +29,14 @@ env = environ.Env(
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
+    CONN_MAX_AGE=(int, 300),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_SECURE=(bool, True),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
     DJANGO_CACHE_URL=(str, ""),
-    CONN_MAX_AGE=(int, 300),
+    IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
@@ -68,6 +69,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
 # Application definition
 INSTALLED_APPS = [
@@ -90,6 +92,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "post_office",
     "rest_framework",
+    "simple_history",
     # Our Apps
     "accounts",
     "dwelling",
@@ -105,6 +108,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 

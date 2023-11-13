@@ -1,0 +1,78 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+
+jobs:
+  CIWorkflow:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+      id-token: write # Required for requesting the JWT
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetches all history for the current branch only
+      - uses: nrwl/nx-set-shas@v4
+
+      - name: Set Environment Variables
+        run: |
+          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+          if [ "$BRANCH_NAME" == "main" ]; then
+            IMAGE_TAG_PREFIX="main"
+          else
+            IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
+          fi
+          DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - if: env.BRANCH_NAME != 'main'
+        run: git branch --track main origin/main
+
+      - name: Configure Node and Install Dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: yarn
+      - run: yarn install
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials and Login to Amazon ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Artifacts
+        run: |
+          yarn nx affected -t build
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy Changes
+        if: env.BRANCH_NAME == 'main'
+        run: |
+          yarn nx affected -t deploy
