@@ -67,7 +67,8 @@ jobs:
 
       - name: Build and Push Artifacts
         run: |
-          yarn nx affected -t build
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t build --exclude=betterangels
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,4 +76,5 @@ jobs:
       - name: Deploy Changes
         # if: env.BRANCH_NAME == 'main'
         run: |
-          yarn nx affected -t deploy
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t deploy --exclude=betterangels
