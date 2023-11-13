@@ -290,6 +290,7 @@ POST_OFFICE = {
     "CELERY_ENABLED": True,
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
 
 SITE_ID = 1
