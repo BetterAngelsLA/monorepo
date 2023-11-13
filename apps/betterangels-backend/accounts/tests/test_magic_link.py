@@ -8,7 +8,7 @@ from post_office.models import Email
 from sesame.utils import get_query_string
 
 
-class SesameLoginTests(TestCase):
+class TestMagicLink(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
         self.client = Client()
