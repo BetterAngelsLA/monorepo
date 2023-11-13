@@ -107,3 +107,5 @@ ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 COPY --chown=betterangels . /workspace/
 WORKDIR /workspace/
 RUN poetry install --no-interaction --no-ansi
+WORKDIR /workspace/apps/betterangels-backend
+RUN python manage.py collectstatic --noinput
