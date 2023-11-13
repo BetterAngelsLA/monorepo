@@ -14,7 +14,7 @@ fi
 # Ensuring all required environment variables are set
 MISSING_VARS=false
 
-for var in CONTAINER_NAME IMAGE_JSON_NAME DIST_PATH ECR_REPO ZIP_NAME S3_BUCKET; do
+for var in CONTAINER_NAME IMAGE_JSON_NAME DIST_PATH ECR_REGISTRY ZIP_NAME BUILD_ARTIFACT_BUCKET; do
     if [ -z "${!var}" ]; then
         echo "Error: Environment variable $var is not set."
         MISSING_VARS=true
@@ -28,10 +28,10 @@ fi
 DIST_PATH=./dist/${APP_NAME}
 IMAGE_JSON_NAME=imagedefinitions.json
 ZIP_NAME=imagedefinitions.zip
-REPO_URI="${ECR_REPO}:${DOCKER_TAG:-dev}"
+REPO_URI="${ECR_REGISTRY}:${DOCKER_TAG:-dev}"
 IMAGE_JSON_PATH="${DIST_PATH}/${IMAGE_JSON_NAME}"
 IMAGE_ZIP_PATH="${DIST_PATH}/${ZIP_NAME}"
-S3_PATH=${S3_BUCKET}/${APP_NAME}/${ZIP_NAME}"
+S3_PATH=${BUILD_ARTIFACT_BUCKET}/${APP_NAME}/${ZIP_NAME}"
 
 echo "Creating ${IMAGE_JSON_NAME} file..."
 mkdir -p "${DIST_PATH}"
