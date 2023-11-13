@@ -18,10 +18,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER betterangels
-ENV PATH /app/.venv/bin:$PATH:$HOME/.local/bin
+ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 # TODO copy the poetry files first
 COPY --chown=betterangels . /workspace/
-WORKDIR /app/
-RUN poetry install --no-interaction --no-ansi
+RUN cd /workspace && poetry install --no-interaction --no-ansi
 WORKDIR /workspace/apps/betterangels-backend
 RUN python manage.py collectstatic --noinput
