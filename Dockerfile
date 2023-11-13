@@ -100,11 +100,3 @@ RUN mkdir -p /workspace/node_modules /workspace/.venv \
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
 
-# Production Build
-FROM base as production
-USER betterangels
-ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
-COPY --chown=betterangels . /workspace/
-RUN cd /workspace && poetry install --no-interaction --no-ansi
-WORKDIR /workspace/apps/betterangels-backend
-RUN python manage.py collectstatic --noinput
