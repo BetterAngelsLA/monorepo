@@ -25,9 +25,13 @@ if [ "$MISSING_VARS" = true ]; then
     exit 1
 fi
 
+DIST_PATH=./dist/${APP_NAME}
+IMAGE_JSON_NAME=imagedefinitions.json
+ZIP_NAME=imagedefinitions.zip
 REPO_URI="${ECR_REPO}:${DOCKER_TAG:-dev}"
 IMAGE_JSON_PATH="${DIST_PATH}/${IMAGE_JSON_NAME}"
 IMAGE_ZIP_PATH="${DIST_PATH}/${ZIP_NAME}"
+S3_PATH=${S3_BUCKET}/${APP_NAME}/${ZIP_NAME}"
 
 echo "Creating ${IMAGE_JSON_NAME} file..."
 mkdir -p "${DIST_PATH}"
@@ -37,4 +41,4 @@ echo "Zipping ${IMAGE_JSON_NAME}..."
 zip -j "${IMAGE_ZIP_PATH}" "${IMAGE_JSON_PATH}"
 
 echo "Pushing ${ZIP_NAME} to S3..."
-aws s3 cp "${IMAGE_ZIP_PATH}" "${S3_BUCKET}/${ZIP_NAME}"
+aws s3 cp "${IMAGE_ZIP_PATH}" "${S3_PATH}"
