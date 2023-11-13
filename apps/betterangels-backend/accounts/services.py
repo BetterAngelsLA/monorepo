@@ -18,10 +18,10 @@ def send_magic_link(email: str, base_url: str) -> Tuple[Email, str]:
     context = {"magic_login_link_url": link}
     subject = SUBJECT_LINE
 
-    template = loader.get_template("email_magic_link.html")
+    template = loader.get_template("account/email/email_magic_link.html")
     html_message = template.render(context)
 
-    text_template = loader.get_template("email_magic_link.txt")
+    text_template = loader.get_template("account/messagesemail_magic_link.txt")
     text_message = text_template.render(context)
 
     return (
