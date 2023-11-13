@@ -2,8 +2,8 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from simple_history.admin import SimpleHistoryAdmin  # type: ignore
-from simple_history.models import HistoricalRecords  # type: ignore
+from simple_history.admin import SimpleHistoryAdmin
+from simple_history.models import HistoricalRecords
 
 from .forms import UserChangeForm, UserCreationForm
 from .models import User

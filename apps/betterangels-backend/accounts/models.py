@@ -3,7 +3,7 @@ from typing import List
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from simple_history.models import HistoricalRecords  # type: ignore
+from simple_history.models import HistoricalRecords
 
 from .managers import UserManager
 
@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: List[str] = []
+    REQUIRED_FIELDS = []
 
     objects = UserManager()
 
