@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from .models import User
+from ..models import User
 
 # Tests inspired from here: https://learndjango.com/tutorials/django-custom-user-model
 
