@@ -26,7 +26,7 @@ def send_magic_link(email: str, base_url: str) -> str:
     send_mail(
         subject,
         text_message,
-        "info@betterangels.la",
+        "no-reply@betterangels.la",
         [email],
         html_message=html_message,
     )

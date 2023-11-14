@@ -21,9 +21,8 @@ class CustomInvitations(InvitationBackend):  # type:ignore
         try:
             user = self.user_model.objects.get(email=email)
         except self.user_model.DoesNotExist:
-            user = self.user_model.objects.create(
-                email=email, password=self.user_model.objects.make_random_password()
-            )
+            user = self.user_model.objects.create(email=email)
+            user.set_unusable_password()
             user.is_active = False
             user.save()
         self.send_invitation(user, sender, **kwargs)

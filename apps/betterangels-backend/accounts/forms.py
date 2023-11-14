@@ -32,7 +32,7 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
 
     class Meta:
         exclude = ("user", "is_admin")
-        model = User
+        model = get_user_model()
 
     def __init__(self, *args: Any, **kwargs: Any):
         self.request = kwargs.pop("request", None)
