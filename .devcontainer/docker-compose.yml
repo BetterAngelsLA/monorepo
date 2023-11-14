@@ -9,7 +9,6 @@ services:
     #
     build:
       context: .
-      target: development
       # dockerfile: .devcontainer/Dockerfile
     environment:
       - AWS_CONFIG_FILE=/workspace/.aws/config
