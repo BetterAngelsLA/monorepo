@@ -20,6 +20,7 @@ export { default as CalendarDaysIcon } from './components/CalendarDaysIcon';
 export { default as CalendarIcon } from './components/CalendarIcon';
 export { default as CarIcon } from './components/CarIcon';
 export { default as CheckIcon } from './components/CheckIcon';
+export { default as ChevronLeftIcon } from './components/ChevronLeftIcon';
 export { default as CircleXmarkIcon } from './components/CircleXmarkIcon';
 export { default as EyeIcon } from './components/EyeIcon';
 export { default as FaceAngryIcon } from './components/FaceAngryIcon';

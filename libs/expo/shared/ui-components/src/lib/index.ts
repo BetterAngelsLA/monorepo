@@ -7,3 +7,4 @@ export { default as H4 } from './H4';
 export { default as IconButton } from './IconButton';
 export { default as Input } from './Input';
 export { default as SearchableDropdown } from './SearchableDropdown';
+export { default as StatusBadge } from './StatusBadge';
