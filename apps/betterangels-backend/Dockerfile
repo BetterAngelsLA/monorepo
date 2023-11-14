@@ -20,7 +20,8 @@ RUN apt-get update \
 USER betterangels
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-RUN cd /workspace && poetry install --no-interaction --no-ansi --no-root
-COPY --chown=betterangels . /workspace/
+COPY --chown=betterangels apps/betterangels-backend/poetry.toml apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/
+RUN cd /workspace && poetry install --no-interaction --no-ansi
+COPY --chown=betterangels apps/betterangels-backend/ /workspace/apps/betterangels-backend/
 WORKDIR /workspace/apps/betterangels-backend
 RUN python manage.py collectstatic --noinput
