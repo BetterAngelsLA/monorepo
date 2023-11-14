@@ -4,6 +4,30 @@ ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
+# Docker
+RUN apt-get update \
+    # Install Systems Packages
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" |  tee /etc/apt/sources.list.d/docker.list > /dev/null \
+  && apt-get update \
+  && apt-get install -y \
+    docker-ce \
+    docker-ce-cli \
+    containerd.io \
+    docker-buildx-plugin \
+    docker-compose-plugin \
+    # Install Python Lib Requirements
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
 ENV NODE_VERSION 18.17.1
@@ -66,7 +90,7 @@ RUN corepack enable && \
 RUN pip install poetry==1.6.1
 RUN apt-get update \
     # Install Systems Packages
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       git \
