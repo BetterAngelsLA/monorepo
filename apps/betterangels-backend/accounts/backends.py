@@ -20,9 +20,6 @@ class CustomInvitations(InvitationBackend):
             )
             user.is_active = False
             user.save()
-        import pdb
-
-        pdb.set_trace()
         self.send_invitation(user, sender, **kwargs)
 
         return user

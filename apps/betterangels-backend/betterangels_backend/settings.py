@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
+    "simple_history",
     # Our Apps
     "accounts",
     "dwelling",
@@ -108,6 +109,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 
