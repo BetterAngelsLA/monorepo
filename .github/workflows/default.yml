@@ -48,6 +48,8 @@ jobs:
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
 
+      - run: sudo chown -R 1000:1000 ${GITHUB_WORKSPACE}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -78,7 +80,6 @@ jobs:
 
       - name: Spin up monorepo environment
         run: |
-          sudo chown -R 1000:1000 .git
           docker-compose up -d
 
       - name: Lint
@@ -110,5 +111,6 @@ jobs:
       #     yarn nx affected -t deploy --exclude=betterangels
 
       - name: Spin down monorepo environment
+        if: always()
         run: |
           docker-compose down
