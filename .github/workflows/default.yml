@@ -81,33 +81,37 @@ jobs:
         run: |
           docker-compose up -d
 
-      - name: Lint
+      # - name: Lint
+      #   run: |
+      #     docker-compose run better-angels bash <<'EOF'
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t lint --exclude=betterangels
+      #     EOF
+
+      # - name: Test
+      #   run: |
+      #     docker-compose run better-angels bash <<'EOF'
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t test --exclude=betterangels
+      #     EOF
+
+      - name: Build and Push Artifacts
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t lint --exclude=betterangels
+          yarn nx affected -t build --exclude=betterangels
           EOF
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test
+      - name: Deploy Changes
+        # if: env.BRANCH_NAME == 'main'
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t test --exclude=betterangels
+          yarn nx affected -t deploy --exclude=betterangels
           EOF
-
-      # - name: Build and Push Artifacts
-      #   run: |
-      #     # Exclude Betterangels Frontend Given its CI is not setup yet
-      #     yarn nx affected -t build --exclude=betterangels
-      #   env:
-      #     AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-      #     INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Deploy Changes
-      #   if: env.BRANCH_NAME == 'main'
-      #   run: |
-      #     # Exclude Betterangels Frontend Given its CI is not setup yet
-      #     yarn nx affected -t deploy --exclude=betterangels
 
       - name: Spin down monorepo environment
         if: always()
