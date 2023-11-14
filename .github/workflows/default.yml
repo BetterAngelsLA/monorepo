@@ -99,7 +99,7 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=betterangels
+          yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
@@ -110,7 +110,7 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=betterangels
+          yarn nx affected -t deploy --exclude=betterangels --verbose
           EOF
 
       - name: Spin down monorepo environment
