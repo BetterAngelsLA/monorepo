@@ -80,6 +80,16 @@ jobs:
         run: |
           docker-compose up -d
 
+      - name: Lint
+        run: |
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          docker-compose run better-angels yarn nx affected -t lint --exclude=betterangels
+
+      - name: Test
+        run: |
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          docker-compose run better-angels yarn nx affected -t test --exclude=betterangels
+
       # - name: Build and Push Artifacts
       #   run: |
       #     # Exclude Betterangels Frontend Given its CI is not setup yet
