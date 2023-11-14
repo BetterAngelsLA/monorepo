@@ -20,7 +20,8 @@ RUN apt-get update \
 USER betterangels
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-COPY --chown=betterangels apps/betterangels-backend/poetry.toml apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/
+COPY --chown=betterangels apps/betterangels-backend/poetry.toml apps/betterangels-backend/pyproject.toml apps/betterangels-backend/README.md /workspace/apps/betterangels-backend/
+COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
 RUN cd /workspace && poetry install --no-interaction --no-ansi
 COPY --chown=betterangels apps/betterangels-backend/ /workspace/apps/betterangels-backend/
 WORKDIR /workspace/apps/betterangels-backend
