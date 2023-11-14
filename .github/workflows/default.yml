@@ -47,8 +47,7 @@ jobs:
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
-
-      - run: sudo chown -R 1000:1000 .git
+      - run: sudo chown -R 1000:1000 $GITHUB_WORKSPACE
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
