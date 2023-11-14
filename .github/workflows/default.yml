@@ -11,6 +11,7 @@ env:
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
   ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
 jobs:
   CIWorkflow:
@@ -60,6 +61,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Build and Push Monorepo Image for each commit
       - name: Build Monorepo Docker image
         uses: docker/build-push-action@v5
         with:
@@ -74,16 +76,24 @@ jobs:
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      - name: Build and Push Artifacts
+      - name: Spin up monorepo environment
         run: |
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=betterangels
-        env:
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          docker-compose up -d
 
-      - name: Deploy Changes
-        if: env.BRANCH_NAME == 'main'
+      # - name: Build and Push Artifacts
+      #   run: |
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t build --exclude=betterangels
+      #   env:
+      #     AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+      #     INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Deploy Changes
+      #   if: env.BRANCH_NAME == 'main'
+      #   run: |
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t deploy --exclude=betterangels
+
+      - name: Spin down monorepo environment
         run: |
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=betterangels
+          docker-compose down
