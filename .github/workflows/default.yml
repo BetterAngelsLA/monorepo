@@ -48,7 +48,7 @@ jobs:
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
 
-      - run: sudo chown -R 1000:1000 ${{ env.GITHUB_WORKSPACE }}
+      - run: sudo chown -R 1000:1000 .git
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
