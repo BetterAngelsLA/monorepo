@@ -10,6 +10,8 @@ env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  MONOREPO_IMAGE: ${{ env.ECR_REGISTRY }}/monorepo
 
 jobs:
   CIWorkflow:
@@ -45,13 +47,6 @@ jobs:
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
 
-      - name: Configure Node and Install Dependencies
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.17.1
-          cache: yarn
-      - run: yarn install
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -64,6 +59,20 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Monorepo Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64
+          cache-from: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
+          cache-to: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }},image-manifest=true,mode=max
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: Build and Push Artifacts
         run: |

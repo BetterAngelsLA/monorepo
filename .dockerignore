@@ -2,6 +2,8 @@ node_modules
 .vscode
 .devcontainer
 .yarn
+!.yarn/releases
+!.yarn/plugins
 dist
 reports
 
