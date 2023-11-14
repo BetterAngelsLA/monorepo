@@ -1,8 +1,6 @@
 services:
   better-angels:
-    image: ${MONOREPO_IMAGE}
-    ports:
-      - '8000:8000'
+    image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
       - .git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
