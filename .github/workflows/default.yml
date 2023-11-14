@@ -11,7 +11,6 @@ env:
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
   ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
-  MONOREPO_IMAGE: ${{ env.ECR_REGISTRY }}/monorepo
 
 jobs:
   CIWorkflow:
@@ -42,6 +41,7 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
 
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
