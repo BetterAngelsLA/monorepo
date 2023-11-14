@@ -4,5 +4,4 @@ services:
     volumes:
       - .git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
-    working_dir:
-      - /workspace
+    working_dir: /workspace
