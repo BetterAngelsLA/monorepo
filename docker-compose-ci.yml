@@ -2,6 +2,6 @@ services:
   better-angels:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
-      - ${GITHUB_WORKSPACE:-.git}:/workspace/.git
+      - ${GITHUB_WORKSPACE}/.git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /workspace
