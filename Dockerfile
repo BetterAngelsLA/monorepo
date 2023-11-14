@@ -81,7 +81,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Development Build
-FROM base as development
 # Add session manager to allow Fargate sshing
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
@@ -99,11 +98,3 @@ RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
 USER betterangels
 ENV PATH $PATH:$HOME/.local/bin
-
-# Production Build
-FROM base as production
-USER betterangels
-ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
-COPY --chown=betterangels . /workspace/
-WORKDIR /workspace/
-RUN poetry install --no-interaction --no-ansi
