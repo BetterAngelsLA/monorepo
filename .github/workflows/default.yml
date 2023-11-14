@@ -77,3 +77,4 @@ jobs:
         run: |
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn dlx nx affected -t deploy --exclude=betterangels
+          echo test
