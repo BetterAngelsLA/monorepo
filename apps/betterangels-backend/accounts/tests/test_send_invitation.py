@@ -15,8 +15,7 @@ class SendInvitationTest(TestCase):
         self.invitation_backend = CustomInvitations()
 
     def test_send_invitation_case(self) -> None:
-        self.invitation_backend.invite_by_email(self.email)
+        self.invitation_backend.invite_by_email(
+            self.email, domain={"domain": "localhost:8000"}
+        )
         self.assertEquals(Email.objects.filter(to=self.email).count(), 1)
-
-    def test_invitation_acceptance(self) -> None:
-        pass
