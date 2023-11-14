@@ -78,6 +78,7 @@ jobs:
 
       - name: Spin up monorepo environment
         run: |
+          chown -R 1000:1000 .git
           docker-compose up -d
 
       - name: Lint
