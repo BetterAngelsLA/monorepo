@@ -68,6 +68,7 @@ jobs:
           file: Dockerfile
           push: true
           platforms: linux/amd64
+          load: true # Allow local reuse
           cache-from: |
             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
