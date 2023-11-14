@@ -26,6 +26,7 @@
     "build": {
       "executor": "@nx-tools/nx-container:build",
       "options": {
+        "file": "Dockerfile",
         "push": true,
         "platforms": ["linux/amd64"],
         "cache-from": [

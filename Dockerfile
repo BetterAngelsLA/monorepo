@@ -97,4 +97,19 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
 USER betterangels
-ENV PATH $PATH:$HOME/.local/bin
+
+
+# Production Build
+# This is kinda a hack. We should find a way to cleanly target services for deploys.
+FROM base as production
+USER betterangels
+ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
+COPY --chown=betterangels yarn.lock package.json .yarnrc.yml /workspace/
+RUN cd /workspace && yarn install
+
+COPY --chown=betterangels apps/betterangels-backend/poetry.toml apps/betterangels-backend/pyproject.toml apps/betterangels-backend/README.md /workspace/apps/betterangels-backend/
+COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
+RUN cd /workspace/apps/betterangels-backend && poetry install --no-interaction --no-ansi
+COPY --chown=betterangels apps/betterangels-backend/ /workspace/apps/betterangels-backend/
+WORKDIR /workspace/apps/betterangels-backend
+RUN poetry run python manage.py collectstatic --noinput

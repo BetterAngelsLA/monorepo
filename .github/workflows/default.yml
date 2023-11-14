@@ -50,7 +50,6 @@ jobs:
         with:
           node-version: 18.17.1
           cache: yarn
-      - run: yarn install
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,7 +67,7 @@ jobs:
       - name: Build and Push Artifacts
         run: |
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=betterangels
+          yarn dlx nx affected -t build --exclude=betterangels
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,4 +76,4 @@ jobs:
         if: env.BRANCH_NAME == 'main'
         run: |
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=betterangels
+          yarn dlx nx affected -t deploy --exclude=betterangels
