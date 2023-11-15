@@ -5,3 +5,19 @@ services:
       - ${GITHUB_WORKSPACE}/.git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /workspace
+    environment:
+      - AWS_REGION
+      - AWS_ACCOUNT_ID
+      - ASSUMED_ROLE
+      - ECR_REGISTRY
+      - NX_BASE
+      - NX_HEAD
+      - BRANCH_NAME
+      - SHORT_SHA
+      - IMAGE_TAG_PREFIX
+      - DOCKER_TAG
+      - MONOREPO_IMAGE
+      - AWS_DEFAULT_REGION
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
