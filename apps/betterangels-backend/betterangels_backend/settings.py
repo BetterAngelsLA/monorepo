@@ -62,14 +62,14 @@ env = environ.Env(
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+IS_LOCAL_DEV = env("IS_LOCAL_DEV")
+if IS_LOCAL_DEV:
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
 # Application definition
 INSTALLED_APPS = [
@@ -110,6 +110,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 

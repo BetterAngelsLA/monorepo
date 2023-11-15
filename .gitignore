@@ -69,8 +69,6 @@ apps/betterangels-e2e/artifacts
 # Python
 __pycache__
 .mypy_cache
-poetry.lock
-!/poetry.lock
 tmp
 
 .scripts/

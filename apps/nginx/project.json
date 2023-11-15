@@ -26,8 +26,12 @@
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh"
     },
-    "lint": {},
-    "test": {}
+    "lint": {
+      "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:noop"
+    }
   },
   "tags": []
 }
