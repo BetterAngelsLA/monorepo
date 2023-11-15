@@ -151,7 +151,3 @@ FROM base AS production
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
-# NOTE: Let's find a longer term solution for deploy.
-# Though right now it is simpler to have a single image for everything (probably even long term but I'm uncomfortable with running collectstatic)
-WORKDIR /workspace/apps/betterangels-backend
-RUN poetry run python manage.py collectstatic --noinput
