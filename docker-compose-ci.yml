@@ -24,3 +24,6 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN
       - INPUT_GITHUB_TOKEN
+      - ECR_USERNAME
+      - ECR_PASSWORD
+      - ECR_REGISTRY
