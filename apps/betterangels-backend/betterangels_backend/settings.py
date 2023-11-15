@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List
 
 import django_stubs_ext
-import environ  # type: ignore
+import environ
 
 django_stubs_ext.monkeypatch()
 
@@ -110,6 +110,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 

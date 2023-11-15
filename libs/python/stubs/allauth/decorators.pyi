@@ -1,3 +1,0 @@
-from allauth import ratelimit as ratelimit
-
-def rate_limit(*, action, **rl_kwargs): ...

@@ -1,3 +1,0 @@
-from .models import HistoricalRecords as HistoricalRecords
-
-def HistoryRequestMiddleware(get_response): ...

@@ -16,6 +16,7 @@ from dj_rest_auth.registration.serializers import (
     SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
 )
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
@@ -34,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "email")
 
 
-class MagicLinkSerializer(serializers.Serializer):
+class MagicLinkSerializer(serializers.Serializer[str]):
     email = serializers.EmailField()
 
 
