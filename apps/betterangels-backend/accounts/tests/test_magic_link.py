@@ -1,13 +1,15 @@
 from accounts.services import send_magic_link
+from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
+from django.core.mail import send_mail
 from django.template import loader
-from django.test import Client, RequestFactory, TestCase
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
-from post_office import mail
 from post_office.models import Email
 from sesame.utils import get_query_string
 
 
+@override_settings(EMAIL_BACKEND="post_office.EmailBackend")
 class TestMagicLink(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
@@ -44,24 +46,23 @@ class TestMagicLink(TestCase):
         text_template = loader.get_template("account/messages/email_magic_link.txt")
         text_message = text_template.render(context)
 
-        sent = mail.send(
-            "test@test.com",
+        send_mail(
+            "Login through link",
+            text_message,
             "from@test.com",
-            subject="Login through link",
+            ["test@test.com"],
+            fail_silently=False,
             html_message=html_message,
-            message=text_message,
         )
 
         # Call the function with the mock request
-
-        found = Email.objects.get(id=sent.id)
+        found = Email.objects.first()
         self.assertIn(magic_login_url, found.html_message)
         self.assertIn(magic_login_url, found.message)
 
     def test_send_magic_link(self) -> None:
-        sent, query_string = send_magic_link(self.user.email, "http://localhost")
-
-        found = Email.objects.get(id=sent.id)
+        query_string = send_magic_link(self.user.email, "http://localhost")
+        found = Email.objects.all().first()
         self.assertIn(query_string, found.html_message)
         self.assertIn(query_string, found.message)
 
