@@ -10,6 +10,7 @@ from .models import User
 
 class CustomInvitations(InvitationBackend):  # type:ignore
     form_class = UserCreationForm
+    invitation_body = "account/email/email_invite_organization.html"
 
     def invite_by_email(
         self,
