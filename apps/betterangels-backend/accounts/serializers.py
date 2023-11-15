@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "email")
 
 
-class MagicLinkSerializer(serializers.Serializer[str]):
+class MagicLinkSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 

@@ -17,7 +17,7 @@ class UserCreationForm(BaseUserCreationForm[User]):
         fields = ("email", "username")
 
 
-class UserChangeForm(BaseUserChangeForm):
+class UserChangeForm(BaseUserChangeForm[User]):
     class Meta(BaseUserChangeForm.Meta):
         model = get_user_model()
         fields = ("email",)
