@@ -17,6 +17,7 @@ services:
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
       - GITHUB_ACTIONS
+      - GITHUB_REPOSITORY
       - MONOREPO_IMAGE
       - AWS_DEFAULT_REGION
       - AWS_ACCESS_KEY_ID
