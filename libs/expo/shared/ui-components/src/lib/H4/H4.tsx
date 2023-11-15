@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, TextStyle } from 'react-native';
 
 export function H4({
   children,
@@ -12,6 +12,9 @@ export function H4({
   my,
   mx,
   color = Colors.DARK_BLUE,
+  align,
+  spacing,
+  style,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
@@ -22,13 +25,18 @@ export function H4({
   ml?: number;
   mr?: number;
   color?: '#102C55' | '#FFF82E';
+  align?: 'auto' | 'center' | 'left' | 'right' | 'justify';
+  spacing?: number;
+  style?: TextStyle;
 }) {
   return (
     <Text
       style={[
         styles.text,
+        style,
         {
           textTransform,
+          textAlign: align,
           marginBottom: mb,
           marginTop: mt,
           marginLeft: ml,
@@ -36,6 +44,7 @@ export function H4({
           marginHorizontal: mx,
           marginVertical: my,
           color,
+          letterSpacing: spacing,
         },
       ]}
     >
