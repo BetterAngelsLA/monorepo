@@ -24,9 +24,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-        # with:
-        #   fetch-depth: 0 # Probably can remove this
-      # - run: git fetch --no-tags --prune --depth=1 origin master
+        with:
+          fetch-depth: 0 # Probably can remove this
       - uses: nrwl/nx-set-shas@v4
 
       - name: Set Environment Variables
