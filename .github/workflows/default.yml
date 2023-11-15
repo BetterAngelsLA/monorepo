@@ -76,9 +76,11 @@ jobs:
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      - run: sudo chown -R 1000:1000 .git
-      - run: sudo setfacl --modify user:1000:rw /var/run/docker.sock
-      - run: sudo setfacl -Rm u:1000:rw $HOME/.docker && sudo setfacl -Rm d:user:1000:rw $HOME/.docker
+      - name: Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 .git
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
       - name: Spin up monorepo environment
         run: |
           docker-compose up -d
