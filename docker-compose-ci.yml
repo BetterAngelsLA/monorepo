@@ -9,6 +9,8 @@ services:
       - AWS_REGION
       - AWS_ACCOUNT_ID
       - ASSUMED_ROLE
+      - ECR_USERNAME
+      - ECR_PASSWORD
       - ECR_REGISTRY
       - NX_BASE
       - NX_HEAD
@@ -24,6 +26,3 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN
       - INPUT_GITHUB_TOKEN
-      - ECR_USERNAME
-      - ECR_PASSWORD
-      - ECR_REGISTRY
