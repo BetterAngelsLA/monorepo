@@ -103,7 +103,6 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           docker buildx ls
-          docker buildx create --use
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
