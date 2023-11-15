@@ -2,7 +2,8 @@ services:
   better-angels:
     environment:
       - IS_LOCAL_DEV=True
-
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   db:
     image: postgis/postgis:15-3.4
     ports:

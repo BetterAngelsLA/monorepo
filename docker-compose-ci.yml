@@ -3,7 +3,6 @@ services:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
       - .git:/workspace/.git
-      - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/.docker/:/home/betterangels/.docker/
     working_dir: /workspace
     # Pass in GitHub Actions Envs into the container
