@@ -101,8 +101,8 @@ jobs:
       - name: Build and Push Artifacts
         run: |
           docker-compose run better-angels bash <<'EOF'
-          docker buildx use --create
-          echo ${{ steps.ecr-login.outputs.password }} | docker login --username ${{ steps.ecr-login.outputs.username }} --password-stdin ${{ steps.ecr-login.outputs.registry }}
+          docker buildx --create use
+          docker login -u ${{ steps.ecr-login.outputs.username }} -p echo ${{ steps.ecr-login.outputs.password }} ${{ steps.ecr-login.outputs.registry }}
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
@@ -122,3 +122,4 @@ jobs:
         if: always()
         run: |
           docker-compose down
+          docker logout
