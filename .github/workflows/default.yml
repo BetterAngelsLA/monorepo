@@ -10,6 +10,8 @@ env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
 jobs:
   CIWorkflow:
@@ -23,7 +25,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Fetches all history for the current branch only
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
       - uses: nrwl/nx-set-shas@v4
 
       - name: Set Environment Variables
@@ -40,17 +42,11 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
 
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
-
-      - name: Configure Node and Install Dependencies
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.17.1
-          cache: yarn
-      - run: yarn install
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -65,10 +61,50 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Build and Push Monorepo Image for each commit
+      - name: Build Monorepo Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64
+          cache-from: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
+          cache-to: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }},image-manifest=true,mode=max
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+
+      - name: Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 .git
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+      - name: Spin up monorepo environment
+        run: |
+          docker-compose up -d
+
+      - name: Lint
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t lint --exclude=betterangels
+          EOF
+
+      - name: Test
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t test --exclude=betterangels
+          EOF
+
       - name: Build and Push Artifacts
         run: |
+          docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels
+          EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,5 +112,12 @@ jobs:
       - name: Deploy Changes
         if: env.BRANCH_NAME == 'main'
         run: |
+          docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
+          EOF
+
+      - name: Spin down monorepo environment
+        if: always()
+        run: |
+          docker-compose down
