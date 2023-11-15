@@ -13,15 +13,15 @@ export function StatusBadge({ title }: { title: 'Pending' | 'Accepted' }) {
         },
       ]}
     >
-      <BodyText>{title}</BodyText>
+      <BodyText size="sm">{title}</BodyText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 83,
-    height: 40,
+    width: 75,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 3,
