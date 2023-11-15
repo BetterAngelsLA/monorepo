@@ -66,6 +66,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           file: Dockerfile
+          context: '{{defaultContext}}'
           push: true
           platforms: linux/amd64
           cache-from: |
