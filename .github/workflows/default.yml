@@ -102,6 +102,7 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           ls -lah
           env
+          git status
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
