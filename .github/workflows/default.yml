@@ -62,6 +62,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
       # Build and Push Monorepo Image for each commit
@@ -100,9 +101,9 @@ jobs:
       - name: Build and Push Artifacts
         run: |
           docker-compose run better-angels bash <<'EOF'
+          docker buildx use --create
+          echo ${{ steps.ecr-login.outputs.password }} | docker login --username ${{ steps.ecr-login.outputs.username }} --password-stdin ${{ steps.ecr-login.outputs.registry }}
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          docker buildx ls
-          docker buildx use ${{ steps.buildx.outputs.name }}
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
