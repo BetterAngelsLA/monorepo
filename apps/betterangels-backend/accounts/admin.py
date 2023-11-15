@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from organizations.models import OrganizationUser
 from simple_history.admin import SimpleHistoryAdmin
@@ -37,11 +36,9 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
         ),
         (("Important dates"), {"fields": ("last_login",)}),
     )
-    model = get_user_model()
     list_display = [
         "email",
     ]
-
     history = HistoricalRecords()
 
 
