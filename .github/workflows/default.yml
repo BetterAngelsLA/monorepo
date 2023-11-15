@@ -24,8 +24,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Fetches all history for the current branch only
+        # with:
+        #   fetch-depth: 0 # Probably can remove this
+      # - run: git fetch --no-tags --prune --depth=1 origin master
       - uses: nrwl/nx-set-shas@v4
 
       - name: Set Environment Variables
@@ -101,6 +102,7 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
+          docker buildx ls
           docker buildx use ${{ steps.buildx.outputs.name }}
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
