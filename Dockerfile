@@ -24,6 +24,20 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && docker --version
 
+# Pin due to: https://github.com/aws/aws-cli/issues/8320
+ENV AWS_CLI_VERSION=2.13.33
+RUN ARCH=$(uname -m) && \
+  if [ "$ARCH" = "x86_64" ]; then \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip" && \
+  elif [ "$ARCH" = "aarch64" ]; then \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip" && \
+  else \
+  echo "Unsupported architecture: $ARCH" && exit 1; \
+  fi && \
+  unzip awscliv2.zip && \
+  ./aws/install && \
+  rm awscliv2.zip
+
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
 ENV NODE_VERSION 18.17.1
