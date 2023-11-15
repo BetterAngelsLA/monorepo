@@ -84,6 +84,7 @@ export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';
 export { default as PlusIcon } from './components/PlusIcon';
 export { default as PrescriptionIcon } from './components/PrescriptionIcon';
+export { default as SearchIcon } from './components/SearchIcon';
 export { default as ShirtIcon } from './components/ShirtIcon';
 export { default as ShoePrintsIcon } from './components/ShoePrintsIcon';
 export { default as ShowerIcon } from './components/ShowerIcon';

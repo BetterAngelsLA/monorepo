@@ -2,6 +2,7 @@ from accounts.views.api_views import current_user, generate_magic_link
 from accounts.views.auth_views import AuthRedirectView, GoogleLogin
 from accounts.views.class_views import SignUpView
 from django.urls import include, path
+from organizations.backends import invitation_backend
 from sesame.views import LoginView
 
 urlpatterns = [
@@ -14,4 +15,7 @@ urlpatterns = [
     path("magic-auth/login/", LoginView.as_view(), name="magic-auth-login"),
     # dj-rest-auth urls
     path("rest-auth/", include("dj_rest_auth.urls")),
+    # django-organizations
+    path("accounts/", include("organizations.urls")),
+    path("invitations/", include(invitation_backend().get_urls())),
 ]

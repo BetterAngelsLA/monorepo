@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "post_office",
     "rest_framework",
+    "organizations",
     "simple_history",
     # Our Apps
     "accounts",
@@ -251,6 +252,9 @@ LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 LOGIN_URL = "/accounts/login/"
 
+# django-organizations settings
+ORGS_SLUGFIELD = "django_extensions.db.fields.AutoSlugField"
+
 
 # ALL AUTH SETTINGS
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7
@@ -288,6 +292,7 @@ POST_OFFICE = {
     "CELERY_ENABLED": True,
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
 
 SITE_ID = 1
