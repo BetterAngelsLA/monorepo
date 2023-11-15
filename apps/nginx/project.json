@@ -29,7 +29,9 @@
     "lint": {
       "executor": "nx:noop"
     },
-    "test": {}
+    "test": {
+      "executor": "nx:noop"
+    }
   },
   "tags": []
 }
