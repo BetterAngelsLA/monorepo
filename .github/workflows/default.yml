@@ -104,13 +104,16 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           docker buildx create --use
-          echo ${{ steps.ecr-login.outputs.password }} | docker login -u ${{ steps.ecr-login.outputs.username }} --password-stdin ${{ steps.ecr-login.outputs.registry }}
+          echo $ECR_PASSWORD | docker login -u $ECR_USERNAME --password-stdin $ECR_REGISTRY
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ECR_USERNAME: ${{ steps.ecr-login.outputs.username }}
+          ECR_PASSWORD: ${{ steps.ecr-login.outputs.password }}
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
 
       - name: Deploy Changes
         # if: env.BRANCH_NAME == 'main'
@@ -124,4 +127,3 @@ jobs:
         if: always()
         run: |
           docker-compose down
-          docker logout
