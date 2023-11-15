@@ -10,8 +10,6 @@ services:
       - AWS_ACCOUNT_ID
       - ASSUMED_ROLE
       - ECR_USERNAME
-      - ECR_PASSWORD
-      - ECR_REGISTRY
       - NX_BASE
       - NX_HEAD
       - BRANCH_NAME
