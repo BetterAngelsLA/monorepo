@@ -25,6 +25,7 @@ export function SearchableDropdown({
   setExternalValue,
   height = 56,
   disabled,
+  placeholder,
   onExtraPress,
 }: {
   extraTitle?: string;
@@ -34,6 +35,7 @@ export function SearchableDropdown({
   height?: 56 | 40;
   disabled?: boolean;
   onExtraPress?: () => void;
+  placeholder?: string;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
