@@ -47,8 +47,6 @@ jobs:
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
-      - run: sudo chown -R 1000:1000 .git
-      - run: sudo setfacl --modify user:1000:rw /var/run/docker.sock
 
       - name: Set up Docker Buildx
         id: buildx
@@ -80,6 +78,9 @@ jobs:
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
+      - run: sudo chown -R 1000:1000 .git
+      - run: sudo setfacl --modify user:1000:rw /var/run/docker.sock
+      - run: sudo setfacl --modify user:1000:rw $HOME/.docker/config.json
       - name: Spin up monorepo environment
         run: |
           docker-compose up -d
@@ -102,13 +103,14 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           docker buildx create --use
+          echo $ECR_PASSWORD | docker login -u $ECR_USERNAME --password-stdin $ECR_REGISTRY
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILDX_NAME: ${{ steps.buildx.outputs.name }}
+          BUILDX_NAME: ${{ steps.ecr-login.outputs.username }}
 
       - name: Deploy Changes
         # if: env.BRANCH_NAME == 'main'

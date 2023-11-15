@@ -20,7 +20,6 @@ RUN apt-get update \
       docker-ce-cli \
       containerd.io \
       docker-buildx-plugin \
-      docker-compose-plugin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && docker --version
