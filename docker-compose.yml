@@ -1,4 +1,8 @@
 services:
+  better-angels:
+    environment:
+      - IS_LOCAL_DEV=True
+
   db:
     image: postgis/postgis:15-3.4
     ports:

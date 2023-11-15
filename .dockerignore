@@ -9,7 +9,5 @@ dist
 reports
 
 **/.venv
-**/.env
-**/.env.*
 **/.mypy_cache
 **/tmp
