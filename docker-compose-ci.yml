@@ -16,6 +16,7 @@ services:
       - SHORT_SHA
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
+      - GITHUB_ACTIONS
       - MONOREPO_IMAGE
       - AWS_DEFAULT_REGION
       - AWS_ACCESS_KEY_ID
