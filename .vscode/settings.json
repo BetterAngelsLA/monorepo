@@ -19,7 +19,6 @@
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
-  "isort.args": ["--profile", "black"],
   "typescript.suggest.autoImports": true,
   "search.exclude": {
     "**/.pnp.*": true,

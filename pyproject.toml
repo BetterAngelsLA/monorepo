@@ -9,6 +9,10 @@ authors = []
 license = "Proprietary"
 readme = "README.md"
 
+[tool.isort]
+profile = "black"
+skip_glob = ["*/migrations/*"]
+
 [tool.poetry.dependencies]
 python = "3.11.5"
 psycopg = "3.1.10"
