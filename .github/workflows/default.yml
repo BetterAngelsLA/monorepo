@@ -25,7 +25,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Probably can remove this
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
       - uses: nrwl/nx-set-shas@v4
 
       - name: Set Environment Variables
