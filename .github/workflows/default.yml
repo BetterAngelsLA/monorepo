@@ -47,6 +47,7 @@ jobs:
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
+      - run: git config --system --add safe.directory '*'
       - run: sudo setfacl -d -m u:1000:rwx .git
       - run: sudo setfacl --modify user:1000:rw /var/run/docker.sock
 
