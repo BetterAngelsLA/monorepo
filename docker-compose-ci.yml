@@ -9,9 +9,8 @@ services:
       - AWS_REGION
       - AWS_ACCOUNT_ID
       - ASSUMED_ROLE
-      - ECR_USERNAME
-      - ECR_PASSWORD
       - ECR_REGISTRY
+      - BUILDX_NAME
       - NX_BASE
       - NX_HEAD
       - BRANCH_NAME
