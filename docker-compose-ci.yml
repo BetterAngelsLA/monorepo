@@ -1,6 +1,7 @@
 services:
   better-angels:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
+    privileged: true
     volumes:
       - ${GITHUB_WORKSPACE}/.git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
