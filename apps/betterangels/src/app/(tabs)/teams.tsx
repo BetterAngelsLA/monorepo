@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
@@ -51,6 +57,11 @@ export default function TeamsScreen() {
 
       {teams && teams.length < 1 ? (
         <View style={{ alignItems: 'center' }}>
+          <Image
+            height={200}
+            width={200}
+            source={require('../assets/images/no-teams.png')}
+          />
           <H4 style={{ maxWidth: 265 }} align="center" mt={24} spacing={0.5}>
             No teams have been added yet. Let’s start building your team!
           </H4>
