@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Template</title>
+        <title>Welcome to Better Angels</title>
     </head>
     <body style="font-family: Arial, sans-serif;
                  margin: 0;
@@ -57,7 +57,7 @@
                         </tr>
                         <tr>
                             <td align="left" style="padding-bottom: 37px;">
-                                <p style="font-size: 16px; color: #1E3342; margin: 0;">Hi xxxxxx!</p>
+                                <p style="font-size: 16px; color: #1E3342; margin: 0;">Hello!</p>
                             </td>
                         </tr>
                         <tr>
@@ -89,7 +89,7 @@
                         </tr>
                         <tr>
                             <td align="center" style="padding-top: 40px; padding-bottom: 40px;">
-                                <a href="https://app.dev.betterangels.la/auth"
+                                <a href="http://{{ domain.domain }}{% url "invitations_register" user.pk token %}"
                                    style="display: inline-block;
                                           padding: 18px 20px;
                                           width: 277px;
