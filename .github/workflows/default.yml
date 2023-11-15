@@ -103,6 +103,7 @@ jobs:
           ls -lah
           env
           git status
+          echo 1
           yarn nx affected -t build --exclude=betterangels --verbose
           EOF
         env:
