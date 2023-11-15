@@ -4,7 +4,7 @@ services:
     volumes:
       - .git:/workspace/.git
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOME}/.docker/config.json:/home/betterangels/.docker/config.json
+      - ${HOME}/.docker/:/home/betterangels/.docker/
     working_dir: /workspace
     environment:
       - AWS_REGION
