@@ -1,6 +1,6 @@
+import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView } from 'react-native';
 import Edit from './Edit';
 import Main from './Main';
 
@@ -18,9 +18,9 @@ export default function TeamScreen() {
   }
 
   return (
-    <ScrollView>
+    <MainScrollContainer>
       {/* need to be changed to Container after Main Teams screen ui merge*/}
       {isEdit ? <Edit {...props} /> : <Main {...props} />}
-    </ScrollView>
+    </MainScrollContainer>
   );
 }
