@@ -28,13 +28,21 @@
       "options": {
         "push": true,
         "platforms": ["linux/amd64"],
+        "cache-from": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
+        ],
+        "cache-to": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
+        ],
         "metadata": {
-          "images": [
-            "174477281453.dkr.ecr.us-west-2.amazonaws.com/betterangels-backend"
-          ],
-          "tags": ["type=sha"]
+          "images": ["${ECR_REGISTRY}/${APP_NAME}"],
+          "tags": ["${DOCKER_TAG}"]
         }
       }
+    },
+    "deploy": {
+      "command": "tools/deploy/ecs_deploy.sh"
     },
     "manage": {
       "executor": "@nxlv/python:run-commands",
@@ -86,6 +94,8 @@
       "options": {
         "commands": [
           "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
+          "poetry run black --check .",
+          "poetry run isort . --check-only",
           "poetry run mypy --config-file=../../mypy.ini ."
         ],
         "cwd": "apps/betterangels-backend",

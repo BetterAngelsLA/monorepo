@@ -1,13 +1,23 @@
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from organizations.models import OrganizationUser
+from simple_history.admin import SimpleHistoryAdmin
+from simple_history.models import HistoricalRecords
 
-from .forms import UserChangeForm, UserCreationForm
+from .admin_request_mixin import AdminRequestMixin
+from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
 from .models import User
 
 
-class UserAdmin(BaseUserAdmin):
+class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
+    form = OrganizationUserForm
+
+
+class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
     fieldsets = (
@@ -27,13 +37,17 @@ class UserAdmin(BaseUserAdmin):
         ),
         (("Important dates"), {"fields": ("last_login",)}),
     )
-    model = User
+    model = get_user_model()
     list_display = [
         "email",
     ]
 
+    history = HistoricalRecords()
+
 
 admin.site.register(User, UserAdmin)
+admin.site.unregister(OrganizationUser)
+admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 
 admin.site.login = staff_member_required(  # type: ignore
     admin.site.login, login_url=settings.LOGIN_URL

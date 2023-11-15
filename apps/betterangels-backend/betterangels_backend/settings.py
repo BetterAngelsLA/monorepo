@@ -29,13 +29,14 @@ env = environ.Env(
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
+    CONN_MAX_AGE=(int, 300),
     CSRF_TRUSTED_ORIGINS=(list, []),
     CSRF_COOKIE_SECURE=(bool, True),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
     DJANGO_CACHE_URL=(str, ""),
-    CONN_MAX_AGE=(int, 300),
+    IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
@@ -52,6 +53,10 @@ env = environ.Env(
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
+    SESAME_TOKEN_NAME=(str, "token"),
+    SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
+    SESAME_ONE_TIME=(bool, True),
+    SESAME_SALT=(str, "sesame"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -64,6 +69,7 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 
 # Application definition
 INSTALLED_APPS = [
@@ -86,6 +92,8 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "post_office",
     "rest_framework",
+    "organizations",
+    "simple_history",
     # Our Apps
     "accounts",
     "dwelling",
@@ -101,6 +109,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 
@@ -142,13 +151,14 @@ TEMPLATES = [
                 "django.template.context_processors.request",
             ],
         },
-    },
+    }
 ]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
+    "sesame.backends.ModelBackend",
 ]
 
 REST_FRAMEWORK = {
@@ -242,6 +252,9 @@ LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 LOGIN_URL = "/accounts/login/"
 
+# django-organizations settings
+ORGS_SLUGFIELD = "django_extensions.db.fields.AutoSlugField"
+
 
 # ALL AUTH SETTINGS
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7
@@ -279,6 +292,7 @@ POST_OFFICE = {
     "CELERY_ENABLED": True,
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
+INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
 
 SITE_ID = 1
@@ -300,3 +314,9 @@ SESSION_SAVE_EVERY_REQUEST = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
+
+# Django Sesame settings
+SESAME_TOKEN_NAME = env("SESAME_TOKEN_NAME")
+SESAME_MAX_AGE = env("SESAME_MAX_AGE")
+SESAME_ONE_TIME = env("SESAME_ONE_TIME")
+SESAME_SALT = env("SESAME_SALT")

@@ -10,13 +10,13 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
+  ViewStyle,
 } from 'react-native';
 import BodyText from '../BodyText';
 
 const MIN_FITABLE_HEIGHT = 300;
-const DROPDOWN_MAX_HEIGHT = 200;
+const DROPDOWN_MAX_HEIGHT = 150;
 
 export function SearchableDropdown({
   extraTitle,
@@ -63,11 +63,6 @@ export function SearchableDropdown({
     }
   };
 
-  const dismissDropdown = () => {
-    Keyboard.dismiss();
-    setShowDropdown(false);
-  };
-
   const handlePress = (newValue: string) => {
     setValue(newValue);
     setExternalValue(newValue);
@@ -75,93 +70,86 @@ export function SearchableDropdown({
     Keyboard.dismiss();
   };
 
-  return (
-    <TouchableWithoutFeedback onPress={dismissDropdown} accessible={false}>
-      <View style={[styles.inputContainer, { zIndex: showDropdown ? 10 : 1 }]}>
-        <BodyText mb={8} size="sm">
-          {label}
-        </BodyText>
-        <View style={styles.textInput}>
-          <TextInput
-            placeholder={placeholder}
-            style={{
-              color: disabled ? Colors.GRAY : 'black',
-              paddingLeft: 16,
-              paddingRight: 38,
-              height,
-              ...Platform.select({
-                web: {
-                  outline: 'none',
-                },
-              }),
-            }}
-            ref={inputRef}
-            value={value}
-            onChangeText={(e) => setValue(e)}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-          />
-          {value && (
-            <Pressable
-              onPress={() => {
-                setExternalValue('');
-                setValue('');
-              }}
-              style={styles.icon}
-            >
-              <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
-            </Pressable>
-          )}
-        </View>
+  const containerStyle: ViewStyle = {
+    position: 'relative',
+    width: '100%',
+    maxWidth: 600,
+    ...(Platform.OS === 'ios' && showDropdown ? { zIndex: 10 } : null),
+  };
 
-        {showDropdown && (
-          <ScrollView
-            contentContainerStyle={{ padding: 8 }}
-            keyboardShouldPersistTaps="handled"
-            style={[
-              styles.dropdown,
-              dropdownPosition === 'top'
-                ? styles.dropdownTop
-                : styles.dropdownBottom,
-            ]}
-          >
-            {data.map((item, idx) => (
-              <TouchableOpacity
-                style={{ padding: 8 }}
-                key={idx}
-                onPress={() => handlePress(item)}
-              >
-                <BodyText>{item}</BodyText>
-              </TouchableOpacity>
-            ))}
-            {extraTitle && (
-              <TouchableOpacity
-                style={{
-                  padding: 16,
-                  borderTopWidth: 1,
-                  borderTopColor: Colors.DARK_BLUE,
-                }}
-                onPress={onExtraPress}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <PlusIcon color={Colors.DARK_BLUE} size="sm" />
-                  <BodyText ml={10}>{extraTitle}</BodyText>
-                </View>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
+  return (
+    <View style={{ ...containerStyle }}>
+      <BodyText mb={8} size="sm">
+        {label}
+      </BodyText>
+      <View style={styles.textInput}>
+        <TextInput
+          style={{
+            color: disabled ? Colors.GRAY : 'black',
+            paddingLeft: 16,
+            paddingRight: 38,
+            height,
+            ...Platform.select({
+              web: {
+                outline: 'none',
+              },
+            }),
+          }}
+          ref={inputRef}
+          value={value}
+          onChangeText={(e) => setValue(e)}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+        />
+        {value && (
+          <Pressable onPress={() => setValue('')} style={styles.icon}>
+            <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
+          </Pressable>
         )}
       </View>
-    </TouchableWithoutFeedback>
+
+      {showDropdown && (
+        <ScrollView
+          contentContainerStyle={{ padding: 8 }}
+          keyboardShouldPersistTaps="handled"
+          style={[
+            styles.dropdown,
+            dropdownPosition === 'top'
+              ? styles.dropdownTop
+              : styles.dropdownBottom,
+          ]}
+        >
+          {data.map((item, idx) => (
+            <TouchableOpacity
+              style={{ padding: 8 }}
+              key={idx}
+              onPress={() => handlePress(item)}
+            >
+              <BodyText>{item}</BodyText>
+            </TouchableOpacity>
+          ))}
+          {extraTitle && (
+            <TouchableOpacity
+              style={{
+                padding: 8,
+                borderTopWidth: 1,
+                borderTopColor: Colors.DARK_BLUE,
+              }}
+              onPress={onExtraPress}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <PlusIcon color={Colors.DARK_BLUE} size="sm" />
+                <BodyText ml={10}>{extraTitle}</BodyText>
+              </View>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  inputContainer: {
-    position: 'relative',
-    width: '100%',
-    maxWidth: 600,
-  },
   textInput: {
     position: 'relative',
     fontFamily: 'Pragmatica-book',
@@ -175,7 +163,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxHeight: DROPDOWN_MAX_HEIGHT,
     position: 'absolute',
-    overflow: 'scroll',
     zIndex: 100,
     borderWidth: 1,
     borderColor: Colors.DARK_BLUE,
