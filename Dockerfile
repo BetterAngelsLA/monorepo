@@ -113,11 +113,10 @@ RUN apt-get update \
     gdal-bin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
-WORKDIR /workspace/
-RUN mkdir -p /workspace \
+RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
     && chown -R betterangels:betterangels /workspace
+WORKDIR /workspace
 USER betterangels
 
 # Development Build
