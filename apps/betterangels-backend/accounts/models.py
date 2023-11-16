@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from organizations.models import AbstractOrganizationInvitation, OrganizationInvitation
 from simple_history.models import HistoricalRecords
 
 from .managers import UserManager
@@ -47,3 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self: "User") -> str:
         return self.email
+
+
+class ExtendedOrganizationInvitation(OrganizationInvitation):
+    accepted = models.BooleanField(default=False)  # type:ignore
