@@ -52,3 +52,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)  # type:ignore
+
+    class Meta:
+        verbose_name = "Organization Invitation"
+        verbose_name_plural = "Organization Invitations"
+
+    organization_invitation = models.OneToOneField(  # type:ignore
+        OrganizationInvitation,
+        on_delete=models.CASCADE,
+        parent_link=True,
+        related_name="extended_invitation",
+    )

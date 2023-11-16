@@ -23,7 +23,7 @@ django_stubs_ext.monkeypatch()
 
 env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
-    ALLOWED_HOSTS=(list, []),
+    ALLOWED_HOSTS=(list, ["*"]),
     AWS_REGION=(str, "us-west-2"),
     AWS_SES_REGION_NAME=(str, ""),
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),

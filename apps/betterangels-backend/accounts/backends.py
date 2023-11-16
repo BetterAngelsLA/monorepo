@@ -16,7 +16,7 @@ from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
 
 from .forms import UserCreationForm
-from .models import User
+from .models import ExtendedOrganizationInvitation, User
 
 
 class CustomInvitations(InvitationBackend):  # type:ignore
@@ -37,6 +37,7 @@ class CustomInvitations(InvitationBackend):  # type:ignore
             user.set_unusable_password()
             user.is_active = False
             user.save()
+
         self.send_invitation(user, sender, **kwargs)
 
         return user
@@ -47,11 +48,13 @@ class CustomInvitations(InvitationBackend):  # type:ignore
         """
         Creates an organization invite for given invitation user
         """
-        invitation: OrganizationInvitation = OrganizationInvitation.objects.create(
-            invited_by=invited_by_user,
-            invitee=invitee_user,
-            organization=organization,
-            invitee_identifier=invitee_user.email,
+        invitation: OrganizationInvitation = (
+            ExtendedOrganizationInvitation.objects.create(
+                invited_by=invited_by_user,
+                invitee=invitee_user,
+                organization=organization,
+                invitee_identifier=invitee_user.email,
+            )
         )
 
         return invitation
@@ -71,9 +74,6 @@ class CustomInvitations(InvitationBackend):  # type:ignore
         form = self.get_form(
             data=request.POST or None, files=request.FILES or None, instance=user
         )
-        import pdb
-
-        pdb.set_trace()
         if form.is_valid():
             form.instance.is_active = True
             user = form.save()
@@ -95,9 +95,6 @@ class CustomInvitations(InvitationBackend):  # type:ignore
         """
         Updates the invitation to be accepted by the user.
         """
-        invitation = OrganizationInvitation.objects.get(invitee=user)
-        import pdb
-
-        pdb.set_trace()
+        invitation = ExtendedOrganizationInvitation.objects.get(invitee=user)
         invitation.accepted = True
         invitation.save()
