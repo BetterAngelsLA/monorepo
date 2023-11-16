@@ -43,7 +43,6 @@ jobs:
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
-          echo "::set-output name=docker_tag::$DOCKER_TAG"
 
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
@@ -115,9 +114,6 @@ jobs:
         run: |
           docker-compose down
 
-    outputs:
-      docker_tag: ${{ steps.set_vars.outputs.docker_tag }}
-
   deploy:
     needs: build
     # if: github.ref == 'refs/heads/main'
@@ -154,7 +150,7 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
         env:
-          DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
+          DOCKER_TAG: ${{ needs.build.outputs.DOCKER_TAG }}
 
     concurrency:
       group: deploy-main-${{ github.ref }}
