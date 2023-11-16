@@ -156,5 +156,5 @@ jobs:
           DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
 
     concurrency:
-      group: deploy-main
+      group: deploy-${{ github.ref }}
       cancel-in-progress: false
