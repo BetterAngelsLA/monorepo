@@ -116,10 +116,14 @@ RUN apt-get update \
 
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 WORKDIR /workspace/
+RUN mkdir -p /workspace \
+    && chown -R betterangels:betterangels /workspace
+USER betterangels
 
 # Development Build
 # Add session manager to allow Fargate sshing
 FROM base as development
+USER root
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
@@ -132,9 +136,6 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN mkdir -p /workspace/node_modules /workspace/.venv \
-    && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
-USER betterangels
 
 FROM base as poetry
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
@@ -147,7 +148,6 @@ RUN yarn install
 
 # Production Build
 FROM base AS production
-USER betterangels
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
