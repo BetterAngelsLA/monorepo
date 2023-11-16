@@ -112,8 +112,8 @@ jobs:
       - name: Spin down monorepo environment
         if: always()
         run: |
-          sudo chown -R 1001:1001 .git
           docker-compose down
+          sudo chown -R 1001:1001 .git
 
     outputs:
       docker_tag: ${{ env.DOCKER_TAG }}
