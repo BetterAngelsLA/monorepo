@@ -16,7 +16,7 @@ class DatabaseWrapper(PostGISDatabaseWrapper):
         if iam_settings.get("ENABLED", False):
             region_name: str = iam_settings["REGION_NAME"]
             db_hostname: str = self.settings_dict["HOST"]
-            db_port: str = self.settings_dict["PORT"]
+            db_port: int = int(self.settings_dict["PORT"])
             db_username: str = self.settings_dict["USER"]
 
             # Generate IAM auth token using boto3

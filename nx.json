@@ -53,7 +53,14 @@
       "!{projectRoot}/.storybook/**/*",
       "!{projectRoot}/tsconfig.storybook.json"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": [
+      "{workspaceRoot}/Dockerfile",
+      "{workspaceRoot}/docker-compose*.yml",
+      "{workspaceRoot}/mypy.ini",
+      "{workspaceRoot}/poetry.*",
+      "{workspaceRoot}/docker-compose*.yml",
+      "{workspaceRoot}/docker-pyproject.toml"
+    ]
   },
   "plugins": ["@nxlv/python"]
 }

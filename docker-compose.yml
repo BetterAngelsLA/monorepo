@@ -1,11 +1,9 @@
 services:
   better-angels:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    ports:
-      - '8000:8000'
-    depends_on:
-      - db
+    environment:
+      - IS_LOCAL_DEV=True
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   db:
     image: postgis/postgis:15-3.4
     ports:

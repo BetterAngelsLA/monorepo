@@ -26,6 +26,7 @@
         "foregroundImage": "./src/app/assets/images/adaptive-icon.png",
         "backgroundColor": "#1E3342"
       },
+      "softwareKeyboardLayoutMode": "pan",
       "package": "la.betterangels.app",
       "intentFilters": [
         {

@@ -1,6 +1,11 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { GestureResponderEvent, StyleSheet, Text } from 'react-native';
+import {
+  GestureResponderEvent,
+  StyleSheet,
+  Text,
+  TextStyle,
+} from 'react-native';
 
 const SIZES = {
   md: {
@@ -30,6 +35,7 @@ export function BodyText({
   textDecorationLine,
   color = Colors.DARK_BLUE,
   size = 'md',
+  style,
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
@@ -48,12 +54,14 @@ export function BodyText({
     | undefined;
   color?: string;
   size?: 'md' | 'sm' | 'xs';
+  style?: TextStyle;
 }) {
   return (
     <Text
       onPress={onPress}
       style={[
         styles.text,
+        style,
         {
           textTransform,
           marginBottom: mb,

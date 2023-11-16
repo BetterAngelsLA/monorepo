@@ -1,12 +1,13 @@
 node_modules
 .vscode
 .devcontainer
+.git
 .yarn
+!.yarn/releases
+!.yarn/plugins
 dist
 reports
 
 **/.venv
-**/.env
-**/.env.*
 **/.mypy_cache
 **/tmp

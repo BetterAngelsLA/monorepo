@@ -4,6 +4,40 @@ ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
+# Docker
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y \
+      docker-ce \
+      docker-ce-cli \
+      containerd.io \
+      docker-buildx-plugin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && docker --version
+
+# Pin due to: https://github.com/aws/aws-cli/issues/8320
+ENV AWS_CLI_VERSION=2.13.33
+RUN ARCH=$(uname -m) && \
+  if [ "$ARCH" = "x86_64" ]; then \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
+  elif [ "$ARCH" = "aarch64" ]; then \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
+  else \
+    echo "Unsupported architecture: $ARCH" && exit 1; \
+  fi && \
+  unzip awscliv2.zip && \
+  ./aws/install && \
+  rm awscliv2.zip
+
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
 ENV NODE_VERSION 18.17.1
@@ -50,7 +84,8 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
       | cut -d: -f1 \
       | sort -u \
       | xargs -r apt-mark manual \
-    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
     # smoke tests
     && node --version \
@@ -64,10 +99,9 @@ RUN corepack enable && \
 
 # Python
 RUN pip install poetry==1.6.1
-
 RUN apt-get update \
     # Install Systems Packages
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       git \
@@ -80,8 +114,13 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+USER betterangels
+ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
+WORKDIR /workspace/
+
 # Development Build
 # Add session manager to allow Fargate sshing
+FROM base as development
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
@@ -97,4 +136,18 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 RUN mkdir -p /workspace/node_modules /workspace/.venv \
     && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
 USER betterangels
-ENV PATH $PATH:$HOME/.local/bin
+
+FROM base as poetry
+COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
+RUN poetry install --no-interaction --no-ansi
+
+FROM base as yarn
+COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
+COPY --chown=betterangels .yarn /workspace/.yarn/
+RUN yarn install
+
+# Production Build
+FROM base AS production
+COPY --from=poetry /workspace /workspace
+COPY --from=yarn /workspace /workspace
+COPY --chown=betterangels . /workspace

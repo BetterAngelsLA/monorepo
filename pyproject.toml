@@ -9,12 +9,30 @@ authors = []
 license = "Proprietary"
 readme = "README.md"
 
+[tool.isort]
+profile = "black"
+skip_glob = ["*/migrations/*"]
+
 [tool.poetry.dependencies]
 python = "3.11.5"
-
-[tool.poetry.dependencies.betterangels-backend]
-path = "apps/betterangels-backend"
-develop = true
+psycopg = "3.1.10"
+django = "^4.2.4"
+django-environ = "^0.10.0"
+gunicorn = { extras = ["gevent"], version = "^21.2.0" }
+django-extensions = "^3.2.3"
+dj-rest-auth = { extras = ["with-social"], version = "^5.0.0" }
+django-cors-headers = "^4.2.0"
+whitenoise = "^6.5.0"
+boto3 = "^1.28.62"
+django-post-office = "^3.7.1"
+celery-redbeat = "^2.1.1"
+celery = { extras = ["redis"], version = "^5.3.4" }
+django-ses = "^3.5.0"
+hiredis = "^2.2.3"
+django-jazzmin = "^2.6.0"
+django-organizations = "^2.2.0"
+django-sesame = "^3.2.1"
+django-simple-history = "^3.4.0"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.1.0"
@@ -31,10 +49,10 @@ djangorestframework-stubs = { extras = [
 ], version = "^3.14.4" }
 ipython = "^8.17.2"
 pytest-django = "^4.7.0"
+boto3-stubs = {extras = ["essential"], version = "^1.29.0"}
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "betterangels_backend.settings"
 
 [build-system]
 requires = ["poetry-core==1.1.0"]
-build-backend = "poetry.core.masonry.api"
