@@ -133,7 +133,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: nrwl/nx-set-shas@v4
-      - run: git branch --track main origin/main
 
       - name: Configure Node and Install Dependencies
         uses: actions/setup-node@v3
