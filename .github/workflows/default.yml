@@ -142,7 +142,7 @@ jobs:
           cache: yarn
       - run: yarn install
 
-      - name: Configure AWS credentials and Login to Amazon ECR
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
