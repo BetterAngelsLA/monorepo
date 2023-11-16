@@ -4,6 +4,7 @@ import {
   H1,
   Input,
   SearchableDropdown,
+  Select,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction } from 'react';
 import { useForm } from 'react-hook-form';
@@ -49,9 +50,16 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         data={['Case Manager', 'Client Supportive Services']}
         label="Title"
       />
-      {/* TODO: here missing Select component*/}
+      <Select
+        mb={16}
+        mt={16}
+        placeholder="Select the role"
+        label="Roles and permissions"
+        data={['Case Manager']}
+        setExternalValue={(value) => console.log(value)}
+      />
       <Input
-        componentStyle={{ marginBottom: 16, marginTop: 16 }}
+        componentStyle={{ marginBottom: 16 }}
         label="Email Address"
         control={control}
         name="email"

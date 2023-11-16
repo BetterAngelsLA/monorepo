@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 100,
     borderWidth: 1,
+    borderRadius: 3,
     borderColor: Colors.DARK_BLUE,
     backgroundColor: Colors.WHITE,
   },
