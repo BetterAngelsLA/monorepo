@@ -113,11 +113,7 @@ RUN apt-get update \
     gdal-bin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
-WORKDIR /workspace/
-RUN mkdir -p /workspace \
-    && chown -R betterangels:betterangels /workspace
 USER betterangels
 
 # Development Build
@@ -136,6 +132,8 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN mkdir -p /workspace/.venv /workspace/node_modules\
+    && chown -R betterangels:betterangels /workspace
 USER betterangels
 
 FROM base as poetry
@@ -152,3 +150,4 @@ FROM base AS production
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
+WORKDIR /workspace/
