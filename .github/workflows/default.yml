@@ -120,7 +120,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -142,11 +142,6 @@ jobs:
           cache: yarn
       - run: yarn install
 
-      - name: Set Environment Variables
-        run: |
-          DOCKER_TAG=${{ needs.build.outputs.docker_tag }}
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-
       - name: Configure AWS credentials and Login to Amazon ECR
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -158,6 +153,8 @@ jobs:
         run: |
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
+        env:
+          DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
 
     concurrency:
       group: deploy-main-${{ github.ref }}
