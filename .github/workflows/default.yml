@@ -112,6 +112,7 @@ jobs:
       - name: Spin down monorepo environment
         if: always()
         run: |
+          sudo chown -R 1001:1001 .git
           docker-compose down
 
     outputs:
