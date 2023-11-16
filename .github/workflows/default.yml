@@ -38,12 +38,18 @@ jobs:
         run: |
           BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
+          SANITIZED_BRANCH_NAME=$(echo $BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+
           if [ "$BRANCH_NAME" == "main" ]; then
             IMAGE_TAG_PREFIX="main"
           else
-            IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
+            IMAGE_TAG_PREFIX="dev-$SANITIZED_BRANCH_NAME"
           fi
+
           DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
