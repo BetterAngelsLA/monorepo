@@ -9,4 +9,5 @@ export { default as Input } from './Input';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
 export { default as StatusBadge } from './StatusBadge';
+export { default as Tag } from './Tag';
 export { default as Textarea } from './Textarea';

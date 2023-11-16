@@ -5,8 +5,9 @@ import {
   Input,
   SearchableDropdown,
   Select,
+  Tag,
 } from '@monorepo/expo/shared/ui-components';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -17,7 +18,15 @@ interface ITeamEditScreenProps {
 
 export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
   const { setFlow, teamId } = props;
-  const { control } = useForm();
+  const [tags, setTags] = useState<Array<string>>([]);
+  const { control, watch, setValue } = useForm();
+
+  const tag = watch('otherTeam');
+
+  function onAddingTag() {
+    setTags([...tags, tag]);
+    setValue('otherTeam', '');
+  }
 
   return (
     <>
@@ -72,6 +81,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
           name="otherTeam"
         />
         <Button
+          onPress={onAddingTag}
           ml={8}
           size="auto"
           variant="secondary"
@@ -79,8 +89,26 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
           height="sm"
         />
       </View>
-      {/* TODO: here missing Tag component*/}
-      <Button mt={53} variant="primary" size="full" title="Send Invite" />
+      {tags.length > 0 && (
+        <View style={styles.tags}>
+          {tags.map((tag, idx) => (
+            <View key={idx} style={{ marginHorizontal: 4, marginBottom: 8 }}>
+              <Tag
+                onRemove={() => setTags(tags.filter((item) => item !== tag))}
+                value={tag}
+              />
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Button mb={16} variant="primary" size="full" title="Send Invite" />
+      <Button
+        onPress={() => setFlow('1')}
+        variant="secondary"
+        size="full"
+        title="I'm Done"
+      />
     </>
   );
 }
@@ -89,5 +117,12 @@ const styles = StyleSheet.create({
   otherTeam: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  tags: {
+    marginHorizontal: -4,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
+    marginBottom: 53,
   },
 });
