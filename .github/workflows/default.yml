@@ -12,7 +12,7 @@ env:
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
 
 jobs:
-  CIWorkflow:
+  build:
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to find the last successful workflow run
@@ -40,17 +40,11 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "::set-output name=docker_tag::$DOCKER_TAG"
 
       # This line is needed for nx affected to work when CI is running on a PR
       - if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
-
-      - name: Configure Node and Install Dependencies
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.17.1
-          cache: yarn
-      - run: yarn install
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -73,8 +67,50 @@ jobs:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    outputs:
+      docker_tag: ${{ steps.set_vars.outputs.docker_tag }}
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: nrwl/nx-set-shas@v4
+      - run: git branch --track main origin/main
+
+      - name: Configure Node and Install Dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: yarn
+      - run: yarn install
+
+      - name: Set Environment Variables
+        run: |
+          DOCKER_TAG=${{ needs.build.outputs.docker_tag }}
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials and Login to Amazon ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Deploy Changes
-        if: env.BRANCH_NAME == 'main'
         run: |
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
+
+    concurrency:
+      group: deploy-main-${{ github.ref }}
+      cancel-in-progress: false
