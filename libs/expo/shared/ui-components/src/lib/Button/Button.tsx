@@ -17,9 +17,10 @@ type TVariants = {
   };
 };
 
-const SIZES: Record<'sm' | 'full', DimensionValue> = {
+const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   sm: 132,
   full: '100%',
+  auto: 'auto',
 };
 
 const VARIANTS: TVariants = {
@@ -52,7 +53,7 @@ const VARIANTS: TVariants = {
 
 interface IButtonProps {
   title: string;
-  size: 'sm' | 'full';
+  size: 'sm' | 'full' | 'auto';
   onPress?: () => void;
   variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
   align?: 'flex-start' | 'center';
@@ -66,6 +67,8 @@ interface IButtonProps {
   mx?: number;
   ml?: number;
   mr?: number;
+  height?: 46 | 32;
+  fontSize?: 16 | 14;
 }
 
 export function Button(props: IButtonProps) {
@@ -79,6 +82,8 @@ export function Button(props: IButtonProps) {
     style,
     icon,
     fontFamily = 'Pragmatica-book',
+    height = 46,
+    fontSize = 16,
     mb,
     mt,
     mr,
@@ -103,6 +108,7 @@ export function Button(props: IButtonProps) {
           marginRight: mr,
           marginHorizontal: mx,
           marginVertical: my,
+          height,
         },
       ]}
       onPress={onPress}
@@ -116,6 +122,7 @@ export function Button(props: IButtonProps) {
               color: disabled ? Colors.DARK_GRAY : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
               fontFamily,
+              fontSize,
             },
           ]}
         >
@@ -128,14 +135,12 @@ export function Button(props: IButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    height: 46,
     justifyContent: 'center',
     borderRadius: 3,
     borderWidth: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   text: {
-    fontSize: 16,
     letterSpacing: 0.4,
   },
   wrapper: {
