@@ -114,6 +114,9 @@ jobs:
         run: |
           docker-compose down
 
+    outputs:
+      docker_tag: ${{ env.DOCKER_TAG }}
+
   deploy:
     needs: build
     # if: github.ref == 'refs/heads/main'
@@ -150,7 +153,7 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
         env:
-          DOCKER_TAG: ${{ needs.build.outputs.DOCKER_TAG }}
+          DOCKER_TAG: ${{ needs.build.outputs.docker_tag }}
 
     concurrency:
       group: deploy-main-${{ github.ref }}
