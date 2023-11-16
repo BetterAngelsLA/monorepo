@@ -136,6 +136,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+USER betterangels
 
 FROM base as poetry
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
