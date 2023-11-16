@@ -114,7 +114,6 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-USER betterangels
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 WORKDIR /workspace/
 
@@ -148,6 +147,7 @@ RUN yarn install
 
 # Production Build
 FROM base AS production
+USER betterangels
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
