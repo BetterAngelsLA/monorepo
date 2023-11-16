@@ -156,7 +156,6 @@ jobs:
 
       - name: Deploy Changes
         run: |
-          docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
 
