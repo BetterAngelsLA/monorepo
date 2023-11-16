@@ -1,9 +1,9 @@
 import { UserProvider } from '@monorepo/expo/betterangels';
-import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
+import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { BodyText, IconButton } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack, useRouter } from 'expo-router';
+import { Link, SplashScreen, Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import Logo from './assets/images/logo.svg';
@@ -83,6 +83,26 @@ function RootLayoutNav() {
         <Stack.Screen
           name="(private-screens)"
           options={{ headerShown: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="team"
+          options={{
+            title: '',
+            presentation: 'modal',
+            headerLeft: () => (
+              <Link href="/teams">
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <ChevronLeftIcon color={Colors.LIGHT_BLUE} />
+                  <BodyText color={Colors.LIGHT_BLUE}>Teams</BodyText>
+                </View>
+              </Link>
+            ),
+          }}
         />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen
