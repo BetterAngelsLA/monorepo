@@ -134,6 +134,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN mkdir -p /workspace/.venv /workspace/node_modules\
     && chown -R betterangels:betterangels /workspace
+WORKDIR /workspace/
 USER betterangels
 
 FROM base as poetry
@@ -150,4 +151,3 @@ FROM base AS production
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
-WORKDIR /workspace/
