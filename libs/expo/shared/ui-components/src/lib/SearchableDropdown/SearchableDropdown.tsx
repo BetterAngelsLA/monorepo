@@ -88,6 +88,8 @@ export function SearchableDropdown({
             color: disabled ? Colors.GRAY : 'black',
             paddingLeft: 16,
             paddingRight: 38,
+            fontFamily: 'Pragmatica-book',
+            fontSize: 16,
             height,
             ...Platform.select({
               web: {

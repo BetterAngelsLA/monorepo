@@ -8,6 +8,7 @@ import {
   StatusBadge,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { Dispatch, SetStateAction } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,11 +34,11 @@ const INVITED_USERS: TInvitedUsers[] = [
 
 interface ITeamEditScreenProps {
   teamId: string | undefined;
-  setIsEdit: (e: boolean) => void;
+  setFlow: Dispatch<SetStateAction<string>>;
 }
 
 export default function TeamEditScreen(props: ITeamEditScreenProps) {
-  const { setIsEdit, teamId } = props;
+  const { setFlow, teamId } = props;
   const { control } = useForm({
     defaultValues: {
       description:
@@ -80,8 +81,8 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
             <StatusBadge title={user.status} />
             <Button
               ml={10}
-              fontSize={14}
-              height={32}
+              fontSize="sm"
+              height="sm"
               variant="secondary"
               title="Edit"
               size="auto"
@@ -90,6 +91,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         </View>
       ))}
       <Button
+        onPress={() => setFlow('3')}
         mt={16}
         mb={84}
         size="full"

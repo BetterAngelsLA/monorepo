@@ -5,6 +5,7 @@ import {
   H4,
   StatusBadge,
 } from '@monorepo/expo/shared/ui-components';
+import { Dispatch, SetStateAction } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 type TInvitedUsers = {
@@ -29,17 +30,17 @@ const INVITED_USERS: TInvitedUsers[] = [
 
 interface ITeamMainScreenProps {
   teamId: string | undefined;
-  setIsEdit: (e: boolean) => void;
+  setFlow: Dispatch<SetStateAction<string>>;
 }
 
 export default function TeamMainScreen(props: ITeamMainScreenProps) {
-  const { setIsEdit, teamId } = props;
+  const { setFlow, teamId } = props;
   return (
     <>
       <View style={styles.headerContainer}>
         <H1>Clinical Team</H1>
         <BodyText
-          onPress={() => setIsEdit(true)}
+          onPress={() => setFlow('2')}
           color={Colors.LIGHT_BLUE}
           textDecorationLine="underline"
         >

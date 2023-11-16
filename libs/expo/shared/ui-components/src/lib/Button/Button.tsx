@@ -23,6 +23,16 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   auto: 'auto',
 };
 
+const FONT_SIZE = {
+  sm: 14,
+  md: 16,
+};
+
+const HEIGHT = {
+  sm: 32,
+  md: 46,
+};
+
 const VARIANTS: TVariants = {
   dark: {
     bg: Colors.BRAND_BLUE,
@@ -67,8 +77,8 @@ interface IButtonProps {
   mx?: number;
   ml?: number;
   mr?: number;
-  height?: 46 | 32;
-  fontSize?: 16 | 14;
+  height?: 'sm' | 'md';
+  fontSize?: 'sm' | 'md';
 }
 
 export function Button(props: IButtonProps) {
@@ -82,8 +92,8 @@ export function Button(props: IButtonProps) {
     style,
     icon,
     fontFamily = 'Pragmatica-book',
-    height = 46,
-    fontSize = 16,
+    height = 'md',
+    fontSize = 'md',
     mb,
     mt,
     mr,
@@ -108,7 +118,7 @@ export function Button(props: IButtonProps) {
           marginRight: mr,
           marginHorizontal: mx,
           marginVertical: my,
-          height,
+          height: HEIGHT[height],
         },
       ]}
       onPress={onPress}
@@ -122,7 +132,7 @@ export function Button(props: IButtonProps) {
               color: disabled ? Colors.DARK_GRAY : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
               fontFamily,
-              fontSize,
+              fontSize: FONT_SIZE[fontSize],
             },
           ]}
         >
