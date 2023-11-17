@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List
 
 import django_stubs_ext
-import environ  # type: ignore
+import environ
 
 django_stubs_ext.monkeypatch()
 
