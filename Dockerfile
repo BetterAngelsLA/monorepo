@@ -113,14 +113,16 @@ RUN apt-get update \
     gdal-bin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-USER betterangels
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
-WORKDIR /workspace/
+RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
+    && chown -R betterangels:betterangels /workspace
+WORKDIR /workspace
+USER betterangels
 
 # Development Build
 # Add session manager to allow Fargate sshing
 FROM base as development
+USER root
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
@@ -133,8 +135,6 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN mkdir -p /workspace/node_modules /workspace/.venv \
-    && chown -R betterangels:betterangels /workspace/node_modules /workspace/.venv
 USER betterangels
 
 FROM base as poetry

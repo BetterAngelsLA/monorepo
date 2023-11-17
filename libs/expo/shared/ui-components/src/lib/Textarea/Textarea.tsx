@@ -1,9 +1,7 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
 import {
   Platform,
-  Pressable,
   StyleProp,
   StyleSheet,
   Text,
@@ -29,10 +27,10 @@ type TRules = {
     | { value: TValidateFn; message: string };
 };
 
-interface IInputProps {
+interface ITextareaProps {
   label: string;
   control: Control<any>;
-  height?: 40 | 56 | 200;
+  height?: 200;
   name: string;
   required?: boolean;
   disabled?: boolean;
@@ -41,7 +39,7 @@ interface IInputProps {
   componentStyle?: StyleProp<ViewStyle>;
 }
 
-export function Input(props: IInputProps) {
+export function Textarea(props: ITextareaProps) {
   const {
     label,
     control,
@@ -51,7 +49,7 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
-    height = 56,
+    height = 200,
     ...rest
   } = props;
   return (
@@ -59,7 +57,7 @@ export function Input(props: IInputProps) {
       control={control}
       name={name}
       render={({ field: { value, onBlur, onChange } }) => (
-        <View style={[styles.inputContainer, componentStyle]}>
+        <View style={[styles.TextareaContainer, componentStyle]}>
           {label && (
             <View style={styles.label}>
               <Text style={styles.labelText}>{label}</Text>
@@ -68,7 +66,7 @@ export function Input(props: IInputProps) {
           )}
           <View
             style={[
-              styles.input,
+              styles.Textarea,
               {
                 borderColor: error ? 'red' : Colors.DARK_BLUE,
               },
@@ -77,10 +75,10 @@ export function Input(props: IInputProps) {
             <TextInput
               style={{
                 color: disabled ? Colors.GRAY : 'black',
-                paddingLeft: 16,
-                paddingRight: 38,
+                paddingHorizontal: 16,
                 fontFamily: 'Pragmatica-book',
                 fontSize: 16,
+                lineHeight: 24,
                 height,
                 ...Platform.select({
                   web: {
@@ -88,17 +86,13 @@ export function Input(props: IInputProps) {
                   },
                 }),
               }}
+              multiline
               value={value}
               onBlur={onBlur}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}
             />
-            {value && (
-              <Pressable onPress={() => onChange('')} style={styles.icon}>
-                <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
-              </Pressable>
-            )}
           </View>
         </View>
       )}
@@ -107,14 +101,13 @@ export function Input(props: IInputProps) {
 }
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  TextareaContainer: {
     position: 'relative',
     width: '100%',
     maxWidth: 600,
   },
-  input: {
+  Textarea: {
     position: 'relative',
-    fontFamily: 'Pragmatica-book',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 3,
@@ -133,15 +126,5 @@ const styles = StyleSheet.create({
   required: {
     marginLeft: 2,
     color: 'red',
-  },
-  icon: {
-    position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
-    backgroundColor: Colors.GRAY,
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

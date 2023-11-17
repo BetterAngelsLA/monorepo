@@ -15,13 +15,35 @@ import {
   H4,
   SearchableDropdown,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+
+interface ITeam {
+  id: string;
+  title: string;
+}
+
+const TEAMS: ITeam[] = [
+  {
+    id: '1',
+    title: 'Clinical',
+  },
+  {
+    id: '2',
+    title: 'Compliance',
+  },
+  {
+    id: '3',
+    title: 'E6 Outreach',
+  },
+];
 
 export default function TeamsScreen() {
   const navigation = useNavigation();
+  const router = useRouter();
+
   const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
-  const [teams, setTeams] = useState<Array<string> | null>([]);
+  const [teams, setTeams] = useState<Array<ITeam> | null>(TEAMS);
 
   useEffect(() => {
     navigation.setOptions({
@@ -68,8 +90,12 @@ export default function TeamsScreen() {
         </View>
       ) : (
         teams?.map((team, idx) => (
-          <TouchableOpacity style={{ padding: 16, marginTop: 24 }} key={idx}>
-            <BodyText>{team}</BodyText>
+          <TouchableOpacity
+            onPress={() => router.push(`/team/${team.id}`)}
+            style={{ padding: 16, marginTop: 24 }}
+            key={idx}
+          >
+            <BodyText>{team.title}</BodyText>
           </TouchableOpacity>
         ))
       )}

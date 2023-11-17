@@ -14,7 +14,7 @@ env:
   COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
 jobs:
-  CIWorkflow:
+  BuildTestDeploy:
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to find the last successful workflow run
@@ -22,6 +22,12 @@ jobs:
       id-token: write # Required for requesting the JWT
 
     steps:
+      - name: Turnstyle
+        uses: softprops/turnstyle@v1
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Check out the repo
         uses: actions/checkout@v3
         with:
@@ -30,14 +36,20 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
+          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+
           if [ "$BRANCH_NAME" == "main" ]; then
             IMAGE_TAG_PREFIX="main"
           else
             IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
           fi
+
           DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
@@ -110,7 +122,6 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy Changes
-        if: env.BRANCH_NAME == 'main'
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
@@ -121,3 +132,4 @@ jobs:
         if: always()
         run: |
           docker-compose down
+          sudo chown -R 1001:1001 .git
