@@ -150,9 +150,7 @@ COPY --chown=betterangels .yarn /workspace/.yarn/
 RUN yarn install
 
 # Production Build
-FROM base AS dependencies
-COPY --from=poetry /workspace/.venv /workspace/.venv
-COPY --from=yarn /workspace/node_modules /workspace/node_modules
-
-FROM dependencies as production
-COPY --chown=betterangels . .
+FROM base AS production
+COPY --from=poetry /workspace /workspace
+COPY --from=yarn /workspace /workspace
+COPY --chown=betterangels . /workspace
