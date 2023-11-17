@@ -3,9 +3,7 @@ from django.test import Client, TestCase
 
 
 class DjRestAuthTestCase(TestCase):
-    @vcr.use_cassette(
-        "accounts/tests/cassettes/google_pcke_authentication_flow.yaml"
-    )  # type:ignore
+    @vcr.use_cassette("accounts/tests/cassettes/google_pcke_authentication_flow.yaml")
     def test_google_pcke_authentication_flow(self) -> None:
         client = Client()
         code = (

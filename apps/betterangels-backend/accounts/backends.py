@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from organizations.backends.defaults import InvitationBackend  # type:ignore
+from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
 
@@ -8,7 +8,7 @@ from .forms import UserCreationForm
 from .models import User
 
 
-class CustomInvitations(InvitationBackend):  # type:ignore
+class CustomInvitations(InvitationBackend):
     form_class = UserCreationForm
     invitation_body = "account/email/email_invite_organization.html"
 

@@ -21,7 +21,7 @@ class UserChangeForm(BaseUserChangeForm):
         fields = ("email",)
 
 
-class OrganizationUserForm(forms.ModelForm):  # type:ignore
+class OrganizationUserForm(forms.ModelForm):
     """
     Form class for editing OrganizationUsers *and* the linked user model.
     """
@@ -34,11 +34,11 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
 
     def __init__(self, *args: Any, **kwargs: Any):
         self.request = kwargs.pop("request", None)
-        super(OrganizationUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.instance.pk is not None:
             self.fields["email"].initial = self.instance.user.email
 
-    def save(self, *args: Any, **kwargs: Any):  # type:ignore
+    def save(self, *args: Any, **kwargs: Any) -> "OrganizationUserForm":
         """
         This method saves changes to the linked user model.
         """
@@ -58,4 +58,4 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
 
-        return super(OrganizationUserForm, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
