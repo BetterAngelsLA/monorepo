@@ -25,7 +25,7 @@ class GoogleLogin(SocialLoginView):
         # Get callback_url from the POST data or URL parameters,
         # if not provided use a default
         self.callback_url = request.query_params.get("redirect_uri")
-        return super(GoogleLogin, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 
 class AuthRedirectView(APIView):
