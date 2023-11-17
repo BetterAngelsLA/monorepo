@@ -138,20 +138,20 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 USER betterangels
 
 FROM base as poetry
-COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
+COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml ./
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)
-COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
-COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
+COPY --chown=betterangels apps/betterangels-backend/pyproject.toml apps/betterangels-backend/pyproject.toml
+COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py apps/betterangels-backend/betterangels_backend/__init__.py
 RUN poetry install --no-interaction --no-ansi
 
 FROM base as yarn
-COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
-COPY --chown=betterangels .yarn /workspace/.yarn/
+COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml ./
+COPY --chown=betterangels .yarn .yarn/
 RUN yarn install
 
 FROM base AS dependencies
-COPY --from=poetry .venv .venv
-COPY --from=yarn node_modules node_modules
+COPY --from=poetry /workspace/.venv .venv
+COPY --from=yarn /workspace/node_modules node_modules
 
 # Production Build
 FROM dependencies as production
