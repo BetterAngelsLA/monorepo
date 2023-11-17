@@ -58,8 +58,8 @@
         "commands": [
           "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
           "poetry run black --check .",
-          "poetry run isort . --check-only"
-          // "poetry run mypy --config-file=../../mypy.ini ."
+          "poetry run isort . --check-only",
+          "poetry run mypy --config-file=../../mypy.ini ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false

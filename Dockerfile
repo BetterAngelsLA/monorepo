@@ -139,6 +139,9 @@ USER betterangels
 
 FROM base as poetry
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
+# Need to copy some bare Python Packages otherwise poetry will explode (sadpanda)
+COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
+COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
 RUN poetry install --no-interaction --no-ansi
 
 FROM base as yarn

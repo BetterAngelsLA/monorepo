@@ -1,6 +1,0 @@
-from organizations.app_settings import ORGS_INVITATION_BACKEND as ORGS_INVITATION_BACKEND, ORGS_REGISTRATION_BACKEND as ORGS_REGISTRATION_BACKEND
-from organizations.backends.defaults import BaseBackend as BaseBackend
-from typing import Optional, Text
-
-def invitation_backend(backend: Optional[Text] = ..., namespace: Optional[Text] = ...) -> BaseBackend: ...
-def registration_backend(backend: Optional[Text] = ..., namespace: Optional[Text] = ...) -> BaseBackend: ...

@@ -1,8 +1,0 @@
-{
-  "name": "python-stubs",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/python/stubs",
-  "projectType": "library",
-  "targets": {},
-  "tags": []
-}
