@@ -4,6 +4,43 @@
   "projectType": "application",
   "sourceRoot": "apps/betterangels-backend/betterangels_backend",
   "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "push": true,
+        "platforms": ["linux/amd64"],
+        "cache-from": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
+        ],
+        "cache-to": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
+        ],
+        "metadata": {
+          "images": ["${ECR_REGISTRY}/${APP_NAME}"],
+          "tags": ["${DOCKER_TAG}"]
+        }
+      }
+    },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh"
     },
