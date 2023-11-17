@@ -23,7 +23,7 @@ django_stubs_ext.monkeypatch()
 
 env = environ.Env(
     ACCOUNT_DEFAULT_HTTP_PROTOCOL=(str, "http"),
-    ALLOWED_HOSTS=(list, ["*"]),
+    ALLOWED_HOSTS=(list, []),
     AWS_REGION=(str, "us-west-2"),
     AWS_SES_REGION_NAME=(str, ""),
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
@@ -62,9 +62,9 @@ env = environ.Env(
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
-# IS_LOCAL_DEV = env("IS_LOCAL_DEV")
-# if IS_LOCAL_DEV:
+IS_LOCAL_DEV = env("IS_LOCAL_DEV")
+if IS_LOCAL_DEV:
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -294,6 +294,7 @@ POST_OFFICE = {
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
+
 
 SITE_ID = 1
 
