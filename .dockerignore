@@ -7,7 +7,6 @@
 !*.env*
 !.eslint*
 !.flake8
-!.gitignore
 !.prettierignore
 !.prettierrc
 !.python-version
