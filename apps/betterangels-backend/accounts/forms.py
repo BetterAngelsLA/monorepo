@@ -8,16 +8,14 @@ from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.contrib.sites.models import Site
 from organizations.backends import invitation_backend
 
-from .models import User
 
-
-class UserCreationForm(BaseUserCreationForm[User]):
+class UserCreationForm(BaseUserCreationForm):
     class Meta(BaseUserCreationForm.Meta):
         model = get_user_model()
         fields = ("email", "username")
 
 
-class UserChangeForm(BaseUserChangeForm[User]):
+class UserChangeForm(BaseUserChangeForm):
     class Meta(BaseUserChangeForm.Meta):
         model = get_user_model()
         fields = ("email",)

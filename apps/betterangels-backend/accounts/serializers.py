@@ -129,7 +129,7 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
             raise serializers.ValidationError(_("Incorrect value"))
 
         if isinstance(ret, HttpResponseBadRequest):
-            raise serializers.ValidationError(ret.content)
+            raise serializers.ValidationError(ret.content)  # type: ignore
 
         if not login.is_existing:
             # We have an account already signed up in a different flow
