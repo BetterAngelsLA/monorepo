@@ -56,7 +56,7 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
+          "poetry run flake8 .",
           "poetry run black --check .",
           "poetry run isort . --check-only",
           "poetry run mypy --config-file=../../mypy.ini ."

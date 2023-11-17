@@ -1,5 +1,4 @@
 from accounts.services import send_magic_link
-from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.core.mail import send_mail
 from django.template import loader
@@ -32,7 +31,8 @@ class TestMagicLink(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.client.session[SESSION_KEY], str(self.user.pk))
 
-        # Additional checks can be added, such as redirect behaviors, content on the page, etc.
+        # Additional checks can be added, such as redirect behaviors, content on the
+        # page, etc.
 
     def test_magic_link_email_template_render(self) -> None:
         # Generate a magic login URL for the test user
