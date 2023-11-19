@@ -141,10 +141,12 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 USER betterangels
 
 FROM base as poetry
+RUN mkdir .venv
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
 RUN --mount=type=cache,target=/workspace/.venv poetry install --no-interaction --no-ansi
 
 FROM base as yarn
+RUN mkdir node_modules
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
 COPY --chown=betterangels .yarn /workspace/.yarn/
 RUN --mount=type=cache,target=/workspace/node_modules yarn install
