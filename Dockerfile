@@ -142,15 +142,13 @@ USER betterangels
 
 FROM base as poetry
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-RUN --mount=type=cache,target=/workspace/.venv \
-    && chown -R betterangels:betterangels .venv \
-    poetry install --no-interaction --no-ansi
+RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.venv \
+    && poetry install --no-interaction --no-ansi
 
 FROM base as yarn
-COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
 COPY --chown=betterangels .yarn /workspace/.yarn/
-RUN --mount=type=cache,target=/workspace/node_modules \
-    && chown -R betterangels:betterangels node_modules \
+COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
+RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/node_modules \
     && yarn install
 
 # Production Build
