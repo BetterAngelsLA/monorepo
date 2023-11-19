@@ -5,8 +5,9 @@ RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
 # Docker
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
@@ -21,8 +22,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
       docker-ce-cli \
       containerd.io \
       docker-buildx-plugin \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && docker --version
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
@@ -42,8 +41,9 @@ RUN ARCH=$(uname -m) && \
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
 ENV NODE_VERSION 18.17.1
-RUN --mount=type=cache,target=/var/cache/apt \
-    ARCH= && dpkgArch="$(dpkg --print-architecture)" \
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && case "${dpkgArch##*-}" in \
       amd64) ARCH='x64';; \
       ppc64el) ARCH='ppc64le';; \
@@ -86,9 +86,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
       | cut -d: -f1 \
       | sort -u \
       | xargs -r apt-mark manual \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
     # smoke tests
     && node --version \
     && npm --version
@@ -101,8 +98,9 @@ RUN corepack enable && \
 
 # Python
 RUN pip install poetry==1.6.1
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update \
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
     # Install Systems Packages
     && apt-get install -y --no-install-recommends \
       build-essential \
@@ -113,9 +111,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     # Install Python Lib Requirements
     && apt-get install -y \
     libpq5 \
-    gdal-bin \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    gdal-bin
 ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
 RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
     && chown -R betterangels:betterangels /workspace
@@ -142,16 +138,14 @@ USER betterangels
 
 FROM base as poetry
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.venv
-COPY .venv .venv
-RUN poetry install --no-interaction --no-ansi
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
+    poetry install --no-interaction --no-ansi
 
 FROM base as yarn
-COPY --chown=betterangels .yarn /workspace/.yarn/
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
-RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/node_modules
-COPY node_modules node_modules
-RUN yarn install
+COPY --chown=betterangels .yarn /workspace/.yarn
+RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
+    yarn install
 
 # Production Build
 FROM base AS production
