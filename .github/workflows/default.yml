@@ -122,6 +122,7 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy Changes
+        if: env.BRANCH_NAME != 'main'
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
