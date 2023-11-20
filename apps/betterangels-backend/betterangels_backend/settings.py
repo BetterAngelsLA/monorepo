@@ -35,6 +35,7 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
@@ -286,11 +287,13 @@ AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
 EMAIL_BACKEND = "post_office.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 POST_OFFICE = {
     "BACKENDS": {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
     "CELERY_ENABLED": True,
+    "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
