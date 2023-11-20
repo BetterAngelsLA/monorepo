@@ -123,14 +123,7 @@ jobs:
 
       # Build and Push Monorepo Image
       - name: Push Monorepo Docker image
-        uses: docker/build-push-action@v5
-        if: env.BRANCH_NAME != 'main'
-        with:
-          file: Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+        run: docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: Deploy Changes
         if: env.BRANCH_NAME != 'main'
