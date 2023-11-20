@@ -4,6 +4,25 @@
   "projectType": "application",
   "sourceRoot": "apps/betterangels-backend/betterangels_backend",
   "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh"
     },
@@ -56,10 +75,10 @@
       "executor": "@nxlv/python:run-commands",
       "options": {
         "commands": [
-          "poetry run flake8 --exit-zero --output-file ../../reports/apps/betterangels-backend/lint.txt",
+          "poetry run flake8 .",
           "poetry run black --check .",
-          "poetry run isort . --check-only"
-          // "poetry run mypy --config-file=../../mypy.ini ."
+          "poetry run isort . --check-only",
+          "poetry run mypy --config-file=../../mypy.ini ."
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false

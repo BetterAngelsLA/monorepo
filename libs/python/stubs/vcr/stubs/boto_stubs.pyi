@@ -1,3 +1,0 @@
-from ..stubs import VCRHTTPSConnection as VCRHTTPSConnection
-
-class VCRCertValidatingHTTPSConnection(VCRHTTPSConnection): ...
