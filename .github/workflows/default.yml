@@ -123,6 +123,7 @@ jobs:
 
       # Build and Push Monorepo Image
       - name: Push Monorepo Docker image
+        if: env.BRANCH_NAME != 'main'
         run: docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: Deploy Changes
