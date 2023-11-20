@@ -58,6 +58,7 @@ env = environ.Env(
     SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
     SESAME_ONE_TIME=(bool, True),
     SESAME_SALT=(str, "sesame"),
+    DEFAULT_CHARSET=(str, "utf-8"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -324,3 +325,4 @@ SESAME_TOKEN_NAME = env("SESAME_TOKEN_NAME")
 SESAME_MAX_AGE = env("SESAME_MAX_AGE")
 SESAME_ONE_TIME = env("SESAME_ONE_TIME")
 SESAME_SALT = env("SESAME_SALT")
+DEFAULT_CHARSET = env("DEFAULT_CHARSET")
