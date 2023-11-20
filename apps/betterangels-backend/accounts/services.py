@@ -1,6 +1,7 @@
 from typing import cast
 
 from accounts.models import User
+from django.conf import settings
 from django.core.mail import send_mail
 from django.template import loader
 from django.urls import reverse
@@ -24,10 +25,10 @@ def send_magic_link(email: str, base_url: str) -> str:
     text_message = text_template.render(context)
 
     send_mail(
-        subject,
-        text_message,
-        "no-reply@betterangels.la",
-        [email],
+        subject=subject,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        message=text_message,
+        recipient_list=[email],
         html_message=html_message,
     )
 
