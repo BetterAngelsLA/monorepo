@@ -263,11 +263,3 @@ class YourModelAdmin(SimpleHistoryAdmin):
 Use the `history` attribute of your model instance to access historical records.
 
 </details>
-
-### Generating missing Python Type Stubs
-
-Some Python libraries do not have type stubs yet. In the case we are missing them you can run the following command:
-
-```
-stubgen -p <package_name> -o libs/python/stubs
-```
