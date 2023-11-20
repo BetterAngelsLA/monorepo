@@ -25,10 +25,9 @@
     "**/.yarn": true,
     "**/.venv": true
   },
-  "mypy-type-checker.importStrategy": "fromEnvironment",
-
+  "mypy.enabled": true,
+  "mypy.runUsingActiveInterpreter": true,
   "python.analysis.typeCheckingMode": "off",
-  "mypy-type-checker.reportingScope": "workspace",
   "python.testing.pytestArgs": ["apps", "libs"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
