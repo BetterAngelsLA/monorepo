@@ -138,9 +138,9 @@ USER betterangels
 
 FROM base as poetry
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)
+COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
 COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
 COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init__.py /workspace/apps/betterangels-backend/betterangels_backend/__init__.py
-COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
     poetry install --no-interaction --no-ansi
 
