@@ -21,8 +21,6 @@ from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
 from rest_framework import serializers
 
-from .models import User
-
 try:
     from allauth.account import app_settings as allauth_account_settings
     from allauth.socialaccount.helpers import complete_social_login
@@ -32,7 +30,7 @@ except ImportError:
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = get_user_model()
         fields = ("id", "username", "email")
 
 
