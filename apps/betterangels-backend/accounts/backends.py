@@ -1,6 +1,3 @@
-from typing import ClassVar  # noqa
-from typing import Optional  # noqa
-from typing import Text  # noqa
 from typing import Any, Union
 
 from django.contrib.auth import authenticate, login
@@ -9,7 +6,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
-from organizations.backends.defaults import InvitationBackend  # type:ignore
+from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
 
@@ -80,13 +77,14 @@ class CustomInvitations(InvitationBackend):
             user.save()
             self.activate_organizations(user)
             self.update_invitation(user)
-            user = authenticate(
+            authenticated_user = authenticate(
                 username=form.cleaned_data["username"],
                 password=form.cleaned_data["password1"],
             )
-            if user is None:
+            if authenticated_user is None:
                 raise Http404(_("Can't authenticate user"))
-            login(request, user)
+
+            login(request, authenticated_user)
             return redirect(self.get_success_url())
         return render(request, self.registration_form_template, {"form": form})
 
