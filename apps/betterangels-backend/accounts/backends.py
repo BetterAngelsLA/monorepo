@@ -1,5 +1,6 @@
 from typing import Any, Union
 
+from django.contrib.auth.models import AbstractBaseUser
 from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
@@ -11,6 +12,7 @@ from .models import User
 class CustomInvitations(InvitationBackend):
     form_class = UserCreationForm
     invitation_body = "account/email/email_invite_organization.html"
+    user_model = User
 
     def invite_by_email(
         self,
@@ -18,7 +20,7 @@ class CustomInvitations(InvitationBackend):
         sender: Union[str, None] = None,
         request: Union[Request, None] = None,
         **kwargs: Any
-    ) -> Any:
+    ) -> AbstractBaseUser:
         try:
             user = self.user_model.objects.get(email=email)
         except self.user_model.DoesNotExist:

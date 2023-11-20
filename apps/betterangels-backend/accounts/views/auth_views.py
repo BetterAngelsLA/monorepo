@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, TypeVar, Union
+from typing import Any, List, TypeVar, Union, cast
 from urllib.parse import unquote
 
 from accounts.serializers import SocialLoginSerializer
@@ -25,7 +25,7 @@ class GoogleLogin(SocialLoginView):
         # Get callback_url from the POST data or URL parameters,
         # if not provided use a default
         self.callback_url = request.query_params.get("redirect_uri")
-        return super().post(request, *args, **kwargs)
+        return cast(Response, super().post(request, *args, **kwargs))
 
 
 class AuthRedirectView(APIView):

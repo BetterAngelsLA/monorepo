@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from organizations.models import OrganizationUser
@@ -41,7 +40,7 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
         (("Important dates"), {"fields": ("last_login",)}),
     )
     # Not convinced this is the right type
-    model = cast(Type[DefaultUser], get_user_model())
+    model = cast(Type[DefaultUser], User)
     list_display = [
         "email",
     ]

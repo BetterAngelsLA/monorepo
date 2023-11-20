@@ -15,11 +15,12 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from dj_rest_auth.registration.serializers import (
     SocialLoginSerializer as DjRestAuthSocialLoginSerializer,
 )
-from django.contrib.auth import get_user_model
 from django.http import HttpResponseBadRequest
 from django.utils.translation import gettext_lazy as _
 from requests.exceptions import HTTPError
 from rest_framework import serializers
+
+from .models import User
 
 try:
     from allauth.account import app_settings as allauth_account_settings
@@ -30,7 +31,7 @@ except ImportError:
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ("id", "username", "email")
 
 
@@ -138,13 +139,9 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
             # link up the accounts due to security constraints
             if allauth_account_settings.UNIQUE_EMAIL:
                 # Do we have an account already with this email address?
-                account_exists = (
-                    get_user_model()
-                    .objects.filter(
-                        email=login.user.email,
-                    )
-                    .exists()
-                )
+                account_exists = User.objects.filter(
+                    email=login.user.email,
+                ).exists()
                 if account_exists:
                     raise serializers.ValidationError(
                         _("User is already registered with this e-mail address."),
