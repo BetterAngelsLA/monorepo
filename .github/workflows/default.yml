@@ -121,9 +121,10 @@ jobs:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and Push Monorepo Image for each commit
+      # Build and Push Monorepo Image
       - name: Push Monorepo Docker image
         uses: docker/build-push-action@v5
+        if: env.BRANCH_NAME != 'main'
         with:
           file: Dockerfile
           push: true
