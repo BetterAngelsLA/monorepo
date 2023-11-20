@@ -131,8 +131,6 @@ jobs:
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      - name: Prep Container Permissions
-
       - name: Deploy Changes
         if: env.BRANCH_NAME != 'main'
         run: |
