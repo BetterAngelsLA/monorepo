@@ -136,19 +136,13 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 USER betterangels
 
-FROM base as poetry
-COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
-RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
-    poetry install --no-interaction --no-ansi
-
-FROM base as yarn
+# Production Build
+FROM base AS production
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
 COPY --chown=betterangels .yarn /workspace/.yarn
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
     yarn install
-
-# Production Build
-FROM base AS production
-COPY --from=poetry /workspace /workspace
-COPY --from=yarn /workspace /workspace
+COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
+RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
+    poetry install --no-interaction --no-ansi
 COPY --chown=betterangels . /workspace
