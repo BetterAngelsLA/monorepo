@@ -78,7 +78,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           file: Dockerfile
-          push: true
+          load: true
           platforms: linux/amd64
           cache-from: |
             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
@@ -120,6 +120,18 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and Push Monorepo Image for each commit
+      - name: Push Monorepo Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+
+      - name: Prep Container Permissions
 
       - name: Deploy Changes
         if: env.BRANCH_NAME != 'main'
