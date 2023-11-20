@@ -1,17 +1,12 @@
-from typing import ClassVar  # noqa
-from typing import Optional  # noqa
-from typing import Text  # noqa
 from typing import Any, Union
 
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
-from organizations.backends.defaults import (  # type:ignore
-    InvitationBackend,
-    RegistrationBackend,
-)
+from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
 from rest_framework.request import Request
 
@@ -19,9 +14,10 @@ from .forms import UserCreationForm
 from .models import ExtendedOrganizationInvitation, User
 
 
-class CustomInvitations(InvitationBackend):  # type:ignore
+class CustomInvitations(InvitationBackend):
     form_class = UserCreationForm
     invitation_body = "account/email/email_invite_organization.html"
+    user_model = User
 
     def invite_by_email(
         self,
@@ -29,7 +25,7 @@ class CustomInvitations(InvitationBackend):  # type:ignore
         sender: Union[str, None] = None,
         request: Union[Request, None] = None,
         **kwargs: Any
-    ) -> Any:
+    ) -> AbstractBaseUser:
         try:
             user = self.user_model.objects.get(email=email)
         except self.user_model.DoesNotExist:
@@ -81,13 +77,14 @@ class CustomInvitations(InvitationBackend):  # type:ignore
             user.save()
             self.activate_organizations(user)
             self.update_invitation(user)
-            user = authenticate(
+            authenticated_user = authenticate(
                 username=form.cleaned_data["username"],
                 password=form.cleaned_data["password1"],
             )
-            if user is None:
+            if authenticated_user is None:
                 raise Http404(_("Can't authenticate user"))
-            login(request, user)
+
+            login(request, authenticated_user)
             return redirect(self.get_success_url())
         return render(request, self.registration_form_template, {"form": form})
 

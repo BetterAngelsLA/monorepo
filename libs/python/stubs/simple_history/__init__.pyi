@@ -1,3 +1,0 @@
-from _typeshed import Incomplete
-
-def register(model, app: Incomplete | None = ..., manager_name: str = ..., records_class: Incomplete | None = ..., table_name: Incomplete | None = ..., **records_config) -> None: ...
