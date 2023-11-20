@@ -26,8 +26,8 @@ def send_magic_link(email: str, base_url: str) -> str:
 
     send_mail(
         subject=subject,
-        from_email=settings.DEFAULT_FROM_EMAIL,
         message=text_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[email],
         html_message=html_message,
     )
