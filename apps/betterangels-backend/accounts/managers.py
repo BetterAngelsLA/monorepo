@@ -34,7 +34,7 @@ class UserManager(BaseUserManager["User"]):
             raise ValueError(_("Superuser must have is_superuser=True."))
         return self.create_user(email, password, **extra_fields)
 
-    def find_by_email(self, email: str) -> Optional["User":
+    def find_by_email(self, email: str) -> Optional["User"]:
         try:
             return self.get(email__iexact=email)
         except self.model.DoesNotExist:
