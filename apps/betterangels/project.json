@@ -66,7 +66,7 @@
       "executor": "@nx/expo:install",
       "options": {}
     },
-    "update": {
+    "eas-update": {
       "executor": "@nx/expo:update",
       "options": {}
     },

@@ -33,4 +33,4 @@ jobs:
       - name: 🚀 Create preview
         uses: expo/expo-github-action/preview@v8
         with:
-          command: yarn nx affected -t update --auto
+          command: yarn nx affected -t eas-update --auto
