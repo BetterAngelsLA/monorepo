@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🏗 Track main if PR
