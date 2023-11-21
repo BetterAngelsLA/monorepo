@@ -132,4 +132,11 @@ class CustomInvitations(InvitationBackend):
             kwargs
         ).strip()  # Remove stray newline characters
         body = body_template.render(kwargs)
-        return message_class(subject, body, from_email, [user.email], headers=headers)
+        return message_class(
+            subject,
+            body,
+            from_email,
+            [user.email],
+            headers=headers,
+            alternatives=[(body, "text/html")],
+        )
