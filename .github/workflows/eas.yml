@@ -5,6 +5,8 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
       pull-requests: write # Allow comments on PRs
     steps:
       - name: 🏗 Setup repo
