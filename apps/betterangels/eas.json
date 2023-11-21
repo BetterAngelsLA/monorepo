@@ -1,5 +1,19 @@
 {
   "build": {
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REDIRECT_URL": "http://localhost:8000/auth-redirect"
+      }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
@@ -8,30 +22,18 @@
         "EXPO_PUBLIC_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect"
       },
-      "preview": {
-        "distribution": "internal",
-        "ios": {
-          "simulator": true
-        },
-        "android": {
-          "buildType": "apk"
-        },
-        "env": {
-          "EXPO_PUBLIC_API_URL": "",
-          "EXPO_PUBLIC_CLIENT_ID": "",
-          "EXPO_PUBLIC_REDIRECT_URL": ""
-        }
+      "releaseChannel": "development"
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
       },
-      "production": {
-        "android": {
-          "buildType": "app-bundle"
-        },
-        "env": {
-          "EXPO_PUBLIC_API_URL": "",
-          "EXPO_PUBLIC_CLIENT_ID": "",
-          "EXPO_PUBLIC_REDIRECT_URL": ""
-        }
-      }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "",
+        "EXPO_PUBLIC_CLIENT_ID": "",
+        "EXPO_PUBLIC_REDIRECT_URL": ""
+      },
+      "releaseChannel": "production"
     }
   },
   "submit": {
