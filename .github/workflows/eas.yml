@@ -33,7 +33,7 @@ jobs:
       - name: Determine Affected Projects for eas-update
         id: set-matrix
         run: |
-          MATRIX_JSON=$(yarn nx show projects --affected --withTarget eas-update | jq -Rcs 'split("\n") | map(select(. != "") | {project: .})')
+          MATRIX_JSON=$(yarn nx show projects --affected --withTarget eas-update | jq -Rcs 'split("\n") | map(select(. != "") | {project: .}) | {include: .}')
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
