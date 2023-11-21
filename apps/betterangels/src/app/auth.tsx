@@ -20,7 +20,7 @@ export default function Auth() {
         <Logo width={200} height={30} />
         <View style={styles.buttonsContainer}>
           <Button
-            mb={8}
+            mb="xs"
             onPress={() =>
               router.push({
                 pathname: '/sign-in',

@@ -48,29 +48,23 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
 
   return (
     <>
-      <H1 mb={24}>Edit Clinical Team</H1>
-      <Input
-        componentStyle={{ marginBottom: 24 }}
-        label="Team Name"
-        control={control}
-        name="name"
-      />
+      <H1 mb="md">Edit Clinical Team</H1>
+      <Input mb="md" label="Team Name" control={control} name="name" />
       <Textarea
+        mb="md"
         height={200}
         label="Description"
         control={control}
         name="description"
       />
-      <H4 mt={24} mb={8}>
-        Invited by me
-      </H4>
+      <H4 mb="xs">Invited by me</H4>
       {INVITED_USERS.map((user, index) => (
         <View
           key={index}
           style={[
             styles.invitedUser,
             {
-              borderTopColor: Colors.LIGHT_GRAY,
+              borderTopColor: Colors.NEUTRAL_LIGHT,
               borderTopWidth: index === 0 ? 0 : 1,
             },
           ]}
@@ -79,7 +73,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
           <View style={{ flexDirection: 'row' }}>
             <StatusBadge title={user.status} />
             <Button
-              ml={10}
+              ml="xs"
               fontSize={14}
               height={32}
               variant="secondary"
@@ -90,8 +84,8 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         </View>
       ))}
       <Button
-        mt={16}
-        mb={84}
+        mt="sm"
+        mb="xl"
         size="full"
         variant="secondary"
         title="Add Team members"

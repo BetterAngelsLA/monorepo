@@ -29,6 +29,8 @@ type TRules = {
     | { value: TValidateFn; message: string };
 };
 
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 interface IInputProps {
   label: string;
   control: Control<any>;
@@ -39,7 +41,21 @@ interface IInputProps {
   error?: boolean;
   rules?: TRules;
   componentStyle?: StyleProp<ViewStyle>;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }
+
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
 
 export function Input(props: IInputProps) {
   const {
@@ -52,6 +68,12 @@ export function Input(props: IInputProps) {
     disabled,
     componentStyle,
     height = 56,
+    mb,
+    mt,
+    my,
+    mx,
+    ml,
+    mr,
     ...rest
   } = props;
   return (
@@ -59,7 +81,20 @@ export function Input(props: IInputProps) {
       control={control}
       name={name}
       render={({ field: { value, onBlur, onChange } }) => (
-        <View style={[styles.inputContainer, componentStyle]}>
+        <View
+          style={[
+            styles.inputContainer,
+            componentStyle,
+            {
+              marginBottom: mb && SPACING[mb],
+              marginTop: mt && SPACING[mt],
+              marginLeft: ml && SPACING[ml],
+              marginRight: mr && SPACING[mr],
+              marginHorizontal: mx && SPACING[mx],
+              marginVertical: my && SPACING[my],
+            },
+          ]}
+        >
           {label && (
             <View style={styles.label}>
               <Text style={styles.labelText}>{label}</Text>
@@ -70,13 +105,15 @@ export function Input(props: IInputProps) {
             style={[
               styles.input,
               {
-                borderColor: error ? 'red' : Colors.DARK_BLUE,
+                borderColor: error ? 'red' : Colors.PRIMARY_EXTRA_DARK,
               },
             ]}
           >
             <TextInput
               style={{
-                color: disabled ? Colors.GRAY : 'black',
+                color: disabled
+                  ? Colors.NEUTRAL_LIGHT
+                  : Colors.PRIMARY_EXTRA_DARK,
                 paddingLeft: 16,
                 paddingRight: 38,
                 fontFamily: 'Pragmatica-book',
@@ -96,7 +133,7 @@ export function Input(props: IInputProps) {
             />
             {value && (
               <Pressable onPress={() => onChange('')} style={styles.icon}>
-                <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
+                <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
               </Pressable>
             )}
           </View>
@@ -126,7 +163,7 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontSize: 14,
-    color: Colors.DARK_BLUE,
+    color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
     fontFamily: 'Pragmatica-book',
   },
@@ -139,7 +176,7 @@ const styles = StyleSheet.create({
     right: 16,
     height: 16,
     width: 16,
-    backgroundColor: Colors.GRAY,
+    backgroundColor: Colors.NEUTRAL_LIGHT,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
