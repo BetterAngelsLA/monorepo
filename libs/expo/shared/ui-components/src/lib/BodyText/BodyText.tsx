@@ -22,6 +22,16 @@ const SIZES = {
   },
 };
 
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 export function BodyText({
   children,
   textTransform,
@@ -33,19 +43,19 @@ export function BodyText({
   mx,
   onPress,
   textDecorationLine,
-  color = Colors.DARK_BLUE,
+  color = Colors.PRIMARY_EXTRA_DARK,
   size = 'md',
   style,
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
-  mb?: number;
-  mt?: number;
-  my?: number;
-  mx?: number;
-  ml?: number;
-  mr?: number;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
   textDecorationLine?:
     | 'none'
     | 'underline'
@@ -64,12 +74,12 @@ export function BodyText({
         style,
         {
           textTransform,
-          marginBottom: mb,
-          marginTop: mt,
-          marginLeft: ml,
-          marginRight: mr,
-          marginHorizontal: mx,
-          marginVertical: my,
+          marginBottom: mb && SPACING[mb],
+          marginTop: mt && SPACING[mt],
+          marginLeft: ml && SPACING[ml],
+          marginRight: mr && SPACING[mr],
+          marginHorizontal: mx && SPACING[mx],
+          marginVertical: my && SPACING[my],
           textDecorationLine,
           color,
           fontSize: SIZES[size].fontSize,

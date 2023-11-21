@@ -39,13 +39,7 @@ export default function TabOneScreen() {
           variant="negative"
           title="Sign Out"
         />
-        <Input
-          componentStyle={{ marginVertical: 10 }}
-          label="Test"
-          height={56}
-          name="test"
-          control={control}
-        />
+        <Input label="Test" height={56} name="test" control={control} />
         <SearchableDropdown
           extraTitle="Add Team"
           onExtraPress={() => console.log('adding extra')}
