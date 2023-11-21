@@ -19,14 +19,14 @@ jobs:
       - name: 🏗 Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
+      - name: 📦 Install dependencies
+        run: yarn install
+
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: 📦 Install dependencies
-        run: yarn install
 
       - name: 🚀 Create preview
         uses: expo/expo-github-action/preview@v8
