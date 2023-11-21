@@ -109,11 +109,6 @@ class CustomInvitations(InvitationBackend):
         message_class: Any = EmailMultiAlternatives,
         **kwargs: Any
     ) -> Any:
-        """
-        Returns an email message for a new user. This can be easily overridden.
-        For instance, to send an HTML message, use the EmailMultiAlternatives message_class
-        and attach the additional conent.
-        """
         if sender:
             try:
                 display_name = sender.get_full_name()  # type: ignore
