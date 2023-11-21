@@ -33,6 +33,11 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🏗 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
+
       - name: 🏗 Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
@@ -57,11 +62,6 @@ jobs:
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
-
-      # This line is needed for nx affected to work when CI is running on a PR
-      - name: 🏗 Track main if PR
-        if: env.BRANCH_NAME != 'main'
-        run: git branch --track main origin/main
 
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

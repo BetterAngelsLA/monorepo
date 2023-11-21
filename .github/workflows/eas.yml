@@ -11,14 +11,19 @@ jobs:
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
 
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🏗 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
+
+      - name: 🏗 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.17.1
           cache: yarn
-
-      - name: 🏗 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
 
       - name: 📦 Install dependencies
         run: yarn install
