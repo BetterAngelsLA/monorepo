@@ -68,7 +68,9 @@
     },
     "eas-update": {
       "executor": "@nx/expo:update",
-      "options": {}
+      "options": {
+        "auto": true
+      }
     },
     "export": {
       "executor": "@nx/expo:export",
