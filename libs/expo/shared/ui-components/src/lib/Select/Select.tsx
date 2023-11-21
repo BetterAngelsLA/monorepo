@@ -16,18 +16,28 @@ import BodyText from '../BodyText';
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
 
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 interface ISelectProps {
   data: string[];
   setExternalValue: (e: string) => void;
-  mb?: number;
-  mt?: number;
-  my?: number;
-  mx?: number;
-  ml?: number;
-  mr?: number;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
   label?: string;
   placeholder?: string;
 }
+
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
 
 export function Select(props: ISelectProps) {
   const { setExternalValue, data, mb, mt, mr, ml, my, mx, label, placeholder } =
@@ -70,17 +80,17 @@ export function Select(props: ISelectProps) {
       style={[
         containerStyle,
         {
-          marginBottom: mb,
-          marginTop: mt,
-          marginLeft: ml,
-          marginRight: mr,
-          marginHorizontal: mx,
-          marginVertical: my,
+          marginBottom: mb && SPACING[mb],
+          marginTop: mt && SPACING[mt],
+          marginLeft: ml && SPACING[ml],
+          marginRight: mr && SPACING[mr],
+          marginHorizontal: mx && SPACING[mx],
+          marginVertical: my && SPACING[my],
         },
       ]}
     >
       {label && (
-        <BodyText mb={8} size="sm">
+        <BodyText mb="xs" size="sm">
           {label}
         </BodyText>
       )}
@@ -90,7 +100,7 @@ export function Select(props: ISelectProps) {
           <View style={styles.icon}>
             <ChevronLeftIcon
               rotate={showDropdown ? '90deg' : '-90deg'}
-              color={Colors.DARK_BLUE}
+              color={Colors.PRIMARY_EXTRA_DARK}
             />
           </View>
         </View>
@@ -126,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 3,
-    borderColor: Colors.DARK_BLUE,
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
     paddingLeft: 16,
     paddingRight: 38,
@@ -139,7 +149,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     borderWidth: 1,
     borderRadius: 3,
-    borderColor: Colors.DARK_BLUE,
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },
   dropdownTop: {

@@ -14,7 +14,7 @@ export function Tag(props: ITagProps) {
     <View style={styles.container}>
       <BodyText>{value}</BodyText>
       <Pressable onPress={onRemove} style={styles.icon}>
-        <XmarkIcon size="sm" color={Colors.DARK_GRAY} />
+        <XmarkIcon size="sm" color={Colors.NEUTRAL_DARK} />
       </Pressable>
     </View>
   );
@@ -22,7 +22,7 @@ export function Tag(props: ITagProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.LIGHT_PURPLE,
+    backgroundColor: Colors.SECONDARY_LIGHT,
     borderRadius: 3,
     padding: 8,
     flexDirection: 'row',

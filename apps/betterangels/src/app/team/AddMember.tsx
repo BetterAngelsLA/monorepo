@@ -30,64 +30,51 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
 
   return (
     <>
-      <H1 mb={16}>Add Team Members</H1>
-      <BodyText mb={22}>
+      <H1 mb="sm">Add Team Members</H1>
+      <BodyText mb="md">
         You can send an invitation by filling out their information down below.
         They will receive the invite via email so they can sign up later on.
       </BodyText>
       <Button
         disabled
-        mb={26}
+        mb="md"
         size="full"
         variant="primary"
         title="View Invited Members"
       />
-      <Input
-        componentStyle={{ marginBottom: 16 }}
-        label="First Name"
-        control={control}
-        name="firstName"
-      />
-      <Input
-        componentStyle={{ marginBottom: 16 }}
-        label="Last Name"
-        control={control}
-        name="lastName"
-      />
+      <Input mb="sm" label="First Name" control={control} name="firstName" />
+      <Input mb="sm" label="Last Name" control={control} name="lastName" />
       <SearchableDropdown
+        mb="sm"
         setExternalValue={(value) => console.log(value)}
         data={['Case Manager', 'Client Supportive Services']}
         label="Title"
       />
       <Select
-        mb={16}
-        mt={16}
+        mb="sm"
         placeholder="Select the role"
         label="Roles and permissions"
         data={['Case Manager']}
         setExternalValue={(value) => console.log(value)}
       />
-      <Input
-        componentStyle={{ marginBottom: 16 }}
-        label="Email Address"
-        control={control}
-        name="email"
-      />
+      <Input mb="sm" label="Email Address" control={control} name="email" />
       <View style={styles.otherTeam}>
         <Input
-          componentStyle={{ marginBottom: 16, flex: 1 }}
+          componentStyle={{ flex: 1 }}
           label="Other Team Name"
           control={control}
           name="otherTeam"
         />
-        <Button
-          onPress={onAddingTag}
-          ml={8}
-          size="auto"
-          variant="secondary"
-          title="Add"
-          height="sm"
-        />
+        <View style={{ marginBottom: 12 }}>
+          <Button
+            onPress={onAddingTag}
+            ml="xs"
+            size="auto"
+            variant="secondary"
+            title="Add"
+            height="sm"
+          />
+        </View>
       </View>
       {tags.length > 0 && (
         <View style={styles.tags}>
@@ -102,7 +89,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         </View>
       )}
 
-      <Button mb={16} variant="primary" size="full" title="Send Invite" />
+      <Button mb="sm" variant="primary" size="full" title="Send Invite" />
       <Button
         onPress={() => setFlow('1')}
         variant="secondary"
@@ -116,7 +103,8 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
 const styles = StyleSheet.create({
   otherTeam: {
     flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 16,
+    alignItems: 'flex-end',
   },
   tags: {
     marginHorizontal: -4,
