@@ -51,6 +51,7 @@ jobs:
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
         with:
+          # https://github.com/expo/expo-github-action/issues/229
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: 🏗 Setup Node
