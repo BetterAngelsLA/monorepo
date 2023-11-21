@@ -7,6 +7,16 @@ const LINE_HEIGHT = {
   '24': 31,
 };
 
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 export function H1({
   children,
   textTransform,
@@ -17,18 +27,18 @@ export function H1({
   ml,
   my,
   mx,
-  color = Colors.DARK_BLUE,
+  color = Colors.PRIMARY_EXTRA_DARK,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
   fontSize?: 32 | 24;
-  mb?: number;
-  mt?: number;
-  my?: number;
-  mx?: number;
-  ml?: number;
-  mr?: number;
-  color?: '#F2FAFC' | '#102C55';
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
+  color?: '#F2FAFC' | '#003B4F';
 }) {
   return (
     <Text
@@ -38,12 +48,12 @@ export function H1({
           textTransform,
           fontSize,
           lineHeight: LINE_HEIGHT[fontSize],
-          marginBottom: mb,
-          marginTop: mt,
-          marginLeft: ml,
-          marginRight: mr,
-          marginHorizontal: mx,
-          marginVertical: my,
+          marginBottom: mb ? SPACING[mb] : undefined,
+          marginTop: mt ? SPACING[mt] : undefined,
+          marginLeft: ml ? SPACING[ml] : undefined,
+          marginRight: mr ? SPACING[mr] : undefined,
+          marginHorizontal: mx ? SPACING[mx] : undefined,
+          marginVertical: my ? SPACING[my] : undefined,
           color,
         },
       ]}

@@ -27,6 +27,8 @@ type TRules = {
     | { value: TValidateFn; message: string };
 };
 
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 interface ITextareaProps {
   label: string;
   control: Control<any>;
@@ -37,7 +39,21 @@ interface ITextareaProps {
   error?: boolean;
   rules?: TRules;
   componentStyle?: StyleProp<ViewStyle>;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }
+
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
 
 export function Textarea(props: ITextareaProps) {
   const {
@@ -50,6 +66,12 @@ export function Textarea(props: ITextareaProps) {
     disabled,
     componentStyle,
     height = 200,
+    mb,
+    mt,
+    my,
+    mx,
+    ml,
+    mr,
     ...rest
   } = props;
   return (
@@ -57,7 +79,20 @@ export function Textarea(props: ITextareaProps) {
       control={control}
       name={name}
       render={({ field: { value, onBlur, onChange } }) => (
-        <View style={[styles.TextareaContainer, componentStyle]}>
+        <View
+          style={[
+            styles.TextareaContainer,
+            componentStyle,
+            {
+              marginBottom: mb ? SPACING[mb] : undefined,
+              marginTop: mt ? SPACING[mt] : undefined,
+              marginLeft: ml ? SPACING[ml] : undefined,
+              marginRight: mr ? SPACING[mr] : undefined,
+              marginHorizontal: mx ? SPACING[mx] : undefined,
+              marginVertical: my ? SPACING[my] : undefined,
+            },
+          ]}
+        >
           {label && (
             <View style={styles.label}>
               <Text style={styles.labelText}>{label}</Text>
@@ -68,13 +103,13 @@ export function Textarea(props: ITextareaProps) {
             style={[
               styles.Textarea,
               {
-                borderColor: error ? 'red' : Colors.DARK_BLUE,
+                borderColor: error ? 'red' : Colors.PRIMARY_EXTRA_DARK,
               },
             ]}
           >
             <TextInput
               style={{
-                color: disabled ? Colors.GRAY : 'black',
+                color: disabled ? Colors.NEUTRAL_LIGHT : 'black',
                 paddingHorizontal: 16,
                 fontFamily: 'Pragmatica-book',
                 fontSize: 16,
@@ -119,7 +154,7 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontSize: 14,
-    color: Colors.DARK_BLUE,
+    color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
     fontFamily: 'Pragmatica-book',
   },

@@ -2,6 +2,16 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 export function H3({
   children,
   textTransform,
@@ -14,12 +24,12 @@ export function H3({
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
-  mb?: number;
-  mt?: number;
-  my?: number;
-  mx?: number;
-  ml?: number;
-  mr?: number;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }) {
   return (
     <Text
@@ -27,12 +37,12 @@ export function H3({
         styles.text,
         {
           textTransform,
-          marginBottom: mb,
-          marginTop: mt,
-          marginLeft: ml,
-          marginRight: mr,
-          marginHorizontal: mx,
-          marginVertical: my,
+          marginBottom: mb ? SPACING[mb] : undefined,
+          marginTop: mt ? SPACING[mt] : undefined,
+          marginLeft: ml ? SPACING[ml] : undefined,
+          marginRight: mr ? SPACING[mr] : undefined,
+          marginHorizontal: mx ? SPACING[mx] : undefined,
+          marginVertical: my ? SPACING[my] : undefined,
         },
       ]}
     >
@@ -44,7 +54,7 @@ export function H3({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Pragmatica-bold',
-    color: Colors.DARK_BLUE,
+    color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: 20,
     lineHeight: 26,
   },

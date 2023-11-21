@@ -11,27 +11,44 @@ type TVariants = {
     | 'dark'
     | 'transparent']: {
     bg: string;
+    border: string;
   };
 };
 
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 const VARIANTS: TVariants = {
   dark: {
-    bg: Colors.BRAND_BLUE,
+    bg: Colors.BRAND_DARK_BLUE,
+    border: Colors.BRAND_DARK_BLUE,
   },
   sky: {
-    bg: Colors.BRAND_LIGHT_BLUE,
+    bg: Colors.BRAND_SKY_BLUE,
+    border: Colors.BRAND_SKY_BLUE,
   },
   primary: {
-    bg: Colors.BLUE,
+    bg: Colors.PRIMARY,
+    border: Colors.PRIMARY,
   },
   secondary: {
-    bg: Colors.LIGHT_GRAY,
+    bg: Colors.WHITE,
+    border: Colors.NEUTRAL,
   },
   negative: {
     bg: Colors.WHITE,
+    border: Colors.ERROR,
   },
   transparent: {
     bg: 'transparent',
+    border: 'transparent',
   },
 };
 
@@ -47,10 +64,28 @@ interface IIconButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   children: ReactNode;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }
 
 export function IconButton(props: IIconButtonProps) {
-  const { onPress, variant, disabled, style, children } = props;
+  const {
+    onPress,
+    variant,
+    disabled,
+    style,
+    children,
+    mb,
+    mt,
+    my,
+    mx,
+    ml,
+    mr,
+  } = props;
   return (
     <Pressable
       disabled={disabled}
@@ -58,7 +93,18 @@ export function IconButton(props: IIconButtonProps) {
         styles.button,
         style,
         {
-          backgroundColor: disabled ? Colors.DISABLED : VARIANTS[variant].bg,
+          backgroundColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : VARIANTS[variant].bg,
+          borderColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : VARIANTS[variant].border,
+          marginBottom: mb ? SPACING[mb] : undefined,
+          marginTop: mt ? SPACING[mt] : undefined,
+          marginLeft: ml ? SPACING[ml] : undefined,
+          marginRight: mr ? SPACING[mr] : undefined,
+          marginHorizontal: mx ? SPACING[mx] : undefined,
+          marginVertical: my ? SPACING[my] : undefined,
         },
       ]}
       onPress={onPress}
