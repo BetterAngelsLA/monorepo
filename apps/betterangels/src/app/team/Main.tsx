@@ -41,27 +41,27 @@ export default function TeamMainScreen(props: ITeamMainScreenProps) {
         <H1>Clinical Team</H1>
         <BodyText
           onPress={() => setFlow('2')}
-          color={Colors.LIGHT_BLUE}
+          color={Colors.PRIMARY_LIGHT}
           textDecorationLine="underline"
         >
           Edit
         </BodyText>
       </View>
-      <H4 mb={13}>Description</H4>
-      <BodyText mb={24}>
+      <H4 mb="sm">Description</H4>
+      <BodyText mb="md">
         We provide supervision and review of clinical documentation, including
         progress notes, treatment plans, assessments, and any other clinical
         documentation as it arises in the client record in adherence to Medi-Cal
         and DMH requirements.
       </BodyText>
-      <H4 mb={8}>Invited by me</H4>
+      <H4 mb="xs">Invited by me</H4>
       {INVITED_USERS.map((user, index) => (
         <View
           key={index}
           style={[
             styles.invitedUser,
             {
-              borderTopColor: Colors.LIGHT_GRAY,
+              borderTopColor: Colors.NEUTRAL_LIGHT,
               borderTopWidth: index === 0 ? 0 : 1,
             },
           ]}

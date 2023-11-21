@@ -4,6 +4,8 @@ services:
       - IS_LOCAL_DEV=True
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '8000:8000'
   db:
     image: postgis/postgis:15-3.4
     ports:

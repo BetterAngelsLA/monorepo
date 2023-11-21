@@ -18,6 +18,16 @@ import BodyText from '../BodyText';
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
 
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
 export function SearchableDropdown({
   extraTitle,
   label,
@@ -27,6 +37,12 @@ export function SearchableDropdown({
   disabled,
   placeholder,
   onExtraPress,
+  mb,
+  mt,
+  my,
+  mx,
+  ml,
+  mr,
 }: {
   extraTitle?: string;
   label: string;
@@ -36,6 +52,12 @@ export function SearchableDropdown({
   disabled?: boolean;
   onExtraPress?: () => void;
   placeholder?: string;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
@@ -78,14 +100,24 @@ export function SearchableDropdown({
   };
 
   return (
-    <View style={{ ...containerStyle }}>
-      <BodyText mb={8} size="sm">
+    <View
+      style={{
+        ...containerStyle,
+        marginBottom: mb && SPACING[mb],
+        marginTop: mt && SPACING[mt],
+        marginLeft: ml && SPACING[ml],
+        marginRight: mr && SPACING[mr],
+        marginHorizontal: mx && SPACING[mx],
+        marginVertical: my && SPACING[my],
+      }}
+    >
+      <BodyText mb="xs" size="sm">
         {label}
       </BodyText>
       <View style={styles.textInput}>
         <TextInput
           style={{
-            color: disabled ? Colors.GRAY : 'black',
+            color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
             paddingLeft: 16,
             paddingRight: 38,
             fontFamily: 'Pragmatica-book',
@@ -105,7 +137,7 @@ export function SearchableDropdown({
         />
         {value && (
           <Pressable onPress={() => setValue('')} style={styles.icon}>
-            <XmarkIcon color={Colors.DARK_BLUE} size="xs" />
+            <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
           </Pressable>
         )}
       </View>
@@ -135,13 +167,13 @@ export function SearchableDropdown({
               style={{
                 padding: 8,
                 borderTopWidth: 1,
-                borderTopColor: Colors.DARK_BLUE,
+                borderTopColor: Colors.PRIMARY_EXTRA_DARK,
               }}
               onPress={onExtraPress}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <PlusIcon color={Colors.DARK_BLUE} size="sm" />
-                <BodyText ml={10}>{extraTitle}</BodyText>
+                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+                <BodyText ml="xs">{extraTitle}</BodyText>
               </View>
             </TouchableOpacity>
           )}
@@ -158,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 3,
-    borderColor: Colors.DARK_BLUE,
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
   },
   dropdown: {
@@ -168,7 +200,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     borderWidth: 1,
     borderRadius: 3,
-    borderColor: Colors.DARK_BLUE,
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },
   dropdownTop: {
@@ -182,7 +214,7 @@ const styles = StyleSheet.create({
     right: 16,
     height: 16,
     width: 16,
-    backgroundColor: Colors.GRAY,
+    backgroundColor: Colors.NEUTRAL_LIGHT,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',

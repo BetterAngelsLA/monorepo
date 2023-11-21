@@ -35,31 +35,41 @@ const HEIGHT = {
 
 const VARIANTS: TVariants = {
   dark: {
-    bg: Colors.BRAND_BLUE,
+    bg: Colors.BRAND_STEEL_BLUE,
     color: Colors.WHITE,
-    border: Colors.BRAND_BLUE,
+    border: Colors.BRAND_STEEL_BLUE,
   },
   sky: {
-    bg: Colors.BRAND_LIGHT_BLUE,
+    bg: Colors.BRAND_SKY_BLUE,
     color: Colors.BRAND_DARK_BLUE,
-    border: Colors.BRAND_LIGHT_BLUE,
+    border: Colors.BRAND_SKY_BLUE,
   },
   primary: {
-    bg: Colors.BLUE,
-    color: Colors.WHITE,
-    border: Colors.BLUE,
+    bg: Colors.PRIMARY,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    border: Colors.PRIMARY,
   },
   secondary: {
-    bg: Colors.LIGHT_GRAY,
-    color: Colors.DARK_BLUE,
-    border: Colors.LIGHT_GRAY,
+    bg: Colors.WHITE,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    border: Colors.NEUTRAL,
   },
   negative: {
     bg: Colors.WHITE,
-    color: Colors.RED,
-    border: Colors.BORDER_RED,
+    color: Colors.ERROR,
+    border: Colors.ERROR,
   },
 };
+
+const SPACING = {
+  xs: 8,
+  sm: 16,
+  md: 24,
+  lg: 32,
+  xl: 40,
+};
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IButtonProps {
   title: string;
@@ -71,12 +81,12 @@ interface IButtonProps {
   style?: ViewStyle;
   icon?: ReactNode;
   fontFamily?: 'Pragmatica-book' | 'IBM-bold';
-  mb?: number;
-  mt?: number;
-  my?: number;
-  mx?: number;
-  ml?: number;
-  mr?: number;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
 }
@@ -110,14 +120,18 @@ export function Button(props: IButtonProps) {
         {
           width: SIZES[size],
           alignItems: align,
-          backgroundColor: disabled ? Colors.DISABLED : VARIANTS[variant].bg,
-          borderColor: disabled ? Colors.DISABLED : VARIANTS[variant].border,
-          marginBottom: mb,
-          marginTop: mt,
-          marginLeft: ml,
-          marginRight: mr,
-          marginHorizontal: mx,
-          marginVertical: my,
+          backgroundColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : VARIANTS[variant].bg,
+          borderColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : VARIANTS[variant].border,
+          marginBottom: mb && SPACING[mb],
+          marginTop: mt && SPACING[mt],
+          marginLeft: ml && SPACING[ml],
+          marginRight: mr && SPACING[mr],
+          marginHorizontal: mx && SPACING[mx],
+          marginVertical: my && SPACING[my],
           height: HEIGHT[height],
         },
       ]}
@@ -129,7 +143,7 @@ export function Button(props: IButtonProps) {
           style={[
             styles.text,
             {
-              color: disabled ? Colors.DARK_GRAY : VARIANTS[variant].color,
+              color: disabled ? Colors.NEUTRAL_DARK : VARIANTS[variant].color,
               marginLeft: icon ? 10 : 0,
               fontFamily,
               fontSize: FONT_SIZE[fontSize],

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List
 
 import django_stubs_ext
-import environ  # type: ignore
+import environ
 
 django_stubs_ext.monkeypatch()
 
@@ -35,6 +35,7 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
@@ -266,8 +267,8 @@ The user is required to hand over an email address when signing up.
 # ACCOUNT_EMAIL_REQUIRED = True
 """
 ACCOUNT_EMAIL_VERIFICATION (default: "optional")
-Determines the email verification method during signup 
-– choose one of "mandatory", "optional", or "none".
+Determines the email verification method during signup
+- choose one of "mandatory", "optional", or "none".
 
 Setting this to "mandatory" requires ACCOUNT_EMAIL_REQUIRED to be True.
 
@@ -286,11 +287,13 @@ AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
 EMAIL_BACKEND = "post_office.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 POST_OFFICE = {
     "BACKENDS": {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
     "CELERY_ENABLED": True,
+    "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"

@@ -5,6 +5,7 @@ exclude =
 	build,
 	dist,
 	node_modules,
+	*/migrations/*,
 	.tox,
 	venv,
 	.venv,

@@ -1,8 +1,9 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, cast
 
 from django import forms
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.contrib.sites.models import Site
@@ -11,19 +12,19 @@ from organizations.backends import invitation_backend
 from .models import User
 
 
-class UserCreationForm(BaseUserCreationForm[User]):
+class UserCreationForm(BaseUserCreationForm):
     class Meta(BaseUserCreationForm.Meta):
-        model = get_user_model()
+        model = User
         fields = ("email", "username")
 
 
-class UserChangeForm(BaseUserChangeForm[User]):
+class UserChangeForm(BaseUserChangeForm):
     class Meta(BaseUserChangeForm.Meta):
-        model = get_user_model()
+        model = User
         fields = ("email",)
 
 
-class OrganizationUserForm(forms.ModelForm):  # type:ignore
+class OrganizationUserForm(forms.ModelForm):
     """
     Form class for editing OrganizationUsers *and* the linked user model.
     """
@@ -32,15 +33,15 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
 
     class Meta:
         exclude = ("user", "is_admin")
-        model = get_user_model()
+        model = User
 
     def __init__(self, *args: Any, **kwargs: Any):
         self.request = kwargs.pop("request", None)
-        super(OrganizationUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.instance.pk is not None:
             self.fields["email"].initial = self.instance.user.email
 
-    def save(self, *args: Any, **kwargs: Any):  # type:ignore
+    def save(self, *args: Any, **kwargs: Any) -> User:
         """
         This method saves changes to the linked user model.
         """
@@ -52,7 +53,7 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
                 **{
                     "organization": self.cleaned_data["organization"],
                     "domain": site,
-                }
+                },
             )
             invitation_backend().create_organization_invite(
                 self.cleaned_data["organization"], self.request.user, self.instance.user
@@ -60,4 +61,4 @@ class OrganizationUserForm(forms.ModelForm):  # type:ignore
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
 
-        return super(OrganizationUserForm, self).save(*args, **kwargs)
+        return cast(User, super().save(*args, **kwargs))

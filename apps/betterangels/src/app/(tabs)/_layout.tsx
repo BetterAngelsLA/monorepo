@@ -38,8 +38,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarShowLabel: false,
-        tabBarActiveTintColor: Colors.DARK_BLUE,
-        tabBarInactiveTintColor: Colors.DARK_GRAY,
+        tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
+        tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
         tabBarStyle: {
           height: 70 + insets.bottom,
           alignItems: 'center',
@@ -160,7 +160,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   profileContainer: {
-    backgroundColor: Colors.EXTRA_LIGHT_BLUE,
+    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
     height: 24,
     width: 24,
     borderRadius: 100,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     height: 66,
     width: 66,
     borderRadius: 100,
-    backgroundColor: Colors.BLUE,
+    backgroundColor: Colors.PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
   },

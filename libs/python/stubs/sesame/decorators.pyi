@@ -1,3 +1,0 @@
-from _typeshed import Incomplete
-
-def authenticate(view: Incomplete | None = ..., scope: str = ..., max_age: Incomplete | None = ..., *, required: bool = ..., permanent: bool = ..., override: bool = ...): ...

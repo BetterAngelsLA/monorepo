@@ -215,11 +215,11 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
-        <H4 textTransform="uppercase" mb={8} color={Colors.BRAND_YELLOW}>
+        <H4 textTransform="uppercase" mb="xs" color={Colors.BRAND_YELLOW}>
           {FLOW[flow].welcome}
         </H4>
         <H1
-          mb={56}
+          mb="xl"
           color={Colors.BRAND_ANGEL_BLUE}
           fontSize={32}
           textTransform="uppercase"
@@ -227,7 +227,7 @@ export default function SignIn() {
           {FLOW[flow].title}
         </H1>
         {FLOW[flow].message && (
-          <BodyText mb={24} color={Colors.WHITE}>
+          <BodyText mb="md" color={Colors.WHITE}>
             {FLOW[flow].message}
           </BodyText>
         )}
@@ -239,7 +239,7 @@ export default function SignIn() {
             onPress={async () => await magicLink()}
           />
           <Button
-            mb={8}
+            mb="xs"
             title={`${FLOW[flow].link} with Microsoft`}
             disabled
             icon={<Windowsicon size="sm" />}
@@ -262,14 +262,14 @@ export default function SignIn() {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
-          <BodyText
-            color={Colors.BRAND_LIGHT_BLUE}
+          <H4
             textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
+            color={Colors.BRAND_SKY_BLUE}
           >
             {' '}
             {FLOW[flow].link}
-          </BodyText>
+          </H4>
         </View>
       </View>
     </AuthContainer>
@@ -302,6 +302,6 @@ const styles = StyleSheet.create({
   link: {
     fontFamily: 'Pragmatica-bold',
     textDecorationLine: 'underline',
-    color: Colors.BRAND_LIGHT_BLUE,
+    color: Colors.BRAND_SKY_BLUE,
   },
 });

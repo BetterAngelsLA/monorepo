@@ -1,3 +1,0 @@
-from allauth.utils import import_attribute as import_attribute
-
-def default_urlpatterns(provider): ...

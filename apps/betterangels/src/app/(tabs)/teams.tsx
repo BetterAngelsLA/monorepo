@@ -50,13 +50,13 @@ export default function TeamsScreen() {
       headerRight: () => (
         <View style={styles.headerContainer}>
           <Pressable>
-            <SearchIcon color={Colors.DARK_BLUE} />
+            <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
           <Pressable style={{ marginHorizontal: 24 }}>
-            <BellIcon color={Colors.DARK_BLUE} />
+            <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
           <Pressable>
-            <BarsIcon color={Colors.DARK_BLUE} />
+            <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
         </View>
       ),
@@ -65,17 +65,18 @@ export default function TeamsScreen() {
 
   return (
     <MainScrollContainer>
-      <H1 mb={16}>Teams</H1>
-      <BodyText mb={24} size="sm">
+      <H1 mb="sm">Teams</H1>
+      <BodyText mb="md" size="sm">
         Add your team names in order to build your teams.
       </BodyText>
       <SearchableDropdown
+        mb="lg"
         setExternalValue={setSelectedTeam}
         data={['Clinical', 'Compliance', 'E6 Outreach']}
         placeholder="Enter team name"
         label="Team Name"
       />
-      <H4 mt={32}>Teams List</H4>
+      <H4>Teams List</H4>
 
       {teams && teams.length < 1 ? (
         <View style={{ alignItems: 'center' }}>
@@ -84,7 +85,7 @@ export default function TeamsScreen() {
             width={200}
             source={require('../assets/images/no-teams.png')}
           />
-          <H4 style={{ maxWidth: 265 }} align="center" mt={24} spacing={0.5}>
+          <H4 style={{ maxWidth: 265 }} align="center" mt="md" spacing={0.5}>
             No teams have been added yet. Let’s start building your team!
           </H4>
         </View>
