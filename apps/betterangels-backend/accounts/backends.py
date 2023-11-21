@@ -1,10 +1,14 @@
-from typing import Any, Union
+import email.utils
+from typing import Any, Optional
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.mail import EmailMultiAlternatives
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.template import loader
 from django.utils.translation import gettext as _
 from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
@@ -22,8 +26,8 @@ class CustomInvitations(InvitationBackend):
     def invite_by_email(
         self,
         email: str,
-        sender: Union[str, None] = None,
-        request: Union[Request, None] = None,
+        sender: Optional[str] = None,
+        request: Optional[Request] = None,
         **kwargs: Any
     ) -> AbstractBaseUser:
         try:
@@ -95,3 +99,44 @@ class CustomInvitations(InvitationBackend):
         invitation = ExtendedOrganizationInvitation.objects.get(invitee=user)
         invitation.accepted = True
         invitation.save()
+
+    def email_message(
+        self,
+        user: User,
+        subject_template: str,
+        body_template: str,
+        sender: Optional[User] = None,
+        message_class: Any = EmailMultiAlternatives,
+        **kwargs: Any
+    ) -> Any:
+        if sender:
+            try:
+                display_name = sender.get_full_name()  # type: ignore
+            except (AttributeError, TypeError):
+                display_name = sender.get_username()
+            from_email = "%s <%s>" % (
+                display_name,
+                email.utils.parseaddr(settings.DEFAULT_FROM_EMAIL)[1],
+            )
+            reply_to = "%s <%s>" % (display_name, sender.email)
+        else:
+            from_email = settings.DEFAULT_FROM_EMAIL
+            reply_to = from_email
+
+        headers = {"Reply-To": reply_to}
+        kwargs.update({"sender": sender, "user": user})
+
+        subject_template = loader.get_template(subject_template)
+        body_template = loader.get_template(body_template)
+        subject = subject_template.render(
+            kwargs
+        ).strip()  # Remove stray newline characters
+        body = body_template.render(kwargs)
+        return message_class(
+            subject,
+            body,
+            from_email,
+            [user.email],
+            headers=headers,
+            alternatives=[(body, "text/html")],
+        )
