@@ -70,7 +70,9 @@ jobs:
         run: yarn install
 
       - name: 🚀 Create preview
-        uses: expo/expo-github-action/preview@v8
+        # https://github.com/expo/expo-github-action/issues/221
+        # uses: expo/expo-github-action/preview@v8
+        uses: nderscore/expo-github-action/preview@workaround
         with:
           command: eas update --auto
           working-directory: apps/${{ matrix.project }}
