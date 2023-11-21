@@ -32,7 +32,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
-      - uses: nrwl/nx-set-shas@v4
+
+      - name: 🏗 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
 
       - name: 🔧 Set Environment Variables
         run: |
@@ -57,7 +59,8 @@ jobs:
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
 
       # This line is needed for nx affected to work when CI is running on a PR
-      - if: env.BRANCH_NAME != 'main'
+      - name: 🏗 Track main if PR
+        if: env.BRANCH_NAME != 'main'
         run: git branch --track main origin/main
 
       - name: 🐳 Set up Docker Buildx
