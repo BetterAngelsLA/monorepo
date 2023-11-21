@@ -38,12 +38,12 @@ export function StatusBadge({
             title === 'Accepted'
               ? Colors.SUCCESS_EXTRA_LIGHT
               : Colors.WARNING_EXTRA_LIGHT,
-          marginBottom: mb ? SPACING[mb] : undefined,
-          marginTop: mt ? SPACING[mt] : undefined,
-          marginLeft: ml ? SPACING[ml] : undefined,
-          marginRight: mr ? SPACING[mr] : undefined,
-          marginHorizontal: mx ? SPACING[mx] : undefined,
-          marginVertical: my ? SPACING[my] : undefined,
+          marginBottom: mb && SPACING[mb],
+          marginTop: mt && SPACING[mt],
+          marginLeft: ml && SPACING[ml],
+          marginRight: mr && SPACING[mr],
+          marginHorizontal: mx && SPACING[mx],
+          marginVertical: my && SPACING[my],
         },
       ]}
     >
