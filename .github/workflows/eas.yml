@@ -34,11 +34,10 @@ jobs:
         id: set-matrix
         run: |
           MATRIX_JSON=$( yarn nx show projects --affected --withTarget eas-update | jq -Rcs 'split("\n") | map(select(. != "") | {project: .})')
-          echo $MATRIX_JSON
-          echo "matrix=$MATRIX_JSON" >> $GITHUB_ENV
+          echo "MATRIX_JSON=$MATRIX_JSON" >> $GITHUB_ENV
 
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ env.MATRIX_JSON }}
 
   preview:
     needs: prepare
