@@ -15,7 +15,7 @@
       "executor": "@nxlv/python:add",
       "options": {}
     },
-    "poetry-update": {
+    "update": {
       "executor": "@nxlv/python:update",
       "options": {}
     },
