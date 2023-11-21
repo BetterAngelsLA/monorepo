@@ -1,5 +1,5 @@
 import email.utils
-from typing import Any, Union
+from typing import Any, Optional
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
@@ -26,8 +26,8 @@ class CustomInvitations(InvitationBackend):
     def invite_by_email(
         self,
         email: str,
-        sender: Union[str, None] = None,
-        request: Union[Request, None] = None,
+        sender: Optional[str] = None,
+        request: Optional[Request] = None,
         **kwargs: Any
     ) -> AbstractBaseUser:
         try:
@@ -105,7 +105,7 @@ class CustomInvitations(InvitationBackend):
         user: User,
         subject_template: str,
         body_template: str,
-        sender: Union[User, None] = None,
+        sender: Optional[User] = None,
         message_class: Any = EmailMultiAlternatives,
         **kwargs: Any
     ) -> Any:
