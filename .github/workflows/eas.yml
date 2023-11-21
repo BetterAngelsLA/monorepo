@@ -36,7 +36,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{fromJson(env.matrix)}}
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
