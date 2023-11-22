@@ -79,5 +79,5 @@ jobs:
         # uses: expo/expo-github-action/preview@v8
         uses: nderscore/expo-github-action/preview@workaround
         with:
-          command: eas update --auto --channel=preview
+          command: eas update --auto
           working-directory: apps/${{ matrix.project }}
