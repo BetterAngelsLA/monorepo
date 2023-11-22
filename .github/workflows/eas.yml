@@ -73,6 +73,7 @@ jobs:
         run: |
           find . -name '*.env*' -delete
           cp apps/${{ matrix.project }}/preview-config.eas apps/${{ matrix.project }}/.env
+        working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
         # https://github.com/expo/expo-github-action/issues/221
@@ -81,3 +82,38 @@ jobs:
         with:
           command: eas update --auto
           working-directory: apps/${{ matrix.project }}
+
+      # Because of https://github.com/expo/expo-github-action/issues/214, we have to generate our own QR code for now.
+      # They need to allow publishing a QR code without the schema for ExpoGO to "just work"
+      - name: 📝 Comment on PR
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- expo-qr-code -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- expo-qr-code -->
+
+            ### <MY_APP_NAME> Preview
+
+            <table>
+            <tr>
+              <td><b>Project
+              <td><b>Channel
+              <td><b>Project Link
+            <tr>
+              <td>${{ steps.expo_preview.outputs.projectName }}
+              <td>${{ steps.preview_channel.outputs.channel }}
+              <td><a href="${{ steps.expo_preview.outputs.link }}">${{ steps.expo_preview.outputs.link }}</a>
+            </table>
+
+            -----
+
+            **Option 1 - 📱 Scan QR Code**
+
+            <img src="https://qr.expo.dev/eas-update/?projectId=${{ steps.expo_preview.outputs.projectId }}&groupId=${{ steps.expo_preview.outputs.groupId }}" height="200px" width="200px" />
+
+            **Option 2 - 📱 Open Link**
+
+            [exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }}](exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }})
+          edit-mode: replace
