@@ -1,3 +1,5 @@
+Name: 📱 FE App Deployment
+
 on:
   pull_request:
     types: [opened, synchronize]

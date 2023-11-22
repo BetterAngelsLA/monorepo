@@ -1,4 +1,4 @@
-name: 🚀 CI/CD Pipeline
+name: 👷 Monorepo Pipeline
 
 on:
   push:
