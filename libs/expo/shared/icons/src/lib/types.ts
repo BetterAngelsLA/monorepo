@@ -1,6 +1,7 @@
 export interface IIconProps {
   size?: TIconSizes;
   color?: string;
+  rotate?: string;
 }
 
 export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg' | 'xl';

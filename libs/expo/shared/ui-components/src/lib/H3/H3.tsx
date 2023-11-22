@@ -1,14 +1,6 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -37,12 +29,12 @@ export function H3({
         styles.text,
         {
           textTransform,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
         },
       ]}
     >
@@ -55,7 +47,7 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'Pragmatica-bold',
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: FontSizes.lg.fontSize,
+    lineHeight: FontSizes.lg.lineHeight,
   },
 });

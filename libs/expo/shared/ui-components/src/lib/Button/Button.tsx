@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -21,6 +21,11 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   sm: 132,
   full: '100%',
   auto: 'auto',
+};
+
+const HEIGHT = {
+  sm: 32,
+  md: 46,
 };
 
 const VARIANTS: TVariants = {
@@ -51,14 +56,6 @@ const VARIANTS: TVariants = {
   },
 };
 
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IButtonProps {
@@ -77,8 +74,8 @@ interface IButtonProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  height?: 46 | 32;
-  fontSize?: 16 | 14;
+  height?: 'sm' | 'md';
+  fontSize?: 'sm' | 'md';
 }
 
 export function Button(props: IButtonProps) {
@@ -92,8 +89,8 @@ export function Button(props: IButtonProps) {
     style,
     icon,
     fontFamily = 'Pragmatica-book',
-    height = 46,
-    fontSize = 16,
+    height = 'md',
+    fontSize = 'md',
     mb,
     mt,
     mr,
@@ -116,13 +113,13 @@ export function Button(props: IButtonProps) {
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
             : VARIANTS[variant].border,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
-          height,
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
+          height: HEIGHT[height],
         },
       ]}
       onPress={onPress}
@@ -134,9 +131,10 @@ export function Button(props: IButtonProps) {
             styles.text,
             {
               color: disabled ? Colors.NEUTRAL_DARK : VARIANTS[variant].color,
-              marginLeft: icon ? 10 : 0,
+              marginLeft: icon ? Spacings.xs : 0,
               fontFamily,
-              fontSize,
+              fontSize: FontSizes[fontSize].fontSize,
+              lineHeight: FontSizes[fontSize].lineHeight,
             },
           ]}
         >

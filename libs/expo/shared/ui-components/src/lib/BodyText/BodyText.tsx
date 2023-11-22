@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   GestureResponderEvent,
@@ -6,29 +6,6 @@ import {
   Text,
   TextStyle,
 } from 'react-native';
-
-const SIZES = {
-  md: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  sm: {
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  xs: {
-    fontSize: 11,
-    lineHeight: 16.5,
-  },
-};
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -74,16 +51,16 @@ export function BodyText({
         style,
         {
           textTransform,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           textDecorationLine,
           color,
-          fontSize: SIZES[size].fontSize,
-          lineHeight: SIZES[size].lineHeight,
+          fontSize: FontSizes[size].fontSize,
+          lineHeight: FontSizes[size].lineHeight,
         },
       ]}
     >

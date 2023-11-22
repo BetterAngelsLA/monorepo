@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   GestureResponderEvent,
@@ -6,14 +6,6 @@ import {
   Text,
   TextStyle,
 } from 'react-native';
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -62,12 +54,12 @@ export function H4({
         {
           textTransform,
           textAlign: align,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           textDecorationLine,
           color,
           letterSpacing: spacing,
@@ -82,7 +74,7 @@ export function H4({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Pragmatica-bold',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: FontSizes.md.fontSize,
+    lineHeight: FontSizes.md.lineHeight,
   },
 });
