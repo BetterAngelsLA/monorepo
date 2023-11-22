@@ -1,26 +1,41 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
+import AddMember from './AddMember';
 import Edit from './Edit';
 import Main from './Main';
 
+interface ITeamEditScreenProps {
+  teamId: string | undefined;
+  setFlow: Dispatch<SetStateAction<string>>;
+}
+
+const flowComponents: {
+  [key: string]: React.ComponentType<ITeamEditScreenProps>;
+} = {
+  '1': Main,
+  '2': Edit,
+  '3': AddMember,
+};
+
 export default function TeamScreen() {
-  const [isEdit, setIsEdit] = useState(false);
+  const [flow, setFlow] = useState('1');
   const { teamId } = useLocalSearchParams<{ teamId: string }>();
 
   const props = {
     teamId,
-    setIsEdit,
+    setFlow,
   };
 
   if (!teamId) {
     throw new Error('Team id is required');
   }
 
+  const FlowComponent = flowComponents[String(flow)] || null;
+
   return (
     <MainScrollContainer>
-      {/* need to be changed to Container after Main Teams screen ui merge*/}
-      {isEdit ? <Edit {...props} /> : <Main {...props} />}
+      {FlowComponent && <FlowComponent {...props} />}
     </MainScrollContainer>
   );
 }

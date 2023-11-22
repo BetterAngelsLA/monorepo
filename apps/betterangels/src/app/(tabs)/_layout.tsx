@@ -12,7 +12,7 @@ import {
   SolidHouseIcon,
   SolidSitemapIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,7 +73,10 @@ export default function TabLayout() {
                     name="info-circle"
                     size={25}
                     color="black"
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    style={{
+                      marginRight: Spacings.sm,
+                      opacity: pressed ? 0.5 : 1,
+                    }}
                   />
                 )}
               </Pressable>
@@ -171,7 +174,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.WHITE,
     fontFamily: 'Pragmatica-bold',
-    fontSize: 11,
+    fontSize: FontSizes.xs.fontSize,
   },
   middleButton: {
     height: 66,

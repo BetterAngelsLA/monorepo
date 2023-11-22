@@ -8,7 +8,7 @@ import {
 
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   H1,
@@ -52,7 +52,7 @@ export default function TeamsScreen() {
           <Pressable>
             <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable style={{ marginHorizontal: 24 }}>
+          <Pressable style={{ marginHorizontal: Spacings.md }}>
             <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
           <Pressable>
@@ -93,7 +93,7 @@ export default function TeamsScreen() {
         teams?.map((team, idx) => (
           <TouchableOpacity
             onPress={() => router.push(`/team/${team.id}`)}
-            style={{ padding: 16, marginTop: 24 }}
+            style={{ padding: Spacings.sm, marginTop: Spacings.md }}
             key={idx}
           >
             <BodyText>{team.title}</BodyText>
@@ -108,15 +108,11 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 13,
+    marginRight: Spacings.sm,
   },
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
 });

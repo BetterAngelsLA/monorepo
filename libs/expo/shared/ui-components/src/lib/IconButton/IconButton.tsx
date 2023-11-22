@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
@@ -13,14 +13,6 @@ type TVariants = {
     bg: string;
     border: string;
   };
-};
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -99,12 +91,12 @@ export function IconButton(props: IIconButtonProps) {
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
             : VARIANTS[variant].border,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
         },
       ]}
       onPress={onPress}

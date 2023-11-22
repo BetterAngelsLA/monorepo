@@ -109,6 +109,7 @@ function RootLayoutNav() {
           name="sign-in"
           options={{
             headerTransparent: true,
+            headerBackVisible: false,
             headerLeft: () => (
               <IconButton
                 style={{ marginLeft: -17 }}

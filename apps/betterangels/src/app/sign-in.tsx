@@ -5,7 +5,7 @@ import {
   useUser,
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
@@ -221,7 +221,7 @@ export default function SignIn() {
         <H1
           mb="xl"
           color={Colors.BRAND_ANGEL_BLUE}
-          fontSize={32}
+          size="2xl"
           textTransform="uppercase"
         >
           {FLOW[flow].title}
@@ -231,7 +231,7 @@ export default function SignIn() {
             {FLOW[flow].message}
           </BodyText>
         )}
-        <View style={{ width: '100%', marginBottom: 24 }}>
+        <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
             title="hello"
             size="full"
@@ -280,28 +280,5 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 170,
     flex: 1,
-  },
-  title: {
-    fontFamily: 'IBM-semibold',
-    fontSize: 32,
-    textTransform: 'uppercase',
-    color: Colors.BRAND_ANGEL_BLUE,
-    marginBottom: 56,
-  },
-  message: {
-    fontFamily: 'Pragmatica-book',
-    color: Colors.WHITE,
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  question: {
-    fontFamily: 'Pragmatica-book',
-    color: Colors.WHITE,
-    fontSize: 16,
-  },
-  link: {
-    fontFamily: 'Pragmatica-bold',
-    textDecorationLine: 'underline',
-    color: Colors.BRAND_SKY_BLUE,
   },
 });

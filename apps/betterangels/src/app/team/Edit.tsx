@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   Button,
@@ -8,6 +8,7 @@ import {
   StatusBadge,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { Dispatch, SetStateAction } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,11 +34,11 @@ const INVITED_USERS: TInvitedUsers[] = [
 
 interface ITeamEditScreenProps {
   teamId: string | undefined;
-  setIsEdit: (e: boolean) => void;
+  setFlow: Dispatch<SetStateAction<string>>;
 }
 
 export default function TeamEditScreen(props: ITeamEditScreenProps) {
-  const { setIsEdit, teamId } = props;
+  const { setFlow, teamId } = props;
   const { control } = useForm({
     defaultValues: {
       description:
@@ -74,8 +75,8 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
             <StatusBadge title={user.status} />
             <Button
               ml="xs"
-              fontSize={14}
-              height={32}
+              fontSize="sm"
+              height="sm"
               variant="secondary"
               title="Edit"
               size="auto"
@@ -84,6 +85,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         </View>
       ))}
       <Button
+        onPress={() => setFlow('3')}
         mt="sm"
         mb="xl"
         size="full"
@@ -97,8 +99,8 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
 
 const styles = StyleSheet.create({
   invitedUser: {
-    paddingVertical: 16,
-    paddingRight: 16,
+    paddingVertical: Spacings.sm,
+    paddingRight: Spacings.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
