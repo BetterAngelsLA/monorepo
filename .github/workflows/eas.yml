@@ -79,8 +79,10 @@ jobs:
         # https://github.com/expo/expo-github-action/issues/221
         # uses: expo/expo-github-action/preview@v8
         uses: nderscore/expo-github-action/preview@workaround
+        id: expo_preview
         with:
           command: eas update --auto
+          comment: false
           working-directory: apps/${{ matrix.project }}
 
       # Because of https://github.com/expo/expo-github-action/issues/214, we have to generate our own QR code for now.
@@ -94,7 +96,7 @@ jobs:
           body: |
             <!-- expo-qr-code -->
 
-            ### <MY_APP_NAME> Preview
+            🚀 Expo preview is ready!
 
             <table>
             <tr>
@@ -103,7 +105,7 @@ jobs:
               <td><b>Project Link
             <tr>
               <td>${{ steps.expo_preview.outputs.projectName }}
-              <td>${{ steps.preview_channel.outputs.channel }}
+              <td>${{ github.event.pull_request.head.ref }}
               <td><a href="${{ steps.expo_preview.outputs.link }}">${{ steps.expo_preview.outputs.link }}</a>
             </table>
 
