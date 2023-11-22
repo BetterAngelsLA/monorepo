@@ -75,15 +75,15 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "channel=production" >> $GITHUB_OUTPUT
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_OUTPUT
           else
-            echo "channel=preview" >> $GITHUB_OUTPUT
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_OUTPUT
           fi
 
       - name: Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.${{ env.CHANNEL }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
