@@ -8,7 +8,7 @@ jobs:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
     steps:
-      - name: 🏗 Setup repo
+      - name: 🏗 Check out repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
@@ -18,10 +18,10 @@ jobs:
         if: github.ref != 'refs/heads/main'
         run: git branch --track main origin/main
 
-      - name: 🛠️ Configure NX SHAs
+      - name: 🔧 Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
-      - name: 🏗 Setup Node
+      - name: 🔧 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.17.1
@@ -48,13 +48,13 @@ jobs:
       contents: read # Required for actions/checkout
       pull-requests: write # Allow comments on PRs
     steps:
-      - name: 🏗 Setup repo
+      - name: 🏗 Check out repo
         uses: actions/checkout@v3
         with:
           # https://github.com/expo/expo-github-action/issues/229
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: 🏗 Setup Node
+      - name: 🔧 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.17.1

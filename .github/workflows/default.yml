@@ -28,17 +28,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🏗 Check out the repo
+      - name: 🏗 Check out repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
       # This line is needed for nx affected to work when CI is running on a PR
-      - name: 🏗 Track main if PR
+      - name: 🔀 Track main if PR
         if: github.ref != 'refs/heads/main'
         run: git branch --track main origin/main
 
-      - name: 🏗 Configure NX SHAs
+      - name: 🔧 Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
       - name: 🔧 Set Environment Variables
