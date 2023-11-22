@@ -1,4 +1,4 @@
-Name: 📱 FE App Deployment
+name: 📱 FE App Deployment
 
 on:
   pull_request:
