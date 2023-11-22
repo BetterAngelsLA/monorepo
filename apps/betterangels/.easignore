@@ -1,0 +1,26 @@
+# Node modules
+node_modules/
+
+# Expo generated files
+.expo/
+.expo-shared/
+
+# Logs
+logs
+*.log
+
+# Directory for editor configs and cache
+.vscode/
+.eslintcache
+
+# Dependency directories
+ios/Pods/
+android/.gradle/
+
+# Production build files
+ios/build/
+android/build/
+android/app/build/
+
+# Config
+*.env
