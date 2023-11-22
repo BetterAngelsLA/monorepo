@@ -80,9 +80,9 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Clear All .env files
+      - name: Clear All .env files and load eas.json
         run: |
-          # find . -name '*.env*' -delete
+          find . -name '*.env*' -delete
           cat eas.json | jq -r '.build.preview.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
