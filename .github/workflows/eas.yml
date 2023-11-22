@@ -70,7 +70,9 @@ jobs:
         run: yarn install
 
       - name: Clear All .env files
-        run: find . -name '*.env*' -delete
+        run: |
+          find . -name '*.env*' -delete
+          cp apps/${{ matrix.project }}/preview-config.eas apps/${{ matrix.project }}/.env
 
       - name: 🚀 Create preview
         # https://github.com/expo/expo-github-action/issues/221
