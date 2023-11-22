@@ -72,7 +72,7 @@ jobs:
       - name: Clear All .env files
         run: |
           find . -name '*.env*' -delete
-          cp apps/${{ matrix.project }}/preview-config.eas apps/${{ matrix.project }}/.env
+          cp preview-config.eas .env
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
