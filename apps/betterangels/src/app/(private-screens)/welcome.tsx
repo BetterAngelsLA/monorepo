@@ -13,16 +13,16 @@ export default function Welcome() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
       >
-        <H1 mb={16} textTransform="uppercase">
+        <H1 mb="sm" textTransform="uppercase">
           Thank you,
         </H1>
-        <H2 mb={56}>for signing up and creating your Better Angels Account!</H2>
-        <BodyText mb={20}>Welcome!</BodyText>
-        <BodyText mb={20}>
+        <H2 mb="xl">for signing up and creating your Better Angels Account!</H2>
+        <BodyText mb="md">Welcome!</BodyText>
+        <BodyText mb="md">
           In the future, you'll be able to request resources for yourself that
           you might qualify for or contribute to reporting immediate needs here.
         </BodyText>
-        <BodyText mb={20}>
+        <BodyText mb="md">
           For now, please wait for an email sent to your work email address from
           newaccounts@betterangels.la that will give you the link to your work
           area.
@@ -42,7 +42,7 @@ export default function Welcome() {
         // Temporarily reroute to the screen page with username and logout so that current user can be verified
         // and the logout functionality can be tested.
         onPress={() => router.replace('/')}
-        mb={51}
+        mb="xl"
         size="full"
         title="Close"
         variant="secondary"

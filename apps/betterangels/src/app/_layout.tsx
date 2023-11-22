@@ -97,8 +97,8 @@ function RootLayoutNav() {
                     alignItems: 'center',
                   }}
                 >
-                  <ChevronLeftIcon color={Colors.LIGHT_BLUE} />
-                  <BodyText color={Colors.LIGHT_BLUE}>Teams</BodyText>
+                  <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                  <BodyText color={Colors.PRIMARY_LIGHT}>Teams</BodyText>
                 </View>
               </Link>
             ),
