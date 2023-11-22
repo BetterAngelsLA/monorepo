@@ -80,11 +80,11 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      # - name: Clear All .env files
-      #   run: |
-      #     find . -name '*.env*' -delete
-      #     cp preview-config.eas .env
-      #   working-directory: apps/${{ matrix.project }}
+      - name: Clear All .env files
+        run: |
+          find . -name '*.env*' -delete
+          cp preview-config.eas .env
+        working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
         # https://github.com/expo/expo-github-action/issues/221
