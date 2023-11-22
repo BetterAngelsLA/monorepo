@@ -66,10 +66,24 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: Determine Channel Config
+        # When not in production we use the preview eas.json config.
+        # This will not necessarily map to the actual deployed channel.
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "channel=production" >> $GITHUB_OUTPUT
+          else
+            echo "channel=preview" >> $GITHUB_OUTPUT
+          fi
+
       - name: Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.preview.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          cat eas.json | jq -r '.build.${{ env.CHANNEL }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
