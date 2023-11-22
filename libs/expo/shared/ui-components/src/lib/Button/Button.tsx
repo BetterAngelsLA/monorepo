@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -21,11 +21,6 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   sm: 132,
   full: '100%',
   auto: 'auto',
-};
-
-const FONT_SIZE = {
-  sm: 14,
-  md: 16,
 };
 
 const HEIGHT = {
@@ -59,14 +54,6 @@ const VARIANTS: TVariants = {
     color: Colors.ERROR,
     border: Colors.ERROR,
   },
-};
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -126,12 +113,12 @@ export function Button(props: IButtonProps) {
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
             : VARIANTS[variant].border,
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           height: HEIGHT[height],
         },
       ]}
@@ -144,9 +131,10 @@ export function Button(props: IButtonProps) {
             styles.text,
             {
               color: disabled ? Colors.NEUTRAL_DARK : VARIANTS[variant].color,
-              marginLeft: icon ? 10 : 0,
+              marginLeft: icon ? Spacings.xs : 0,
               fontFamily,
-              fontSize: FONT_SIZE[fontSize],
+              fontSize: FontSizes[fontSize].fontSize,
+              lineHeight: FontSizes[fontSize].lineHeight,
             },
           ]}
         >

@@ -1,5 +1,5 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import BodyText from '../BodyText';
 
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.SECONDARY_LIGHT,
     borderRadius: 3,
-    padding: 8,
+    padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -35,6 +35,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: Spacings.xs,
   },
 });

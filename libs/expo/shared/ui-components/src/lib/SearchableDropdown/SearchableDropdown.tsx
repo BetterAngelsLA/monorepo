@@ -1,5 +1,5 @@
 import { PlusIcon, XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import {
   Dimensions,
@@ -17,14 +17,6 @@ import BodyText from '../BodyText';
 
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -103,12 +95,12 @@ export function SearchableDropdown({
     <View
       style={{
         ...containerStyle,
-        marginBottom: mb && SPACING[mb],
-        marginTop: mt && SPACING[mt],
-        marginLeft: ml && SPACING[ml],
-        marginRight: mr && SPACING[mr],
-        marginHorizontal: mx && SPACING[mx],
-        marginVertical: my && SPACING[my],
+        marginBottom: mb && Spacings[mb],
+        marginTop: mt && Spacings[mt],
+        marginLeft: ml && Spacings[ml],
+        marginRight: mr && Spacings[mr],
+        marginHorizontal: mx && Spacings[mx],
+        marginVertical: my && Spacings[my],
       }}
     >
       <BodyText mb="xs" size="sm">
@@ -118,10 +110,10 @@ export function SearchableDropdown({
         <TextInput
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: 16,
+            paddingLeft: Spacings.sm,
             paddingRight: 38,
             fontFamily: 'Pragmatica-book',
-            fontSize: 16,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -155,7 +147,7 @@ export function SearchableDropdown({
         >
           {data.map((item, idx) => (
             <TouchableOpacity
-              style={{ padding: 8 }}
+              style={{ padding: Spacings.xs }}
               key={idx}
               onPress={() => handlePress(item)}
             >
@@ -165,7 +157,7 @@ export function SearchableDropdown({
           {extraTitle && (
             <TouchableOpacity
               style={{
-                padding: 8,
+                padding: Spacings.xs,
                 borderTopWidth: 1,
                 borderTopColor: Colors.PRIMARY_EXTRA_DARK,
               }}

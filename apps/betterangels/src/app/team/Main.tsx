@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   H1,
@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: Spacings.lg,
   },
   invitedUser: {
-    paddingVertical: 16,
-    paddingRight: 16,
+    paddingVertical: Spacings.sm,
+    paddingRight: Spacings.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   Button,
@@ -65,7 +66,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
           control={control}
           name="otherTeam"
         />
-        <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: Spacings.sm }}>
           <Button
             onPress={onAddingTag}
             ml="xs"
@@ -79,7 +80,10 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
       {tags.length > 0 && (
         <View style={styles.tags}>
           {tags.map((tag, idx) => (
-            <View key={idx} style={{ marginHorizontal: 4, marginBottom: 8 }}>
+            <View
+              key={idx}
+              style={{ marginHorizontal: 4, marginBottom: Spacings.xs }}
+            >
               <Tag
                 onRemove={() => setTags(tags.filter((item) => item !== tag))}
                 value={tag}
@@ -103,7 +107,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
 const styles = StyleSheet.create({
   otherTeam: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: Spacings.sm,
     alignItems: 'flex-end',
   },
   tags: {
@@ -111,6 +115,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     flexWrap: 'wrap',
-    marginBottom: 53,
+    marginBottom: Spacings.xl,
   },
 });

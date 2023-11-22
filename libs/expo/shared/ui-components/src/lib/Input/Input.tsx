@@ -1,5 +1,5 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
 import {
   Platform,
@@ -49,14 +49,6 @@ interface IInputProps {
   mr?: TSpacing;
 }
 
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
-
 export function Input(props: IInputProps) {
   const {
     label,
@@ -86,12 +78,12 @@ export function Input(props: IInputProps) {
             styles.inputContainer,
             componentStyle,
             {
-              marginBottom: mb && SPACING[mb],
-              marginTop: mt && SPACING[mt],
-              marginLeft: ml && SPACING[ml],
-              marginRight: mr && SPACING[mr],
-              marginHorizontal: mx && SPACING[mx],
-              marginVertical: my && SPACING[my],
+              marginBottom: mb && Spacings[mb],
+              marginTop: mt && Spacings[mt],
+              marginLeft: ml && Spacings[ml],
+              marginRight: mr && Spacings[mr],
+              marginHorizontal: mx && Spacings[mx],
+              marginVertical: my && Spacings[my],
             },
           ]}
         >
@@ -159,10 +151,11 @@ const styles = StyleSheet.create({
   },
   label: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: Spacings.xs,
   },
   labelText: {
-    fontSize: 14,
+    fontSize: FontSizes.sm.fontSize,
+    lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
     fontFamily: 'Pragmatica-book',

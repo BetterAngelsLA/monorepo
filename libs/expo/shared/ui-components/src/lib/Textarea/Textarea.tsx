@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
 import {
   Platform,
@@ -47,14 +47,6 @@ interface ITextareaProps {
   mr?: TSpacing;
 }
 
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
-
 export function Textarea(props: ITextareaProps) {
   const {
     label,
@@ -84,12 +76,12 @@ export function Textarea(props: ITextareaProps) {
             styles.TextareaContainer,
             componentStyle,
             {
-              marginBottom: mb && SPACING[mb],
-              marginTop: mt && SPACING[mt],
-              marginLeft: ml && SPACING[ml],
-              marginRight: mr && SPACING[mr],
-              marginHorizontal: mx && SPACING[mx],
-              marginVertical: my && SPACING[my],
+              marginBottom: mb && Spacings[mb],
+              marginTop: mt && Spacings[mt],
+              marginLeft: ml && Spacings[ml],
+              marginRight: mr && Spacings[mr],
+              marginHorizontal: mx && Spacings[mx],
+              marginVertical: my && Spacings[my],
             },
           ]}
         >
@@ -110,10 +102,10 @@ export function Textarea(props: ITextareaProps) {
             <TextInput
               style={{
                 color: disabled ? Colors.NEUTRAL_LIGHT : 'black',
-                paddingHorizontal: 16,
+                paddingHorizontal: Spacings.sm,
                 fontFamily: 'Pragmatica-book',
-                fontSize: 16,
-                lineHeight: 24,
+                fontSize: FontSizes.md.fontSize,
+                lineHeight: FontSizes.md.lineHeight,
                 height,
                 ...Platform.select({
                   web: {
@@ -150,10 +142,11 @@ const styles = StyleSheet.create({
   },
   label: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: Spacings.xs,
   },
   labelText: {
-    fontSize: 14,
+    fontSize: FontSizes.sm.fontSize,
+    lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
     fontFamily: 'Pragmatica-book',

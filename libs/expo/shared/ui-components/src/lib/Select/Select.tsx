@@ -1,5 +1,5 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import {
   Dimensions,
@@ -30,14 +30,6 @@ interface ISelectProps {
   label?: string;
   placeholder?: string;
 }
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 export function Select(props: ISelectProps) {
   const { setExternalValue, data, mb, mt, mr, ml, my, mx, label, placeholder } =
@@ -80,12 +72,12 @@ export function Select(props: ISelectProps) {
       style={[
         containerStyle,
         {
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
         },
       ]}
     >
@@ -107,7 +99,7 @@ export function Select(props: ISelectProps) {
       </Pressable>
       {showDropdown && (
         <ScrollView
-          contentContainerStyle={{ padding: 8 }}
+          contentContainerStyle={{ padding: Spacings.xs }}
           keyboardShouldPersistTaps="handled"
           style={[
             styles.dropdown,
@@ -118,7 +110,7 @@ export function Select(props: ISelectProps) {
         >
           {data.map((item, idx) => (
             <TouchableOpacity
-              style={{ padding: 8 }}
+              style={{ padding: Spacings.xs }}
               key={idx}
               onPress={() => handlePress(item)}
             >
@@ -138,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
-    paddingLeft: 16,
+    paddingLeft: Spacings.sm,
     paddingRight: 38,
     height: 56,
   },
