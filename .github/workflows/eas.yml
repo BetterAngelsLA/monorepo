@@ -13,6 +13,15 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
+      - name: Determine Deploy Env
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🏗 Track main if PR
         if: github.ref != 'refs/heads/main'
@@ -36,11 +45,13 @@ jobs:
           MATRIX_JSON=$(yarn nx show projects --affected --withTarget eas-update | jq -Rcs 'split("\n") | map(select(. != "") | {project: .}) | {include: .}')
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
   preview:
     needs: prepare
     runs-on: ubuntu-latest
+    environment: needs.prepare.outputs.environment
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
@@ -69,11 +80,11 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Clear All .env files
-        run: |
-          find . -name '*.env*' -delete
-          cp preview-config.eas .env
-        working-directory: apps/${{ matrix.project }}
+      # - name: Clear All .env files
+      #   run: |
+      #     find . -name '*.env*' -delete
+      #     cp preview-config.eas .env
+      #   working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
         # https://github.com/expo/expo-github-action/issues/221
