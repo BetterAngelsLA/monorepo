@@ -82,7 +82,8 @@ jobs:
 
       - name: Clear All .env files
         run: |
-          find . -name '*.env*' -delete
+          # find . -name '*.env*' -delete
+          cat eas.json | jq -r '.build.preview.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
