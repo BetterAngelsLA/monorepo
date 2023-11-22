@@ -14,11 +14,11 @@ jobs:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
       # This line is needed for nx affected to work when CI is running on a PR
-      - name: 🏗 Track main if PR
+      - name: 🔀 Track main if PR
         if: github.ref != 'refs/heads/main'
         run: git branch --track main origin/main
 
-      - name: 🏗 Configure NX SHAs
+      - name: 🛠️ Configure NX SHAs
         uses: nrwl/nx-set-shas@v4
 
       - name: 🏗 Setup Node
@@ -30,7 +30,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Determine Affected Projects for eas-update
+      - name: 🧩 Determine Affected Projects for eas-update
         id: set-matrix
         run: |
           MATRIX_JSON=$(yarn nx show projects --affected --withTarget eas-update | jq -Rcs 'split("\n") | map(select(. != "") | {project: .}) | {include: .}')
@@ -60,7 +60,7 @@ jobs:
           node-version: 18.17.1
           cache: yarn
 
-      - name: 🏗 Setup EAS
+      - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
@@ -69,7 +69,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Determine Channel Config
+      - name: 🔍 Determine Channel Config
         # When not in production we use the preview eas.json config.
         # This will not necessarily map to the actual deployed channel.
         id: set-env
@@ -80,7 +80,7 @@ jobs:
             echo "CHANNEL_CONFIG=preview" >> $GITHUB_OUTPUT
           fi
 
-      - name: Clear All .env files and load eas.json
+      - name: 🧹 Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
           cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
