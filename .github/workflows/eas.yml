@@ -75,9 +75,9 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "CHANNEL_CONFIG=production" >> $GITHUB_OUTPUT
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
           else
-            echo "CHANNEL_CONFIG=preview" >> $GITHUB_OUTPUT
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
           fi
 
       - name: 🧹 Clear All .env files and load eas.json
