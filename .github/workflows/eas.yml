@@ -89,9 +89,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
-        # https://github.com/expo/expo-github-action/issues/221
-        # uses: expo/expo-github-action/preview@v8
-        uses: nderscore/expo-github-action/preview@workaround
+        uses: expo/expo-github-action/preview@v8d
         id: expo_preview
         with:
           command: eas update --auto
