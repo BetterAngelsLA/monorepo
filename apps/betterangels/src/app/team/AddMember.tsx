@@ -18,7 +18,7 @@ interface ITeamEditScreenProps {
 }
 
 export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
-  const { setFlow, teamId } = props;
+  const { setFlow } = props;
   const [tags, setTags] = useState<Array<string>>([]);
   const { control, watch, setValue } = useForm();
 
