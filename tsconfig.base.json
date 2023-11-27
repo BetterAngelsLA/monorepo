@@ -24,5 +24,6 @@
       ]
     }
   },
+  "files": ["node_modules/@nx/expo/typings/svg.d.ts"],
   "exclude": ["node_modules", "tmp"]
 }
