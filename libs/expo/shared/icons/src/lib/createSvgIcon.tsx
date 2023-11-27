@@ -1,17 +1,10 @@
 import { memo } from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
+import { SvgProps } from 'react-native-svg';
 import { IIconProps } from './types';
 import { extractSize } from './utils';
 
-interface ISVGProps {
-  width?: string | number;
-  height?: string | number;
-  fill?: string;
-  style?: StyleProp<ViewStyle>;
-}
-
 // Higher Order Component to create SVG icons
-const createSvgIcon = (SvgComponent: React.ComponentType<ISVGProps>) => {
+const createSvgIcon = (SvgComponent: React.ComponentType<SvgProps>) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
     color = '#ffffff',

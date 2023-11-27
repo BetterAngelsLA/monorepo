@@ -202,7 +202,7 @@ export default function SignIn() {
 
   useEffect(() => {
     void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
-  }, [response]);
+  }, [handleDeepLinking, response]);
 
   useEffect(() => {
     setFlow(type);

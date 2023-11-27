@@ -42,7 +42,7 @@ export default function TeamsScreen() {
   const navigation = useNavigation();
   const router = useRouter();
 
-  const [setSelectedTeam] = useState<string | undefined>();
+  const [, setSelectedTeam] = useState<string | undefined>();
   const [teams] = useState<Array<ITeam> | null>(TEAMS);
 
   useEffect(() => {
