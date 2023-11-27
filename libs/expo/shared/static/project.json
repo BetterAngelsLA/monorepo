@@ -10,6 +10,17 @@
       "options": {
         "lintFilePatterns": ["libs/expo/shared/static/**/*.ts"]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/shared/static",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
     }
   },
   "tags": []
