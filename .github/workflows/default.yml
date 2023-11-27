@@ -108,10 +108,10 @@ jobs:
           EOF
 
       - name: 🔬 Typecheck
-      run: |
-        docker-compose run better-angels bash <<'EOF'
-        yarn nx affected -t typecheck
-        EOF
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx affected -t typecheck
+          EOF
 
       - name: 🧪 Test
         run: |
