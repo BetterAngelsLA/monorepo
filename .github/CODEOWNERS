@@ -1,4 +1,4 @@
 # GitHub CODEOWNERS configuration
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-/.github/ @developers
+/.github/ @BetterAngelsLA/developers
