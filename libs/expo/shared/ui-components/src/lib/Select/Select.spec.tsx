@@ -77,7 +77,6 @@ describe('Select Component', () => {
       />
     );
 
-    // Assuming the dropdown has a testID set for position verification
     fireEvent.press(getByText('Select an option'));
     const dropdown = getByTestId('select-dropdown');
     expect(dropdown.props.style).toContainEqual({ top: '102%' }); // Assuming default position is bottom
