@@ -1,8 +1,6 @@
-from enum import Enum
 from typing import Any, List
 
 from allauth.account.models import EmailAddress
-from allauth.socialaccount import providers
 from allauth.socialaccount.providers.base import ProviderAccount
 from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
 
