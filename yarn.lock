@@ -1757,6 +1757,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.15.4":
+  version: 7.23.4
+  resolution: "@babel/runtime@npm:7.23.4"
+  dependencies:
+    regenerator-runtime: ^0.14.0
+  checksum: 8eb6a6b2367f7d60e7f7dd83f477cc2e2fdb169e5460694d7614ce5c730e83324bcf29251b70940068e757ad1ee56ff8073a372260d90cad55f18a825caf97cd
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.0.0, @babel/template@npm:^7.22.15, @babel/template@npm:^7.22.5, @babel/template@npm:^7.3.3":
   version: 7.22.15
   resolution: "@babel/template@npm:7.22.15"
@@ -3268,6 +3277,7 @@ __metadata:
     eslint-plugin-jsx-a11y: 6.7.1
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
+    eslint-plugin-react-native-a11y: ^3.3.0
     expo: ^49.0.21
     expo-auth-session: ~5.0.2
     expo-constants: ~14.4.2
@@ -12294,6 +12304,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react-native-a11y@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "eslint-plugin-react-native-a11y@npm:3.3.0"
+  dependencies:
+    "@babel/runtime": ^7.15.4
+    ast-types-flow: ^0.0.7
+    jsx-ast-utils: ^3.2.1
+  peerDependencies:
+    eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
+  checksum: b1e8f7268c479b50327c6177def93eab6b83ba3502ed4453250980a4d6ac93946a46adb8f9926c8eac4062b530d1a6ac48ae644823715614337e06f334dd0108
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-react@npm:7.32.2":
   version: 7.32.2
   resolution: "eslint-plugin-react@npm:7.32.2"
@@ -16220,7 +16243,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsx-ast-utils@npm:^2.4.1 || ^3.0.0, jsx-ast-utils@npm:^3.3.3":
+"jsx-ast-utils@npm:^2.4.1 || ^3.0.0, jsx-ast-utils@npm:^3.2.1, jsx-ast-utils@npm:^3.3.3":
   version: 3.3.5
   resolution: "jsx-ast-utils@npm:3.3.5"
   dependencies:
