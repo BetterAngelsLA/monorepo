@@ -107,6 +107,7 @@ export function Select(props: ISelectProps) {
               ? styles.dropdownTop
               : styles.dropdownBottom,
           ]}
+          testID="select-dropdown"
         >
           {data.map((item, idx) => (
             <TouchableOpacity
