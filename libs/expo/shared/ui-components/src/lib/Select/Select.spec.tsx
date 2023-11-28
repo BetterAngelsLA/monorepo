@@ -64,8 +64,8 @@ describe('Select Component', () => {
     const mockDimensions = {
       width: 375,
       height: 667,
-      scale: 2, // Add scale
-      fontScale: 1, // Add fontScale
+      scale: 2,
+      fontScale: 1,
     };
     jest.spyOn(Dimensions, 'get').mockReturnValue(mockDimensions);
 
