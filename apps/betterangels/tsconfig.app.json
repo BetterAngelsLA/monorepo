@@ -4,12 +4,12 @@
     "outDir": "../../dist/out-tsc",
     "types": ["node"]
   },
-  "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
   "exclude": [
     "jest.config.ts",
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "test-setup.ts"
   ],
+  "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 }

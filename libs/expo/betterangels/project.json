@@ -10,6 +10,17 @@
       "options": {
         "lintFilePatterns": ["libs/expo/betterangels/**/*.ts"]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/betterangels",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
     }
   },
   "tags": []

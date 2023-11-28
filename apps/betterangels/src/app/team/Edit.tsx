@@ -38,7 +38,7 @@ interface ITeamEditScreenProps {
 }
 
 export default function TeamEditScreen(props: ITeamEditScreenProps) {
-  const { setFlow, teamId } = props;
+  const { setFlow } = props;
   const { control } = useForm({
     defaultValues: {
       description:
