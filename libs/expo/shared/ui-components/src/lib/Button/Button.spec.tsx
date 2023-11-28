@@ -39,5 +39,4 @@ describe('Button Component', () => {
     fireEvent.press(getByText('Disabled Button'));
     expect(mockOnPress).not.toHaveBeenCalled();
   });
-  // Add more tests as needed
 });
