@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: Spacings.sm,
+    marginRight: Spacings.md,
   },
   container: {
     flex: 1,

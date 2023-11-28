@@ -3,17 +3,21 @@ import { Image, View } from 'react-native';
 import H2 from '../H2';
 
 interface IAvatarProps {
+  /**
+   * size:
+   * sm(20) md(40) lg(60)
+   */
   size?: 'sm' | 'md' | 'lg';
   firstName: string;
   lastName: string;
   imageUrl?: string;
 }
 
-const SIZE = {
+export const SIZE = {
   sm: 20,
   md: 40,
   lg: 60,
-};
+} as const;
 
 export function Avatar(props: IAvatarProps) {
   const { size = 'md', firstName, lastName, imageUrl } = props;

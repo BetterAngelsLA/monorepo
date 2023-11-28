@@ -1,91 +1,81 @@
-import { SafeAreaView, StyleSheet, Text } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   MainScrollContainer,
   useSignOut,
   useUser,
 } from '@monorepo/expo/betterangels';
-import { ArrowLeftToArcIcon } from '@monorepo/expo/shared/icons';
-import {
-  Button,
-  Input,
-  SearchableDropdown,
-} from '@monorepo/expo/shared/ui-components';
+import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Avatar, H1 } from '@monorepo/expo/shared/ui-components';
+import { useNavigation } from 'expo-router';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { apiUrl } from '../../../config';
 
 export default function TabOneScreen() {
   const { user } = useUser();
   const { signOut } = useSignOut();
   const { control } = useForm();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerContainer}>
+          <Pressable>
+            <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          </Pressable>
+          <Pressable style={{ marginHorizontal: Spacings.md }}>
+            <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          </Pressable>
+          <Pressable>
+            <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          </Pressable>
+        </View>
+      ),
+    });
+  }, [navigation]);
 
   return (
-    <MainScrollContainer>
-      <SafeAreaView style={{ flex: 1, paddingBottom: 70 }}>
-        <Text style={styles.title}>
-          Tab One: user id: {user?.id} username: {user?.username}
-        </Text>
-        <SearchableDropdown
-          extraTitle="Add Team"
-          onExtraPress={() => console.log('adding extra')}
-          setExternalValue={(item) => console.log(item)}
-          label="Label"
-          data={['test', 'test 1', 'second test', 'third']}
-        />
-        <Button
-          icon={<ArrowLeftToArcIcon size="xs" />}
-          size="sm"
-          onPress={() => signOut(apiUrl as string)}
-          variant="negative"
-          title="Sign Out"
-        />
-        <Input label="Test" height={56} name="test" control={control} />
-        <SearchableDropdown
-          extraTitle="Add Team"
-          onExtraPress={() => console.log('adding extra')}
-          setExternalValue={(item) => console.log(item)}
-          label="Label"
-          data={['test', 'test 1', 'second test', 'third']}
-        />
-        <SearchableDropdown
-          extraTitle="Add Team"
-          onExtraPress={() => console.log('adding extra')}
-          setExternalValue={(item) => console.log(item)}
-          label="Label"
-          data={['test', 'test 1', 'second test', 'third']}
-        />
-        <SearchableDropdown
-          extraTitle="Add Team"
-          onExtraPress={() => console.log('adding extra')}
-          setExternalValue={(item) => console.log(item)}
-          label="Label"
-          data={[
-            'test',
-            'test 1',
-            'second test',
-            'third',
-            'test',
-            'test 1',
-            'second test',
-            'third',
-          ]}
-        />
-      </SafeAreaView>
-    </MainScrollContainer>
+    <View style={{ flex: 1 }}>
+      <View style={styles.heading}>
+        <View>
+          <Image
+            style={{ width: 100, height: 19 }}
+            source={require('../assets/images/blackLogo.png')}
+          />
+          <H1 size="2xl">Home</H1>
+        </View>
+        <Avatar firstName="Davit" lastName="Manukyan" size="md" />
+      </View>
+      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+        <View></View>
+      </MainScrollContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: Spacings.md,
+  },
   container: {
-    paddingHorizontal: 20,
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  containerContent: {
+    paddingBottom: 80,
+    paddingTop: 24,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  heading: {
+    paddingHorizontal: Spacings.sm,
+    paddingBottom: Spacings.md,
+    backgroundColor: Colors.WHITE,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });

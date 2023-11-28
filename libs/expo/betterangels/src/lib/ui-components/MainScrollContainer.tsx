@@ -4,8 +4,10 @@ import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
 export default function MainScrollContainer({
   children,
+  bg,
 }: {
   children: ReactNode;
+  bg?: string;
 }) {
   return (
     <KeyboardAvoidingView
@@ -14,7 +16,7 @@ export default function MainScrollContainer({
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1, backgroundColor: Colors.WHITE }}
+        style={{ flex: 1, backgroundColor: bg || Colors.WHITE }}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 80,
