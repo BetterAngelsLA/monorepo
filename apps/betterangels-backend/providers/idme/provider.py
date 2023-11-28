@@ -7,19 +7,6 @@ from allauth.socialaccount.providers.base import ProviderAccount
 from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
 
 
-class Scope(Enum):
-    MILITARY = "military"
-    VETERAN = "veteran"
-    STUDENT = "student"
-    RESIDENT = "resident"
-    GOVERNMENT = "government"
-    TEACHER = "teacher"
-    FIRST_RESPONDER = "first_responder"
-    NURSE = "nurse"
-    DOCTOR = "doctor"
-    NONPROFIT = "nonprofit"
-
-
 class IdmeAccount(ProviderAccount):
     pass
 
@@ -29,8 +16,8 @@ class IdmeProvider(OAuth2Provider):
     name = "id.me"
     account_class = IdmeAccount
 
-    def get_default_scope(self) -> List[Scope]:
-        scope = [Scope.NONPROFIT]
+    def get_default_scope(self) -> List[str]:
+        scope = ["fortified_identity"]
         return scope
 
     def extract_uid(self, data: dict[str, str]) -> str:
@@ -52,4 +39,4 @@ class IdmeProvider(OAuth2Provider):
         return ret
 
 
-providers.registry.register(IdmeProvider)
+provider_classes = [IdmeProvider]
