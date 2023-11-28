@@ -72,6 +72,17 @@
       "options": {
         "lintFilePatterns": ["apps/betterangels-e2e/**/*.{ts,tsx,js,jsx}"]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "/workspace/apps/betterangels-e2e",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.e2e.json"
+          }
+        ]
+      }
     }
   },
   "tags": [],
