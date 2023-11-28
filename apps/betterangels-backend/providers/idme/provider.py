@@ -1,9 +1,13 @@
+from enum import Enum
+from typing import Any, List
+
 from allauth.account.models import EmailAddress
+from allauth.socialaccount import providers
 from allauth.socialaccount.providers.base import ProviderAccount
 from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
 
 
-class Scope(object):
+class Scope(Enum):
     MILITARY = "military"
     VETERAN = "veteran"
     STUDENT = "student"
@@ -17,15 +21,7 @@ class Scope(object):
 
 
 class IdmeAccount(ProviderAccount):
-    def get_profile_url(self):
-        return self.account.extra_data.get("profile_url")
-
-    def get_avatar_url(self):
-        return self.account.extra_data.get("avatar_url")
-
-    def to_str(self):
-        dflt = super(IdmeAccount, self).to_str()
-        return self.account.extra_data.get("name", dflt)
+    pass
 
 
 class IdmeProvider(OAuth2Provider):
@@ -33,14 +29,14 @@ class IdmeProvider(OAuth2Provider):
     name = "id.me"
     account_class = IdmeAccount
 
-    def get_default_scope(self):
+    def get_default_scope(self) -> List[Scope]:
         scope = [Scope.NONPROFIT]
         return scope
 
-    def extract_uid(self, data):
+    def extract_uid(self, data: dict[str, str]) -> str:
         return str(data["id"])
 
-    def extract_common_fields(self, data):
+    def extract_common_fields(self, data: Any) -> dict[str, str]:
         return dict(
             email=data.get("email"),
             first_name=data.get("first_name"),
@@ -48,9 +44,12 @@ class IdmeProvider(OAuth2Provider):
             name=data.get("name"),
         )
 
-    def extract_email_addresses(self, data):
+    def extract_email_addresses(self, data: Any) -> List[EmailAddress]:
         ret = []
         email = data.get("email")
         if email:
             ret.append(EmailAddress(email=email, verified=True, primary=True))
         return ret
+
+
+providers.registry.register(IdmeProvider)
