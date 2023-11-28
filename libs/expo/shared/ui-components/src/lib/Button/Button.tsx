@@ -76,6 +76,7 @@ interface IButtonProps {
   mr?: TSpacing;
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
+  testID?: string;
 }
 
 export function Button(props: IButtonProps) {
@@ -97,9 +98,12 @@ export function Button(props: IButtonProps) {
     ml,
     my,
     mx,
+    testID,
   } = props;
   return (
     <Pressable
+      accessible
+      accessibilityRole="button"
       disabled={disabled}
       style={[
         styles.button,
@@ -123,6 +127,7 @@ export function Button(props: IButtonProps) {
         },
       ]}
       onPress={onPress}
+      testID={testID}
     >
       <View style={styles.wrapper}>
         {icon && icon}

@@ -39,4 +39,24 @@ describe('Button Component', () => {
     fireEvent.press(getByText('Disabled Button'));
     expect(mockOnPress).not.toHaveBeenCalled();
   });
+
+  it('renders correctly with different variants', () => {
+    const variants: Array<
+      'primary' | 'secondary' | 'negative' | 'sky' | 'dark'
+    > = ['primary', 'secondary', 'negative', 'sky', 'dark'];
+    variants.forEach((variant, index) => {
+      const testID = `button-${variant}-${index}`;
+      const { getByTestId } = render(
+        <Button title={variant} variant={variant} size="sm" testID={testID} />
+      );
+      expect(getByTestId(testID)).toBeTruthy();
+    });
+  });
+
+  it('is accessible by role', () => {
+    const { getByRole } = render(
+      <Button title="Accessible Button" variant="primary" size="sm" />
+    );
+    expect(getByRole('button')).toBeTruthy();
+  });
 });
