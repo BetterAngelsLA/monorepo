@@ -17,6 +17,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Alert,
   Avatar,
+  EventCard,
   BodyText,
   Button,
   ClientCard,
@@ -28,6 +29,104 @@ import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+const EVENTS = [
+  {
+    title: 'Event Card somehthng somet dasf',
+    time: '09:00 AM',
+    address: '123 Wilshire Blvd',
+    participants: [
+      {
+        id: '1',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '2',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '3',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '4',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '1',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '2',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '3',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '4',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '1',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '2',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '3',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '4',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+    ],
+  },
+  {
+    title: 'Event Card somehthng somet dasf',
+    time: '09:00 AM',
+    address: '123 Wilshire Blvd',
+    participants: [
+      {
+        id: '1',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+      {
+        id: '2',
+        firstName: 'first',
+        lastName: 'first',
+        image: '',
+      },
+    ],
 const TOOLS = [
   {
     icon: <BurgerSodaIcon size="sm" color={Colors.SECONDARY} />,
@@ -88,6 +187,18 @@ export default function TabOneScreen() {
             actionText="More"
           />
         </View>
+        <ScrollView horizontal>
+          {EVENTS.map((event, idx) => (
+            <EventCard
+              mr="xs"
+              key={idx}
+              title={event.title}
+              time={event.time}
+              address={event.address}
+              participants={event.participants}
+            />
+          ))}
+        </ScrollView>
         <View style={styles.tabsContainer}>
           <View
             style={{

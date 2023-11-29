@@ -1,13 +1,14 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
 import H2 from '../H2';
+import H4 from '../H4';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IAvatarProps {
   /**
    * size:
-   * sm(20) md(40) lg(60)
+   * sm(24) md(40) lg(60)
    */
   size?: 'sm' | 'md' | 'lg';
   firstName: string;
@@ -22,7 +23,7 @@ interface IAvatarProps {
 }
 
 export const SIZE = {
-  sm: 20,
+  sm: 24,
   md: 40,
   lg: 60,
 } as const;
@@ -40,6 +41,23 @@ export function Avatar(props: IAvatarProps) {
     my,
     mx,
   } = props;
+  const initials = firstName[0] + lastName[0];
+
+  const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
+    const textProps = {
+      children: initials,
+    };
+
+    switch (size) {
+      case 'sm':
+        return <H4 {...textProps} />;
+      case 'md':
+      case 'lg':
+        return <H2 {...textProps} />;
+      default:
+        return null;
+    }
+  };
   return (
     <View
       style={{
@@ -70,7 +88,7 @@ export function Avatar(props: IAvatarProps) {
           }}
         />
       ) : (
-        <H2>{firstName[0] + lastName[0]}</H2>
+        getTextComponent(size)
       )}
     </View>
   );
