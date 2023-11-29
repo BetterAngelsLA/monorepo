@@ -1,0 +1,11 @@
+import strawberry_django
+from strawberry import auto
+
+from .models import User
+
+
+@strawberry_django.type(User)
+class UserType:
+    id: auto
+    username: auto
+    email: auto
