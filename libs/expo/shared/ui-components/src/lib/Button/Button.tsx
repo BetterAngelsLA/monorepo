@@ -76,6 +76,7 @@ interface IButtonProps {
   mr?: TSpacing;
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
+  borderColor?: string;
 }
 
 export function Button(props: IButtonProps) {
@@ -97,6 +98,7 @@ export function Button(props: IButtonProps) {
     ml,
     my,
     mx,
+    borderColor,
   } = props;
   return (
     <Pressable
@@ -112,6 +114,8 @@ export function Button(props: IButtonProps) {
             : VARIANTS[variant].bg,
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
+            : borderColor
+            ? borderColor
             : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],

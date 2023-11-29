@@ -101,6 +101,7 @@ export { default as ToothbrushIcon } from './components/ToothbrushIcon';
 export { default as UserDoctorHairIcon } from './components/UserDoctorHairIcon';
 export { default as UserIcon } from './components/UserIcon';
 export { default as VideoIcon } from './components/VideoIcon';
+export { default as WalkingIcon } from './components/WalkingIcon';
 export { default as WarehouseIcon } from './components/WarehouseIcon';
 export { default as WarningIcon } from './components/WarningIcon';
 export { default as Windowsicon } from './components/WindowsIcon';

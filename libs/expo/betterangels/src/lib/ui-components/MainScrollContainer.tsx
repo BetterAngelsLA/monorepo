@@ -6,10 +6,12 @@ export default function MainScrollContainer({
   children,
   bg,
   pt = 'md',
+  px = 'sm',
 }: {
   children: ReactNode;
   bg?: string;
   pt?: 'sm' | 'md';
+  px?: 'sm' | 'md' | 0;
 }) {
   return (
     <KeyboardAvoidingView
@@ -20,7 +22,7 @@ export default function MainScrollContainer({
         keyboardShouldPersistTaps="handled"
         style={{ flex: 1, backgroundColor: bg || Colors.WHITE }}
         contentContainerStyle={{
-          paddingHorizontal: 16,
+          paddingHorizontal: px && Spacings[px],
           paddingBottom: 80,
           paddingTop: Spacings[pt],
         }}
