@@ -19,4 +19,4 @@ export const ICON_SIZE = {
     w: 48,
     h: 48,
   },
-};
+} as const;
