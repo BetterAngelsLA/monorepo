@@ -9,7 +9,7 @@ import IconButton from '../IconButton';
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IClientCardProps {
-  image: string;
+  imageUrl: string;
   firstName: string;
   lastName: string;
   address: string;
@@ -25,7 +25,7 @@ interface IClientCardProps {
 
 export function ClientCard(props: IClientCardProps) {
   const {
-    image,
+    imageUrl,
     firstName,
     lastName,
     address,
@@ -54,7 +54,7 @@ export function ClientCard(props: IClientCardProps) {
     >
       <View style={{ alignItems: 'center', paddingHorizontal: Spacings.xs }}>
         <Avatar
-          imageUrl={image}
+          imageUrl={imageUrl}
           mb="xs"
           firstName={firstName}
           lastName={lastName}

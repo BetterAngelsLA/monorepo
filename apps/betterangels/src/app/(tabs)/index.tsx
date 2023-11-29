@@ -149,7 +149,7 @@ export default function TabOneScreen() {
           </View>
           <ClientCard
             mb="xs"
-            image=""
+            imageUrl=""
             address="123 sdaf dasfda"
             firstName="f"
             lastName="l"
