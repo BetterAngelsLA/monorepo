@@ -1,13 +1,15 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
 export default function MainScrollContainer({
   children,
   bg,
+  pt = 'md',
 }: {
   children: ReactNode;
   bg?: string;
+  pt?: 'sm' | 'md';
 }) {
   return (
     <KeyboardAvoidingView
@@ -20,7 +22,7 @@ export default function MainScrollContainer({
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 80,
-          paddingTop: 24,
+          paddingTop: Spacings[pt],
         }}
       >
         {children}

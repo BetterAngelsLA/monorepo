@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, H1 } from '@monorepo/expo/shared/ui-components';
+import { Alert, Avatar, H1 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -48,8 +48,15 @@ export default function TabOneScreen() {
         </View>
         <Avatar firstName="Davit" lastName="Manukyan" size="md" />
       </View>
-      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-        <View></View>
+      <MainScrollContainer pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+        <View>
+          <Alert
+            text="4 shelter referrals are pending for over 14 days."
+            variant="warning"
+            onActionPress={() => console.log('press')}
+            actionText="More"
+          />
+        </View>
       </MainScrollContainer>
     </View>
   );
