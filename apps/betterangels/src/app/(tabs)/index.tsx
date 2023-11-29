@@ -5,9 +5,14 @@ import {
   useSignOut,
   useUser,
 } from '@monorepo/expo/betterangels';
-import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import {
+  BarsIcon,
+  BellIcon,
+  ChevronLeftIcon,
+  SearchIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Alert, Avatar, H1 } from '@monorepo/expo/shared/ui-components';
+import { Alert, Avatar, Button, H1 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -57,6 +62,19 @@ export default function TabOneScreen() {
             actionText="More"
           />
         </View>
+        <Button
+          borderColor={Colors.PRIMARY}
+          icon={
+            <ChevronLeftIcon
+              size="sm"
+              rotate="-90deg"
+              color={Colors.PRIMARY_EXTRA_DARK}
+            />
+          }
+          size="full"
+          variant="secondary"
+          title="More List"
+        />
       </MainScrollContainer>
     </View>
   );
