@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   MainScrollContainer,
@@ -8,8 +8,10 @@ import {
 import {
   BarsIcon,
   BellIcon,
+  BurgerSodaIcon,
   ChevronLeftIcon,
   SearchIcon,
+  WalkingIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -18,11 +20,25 @@ import {
   BodyText,
   Button,
   H1,
+  H2,
   H4,
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+const TOOLS = [
+  {
+    icon: <BurgerSodaIcon size="sm" color={Colors.SECONDARY} />,
+    title: 'Services',
+    link: '',
+  },
+  {
+    icon: <WalkingIcon size="sm" color={Colors.SECONDARY} />,
+    title: 'Activity',
+    link: '',
+  },
+];
 
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
@@ -95,19 +111,44 @@ export default function TabOneScreen() {
           </BodyText>
         </View>
         <View style={styles.tab}></View>
-        <Button
-          borderColor={Colors.PRIMARY}
-          icon={
-            <ChevronLeftIcon
-              size="sm"
-              rotate="-90deg"
-              color={Colors.PRIMARY_EXTRA_DARK}
-            />
-          }
-          size="full"
-          variant="secondary"
-          title="More List"
-        />
+        <View style={{ paddingHorizontal: Spacings.sm }}>
+          <H2 mb="sm">Useful Tools</H2>
+          <ScrollView
+            contentContainerStyle={{ marginBottom: Spacings.md }}
+            horizontal
+          >
+            {TOOLS.map((tool, idx) => (
+              <Pressable style={styles.tool} key={idx}>
+                <View
+                  style={{
+                    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+                    height: 30,
+                    width: 30,
+                    borderRadius: 100,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {tool.icon}
+                </View>
+                <BodyText mt="xs">{tool.title}</BodyText>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Button
+            borderColor={Colors.PRIMARY}
+            icon={
+              <ChevronLeftIcon
+                size="sm"
+                rotate="-90deg"
+                color={Colors.PRIMARY_EXTRA_DARK}
+              />
+            }
+            size="full"
+            variant="secondary"
+            title="More List"
+          />
+        </View>
       </MainScrollContainer>
     </View>
   );
@@ -158,5 +199,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     marginBottom: Spacings.xl,
     paddingHorizontal: Spacings.sm,
+  },
+  tool: {
+    marginRight: Spacings.xs,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    borderRadius: 3,
+    backgroundColor: Colors.WHITE,
+    height: 97,
+    width: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
