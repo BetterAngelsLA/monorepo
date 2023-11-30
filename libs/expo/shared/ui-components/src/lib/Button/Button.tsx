@@ -78,6 +78,7 @@ interface IButtonProps {
   fontSize?: 'sm' | 'md';
   borderColor?: string;
   accLabel?: string;
+  accHint: string;
   testID?: string;
 }
 
@@ -103,11 +104,13 @@ export function Button(props: IButtonProps) {
     borderColor,
     accLabel,
     testID,
+    accHint,
   } = props;
   return (
     <Pressable
       accessible
       accessibilityLabel={accLabel}
+      accessibilityHint={accHint}
       accessibilityRole="button"
       disabled={disabled}
       style={[

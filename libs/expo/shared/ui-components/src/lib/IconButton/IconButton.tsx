@@ -78,6 +78,7 @@ interface IIconButtonProps {
   width?: 'xs' | 'md' | 'full';
   height?: 'xs' | 'sm' | 'md';
   accLabel: string;
+  accHint: string;
 }
 
 export function IconButton(props: IIconButtonProps) {
@@ -97,12 +98,14 @@ export function IconButton(props: IIconButtonProps) {
     width = 'md',
     height = 'md',
     accLabel,
+    accHint,
   } = props;
   return (
     <Pressable
       accessible
       accessibilityLabel={accLabel}
       accessibilityRole="button"
+      accessibilityHint={accHint}
       disabled={disabled}
       style={[
         styles.button,

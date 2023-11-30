@@ -19,6 +19,7 @@ interface IAvatarProps {
   mr?: TSpacing;
   alt?: string;
   accLabel: string;
+  accHint: string;
 }
 
 export const SIZE = {
@@ -28,7 +29,18 @@ export const SIZE = {
 } as const;
 
 export function Avatar(props: IAvatarProps) {
-  const { size = 'md', imageUrl, mb, mt, mr, ml, my, mx, accLabel } = props;
+  const {
+    size = 'md',
+    imageUrl,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    accLabel,
+    accHint,
+  } = props;
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
     switch (size) {
@@ -74,6 +86,8 @@ export function Avatar(props: IAvatarProps) {
             accessible
             accessibilityLabel={accLabel}
             accessibilityRole="image"
+            accessibilityHint={accHint}
+            accessibilityIgnoresInvertColors
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,

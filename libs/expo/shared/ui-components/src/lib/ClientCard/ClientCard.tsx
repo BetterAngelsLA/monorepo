@@ -54,6 +54,7 @@ export function ClientCard(props: IClientCardProps) {
     >
       <View style={{ alignItems: 'center', paddingHorizontal: Spacings.xs }}>
         <Avatar
+          accHint={`shows avatar of ${firstName} ${lastName} if available`}
           accLabel={`Avatar of ${firstName} ${lastName} client`}
           imageUrl={imageUrl}
           mb="xs"
@@ -73,6 +74,7 @@ export function ClientCard(props: IClientCardProps) {
           <BodyText size="sm"> {address}</BodyText>
         </View>
         <IconButton
+          accHint={`goes to create a note page for  ${firstName} ${lastName}`}
           accLabel={`Create a note for ${firstName} ${lastName}`}
           onPress={onPress}
           mb="xs"

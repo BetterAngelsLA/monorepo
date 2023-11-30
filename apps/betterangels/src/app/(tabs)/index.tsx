@@ -186,7 +186,7 @@ export default function TabOneScreen() {
           />
           <H1 size="2xl">Home</H1>
         </View>
-        <Avatar accLabel="My Avatar" size="md" />
+        <Avatar accHint="my avatar" accLabel="My Avatar" size="md" />
       </View>
       <MainScrollContainer px={0} pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View style={{ paddingHorizontal: Spacings.sm }}>
@@ -306,6 +306,7 @@ export default function TabOneScreen() {
             progress="10%"
           />
           <Button
+            accHint="loads more active clients"
             borderColor={Colors.PRIMARY}
             icon={
               <ChevronLeftIcon
