@@ -1,7 +1,9 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
 import H2 from '../H2';
 import H4 from '../H4';
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IAvatarProps {
   /**
@@ -12,6 +14,12 @@ interface IAvatarProps {
   firstName: string;
   lastName: string;
   imageUrl?: string;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }
 
 export const SIZE = {
@@ -21,7 +29,18 @@ export const SIZE = {
 } as const;
 
 export function Avatar(props: IAvatarProps) {
-  const { size = 'md', firstName, lastName, imageUrl } = props;
+  const {
+    size = 'md',
+    firstName,
+    lastName,
+    imageUrl,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+  } = props;
   const initials = firstName[0] + lastName[0];
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
@@ -47,7 +66,13 @@ export function Avatar(props: IAvatarProps) {
         height: SIZE[size],
         width: SIZE[size],
         borderRadius: 100,
-        backgroundColor: Colors.PRIMARY_LIGHT,
+        backgroundColor: Colors.NEUTRAL_LIGHT,
+        marginBottom: mb && Spacings[mb],
+        marginTop: mt && Spacings[mt],
+        marginLeft: ml && Spacings[ml],
+        marginRight: mr && Spacings[mr],
+        marginHorizontal: mx && Spacings[mx],
+        marginVertical: my && Spacings[my],
       }}
     >
       {imageUrl ? (

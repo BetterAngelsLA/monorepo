@@ -20,6 +20,7 @@ import {
   EventCard,
   BodyText,
   Button,
+  ClientCard,
   H1,
   H2,
   H4,
@@ -246,6 +247,25 @@ export default function TabOneScreen() {
               </Pressable>
             ))}
           </ScrollView>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: Spacings.sm,
+            }}
+          >
+            <H2>Active Clients List</H2>
+            <BodyText>Full List</BodyText>
+          </View>
+          <ClientCard
+            mb="xs"
+            imageUrl=""
+            address="123 sdaf dasfda"
+            firstName="f"
+            lastName="l"
+            progress="10%"
+          />
           <Button
             borderColor={Colors.PRIMARY}
             icon={
