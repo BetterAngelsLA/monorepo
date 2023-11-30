@@ -7,7 +7,6 @@ import Logo from './assets/images/logo.svg';
 
 export default function Auth() {
   const router = useRouter();
-
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <SafeAreaView
