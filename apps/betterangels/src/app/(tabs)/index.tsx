@@ -286,7 +286,6 @@ export default function TabOneScreen() {
             progress="10%"
           />
           <Button
-            accLabel="Download more active clients button"
             borderColor={Colors.PRIMARY}
             icon={
               <ChevronLeftIcon

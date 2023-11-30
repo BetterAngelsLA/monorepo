@@ -73,6 +73,7 @@ export function Avatar(props: IAvatarProps) {
           <Image
             accessible
             accessibilityLabel={accLabel}
+            accessibilityRole="image"
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,

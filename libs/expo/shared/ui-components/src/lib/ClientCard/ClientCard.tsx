@@ -73,7 +73,7 @@ export function ClientCard(props: IClientCardProps) {
           <BodyText size="sm"> {address}</BodyText>
         </View>
         <IconButton
-          accLabel={`Create a note for ${firstName} ${lastName} button`}
+          accLabel={`Create a note for ${firstName} ${lastName}`}
           onPress={onPress}
           mb="xs"
           variant="secondary"

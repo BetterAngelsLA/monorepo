@@ -93,7 +93,7 @@ export function EventCard(props: IEventCardProps) {
           )}
         </View>
         <IconButton
-          accLabel={`${title} event participants details button`}
+          accLabel={`${title} event participants details`}
           style={{ position: 'relative', left: 10 }}
           width="xs"
           height="xs"

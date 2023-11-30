@@ -112,7 +112,7 @@ function RootLayoutNav() {
             headerBackVisible: false,
             headerLeft: () => (
               <IconButton
-                accLabel="Back to main auth screen button"
+                accLabel="Back to main auth screen"
                 style={{ marginLeft: -17 }}
                 variant="transparent"
                 onPress={() => router.back()}
