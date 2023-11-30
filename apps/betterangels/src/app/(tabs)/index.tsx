@@ -1,10 +1,6 @@
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import {
-  MainScrollContainer,
-  useSignOut,
-  useUser,
-} from '@monorepo/expo/betterangels';
+import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import {
   BarsIcon,
   BellIcon,
@@ -27,7 +23,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
 
 const EVENTS = [
   {
@@ -144,9 +139,6 @@ const TOOLS = [
 
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
-  const { user } = useUser();
-  const { signOut } = useSignOut();
-  const { control } = useForm();
   const navigation = useNavigation();
 
   useEffect(() => {
