@@ -1,6 +1,5 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Redirect, Tabs } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Redirect, Tabs } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { useUser } from '@monorepo/expo/betterangels';
 import {
@@ -16,7 +15,7 @@ import {
   SolidUsersIcon,
   UsersIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -69,23 +68,6 @@ export default function TabLayout() {
                 Home
               </BodyText>
             </View>
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color="black"
-                    style={{
-                      marginRight: Spacings.sm,
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  />
-                )}
-              </Pressable>
-            </Link>
           ),
         }}
       />

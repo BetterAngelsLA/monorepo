@@ -49,13 +49,29 @@ export default function TeamsScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerContainer}>
-          <Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="focuses on input to search"
+            accessible
+            accessibilityLabel="Navbar Search Icon"
+          >
             <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable style={{ marginHorizontal: Spacings.md }}>
+          <Pressable
+            accessible
+            accessibilityRole="button"
+            accessibilityHint="opens notifications screen"
+            accessibilityLabel="Navbar Notifications Icon"
+            style={{ marginHorizontal: Spacings.md }}
+          >
             <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessible
+            accessibilityHint="opens menu popup"
+            accessibilityLabel="Navbar Menu Icon"
+          >
             <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
         </View>
@@ -81,6 +97,7 @@ export default function TeamsScreen() {
       {teams && teams.length < 1 ? (
         <View style={{ alignItems: 'center' }}>
           <Image
+            accessibilityIgnoresInvertColors={true}
             height={200}
             width={200}
             source={require('../assets/images/no-teams.png')}
@@ -92,6 +109,8 @@ export default function TeamsScreen() {
       ) : (
         teams?.map((team, idx) => (
           <TouchableOpacity
+            accessible
+            accessibilityHint={`opens selected ${team.title} single page`}
             onPress={() => router.push(`/team/${team.id}`)}
             style={{ padding: Spacings.sm, marginTop: Spacings.md }}
             key={idx}

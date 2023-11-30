@@ -147,6 +147,7 @@ export default function TabOneScreen() {
         <View style={styles.headerContainer}>
           <Pressable
             accessibilityRole="button"
+            accessibilityHint="focuses on input to search"
             accessible
             accessibilityLabel="Navbar Search Icon"
           >
@@ -155,6 +156,7 @@ export default function TabOneScreen() {
           <Pressable
             accessible
             accessibilityRole="button"
+            accessibilityHint="opens notifications screen"
             accessibilityLabel="Navbar Notifications Icon"
             style={{ marginHorizontal: Spacings.md }}
           >
@@ -163,6 +165,7 @@ export default function TabOneScreen() {
           <Pressable
             accessibilityRole="button"
             accessible
+            accessibilityHint="opens menu popup"
             accessibilityLabel="Navbar Menu Icon"
           >
             <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
@@ -179,6 +182,7 @@ export default function TabOneScreen() {
           <Image
             style={{ width: 100, height: 19 }}
             source={require('../assets/images/blackLogo.png')}
+            accessibilityIgnoresInvertColors={true}
           />
           <H1 size="2xl">Home</H1>
         </View>
@@ -201,13 +205,23 @@ export default function TabOneScreen() {
             }}
           >
             <View style={{ position: 'relative', paddingBottom: Spacings.sm }}>
-              <Pressable onPress={() => toggle(1)}>
+              <Pressable
+                accessible
+                accessibilityHint="switches to today tab"
+                accessibilityRole="button"
+                onPress={() => toggle(1)}
+              >
                 <H4 mx="sm">Today</H4>
               </Pressable>
               {tab === 1 && <View style={styles.line} />}
             </View>
             <View style={{ position: 'relative', paddingBottom: Spacings.sm }}>
-              <Pressable onPress={() => toggle(2)}>
+              <Pressable
+                accessible
+                accessibilityHint="switches to daily tasks tab"
+                accessibilityRole="button"
+                onPress={() => toggle(2)}
+              >
                 <H4 mx="sm">Daily Tasks</H4>
               </Pressable>
               {tab === 2 && <View style={styles.line} />}
@@ -242,7 +256,13 @@ export default function TabOneScreen() {
             horizontal
           >
             {TOOLS.map((tool, idx) => (
-              <Pressable style={styles.tool} key={idx}>
+              <Pressable
+                accessible
+                accessibilityRole="button"
+                accessibilityHint={`goes to ${tool.title} screen`}
+                style={styles.tool}
+                key={idx}
+              >
                 <View
                   style={{
                     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
@@ -270,7 +290,7 @@ export default function TabOneScreen() {
             <H2>Active Clients List</H2>
             <Link
               accessible
-              accessibilityLabel="Go to active clients full list"
+              accessibilityHint="goes to active clients full list"
               accessibilityRole="button"
               href="#"
             >
