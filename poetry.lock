@@ -1304,7 +1304,7 @@ files = [
 [package.dependencies]
 django-stubs = ">=4.2.5"
 mypy = [
-    {version = ">=0.991"},
+    {version = ">=0.991", optional = true, markers = "extra != \"compatible-mypy\""},
     {version = ">=1.6.0,<1.7.0", optional = true, markers = "extra == \"compatible-mypy\""},
 ]
 requests = ">=2.0.0"
@@ -1873,6 +1873,24 @@ files = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
+
+[[package]]
+name = "model-bakery"
+version = "1.17.0"
+description = "Smart object creation facility for Django."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "model_bakery-1.17.0-py3-none-any.whl", hash = "sha256:1d26f1a7043c46e6729145b964a7740bf8f6dddac16510fd18323a1492fba757"},
+    {file = "model_bakery-1.17.0.tar.gz", hash = "sha256:fe808132cd966164600f0450cc05b3cfa50c6c062e00f739a861c5a4b9f236ca"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+
+[package.extras]
+docs = ["sphinx", "sphinx-rtd-theme"]
+test = ["black", "coverage", "mypy", "pillow", "pytest", "pytest-django", "ruff"]
 
 [[package]]
 name = "multidict"
@@ -3228,4 +3246,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "c0b8c6f03128fd0cdf753f18c82f07e13adc9df18b0f994c714465b4bf9bba53"
+content-hash = "f571329b3091275371bc1b10ed7699fee67454e63b9ba1eb3274497202eaa8a9"
