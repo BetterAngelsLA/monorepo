@@ -4,8 +4,8 @@ from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
 
 
-class GraphQLTestCase(GraphQLTestCaseMixin, TestCase):
-    def test_anonymous_user(self) -> None:
+class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
+    def test_anonymous_user_query(self) -> None:
         query = """
         query {
             currentUser {
@@ -18,7 +18,7 @@ class GraphQLTestCase(GraphQLTestCaseMixin, TestCase):
         self.assertIsNone(response.get("errors"))
         self.assertIsNone(response["data"]["currentUser"])
 
-    def test_logged_in_user(self) -> None:
+    def test_logged_in_user_query(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
 
