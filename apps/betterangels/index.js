@@ -1,5 +1,7 @@
+import { ApolloProvider } from '@apollo/client';
 import { registerRootComponent } from 'expo';
 import { ExpoRoot } from 'expo-router';
+import client from './apollo'; // Adjust the path to your Apollo client setup
 
 /* polyfills */
 //** URL polyfill */
@@ -8,7 +10,9 @@ import 'react-native-url-polyfill/auto';
 // Must be exported or Fast Refresh won't update the context
 export function App() {
   const ctx = require.context('./src/app');
-  return <ExpoRoot context={ctx} />;
+  <ApolloProvider client={client}>
+    return <ExpoRoot context={ctx} />;
+  </ApolloProvider>;
 }
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
