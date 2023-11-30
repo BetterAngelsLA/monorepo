@@ -1,9 +1,10 @@
 from accounts.models import User
-from django.test import TestCase
+from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
 
 
+@ignore_warnings(category=UserWarning)
 class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
     def test_anonymous_user_query(self) -> None:
         query = """
