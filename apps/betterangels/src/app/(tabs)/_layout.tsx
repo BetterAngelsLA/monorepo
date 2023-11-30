@@ -6,11 +6,15 @@ import { useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
   HouseIcon,
+  MapIcon,
   PlusIcon,
   SitemapIcon,
   SolidCalendarIcon,
   SolidHouseIcon,
+  SolidMapIcon,
   SolidSitemapIcon,
+  SolidUsersIcon,
+  UsersIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
@@ -88,6 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="appointment"
         options={{
+          href: null,
           title: 'Appointment',
           tabBarIcon: ({ focused, color }) => (
             <View style={{ alignItems: 'center' }}>
@@ -98,6 +103,24 @@ export default function TabLayout() {
               )}
               <BodyText color={color} size="xs">
                 Appointment
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: 'Clients',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidUsersIcon color={color} />
+              ) : (
+                <UsersIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Clients
               </BodyText>
             </View>
           ),
@@ -115,16 +138,34 @@ export default function TabLayout() {
           tabBarIcon: () => (
             <View style={styles.wrapper}>
               <View style={styles.middleButton}>
-                <PlusIcon />
+                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
               </View>
             </View>
           ),
         }}
       />
-
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidMapIcon color={color} />
+              ) : (
+                <MapIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Map
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
       <Tabs.Screen
         name="teams"
         options={{
+          href: null,
           title: '',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
@@ -141,9 +182,28 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'Calendar',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidCalendarIcon color={color} />
+              ) : (
+                <CalendarIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Calendar
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
+          href: null,
           tabBarIcon: ({ color }) => (
             <View style={{ alignItems: 'center' }}>
               <View style={styles.profileContainer}>

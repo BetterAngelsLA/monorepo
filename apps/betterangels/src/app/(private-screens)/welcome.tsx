@@ -41,6 +41,7 @@ export default function Welcome() {
       <Button
         // Temporarily reroute to the screen page with username and logout so that current user can be verified
         // and the logout functionality can be tested.
+        accLabel="Close welcome screen button"
         onPress={() => router.replace('/')}
         mb="xl"
         size="full"

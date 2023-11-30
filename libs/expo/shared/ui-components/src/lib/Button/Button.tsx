@@ -77,7 +77,7 @@ interface IButtonProps {
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
-  accLabel: string;
+  accLabel?: string;
   testID?: string;
 }
 
