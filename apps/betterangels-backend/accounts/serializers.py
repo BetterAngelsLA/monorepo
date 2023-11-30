@@ -28,12 +28,6 @@ except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "username", "email")
-
-
 class MagicLinkSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
