@@ -1,9 +1,14 @@
-import { CalendarIcon, LocationDotIcon } from '@monorepo/expo/shared/icons';
+import {
+  CalendarIcon,
+  LocationDotIcon,
+  MoreIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import BodyText from '../BodyText';
 import H4 from '../H4';
+import IconButton from '../IconButton';
 
 // TODO: User type should be actual user type
 type User = {
@@ -31,8 +36,8 @@ interface IEventCardProps {
 export function EventCard(props: IEventCardProps) {
   const { time, address, participants, title, mb, mt, mr, ml, my, mx } = props;
 
-  const maxVisibleAvatars = 9;
-  const additionalParticipants = participants.length > maxVisibleAvatars + 1;
+  const maxVisibleAvatars = 8;
+  const additionalParticipants = participants.length > maxVisibleAvatars;
   return (
     <View
       style={[
@@ -58,23 +63,44 @@ export function EventCard(props: IEventCardProps) {
         <LocationDotIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
         <BodyText> {address}</BodyText>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-        {participants.slice(0, maxVisibleAvatars).map((participant, idx) => (
-          <View
-            key={idx}
-            style={{
-              marginLeft: idx > 0 ? -8 : 0,
-            }}
-          >
-            <Avatar
-              size="sm"
-              firstName={participant.firstName}
-              lastName={participant.lastName}
-              imageUrl={participant.image}
-            />
-          </View>
-        ))}
-        {additionalParticipants && <BodyText size="sm"> ...</BodyText>}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+          {participants.slice(0, maxVisibleAvatars).map((participant, idx) => (
+            <View
+              key={idx}
+              style={{
+                marginLeft: idx > 0 ? -8 : 0,
+              }}
+            >
+              <Avatar
+                accLabel={`${participant.firstName} ${participant.lastName} avatar`}
+                size="sm"
+                imageUrl={participant.image}
+              />
+            </View>
+          ))}
+          {additionalParticipants && (
+            <BodyText size="sm">
+              {' '}
+              + {participants.length - maxVisibleAvatars}
+            </BodyText>
+          )}
+        </View>
+        <IconButton
+          accLabel={`${title} event participants details button`}
+          style={{ position: 'relative', left: 10 }}
+          width="xs"
+          height="xs"
+          variant="transparent"
+        >
+          <MoreIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+        </IconButton>
       </View>
     </View>
   );

@@ -79,6 +79,7 @@ export { default as LocationDotIcon } from './components/LocationDotIcon';
 export { default as MagnifyingGlassIcon } from './components/MagnifyingGlassIcon';
 export { default as MapIcon } from './components/MapIcon';
 export { default as MicrophoneIcon } from './components/MicrophoneIcon';
+export { default as MoreIcon } from './components/MoreIcon';
 export { default as NoteIcon } from './components/NoteIcon';
 export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';

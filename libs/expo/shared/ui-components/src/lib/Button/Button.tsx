@@ -77,6 +77,7 @@ interface IButtonProps {
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
+  accLabel: string;
 }
 
 export function Button(props: IButtonProps) {
@@ -99,9 +100,12 @@ export function Button(props: IButtonProps) {
     my,
     mx,
     borderColor,
+    accLabel,
   } = props;
   return (
     <Pressable
+      accessible
+      accessibilityLabel={accLabel}
       disabled={disabled}
       style={[
         styles.button,

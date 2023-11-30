@@ -17,15 +17,15 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Alert,
   Avatar,
-  EventCard,
   BodyText,
   Button,
   ClientCard,
+  EventCard,
   H1,
   H2,
   H4,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from 'expo-router';
+import { Link, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -127,6 +127,8 @@ const EVENTS = [
         image: '',
       },
     ],
+  },
+];
 const TOOLS = [
   {
     icon: <BurgerSodaIcon size="sm" color={Colors.SECONDARY} />,
@@ -151,13 +153,17 @@ export default function TabOneScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerContainer}>
-          <Pressable>
+          <Pressable accessible accessibilityLabel="Navbar Search Icon">
             <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable style={{ marginHorizontal: Spacings.md }}>
+          <Pressable
+            accessible
+            accessibilityLabel="Navbar Notifications Icon"
+            style={{ marginHorizontal: Spacings.md }}
+          >
             <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable>
+          <Pressable accessible accessibilityLabel="Navbar Menu Icon">
             <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
         </View>
@@ -175,7 +181,7 @@ export default function TabOneScreen() {
           />
           <H1 size="2xl">Home</H1>
         </View>
-        <Avatar firstName="Davit" lastName="Manukyan" size="md" />
+        <Avatar accLabel="My Avatar" size="md" />
       </View>
       <MainScrollContainer px={0} pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View style={{ paddingHorizontal: Spacings.sm }}>
@@ -187,18 +193,6 @@ export default function TabOneScreen() {
             actionText="More"
           />
         </View>
-        <ScrollView horizontal>
-          {EVENTS.map((event, idx) => (
-            <EventCard
-              mr="xs"
-              key={idx}
-              title={event.title}
-              time={event.time}
-              address={event.address}
-              participants={event.participants}
-            />
-          ))}
-        </ScrollView>
         <View style={styles.tabsContainer}>
           <View
             style={{
@@ -222,7 +216,24 @@ export default function TabOneScreen() {
             Calendar
           </BodyText>
         </View>
-        <View style={styles.tab}></View>
+        <View style={styles.tab}>
+          {tab === 1 ? (
+            <ScrollView horizontal>
+              {EVENTS.map((event, idx) => (
+                <EventCard
+                  mr="xs"
+                  key={idx}
+                  title={event.title}
+                  time={event.time}
+                  address={event.address}
+                  participants={event.participants}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <></>
+          )}
+        </View>
         <View style={{ paddingHorizontal: Spacings.sm }}>
           <H2 mb="sm">Useful Tools</H2>
           <ScrollView
@@ -256,10 +267,16 @@ export default function TabOneScreen() {
             }}
           >
             <H2>Active Clients List</H2>
-            <BodyText>Full List</BodyText>
+            <Link
+              accessible
+              accessibilityLabel="Go to active clients full list"
+              href="#"
+            >
+              <BodyText>Full List</BodyText>
+            </Link>
           </View>
           <ClientCard
-            mb="xs"
+            mb="sm"
             imageUrl=""
             address="123 sdaf dasfda"
             firstName="f"
@@ -267,6 +284,7 @@ export default function TabOneScreen() {
             progress="10%"
           />
           <Button
+            accLabel="Download more active clients button"
             borderColor={Colors.PRIMARY}
             icon={
               <ChevronLeftIcon

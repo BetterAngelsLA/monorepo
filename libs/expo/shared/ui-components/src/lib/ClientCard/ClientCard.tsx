@@ -54,10 +54,9 @@ export function ClientCard(props: IClientCardProps) {
     >
       <View style={{ alignItems: 'center', paddingHorizontal: Spacings.xs }}>
         <Avatar
+          accLabel={`Avatar of ${firstName} ${lastName} client`}
           imageUrl={imageUrl}
           mb="xs"
-          firstName={firstName}
-          lastName={lastName}
           size="lg"
         />
         <H4>
@@ -74,6 +73,7 @@ export function ClientCard(props: IClientCardProps) {
           <BodyText size="sm"> {address}</BodyText>
         </View>
         <IconButton
+          accLabel={`Create a note for ${firstName} ${lastName} button`}
           onPress={onPress}
           mb="xs"
           variant="secondary"

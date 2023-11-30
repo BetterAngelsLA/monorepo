@@ -1,7 +1,6 @@
+import { UserIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
-import H2 from '../H2';
-import H4 from '../H4';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -11,8 +10,6 @@ interface IAvatarProps {
    * sm(24) md(40) lg(60)
    */
   size?: 'sm' | 'md' | 'lg';
-  firstName: string;
-  lastName: string;
   imageUrl?: string;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -20,6 +17,8 @@ interface IAvatarProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  alt?: string;
+  accLabel: string;
 }
 
 export const SIZE = {
@@ -29,31 +28,15 @@ export const SIZE = {
 } as const;
 
 export function Avatar(props: IAvatarProps) {
-  const {
-    size = 'md',
-    firstName,
-    lastName,
-    imageUrl,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
-  } = props;
-  const initials = firstName[0] + lastName[0];
+  const { size = 'md', imageUrl, mb, mt, mr, ml, my, mx, accLabel } = props;
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
-    const textProps = {
-      children: initials,
-    };
-
     switch (size) {
       case 'sm':
-        return <H4 {...textProps} />;
+        return <UserIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
       case 'md':
       case 'lg':
-        return <H2 {...textProps} />;
+        return <UserIcon color={Colors.PRIMARY_EXTRA_DARK} />;
       default:
         return null;
     }
@@ -61,8 +44,6 @@ export function Avatar(props: IAvatarProps) {
   return (
     <View
       style={{
-        alignItems: 'center',
-        justifyContent: 'center',
         height: SIZE[size],
         width: SIZE[size],
         borderRadius: 100,
@@ -73,23 +54,39 @@ export function Avatar(props: IAvatarProps) {
         marginRight: mr && Spacings[mr],
         marginHorizontal: mx && Spacings[mx],
         marginVertical: my && Spacings[my],
+        borderWidth: size === 'sm' ? 1 : 0,
+        borderColor: Colors.PRIMARY_EXTRA_DARK,
       }}
     >
-      {imageUrl ? (
-        <Image
-          style={{
-            height: SIZE[size],
-            width: SIZE[size],
-            borderRadius: 100,
-            resizeMode: 'cover',
-          }}
-          source={{
-            uri: imageUrl,
-          }}
-        />
-      ) : (
-        getTextComponent(size)
-      )}
+      <View
+        style={{
+          borderWidth: size === 'sm' ? 1 : 0,
+          borderColor: Colors.WHITE,
+          borderRadius: 100,
+          height: '100%',
+          width: '100%',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {imageUrl ? (
+          <Image
+            accessible
+            accessibilityLabel={accLabel}
+            style={{
+              height: SIZE[size] - 1,
+              width: SIZE[size] - 1,
+              borderRadius: 100,
+              resizeMode: 'cover',
+            }}
+            source={{
+              uri: imageUrl,
+            }}
+          />
+        ) : (
+          getTextComponent(size)
+        )}
+      </View>
     </View>
   );
 }

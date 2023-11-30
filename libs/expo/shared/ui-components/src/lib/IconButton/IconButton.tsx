@@ -45,11 +45,13 @@ const VARIANTS: TVariants = {
 };
 
 const Height = {
+  xs: 20,
   sm: 32,
   md: 40,
 } as const;
 
 const Width = {
+  xs: 20,
   md: 40,
   full: '100%',
 } as const;
@@ -73,8 +75,9 @@ interface IIconButtonProps {
   ml?: TSpacing;
   mr?: TSpacing;
   borderColor?: string;
-  width?: 'md' | 'full';
-  height?: 'sm' | 'md';
+  width?: 'xs' | 'md' | 'full';
+  height?: 'xs' | 'sm' | 'md';
+  accLabel: string;
 }
 
 export function IconButton(props: IIconButtonProps) {
@@ -93,9 +96,12 @@ export function IconButton(props: IIconButtonProps) {
     borderColor,
     width = 'md',
     height = 'md',
+    accLabel,
   } = props;
   return (
     <Pressable
+      accessible
+      accessibilityLabel={accLabel}
       disabled={disabled}
       style={[
         styles.button,
