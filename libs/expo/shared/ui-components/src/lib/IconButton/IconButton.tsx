@@ -102,6 +102,7 @@ export function IconButton(props: IIconButtonProps) {
     <Pressable
       accessible
       accessibilityLabel={accLabel}
+      accessibilityRole="button"
       disabled={disabled}
       style={[
         styles.button,

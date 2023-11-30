@@ -153,17 +153,26 @@ export default function TabOneScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerContainer}>
-          <Pressable accessible accessibilityLabel="Navbar Search Icon">
+          <Pressable
+            accessibilityRole="button"
+            accessible
+            accessibilityLabel="Navbar Search Icon"
+          >
             <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
           <Pressable
             accessible
+            accessibilityRole="button"
             accessibilityLabel="Navbar Notifications Icon"
             style={{ marginHorizontal: Spacings.md }}
           >
             <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable accessible accessibilityLabel="Navbar Menu Icon">
+          <Pressable
+            accessibilityRole="button"
+            accessible
+            accessibilityLabel="Navbar Menu Icon"
+          >
             <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
         </View>
@@ -270,6 +279,7 @@ export default function TabOneScreen() {
             <Link
               accessible
               accessibilityLabel="Go to active clients full list"
+              accessibilityRole="button"
               href="#"
             >
               <BodyText>Full List</BodyText>
