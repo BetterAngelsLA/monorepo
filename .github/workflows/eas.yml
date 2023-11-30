@@ -3,6 +3,9 @@ name: 📱 FE App Deployment
 on:
   pull_request:
     types: [opened, synchronize]
+  push:
+    branches:
+      - main
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -99,6 +102,7 @@ jobs:
       # Because of https://github.com/expo/expo-github-action/issues/214, we have to generate our own QR code for now.
       # They need to allow publishing a QR code without the schema for ExpoGO to "just work"
       - name: 📝 Comment on PR
+        if: github.event_name == 'pull_request'
         uses: edumserrano/find-create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.pull_request.number }}
