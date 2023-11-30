@@ -86,6 +86,7 @@ export default function TeamsScreen() {
         Add your team names in order to build your teams.
       </BodyText>
       <SearchableDropdown
+        accHint="searches for a team"
         mb="lg"
         setExternalValue={setSelectedTeam}
         data={['Clinical', 'Compliance', 'E6 Outreach']}
