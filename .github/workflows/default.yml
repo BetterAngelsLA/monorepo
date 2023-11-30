@@ -104,15 +104,20 @@ jobs:
       - name: 🧹 Lint
         run: |
           docker-compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t lint --exclude=betterangels
+          yarn nx affected -t lint
+          EOF
+
+      - name: 🔬 Typecheck
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx affected -t typecheck
           EOF
 
       - name: 🧪 Test
         run: |
           docker-compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t test --exclude=betterangels
+          yarn nx affected -t test
           EOF
 
       - name: 🛠️ Build and Push Artifacts

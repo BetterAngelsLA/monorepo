@@ -34,7 +34,7 @@ interface ITeamMainScreenProps {
 }
 
 export default function TeamMainScreen(props: ITeamMainScreenProps) {
-  const { setFlow, teamId } = props;
+  const { setFlow } = props;
   return (
     <>
       <View style={styles.headerContainer}>

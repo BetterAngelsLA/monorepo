@@ -78,6 +78,7 @@ interface IButtonProps {
   fontSize?: 'sm' | 'md';
   borderColor?: string;
   accLabel: string;
+  testID?: string;
 }
 
 export function Button(props: IButtonProps) {
@@ -101,11 +102,13 @@ export function Button(props: IButtonProps) {
     mx,
     borderColor,
     accLabel,
+    testID,
   } = props;
   return (
     <Pressable
       accessible
       accessibilityLabel={accLabel}
+      accessibilityRole="button"
       disabled={disabled}
       style={[
         styles.button,
@@ -131,6 +134,7 @@ export function Button(props: IButtonProps) {
         },
       ]}
       onPress={onPress}
+      testID={testID}
     >
       <View style={styles.wrapper}>
         {icon && icon}

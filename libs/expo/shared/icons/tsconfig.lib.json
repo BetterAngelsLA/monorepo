@@ -5,6 +5,7 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "svg.d.ts", "src/**/*.tsx"],
+  "files": ["../../../../node_modules/@nx/expo/typings/svg.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

@@ -13,5 +13,6 @@
     "**/*.stories.jsx",
     "**/*.stories.tsx"
   ],
+  "files": ["../../../../node_modules/@nx/expo/typings/svg.d.ts"],
   "include": ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
 }
