@@ -1,6 +1,7 @@
 {
   "root": true,
-  "plugins": ["@nx"],
+  "plugins": ["@nx", "react-native-a11y"],
+  "extends": ["plugin:react-native-a11y/all"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -23,7 +24,7 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "extends": ["plugin:@nx/typescript"],
+      "extends": ["plugin:@nx/typescript", "plugin:react-native-a11y/all"],
       "rules": {
         "@typescript-eslint/no-unused-vars": "error",
         "no-multiple-empty-lines": [
@@ -42,7 +43,7 @@
     },
     {
       "files": ["*.js", "*.jsx"],
-      "extends": ["plugin:@nx/javascript"],
+      "extends": ["plugin:@nx/javascript", "plugin:react-native-a11y/all"],
       "rules": {
         "no-unused-vars": "error",
         "quotes": [
