@@ -3292,6 +3292,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.60.1
     "@typescript-eslint/parser": ^5.60.1
     "@yarnpkg/sdks": ^3.0.0-rc.48
+    apollo-link-rest: ^0.9.0
     babel-jest: ^29.4.1
     babel-plugin-react-native-web: ^0.19.8
     babel-preset-expo: ~9.5.0
@@ -8739,6 +8740,17 @@ __metadata:
     normalize-path: ^3.0.0
     picomatch: ^2.0.4
   checksum: 3e044fd6d1d26545f235a9fe4d7a534e2029d8e59fa7fd9f2a6eb21230f6b5380ea1eaf55136e60cbf8e613544b3b766e7a6fa2102e2a3a117505466e3025dc2
+  languageName: node
+  linkType: hard
+
+"apollo-link-rest@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "apollo-link-rest@npm:0.9.0"
+  peerDependencies:
+    "@apollo/client": ">=3"
+    graphql: ">=0.11"
+    qs: ">=6"
+  checksum: 1aa2ca1311597a125dfd0ae08a8edce95e32b7e6f661a5bd980305e7c9fa0bf8d833d510407a7c93fc45a5ed85cb649d42918a4149c160d184348e43d7475abe
   languageName: node
   linkType: hard
 

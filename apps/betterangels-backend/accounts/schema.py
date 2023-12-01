@@ -9,3 +9,4 @@ from .types import UserType
 @strawberry.type
 class Query:
     current_user: Optional[UserType] = auth.current_user()
+    logout = auth.logout()
