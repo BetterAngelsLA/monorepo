@@ -7,19 +7,21 @@
 </h1>
 
 <p align="center">
-   <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" hspace="10" />
-   <img src="https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=FFFFFF" hspace="10" />   
-   <img src="https://img.shields.io/badge/storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white" hspace="10" />
-   <img src="https://img.shields.io/badge/Playwright-45ba4b?style=for-the-badge&logo=Playwright&logoColor=white" hspace="10" />
-   <img src="https://img.shields.io/badge/Amazon AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" hspace="10" /> 
-   <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" hspace="10" /> 
-   <img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" hspace="10" />
+   <a href="https://reactnative.dev/docs/getting-started" target="_blank"><img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" hspace="10" /></a>
+   <a href="https://storybook.js.org/docs" target="_blank"><img src="https://img.shields.io/badge/storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white" hspace="10" /></a>
+   <a href="https://playwright.dev/docs/intro" target="_blank"><img src="https://img.shields.io/badge/Playwright-45ba4b?style=for-the-badge&logo=Playwright&logoColor=white" hspace="10" /></a>
+   <a href="https://graphql.org/code/" target="_blank"><img src="https://img.shields.io/badge/GraphQl-E10098?style=for-the-badge&logo=graphql&logoColor=white" hspace="10" /></a>   
+   <br><br>
+   <a href="https://docs.aws.amazon.com/" target="_blank"><img src="https://img.shields.io/badge/Amazon AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" hspace="10" /></a>
+   <a href="https://docs.djangoproject.com/" target="_blank"><img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" hspace="10" /></a>
+   <a href="https://docs.docker.com/" target="_blank"><img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" hspace="10" /></a>
+   <a href="https://docs.expo.dev/" target="_blank"><img src="https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=FFFFFF" hspace="10" /></a>
 </p>
 
 <details open>
 <summary>
 
-## Frontend Development Guide
+## Frontend Development Guide (Mac)
 
 </summary>
 
@@ -29,7 +31,9 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Prerequisites:**
 
-- Xcode Fully Installed
+- [Xcode](https://developer.apple.com/xcode/resources/)
+- [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
+- [Expo Go](https://expo.dev/signup) with project access
 
 **Setup:**
 
@@ -63,15 +67,21 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 #### Starting Expo
 
-1. The following will start the local environment
+1. Open a new integrated terminal (local) and run the following to start the local environment
 
    ```bash
-   npm run ba
+   yarn nx start betterangels
    ```
+
+1. Press "w" to open the web version of the application :tada:
+
+#### Starting the iOS emulator
+
+1. Make sure Xcode is fully installed and hit "i" while Expo is running
 
 #### Starting Android
 
-1. Set Up Google OAuth Locally:
+1. Give Android port access to your local machine to allow the API to work locally:
 
    **Important** For OAuth redirects to work locally for **Android** emulator, run:
 
@@ -81,11 +91,9 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
    Note: This might require you to install adb (Android Debug Bridge) [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
 
-- **Build** the "betterangels" application:
+1. Hit "a" while Expo is running
 
-```
-yarn nx build betterangels
-```
+#### Testing
 
 - **Lint** the "betterangels" application:
 
@@ -105,6 +113,21 @@ yarn nx test betterangels
 
 to run `yarn storybook`
 to build `yarn storybook:build`
+
+<details>
+<summary>
+
+#### Advanced
+
+</summary>
+
+- **Build** the "betterangels" application:
+
+```
+yarn nx build betterangels
+```
+
+</details>
 
 </details>
 
