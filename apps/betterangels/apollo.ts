@@ -14,11 +14,21 @@ const authLink = setContext(async () => {
   };
 });
 
+const restLink = new RestLink({
+  uri: apiUrl,
+  credentials: 'include',
+});
+
+const httpLink = new HttpLink({
+  uri: `${apiUrl}/graphql`,
+  credentials: 'include',
+});
+
 const client = new ApolloClient({
   link: from([
-    authLink,
-    new RestLink({ uri: apiUrl }),
-    new HttpLink({ uri: `${apiUrl}/graphql` }),
+    authLink, // Add CSRF token to request headers
+    restLink, // Handle REST API requests
+    httpLink, // Handle GraphQL requests
   ]),
   cache: new InMemoryCache(),
 });
