@@ -10,9 +10,11 @@ import 'react-native-url-polyfill/auto';
 // Must be exported or Fast Refresh won't update the context
 export function App() {
   const ctx = require.context('./src/app');
-  <ApolloProvider client={client}>
-    return <ExpoRoot context={ctx} />;
-  </ApolloProvider>;
+  return (
+    <ApolloProvider client={client}>
+      <ExpoRoot context={ctx} />
+    </ApolloProvider>
+  );
 }
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
