@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { CSRF_COOKIE_NAME } from '../../constants';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
 import useAuthStore from '../useAuthStore';
 import useUser from './useUser';
 
@@ -14,7 +14,7 @@ export default function useSignOut() {
         credentials: 'include', // include, *same-origin, omit
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': (await getItem(CSRF_COOKIE_NAME)) || '',
+          [CSRF_HEADER_NAME]: (await getItem(CSRF_COOKIE_NAME)) || '',
         },
       });
       setUser(undefined);
