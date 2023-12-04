@@ -233,7 +233,7 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            accHint=""
+            accessibilityHint=""
             title="hello"
             size="full"
             variant="dark"
@@ -241,7 +241,7 @@ export default function SignIn() {
           />
           <Button
             mb="xs"
-            accHint="authorizes with microsoft"
+            accessibilityHint="authorizes with microsoft"
             title={`${FLOW[flow].link} with Microsoft`}
             disabled
             icon={<Windowsicon size="sm" />}
@@ -252,7 +252,7 @@ export default function SignIn() {
             onPress={() => promptAsync({ showInRecents: false })}
           />
           <Button
-            accHint="authorizes with google"
+            accessibilityHint="authorizes with google"
             size="full"
             title={`${FLOW[flow].link} with Google`}
             align="flex-start"

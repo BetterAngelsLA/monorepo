@@ -112,8 +112,8 @@ function RootLayoutNav() {
             headerBackVisible: false,
             headerLeft: () => (
               <IconButton
-                accHint="goes back to auth screen"
-                accLabel="Back"
+                accessibilityHint="goes back to auth screen"
+                accessibilityLabel="Back"
                 style={{ marginLeft: -17 }}
                 variant="transparent"
                 onPress={() => router.back()}

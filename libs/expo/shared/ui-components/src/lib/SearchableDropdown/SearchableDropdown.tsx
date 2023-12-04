@@ -35,7 +35,7 @@ export function SearchableDropdown({
   mx,
   ml,
   mr,
-  accHint,
+  accessibilityHint,
 }: {
   extraTitle?: string;
   label: string;
@@ -51,7 +51,7 @@ export function SearchableDropdown({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  accHint: string;
+  accessibilityHint: string;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
@@ -171,7 +171,7 @@ export function SearchableDropdown({
             <TouchableOpacity
               accessible
               accessibilityRole="button"
-              accessibilityHint={accHint}
+              accessibilityHint={accessibilityHint}
               style={{
                 padding: Spacings.xs,
                 borderTopWidth: 1,

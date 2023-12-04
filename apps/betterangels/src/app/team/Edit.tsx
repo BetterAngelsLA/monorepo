@@ -74,7 +74,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
           <View style={{ flexDirection: 'row' }}>
             <StatusBadge title={user.status} />
             <Button
-              accHint={`goes to edit invited user ${user.name}`}
+              accessibilityHint={`goes to edit invited user ${user.name}`}
               ml="xs"
               fontSize="sm"
               height="sm"
@@ -86,7 +86,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         </View>
       ))}
       <Button
-        accHint="goes to add team members screen"
+        accessibilityHint="goes to add team members screen"
         onPress={() => setFlow('3')}
         mt="sm"
         mb="xl"
@@ -95,7 +95,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         title="Add Team members"
       />
       <Button
-        accHint="opens the popup to delete this team"
+        accessibilityHint="opens the popup to delete this team"
         title="Delete This Team"
         size="full"
         variant="negative"

@@ -21,7 +21,7 @@ export default function Auth() {
         <Logo width={200} height={30} />
         <View style={styles.buttonsContainer}>
           <Button
-            accHint="goes to sign in screen"
+            accessibilityHint="goes to sign in screen"
             mb="xs"
             onPress={() =>
               router.push({
@@ -36,7 +36,7 @@ export default function Auth() {
             variant="sky"
           />
           <Button
-            accHint="goes to sign up screen"
+            accessibilityHint="goes to sign up screen"
             onPress={() =>
               router.push({
                 pathname: '/sign-in',

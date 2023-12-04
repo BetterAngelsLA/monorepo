@@ -79,8 +79,8 @@ export function EventCard(props: IEventCardProps) {
               }}
             >
               <Avatar
-                accHint={`shows avatar of ${participant.firstName} ${participant.lastName} if available`}
-                accLabel={`${participant.firstName} ${participant.lastName} avatar`}
+                accessibilityHint={`shows avatar of ${participant.firstName} ${participant.lastName} if available`}
+                accessibilityLabel={`${participant.firstName} ${participant.lastName} avatar`}
                 size="sm"
                 imageUrl={participant.image}
               />
@@ -94,8 +94,8 @@ export function EventCard(props: IEventCardProps) {
           )}
         </View>
         <IconButton
-          accHint={`opens ${title} event participants details popup`}
-          accLabel={`${title} event participants details`}
+          accessibilityHint={`opens ${title} event participants details popup`}
+          accessibilityLabel={`${title} event participants details`}
           style={{ position: 'relative', left: 10 }}
           width="xs"
           height="xs"
