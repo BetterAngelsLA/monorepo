@@ -44,6 +44,9 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         view = self.context.get("view")
         request = self._get_request()
+        import pdb
+
+        pdb.set_trace()
 
         if not view:
             raise serializers.ValidationError(

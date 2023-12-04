@@ -46,7 +46,8 @@ const FLOW: TAuthFLow = {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const discoveryUrl = 'https://accounts.google.com';
+// const discoveryUrl = 'https://accounts.google.com';
+const discoveryUrl = 'https://api.idmelabs.com/oidc';
 const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 function base64urlEncode(data: string) {
@@ -75,7 +76,9 @@ export default function SignIn() {
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
-  const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
+  const discovery = useAutoDiscovery(discoveryUrl);
+  console.log('DISCOVERY', JSON.stringify(discovery));
+
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
   const { setCsrfCookieFromResponse } = useAuthStore();
@@ -88,24 +91,43 @@ export default function SignIn() {
     throw new Error('env required');
   }
 
+  console.log('redirect uri', redirectUri);
+
   if (type !== 'sign-up' && type !== 'sign-in') {
     throw new Error('auth param is incorrect');
   }
 
+  // const [request, response, promptAsync] = AuthSession.useAuthRequest(
+  //   {
+  //     clientId,
+  //     redirectUri,
+  //     scopes: ['profile', 'email'],
+  //     usePKCE: true,
+  //     state: generatedState,
+  //     prompt: AuthSession.Prompt.SelectAccount,
+  //   },
+  //   discovery
+  // );
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
-      clientId,
+      clientId: '50defdba4cc82d3007c33bd73da38d50',
+      // clientId: '6cafcb688f95f8bd8e19921f3f7d7f3b',
+      scopes: ['profile'],
       redirectUri,
-      scopes: ['profile', 'email'],
-      usePKCE: true,
       state: generatedState,
-      prompt: AuthSession.Prompt.SelectAccount,
+      usePKCE: false,
+      prompt: AuthSession.Prompt.Login,
+      responseType: 'code',
     },
     discovery
   );
 
+  console.log('request', request, 'response', response);
+
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
+      console.log('>>>>> HANDLE DEEP LINKINGI TRIGGERED', url);
+      console.log('>>>>> Response', response);
       // If no URL and no successful response, exit early.
       if (!url && (!response || response.type !== 'success')) return;
 
@@ -142,11 +164,17 @@ export default function SignIn() {
         }
       }
 
+      console.log('redirect uri', redirectUri);
+
       try {
         const response = await fetch(
-          `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
+          // `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
+          //   redirectUri
+          // )}`,
+          `${apiUrl}/rest-auth/idme/?redirect_uri=${encodeURIComponent(
             redirectUri
           )}`,
+
           {
             method: 'POST',
             headers: {
@@ -305,3 +333,110 @@ const styles = StyleSheet.create({
     color: Colors.BRAND_SKY_BLUE,
   },
 });
+
+export function useAutoDiscovery(
+  issuerOrDiscovery: string
+): AuthSession.DiscoveryDocument | null {
+  const [discovery, setDiscovery] =
+    useState<AuthSession.DiscoveryDocument | null>(null);
+
+  useEffect(() => {
+    let isAllowed = true;
+    if (isAllowed) {
+      setDiscovery({
+        discoveryDocument: {
+          issuer: 'https://api.idmelabs.com/oidc',
+          authorization_endpoint: 'https://api.idmelabs.com/oauth/authorize',
+          token_endpoint: 'https://api.idmelabs.com/oauth/token',
+          userinfo_endpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+          jwks_uri: 'https://api.idmelabs.com/oidc/.well-known/jwks',
+          scopes_supported: ['openid'],
+          response_types_supported: [
+            'code',
+            'token',
+            'id_token',
+            'code id_token',
+            'code token',
+            'id_token token',
+            'code id_token token',
+          ],
+          grant_types_supported: ['authorization_code', 'refresh_token'],
+          subject_types_supported: ['public'],
+          id_token_signing_alg_values_supported: ['RS256', 'ES256'],
+          id_token_encryption_alg_values_supported: ['RSA-OAEP'],
+          id_token_encryption_enc_values_supported: ['A256CBC-HS512'],
+          userinfo_signing_alg_values_supported: ['RS256', 'ES256'],
+          userinfo_encryption_alg_values_supported: ['RSA-OAEP'],
+          userinfo_encryption_enc_values_supported: ['A256CBC-HS512'],
+          token_endpoint_auth_methods_supported: [
+            'client_secret_post',
+            'client_secret_basic',
+          ],
+        },
+        authorizationEndpoint: 'https://api.idmelabs.com/oauth/authorize',
+        tokenEndpoint: 'https://api.idmelabs.com/oauth/token',
+        revocationEndpoint: 'https://api.idmelabs.com/oauth/revoke',
+        userInfoEndpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+      });
+    }
+
+    return () => {
+      isAllowed = false;
+    };
+  }, [issuerOrDiscovery]);
+
+  return discovery;
+}
+
+/**
+ * {
+  "issuer": "https://api.idmelabs.com/oidc",
+  "authorization_endpoint": "https://api.idmelabs.com/oauth/authorize",
+  "token_endpoint": "https://api.idmelabs.com/oauth/token",
+  "userinfo_endpoint": "https://api.idmelabs.com/api/public/v3/userinfo",
+  "jwks_uri": "https://api.idmelabs.com/oidc/.well-known/jwks",
+  "scopes_supported": [
+    "openid"
+  ],
+  "response_types_supported": [
+    "code",
+    "token",
+    "id_token",
+    "code id_token",
+    "code token",
+    "id_token token",
+    "code id_token token"
+  ],
+  "grant_types_supported": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "subject_types_supported": [
+    "public"
+  ],
+  "id_token_signing_alg_values_supported": [
+    "RS256",
+    "ES256"
+  ],
+  "id_token_encryption_alg_values_supported": [
+    "RSA-OAEP"
+  ],
+  "id_token_encryption_enc_values_supported": [
+    "A256CBC-HS512"
+  ],
+  "userinfo_signing_alg_values_supported": [
+    "RS256",
+    "ES256"
+  ],
+  "userinfo_encryption_alg_values_supported": [
+    "RSA-OAEP"
+  ],
+  "userinfo_encryption_enc_values_supported": [
+    "A256CBC-HS512"
+  ],
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_post",
+    "client_secret_basic"
+  ]
+}
+ */

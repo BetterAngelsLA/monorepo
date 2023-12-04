@@ -3,9 +3,9 @@
 
 # TODO: Delete our generated type stubs once the below PR has been merged.
 # https://github.com/python/typeshed/pull/10527
-from gevent import monkey
+# from gevent import monkey
 
-monkey.patch_all()
+# monkey.patch_all()
 
 # flake8: noqa: F401
 import os

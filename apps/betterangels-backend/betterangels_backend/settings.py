@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "accounts.providers.idme",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -137,7 +138,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "OAUTH_PKCE_ENABLED": True,
     },
     "idme": {
-        "SCOPE": ["nonprofit"],
+        "SCOPE": ["profile", "email"],
         "APP": {
             "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
             "secret": env("SOCIALACCOUNT_IDME_SECRET"),
