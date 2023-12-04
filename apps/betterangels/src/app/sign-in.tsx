@@ -1,20 +1,17 @@
-import {
-  AuthContainer,
-  fetchUser,
-  useAuthStore,
-  useUser,
-} from '@monorepo/expo/betterangels';
+import { useApolloClient, useMutation } from '@apollo/client';
+import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
 import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
+import { GOOGLE_AUTH_MUTATION } from './mutations';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -71,14 +68,16 @@ const magicLink = async () => {
 };
 
 export default function SignIn() {
+  const apolloClient = useApolloClient();
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
+  const [googleAuth, { data, loading, error }] =
+    useMutation(GOOGLE_AUTH_MUTATION);
   const { setUser } = useUser();
   const { type } = useLocalSearchParams();
-  const { setCsrfCookieFromResponse } = useAuthStore();
 
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -141,42 +140,34 @@ export default function SignIn() {
           return;
         }
       }
-
+      console.log('before trying to login!!!!!!!!!!!!!!');
+      console.log(redirectUri);
       try {
-        const response = await fetch(
-          `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
-            redirectUri
-          )}`,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code: code,
-              code_verifier: request?.codeVerifier,
-            }),
-            credentials: 'include',
-          }
-        );
-        setCsrfCookieFromResponse(response);
-        const userData = await fetchUser(apiUrl);
-        setUser(userData);
-        if (userData.hasOrganization) {
-          router.replace('/');
-        } else {
-          router.replace('/welcome');
-        }
+        await googleAuth({
+          variables: {
+            code: code,
+            codeVerifier: request?.codeVerifier,
+            redirectUri: encodeURIComponent(redirectUri),
+          },
+        });
+        console.log('after to login!!!!!!!!!!!!!!');
+        // console.log(authData);
+        // const { data } = await apolloClient.query({
+        //   query: GET_CURRENT_USER,
+        //   fetchPolicy: 'network-only', // Ensures fresh data is fetched
+        // });
+        // console.log(data);
+        // setUser(data);
       } catch (error) {
         console.error('Error fetching access token', error);
       }
     },
     [
+      apolloClient,
+      googleAuth,
       request?.codeVerifier,
       request?.state,
       response,
-      setCsrfCookieFromResponse,
       setUser,
     ]
   );

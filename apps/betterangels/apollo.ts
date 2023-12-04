@@ -1,17 +1,20 @@
 import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { CSRF_TOKEN, getItem } from '@monorepo/expo/betterangels';
+import { CSRF_TOKEN, csrfLink, getItem } from '@monorepo/expo/betterangels';
 import { RestLink } from 'apollo-link-rest';
 import { apiUrl } from './config';
 
 // Context link for adding CSRF token to request headers
 const authLink = setContext(async () => {
   const token = await getItem(CSRF_TOKEN);
-  return {
-    headers: {
-      'X-CSRF-TOKEN': token || '',
-    },
-  };
+  if (token) {
+    return {
+      headers: {
+        'X-CSRFTOKEN': token,
+      },
+    };
+  }
+  return {};
 });
 
 const restLink = new RestLink({
@@ -26,6 +29,7 @@ const httpLink = new HttpLink({
 
 const client = new ApolloClient({
   link: from([
+    csrfLink,
     authLink, // Add CSRF token to request headers
     restLink, // Handle REST API requests
     httpLink, // Handle GraphQL requests
