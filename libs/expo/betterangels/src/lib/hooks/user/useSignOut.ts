@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { CSRF_TOKEN } from '../../constants';
+import { CSRF_COOKIE_NAME } from '../../constants';
 import useAuthStore from '../useAuthStore';
 import useUser from './useUser';
 
@@ -14,12 +14,12 @@ export default function useSignOut() {
         credentials: 'include', // include, *same-origin, omit
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': await getItem(CSRF_TOKEN),
+          'X-CSRFToken': (await getItem(CSRF_COOKIE_NAME)) || '',
         },
       });
       setUser(undefined);
       router.replace('/auth');
-      deleteItem(CSRF_TOKEN);
+      deleteItem(CSRF_COOKIE_NAME);
     } catch (err) {
       console.error(err);
     }
