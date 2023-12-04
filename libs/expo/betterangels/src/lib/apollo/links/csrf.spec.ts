@@ -96,11 +96,10 @@ describe('csrfLink', () => {
   });
 
   it('should add CSRF token to request headers if available', async () => {
-    const testToken = 'test-token';
-    (getItem as jest.Mock).mockResolvedValue(testToken);
+    (getItem as jest.Mock).mockResolvedValue(TEST_CSRF_TOKEN_VALUE);
     const assertLink = new ApolloLink((operation) => {
       const headers = operation.getContext()['headers'];
-      expect(headers[CSRF_HEADER_NAME]).toEqual(testToken);
+      expect(headers[CSRF_HEADER_NAME]).toEqual(TEST_CSRF_TOKEN_VALUE);
       return null;
     });
     const link = ApolloLink.from([csrfLink, assertLink]);
