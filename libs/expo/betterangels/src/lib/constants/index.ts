@@ -1,1 +1,1 @@
-export { CSRF_TOKEN } from './csrf';
+export * from './csrf';
