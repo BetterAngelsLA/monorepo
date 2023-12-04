@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
 import { GOOGLE_AUTH_MUTATION } from './mutations';
+import { GET_CURRENT_USER } from './queries';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -151,13 +152,12 @@ export default function SignIn() {
           },
         });
         console.log('after to login!!!!!!!!!!!!!!');
-        // console.log(authData);
-        // const { data } = await apolloClient.query({
-        //   query: GET_CURRENT_USER,
-        //   fetchPolicy: 'network-only', // Ensures fresh data is fetched
-        // });
-        // console.log(data);
-        // setUser(data);
+        const { data } = await apolloClient.query({
+          query: GET_CURRENT_USER,
+          fetchPolicy: 'network-only', // Ensures fresh data is fetched
+        });
+        console.log(data);
+        setUser(data);
       } catch (error) {
         console.error('Error fetching access token', error);
       }

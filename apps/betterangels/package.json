@@ -35,7 +35,8 @@
     "@storybook/react": "*",
     "react-hook-form": "*",
     "@apollo/client": "*",
-    "apollo-link-rest": "*"
+    "apollo-link-rest": "*",
+    "rxjs": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
