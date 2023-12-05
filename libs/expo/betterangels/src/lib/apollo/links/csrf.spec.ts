@@ -9,6 +9,11 @@ import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
 import { getItem, setItem } from '../../storage';
 import { csrfLink } from './csrf';
 
+jest.mock('../../storage', () => ({
+  setItem: jest.fn(),
+  getItem: jest.fn(),
+}));
+
 const TEST_CSRF_TOKEN_VALUE = 'test-token';
 const TEST_QUERY = gql`
   query TestQuery {
@@ -36,11 +41,6 @@ const mockForward = () =>
     observer.next({ data: {}, errors: [], extensions: {}, context: {} });
     observer.complete();
   });
-
-jest.mock('../../storage', () => ({
-  setItem: jest.fn(),
-  getItem: jest.fn(),
-}));
 
 describe('csrfLink', () => {
   beforeEach(() => {
