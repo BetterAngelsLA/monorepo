@@ -69,7 +69,7 @@ describe('csrfLink', () => {
           }),
         },
       },
-    }).subscribe(() => {});
+    });
   });
 
   it('should not store CSRF token if Set-Cookie header is absent', async () => {
@@ -85,7 +85,7 @@ describe('csrfLink', () => {
     execute(link, {
       query: TEST_QUERY,
       context: { headers: {} },
-    }).subscribe(() => {});
+    });
   });
 
   it('should add CSRF token to request headers if available', async () => {
@@ -98,7 +98,7 @@ describe('csrfLink', () => {
     const link = ApolloLink.from([csrfLink, assertLink]);
     execute(link, {
       query: TEST_QUERY,
-    }).subscribe(() => {});
+    });
   });
 
   it('should not add CSRF token to request headers if not available', async () => {
@@ -110,6 +110,6 @@ describe('csrfLink', () => {
     const link = ApolloLink.from([csrfLink, assertLink]);
     execute(link, {
       query: TEST_QUERY,
-    }).subscribe(() => {});
+    });
   });
 });
