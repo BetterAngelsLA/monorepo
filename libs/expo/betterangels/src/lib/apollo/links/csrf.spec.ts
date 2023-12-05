@@ -6,7 +6,6 @@ import {
   execute,
   gql,
 } from '@apollo/client';
-import { Observable as RxObservable, lastValueFrom } from 'rxjs';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
 import { getItem, setItem } from '../../storage';
 import { csrfLink } from './csrf';
@@ -17,6 +16,21 @@ const TEST_QUERY = gql`
     test
   }
 `;
+
+function apolloObservableToPromise(
+  observable: ApolloObservable<FetchResult> | null
+) {
+  return new Promise<FetchResult>((resolve, reject) => {
+    if (observable) {
+      observable.subscribe(
+        (value) => resolve(value),
+        (error) => reject(error)
+      );
+    } else {
+      reject(new Error('Observable is null'));
+    }
+  });
+}
 
 const createMockOperation = (
   cookieHeader: string | null,
@@ -67,8 +81,7 @@ describe('csrfLink', () => {
     const assertLink = new ApolloLink(() => {
       const result = csrfLink.request(operation, mockForward);
       expect(result).toBeDefined();
-      // The below type is kind of gross... is there a better way?
-      lastValueFrom(result as unknown as RxObservable<FetchResult>).then(() => {
+      apolloObservableToPromise(result).then(() => {
         expect(setItem).toHaveBeenCalledWith(
           CSRF_COOKIE_NAME,
           TEST_CSRF_TOKEN_VALUE
@@ -85,8 +98,7 @@ describe('csrfLink', () => {
     const assertLink = new ApolloLink(() => {
       const result = csrfLink.request(operation, mockForward);
       expect(result).toBeDefined();
-      // The below type is kind of gross... is there a better way?
-      lastValueFrom(result as unknown as RxObservable<FetchResult>).then(() => {
+      apolloObservableToPromise(result).then(() => {
         expect(setItem).not.toHaveBeenCalled();
       });
       return null;
