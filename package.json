@@ -11,7 +11,9 @@
     "ba:build-dev": "nx build betterangels --profile development"
   },
   "dependencies": {
+    "@apollo/client": "^3.8.8",
     "@expo/metro-config": "~0.10.6",
+    "apollo-link-rest": "^0.9.0",
     "expo": "^49.0.21",
     "expo-auth-session": "~5.0.2",
     "expo-constants": "~14.4.2",
