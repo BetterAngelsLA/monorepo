@@ -2,7 +2,6 @@ import {
   ApolloLink,
   Observable as ApolloObservable,
   FetchResult,
-  Operation,
   execute,
   gql,
 } from '@apollo/client';
@@ -32,32 +31,6 @@ function apolloObservableToPromise(
   });
 }
 
-const createMockOperation = (
-  cookieHeader: string | null,
-  requestHeaders: Record<string, string> = {}
-) =>
-  ({
-    query: TEST_QUERY,
-    variables: {},
-    operationName: 'TestQuery',
-    extensions: {},
-    getContext: () => ({
-      response: {
-        headers: new Headers(
-          cookieHeader ? { 'Set-Cookie': cookieHeader } : {}
-        ),
-      },
-      headers: new Headers(requestHeaders),
-    }),
-    setContext: jest.fn(),
-  } as Operation);
-
-function executeRequest(link: ApolloLink) {
-  execute(link, { query: TEST_QUERY }).subscribe(() => {
-    /* not our concern within this test */
-  });
-}
-
 const mockForward = () =>
   new ApolloObservable<FetchResult>((observer) => {
     observer.next({ data: {}, errors: [], extensions: {}, context: {} });
@@ -75,10 +48,7 @@ describe('csrfLink', () => {
   });
 
   it('should extract and store CSRF token from Set-Cookie header', async () => {
-    const operation = createMockOperation(
-      `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`
-    );
-    const assertLink = new ApolloLink(() => {
+    const assertLink = new ApolloLink((operation) => {
       const result = csrfLink.request(operation, mockForward);
       expect(result).toBeDefined();
       apolloObservableToPromise(result).then(() => {
@@ -90,12 +60,20 @@ describe('csrfLink', () => {
       return null;
     });
     const link = ApolloLink.from([assertLink]);
-    executeRequest(link);
+    execute(link, {
+      query: TEST_QUERY,
+      context: {
+        response: {
+          headers: new Headers({
+            'Set-Cookie': `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`,
+          }),
+        },
+      },
+    }).subscribe(() => {});
   });
 
   it('should not store CSRF token if Set-Cookie header is absent', async () => {
-    const operation = createMockOperation(null);
-    const assertLink = new ApolloLink(() => {
+    const assertLink = new ApolloLink((operation) => {
       const result = csrfLink.request(operation, mockForward);
       expect(result).toBeDefined();
       apolloObservableToPromise(result).then(() => {
@@ -104,7 +82,10 @@ describe('csrfLink', () => {
       return null;
     });
     const link = ApolloLink.from([assertLink]);
-    executeRequest(link);
+    execute(link, {
+      query: TEST_QUERY,
+      context: { headers: {} },
+    }).subscribe(() => {});
   });
 
   it('should add CSRF token to request headers if available', async () => {
@@ -115,7 +96,9 @@ describe('csrfLink', () => {
       return null;
     });
     const link = ApolloLink.from([csrfLink, assertLink]);
-    executeRequest(link);
+    execute(link, {
+      query: TEST_QUERY,
+    }).subscribe(() => {});
   });
 
   it('should not add CSRF token to request headers if not available', async () => {
@@ -125,6 +108,8 @@ describe('csrfLink', () => {
       return null;
     });
     const link = ApolloLink.from([csrfLink, assertLink]);
-    executeRequest(link);
+    execute(link, {
+      query: TEST_QUERY,
+    }).subscribe(() => {});
   });
 });
