@@ -2,7 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Redirect, Tabs } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { useUser } from '@monorepo/expo/betterangels';
+import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
   HouseIcon,
@@ -14,13 +14,24 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const { user, isLoading } = useUser();
+
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  // Function to close the modal
+  const closeModal = () => {
+    setModalVisible(false);
+  };
 
   if (isLoading) return <Text>Loading</Text>;
 
@@ -35,129 +46,133 @@ export default function TabLayout() {
   // }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
-        tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
-        tabBarStyle: {
-          height: 70 + insets.bottom,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderTopWidth: 0,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidHouseIcon color={color} />
-              ) : (
-                <HouseIcon color={color} />
-              )}
-
-              <BodyText color={color} size="xs">
-                Home
-              </BodyText>
-            </View>
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color="black"
-                    style={{
-                      marginRight: Spacings.sm,
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="appointment"
-        options={{
-          title: 'Appointment',
-          tabBarIcon: ({ focused, color }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidCalendarIcon color={color} />
-              ) : (
-                <CalendarIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Appointment
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="drawerPlaceholder"
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
+          tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
+          tabBarStyle: {
+            height: 70 + insets.bottom,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderTopWidth: 0,
           },
         }}
-        options={{
-          title: '',
-          tabBarIcon: () => (
-            <View style={styles.wrapper}>
-              <View style={styles.middleButton}>
-                <PlusIcon />
-              </View>
-            </View>
-          ),
-        }}
-      />
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidHouseIcon color={color} />
+                ) : (
+                  <HouseIcon color={color} />
+                )}
 
-      <Tabs.Screen
-        name="teams"
-        options={{
-          title: '',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidSitemapIcon color={color} />
-              ) : (
-                <SitemapIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Teams
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <View style={{ alignItems: 'center' }}>
-              <View style={styles.profileContainer}>
-                <Text style={styles.profileText}>
-                  {user.username?.slice(0, 2)}
-                </Text>
+                <BodyText color={color} size="xs">
+                  Home
+                </BodyText>
               </View>
-              <BodyText color={color} size="xs">
-                Profile
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-    </Tabs>
+            ),
+            headerRight: () => (
+              <Link href="/modal" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <FontAwesome
+                      name="info-circle"
+                      size={25}
+                      color="black"
+                      style={{
+                        marginRight: Spacings.sm,
+                        opacity: pressed ? 0.5 : 1,
+                      }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="appointment"
+          options={{
+            title: 'Appointment',
+            tabBarIcon: ({ focused, color }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidCalendarIcon color={color} />
+                ) : (
+                  <CalendarIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Appointment
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="drawerPlaceholder"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openModal();
+            },
+          }}
+          options={{
+            title: '',
+            tabBarIcon: () => (
+              <View style={styles.wrapper}>
+                <View style={styles.middleButton}>
+                  <PlusIcon />
+                </View>
+              </View>
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="teams"
+          options={{
+            title: '',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidSitemapIcon color={color} />
+                ) : (
+                  <SitemapIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Teams
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => (
+              <View style={{ alignItems: 'center' }}>
+                <View style={styles.profileContainer}>
+                  <Text style={styles.profileText}>
+                    {user.username?.slice(0, 2)}
+                  </Text>
+                </View>
+                <BodyText color={color} size="xs">
+                  Profile
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+      </Tabs>
+      <MainPlusModal closeModal={closeModal} isModalVisible={isModalVisible} />
+    </>
   );
 }
 
@@ -193,5 +208,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: hexToRGBA(Colors.SECONDARY_EXTRA_DARK, 0.97),
   },
 });

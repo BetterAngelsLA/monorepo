@@ -68,6 +68,7 @@ export { default as FileArrowDownIcon } from './components/FileArrowDownIcon';
 export { default as FileAudioIcon } from './components/FileAudioIcon';
 export { default as FileIcon } from './components/FileIcon';
 export { default as FilePdfIcon } from './components/FilePdfIcon';
+export { default as FilePlusIcon } from './components/FilePlusIcon';
 export { default as FlagSwallowtailIcon } from './components/FlagSwallowtailIcon';
 export { default as GearIcon } from './components/GearIcon';
 export { default as GoogleIcon } from './components/GoogleIcon';
