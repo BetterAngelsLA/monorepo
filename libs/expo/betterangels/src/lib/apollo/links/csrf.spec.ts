@@ -3,25 +3,18 @@ import {
   Observable as ApolloObservable,
   FetchResult,
   execute,
-  gql
-} from '@apollo/client';
-=======
-  execute,
   gql,
 } from '@apollo/client';
->>>>>>> main
+
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
 import { getItem, setItem } from '../../storage';
 import { csrfLink } from './csrf';
 
-<<<<<<< HEAD
-=======
 jest.mock('../../storage', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
 }));
 
->>>>>>> main
 const TEST_CSRF_TOKEN_VALUE = 'test-token';
 const TEST_QUERY = gql`
   query TestQuery {
