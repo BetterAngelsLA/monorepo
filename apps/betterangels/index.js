@@ -1,7 +1,7 @@
 import { ApolloProvider } from '@apollo/client';
 import { registerRootComponent } from 'expo';
 import { ExpoRoot } from 'expo-router';
-import client from './apollo'; // Adjust the path to your Apollo client setup
+import client from './apollo';
 
 /* polyfills */
 //** URL polyfill */

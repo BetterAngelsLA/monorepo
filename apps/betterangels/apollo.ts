@@ -14,11 +14,7 @@ const httpLink = new HttpLink({
 });
 
 const client = new ApolloClient({
-  link: from([
-    csrfLink,
-    restLink, // Handle REST API requests
-    httpLink, // Handle GraphQL requests
-  ]),
+  link: from([csrfLink, restLink, httpLink]),
   cache: new InMemoryCache(),
 });
 

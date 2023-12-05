@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { CSRF_TOKEN } from '../constants';
+import { CSRF_COOKIE_NAME } from '../constants';
 import { deleteItem, getItem, setItem } from '../storage';
 
 /**
@@ -12,9 +12,11 @@ export default function useAuthStore() {
   async function setCsrfCookieFromResponse(response: Response) {
     if (Platform.OS !== 'web') {
       const cookies = response.headers.get('Set-Cookie');
-      const csrfToken = cookies && /csrftoken=([^;]+);/.exec(cookies)?.[1];
+      const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
+      const csrfTokenMatch = cookies?.match(csrfTokenRegex);
+      const csrfToken = csrfTokenMatch?.[1];
       if (csrfToken) {
-        await setItem(CSRF_TOKEN, csrfToken);
+        await setItem(CSRF_COOKIE_NAME, csrfToken);
       } else {
         console.error('CSRF token not found in the response headers.');
       }
