@@ -4,6 +4,7 @@ import { ExpoRoot } from 'expo-router';
 import client from './apollo';
 
 /* polyfills */
+
 //** URL polyfill */
 import 'react-native-url-polyfill/auto';
 
