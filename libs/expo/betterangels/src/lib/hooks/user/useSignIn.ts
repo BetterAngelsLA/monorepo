@@ -1,7 +1,7 @@
 import { DocumentNode, useLazyQuery, useMutation } from '@apollo/client';
 import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { GET_CURRENT_USER } from '../../apollo/graphql/quries';
+import { GET_CURRENT_USER } from '../../apollo/graphql';
 import useUser from './useUser';
 
 export default function useSignIn(mutation: DocumentNode) {
