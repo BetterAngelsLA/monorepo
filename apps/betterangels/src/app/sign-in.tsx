@@ -1,6 +1,9 @@
-import { useApolloClient, useMutation } from '@apollo/client';
-import { AuthContainer, useUser } from '@monorepo/expo/betterangels';
-import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
+import {
+  AuthContainer,
+  GOOGLE_AUTH_MUTATION,
+  useSignIn,
+} from '@monorepo/expo/betterangels';
+import { GoogleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
@@ -11,8 +14,6 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import { apiUrl, clientId, redirectUri } from '../../config';
-import { GOOGLE_AUTH_MUTATION } from './mutations';
-import { GET_CURRENT_USER } from './queries';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -69,24 +70,16 @@ const magicLink = async () => {
 };
 
 export default function SignIn() {
-  const apolloClient = useApolloClient();
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
-  const [googleAuth, { data, loading, error }] =
-    useMutation(GOOGLE_AUTH_MUTATION);
-  const { setUser } = useUser();
   const { type } = useLocalSearchParams();
-
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
-
-  if (!clientId || !redirectUri || !apiUrl) {
-    throw new Error('env required');
-  }
 
   if (type !== 'sign-up' && type !== 'sign-in') {
     throw new Error('auth param is incorrect');
@@ -126,8 +119,8 @@ export default function SignIn() {
         state = response.params?.state;
       }
 
-      // If we still don't have a code, then we can't proceed.
-      if (!code || !redirectUri) return;
+      // If we still don't have a code or verifier, then we can't proceed.
+      if (!code || !request?.codeVerifier || !redirectUri) return;
 
       // Ensure the state is not invalid or tampered with
       if (!state || state !== request?.state) {
@@ -141,35 +134,10 @@ export default function SignIn() {
           return;
         }
       }
-      console.log('before trying to login!!!!!!!!!!!!!!');
-      console.log(redirectUri);
-      try {
-        await googleAuth({
-          variables: {
-            code: code,
-            codeVerifier: request?.codeVerifier,
-            redirectUri: encodeURIComponent(redirectUri),
-          },
-        });
-        console.log('after to login!!!!!!!!!!!!!!');
-        const { data } = await apolloClient.query({
-          query: GET_CURRENT_USER,
-          fetchPolicy: 'network-only', // Ensures fresh data is fetched
-        });
-        console.log(data);
-        setUser(data);
-      } catch (error) {
-        console.error('Error fetching access token', error);
-      }
+      // Use the signIn function from the hook
+      await signIn(code, request?.codeVerifier, redirectUri);
     },
-    [
-      apolloClient,
-      googleAuth,
-      request?.codeVerifier,
-      request?.state,
-      response,
-      setUser,
-    ]
+    [request?.codeVerifier, request?.state, response, signIn]
   );
 
   useEffect(() => {
@@ -228,17 +196,6 @@ export default function SignIn() {
             size="full"
             variant="dark"
             onPress={async () => await magicLink()}
-          />
-          <Button
-            mb="xs"
-            title={`${FLOW[flow].link} with Microsoft`}
-            disabled
-            icon={<Windowsicon size="sm" />}
-            fontFamily="IBM-bold"
-            size="full"
-            variant="dark"
-            align="flex-start"
-            onPress={() => promptAsync({ showInRecents: false })}
           />
           <Button
             size="full"

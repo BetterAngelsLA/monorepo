@@ -1,38 +1,40 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { fetchUser } from '../../helpers';
+import { useQuery } from '@apollo/client';
+import { GET_CURRENT_USER } from '../../helpers/fetchUser';
 import UserContext, { TUser } from './UserContext';
 
 interface UserProviderProps {
   children: ReactNode;
-  apiUrl: string | undefined;
 }
 
-function useProtectedRoute(apiUrl: string) {
+function useProtectedRoute() {
   const [user, setUser] = useState<TUser | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { data, loading, error } = useQuery(GET_CURRENT_USER);
 
   useEffect(() => {
-    async function getUserAndNavigate() {
-      try {
-        const user = await fetchUser(apiUrl);
-        setUser(user);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsLoading(false);
-      }
+    if (data && data.user) {
+      setUser({
+        id: data.currentUser.id,
+        email: data.currentUser.email,
+        username: data.currentUser.name,
+        hasOrganization: false,
+      });
     }
 
-    getUserAndNavigate();
-  }, []);
+    setIsLoading(loading);
+
+    if (error) {
+      console.error(error);
+    }
+  }, [data, loading, error]);
 
   return { user, setUser, isLoading };
 }
 
-export default function UserProvider({ children, apiUrl }: UserProviderProps) {
-  if (!apiUrl) throw new Error('env apiUrl is not defined');
-  const { isLoading, user, setUser } = useProtectedRoute(apiUrl);
+export default function UserProvider({ children }: UserProviderProps) {
+  const { isLoading, user, setUser } = useProtectedRoute();
 
   const value = useMemo(
     () => ({
