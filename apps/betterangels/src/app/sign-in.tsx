@@ -192,12 +192,7 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            title="hello"
-            size="full"
-            variant="dark"
-            onPress={async () => await magicLink()}
-          />
-          <Button
+            mb="xs"
             size="full"
             title={`${FLOW[flow].link} with Google`}
             align="flex-start"
@@ -206,6 +201,13 @@ export default function SignIn() {
             variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
+          />
+          <Button
+            mb="xs"
+            title="hello"
+            size="full"
+            variant="dark"
+            onPress={async () => await magicLink()}
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
