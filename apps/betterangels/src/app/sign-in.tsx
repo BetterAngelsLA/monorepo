@@ -120,7 +120,7 @@ export default function SignIn() {
       }
 
       // If we still don't have a code or codeVerifier, then we can't proceed.
-      if (!code || !request?.codeVerifier || !redirectUri) return;
+      if (!code || !request?.codeVerifier) return;
 
       // Ensure the state is not invalid or tampered with
       if (!state || state !== request?.state) {
