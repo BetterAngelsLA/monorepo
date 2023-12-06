@@ -79,6 +79,7 @@ class TestMagicLink(TestCase):
 
 
 @ignore_warnings(category=UserWarning)
+@override_settings(EMAIL_BACKEND="post_office.EmailBackend")
 class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
     def test_generate_magic_link(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
