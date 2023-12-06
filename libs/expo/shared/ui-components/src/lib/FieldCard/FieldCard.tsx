@@ -1,8 +1,9 @@
 import { EditIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import H4 from '../H4';
+import IconButton from '../IconButton';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -40,9 +41,9 @@ export function FieldCard(props: IFieldCardProps) {
           {Icon ? <Icon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} /> : null}
           <H4>{title}</H4>
         </View>
-        <Pressable onPress={onPress}>
+        <IconButton onPress={onPress} variant="transparent">
           <EditIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        </Pressable>
+        </IconButton>
       </View>
       {children && <View style={{ marginTop: Spacings.sm }}>{children}</View>}
     </View>
