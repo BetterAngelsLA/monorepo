@@ -1,5 +1,7 @@
+import { useMutation } from '@apollo/client';
 import {
   AuthContainer,
+  GENERATE_MAGIC_LINK_MUTATION,
   GOOGLE_AUTH_MUTATION,
   useSignIn,
 } from '@monorepo/expo/betterangels';
@@ -13,7 +15,7 @@ import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
-import { apiUrl, clientId, redirectUri } from '../../config';
+import { clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -63,17 +65,15 @@ function generateStatePayload(length = 32) {
   return base64urlEncode(JSON.stringify(payload));
 }
 
-const magicLink = async () => {
-  await fetch(`${apiUrl}/magic-auth/generate-link`, {
-    method: 'POST',
-  });
-};
-
 export default function SignIn() {
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [
+    generateMagicLink,
+    { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
+  ] = useMutation(GENERATE_MAGIC_LINK_MUTATION);
   const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { type } = useLocalSearchParams();
@@ -166,6 +166,15 @@ export default function SignIn() {
     setFlow(type);
   }, [type]);
 
+  const handleGenerateMagicLink = async () => {
+    try {
+      await generateMagicLink();
+      // Additional logic if needed, e.g., showing success message or handling the response
+    } catch (error) {
+      console.error('Error generating magic link:', error);
+    }
+  };
+
   if (!generatedState) {
     return <Text>Loading...</Text>;
   }
@@ -203,11 +212,16 @@ export default function SignIn() {
           />
           <Button
             mb="xs"
-            title="hello"
+            title="Generate Magic Link"
             size="full"
             variant="dark"
-            onPress={async () => await magicLink()}
+            onPress={handleGenerateMagicLink}
+            disabled={magicLinkLoading}
           />
+          {magicLinkError && (
+            <Text>Error occurred: {magicLinkError.message}</Text>
+          )}
+          {magicLinkData && <Text>Magic Link Generated Successfully</Text>}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
