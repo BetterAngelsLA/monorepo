@@ -28,10 +28,6 @@ except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
 
 
-class MagicLinkSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-
 class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
     code_verifier = serializers.CharField(required=False, allow_blank=True)
 
