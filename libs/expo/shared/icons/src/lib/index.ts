@@ -101,7 +101,6 @@ export { default as UserDoctorHairIcon } from './components/UserDoctorHairIcon';
 export { default as UserIcon } from './components/UserIcon';
 export { default as VideoIcon } from './components/VideoIcon';
 export { default as WarehouseIcon } from './components/WarehouseIcon';
-export { default as Windowsicon } from './components/WindowsIcon';
 export { default as XmarkIcon } from './components/XmarkIcon';
 export * from './constant';
 export * from './types';
