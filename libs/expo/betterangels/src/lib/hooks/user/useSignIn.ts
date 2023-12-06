@@ -1,41 +1,49 @@
-import { DocumentNode, useMutation } from '@apollo/client';
+import { DocumentNode, useLazyQuery, useMutation } from '@apollo/client';
 import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+import { GET_CURRENT_USER } from '../../helpers/fetchUser';
 import useUser from './useUser';
 
 export default function useSignIn(mutation: DocumentNode) {
   const [socialAuth, { loading, error }] = useMutation(mutation);
+  const [
+    getCurrentUser,
+    { data: userData, loading: userIsLoading, error: userError },
+  ] = useLazyQuery(GET_CURRENT_USER);
   const { setUser } = useUser();
 
   const signIn = useCallback(
     async (code: string, codeVerifier: string, redirectUri: string) => {
       try {
-        const response = await socialAuth({
+        await socialAuth({
           variables: {
-            code: code,
-            codeVerifier: codeVerifier,
+            code,
+            codeVerifier,
             redirectUri: encodeURIComponent(redirectUri),
           },
         });
 
-        if (response.data) {
-          const userData = response.data;
-          // TODO: Maybe we should allow passing the userData mutation directly?
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            username: userData.username,
-            hasOrganization: false,
-          });
-          // TODO: It may make sense to put this somewhere else?
-          router.replace(userData.hasOrganization ? '/' : '/welcome');
-        }
+        // Execute the getCurrentUser query after successful login
+        getCurrentUser();
       } catch (error) {
-        console.error(error);
+        console.error('Error during sign in:', error);
       }
     },
-    [socialAuth, setUser]
+    [socialAuth, getCurrentUser]
   );
 
-  return { signIn, loading, error };
+  // Update the user state once the currentUser data is fetched
+  useEffect(() => {
+    if (userData && userData.currentUser) {
+      setUser({
+        id: userData.currentUser.id,
+        email: userData.currentUser.email,
+        username: userData.currentUser.username,
+        hasOrganization: userData.currentUser.hasOrganization,
+      });
+      router.replace(userData.currentUser.hasOrganization ? '/' : '/welcome');
+    }
+  }, [userData, setUser]);
+
+  return { signIn, loading, error, userIsLoading, userError };
 }
