@@ -1,5 +1,3 @@
-from unittest.mock import ANY, patch
-
 from accounts.models import User
 from accounts.services import send_magic_link
 from django.contrib.auth import SESSION_KEY, get_user_model
