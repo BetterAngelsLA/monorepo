@@ -94,10 +94,9 @@ class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
         variables = {"input": {"email": user.email}}
         response = self.execute_graphql_query(query, variables=variables)
 
-        # Check if send_magic_link was called with the correct arguments
-        emails = Email.objects.all()
-        self.assertEqual(len(emails), 1)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(
             response["data"]["generateMagicLink"]["message"], "Email link sent."
         )
+        emails = Email.objects.all()
+        self.assertEqual(len(emails), 1)
