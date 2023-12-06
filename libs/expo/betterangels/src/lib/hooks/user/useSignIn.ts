@@ -23,7 +23,6 @@ export default function useSignIn(mutation: DocumentNode) {
           },
         });
 
-        // Execute the getCurrentUser query after successful login
         getCurrentUser();
       } catch (error) {
         console.error('Error during sign in:', error);
@@ -32,7 +31,6 @@ export default function useSignIn(mutation: DocumentNode) {
     [socialAuth, getCurrentUser]
   );
 
-  // Update the user state once the currentUser data is fetched
   useEffect(() => {
     if (userData && userData.currentUser) {
       setUser({
@@ -41,6 +39,7 @@ export default function useSignIn(mutation: DocumentNode) {
         username: userData.currentUser.username,
         hasOrganization: userData.currentUser.hasOrganization,
       });
+      // Should we even be doing this here?
       router.replace(userData.currentUser.hasOrganization ? '/' : '/welcome');
     }
   }, [userData, setUser]);
