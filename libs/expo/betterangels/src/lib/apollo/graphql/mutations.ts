@@ -1,5 +1,19 @@
 import { gql } from '@apollo/client';
 
+export const GENERATE_MAGIC_LINK_MUTATION = gql`
+  mutation GenerateMagicLink {
+    generateMagicLink(input: {})
+      @rest(
+        type: "MagicLinkResponse"
+        path: "/magic-auth/generate-link"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+      success
+    }
+  }
+`;
+
 export const GOOGLE_AUTH_MUTATION = gql`
   mutation GoogleAuth(
     $code: String!
