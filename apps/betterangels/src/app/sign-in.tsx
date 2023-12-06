@@ -169,7 +169,6 @@ export default function SignIn() {
   const handleGenerateMagicLink = async () => {
     try {
       await generateMagicLink();
-      // Additional logic if needed, e.g., showing success message or handling the response
     } catch (error) {
       console.error('Error generating magic link:', error);
     }

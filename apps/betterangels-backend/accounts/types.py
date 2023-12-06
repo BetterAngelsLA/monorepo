@@ -1,3 +1,4 @@
+import strawberry
 import strawberry_django
 from strawberry import auto
 
@@ -9,3 +10,13 @@ class UserType:
     id: auto
     username: auto
     email: auto
+
+
+@strawberry.input
+class MagicLinkInput:
+    email: str
+
+
+@strawberry.type
+class MagicLinkResponse:
+    message: str

@@ -1,15 +1,10 @@
 import { gql } from '@apollo/client';
 
+// NOTE: we need to pass in an email from some recovery process
 export const GENERATE_MAGIC_LINK_MUTATION = gql`
   mutation GenerateMagicLink {
-    generateMagicLink(input: {})
-      @rest(
-        type: "MagicLinkResponse"
-        path: "/magic-auth/generate-link"
-        method: "POST"
-        bodyKey: "input"
-      ) {
-      success
+    generateMagicLink(input: { email: "admin@ba.la" }) {
+      message
     }
   }
 `;

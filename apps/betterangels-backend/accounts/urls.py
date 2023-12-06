@@ -1,4 +1,3 @@
-from accounts.views.api_views import generate_magic_link
 from accounts.views.auth_views import AuthRedirectView, GoogleLogin
 from accounts.views.class_views import SignUpView
 from django.urls import include, path
@@ -10,7 +9,6 @@ urlpatterns = [
     path("rest-auth/google/", GoogleLogin.as_view(), name="api_google_login"),
     path("auth-redirect", AuthRedirectView.as_view(), name="auth_redirect"),
     # magic link login urls
-    path("magic-auth/generate-link", generate_magic_link, name="generate-magic-link"),
     path("magic-auth/login/", LoginView.as_view(), name="magic-auth-login"),
     # dj-rest-auth urls
     path("rest-auth/", include("dj_rest_auth.urls")),
