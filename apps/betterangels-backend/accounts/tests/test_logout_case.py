@@ -1,4 +1,5 @@
 from accounts.models import User
+from django.core.cache import cache
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -19,6 +20,9 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
     def test_logged_in_user_logout(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
+        session_cache_key = (
+            f"django.contrib.sessions.cache{self.graphql_client.session.session_key}"
+        )
 
         query = """
         mutation {
@@ -28,3 +32,4 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         response = self.execute_graphql_query(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
+        self.assertIsNone(cache.get(session_cache_key))
