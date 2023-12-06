@@ -119,7 +119,7 @@ export default function SignIn() {
         state = response.params?.state;
       }
 
-      // If we still don't have a code or verifier, then we can't proceed.
+      // If we still don't have a code or codeVerifier, then we can't proceed.
       if (!code || !request?.codeVerifier || !redirectUri) return;
 
       // Ensure the state is not invalid or tampered with
@@ -134,7 +134,6 @@ export default function SignIn() {
           return;
         }
       }
-      // Use the signIn function from the hook
       await signIn(code, request?.codeVerifier, redirectUri);
     },
     [request?.codeVerifier, request?.state, response, signIn]
