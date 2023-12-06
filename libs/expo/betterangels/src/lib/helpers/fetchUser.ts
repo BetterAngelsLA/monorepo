@@ -25,7 +25,7 @@ export default async function fetchUser(apolloClient: ApolloClient<object>) {
       id: data.currentUser.id,
       user: data.currentUser.username,
       email: data.currentUser.email,
-      hasOrganization: true,
+      hasOrganization: true, // TODO: this is a hack since this attribute does not exist
     };
   } catch (e) {
     console.log('Error getting user:', e);
