@@ -12,7 +12,6 @@ import {
   SearchableDropdown,
 } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
-import { apiUrl } from '../../../config';
 
 export default function TabOneScreen() {
   const { user } = useUser();
@@ -35,7 +34,7 @@ export default function TabOneScreen() {
         <Button
           icon={<ArrowLeftToArcIcon size="xs" />}
           size="sm"
-          onPress={() => signOut(apiUrl as string)}
+          onPress={() => signOut()}
           variant="negative"
           title="Sign Out"
         />
