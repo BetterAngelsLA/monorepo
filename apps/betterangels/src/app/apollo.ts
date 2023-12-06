@@ -1,7 +1,7 @@
 import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { csrfLink } from '@monorepo/expo/betterangels';
 import { RestLink } from 'apollo-link-rest';
-import { apiUrl } from './config';
+import { apiUrl } from '../../config';
 
 const restLink = new RestLink({
   uri: apiUrl,
