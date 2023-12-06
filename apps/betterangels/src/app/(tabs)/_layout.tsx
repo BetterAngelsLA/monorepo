@@ -1,6 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Redirect, Tabs } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useUser } from '@monorepo/expo/betterangels';
 import {
@@ -66,20 +66,20 @@ export default function TabLayout() {
             </View>
           ),
           headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color="black"
-                    style={{
-                      marginRight: Spacings.sm,
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  />
-                )}
-              </Pressable>
+            <Link
+              href={{
+                pathname: '/add-note/[clientId]',
+                params: { clientId: 'davit@betterangeld.la' },
+              }}
+            >
+              <FontAwesome
+                name="info-circle"
+                size={25}
+                color="black"
+                style={{
+                  marginRight: Spacings.sm,
+                }}
+              />
             </Link>
           ),
         }}

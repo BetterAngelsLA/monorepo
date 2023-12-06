@@ -2,7 +2,15 @@ export interface IIconProps {
   size?: TIconSizes;
   color?: string;
   rotate?: string;
+  mb?: TSpacing;
+  mt?: TSpacing;
+  my?: TSpacing;
+  mx?: TSpacing;
+  ml?: TSpacing;
+  mr?: TSpacing;
 }
+
+type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
