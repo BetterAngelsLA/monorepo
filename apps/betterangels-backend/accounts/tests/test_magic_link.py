@@ -84,21 +84,20 @@ class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
     def test_generate_magic_link(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
 
-        with patch("accounts.services.send_magic_link") as mock_send_magic_link:
-            query = """
-            mutation GenerateMagicLink($input: MagicLinkInput!) {
-                generateMagicLink(input: $input) {
-                    message
-                }
+        query = """
+        mutation GenerateMagicLink($input: MagicLinkInput!) {
+            generateMagicLink(input: $input) {
+                message
             }
-            """
-            variables = {"input": {"email": user.email}}
-            response = self.execute_graphql_query(query, variables=variables)
+        }
+        """
+        variables = {"input": {"email": user.email}}
+        response = self.execute_graphql_query(query, variables=variables)
 
-            # Check if send_magic_link was called with the correct arguments
-            mock_send_magic_link.assert_called_once_with(user.email, ANY)
-
-            self.assertIsNone(response.get("errors"))
-            self.assertEqual(
-                response["data"]["generateMagicLink"]["message"], "Email link sent."
-            )
+        # Check if send_magic_link was called with the correct arguments
+        emails = Email.objects.all()
+        self.assertEqual(len(emails), 1)
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(
+            response["data"]["generateMagicLink"]["message"], "Email link sent."
+        )
