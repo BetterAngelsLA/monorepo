@@ -5,6 +5,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IDME_CLIENT_ID": "6cafcb688f95f8bd8e19921f3f7d7f3b",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect"
       }
     },
@@ -14,6 +15,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
+        "EXPO_PUBLIC_IDME_CLIENT_ID": "6cafcb688f95f8bd8e19921f3f7d7f3b",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect"
       },
       "channel": "development"
@@ -25,6 +27,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "<FILL_FOR_PRODUCTION>",
         "EXPO_PUBLIC_CLIENT_ID": "<FILL_FOR_PRODUCTION>",
+        "EXPO_PUBLIC_IDME_CLIENT_ID": "<FILL_FOR_PRODUCTION>",
         "EXPO_PUBLIC_REDIRECT_URL": "<FILL_FOR_PRODUCTION>"
       },
       "channel": "production"
