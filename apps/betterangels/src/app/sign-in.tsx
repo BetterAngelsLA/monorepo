@@ -5,7 +5,7 @@ import {
   IDME_AUTH_MUTATION,
   useSignIn,
 } from '@monorepo/expo/betterangels';
-import { GoogleIcon } from '@monorepo/expo/shared/icons';
+import { IdMeIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
@@ -204,9 +204,9 @@ export default function SignIn() {
           <Button
             mb="xs"
             size="full"
-            title={`${FLOW[flow].link} with Google`}
+            title={`${FLOW[flow].link} with ID.me`}
             align="flex-start"
-            icon={<GoogleIcon size="sm" />}
+            icon={<IdMeIcon size="lg" />}
             fontFamily="IBM-bold"
             variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
