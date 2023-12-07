@@ -34,6 +34,12 @@ export default function useSignIn(mutation: DocumentNode) {
   useEffect(() => {
     if (userData && userData.currentUser) {
       setUser(userData.currentUser);
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (userData && userData.currentUser) {
+      setUser(userData.currentUser);
       router.replace(userData.currentUser.hasOrganization ? '/' : '/welcome');
     }
   }, [userData, setUser]);
