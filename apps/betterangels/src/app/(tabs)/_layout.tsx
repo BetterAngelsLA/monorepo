@@ -24,7 +24,6 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   const { user, isLoading } = useUser();
-
   if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
