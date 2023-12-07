@@ -63,148 +63,133 @@ export default function TabLayout() {
           },
         }}
       >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: '',
-          headerShadowVisible: false,
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidHouseIcon color={color} />
-              ) : (
-                <HouseIcon color={color} />
-              )}
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: '',
+            headerShadowVisible: false,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidHouseIcon color={color} />
+                ) : (
+                  <HouseIcon color={color} />
+                )}
 
-              <BodyText color={color} size="xs">
-                Home
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="appointment"
-        options={{
-          href: null,
-          title: 'Appointment',
-          tabBarIcon: ({ focused, color }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidCalendarIcon color={color} />
-              ) : (
-                <CalendarIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Appointment
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="clients"
-        options={{
-          title: 'Clients',
-          tabBarIcon: ({ focused, color }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidUsersIcon color={color} />
-              ) : (
-                <UsersIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Clients
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="drawerPlaceholder"
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            openModal();
-          },
-        }}
-        options={{
-          title: '',
-          tabBarIcon: () => (
-            <View style={styles.wrapper}>
-              <View style={styles.middleButton}>
-                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                <BodyText color={color} size="xs">
+                  Home
+                </BodyText>
               </View>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidMapIcon color={color} />
-              ) : (
-                <MapIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Map
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="teams"
-        options={{
-          href: null,
-          title: '',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidSitemapIcon color={color} />
-              ) : (
-                <SitemapIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Teams
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendar',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              {focused ? (
-                <SolidCalendarIcon color={color} />
-              ) : (
-                <CalendarIcon color={color} />
-              )}
-              <BodyText color={color} size="xs">
-                Calendar
-              </BodyText>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          href: null,
-          tabBarIcon: ({ color }) => (
-            <View style={{ alignItems: 'center' }}>
-              <View style={styles.profileContainer}>
-                <Text style={styles.profileText}>
-                  {user.username?.slice(0, 2)}
-                </Text>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="appointment"
+          options={{
+            href: null,
+            title: 'Appointment',
+            tabBarIcon: ({ focused, color }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidCalendarIcon color={color} />
+                ) : (
+                  <CalendarIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Appointment
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="clients"
+          options={{
+            title: 'Clients',
+            tabBarIcon: ({ focused, color }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidUsersIcon color={color} />
+                ) : (
+                  <UsersIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Clients
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="drawerPlaceholder"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openModal();
+            },
+          }}
+          options={{
+            title: '',
+            tabBarIcon: () => (
+              <View style={styles.wrapper}>
+                <View style={styles.middleButton}>
+                  <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                </View>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="map"
+          options={{
+            title: 'Map',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidMapIcon color={color} />
+                ) : (
+                  <MapIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Map
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="teams"
+          options={{
+            href: null,
+            title: '',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidSitemapIcon color={color} />
+                ) : (
+                  <SitemapIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Teams
+                </BodyText>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="calendar"
+          options={{
+            title: 'Calendar',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={{ alignItems: 'center' }}>
+                {focused ? (
+                  <SolidCalendarIcon color={color} />
+                ) : (
+                  <CalendarIcon color={color} />
+                )}
+                <BodyText color={color} size="xs">
+                  Calendar
+                </BodyText>
               </View>
             ),
           }}
@@ -213,6 +198,7 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: 'Profile',
+            href: null,
             tabBarIcon: ({ color }) => (
               <View style={{ alignItems: 'center' }}>
                 <View style={styles.profileContainer}>
