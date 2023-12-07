@@ -15,7 +15,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             }
         }
         """
-        response = self.execute_graphql_query(query)
+        response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertIsNone(response["data"]["currentUser"])
 
@@ -31,7 +31,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             }
         }
         """
-        response = self.execute_graphql_query(query)
+        response = self.execute_graphql(query)
 
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["currentUser"])

@@ -12,7 +12,7 @@ class GraphQLTestCaseMixin:
             super(TestCase, self).setUp()
         self.graphql_client = Client()
 
-    def execute_graphql_query(
+    def execute_graphql(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         response = self.graphql_client.post(
