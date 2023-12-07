@@ -20,7 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
+  if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
     return <Redirect href="/auth" />;
