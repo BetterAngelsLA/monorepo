@@ -90,7 +90,7 @@ class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
         }
         """
         variables = {"input": {"email": user.email}}
-        response = self.execute_graphql_query(query, variables=variables)
+        response = self.execute_graphql(query, variables=variables)
 
         self.assertIsNone(response.get("errors"))
         self.assertEqual(

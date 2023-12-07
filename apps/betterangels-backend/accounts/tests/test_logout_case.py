@@ -13,7 +13,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             logout
         }
         """
-        response = self.execute_graphql_query(query)
+        response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], False)
 
@@ -29,7 +29,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             logout
         }
         """
-        response = self.execute_graphql_query(query)
+        response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
         self.assertIsNone(cache.get(session_cache_key))
