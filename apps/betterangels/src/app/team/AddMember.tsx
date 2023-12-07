@@ -37,6 +37,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         They will receive the invite via email so they can sign up later on.
       </BodyText>
       <Button
+        accessibilityHint="opens popup to view already invited members"
         disabled
         mb="md"
         size="full"
@@ -46,6 +47,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
       <Input mb="sm" label="First Name" control={control} name="firstName" />
       <Input mb="sm" label="Last Name" control={control} name="lastName" />
       <SearchableDropdown
+        accessibilityHint="searches for the user's role"
         mb="sm"
         setExternalValue={(value) => console.log(value)}
         data={['Case Manager', 'Client Supportive Services']}
@@ -68,6 +70,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         />
         <View style={{ marginBottom: Spacings.sm }}>
           <Button
+            accessibilityHint="adds a tag that comes from other Team Name input"
             onPress={onAddingTag}
             ml="xs"
             size="auto"
@@ -93,8 +96,15 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         </View>
       )}
 
-      <Button mb="sm" variant="primary" size="full" title="Send Invite" />
       <Button
+        accessibilityHint="sends an invite"
+        mb="sm"
+        variant="primary"
+        size="full"
+        title="Send Invite"
+      />
+      <Button
+        accessibilityHint="goes to main teams screen"
         onPress={() => setFlow('1')}
         variant="secondary"
         size="full"
