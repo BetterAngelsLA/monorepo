@@ -77,6 +77,7 @@ export default function SignIn() {
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
   const discovery = useAutoDiscovery(discoveryUrl);
+  // const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   console.log('DISCOVERY', JSON.stringify(discovery));
 
   const { setUser } = useUser();
@@ -110,12 +111,12 @@ export default function SignIn() {
   // );
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
-      clientId: '50defdba4cc82d3007c33bd73da38d50',
-      // clientId: '6cafcb688f95f8bd8e19921f3f7d7f3b',
-      scopes: ['profile'],
+      // clientId: '50defdba4cc82d3007c33bd73da38d50',
+      clientId: '6cafcb688f95f8bd8e19921f3f7d7f3b',
+      scopes: ['fortified_identity'],
       redirectUri,
       state: generatedState,
-      usePKCE: false,
+      usePKCE: true,
       prompt: AuthSession.Prompt.Login,
       responseType: 'code',
     },

@@ -138,7 +138,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "OAUTH_PKCE_ENABLED": True,
     },
     "idme": {
-        "SCOPE": ["profile", "email"],
+        "SCOPE": ["fortified_identity"],
         "APP": {
             "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
             "secret": env("SOCIALACCOUNT_IDME_SECRET"),
