@@ -108,7 +108,6 @@ export { default as VideoIcon } from './components/VideoIcon';
 export { default as WalkingIcon } from './components/WalkingIcon';
 export { default as WarehouseIcon } from './components/WarehouseIcon';
 export { default as WarningIcon } from './components/WarningIcon';
-export { default as Windowsicon } from './components/WindowsIcon';
 export { default as XmarkIcon } from './components/XmarkIcon';
 export * from './constant';
 export * from './types';

@@ -1,38 +1,22 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { fetchUser } from '../../helpers';
+import { useQuery } from '@apollo/client';
+import { GET_CURRENT_USER } from '../../apollo/graphql';
 import UserContext, { TUser } from './UserContext';
 
 interface UserProviderProps {
   children: ReactNode;
-  apiUrl: string | undefined;
 }
 
-function useProtectedRoute(apiUrl: string) {
+export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { data, loading: isLoading } = useQuery(GET_CURRENT_USER);
 
   useEffect(() => {
-    async function getUserAndNavigate() {
-      try {
-        const user = await fetchUser(apiUrl);
-        setUser(user);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsLoading(false);
-      }
+    if (data && !isLoading) {
+      setUser(data.currentUser);
     }
-
-    getUserAndNavigate();
-  }, []);
-
-  return { user, setUser, isLoading };
-}
-
-export default function UserProvider({ children, apiUrl }: UserProviderProps) {
-  if (!apiUrl) throw new Error('env apiUrl is not defined');
-  const { isLoading, user, setUser } = useProtectedRoute(apiUrl);
+  }, [data, isLoading]);
 
   const value = useMemo(
     () => ({

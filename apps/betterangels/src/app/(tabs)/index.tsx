@@ -1,6 +1,13 @@
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
+import { MainScrollContainer, useSignOut } from '@monorepo/expo/betterangels';
 import {
   BarsIcon,
   BellIcon,
@@ -140,11 +147,21 @@ const TOOLS = [
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
   const navigation = useNavigation();
+  const { signOut } = useSignOut();
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerContainer}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="focuses on input to search"
+            accessible
+            accessibilityLabel="Navbar Search Icon"
+            onPress={() => signOut()}
+          >
+            <Text>Signout</Text>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityHint="focuses on input to search"
