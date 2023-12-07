@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Any, List
+from typing import Any, Dict, List
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.providers.base import ProviderAccount
@@ -19,11 +19,13 @@ class IdmeProvider(OAuth2Provider):
         scope = ["fortified_identity"]
         return scope
 
-    def extract_uid(self, data: dict[str, str]) -> str:
+    def extract_uid(self, data: Dict[str, List[Dict[str, str]]]) -> str:
         uuid_object = [attr for attr in data["attributes"] if attr["handle"] == "uuid"]
         return str(uuid_object[0]["value"])
 
-    def extract_common_fields(self, data: Any) -> dict[str, str]:
+    def extract_common_fields(
+        self, data: Dict[str, List[Dict[str, str]]]
+    ) -> dict[str, str]:
         converted_data = {}
         for k, v in groupby(data["attributes"], key=lambda attr: attr["handle"]):
             converted_data[k] = list(v)[0]["value"]
