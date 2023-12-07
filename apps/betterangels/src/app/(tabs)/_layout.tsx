@@ -1,18 +1,21 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Redirect, Tabs } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Redirect, Tabs } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
   HouseIcon,
+  MapIcon,
   PlusIcon,
   SitemapIcon,
   SolidCalendarIcon,
   SolidHouseIcon,
+  SolidMapIcon,
   SolidSitemapIcon,
+  SolidUsersIcon,
+  UsersIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,7 +54,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: '',
+          headerShadowVisible: false,
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               {focused ? (
@@ -65,28 +69,12 @@ export default function TabLayout() {
               </BodyText>
             </View>
           ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color="black"
-                    style={{
-                      marginRight: Spacings.sm,
-                      opacity: pressed ? 0.5 : 1,
-                    }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
         }}
       />
       <Tabs.Screen
         name="appointment"
         options={{
+          href: null,
           title: 'Appointment',
           tabBarIcon: ({ focused, color }) => (
             <View style={{ alignItems: 'center' }}>
@@ -97,6 +85,24 @@ export default function TabLayout() {
               )}
               <BodyText color={color} size="xs">
                 Appointment
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: 'Clients',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidUsersIcon color={color} />
+              ) : (
+                <UsersIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Clients
               </BodyText>
             </View>
           ),
@@ -114,16 +120,34 @@ export default function TabLayout() {
           tabBarIcon: () => (
             <View style={styles.wrapper}>
               <View style={styles.middleButton}>
-                <PlusIcon />
+                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
               </View>
             </View>
           ),
         }}
       />
-
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidMapIcon color={color} />
+              ) : (
+                <MapIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Map
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
       <Tabs.Screen
         name="teams"
         options={{
+          href: null,
           title: '',
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
@@ -140,9 +164,28 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'Calendar',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {focused ? (
+                <SolidCalendarIcon color={color} />
+              ) : (
+                <CalendarIcon color={color} />
+              )}
+              <BodyText color={color} size="xs">
+                Calendar
+              </BodyText>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
+          href: null,
           tabBarIcon: ({ color }) => (
             <View style={{ alignItems: 'center' }}>
               <View style={styles.profileContainer}>

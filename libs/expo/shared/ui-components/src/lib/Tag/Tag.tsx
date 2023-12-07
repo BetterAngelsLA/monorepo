@@ -13,7 +13,13 @@ export function Tag(props: ITagProps) {
   return (
     <View style={styles.container}>
       <BodyText>{value}</BodyText>
-      <Pressable onPress={onRemove} style={styles.icon}>
+      <Pressable
+        accessible
+        accessibilityRole="button"
+        accessibilityHint="removes the tag"
+        onPress={onRemove}
+        style={styles.icon}
+      >
         <XmarkIcon size="sm" color={Colors.NEUTRAL_DARK} />
       </Pressable>
     </View>
