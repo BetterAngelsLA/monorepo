@@ -200,6 +200,7 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
+            accessibilityHint="authorizes with google"
             mb="xs"
             size="full"
             title={`${FLOW[flow].link} with ID.me`}
@@ -211,6 +212,7 @@ export default function SignIn() {
             disabled={!generatedState && !request}
           />
           <Button
+            accessibilityHint="send magic link for forgotten password"
             mb="xs"
             title="Generate Magic Link"
             size="full"
