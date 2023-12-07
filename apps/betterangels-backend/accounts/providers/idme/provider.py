@@ -36,7 +36,9 @@ class IdmeProvider(OAuth2Provider):
             name=converted_data["fname"] + " " + converted_data["lname"],
         )
 
-    def extract_email_addresses(self, data: Any) -> List[EmailAddress]:
+    def extract_email_addresses(
+        self, data: Dict[str, List[Dict[str, str]]]
+    ) -> List[EmailAddress]:
         email = [attr for attr in data["attributes"] if attr["handle"] == "email"]
 
         ret = []
