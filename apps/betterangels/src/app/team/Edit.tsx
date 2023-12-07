@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   Button,
@@ -8,6 +8,7 @@ import {
   StatusBadge,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { Dispatch, SetStateAction } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,11 +34,11 @@ const INVITED_USERS: TInvitedUsers[] = [
 
 interface ITeamEditScreenProps {
   teamId: string | undefined;
-  setIsEdit: (e: boolean) => void;
+  setFlow: Dispatch<SetStateAction<string>>;
 }
 
 export default function TeamEditScreen(props: ITeamEditScreenProps) {
-  const { setIsEdit, teamId } = props;
+  const { setFlow } = props;
   const { control } = useForm({
     defaultValues: {
       description:
@@ -73,9 +74,10 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
           <View style={{ flexDirection: 'row' }}>
             <StatusBadge title={user.status} />
             <Button
+              accessibilityHint={`goes to edit invited user ${user.name}`}
               ml="xs"
-              fontSize={14}
-              height={32}
+              fontSize="sm"
+              height="sm"
               variant="secondary"
               title="Edit"
               size="auto"
@@ -84,21 +86,28 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         </View>
       ))}
       <Button
+        accessibilityHint="goes to add team members screen"
+        onPress={() => setFlow('3')}
         mt="sm"
         mb="xl"
         size="full"
         variant="secondary"
         title="Add Team members"
       />
-      <Button title="Delete This Team" size="full" variant="negative" />
+      <Button
+        accessibilityHint="opens the popup to delete this team"
+        title="Delete This Team"
+        size="full"
+        variant="negative"
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   invitedUser: {
-    paddingVertical: 16,
-    paddingRight: 16,
+    paddingVertical: Spacings.sm,
+    paddingRight: Spacings.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

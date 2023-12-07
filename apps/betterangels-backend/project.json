@@ -77,8 +77,7 @@
         "commands": [
           "poetry run flake8 .",
           "poetry run black --check .",
-          "poetry run isort . --check-only",
-          "poetry run mypy --config-file=../../mypy.ini ."
+          "poetry run isort . --check-only"
         ],
         "cwd": "apps/betterangels-backend",
         "parallel": false
@@ -93,6 +92,14 @@
       "options": {
         "command": "poetry run python manage.py test",
         "cwd": "apps/betterangels-backend"
+      }
+    },
+    "typecheck": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": ["poetry run mypy --config-file=../../mypy.ini ."],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
       }
     }
   },

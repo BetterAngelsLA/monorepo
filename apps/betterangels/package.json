@@ -33,7 +33,10 @@
     "react-native-screens": "*",
     "expo-updates": "*",
     "@storybook/react": "*",
-    "react-hook-form": "*"
+    "react-hook-form": "*",
+    "@apollo/client": "*",
+    "apollo-link-rest": "*",
+    "rxjs": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",

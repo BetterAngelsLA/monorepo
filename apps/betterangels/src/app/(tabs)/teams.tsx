@@ -8,7 +8,7 @@ import {
 
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   H1,
@@ -42,20 +42,36 @@ export default function TeamsScreen() {
   const navigation = useNavigation();
   const router = useRouter();
 
-  const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
-  const [teams, setTeams] = useState<Array<ITeam> | null>(TEAMS);
+  const [, setSelectedTeam] = useState<string | undefined>();
+  const [teams] = useState<Array<ITeam> | null>(TEAMS);
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerContainer}>
-          <Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="focuses on input to search"
+            accessible
+            accessibilityLabel="Navbar Search Icon"
+          >
             <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable style={{ marginHorizontal: 24 }}>
+          <Pressable
+            accessible
+            accessibilityRole="button"
+            accessibilityHint="opens notifications screen"
+            accessibilityLabel="Navbar Notifications Icon"
+            style={{ marginHorizontal: Spacings.md }}
+          >
             <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
-          <Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessible
+            accessibilityHint="opens menu popup"
+            accessibilityLabel="Navbar Menu Icon"
+          >
             <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
           </Pressable>
         </View>
@@ -70,6 +86,7 @@ export default function TeamsScreen() {
         Add your team names in order to build your teams.
       </BodyText>
       <SearchableDropdown
+        accessibilityHint="searches for a team"
         mb="lg"
         setExternalValue={setSelectedTeam}
         data={['Clinical', 'Compliance', 'E6 Outreach']}
@@ -81,6 +98,7 @@ export default function TeamsScreen() {
       {teams && teams.length < 1 ? (
         <View style={{ alignItems: 'center' }}>
           <Image
+            accessibilityIgnoresInvertColors={true}
             height={200}
             width={200}
             source={require('../assets/images/no-teams.png')}
@@ -92,8 +110,10 @@ export default function TeamsScreen() {
       ) : (
         teams?.map((team, idx) => (
           <TouchableOpacity
+            accessible
+            accessibilityHint={`opens selected ${team.title} single page`}
             onPress={() => router.push(`/team/${team.id}`)}
-            style={{ padding: 16, marginTop: 24 }}
+            style={{ padding: Spacings.sm, marginTop: Spacings.md }}
             key={idx}
           >
             <BodyText>{team.title}</BodyText>
@@ -108,15 +128,11 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 13,
+    marginRight: Spacings.md,
   },
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
 });

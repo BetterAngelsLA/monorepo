@@ -1,20 +1,21 @@
+import { useMutation } from '@apollo/client';
 import {
   AuthContainer,
-  fetchUser,
-  useAuthStore,
-  useUser,
+  GENERATE_MAGIC_LINK_MUTATION,
+  ID_ME_AUTH_MUTATION,
+  useSignIn,
 } from '@monorepo/expo/betterangels';
-import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { GoogleIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
-import { apiUrl, clientId, redirectUri } from '../../config';
+import { redirectUri } from '../../config';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -46,7 +47,6 @@ const FLOW: TAuthFLow = {
 
 WebBrowser.maybeCompleteAuthSession();
 
-// const discoveryUrl = 'https://accounts.google.com';
 const discoveryUrl = 'https://api.idmelabs.com/oidc';
 const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
@@ -65,53 +65,28 @@ function generateStatePayload(length = 32) {
   return base64urlEncode(JSON.stringify(payload));
 }
 
-const magicLink = async () => {
-  await fetch(`${apiUrl}/magic-auth/generate-link`, {
-    method: 'POST',
-  });
-};
-
 export default function SignIn() {
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
-  const discovery = useAutoDiscovery(discoveryUrl);
-  // const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
-  console.log('DISCOVERY', JSON.stringify(discovery));
-
-  const { setUser } = useUser();
+  const [
+    generateMagicLink,
+    { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
+  ] = useMutation(GENERATE_MAGIC_LINK_MUTATION);
+  const { signIn } = useSignIn(ID_ME_AUTH_MUTATION);
+  const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { type } = useLocalSearchParams();
-  const { setCsrfCookieFromResponse } = useAuthStore();
-
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
-
-  if (!clientId || !redirectUri || !apiUrl) {
-    throw new Error('env required');
-  }
-
-  console.log('redirect uri', redirectUri);
 
   if (type !== 'sign-up' && type !== 'sign-in') {
     throw new Error('auth param is incorrect');
   }
 
-  // const [request, response, promptAsync] = AuthSession.useAuthRequest(
-  //   {
-  //     clientId,
-  //     redirectUri,
-  //     scopes: ['profile', 'email'],
-  //     usePKCE: true,
-  //     state: generatedState,
-  //     prompt: AuthSession.Prompt.SelectAccount,
-  //   },
-  //   discovery
-  // );
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
-      // clientId: '50defdba4cc82d3007c33bd73da38d50',
       clientId: '6cafcb688f95f8bd8e19921f3f7d7f3b',
       scopes: ['fortified_identity'],
       redirectUri,
@@ -123,12 +98,8 @@ export default function SignIn() {
     discovery
   );
 
-  console.log('request', request, 'response', response);
-
   const handleDeepLinking = useCallback(
     async (url: string | null): Promise<void> => {
-      console.log('>>>>> HANDLE DEEP LINKINGI TRIGGERED', url);
-      console.log('>>>>> Response', response);
       // If no URL and no successful response, exit early.
       if (!url && (!response || response.type !== 'success')) return;
 
@@ -149,8 +120,8 @@ export default function SignIn() {
         state = response.params?.state;
       }
 
-      // If we still don't have a code, then we can't proceed.
-      if (!code || !redirectUri) return;
+      // If we still don't have a code or codeVerifier, then we can't proceed.
+      if (!code || !request?.codeVerifier) return;
 
       // Ensure the state is not invalid or tampered with
       if (!state || state !== request?.state) {
@@ -164,50 +135,9 @@ export default function SignIn() {
           return;
         }
       }
-
-      console.log('redirect uri', redirectUri);
-
-      try {
-        const response = await fetch(
-          // `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
-          //   redirectUri
-          // )}`,
-          `${apiUrl}/rest-auth/idme/?redirect_uri=${encodeURIComponent(
-            redirectUri
-          )}`,
-
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code: code,
-              code_verifier: request?.codeVerifier,
-            }),
-            credentials: 'include',
-          }
-        );
-        setCsrfCookieFromResponse(response);
-        const userData = await fetchUser(apiUrl);
-        setUser(userData);
-        if (userData.hasOrganization) {
-          router.replace('/');
-        } else {
-          router.replace('/welcome');
-        }
-      } catch (error) {
-        console.error('Error fetching access token', error);
-      }
+      await signIn(code, request?.codeVerifier, redirectUri);
     },
-    [
-      request?.codeVerifier,
-      request?.state,
-      response,
-      setCsrfCookieFromResponse,
-      setUser,
-    ]
+    [request?.codeVerifier, request?.state, response, signIn]
   );
 
   useEffect(() => {
@@ -231,11 +161,19 @@ export default function SignIn() {
 
   useEffect(() => {
     void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
-  }, [response]);
+  }, [handleDeepLinking, response]);
 
   useEffect(() => {
     setFlow(type);
   }, [type]);
+
+  const handleGenerateMagicLink = async () => {
+    try {
+      await generateMagicLink();
+    } catch (error) {
+      console.error('Error generating magic link:', error);
+    }
+  };
 
   if (!generatedState) {
     return <Text>Loading...</Text>;
@@ -250,7 +188,7 @@ export default function SignIn() {
         <H1
           mb="xl"
           color={Colors.BRAND_ANGEL_BLUE}
-          fontSize={32}
+          size="2xl"
           textTransform="uppercase"
         >
           {FLOW[flow].title}
@@ -260,25 +198,10 @@ export default function SignIn() {
             {FLOW[flow].message}
           </BodyText>
         )}
-        <View style={{ width: '100%', marginBottom: 24 }}>
+        <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            title="hello"
-            size="full"
-            variant="dark"
-            onPress={async () => await magicLink()}
-          />
-          <Button
+            accessibilityHint="authorizes with google"
             mb="xs"
-            title={`${FLOW[flow].link} with Microsoft`}
-            disabled
-            icon={<Windowsicon size="sm" />}
-            fontFamily="IBM-bold"
-            size="full"
-            variant="dark"
-            align="flex-start"
-            onPress={() => promptAsync({ showInRecents: false })}
-          />
-          <Button
             size="full"
             title={`${FLOW[flow].link} with Google`}
             align="flex-start"
@@ -288,6 +211,19 @@ export default function SignIn() {
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
           />
+          <Button
+            accessibilityHint="send magic link for forgotten password"
+            mb="xs"
+            title="Generate Magic Link"
+            size="full"
+            variant="dark"
+            onPress={handleGenerateMagicLink}
+            disabled={magicLinkLoading}
+          />
+          {magicLinkError && (
+            <Text>Error occurred: {magicLinkError.message}</Text>
+          )}
+          {magicLinkData && <Text>Magic Link Generated Successfully</Text>}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
@@ -309,29 +245,6 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 170,
     flex: 1,
-  },
-  title: {
-    fontFamily: 'IBM-semibold',
-    fontSize: 32,
-    textTransform: 'uppercase',
-    color: Colors.BRAND_ANGEL_BLUE,
-    marginBottom: 56,
-  },
-  message: {
-    fontFamily: 'Pragmatica-book',
-    color: Colors.WHITE,
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  question: {
-    fontFamily: 'Pragmatica-book',
-    color: Colors.WHITE,
-    fontSize: 16,
-  },
-  link: {
-    fontFamily: 'Pragmatica-bold',
-    textDecorationLine: 'underline',
-    color: Colors.BRAND_SKY_BLUE,
   },
 });
 

@@ -1,26 +1,13 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
-
-const LINE_HEIGHT = {
-  '32': 42,
-  '24': 31,
-};
-
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export function H1({
   children,
   textTransform,
-  fontSize = 24,
+  size = 'xl',
   mb,
   mt,
   mr,
@@ -31,7 +18,7 @@ export function H1({
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
-  fontSize?: 32 | 24;
+  size?: 'xl' | '2xl';
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -46,14 +33,14 @@ export function H1({
         styles.text,
         {
           textTransform,
-          fontSize,
-          lineHeight: LINE_HEIGHT[fontSize],
-          marginBottom: mb && SPACING[mb],
-          marginTop: mt && SPACING[mt],
-          marginLeft: ml && SPACING[ml],
-          marginRight: mr && SPACING[mr],
-          marginHorizontal: mx && SPACING[mx],
-          marginVertical: my && SPACING[my],
+          fontSize: FontSizes[size].fontSize,
+          lineHeight: FontSizes[size].lineHeight,
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           color,
         },
       ]}

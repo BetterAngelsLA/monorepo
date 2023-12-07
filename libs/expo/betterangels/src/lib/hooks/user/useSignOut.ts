@@ -1,29 +1,30 @@
+import { gql, useMutation } from '@apollo/client';
 import { router } from 'expo-router';
-import { CSRF_TOKEN } from '../../constants';
-import useAuthStore from '../useAuthStore';
+import { useCallback } from 'react';
+import { CSRF_COOKIE_NAME } from '../../constants';
+import { deleteItem } from '../../storage';
 import useUser from './useUser';
 
-export default function useSignOut() {
-  const { setUser } = useUser();
-  const { getItem, deleteItem } = useAuthStore();
+export const LOGOUT_MUTATION = gql`
+  mutation Logout {
+    logout
+  }
+`;
 
-  async function signOut(apiUrl: string) {
+export default function useSignOut() {
+  const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
+  const { setUser } = useUser();
+
+  const signOut = useCallback(async () => {
     try {
-      await fetch(`${apiUrl}/rest-auth/logout/`, {
-        method: 'POST', // *GET, POST, PUT, DELETE, etc.
-        credentials: 'include', // include, *same-origin, omit
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': await getItem(CSRF_TOKEN),
-        },
-      });
+      await logout();
       setUser(undefined);
       router.replace('/auth');
-      deleteItem(CSRF_TOKEN);
+      await deleteItem(CSRF_COOKIE_NAME);
     } catch (err) {
       console.error(err);
     }
-  }
+  }, [logout, setUser]);
 
-  return { signOut };
+  return { signOut, loading, error };
 }

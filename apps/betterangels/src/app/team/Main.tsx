@@ -1,10 +1,11 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   H1,
   H4,
   StatusBadge,
 } from '@monorepo/expo/shared/ui-components';
+import { Dispatch, SetStateAction } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 type TInvitedUsers = {
@@ -29,17 +30,17 @@ const INVITED_USERS: TInvitedUsers[] = [
 
 interface ITeamMainScreenProps {
   teamId: string | undefined;
-  setIsEdit: (e: boolean) => void;
+  setFlow: Dispatch<SetStateAction<string>>;
 }
 
 export default function TeamMainScreen(props: ITeamMainScreenProps) {
-  const { setIsEdit, teamId } = props;
+  const { setFlow } = props;
   return (
     <>
       <View style={styles.headerContainer}>
         <H1>Clinical Team</H1>
         <BodyText
-          onPress={() => setIsEdit(true)}
+          onPress={() => setFlow('2')}
           color={Colors.PRIMARY_LIGHT}
           textDecorationLine="underline"
         >
@@ -78,11 +79,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: Spacings.lg,
   },
   invitedUser: {
-    paddingVertical: 16,
-    paddingRight: 16,
+    paddingVertical: Spacings.sm,
+    paddingRight: Spacings.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

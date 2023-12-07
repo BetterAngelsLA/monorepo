@@ -7,6 +7,7 @@ import Logo from './assets/images/logo.svg';
 
 export default function Auth() {
   const router = useRouter();
+
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <SafeAreaView
@@ -20,6 +21,7 @@ export default function Auth() {
         <Logo width={200} height={30} />
         <View style={styles.buttonsContainer}>
           <Button
+            accessibilityHint="goes to sign in screen"
             mb="xs"
             onPress={() =>
               router.push({
@@ -34,6 +36,7 @@ export default function Auth() {
             variant="sky"
           />
           <Button
+            accessibilityHint="goes to sign up screen"
             onPress={() =>
               router.push({
                 pathname: '/sign-in',

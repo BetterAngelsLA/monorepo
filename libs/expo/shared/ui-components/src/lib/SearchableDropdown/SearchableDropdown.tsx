@@ -1,5 +1,5 @@
 import { PlusIcon, XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import {
   Dimensions,
@@ -18,14 +18,6 @@ import BodyText from '../BodyText';
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
 
-const SPACING = {
-  xs: 8,
-  sm: 16,
-  md: 24,
-  lg: 32,
-  xl: 40,
-};
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export function SearchableDropdown({
@@ -43,6 +35,7 @@ export function SearchableDropdown({
   mx,
   ml,
   mr,
+  accessibilityHint,
 }: {
   extraTitle?: string;
   label: string;
@@ -58,6 +51,7 @@ export function SearchableDropdown({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  accessibilityHint: string;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
@@ -103,12 +97,12 @@ export function SearchableDropdown({
     <View
       style={{
         ...containerStyle,
-        marginBottom: mb && SPACING[mb],
-        marginTop: mt && SPACING[mt],
-        marginLeft: ml && SPACING[ml],
-        marginRight: mr && SPACING[mr],
-        marginHorizontal: mx && SPACING[mx],
-        marginVertical: my && SPACING[my],
+        marginBottom: mb && Spacings[mb],
+        marginTop: mt && Spacings[mt],
+        marginLeft: ml && Spacings[ml],
+        marginRight: mr && Spacings[mr],
+        marginHorizontal: mx && Spacings[mx],
+        marginVertical: my && Spacings[my],
       }}
     >
       <BodyText mb="xs" size="sm">
@@ -116,10 +110,14 @@ export function SearchableDropdown({
       </BodyText>
       <View style={styles.textInput}>
         <TextInput
+          accessible
+          accessibilityRole="search"
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: 16,
+            paddingLeft: Spacings.sm,
             paddingRight: 38,
+            fontFamily: 'Pragmatica-book',
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -134,7 +132,13 @@ export function SearchableDropdown({
           onFocus={handleFocus}
         />
         {value && (
-          <Pressable onPress={() => setValue('')} style={styles.icon}>
+          <Pressable
+            accessible
+            accessibilityRole="button"
+            accessibilityHint="deletes input's value"
+            onPress={() => setValue('')}
+            style={styles.icon}
+          >
             <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
           </Pressable>
         )}
@@ -153,7 +157,10 @@ export function SearchableDropdown({
         >
           {data.map((item, idx) => (
             <TouchableOpacity
-              style={{ padding: 8 }}
+              accessible
+              accessibilityRole="button"
+              accessibilityHint={`selects ${item}`}
+              style={{ padding: Spacings.xs }}
               key={idx}
               onPress={() => handlePress(item)}
             >
@@ -162,8 +169,11 @@ export function SearchableDropdown({
           ))}
           {extraTitle && (
             <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              accessibilityHint={accessibilityHint}
               style={{
-                padding: 8,
+                padding: Spacings.xs,
                 borderTopWidth: 1,
                 borderTopColor: Colors.PRIMARY_EXTRA_DARK,
               }}
@@ -197,6 +207,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 100,
     borderWidth: 1,
+    borderRadius: 3,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },
