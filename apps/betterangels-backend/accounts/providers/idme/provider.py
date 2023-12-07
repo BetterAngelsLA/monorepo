@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.providers.base import ProviderAccount
