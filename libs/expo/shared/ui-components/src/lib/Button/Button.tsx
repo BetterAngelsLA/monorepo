@@ -76,6 +76,9 @@ interface IButtonProps {
   mr?: TSpacing;
   height?: 'sm' | 'md';
   fontSize?: 'sm' | 'md';
+  borderColor?: string;
+  accessibilityLabel?: string;
+  accessibilityHint: string;
   testID?: string;
 }
 
@@ -98,11 +101,16 @@ export function Button(props: IButtonProps) {
     ml,
     my,
     mx,
+    borderColor,
+    accessibilityLabel,
     testID,
+    accessibilityHint,
   } = props;
   return (
     <Pressable
       accessible
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityRole="button"
       disabled={disabled}
       style={[
@@ -116,6 +124,8 @@ export function Button(props: IButtonProps) {
             : VARIANTS[variant].bg,
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
+            : borderColor
+            ? borderColor
             : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],

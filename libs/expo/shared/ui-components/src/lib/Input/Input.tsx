@@ -124,7 +124,14 @@ export function Input(props: IInputProps) {
               {...rest}
             />
             {value && (
-              <Pressable onPress={() => onChange('')} style={styles.icon}>
+              <Pressable
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel="delete icon"
+                accessibilityHint="deletes input's value"
+                onPress={() => onChange('')}
+                style={styles.icon}
+              >
                 <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
               </Pressable>
             )}
