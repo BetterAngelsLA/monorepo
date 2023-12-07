@@ -10,8 +10,7 @@ function getEnvVariable(name: string): string {
   return value;
 }
 
-// export const clientId = getEnvVariable('EXPO_PUBLIC_CLIENT_ID');
-export const clientId = getEnvVariable('EXPO_PUBLIC_IDME_CLIENT_ID');
+export const clientId = getEnvVariable('EXPO_PUBLIC_CLIENT_ID');
 export const apiUrl = getEnvVariable('EXPO_PUBLIC_API_URL');
 export const redirectUri =
   Platform.OS === 'web'

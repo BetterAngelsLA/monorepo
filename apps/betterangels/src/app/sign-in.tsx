@@ -47,7 +47,6 @@ const FLOW: TAuthFLow = {
 
 WebBrowser.maybeCompleteAuthSession();
 
-// const discoveryUrl = 'https://accounts.google.com';
 const discoveryUrl = 'https://api.idmelabs.com/oidc';
 const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
@@ -90,7 +89,6 @@ export default function SignIn() {
     {
       clientId,
       redirectUri,
-      // scopes: ['profile', 'email'],
       scopes: ['fortified_identity'],
       usePKCE: true,
       state: generatedState,
