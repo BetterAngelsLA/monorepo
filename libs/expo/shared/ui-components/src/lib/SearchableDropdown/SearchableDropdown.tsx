@@ -35,6 +35,7 @@ export function SearchableDropdown({
   mx,
   ml,
   mr,
+  accessibilityHint,
 }: {
   extraTitle?: string;
   label: string;
@@ -50,6 +51,7 @@ export function SearchableDropdown({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  accessibilityHint: string;
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
@@ -108,6 +110,8 @@ export function SearchableDropdown({
       </BodyText>
       <View style={styles.textInput}>
         <TextInput
+          accessible
+          accessibilityRole="search"
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
             paddingLeft: Spacings.sm,
@@ -128,7 +132,13 @@ export function SearchableDropdown({
           onFocus={handleFocus}
         />
         {value && (
-          <Pressable onPress={() => setValue('')} style={styles.icon}>
+          <Pressable
+            accessible
+            accessibilityRole="button"
+            accessibilityHint="deletes input's value"
+            onPress={() => setValue('')}
+            style={styles.icon}
+          >
             <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
           </Pressable>
         )}
@@ -147,6 +157,9 @@ export function SearchableDropdown({
         >
           {data.map((item, idx) => (
             <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              accessibilityHint={`selects ${item}`}
               style={{ padding: Spacings.xs }}
               key={idx}
               onPress={() => handlePress(item)}
@@ -156,6 +169,9 @@ export function SearchableDropdown({
           ))}
           {extraTitle && (
             <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              accessibilityHint={accessibilityHint}
               style={{
                 padding: Spacings.xs,
                 borderTopWidth: 1,
