@@ -200,7 +200,7 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            accessibilityHint="authorizes with google"
+            accessibilityHint="authorizes with idme"
             mb="xs"
             size="full"
             title={`${FLOW[flow].link} with ID.me`}

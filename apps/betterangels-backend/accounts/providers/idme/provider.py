@@ -20,20 +20,20 @@ class IdmeProvider(OAuth2Provider):
         return scope
 
     def extract_uid(self, data: Dict[str, List[Dict[str, str]]]) -> str:
-        uuid_object = [attr for attr in data["attributes"] if attr["handle"] == "uuid"]
-        return str(uuid_object[0]["value"])
+        return next(
+            (attr["value"] for attr in data["attributes"] if attr["handle"] == "uuid"),
+            "",
+        )
 
     def extract_common_fields(
         self, data: Dict[str, List[Dict[str, str]]]
     ) -> dict[str, str]:
-        converted_data = {}
-        for k, v in groupby(data["attributes"], key=lambda attr: attr["handle"]):
-            converted_data[k] = list(v)[0]["value"]
+        attributes = {attr["handle"]: attr["value"] for attr in data["attributes"]}
         return dict(
-            email=converted_data["email"],
-            first_name=converted_data["fname"],
-            last_name=converted_data["lname"],
-            name=converted_data["fname"] + " " + converted_data["lname"],
+            email=attributes["email"],
+            first_name=attributes["fname"],
+            last_name=attributes["lname"],
+            name=attributes["fname"] + " " + attributes["lname"],
         )
 
     def extract_email_addresses(
