@@ -203,7 +203,7 @@ export default function SignIn() {
             mb="xs"
             size="full"
             title={`${FLOW[flow].link} with ID.me`}
-            align="flex-start"
+            align="center"
             icon={<IdMeIcon size="lg" />}
             fontFamily="IBM-bold"
             variant="dark"
