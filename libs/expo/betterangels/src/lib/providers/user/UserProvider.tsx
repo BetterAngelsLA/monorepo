@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 import { useQuery } from '@apollo/client';
 import { GET_CURRENT_USER } from '../../apollo/graphql';
@@ -18,14 +18,16 @@ export default function UserProvider({ children }: UserProviderProps) {
     }
   }, [data, isLoading]);
 
-  const value = useMemo(
-    () => ({
-      user,
-      setUser,
-      isLoading,
-    }),
-    [user, isLoading, setUser]
-  );
+  // const value = useMemo(
+  //   () => ({
+  //     user,
+  //     setUser,
+  //     isLoading,
+  //   }),
+  //   [user, isLoading, setUser]
+  // );
+
+  const value = { user, setUser, isLoading };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }

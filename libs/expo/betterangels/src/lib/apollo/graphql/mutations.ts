@@ -35,12 +35,12 @@ export const GOOGLE_AUTH_MUTATION = gql`
 `;
 
 export const IDME_AUTH_MUTATION = gql`
-  mutation GoogleAuth(
+  mutation IdmeAuth(
     $code: String!
     $codeVerifier: String!
     $redirectUri: String!
   ) {
-    googleAuth(
+    idmeAuth(
       input: {
         code: $code
         code_verifier: $codeVerifier
