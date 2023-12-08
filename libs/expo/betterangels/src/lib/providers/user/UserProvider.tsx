@@ -1,6 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react';
-
 import { useQuery } from '@apollo/client';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { GET_CURRENT_USER } from '../../apollo/graphql';
 import UserContext, { TUser } from './UserContext';
 
@@ -10,7 +9,24 @@ interface UserProviderProps {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
-  const { data, loading: isLoading } = useQuery(GET_CURRENT_USER);
+  const {
+    data,
+    loading: isLoading,
+    refetch: originalRefetch,
+  } = useQuery(GET_CURRENT_USER, {
+    fetchPolicy: 'network-only',
+  });
+
+  const refetchUser = useCallback(async () => {
+    try {
+      const response = await originalRefetch();
+      if (response.data) {
+        setUser(response.data.currentUser);
+      }
+    } catch (error) {
+      console.error('Error refetching user data:', error);
+    }
+  }, [originalRefetch]);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -18,7 +34,15 @@ export default function UserProvider({ children }: UserProviderProps) {
     }
   }, [data, isLoading]);
 
-  const value = { user, setUser, isLoading };
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      isLoading,
+      refetchUser,
+    }),
+    [user, isLoading, setUser]
+  );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }

@@ -17,8 +17,8 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
-      setUser(undefined);
       await deleteItem(CSRF_COOKIE_NAME);
+      setUser(undefined);
     } catch (err) {
       console.error(err);
     }
