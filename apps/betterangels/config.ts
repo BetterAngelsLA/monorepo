@@ -2,17 +2,22 @@
 import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 
-function getEnvVariable(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Environment variable ${name} is missing`);
+function loadConfig() {
+  const clientId = process.env.EXPO_PUBLIC_CLIENT_ID;
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const redirectUri =
+    Platform.OS === 'web'
+      ? makeRedirectUri()
+      : process.env.EXPO_PUBLIC_REDIRECT_URL;
+
+  // Check if any of the environment variables are undefined
+  if (!clientId || !apiUrl || !redirectUri) {
+    throw new Error('One or more environment variables are undefined.');
   }
-  return value;
+
+  return { apiUrl, clientId, redirectUri };
 }
 
-export const clientId = getEnvVariable('EXPO_PUBLIC_CLIENT_ID');
-export const apiUrl = getEnvVariable('EXPO_PUBLIC_API_URL');
-export const redirectUri =
-  Platform.OS === 'web'
-    ? makeRedirectUri()
-    : getEnvVariable('EXPO_PUBLIC_REDIRECT_URL');
+const { apiUrl, clientId, redirectUri } = loadConfig();
+
+export { apiUrl, clientId, redirectUri };

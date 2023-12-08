@@ -1,5 +1,4 @@
 import { gql, useMutation } from '@apollo/client';
-import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { CSRF_COOKIE_NAME } from '../../constants';
 import { deleteItem } from '../../storage';
@@ -18,9 +17,8 @@ export default function useSignOut() {
   const signOut = useCallback(async () => {
     try {
       await logout();
-      setUser(undefined);
-      router.replace('/auth');
       await deleteItem(CSRF_COOKIE_NAME);
+      setUser(undefined);
     } catch (err) {
       console.error(err);
     }
