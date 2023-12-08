@@ -47,7 +47,7 @@ describe('csrfLink', () => {
     jest.resetAllMocks();
   });
 
-  it('should extract and store CSRF token from GraphQL Response Set-Cookie header', async () => {
+  it('should extract and store CSRF token from Set-Cookie header', async () => {
     const assertLink = new ApolloLink((operation) => {
       const result = csrfLink.request(operation, mockForward);
       expect(result).toBeDefined();
@@ -68,33 +68,6 @@ describe('csrfLink', () => {
             'Set-Cookie': `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`,
           }),
         },
-      },
-    });
-  });
-
-  it('should extract and store CSRF token from Rest Response Set-Cookie header', async () => {
-    const assertLink = new ApolloLink((operation) => {
-      const result = csrfLink.request(operation, mockForward);
-      expect(result).toBeDefined();
-      apolloObservableToPromise(result).then(() => {
-        expect(setItem).toHaveBeenCalledWith(
-          CSRF_COOKIE_NAME,
-          TEST_CSRF_TOKEN_VALUE
-        );
-      });
-      return null;
-    });
-    const link = ApolloLink.from([assertLink]);
-    execute(link, {
-      query: TEST_QUERY,
-      context: {
-        restResponses: [
-          {
-            headers: new Headers({
-              'Set-Cookie': `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`,
-            }),
-          },
-        ],
       },
     });
   });

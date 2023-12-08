@@ -17,30 +17,16 @@ export const csrfLink = new ApolloLink((operation, forward) => {
     };
 
     const processResponse = (response: FetchResult) => {
-      const context = operation.getContext();
-      // Helper function to extract 'set-cookie' headers
-      const extractSetCookieHeader = (response: Response | undefined) =>
-        response?.headers.get('set-cookie');
-
-      // Get 'set-cookie' headers from GraphQL response
-      const graphqlCookie = extractSetCookieHeader(context['response']);
-      const graphqlCookies = graphqlCookie ? [graphqlCookie] : [];
-
-      // Get 'set-cookie' headers from REST responses
-      const restCookies = ((context['restResponses'] as Response[]) || [])
-        .map(extractSetCookieHeader)
-        .filter(Boolean);
-
-      // Extract CSRF token
-      const combinedCookies = [...graphqlCookies, ...restCookies].join('; ');
-      const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
-      const csrfTokenMatch = combinedCookies?.match(csrfTokenRegex);
-      const csrfToken = csrfTokenMatch?.[1];
-
-      if (csrfToken) {
-        setItem(CSRF_COOKIE_NAME, csrfToken);
+      const headers = operation.getContext()['response']?.headers;
+      if (headers) {
+        const cookies = headers.get('Set-Cookie');
+        const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
+        const csrfTokenMatch = cookies?.match(csrfTokenRegex);
+        const csrfToken = csrfTokenMatch?.[1];
+        if (csrfToken) {
+          setItem(CSRF_COOKIE_NAME, csrfToken);
+        }
       }
-
       return response;
     };
 
