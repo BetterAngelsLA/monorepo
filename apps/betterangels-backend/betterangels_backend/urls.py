@@ -19,38 +19,34 @@ Including another URLconf
 from typing import Any, Union
 
 from django.contrib import admin
-from django.http import HttpRequest, HttpResponse, HttpResponseNotAllowed
-from django.template.response import TemplateResponse
 from django.urls import include, path
 from django.views.generic.base import TemplateView
 from strawberry.django.views import GraphQLView
-from strawberry.http.exceptions import HTTPException
 
 from .schema import schema
 
+# class ProtectedGraphQLView(GraphQLView):
+#     """
+#     This subclass of GraphQLView is used to remove the CSRF exemption that is
+#     applied by default in Strawberry Django's GraphQLView. Strawberry Django
+#     typically exempts GraphQL views from CSRF checks to facilitate API interactions
+#     from various origins or clients. However, this exemption might not be desirable
+#     in all cases, especially when there's a need for increased security.
 
-class ProtectedGraphQLView(GraphQLView):
-    """
-    This subclass of GraphQLView is used to remove the CSRF exemption that is
-    applied by default in Strawberry Django's GraphQLView. Strawberry Django
-    typically exempts GraphQL views from CSRF checks to facilitate API interactions
-    from various origins or clients. However, this exemption might not be desirable
-    in all cases, especially when there's a need for increased security.
+#     By subclassing GraphQLView and not applying the @csrf_exempt decorator,
+#     this class effectively reinstates the default CSRF protection provided by Django.
+#     """
 
-    By subclassing GraphQLView and not applying the @csrf_exempt decorator,
-    this class effectively reinstates the default CSRF protection provided by Django.
-    """
-
-    def dispatch(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
-        try:
-            return self.run(request=request)
-        except HTTPException as e:
-            return HttpResponse(
-                content=e.reason,
-                status=e.status_code,
-            )
+#     def dispatch(
+#         self, request: HttpRequest, *args: Any, **kwargs: Any
+#     ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
+#         try:
+#             return self.run(request=request)
+#         except HTTPException as e:
+#             return HttpResponse(
+#                 content=e.reason,
+#                 status=e.status_code,
+#             )
 
 
 urlpatterns = [
@@ -58,5 +54,5 @@ urlpatterns = [
     path("", include("accounts.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
-    path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
+    path("graphql", GraphQLView.as_view(schema=schema)),
 ]
