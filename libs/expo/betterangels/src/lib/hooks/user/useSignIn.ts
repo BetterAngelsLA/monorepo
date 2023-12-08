@@ -10,14 +10,13 @@ export default function useSignIn(mutation: DocumentNode) {
   const signIn = useCallback(
     async (code: string, codeVerifier: string, redirectUri: string) => {
       try {
-        const response = await socialAuth({
+        await socialAuth({
           variables: {
             code,
             codeVerifier,
             redirectUri: encodeURIComponent(redirectUri),
           },
         });
-        // Now you can access the response data
         refetch();
       } catch (error) {
         console.error('Error during sign in:', error);
