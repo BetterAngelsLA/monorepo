@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import useUser from './useUser';
 
 export default function useSignIn(mutation: DocumentNode) {
-  const [socialAuth, { data, loading, error }] = useMutation(mutation);
+  const [socialAuth, { loading, error }] = useMutation(mutation);
   const { user, refetchUser: refetch } = useUser();
 
   const signIn = useCallback(
@@ -22,7 +22,7 @@ export default function useSignIn(mutation: DocumentNode) {
         console.error('Error during sign in:', error);
       }
     },
-    [socialAuth]
+    [socialAuth, refetch]
   );
 
   useEffect(() => {
