@@ -1,4 +1,4 @@
-import { gql, useQuery } from '@apollo/client';
+import { gql, useLazyQuery } from '@apollo/client';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import UserContext, { TUser } from './UserContext';
 
@@ -18,39 +18,32 @@ interface UserProviderProps {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
-  const {
-    data,
-    loading: isLoading,
-    refetch: originalRefetch,
-  } = useQuery(GET_CURRENT_USER, {
-    fetchPolicy: 'network-only',
-  });
-
-  const refetchUser = useCallback(async () => {
-    try {
-      const response = await originalRefetch();
-      if (response.data) {
-        setUser(response.data.currentUser);
-      }
-    } catch (error) {
-      console.error('Error refetching user data:', error);
+  const [fetchUser, { data, loading: isLoading, error }] = useLazyQuery(
+    GET_CURRENT_USER,
+    {
+      fetchPolicy: 'network-only',
     }
-  }, [originalRefetch]);
+  );
+
+  const refetchUser = useCallback(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   useEffect(() => {
-    if (data && !isLoading) {
+    if (data && data.currentUser) {
       setUser(data.currentUser);
     }
-  }, [data, isLoading]);
+  }, [data]);
 
   const value = useMemo(
     () => ({
       user,
       setUser,
       isLoading,
+      error,
       refetchUser,
     }),
-    [user, isLoading, setUser]
+    [user, isLoading, error, refetchUser]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

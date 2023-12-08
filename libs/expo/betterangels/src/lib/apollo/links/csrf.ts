@@ -1,55 +1,70 @@
-import { ApolloLink, FetchResult, Observable } from '@apollo/client';
+import { ApolloLink, Observable } from '@apollo/client';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
 import { getItem, setItem } from '../../storage';
 
-export const csrfLink = new ApolloLink((operation, forward) => {
-  return new Observable((observer) => {
-    const addCsrfTokenToRequest = async () => {
-      const token = await getItem(CSRF_COOKIE_NAME);
-      if (token) {
-        operation.setContext(({ headers = {} }) => ({
-          headers: {
-            ...headers,
-            [CSRF_HEADER_NAME]: token,
-          },
-        }));
-      }
-    };
+const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 
-    const processResponse = (response: FetchResult) => {
-      const context = operation.getContext();
-      // Helper function to extract 'set-cookie' headers
-      const extractSetCookieHeader = (response: Response | undefined) =>
-        response?.headers.get('set-cookie');
+export const csrfLink = (apiUrl: string) => {
+  return new ApolloLink((operation, forward) => {
+    return new Observable((observer) => {
+      const processOperation = async () => {
+        try {
+          let csrfToken = await getItem(CSRF_COOKIE_NAME);
+          if (!csrfToken) {
+            const response = await fetch(apiUrl, { credentials: 'include' });
+            const cookies = response.headers.get('Set-Cookie');
+            const csrfTokenMatch = cookies?.match(csrfTokenRegex);
+            csrfToken = csrfTokenMatch?.[1] || '';
+            if (csrfToken) {
+              await setItem(CSRF_COOKIE_NAME, csrfToken);
+            }
+          }
 
-      // Get 'set-cookie' headers from GraphQL response
-      const graphqlCookie = extractSetCookieHeader(context['response']);
-      const graphqlCookies = graphqlCookie ? [graphqlCookie] : [];
+          operation.setContext(({ headers = {} }) => ({
+            headers: {
+              ...headers,
+              [CSRF_HEADER_NAME]: csrfToken,
+            },
+          }));
 
-      // Get 'set-cookie' headers from REST responses
-      const restCookies = ((context['restResponses'] as Response[]) || [])
-        .map(extractSetCookieHeader)
-        .filter(Boolean);
+          // Forward the operation and process the response
+          forward(operation).subscribe({
+            next: (response) => {
+              const context = operation.getContext();
+              const extractSetCookieHeader = (response: Response | undefined) =>
+                response?.headers.get('set-cookie');
 
-      // Extract CSRF token
-      const combinedCookies = [...graphqlCookies, ...restCookies].join('; ');
-      const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
-      const csrfTokenMatch = combinedCookies?.match(csrfTokenRegex);
-      const csrfToken = csrfTokenMatch?.[1];
+              const graphqlCookie = extractSetCookieHeader(context['response']);
+              const graphqlCookies = graphqlCookie ? [graphqlCookie] : [];
 
-      if (csrfToken) {
-        setItem(CSRF_COOKIE_NAME, csrfToken);
-      }
+              const restCookies = (
+                (context['restResponses'] as Response[]) || []
+              )
+                .map(extractSetCookieHeader)
+                .filter(Boolean);
 
-      return response;
-    };
+              const combinedCookies = [...graphqlCookies, ...restCookies].join(
+                '; '
+              );
+              const csrfTokenMatch = combinedCookies.match(csrfTokenRegex);
+              const newCsrfToken = csrfTokenMatch?.[1];
 
-    addCsrfTokenToRequest().then(() => {
-      forward(operation).subscribe({
-        next: (response) => observer.next(processResponse(response)),
-        error: (e) => observer.error(e),
-        complete: () => observer.complete(),
-      });
+              if (newCsrfToken) {
+                setItem(CSRF_COOKIE_NAME, newCsrfToken);
+              }
+
+              observer.next(response);
+            },
+            error: observer.error.bind(observer),
+            complete: observer.complete.bind(observer),
+          });
+        } catch (error) {
+          console.error('Error in CSRF Apollo Link:', error);
+          observer.error(error);
+        }
+      };
+
+      processOperation();
     });
   });
-});
+};
