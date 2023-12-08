@@ -16,8 +16,6 @@ Including another URLconf
 """
 
 
-from typing import Any, Union
-
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
