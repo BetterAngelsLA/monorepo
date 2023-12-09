@@ -5,9 +5,7 @@ import useUser from './useUser';
 
 export default function useSignIn(mutation: DocumentNode) {
   const { user, refetchUser } = useUser();
-  const [socialAuth, { loading, error }] = useMutation(mutation, {
-    onCompleted: refetchUser,
-  });
+  const [socialAuth, { loading, error }] = useMutation(mutation);
 
   const signIn = useCallback(
     async (code: string, codeVerifier: string, redirectUri: string) => {
@@ -19,11 +17,12 @@ export default function useSignIn(mutation: DocumentNode) {
             redirectUri: encodeURIComponent(redirectUri),
           },
         });
+        refetchUser();
       } catch (signInError) {
         console.error('Error during sign in:', signInError);
       }
     },
-    [socialAuth]
+    [socialAuth, refetchUser]
   );
 
   useEffect(() => {
