@@ -39,7 +39,7 @@ const apolloObservableToPromise = (
 };
 
 describe('csrfLink', () => {
-  const apiUrl = 'https://api.example.com'; // Replace with actual API URL
+  const apiUrl = 'https://api.example.com';
 
   beforeEach(() => {
     jest.resetAllMocks();

@@ -38,26 +38,31 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
           forward(operation).subscribe({
             next: (response) => {
               const context = operation.getContext();
+              // Helper function to extract 'set-cookie' headers
               const extractSetCookieHeader = (response: Response | undefined) =>
                 response?.headers.get('set-cookie');
 
+              // Get 'set-cookie' headers from GraphQL response
               const graphqlCookie = extractSetCookieHeader(context['response']);
               const graphqlCookies = graphqlCookie ? [graphqlCookie] : [];
 
+              // Get 'set-cookie' headers from REST responses
               const restCookies = (
                 (context['restResponses'] as Response[]) || []
               )
                 .map(extractSetCookieHeader)
                 .filter(Boolean);
 
+              // Extract CSRF token
               const combinedCookies = [...graphqlCookies, ...restCookies].join(
                 '; '
               );
-              const csrfTokenMatch = combinedCookies.match(csrfTokenRegex);
-              const newCsrfToken = csrfTokenMatch?.[1];
+              const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
+              const csrfTokenMatch = combinedCookies?.match(csrfTokenRegex);
+              const csrfToken = csrfTokenMatch?.[1];
 
-              if (newCsrfToken) {
-                setItem(CSRF_COOKIE_NAME, newCsrfToken);
+              if (csrfToken) {
+                setItem(CSRF_COOKIE_NAME, csrfToken);
               }
 
               observer.next(response);
