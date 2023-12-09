@@ -4,26 +4,33 @@ import { getItem, setItem } from '../../storage';
 
 const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 
-export const csrfLink = (apiUrl: string) => {
+export const csrfLink = (apiUrl: string, customFetch = fetch) => {
   return new ApolloLink((operation, forward) => {
     return new Observable((observer) => {
       const processOperation = async () => {
         try {
-          let csrfToken = await getItem(CSRF_COOKIE_NAME);
+          // Attempt to get the CSRF token from storage
+          const csrfToken = await getItem(CSRF_COOKIE_NAME);
+
+          // If the token is not in storage, try to fetch it
           if (!csrfToken) {
-            const response = await fetch(apiUrl, { credentials: 'include' });
-            const cookies = response.headers.get('Set-Cookie');
+            const response = await customFetch(apiUrl, {
+              credentials: 'include',
+            });
+            const cookies = response.headers?.get('Set-Cookie');
             const csrfTokenMatch = cookies?.match(csrfTokenRegex);
-            csrfToken = csrfTokenMatch?.[1] || '';
-            if (csrfToken) {
-              await setItem(CSRF_COOKIE_NAME, csrfToken);
+
+            // If a token is found in the response, update csrfToken and store it
+            if (csrfTokenMatch?.[1]) {
+              await setItem(CSRF_COOKIE_NAME, csrfTokenMatch[1]);
             }
           }
 
+          // If a CSRF token is available, set it in the request headers
           operation.setContext(({ headers = {} }) => ({
             headers: {
               ...headers,
-              [CSRF_HEADER_NAME]: csrfToken,
+              ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
             },
           }));
 
