@@ -195,7 +195,7 @@ export default function TabOneScreen() {
         </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, signOut, user?.username]);
 
   return (
     <View style={{ flex: 1 }}>
