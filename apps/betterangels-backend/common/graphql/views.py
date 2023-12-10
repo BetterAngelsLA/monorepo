@@ -3,7 +3,6 @@ from typing import Any, Union
 from django.http import HttpRequest, HttpResponse, HttpResponseNotAllowed
 from django.template.response import TemplateResponse
 from strawberry.django.views import GraphQLView
-from strawberry.http.exceptions import HTTPException
 
 
 class ProtectedGraphQLView(GraphQLView):
@@ -21,10 +20,4 @@ class ProtectedGraphQLView(GraphQLView):
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
-        try:
-            return self.run(request=request)
-        except HTTPException as e:
-            return HttpResponse(
-                content=e.reason,
-                status=e.status_code,
-            )
+        return super().dispatch(request, *args, **kwargs)
