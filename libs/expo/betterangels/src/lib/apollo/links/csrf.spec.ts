@@ -73,6 +73,74 @@ describe('csrfLink', () => {
     });
   });
 
+  it('should extract and store CSRF token from GraphQL Response Set-Cookie header', async () => {
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+    const testLink = csrfLink(apiUrl, mockFetch);
+    const assertLink = new ApolloLink((operation) => {
+      const result = testLink.request(operation, mockForward);
+      expect(result).not.toBeNull();
+      if (result) {
+        apolloObservableToPromise(result).then(() => {
+          expect(setItem).toHaveBeenCalledWith(
+            CSRF_COOKIE_NAME,
+            TEST_CSRF_TOKEN_VALUE
+          );
+        });
+      }
+      return null;
+    });
+    execute(assertLink, {
+      query: TEST_QUERY,
+      context: {
+        response: {
+          headers: new Headers({
+            'Set-Cookie': `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`,
+          }),
+        },
+      },
+    });
+  });
+
+  it('should extract and store CSRF token from Rest Response Set-Cookie header', async () => {
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+    const testLink = csrfLink(apiUrl, mockFetch);
+    const assertLink = new ApolloLink((operation) => {
+      const result = testLink.request(operation, mockForward);
+      expect(result).not.toBeNull();
+      if (result) {
+        apolloObservableToPromise(result).then(() => {
+          expect(setItem).toHaveBeenCalledWith(
+            CSRF_COOKIE_NAME,
+            TEST_CSRF_TOKEN_VALUE
+          );
+        });
+      }
+      return null;
+    });
+    execute(assertLink, {
+      query: TEST_QUERY,
+      context: {
+        restResponses: [
+          {
+            headers: new Headers({
+              'Set-Cookie': `${CSRF_COOKIE_NAME}=${TEST_CSRF_TOKEN_VALUE};`,
+            }),
+          },
+        ],
+      },
+    });
+  });
+
   it('should not store CSRF token if Set-Cookie header is absent', async () => {
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -130,7 +198,7 @@ describe('csrfLink', () => {
       if (result) {
         apolloObservableToPromise(result).then(() => {
           const headers = operation.getContext()['headers'];
-          expect(headers).toBeUndefined();
+          expect(headers[CSRF_HEADER_NAME]).toBeUndefined();
         });
       }
       return null;
