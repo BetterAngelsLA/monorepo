@@ -45,7 +45,7 @@ export const csrfLink = (
               next: (response: FetchResult) => {
                 const context = operation.getContext();
                 const combinedCookies = [
-                  // Extract 'set-cookie' header from the response if it exists
+                  // Extract 'set-cookie' header from the GraphQL response if it exists
                   context['response']?.headers?.get('set-cookie'),
                   // Extract 'set-cookie' headers from any REST responses and filter out any null or undefined values
                   ...((context['restResponses'] as Response[]) || [])
