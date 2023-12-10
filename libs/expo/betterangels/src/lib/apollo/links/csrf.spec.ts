@@ -130,7 +130,7 @@ describe('csrfLink', () => {
       if (result) {
         apolloObservableToPromise(result).then(() => {
           const headers = operation.getContext()['headers'];
-          expect(headers[CSRF_HEADER_NAME]).toBeUndefined();
+          expect(headers).toBeUndefined();
         });
       }
       return null;

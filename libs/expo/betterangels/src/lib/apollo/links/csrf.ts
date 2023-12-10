@@ -7,7 +7,7 @@ const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 export const csrfLink = (apiUrl: string, customFetch = fetch) => {
   return new ApolloLink((operation, forward) => {
     return new Observable((observer) => {
-      const processOperation = async () => {
+      (async () => {
         try {
           let csrfToken = await getItem(CSRF_COOKIE_NAME);
 
@@ -24,12 +24,11 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
             }
           }
 
-          operation.setContext(({ headers = {} }) => ({
-            headers: {
-              ...headers,
-              ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
-            },
-          }));
+          if (csrfToken) {
+            operation.setContext(({ headers = {} }) => ({
+              headers: { ...headers, [CSRF_HEADER_NAME]: csrfToken },
+            }));
+          }
 
           forward(operation).subscribe({
             next: observer.next.bind(observer),
@@ -37,12 +36,9 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
             complete: observer.complete.bind(observer),
           });
         } catch (error) {
-          console.error('Error in CSRF Apollo Link:', error);
           observer.error(error);
         }
-      };
-
-      processOperation();
+      })();
     });
   });
 };
