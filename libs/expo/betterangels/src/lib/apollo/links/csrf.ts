@@ -4,10 +4,7 @@ import { getItem, setItem } from '../../storage';
 
 const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 
-const extractCsrfToken = async (
-  apiUrl: string,
-  customFetch: (url: string, init?: RequestInit) => Promise<Response>
-) => {
+const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
   let csrfToken = await getItem(CSRF_COOKIE_NAME);
   if (!csrfToken) {
     const response = await customFetch(apiUrl, { credentials: 'include' });
@@ -24,13 +21,10 @@ const extractCsrfToken = async (
 const updateHeadersWithCsrf = (csrfToken: string | null) =>
   csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {};
 
-export const csrfLink = (
-  apiUrl: string,
-  customFetch: (url: string, init?: RequestInit) => Promise<Response> = fetch
-) =>
+export const csrfLink = (apiUrl: string, customFetch = fetch) =>
   new ApolloLink(
     (operation, forward) =>
-      new Observable<FetchResult>((observer) => {
+      new Observable((observer) => {
         const processOperation = async () => {
           try {
             const csrfToken = await extractCsrfToken(apiUrl, customFetch);
