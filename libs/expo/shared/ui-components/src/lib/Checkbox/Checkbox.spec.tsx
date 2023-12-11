@@ -10,7 +10,7 @@ describe('Checkbox Component', () => {
       <Checkbox
         accessibilityHint={accessibilityHint}
         label="Check Me"
-        onCheck={() => {}}
+        onCheck={() => console.log('Checkbox checked')}
       />
     );
     expect(getByText('Check Me')).toBeTruthy();
@@ -51,7 +51,7 @@ describe('Checkbox Component', () => {
     const { getByText } = render(
       <Checkbox
         label="Accessible Checkbox"
-        onCheck={() => {}}
+        onCheck={() => console.log('Checkbox checked')}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
       />
@@ -66,7 +66,7 @@ describe('Checkbox Component', () => {
       <Checkbox
         accessibilityHint={accessibilityHint}
         label="Accessible Checkbox"
-        onCheck={() => {}}
+        onCheck={() => console.log('Checkbox checked')}
       />
     );
     expect(getByRole('button')).toBeTruthy();
