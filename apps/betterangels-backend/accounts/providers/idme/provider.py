@@ -1,4 +1,3 @@
-from itertools import groupby
 from typing import Dict, List
 
 from allauth.account.models import EmailAddress
