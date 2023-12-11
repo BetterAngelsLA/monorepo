@@ -1,4 +1,4 @@
-from accounts.views.auth_views import AuthRedirectView, GoogleLogin
+from accounts.views.auth_views import AuthRedirectView, GoogleLogin, IdMeLogin
 from accounts.views.class_views import SignUpView
 from django.urls import include, path
 from organizations.backends import invitation_backend
@@ -6,7 +6,10 @@ from sesame.views import LoginView
 
 urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
-    path("rest-auth/google/", GoogleLogin.as_view(), name="api_google_login"),
+    path(
+        "rest-auth/google/", GoogleLogin.as_view(), name="api_google_login"
+    ),  # Currently not being used
+    path("rest-auth/idme/", IdMeLogin.as_view(), name="api_idme_login"),
     path("auth-redirect", AuthRedirectView.as_view(), name="auth_redirect"),
     # magic link login urls
     path("magic-auth/login/", LoginView.as_view(), name="magic-auth-login"),

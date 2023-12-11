@@ -74,6 +74,7 @@ export { default as GoogleIcon } from './components/GoogleIcon';
 export { default as HeadSideBrainIcon } from './components/HeadSideBrainIcon';
 export { default as HouseBlankIcon } from './components/HouseBlankIcon';
 export { default as HouseIcon } from './components/HouseIcon';
+export { default as IdMeIcon } from './components/IdMeIcon';
 export { default as ImageIcon } from './components/ImageIcon';
 export { default as LocationDotIcon } from './components/LocationDotIcon';
 export { default as MagnifyingGlassIcon } from './components/MagnifyingGlassIcon';

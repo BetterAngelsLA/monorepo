@@ -2,10 +2,10 @@ import { useMutation } from '@apollo/client';
 import {
   AuthContainer,
   GENERATE_MAGIC_LINK_MUTATION,
-  GOOGLE_AUTH_MUTATION,
+  IDME_AUTH_MUTATION,
   useSignIn,
 } from '@monorepo/expo/betterangels';
-import { GoogleIcon } from '@monorepo/expo/shared/icons';
+import { IdMeIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
@@ -47,7 +47,7 @@ const FLOW: TAuthFLow = {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const discoveryUrl = 'https://accounts.google.com';
+const discoveryUrl = 'https://api.idmelabs.com/oidc';
 const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 function base64urlEncode(data: string) {
@@ -74,8 +74,8 @@ export default function SignIn() {
     generateMagicLink,
     { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
   ] = useMutation(GENERATE_MAGIC_LINK_MUTATION);
-  const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
-  const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
+  const { signIn } = useSignIn(IDME_AUTH_MUTATION);
+  const discovery = useAutoDiscoveryLocal(discoveryUrl);
   const { type } = useLocalSearchParams();
   useEffect(() => {
     setGeneratedState(generateStatePayload());
@@ -89,10 +89,11 @@ export default function SignIn() {
     {
       clientId,
       redirectUri,
-      scopes: ['profile', 'email'],
+      scopes: ['fortified_identity'],
       usePKCE: true,
       state: generatedState,
       prompt: AuthSession.Prompt.SelectAccount,
+      responseType: 'code',
     },
     discovery
   );
@@ -199,12 +200,12 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            accessibilityHint="authorizes with google"
+            accessibilityHint="authorizes with idme"
             mb="xs"
             size="full"
-            title={`${FLOW[flow].link} with Google`}
-            align="flex-start"
-            icon={<GoogleIcon size="sm" />}
+            title={`${FLOW[flow].link} with ID.me`}
+            align="center"
+            icon={<IdMeIcon size="lg" />}
             fontFamily="IBM-bold"
             variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
@@ -246,3 +247,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+/**
+ * TODO: Temporary hold for retrieving useAutoDiscovery from expo-auth-session
+ */
+function useAutoDiscoveryLocal(
+  issuerOrDiscovery: string
+): AuthSession.DiscoveryDocument | null {
+  const [discovery, setDiscovery] =
+    useState<AuthSession.DiscoveryDocument | null>(null);
+
+  useEffect(() => {
+    let isAllowed = true;
+    if (isAllowed) {
+      setDiscovery({
+        discoveryDocument: {
+          issuer: 'https://api.idmelabs.com/oidc',
+          authorization_endpoint: 'https://api.idmelabs.com/oauth/authorize',
+          token_endpoint: 'https://api.idmelabs.com/oauth/token',
+          userinfo_endpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+          jwks_uri: 'https://api.idmelabs.com/oidc/.well-known/jwks',
+          scopes_supported: ['openid'],
+          response_types_supported: [
+            'code',
+            'token',
+            'id_token',
+            'code id_token',
+            'code token',
+            'id_token token',
+            'code id_token token',
+          ],
+          grant_types_supported: ['authorization_code', 'refresh_token'],
+          subject_types_supported: ['public'],
+          id_token_signing_alg_values_supported: ['RS256', 'ES256'],
+          id_token_encryption_alg_values_supported: ['RSA-OAEP'],
+          id_token_encryption_enc_values_supported: ['A256CBC-HS512'],
+          userinfo_signing_alg_values_supported: ['RS256', 'ES256'],
+          userinfo_encryption_alg_values_supported: ['RSA-OAEP'],
+          userinfo_encryption_enc_values_supported: ['A256CBC-HS512'],
+          token_endpoint_auth_methods_supported: [
+            'client_secret_post',
+            'client_secret_basic',
+          ],
+        },
+        authorizationEndpoint: 'https://api.idmelabs.com/oauth/authorize',
+        tokenEndpoint: 'https://api.idmelabs.com/oauth/token',
+        revocationEndpoint: 'https://api.idmelabs.com/oauth/revoke',
+        userInfoEndpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+      });
+    }
+
+    return () => {
+      isAllowed = false;
+    };
+  }, [issuerOrDiscovery]);
+
+  return discovery;
+}
