@@ -14,10 +14,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from common.graphql.views import ProtectedGraphQLView
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
-from strawberry.django.views import GraphQLView
 
 from .schema import schema
 
@@ -26,5 +27,5 @@ urlpatterns = [
     path("", include("accounts.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
-    path("graphql", GraphQLView.as_view(schema=schema)),
+    path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
 ]

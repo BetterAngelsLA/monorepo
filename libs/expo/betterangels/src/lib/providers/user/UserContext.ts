@@ -11,6 +11,7 @@ export interface IUserProviderValue {
   user: TUser | undefined;
   setUser: Dispatch<SetStateAction<TUser | undefined>>;
   isLoading: boolean;
+  refetchUser: () => Promise<void>;
 }
 
 const UserContext = createContext<IUserProviderValue | undefined>(undefined);

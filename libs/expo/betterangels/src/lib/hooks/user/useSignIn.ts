@@ -1,16 +1,11 @@
-import { DocumentNode, useLazyQuery, useMutation } from '@apollo/client';
+import { DocumentNode, useMutation } from '@apollo/client';
 import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { GET_CURRENT_USER } from '../../apollo/graphql';
 import useUser from './useUser';
 
 export default function useSignIn(mutation: DocumentNode) {
+  const { user, refetchUser } = useUser();
   const [socialAuth, { loading, error }] = useMutation(mutation);
-  const [
-    getCurrentUser,
-    { data: userData, loading: userIsLoading, error: userError },
-  ] = useLazyQuery(GET_CURRENT_USER);
-  const { setUser } = useUser();
 
   const signIn = useCallback(
     async (code: string, codeVerifier: string, redirectUri: string) => {
@@ -22,21 +17,19 @@ export default function useSignIn(mutation: DocumentNode) {
             redirectUri: encodeURIComponent(redirectUri),
           },
         });
-
-        getCurrentUser();
-      } catch (error) {
-        console.error('Error during sign in:', error);
+        refetchUser();
+      } catch (signInError) {
+        console.error('Error during sign in:', signInError);
       }
     },
-    [socialAuth, getCurrentUser]
+    [socialAuth, refetchUser]
   );
 
   useEffect(() => {
-    if (userData && userData.currentUser) {
-      setUser(userData.currentUser);
-      router.replace(userData.currentUser.hasOrganization ? '/' : '/welcome');
+    if (user) {
+      router.replace(user.hasOrganization ? '/' : '/welcome');
     }
-  }, [userData, setUser]);
+  }, [user]);
 
-  return { signIn, loading, error, userIsLoading, userError };
+  return { signIn, loading, error };
 }
