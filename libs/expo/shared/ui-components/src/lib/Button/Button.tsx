@@ -89,7 +89,7 @@ export function Button(props: IButtonProps) {
     disabled,
     style,
     icon,
-    fontFamily = 'Pragmatica-book',
+    fontFamily = 'Pragmatica-bold',
     height = 'md',
     fontSize = 'md',
     mb,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 3,
     borderWidth: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacings.xs,
   },
   text: {
     letterSpacing: 0.4,

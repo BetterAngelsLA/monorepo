@@ -11,6 +11,7 @@ export default function PrivateLayout() {
   return (
     <Stack>
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
+      <Stack.Screen name="add-note/[clientId]" />
     </Stack>
   );
 }
