@@ -44,6 +44,18 @@ const VARIANTS: TVariants = {
   },
 };
 
+const Height = {
+  xs: 20,
+  sm: 32,
+  md: 40,
+} as const;
+
+const Width = {
+  xs: 20,
+  md: 40,
+  full: '100%',
+} as const;
+
 interface IIconButtonProps {
   onPress?: () => void;
   variant:
@@ -62,6 +74,11 @@ interface IIconButtonProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  borderColor?: string;
+  width?: 'xs' | 'md' | 'full';
+  height?: 'xs' | 'sm' | 'md';
+  accessibilityLabel: string;
+  accessibilityHint: string;
 }
 
 export function IconButton(props: IIconButtonProps) {
@@ -77,19 +94,34 @@ export function IconButton(props: IIconButtonProps) {
     mx,
     ml,
     mr,
+    borderColor,
+    width = 'md',
+    height = 'md',
+    accessibilityLabel,
+    accessibilityHint,
   } = props;
   return (
     <Pressable
+      accessible
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityHint={accessibilityHint}
       disabled={disabled}
       style={[
         styles.button,
         style,
         {
+          height: Height[height],
+          width: Width[width],
+          borderWidth: 1,
+          borderRadius: 3,
           backgroundColor: disabled
             ? Colors.NEUTRAL_LIGHT
             : VARIANTS[variant].bg,
           borderColor: disabled
             ? Colors.NEUTRAL_LIGHT
+            : borderColor
+            ? borderColor
             : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
@@ -108,8 +140,6 @@ export function IconButton(props: IIconButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    height: 40,
-    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },

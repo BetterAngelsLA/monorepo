@@ -86,7 +86,12 @@ export function Select(props: ISelectProps) {
           {label}
         </BodyText>
       )}
-      <Pressable onPress={handleDropdown}>
+      <Pressable
+        accessible
+        accessibilityRole="button"
+        accessibilityHint="opens dropdown"
+        onPress={handleDropdown}
+      >
         <View style={styles.select} ref={buttonRef}>
           <BodyText>{value ? value : placeholder}</BodyText>
           <View style={styles.icon}>
@@ -111,6 +116,9 @@ export function Select(props: ISelectProps) {
         >
           {data.map((item, idx) => (
             <TouchableOpacity
+              accessible
+              accessibilityRole="button"
+              accessibilityHint={'selects ${item} from opened dropdown'}
               style={{ padding: Spacings.xs }}
               key={idx}
               onPress={() => handlePress(item)}

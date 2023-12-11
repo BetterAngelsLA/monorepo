@@ -1,3 +1,4 @@
+import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -6,6 +7,7 @@ import { useFonts } from 'expo-font';
 import { Link, SplashScreen, Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import client from './apollo';
 import Logo from './assets/images/logo.svg';
 
 export { ErrorBoundary } from 'expo-router';
@@ -69,66 +71,69 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const router = useRouter();
 
   return (
-    <UserProvider apiUrl={apiUrl}>
-      {/* <ThemeProvider value={Colorscheme === 'dark' ? DarkTheme : DefaultTheme}> */}
-      <Stack>
-        <Stack.Screen
-          name="(tabs)"
-          options={{ headerShown: false, gestureEnabled: false }}
-        />
-        <Stack.Screen
-          name="(private-screens)"
-          options={{ headerShown: false, gestureEnabled: false }}
-        />
-        <Stack.Screen
-          name="team"
-          options={{
-            title: '',
-            presentation: 'modal',
-            headerLeft: () => (
-              <Link href="/teams">
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
+    <ApolloProvider client={client}>
+      <UserProvider>
+        {/* <ThemeProvider value={Colorscheme === 'dark' ? DarkTheme : DefaultTheme}> */}
+        <Stack>
+          <Stack.Screen
+            name="(tabs)"
+            options={{ headerShown: false, gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="(private-screens)"
+            options={{ headerShown: false, gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="team"
+            options={{
+              title: '',
+              presentation: 'modal',
+              headerLeft: () => (
+                <Link href="/teams">
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                    <BodyText color={Colors.PRIMARY_LIGHT}>Teams</BodyText>
+                  </View>
+                </Link>
+              ),
+            }}
+          />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="sign-in"
+            options={{
+              headerTransparent: true,
+              headerBackVisible: false,
+              headerLeft: () => (
+                <IconButton
+                  accessibilityHint="goes back to auth screen"
+                  accessibilityLabel="Back"
+                  style={{ marginLeft: -17 }}
+                  variant="transparent"
+                  onPress={() => router.back()}
                 >
-                  <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                  <BodyText color={Colors.PRIMARY_LIGHT}>Teams</BodyText>
+                  <ArrowLeftIcon color={Colors.WHITE} size="sm" />
+                </IconButton>
+              ),
+              headerTitle: () => (
+                <View>
+                  <Logo color={Colors.WHITE} width={130} height={19.5} />
                 </View>
-              </Link>
-            ),
-          }}
-        />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen
-          name="sign-in"
-          options={{
-            headerTransparent: true,
-            headerBackVisible: false,
-            headerLeft: () => (
-              <IconButton
-                style={{ marginLeft: -17 }}
-                variant="transparent"
-                onPress={() => router.back()}
-              >
-                <ArrowLeftIcon color={Colors.WHITE} size="sm" />
-              </IconButton>
-            ),
-            headerTitle: () => (
-              <View>
-                <Logo color={Colors.WHITE} width={130} height={19.5} />
-              </View>
-            ),
-          }}
-        />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-      </Stack>
-      {/* </ThemeProvider> */}
-    </UserProvider>
+              ),
+            }}
+          />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+        </Stack>
+        {/* </ThemeProvider> */}
+      </UserProvider>
+    </ApolloProvider>
   );
 }

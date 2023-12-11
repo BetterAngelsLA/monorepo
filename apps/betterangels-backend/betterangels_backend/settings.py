@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "organizations",
     "simple_history",
+    "strawberry.django",
     # Our Apps
     "accounts",
     "dwelling",
@@ -192,7 +193,7 @@ CACHES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "backends.iam_dbauth.postgis",
+        "ENGINE": "common.backends.iam_dbauth.postgis",
         "NAME": env("POSTGRES_NAME"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
