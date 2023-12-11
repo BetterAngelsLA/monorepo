@@ -35,10 +35,17 @@
     "@storybook/react": "*",
     "react-hook-form": "*",
     "@apollo/client": "*",
-    "apollo-link-rest": "*"
+    "apollo-link-rest": "*",
+    "rxjs": "*",
+    "expo-splash-screen": "~0.20.5"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
-    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels"
+    "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
   }
 }
