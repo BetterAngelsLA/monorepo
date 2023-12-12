@@ -41,7 +41,12 @@ export function FieldCard(props: IFieldCardProps) {
           {Icon ? <Icon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} /> : null}
           <H4>{title}</H4>
         </View>
-        <IconButton onPress={onPress} variant="transparent">
+        <IconButton
+          accessibilityHint={`edit ${title}`}
+          accessibilityLabel="Edit"
+          onPress={onPress}
+          variant="transparent"
+        >
           <EditIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </IconButton>
       </View>

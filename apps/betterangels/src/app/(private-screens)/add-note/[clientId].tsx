@@ -111,13 +111,19 @@ export default function AddNote() {
         </Pressable>
       </View>
       <Button
+        accessibilityHint="adds a private note"
         mb="lg"
         size="full"
         variant="secondary"
         icon={<PlusIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />}
         title="Add Private Note (Optional)"
       />
-      <Button variant="primary" size="full" title="Save" />
+      <Button
+        accessibilityHint="saves the note"
+        variant="primary"
+        size="full"
+        title="Save"
+      />
     </MainScrollContainer>
   );
 }
