@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     # Our Apps
     "accounts",
     "dwelling",
+    "notes",
 ]
 
 MIDDLEWARE = [
