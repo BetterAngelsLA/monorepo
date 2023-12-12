@@ -17,36 +17,21 @@ import {
   FieldCard,
   H2,
   H3,
-  H4,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import React, { useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 export default function AddNote() {
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  const navigation = useNavigation();
   const { control } = useForm();
 
   console.log(clientId);
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <Pressable onPress={navigation.goBack}>
-          <BodyText color={Colors.PRIMARY}>Back</BodyText>
-        </Pressable>
-      ),
-      headerTitle: () => (
-        <H4 color={Colors.PRIMARY_EXTRA_DARK}>Note for ...</H4>
-      ),
-    });
-  }, []);
-
   return (
-    <MainScrollContainer>
+    <MainScrollContainer bg={Colors.NEUTRAL_LIGHT} pt="sm">
       <H2 mb="lg">Log your session</H2>
       <BodyText mb="xl">
         Log session details, including location, purpose, interventions, and
@@ -101,16 +86,27 @@ export default function AddNote() {
         control={control}
       />
       <View style={styles.iconsContainer}>
-        <Pressable style={styles.icon}>
+        <Pressable
+          accessible
+          accessibilityHint=""
+          accessibilityRole="button"
+          style={styles.icon}
+        >
           <MicrophoneIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </Pressable>
-        <Pressable style={[styles.icon, { marginHorizontal: Spacings.xs }]}>
+        <Pressable
+          accessibilityRole="button"
+          style={[styles.icon, { marginHorizontal: Spacings.xs }]}
+        >
           <PaperclipIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </Pressable>
-        <Pressable style={[styles.icon, { marginRight: Spacings.xs }]}>
+        <Pressable
+          accessibilityRole="button"
+          style={[styles.icon, { marginRight: Spacings.xs }]}
+        >
           <ImageIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </Pressable>
-        <Pressable style={styles.icon}>
+        <Pressable accessibilityRole="button" style={styles.icon}>
           <VideoIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </Pressable>
       </View>

@@ -32,7 +32,7 @@ import {
   H2,
   H4,
 } from '@monorepo/expo/shared/ui-components';
-import { Link, useNavigation } from 'expo-router';
+import { Link, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 const EVENTS = [
@@ -153,6 +153,7 @@ export default function TabOneScreen() {
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
+  const router = useRouter();
 
   useEffect(() => {
     navigation.setOptions({
@@ -324,6 +325,14 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
+            onPress={() =>
+              router.push({
+                pathname: '/add-note/[clientId]',
+                params: {
+                  clientId: '1234',
+                },
+              })
+            }
             mb="sm"
             imageUrl=""
             address="123 sdaf dasfda"
