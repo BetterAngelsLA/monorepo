@@ -108,7 +108,7 @@ export function Input(props: IInputProps) {
                   : Colors.PRIMARY_EXTRA_DARK,
                 paddingLeft: 16,
                 paddingRight: 38,
-                fontFamily: 'Pragmatica-book',
+                fontFamily: 'Poppins-Regular',
                 fontSize: 16,
                 height,
                 ...Platform.select({
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   input: {
     position: 'relative',
-    fontFamily: 'Pragmatica-book',
+    fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 8,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
-    fontFamily: 'Pragmatica-book',
+    fontFamily: 'Poppins-Regular',
   },
   required: {
     marginLeft: 2,

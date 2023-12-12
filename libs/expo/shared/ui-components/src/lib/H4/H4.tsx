@@ -73,7 +73,7 @@ export function H4({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Poppins-Semibold',
+    fontFamily: 'Poppins-SemiBold',
     fontSize: FontSizes.xsm.fontSize,
     lineHeight: FontSizes.xsm.lineHeight,
   },

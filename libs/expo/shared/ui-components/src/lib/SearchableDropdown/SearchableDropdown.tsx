@@ -116,7 +116,7 @@ export function SearchableDropdown({
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
             paddingLeft: Spacings.sm,
             paddingRight: 38,
-            fontFamily: 'Pragmatica-book',
+            fontFamily: 'Poppins-Regular',
             fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
@@ -194,7 +194,7 @@ export function SearchableDropdown({
 const styles = StyleSheet.create({
   textInput: {
     position: 'relative',
-    fontFamily: 'Pragmatica-book',
+    fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 8,
