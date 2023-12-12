@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 8,
     justifyContent: 'center',
   },
   label: {

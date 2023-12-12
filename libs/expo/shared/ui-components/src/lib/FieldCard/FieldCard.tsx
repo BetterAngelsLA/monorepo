@@ -53,7 +53,7 @@ export function FieldCard(props: IFieldCardProps) {
 const styles = StyleSheet.create({
   container: {
     padding: Spacings.sm,
-    borderRadius: 3,
+    borderRadius: 8,
     backgroundColor: Colors.WHITE,
   },
   header: {

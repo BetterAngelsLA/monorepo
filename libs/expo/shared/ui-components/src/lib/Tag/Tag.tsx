@@ -29,7 +29,7 @@ export function Tag(props: ITagProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.SECONDARY_LIGHT,
-    borderRadius: 3,
+    borderRadius: 8,
     padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',

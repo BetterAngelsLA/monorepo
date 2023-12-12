@@ -163,7 +163,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderRadius: 3,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: Spacings.xs,
   },

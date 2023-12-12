@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pragmatica-book',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 8,
     justifyContent: 'center',
   },
   label: {

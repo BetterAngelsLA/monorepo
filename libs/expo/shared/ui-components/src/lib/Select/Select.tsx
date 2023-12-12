@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   select: {
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 8,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
     paddingLeft: Spacings.sm,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 100,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 8,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },

@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   tool: {
     marginRight: Spacings.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 3,
+    borderRadius: 8,
     backgroundColor: Colors.WHITE,
     height: 97,
     width: 160,

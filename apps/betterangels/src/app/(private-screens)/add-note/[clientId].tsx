@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     padding: Spacings.xs,
-    borderRadius: 3,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: Colors.NEUTRAL,
   },
