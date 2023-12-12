@@ -73,8 +73,8 @@ export function H4({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Pragmatica-bold',
-    fontSize: FontSizes.md.fontSize,
-    lineHeight: FontSizes.md.lineHeight,
+    fontFamily: 'Poppins-Semibold',
+    fontSize: FontSizes.xsm.fontSize,
+    lineHeight: FontSizes.xsm.lineHeight,
   },
 });

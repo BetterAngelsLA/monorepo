@@ -52,6 +52,6 @@ export function H1({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'IBM-bold',
+    fontFamily: 'Poppins-SemiBold',
   },
 });

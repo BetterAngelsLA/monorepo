@@ -45,9 +45,9 @@ export function H3({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Pragmatica-bold',
+    fontFamily: 'Poppins-SemiBold',
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontSize: FontSizes.lg.fontSize,
-    lineHeight: FontSizes.lg.lineHeight,
+    fontSize: FontSizes.md.fontSize,
+    lineHeight: FontSizes.md.lineHeight,
   },
 });
