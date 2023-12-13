@@ -10,6 +10,11 @@ from rest_framework.request import Request
 
 
 class GraphQLSchemaView(View):
+    """
+    This publicly exposes the graphql schema so that it can be consumed via API.
+    We may want to consider removing this and just writing to a file that's saved within the repo on commit.
+    """
+
     @method_decorator(csrf_exempt)
     def get(self, request: Request, *args: Any, **kwargs: Any) -> HttpResponse:
         schema_str = str(schema)
