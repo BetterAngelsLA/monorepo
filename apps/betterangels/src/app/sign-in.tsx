@@ -1,20 +1,21 @@
+import { useMutation } from '@apollo/client';
 import {
   AuthContainer,
-  fetchUser,
-  useAuthStore,
-  useUser,
+  GENERATE_MAGIC_LINK_MUTATION,
+  IDME_AUTH_MUTATION,
+  useSignIn,
 } from '@monorepo/expo/betterangels';
-import { GoogleIcon, Windowsicon } from '@monorepo/expo/shared/icons';
+import { IdMeIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
-import { apiUrl, clientId, redirectUri } from '../../config';
+import { clientId, redirectUri } from '../../config';
 
 type TAuthFLow = {
   [key in 'sign-in' | 'sign-up']: {
@@ -46,7 +47,7 @@ const FLOW: TAuthFLow = {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const discoveryUrl = 'https://accounts.google.com';
+const discoveryUrl = 'https://api.idmelabs.com/oidc';
 const STATE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 function base64urlEncode(data: string) {
@@ -64,29 +65,21 @@ function generateStatePayload(length = 32) {
   return base64urlEncode(JSON.stringify(payload));
 }
 
-const magicLink = async () => {
-  await fetch(`${apiUrl}/magic-auth/generate-link`, {
-    method: 'POST',
-  });
-};
-
 export default function SignIn() {
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
   const [flow, setFlow] = useState<'sign-in' | 'sign-up'>('sign-in');
-  const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
-  const { setUser } = useUser();
+  const [
+    generateMagicLink,
+    { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
+  ] = useMutation(GENERATE_MAGIC_LINK_MUTATION);
+  const { signIn } = useSignIn(IDME_AUTH_MUTATION);
+  const discovery = useAutoDiscoveryLocal(discoveryUrl);
   const { type } = useLocalSearchParams();
-  const { setCsrfCookieFromResponse } = useAuthStore();
-
   useEffect(() => {
     setGeneratedState(generateStatePayload());
   }, []);
-
-  if (!clientId || !redirectUri || !apiUrl) {
-    throw new Error('env required');
-  }
 
   if (type !== 'sign-up' && type !== 'sign-in') {
     throw new Error('auth param is incorrect');
@@ -96,10 +89,11 @@ export default function SignIn() {
     {
       clientId,
       redirectUri,
-      scopes: ['profile', 'email'],
+      scopes: ['fortified_identity'],
       usePKCE: true,
       state: generatedState,
       prompt: AuthSession.Prompt.SelectAccount,
+      responseType: 'code',
     },
     discovery
   );
@@ -126,8 +120,8 @@ export default function SignIn() {
         state = response.params?.state;
       }
 
-      // If we still don't have a code, then we can't proceed.
-      if (!code || !redirectUri) return;
+      // If we still don't have a code or codeVerifier, then we can't proceed.
+      if (!code || !request?.codeVerifier) return;
 
       // Ensure the state is not invalid or tampered with
       if (!state || state !== request?.state) {
@@ -141,44 +135,9 @@ export default function SignIn() {
           return;
         }
       }
-
-      try {
-        const response = await fetch(
-          `${apiUrl}/rest-auth/google/?redirect_uri=${encodeURIComponent(
-            redirectUri
-          )}`,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code: code,
-              code_verifier: request?.codeVerifier,
-            }),
-            credentials: 'include',
-          }
-        );
-        setCsrfCookieFromResponse(response);
-        const userData = await fetchUser(apiUrl);
-        setUser(userData);
-        if (userData.hasOrganization) {
-          router.replace('/');
-        } else {
-          router.replace('/welcome');
-        }
-      } catch (error) {
-        console.error('Error fetching access token', error);
-      }
+      await signIn(code, request?.codeVerifier, redirectUri);
     },
-    [
-      request?.codeVerifier,
-      request?.state,
-      response,
-      setCsrfCookieFromResponse,
-      setUser,
-    ]
+    [request?.codeVerifier, request?.state, response, signIn]
   );
 
   useEffect(() => {
@@ -208,6 +167,14 @@ export default function SignIn() {
     setFlow(type);
   }, [type]);
 
+  const handleGenerateMagicLink = async () => {
+    try {
+      await generateMagicLink();
+    } catch (error) {
+      console.error('Error generating magic link:', error);
+    }
+  };
+
   if (!generatedState) {
     return <Text>Loading...</Text>;
   }
@@ -233,35 +200,30 @@ export default function SignIn() {
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
-            accessibilityHint=""
-            title="hello"
-            size="full"
-            variant="dark"
-            onPress={async () => await magicLink()}
-          />
-          <Button
+            accessibilityHint="authorizes with idme"
             mb="xs"
-            accessibilityHint="authorizes with microsoft"
-            title={`${FLOW[flow].link} with Microsoft`}
-            disabled
-            icon={<Windowsicon size="sm" />}
-            fontFamily="IBM-bold"
             size="full"
-            variant="dark"
-            align="flex-start"
-            onPress={() => promptAsync({ showInRecents: false })}
-          />
-          <Button
-            accessibilityHint="authorizes with google"
-            size="full"
-            title={`${FLOW[flow].link} with Google`}
-            align="flex-start"
-            icon={<GoogleIcon size="sm" />}
+            title={`${FLOW[flow].link} with ID.me`}
+            align="center"
+            icon={<IdMeIcon size="lg" />}
             fontFamily="IBM-bold"
             variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
           />
+          <Button
+            accessibilityHint="send magic link for forgotten password"
+            mb="xs"
+            title="Generate Magic Link"
+            size="full"
+            variant="dark"
+            onPress={handleGenerateMagicLink}
+            disabled={magicLinkLoading}
+          />
+          {magicLinkError && (
+            <Text>Error occurred: {magicLinkError.message}</Text>
+          )}
+          {magicLinkData && <Text>Magic Link Generated Successfully</Text>}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
@@ -285,3 +247,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+/**
+ * TODO: Temporary hold for retrieving useAutoDiscovery from expo-auth-session
+ */
+function useAutoDiscoveryLocal(
+  issuerOrDiscovery: string
+): AuthSession.DiscoveryDocument | null {
+  const [discovery, setDiscovery] =
+    useState<AuthSession.DiscoveryDocument | null>(null);
+
+  useEffect(() => {
+    let isAllowed = true;
+    if (isAllowed) {
+      setDiscovery({
+        discoveryDocument: {
+          issuer: 'https://api.idmelabs.com/oidc',
+          authorization_endpoint: 'https://api.idmelabs.com/oauth/authorize',
+          token_endpoint: 'https://api.idmelabs.com/oauth/token',
+          userinfo_endpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+          jwks_uri: 'https://api.idmelabs.com/oidc/.well-known/jwks',
+          scopes_supported: ['openid'],
+          response_types_supported: [
+            'code',
+            'token',
+            'id_token',
+            'code id_token',
+            'code token',
+            'id_token token',
+            'code id_token token',
+          ],
+          grant_types_supported: ['authorization_code', 'refresh_token'],
+          subject_types_supported: ['public'],
+          id_token_signing_alg_values_supported: ['RS256', 'ES256'],
+          id_token_encryption_alg_values_supported: ['RSA-OAEP'],
+          id_token_encryption_enc_values_supported: ['A256CBC-HS512'],
+          userinfo_signing_alg_values_supported: ['RS256', 'ES256'],
+          userinfo_encryption_alg_values_supported: ['RSA-OAEP'],
+          userinfo_encryption_enc_values_supported: ['A256CBC-HS512'],
+          token_endpoint_auth_methods_supported: [
+            'client_secret_post',
+            'client_secret_basic',
+          ],
+        },
+        authorizationEndpoint: 'https://api.idmelabs.com/oauth/authorize',
+        tokenEndpoint: 'https://api.idmelabs.com/oauth/token',
+        revocationEndpoint: 'https://api.idmelabs.com/oauth/revoke',
+        userInfoEndpoint: 'https://api.idmelabs.com/api/public/v3/userinfo',
+      });
+    }
+
+    return () => {
+      isAllowed = false;
+    };
+  }, [issuerOrDiscovery]);
+
+  return discovery;
+}

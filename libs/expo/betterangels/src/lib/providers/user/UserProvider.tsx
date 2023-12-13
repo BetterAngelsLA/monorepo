@@ -1,46 +1,56 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
-
-import { fetchUser } from '../../helpers';
+import { gql, useQuery } from '@apollo/client';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import UserContext, { TUser } from './UserContext';
+
+const GET_CURRENT_USER = gql`
+  query currentUser {
+    currentUser {
+      id
+      username
+      email
+    }
+  }
+`;
 
 interface UserProviderProps {
   children: ReactNode;
-  apiUrl: string | undefined;
 }
 
-function useProtectedRoute(apiUrl: string) {
+export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const {
+    data,
+    loading: isLoading,
+    refetch,
+  } = useQuery(GET_CURRENT_USER, {
+    fetchPolicy: 'network-only',
+  });
+
+  const refetchUser = useCallback(async () => {
+    try {
+      const response = await refetch();
+      if (response.data) {
+        setUser(response.data.currentUser);
+      }
+    } catch (error) {
+      console.error('Error refetching user data:', error);
+    }
+  }, [refetch]);
 
   useEffect(() => {
-    async function getUserAndNavigate() {
-      try {
-        const user = await fetchUser(apiUrl);
-        setUser(user);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsLoading(false);
-      }
+    if (data && !isLoading) {
+      setUser(data.currentUser);
     }
-
-    getUserAndNavigate();
-  }, []);
-
-  return { user, setUser, isLoading };
-}
-
-export default function UserProvider({ children, apiUrl }: UserProviderProps) {
-  if (!apiUrl) throw new Error('env apiUrl is not defined');
-  const { isLoading, user, setUser } = useProtectedRoute(apiUrl);
+  }, [data, isLoading]);
 
   const value = useMemo(
     () => ({
       user,
       setUser,
       isLoading,
+      refetchUser,
     }),
-    [user, isLoading, setUser]
+    [user, isLoading, refetchUser, setUser]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

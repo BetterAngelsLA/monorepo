@@ -1,11 +1,20 @@
+from accounts.models import User
 from accounts.services import send_magic_link
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.core.mail import send_mail
 from django.template import loader
-from django.test import Client, RequestFactory, TestCase, override_settings
+from django.test import (
+    Client,
+    RequestFactory,
+    TestCase,
+    ignore_warnings,
+    override_settings,
+)
 from django.urls import reverse
+from model_bakery import baker
 from post_office.models import Email
 from sesame.utils import get_query_string
+from test_utils.mixins import GraphQLTestCaseMixin
 
 
 @override_settings(EMAIL_BACKEND="post_office.EmailBackend")
@@ -66,11 +75,26 @@ class TestMagicLink(TestCase):
         self.assertIn(query_string, found.html_message)
         self.assertIn(query_string, found.message)
 
-    def test_generate_magic_link_request(self) -> None:
-        url = reverse("generate-magic-link")
-        response = self.client.post(
-            url, data={"email": self.user.email}, HTTP_CONTENT_TYPE="application/json"
+
+@ignore_warnings(category=UserWarning)
+@override_settings(EMAIL_BACKEND="post_office.EmailBackend")
+class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
+    def test_generate_magic_link(self) -> None:
+        user = baker.make(User, email="test@example.com", username="testuser")
+
+        query = """
+        mutation GenerateMagicLink($input: MagicLinkInput!) {
+            generateMagicLink(input: $input) {
+                message
+            }
+        }
+        """
+        variables = {"input": {"email": user.email}}
+        response = self.execute_graphql(query, variables=variables)
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(
+            response["data"]["generateMagicLink"]["message"], "Email link sent."
         )
         emails = Email.objects.all()
         self.assertEqual(len(emails), 1)
-        self.assertEqual(response.status_code, 200)

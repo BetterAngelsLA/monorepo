@@ -35,7 +35,7 @@ export default function TabLayout() {
   const closeModal = () => {
     setModalVisible(false);
   };
-
+  
   if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
