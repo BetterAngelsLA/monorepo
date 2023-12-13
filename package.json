@@ -8,7 +8,8 @@
     "storybook:build": "nx build-storybook expo-shared-ui-components",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
-    "ba:build-dev": "nx build betterangels --profile development"
+    "ba:build-dev": "nx build betterangels --profile development",
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@config-plugins/detox": "~6.0.0",
     "@expo/cli": "~0.10.10",
+    "@graphql-codegen/cli": "5.0.0",
     "@nx-tools/container-metadata": "^5.0.3",
     "@nx-tools/nx-container": "^5.0.3",
     "@nx/detox": "16.6.0",
@@ -94,7 +96,8 @@
     "react-test-renderer": "18.2.0",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
-    "typescript": "~5.1.3"
+    "typescript": "~5.1.3",
+    "@graphql-codegen/client-preset": "4.1.0"
   },
   "engines": {
     "node": "18.17.1"
