@@ -1,0 +1,22 @@
+input MagicLinkInput {
+  email: String!
+}
+
+type MagicLinkResponse {
+  message: String!
+}
+
+type Mutation {
+  logout: Boolean!
+  generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
+}
+
+type Query {
+  currentUser: UserType
+}
+
+type UserType {
+  id: ID!
+  username: String!
+  email: String!
+}
