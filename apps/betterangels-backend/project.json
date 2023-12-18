@@ -61,6 +61,13 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "generate-graphql-schema": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py runscript generate_graphql_schema",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "install": {
       "executor": "@nxlv/python:install",
       "options": {
