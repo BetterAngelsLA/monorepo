@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
@@ -18,7 +18,6 @@ import {
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -78,13 +77,14 @@ export default function TabLayout() {
                 <BodyText color={color} size="xs">
                   Home
                 </BodyText>
-        options={{
-          title: '',
-          tabBarIcon: () => (
-            <View style={styles.wrapper}>
-              <View style={styles.middleButton}>
-                <PlusIcon color={Colors.WHITE} />
               </View>
+              // options={{
+              //   title: '',
+              //   tabBarIcon: () => (
+              //     <View style={styles.wrapper}>
+              //       <View style={styles.middleButton}>
+              //         <PlusIcon color={Colors.WHITE} />
+              //       </View>
             ),
           }}
         />

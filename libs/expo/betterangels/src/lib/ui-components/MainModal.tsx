@@ -25,12 +25,23 @@ export default function MainModal(props: IMainModalProps) {
       onRequestClose={closeModal}
     >
       <View style={styles.modalOverlay}>
-        <Pressable onPress={closeModal} style={styles.closeIcon}>
+        <Pressable
+          accessible
+          accessibilityHint="closes the modal"
+          accessibilityRole="button"
+          accessibilityLabel="close"
+          onPress={closeModal}
+          style={styles.closeIcon}
+        >
           <XmarkIcon color={Colors.WHITE} />
         </Pressable>
         <View style={styles.content}>
           {actions.map((action, idx: number) => (
-            <Pressable key={idx} style={styles.container}>
+            <Pressable
+              accessibilityRole="button"
+              key={idx}
+              style={styles.container}
+            >
               {({ pressed }) => (
                 <>
                   <View
