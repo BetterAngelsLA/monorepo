@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import BodyText from '../BodyText';
 import H2 from '../H2';
@@ -19,6 +19,8 @@ interface IFieldCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   error?: boolean;
+  expanded: string | undefined;
+  setExpanded: () => void;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -34,8 +36,10 @@ export function FieldCard(props: IFieldCardProps) {
     actionName,
     required,
     error,
+    expanded,
+    setExpanded,
   } = props;
-  const [isExpanded, toggle] = useState(false);
+
   return (
     <View
       style={[
@@ -48,22 +52,22 @@ export function FieldCard(props: IFieldCardProps) {
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
           borderColor:
-            error && !isExpanded ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            error && expanded !== title ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
         },
       ]}
     >
       <Pressable
-        onPress={() => toggle(!isExpanded)}
+        onPress={setExpanded}
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}
         style={[
           styles.header,
-          { paddingBottom: isExpanded ? Spacings.sm : Spacings.md },
+          { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
         ]}
       >
         <View style={{ flexDirection: 'row' }}>
-          {isExpanded ? (
+          {expanded === title ? (
             <H2>{title}</H2>
           ) : (
             <BodyText size="sm">{title}</BodyText>
@@ -73,15 +77,7 @@ export function FieldCard(props: IFieldCardProps) {
         <H5 size="sm">{actionName}</H5>
       </Pressable>
 
-      <View
-        style={{
-          paddingBottom: isExpanded ? Spacings.md : 0,
-          height: isExpanded ? 'auto' : 0,
-          overflow: 'hidden',
-        }}
-      >
-        {children}
-      </View>
+      {children}
     </View>
   );
 }
