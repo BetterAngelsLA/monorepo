@@ -2,6 +2,7 @@ export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as BodyText } from './BodyText';
 export { default as Button } from './Button';
+export { default as FieldCard } from './FieldCard';
 export { default as ClientCard } from './ClientCard';
 export { default as EventCard } from './EventCard';
 export { default as H1 } from './H1';

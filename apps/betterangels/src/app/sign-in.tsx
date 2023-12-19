@@ -206,7 +206,6 @@ export default function SignIn() {
             title={`${FLOW[flow].link} with ID.me`}
             align="center"
             icon={<IdMeIcon size="lg" />}
-            fontFamily="IBM-bold"
             variant="dark"
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}

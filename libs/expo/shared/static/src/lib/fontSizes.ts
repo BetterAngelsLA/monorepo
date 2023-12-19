@@ -1,7 +1,7 @@
 export const FontSizes = {
   '2xl': {
-    fontSize: 31,
-    lineHeight: 42,
+    fontSize: 36,
+    lineHeight: 46,
   },
   xl: {
     fontSize: 24,
@@ -20,8 +20,16 @@ export const FontSizes = {
     fontSize: 14,
     lineHeight: 21,
   },
+  xsm: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
   xs: {
-    fontSize: 11,
-    lineHeight: 16.5,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  xxs: {
+    fontSize: 10,
+    lineHeight: 15,
   },
 } as const;

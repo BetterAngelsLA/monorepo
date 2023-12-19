@@ -119,7 +119,7 @@ export default function TabLayout() {
           tabBarIcon: () => (
             <View style={styles.wrapper}>
               <View style={styles.middleButton}>
-                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                <PlusIcon color={Colors.WHITE} />
               </View>
             </View>
           ),
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   profileText: {
     textTransform: 'uppercase',
     color: Colors.WHITE,
-    fontFamily: 'Pragmatica-bold',
+    fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.xs.fontSize,
   },
   middleButton: {

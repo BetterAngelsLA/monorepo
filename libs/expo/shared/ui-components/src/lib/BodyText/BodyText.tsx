@@ -40,7 +40,7 @@ export function BodyText({
     | 'underline line-through'
     | undefined;
   color?: string;
-  size?: 'md' | 'sm' | 'xs';
+  size?: 'md' | 'sm' | 'xs' | 'xxs';
   style?: TextStyle;
 }) {
   return (
@@ -71,6 +71,6 @@ export function BodyText({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Pragmatica-book',
+    fontFamily: 'Poppins-Regular',
   },
 });
