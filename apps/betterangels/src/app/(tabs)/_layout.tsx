@@ -31,11 +31,10 @@ export default function TabLayout() {
     setModalVisible(true);
   };
 
-  // Function to close the modal
   const closeModal = () => {
     setModalVisible(false);
   };
-  
+
   if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
