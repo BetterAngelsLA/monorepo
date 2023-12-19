@@ -38,7 +38,9 @@
     "apollo-link-rest": "*",
     "rxjs": "*",
     "expo-splash-screen": "~0.20.5",
-    "@babel/core": "*"
+    "@babel/core": "*",
+    "@graphql-typed-document-node/core": "*",
+    "graphql": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
