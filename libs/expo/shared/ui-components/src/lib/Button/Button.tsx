@@ -67,7 +67,6 @@ interface IButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   icon?: ReactNode;
-  fontFamily?: 'Pragmatica-book' | 'IBM-bold';
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -92,7 +91,6 @@ export function Button(props: IButtonProps) {
     disabled,
     style,
     icon,
-    fontFamily = 'Pragmatica-book',
     height = 'md',
     fontSize = 'md',
     mb,
@@ -147,7 +145,7 @@ export function Button(props: IButtonProps) {
             {
               color: disabled ? Colors.NEUTRAL_DARK : VARIANTS[variant].color,
               marginLeft: icon ? Spacings.xs : 0,
-              fontFamily,
+              fontFamily: 'Poppins-SemiBold',
               fontSize: FontSizes[fontSize].fontSize,
               lineHeight: FontSizes[fontSize].lineHeight,
             },
@@ -163,9 +161,9 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderRadius: 3,
+    borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacings.xs,
   },
   text: {
     letterSpacing: 0.4,

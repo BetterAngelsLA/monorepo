@@ -78,6 +78,12 @@ export default function TabLayout() {
                 <BodyText color={color} size="xs">
                   Home
                 </BodyText>
+        options={{
+          title: '',
+          tabBarIcon: () => (
+            <View style={styles.wrapper}>
+              <View style={styles.middleButton}>
+                <PlusIcon color={Colors.WHITE} />
               </View>
             ),
           }}
@@ -230,7 +236,7 @@ const styles = StyleSheet.create({
   profileText: {
     textTransform: 'uppercase',
     color: Colors.WHITE,
-    fontFamily: 'Pragmatica-bold',
+    fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.xs.fontSize,
   },
   middleButton: {

@@ -40,7 +40,7 @@ export function H4({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  color?: '#003B4F' | '#FFF82E' | '#9CDCED';
+  color?: '#052B73' | '#FFF82E' | '#9CDCED';
   align?: 'auto' | 'center' | 'left' | 'right' | 'justify';
   spacing?: number;
   style?: TextStyle;
@@ -73,8 +73,8 @@ export function H4({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Pragmatica-bold',
-    fontSize: FontSizes.md.fontSize,
-    lineHeight: FontSizes.md.lineHeight,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: FontSizes.xsm.fontSize,
+    lineHeight: FontSizes.xsm.lineHeight,
   },
 });

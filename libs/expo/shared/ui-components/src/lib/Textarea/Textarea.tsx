@@ -103,7 +103,7 @@ export function Textarea(props: ITextareaProps) {
               style={{
                 color: disabled ? Colors.NEUTRAL_LIGHT : 'black',
                 paddingHorizontal: Spacings.sm,
-                fontFamily: 'Pragmatica-book',
+                fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,
                 height,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 8,
     justifyContent: 'center',
   },
   label: {
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
     textTransform: 'capitalize',
-    fontFamily: 'Pragmatica-book',
+    fontFamily: 'Poppins-Regular',
   },
   required: {
     marginLeft: 2,

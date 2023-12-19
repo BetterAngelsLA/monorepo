@@ -114,7 +114,7 @@ export function IconButton(props: IIconButtonProps) {
           height: Height[height],
           width: Width[width],
           borderWidth: 1,
-          borderRadius: 3,
+          borderRadius: 8,
           backgroundColor: disabled
             ? Colors.NEUTRAL_LIGHT
             : VARIANTS[variant].bg,
