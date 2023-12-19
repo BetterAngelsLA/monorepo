@@ -5,7 +5,7 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from .models import Note
-from .types import NoteType
+from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
 @strawberry.type
@@ -32,24 +32,24 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    def create_note(self, info: Info, title: str, body: str) -> Optional[NoteType]:
+    def create_note(self, info: Info, input: CreateNoteInput) -> Optional[NoteType]:
         user = get_current_user(info)
         if user.is_authenticated:
             # Need to figure out types here
-            return Note.objects.create(created_by=user, title=title, body=body)  # type: ignore
+            return Note.objects.create(
+                created_by=user, title=input.title, body=input.body  # type: ignore
+            )
         else:
             return None
 
     @strawberry.mutation
-    def update_note(
-        self, info: Info, id: strawberry.ID, title: str, body: str
-    ) -> Optional[NoteType]:
+    def update_note(self, info: Info, input: UpdateNoteInput) -> Optional[NoteType]:
         user = get_current_user(info)
         if user.is_authenticated:
             # Need to figure out types here
-            note = Note.objects.get(id=id)
-            note.title = title
-            note.body = body
+            note = Note.objects.get(id=input.id)
+            note.title = input.title
+            note.body = input.body
             note.save()
             return note  # type: ignore
         else:

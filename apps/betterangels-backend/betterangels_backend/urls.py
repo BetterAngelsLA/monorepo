@@ -21,7 +21,6 @@ from django.urls import include, path
 from django.views.generic.base import TemplateView
 
 from .schema import schema
-from .views.graphql_schema import GraphQLSchemaView
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
@@ -29,5 +28,4 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
-    path("graphql/schema", GraphQLSchemaView.as_view(), name="graphql-schema"),
 ]

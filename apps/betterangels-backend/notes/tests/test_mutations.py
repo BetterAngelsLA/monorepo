@@ -18,7 +18,7 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
         mutation = """
           mutation CreateNote($title: String!, $body: String!) {
-              createNote(title: $title, body: $body) {
+              createNote(input: { title: $title, body: $body }) {
                   title
                   body
               }
@@ -36,7 +36,7 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
         mutation = """
             mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(id: $id, title: $title, body: $body) {
+                updateNote(input: { id: $id, title: $title, body: $body }) {
                     title
                     body
                 }
