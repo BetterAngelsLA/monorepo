@@ -45,9 +45,9 @@ export function H2({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'IBM-light',
+    fontFamily: 'Poppins-Medium',
     color: Colors.PRIMARY_EXTRA_DARK,
-    fontSize: FontSizes.xl.fontSize,
-    lineHeight: FontSizes.xl.lineHeight,
+    fontSize: FontSizes.lg.fontSize,
+    lineHeight: FontSizes.lg.lineHeight,
   },
 });
