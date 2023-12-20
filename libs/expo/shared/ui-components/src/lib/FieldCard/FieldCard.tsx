@@ -1,27 +1,45 @@
-import { EditIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
-import H4 from '../H4';
-import IconButton from '../IconButton';
+import { Pressable, StyleSheet, View } from 'react-native';
+import BodyText from '../BodyText';
+import H2 from '../H2';
+import H5 from '../H5';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IFieldCardProps {
-  children?: ReactNode;
+  children: ReactNode;
   title: string;
-  Icon?: React.ElementType;
-  onPress: () => void;
+  actionName: string;
+  required?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  error?: boolean;
+  expanded: string | undefined;
+  setExpanded: () => void;
 }
 
 export function FieldCard(props: IFieldCardProps) {
-  const { children, title, Icon, onPress, mb, mt, mr, ml, my, mx } = props;
+  const {
+    children,
+    title,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    actionName,
+    required,
+    error,
+    expanded,
+    setExpanded,
+  } = props;
+
   return (
     <View
       style={[
@@ -33,35 +51,46 @@ export function FieldCard(props: IFieldCardProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
+          borderColor:
+            error && expanded !== title ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
         },
       ]}
     >
-      <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {Icon ? <Icon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} /> : null}
-          <H4>{title}</H4>
+      <Pressable
+        onPress={setExpanded}
+        accessible
+        accessibilityRole="button"
+        accessibilityHint={`expands ${title} field`}
+        style={[
+          styles.header,
+          { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
+        ]}
+      >
+        <View style={{ flexDirection: 'row' }}>
+          {expanded === title ? (
+            <H2>{title}</H2>
+          ) : (
+            <BodyText size="sm">{title}</BodyText>
+          )}
+          {required && <BodyText color={Colors.ERROR}>*</BodyText>}
         </View>
-        <IconButton
-          accessibilityHint={`edit ${title}`}
-          accessibilityLabel="Edit"
-          onPress={onPress}
-          variant="transparent"
-        >
-          <EditIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        </IconButton>
-      </View>
-      {children && <View style={{ marginTop: Spacings.sm }}>{children}</View>}
+        <H5 size="sm">{actionName}</H5>
+      </Pressable>
+
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: Spacings.sm,
+    paddingHorizontal: Spacings.sm,
     borderRadius: 8,
     backgroundColor: Colors.WHITE,
+    borderWidth: 1,
   },
   header: {
+    paddingTop: Spacings.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

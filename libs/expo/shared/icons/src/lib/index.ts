@@ -97,6 +97,7 @@ export { default as ShowerIcon } from './components/ShowerIcon';
 export { default as SirenIcon } from './components/SirenIcon';
 export { default as SitemapIcon } from './components/SitemapIcon';
 export { default as SolidCalendarIcon } from './components/SolidCalendarIcon';
+export { default as SolidCircleIcon } from './components/SolidCircleIcon';
 export { default as SolidHouseIcon } from './components/SolidHouseIcon';
 export { default as SolidMapIcon } from './components/SolidMapIcon';
 export { default as SolidSitemapIcon } from './components/SolidSitemapIcon';
