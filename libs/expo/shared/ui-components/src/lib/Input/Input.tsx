@@ -1,6 +1,6 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
+import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
   Platform,
   Pressable,
@@ -12,27 +12,15 @@ import {
   ViewStyle,
 } from 'react-native';
 
-type TValidateFn = (
-  data: unknown
-) => boolean | string | Promise<boolean | string>;
-
-type TRules = {
-  required?: boolean | string | ValidationValueMessage<string>;
-  min?: number | string | ValidationValueMessage<number | string>;
-  max?: number | string | ValidationValueMessage<number | string>;
-  maxLength?: number | string | ValidationValueMessage<number | string>;
-  minLength?: number | string | ValidationValueMessage<number | string>;
-  pattern?: RegExp | { value: RegExp; message: string };
-  validate?:
-    | TValidateFn
-    | Record<string, TValidateFn>
-    | { value: TValidateFn; message: string };
-};
+type TRules = Omit<
+  RegisterOptions,
+  'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
+>;
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IInputProps {
-  label: string;
+  label?: string;
   control: Control<any>;
   height?: 40 | 56 | 200;
   name: string;
@@ -72,6 +60,7 @@ export function Input(props: IInputProps) {
     <Controller
       control={control}
       name={name}
+      rules={rules}
       render={({ field: { value, onBlur, onChange } }) => (
         <View
           style={[
