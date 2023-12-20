@@ -8,3 +8,35 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
     }
   }
 `;
+
+export const CREATE_NOTE = gql`
+  mutation CreateNote($input: CreateNoteInput!) {
+    createNote(input: $input) {
+      id
+      title
+      body
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
+    }
+  }
+`;
+
+export const UPDATE_NOTE = gql`
+  mutation UpdateNote($input: UpdateNoteInput!) {
+    updateNote(input: $input) {
+      id
+      title
+      body
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
+    }
+  }
+`;

@@ -14,7 +14,8 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 const documents = {
     "\n  mutation GenerateMagicLink {\n    generateMagicLink(input: { email: \"paul+test@betterangels.la\" }) {\n      message\n    }\n  }\n": types.GenerateMagicLinkDocument,
-    "\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n    }\n  }\n\n  input CreateNoteInput {\n    title: String!\n    body: String!\n  }\n": types.CreateNoteDocument,
+    "\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n": types.CreateNoteDocument,
+    "\n  mutation UpdateNote($input: UpdateNoteInput!) {\n    updateNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n": types.UpdateNoteDocument,
     "\n  query currentUser {\n    currentUser {\n      id\n      username\n      email\n    }\n  }\n": types.CurrentUserDocument,
 };
 
@@ -39,7 +40,11 @@ export function graphql(source: "\n  mutation GenerateMagicLink {\n    generateM
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n    }\n  }\n\n  input CreateNoteInput {\n    title: String!\n    body: String!\n  }\n"): (typeof documents)["\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n    }\n  }\n\n  input CreateNoteInput {\n    title: String!\n    body: String!\n  }\n"];
+export function graphql(source: "\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateNote($input: CreateNoteInput!) {\n    createNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateNote($input: UpdateNoteInput!) {\n    updateNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateNote($input: UpdateNoteInput!) {\n    updateNote(input: $input) {\n      id\n      title\n      body\n      createdAt\n      createdBy {\n        id\n        username\n        email\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
