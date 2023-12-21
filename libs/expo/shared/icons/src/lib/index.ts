@@ -100,6 +100,7 @@ export { default as SolidCalendarIcon } from './components/SolidCalendarIcon';
 export { default as SolidCircleIcon } from './components/SolidCircleIcon';
 export { default as SolidHouseIcon } from './components/SolidHouseIcon';
 export { default as SolidMapIcon } from './components/SolidMapIcon';
+export { default as SolidPeincilIcon } from './components/SolidPencilIcon';
 export { default as SolidSitemapIcon } from './components/SolidSitemapIcon';
 export { default as SolidUsersIcon } from './components/SolidUsersIcon';
 export { default as SquareCheckIcon } from './components/SquareCheckIcon';

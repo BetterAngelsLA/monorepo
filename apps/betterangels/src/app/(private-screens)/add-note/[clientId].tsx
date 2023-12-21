@@ -1,10 +1,12 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { BodyText, Button } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import Purpose from './Purpose';
+import Title from './Title';
 
 interface INote {
   purposes: { value: string }[];
@@ -25,6 +27,14 @@ export default function AddNote() {
   return (
     <FormProvider {...methods}>
       <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
+        <Title
+          expanded={expanded}
+          setExpanded={setExpanded}
+          firstName="Davit"
+        />
+        <BodyText size="xs" mb="md">
+          {format(new Date(), 'MM/dd/yy @ hha').toLowerCase()}
+        </BodyText>
         <Purpose expanded={expanded} setExpanded={setExpanded} />
 
         <Button
