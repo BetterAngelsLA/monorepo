@@ -35,6 +35,7 @@ interface IInputProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  onBlur?: () => void;
 }
 
 export function Input(props: IInputProps) {
@@ -56,6 +57,13 @@ export function Input(props: IInputProps) {
     mr,
     ...rest
   } = props;
+
+  const handleBlur = (onBlur: () => void) => {
+    onBlur();
+    if (props.onBlur) {
+      props.onBlur();
+    }
+  };
   return (
     <Controller
       control={control}
@@ -107,7 +115,7 @@ export function Input(props: IInputProps) {
                 }),
               }}
               value={value}
-              onBlur={onBlur}
+              onBlur={() => handleBlur(onBlur)}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}

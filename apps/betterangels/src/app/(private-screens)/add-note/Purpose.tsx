@@ -6,7 +6,12 @@ import {
   H5,
   Input,
 } from '@monorepo/expo/shared/ui-components';
-import { FieldErrors, useFieldArray, useFormContext } from 'react-hook-form';
+import {
+  FieldErrors,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { View } from 'react-native';
 
 interface INote {
@@ -26,26 +31,28 @@ interface IPurposeProps {
 
 export default function Purpose(props: IPurposeProps) {
   const { expanded, setExpanded } = props;
-  const { control, formState, watch, setValue } = useFormContext();
+  const { control, formState, setValue } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'purposes',
   });
 
-  const purposes: TPurposes = watch('purposes');
-  const firstPurposeValue = watch('purposes[0].value');
+  const purposes: TPurposes = useWatch({
+    name: 'purposes',
+    control,
+  });
 
   const typedErrors = formState.errors as NoteFormErrors;
-
-  console.log(purposes);
 
   return (
     <FieldCard
       expanded={expanded}
       setExpanded={() => {
-        setValue('purposes', [
-          purposes[0],
-          ...purposes.slice(1).filter((field) => !!field.value),
-        ]);
+        if (purposes.length > 0) {
+          setValue('purposes', [
+            purposes[0],
+            ...purposes.slice(1).filter((field) => !!field.value),
+          ]);
+        }
         setExpanded(expanded === 'Purpose' ? undefined : 'Purpose');
       }}
       error={
@@ -55,7 +62,9 @@ export default function Purpose(props: IPurposeProps) {
       }
       required
       mb="xs"
-      actionName={firstPurposeValue ? '' : 'Add Purpose'}
+      actionName={
+        purposes[0].value || expanded === 'Purpose' ? '' : 'Add Purpose'
+      }
       title="Purpose"
     >
       <View
@@ -67,8 +76,16 @@ export default function Purpose(props: IPurposeProps) {
       >
         {fields.map((purpose, index) => (
           <Input
+            onBlur={() =>
+              !purposes[index].value &&
+              index !== 0 &&
+              setValue(
+                'purposes',
+                purposes.filter((purpose, idx) => idx !== index)
+              )
+            }
             key={purpose.id}
-            mb="xs"
+            mt={index !== 0 ? 'xs' : undefined}
             error={typedErrors?.purposes?.[0] && index === 0}
             rules={{
               required: index === 0,
@@ -78,17 +95,22 @@ export default function Purpose(props: IPurposeProps) {
             name={`purposes[${index}].value`}
           />
         ))}
-        <H5
-          textAlign="right"
-          color={Colors.PRIMARY}
-          onPress={() => append('')}
-          size="xs"
-        >
-          Add another Purpose
-        </H5>
+        {purposes.length > 0 &&
+          purposes.length <= 10 &&
+          purposes[purposes.length - 1].value && (
+            <H5
+              mt="xs"
+              textAlign="right"
+              color={Colors.PRIMARY}
+              onPress={() => append({ value: '' })}
+              size="sm"
+            >
+              Add another Purpose
+            </H5>
+          )}
       </View>
 
-      {purposes[0].value && (
+      {purposes.length > 0 && purposes[0].value && (
         <View
           style={{
             paddingBottom: expanded !== 'Purpose' ? Spacings.md : 0,
@@ -102,7 +124,7 @@ export default function Purpose(props: IPurposeProps) {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                marginBottom: Spacings.xs,
+                marginTop: index === 0 ? 0 : Spacings.xs,
               }}
             >
               <SolidCircleIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />

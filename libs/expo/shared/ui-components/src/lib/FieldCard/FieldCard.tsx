@@ -66,7 +66,7 @@ export function FieldCard(props: IFieldCardProps) {
           { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
         ]}
       >
-        <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {expanded === title ? (
             <H2>{title}</H2>
           ) : (
