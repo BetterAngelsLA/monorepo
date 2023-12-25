@@ -63,7 +63,11 @@ export default function Purpose(props: IPurposeProps) {
       required
       mb="xs"
       actionName={
-        purposes[0].value || expanded === 'Purpose' ? '' : 'Add Purpose'
+        purposes[0].value || expanded === 'Purpose' ? (
+          ''
+        ) : (
+          <H5 size="sm">Add Purpose</H5>
+        )
       }
       title="Purpose"
     >

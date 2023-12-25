@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import Mood from './Mood';
 import Purpose from './Purpose';
 import Title from './Title';
 
@@ -36,6 +37,7 @@ export default function AddNote() {
           {format(new Date(), 'MM/dd/yy @ hha').toLowerCase()}
         </BodyText>
         <Purpose expanded={expanded} setExpanded={setExpanded} />
+        <Mood expanded={expanded} setExpanded={setExpanded} />
 
         <Button
           size="full"

@@ -3,14 +3,13 @@ import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import BodyText from '../BodyText';
 import H2 from '../H2';
-import H5 from '../H5';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IFieldCardProps {
   children: ReactNode;
   title: string;
-  actionName: string;
+  actionName: ReactNode;
   required?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -74,7 +73,7 @@ export function FieldCard(props: IFieldCardProps) {
           )}
           {required && <BodyText color={Colors.ERROR}>*</BodyText>}
         </View>
-        <H5 size="sm">{actionName}</H5>
+        {actionName}
       </Pressable>
 
       {children}
