@@ -99,6 +99,7 @@ export default function Mood(props: IMoodProps) {
 
   return (
     <FieldCard
+      mb="xs"
       actionName={
         expanded === 'Mood' && moods.length < 1 ? (
           ''

@@ -6,7 +6,9 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import Mood from './Mood';
+import ProvidedServices from './ProvidedServices';
 import Purpose from './Purpose';
+import ServicesRequested from './ServicesRequested';
 import Title from './Title';
 
 interface INote {
@@ -38,6 +40,8 @@ export default function AddNote() {
         </BodyText>
         <Purpose expanded={expanded} setExpanded={setExpanded} />
         <Mood expanded={expanded} setExpanded={setExpanded} />
+        <ProvidedServices expanded={expanded} setExpanded={setExpanded} />
+        <ServicesRequested expanded={expanded} setExpanded={setExpanded} />
 
         <Button
           size="full"

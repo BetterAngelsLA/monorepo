@@ -93,6 +93,7 @@ export { default as MoreIcon } from './components/MoreIcon';
 export { default as NoteIcon } from './components/NoteIcon';
 export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';
+export { default as PeopleRoofIcon } from './components/PeopleRoofIcon';
 export { default as PlusIcon } from './components/PlusIcon';
 export { default as PrescriptionIcon } from './components/PrescriptionIcon';
 export { default as SearchIcon } from './components/SearchIcon';
