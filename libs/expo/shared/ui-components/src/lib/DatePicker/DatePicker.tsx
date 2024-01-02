@@ -1,7 +1,7 @@
 import { CalendarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { useState } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
@@ -203,14 +203,14 @@ export function DatePicker(props: IDatePickerProps) {
               }}
             >
               <DateTimePicker
-                onChange={(event, selectedDate) =>
-                  setDate(onChange, selectedDate)
-                }
+                onChange={(event, date) => setDate(onChange, date)}
                 style={{ backgroundColor: Colors.WHITE }}
-                display={'inline'}
+                display="inline"
                 mode="date"
                 minimumDate={new Date()}
-                value={new Date()}
+                value={
+                  value ? parse(value, 'MM/dd/yy', new Date()) : new Date()
+                }
               />
             </Pressable>
           </Modal>

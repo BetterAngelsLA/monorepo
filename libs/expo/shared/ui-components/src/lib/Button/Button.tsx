@@ -25,7 +25,8 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
 
 const HEIGHT = {
   sm: 32,
-  md: 46,
+  md: 40,
+  lg: 46,
 };
 
 const VARIANTS: TVariants = {
@@ -41,7 +42,7 @@ const VARIANTS: TVariants = {
   },
   primary: {
     bg: Colors.PRIMARY,
-    color: Colors.PRIMARY_EXTRA_DARK,
+    color: Colors.WHITE,
     border: Colors.PRIMARY,
   },
   secondary: {
@@ -73,7 +74,7 @@ interface IButtonProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  height?: 'sm' | 'md';
+  height?: 'sm' | 'md' | 'lg';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
   accessibilityLabel?: string;
@@ -91,7 +92,7 @@ export function Button(props: IButtonProps) {
     disabled,
     style,
     icon,
-    height = 'md',
+    height = 'lg',
     fontSize = 'md',
     mb,
     mt,

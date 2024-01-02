@@ -6,13 +6,14 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 
-interface INextStepProps {
+interface IPublicNoteProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
+  firstName: string;
 }
 
-export default function PublicNote(props: INextStepProps) {
-  const { expanded, setExpanded } = props;
+export default function PublicNote(props: IPublicNoteProps) {
+  const { expanded, setExpanded, firstName } = props;
   const { control, watch } = useFormContext();
 
   const hmisNote = watch('hmisNote');
@@ -37,7 +38,7 @@ export default function PublicNote(props: INextStepProps) {
           mb="md"
           name="hmisNote"
           control={control}
-          label="How was ... today"
+          label={`How was ${firstName} today`}
         />
       ) : (
         !isEmptyOrTemplate && <BodyText mb="md">{hmisNote}</BodyText>

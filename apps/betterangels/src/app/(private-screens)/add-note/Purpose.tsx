@@ -6,6 +6,7 @@ import {
   H5,
   Input,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
 import {
   FieldErrors,
   useFieldArray,
@@ -43,30 +44,30 @@ export default function Purpose(props: IPurposeProps) {
 
   const typedErrors = formState.errors as NoteFormErrors;
 
+  useEffect(() => {
+    if (expanded !== 'Purpose') {
+      const requiredField = purposes[0];
+      const filteredPurposes = purposes
+        .slice(1)
+        .filter((field) => !!field.value);
+      setValue('purposes', [requiredField, ...filteredPurposes]);
+    }
+  }, [expanded]);
+
   return (
     <FieldCard
       expanded={expanded}
-      setExpanded={() => {
-        if (purposes.length > 0) {
-          setValue('purposes', [
-            purposes[0],
-            ...purposes.slice(1).filter((field) => !!field.value),
-          ]);
-        }
-        setExpanded(expanded === 'Purpose' ? undefined : 'Purpose');
-      }}
-      error={
-        typedErrors?.purposes?.length && typedErrors?.purposes?.length > 0
-          ? true
-          : false
+      setExpanded={() =>
+        setExpanded(expanded === 'Purpose' ? undefined : 'Purpose')
       }
+      error={!!typedErrors?.purposes}
       required
       mb="xs"
       actionName={
-        purposes[0].value || expanded === 'Purpose' ? (
-          ''
-        ) : (
+        !purposes.some((purpose) => purpose.value) && expanded !== 'Purpose' ? (
           <H5 size="sm">Add Purpose</H5>
+        ) : (
+          ''
         )
       }
       title="Purpose"
@@ -80,14 +81,6 @@ export default function Purpose(props: IPurposeProps) {
       >
         {fields.map((purpose, index) => (
           <Input
-            onBlur={() =>
-              !purposes[index].value &&
-              index !== 0 &&
-              setValue(
-                'purposes',
-                purposes.filter((purpose, idx) => idx !== index)
-              )
-            }
             key={purpose.id}
             mt={index !== 0 ? 'xs' : undefined}
             error={typedErrors?.purposes?.[0] && index === 0}
