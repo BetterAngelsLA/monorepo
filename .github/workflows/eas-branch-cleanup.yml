@@ -1,0 +1,72 @@
+name: 📱 FE App Deployment
+
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🔀 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: yarn
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🧩 Determine Affected Projects for eas-update
+        id: set-matrix
+        run: |
+          # Get the list of affected projects with eas-update target
+          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+          # Convert the list to a JSON matrix
+          MATRIX_JSON=echo $affected_projects | jq -Rcs 'split("\n") | map(select(. != "") | {project: .}) | {include: .}')
+          echo $MATRIX_JSON
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  delete-eas-branch:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v3
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🗑️ Delete EAS Branch
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: eas branch:delete --non-interactive ${{ github.head_ref_name }}
+          comment: false
+          working-directory: apps/${{ matrix.project }}
