@@ -1,4 +1,4 @@
-name: 📱 FE App Deployment
+name: 🧹 EAS Update Branch Cleanup
 
 on:
   pull_request:
