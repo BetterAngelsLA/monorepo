@@ -48,13 +48,16 @@ jobs:
             end'
           )
           echo $MATRIX_JSON
+          echo "is_matrix_empty=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then "true" else "false" end')"
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   delete-eas-branch:
     needs: prepare
     runs-on: ubuntu-latest
+    if: steps.check_json.outputs.is_empty == 'false'
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     steps:
