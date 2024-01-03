@@ -9,3 +9,14 @@ export const GET_CURRENT_USER = gql`
     }
   }
 `;
+
+export const GET_NOTES = gql`
+  query notes {
+    notes {
+      id
+      title
+      body
+      createdAt
+    }
+  }
+`;
