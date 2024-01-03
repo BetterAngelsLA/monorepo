@@ -47,9 +47,7 @@ jobs:
                 {include: map({project: .})} 
             end'
           )
-          echo $MATRIX_JSON
           IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
-          echo $IS_MATRIX_EMPTY
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
@@ -60,8 +58,6 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
-    strategy:
-      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v3
@@ -77,9 +73,13 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🗑️ Delete EAS Branch
-        uses: expo/expo-github-action/preview@v8
-        with:
-          command: eas branch:delete --non-interactive ${{ github.head_ref_name }}
-          comment: false
-          working-directory: apps/${{ matrix.project }}
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🗑️ Delete EAS Branch for Each Project
+        run: |
+          MATRIX_JSON='${{ needs.prepare.outputs.matrix }}'
+          for project in $(echo $MATRIX_JSON | jq -r '.include[].project'); do
+            echo "Deleting EAS branch for project: $project"
+            eas branch:delete --non-interactive ${{ github.head_ref_name }} --working-directory=apps/$project
+          done

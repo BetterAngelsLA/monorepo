@@ -50,9 +50,7 @@ jobs:
                 {include: map({project: .})} 
             end'
           )
-          echo $MATRIX_JSON
           IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
-          echo $IS_MATRIX_EMPTY
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
