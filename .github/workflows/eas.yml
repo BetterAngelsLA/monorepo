@@ -79,12 +79,11 @@ jobs:
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
-          # if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          #   echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          # else
-          #   echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          # fi
-          echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
+          else
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          fi
 
       - name: 🧹 Clear All .env files and load eas.json
         run: |
@@ -135,3 +134,25 @@ jobs:
 
             [exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }}](exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }})
           edit-mode: replace
+
+    delete-eas-branch:
+      if: github.event.pull_request.merged == true
+      needs: [preview] # or whichever job you prefer to wait for
+      runs-on: ubuntu-latest
+      steps:
+        - name: 🏗 Check out repo
+          uses: actions/checkout@v3
+
+        - name: 🔧 Setup Node
+          uses: actions/setup-node@v3
+          with:
+            node-version: 18.17.1
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+        - name: 🗑️ Delete EAS Branch
+          run: eas branch:delete --non-interactive ${{ env.GITHUB_REF_NAME }}
