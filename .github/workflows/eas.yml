@@ -135,30 +135,30 @@ jobs:
             [exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }}](exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }})
           edit-mode: replace
 
-    delete-eas-branch:
-      if: github.event_name == 'pull_request' && github.event.action == 'closed'
-      needs: prepare
-      runs-on: ubuntu-latest
-      strategy:
-        matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-      steps:
-        - name: 🏗 Check out repo
-          uses: actions/checkout@v3
+  delete-eas-branch:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v3
 
-        - name: 🔧 Setup Node
-          uses: actions/setup-node@v3
-          with:
-            node-version: 18.17.1
-
-      - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@v8
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          node-version: 18.17.1
 
-      - name: 🗑️ Delete EAS Branch
-        uses: expo/expo-github-action/preview@v8
-        with:
-          command: eas branch:delete --non-interactive ${{ env.GITHUB_REF_NAME }}
-          comment: false
-          working-directory: apps/${{ matrix.project }}
+    - name: 🔧 Setup EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+
+    - name: 🗑️ Delete EAS Branch
+      uses: expo/expo-github-action/preview@v8
+      with:
+        command: eas branch:delete --non-interactive ${{ env.GITHUB_REF_NAME }}
+        comment: false
+        working-directory: apps/${{ matrix.project }}
