@@ -5,7 +5,7 @@ const config: CodegenConfig = {
   schema: 'apps/betterangels-backend/out/schema.graphql',
   documents: 'libs/expo/betterangels/src/lib/apollo/graphql/**/*.ts',
   generates: {
-    'libs/expo/betterangels/src/lib/apollo/gql/': {
+    'libs/expo/betterangels/src/lib/apollo/gql-types/': {
       preset: 'client',
       plugins: [],
     },
