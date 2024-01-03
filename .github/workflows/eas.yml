@@ -136,7 +136,7 @@ jobs:
           edit-mode: replace
 
     delete-eas-branch:
-      if: github.event.pull_request.merged == true
+      if: github.event_name == 'pull_request' && github.event.action == 'closed'
       needs: prepare
       runs-on: ubuntu-latest
       strategy:
