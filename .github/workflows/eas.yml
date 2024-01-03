@@ -62,7 +62,7 @@ jobs:
   preview:
     needs: prepare
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.is_matrix_empty == false
+    if: needs.prepare.outputs.is_matrix_empty == "false"
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
