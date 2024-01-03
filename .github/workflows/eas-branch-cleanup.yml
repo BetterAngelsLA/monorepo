@@ -66,6 +66,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.17.1
+          cache: yarn
 
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
