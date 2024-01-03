@@ -44,7 +44,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
   preview:
-    if: ${{ needs.prepare.outputs.matrix != "" }}
+    if: needs.prepare.outputs.matrix != '[]'
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
@@ -137,7 +137,7 @@ jobs:
           edit-mode: replace
 
   delete-eas-branch:
-    if: ${{ needs.prepare.outputs.matrix != "" }} && ( github.event_name == 'pull_request' || github.event.action == 'closed' )
+    if: needs.prepare.outputs.matrix != '[]' && github.event_name == 'pull_request' && github.event.action == 'closed'
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
