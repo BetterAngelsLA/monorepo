@@ -51,7 +51,7 @@ jobs:
             end'
           )
           echo $MATRIX_JSON
-          IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then "true" else "false" end')
+          IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
           echo $IS_MATRIX_EMPTY
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
@@ -62,7 +62,7 @@ jobs:
   preview:
     needs: prepare
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.is_matrix_empty == "false"
+    if: needs.prepare.outputs.is_matrix_empty == 'false'
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
