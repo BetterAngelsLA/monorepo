@@ -113,12 +113,13 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         expanded === 'Provided Services' && providedServices.length < 1 ? (
           ''
         ) : providedServices.length > 0 ? (
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {providedServices.map((service: string) => {
               const IconComponent = ICONS[service];
               return (
                 <IconComponent
-                  ml="xs"
+                  mr="xs"
+                  my="xs"
                   key={service}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}

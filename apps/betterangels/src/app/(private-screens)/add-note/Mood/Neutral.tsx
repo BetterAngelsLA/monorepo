@@ -1,7 +1,7 @@
 import {
-  FaceFrownIcon,
   FaceHandYawnIcon,
   FaceMehBlankIcon,
+  FacePerseveringIcon,
   FacePoutingIcon,
   FaceSpiralEyesIcon,
 } from '@monorepo/expo/shared/icons';
@@ -15,7 +15,7 @@ const NEUTRAL_MOOD = [
   { Icon: FaceSpiralEyesIcon, title: 'Disorganized Thought' },
   { Icon: FaceMehBlankIcon, title: 'Flat/blunted' },
   { Icon: FaceHandYawnIcon, title: 'Indifferent' },
-  { Icon: FaceFrownIcon, title: 'Restless' },
+  { Icon: FacePerseveringIcon, title: 'Restless' },
 ];
 
 export default function Neutral() {

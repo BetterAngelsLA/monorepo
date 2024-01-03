@@ -113,12 +113,13 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
         expanded === 'Services Requested' && services.length < 1 ? (
           ''
         ) : services.length > 0 ? (
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
               const IconComponent = ICONS[service];
               return (
                 <IconComponent
-                  ml="xs"
+                  mr="xs"
+                  my="xs"
                   key={service}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}

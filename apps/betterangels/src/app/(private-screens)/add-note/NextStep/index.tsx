@@ -7,7 +7,6 @@ import {
   H5,
   Input,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
 import { useEffect } from 'react';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
@@ -52,8 +51,6 @@ export default function NextStep(props: INextStepProps) {
       mb="xs"
       setExpanded={() => {
         if (nextStepActions.length === 0) append({ value: '' });
-        if (!nextStepDate && expanded !== 'Next Step')
-          setValue('nextStepDate', format(new Date(), 'MM/dd/yy'));
 
         setExpanded(expanded === 'Next Step' ? undefined : 'Next Step');
       }}

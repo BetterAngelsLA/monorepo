@@ -104,12 +104,18 @@ export default function Mood(props: IMoodProps) {
         expanded === 'Mood' && moods.length < 1 ? (
           ''
         ) : moods.length > 0 ? (
-          <View style={{ flexDirection: 'row' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+            }}
+          >
             {moods.map((mood: string) => {
               const IconComponent = ICONS[mood];
               return (
                 <IconComponent
-                  ml="xs"
+                  mr="xs"
+                  my="xs"
                   key={mood}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}
