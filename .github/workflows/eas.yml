@@ -2,7 +2,7 @@ name: 📱 FE App Deployment
 
 on:
   pull_request:
-    types: []
+    types: [opened, synchronize]
   push:
     branches:
       - main
@@ -110,7 +110,7 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         id: expo_preview
         with:
-          command: eas update --auto
+          command: eas update --auto --channel ${{ env.CHANNEL_CONFIG }}
           comment: false
           working-directory: apps/${{ matrix.project }}
 
