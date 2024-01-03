@@ -2,7 +2,7 @@ name: 📱 FE App Deployment
 
 on:
   pull_request:
-    types: [closed, opened, synchronize]
+    types: []
   push:
     branches:
       - main
@@ -55,112 +55,27 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
-  # preview:
-  #   if: github.event.action != 'closed'
-  #   needs: prepare
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-  #   permissions:
-  #     actions: write # Allow updating fingerprint in acton caches
-  #     contents: read # Required for actions/checkout
-  #     pull-requests: write # Allow comments on PRs
-  #   steps:
-  #     - name: 🏗 Check out repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         # https://github.com/expo/expo-github-action/issues/229
-  #         ref: ${{ github.event.pull_request.head.ref }}
-
-  #     - name: 🔧 Setup Node
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18.17.1
-  #         cache: yarn
-
-  #     - name: 🔧 Setup EAS
-  #       uses: expo/expo-github-action@v8
-  #       with:
-  #         eas-version: latest
-  #         token: ${{ secrets.EXPO_TOKEN }}
-
-  #     - name: 📦 Install dependencies
-  #       run: yarn install
-
-  #     - name: 🔍 Determine Channel Config
-  #       # When not in production we use the preview eas.json config.
-  #       # This will not necessarily map to the actual deployed channel.
-  #       id: set-env
-  #       run: |
-  #         if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-  #           echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-  #         else
-  #           echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-  #         fi
-
-  #     - name: 🧹 Clear All .env files and load eas.json
-  #       run: |
-  #         find . -name '*.env*' -delete
-  #         cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
-  #       working-directory: apps/${{ matrix.project }}
-
-  #     - name: 🚀 Create preview
-  #       uses: expo/expo-github-action/preview@v8
-  #       id: expo_preview
-  #       with:
-  #         command: eas update --auto
-  #         comment: false
-  #         working-directory: apps/${{ matrix.project }}
-
-  #     # Because of https://github.com/expo/expo-github-action/issues/214, we have to generate our own QR code for now.
-  #     # They need to allow publishing a QR code without the schema for ExpoGO to "just work"
-  #     - name: 📝 Comment on PR
-  #       if: github.event_name == 'pull_request'
-  #       uses: edumserrano/find-create-or-update-comment@v1
-  #       with:
-  #         issue-number: ${{ github.event.pull_request.number }}
-  #         body-includes: '<!-- expo-qr-code -->'
-  #         comment-author: 'github-actions[bot]'
-  #         body: |
-  #           <!-- expo-qr-code -->
-
-  #           🚀 Expo preview is ready!
-
-  #           <table>
-  #           <tr>
-  #             <td><b>Project
-  #             <td><b>Channel
-  #             <td><b>Project Link
-  #           <tr>
-  #             <td>${{ steps.expo_preview.outputs.projectName }}
-  #             <td>${{ github.event.pull_request.head.ref }}
-  #             <td><a href="${{ steps.expo_preview.outputs.link }}">${{ steps.expo_preview.outputs.link }}</a>
-  #           </table>
-
-  #           -----
-
-  #           **Option 1 - 📱 Scan QR Code**
-
-  #           <img src="https://qr.expo.dev/eas-update/?projectId=${{ steps.expo_preview.outputs.projectId }}&groupId=${{ steps.expo_preview.outputs.groupId }}" height="200px" width="200px" />
-
-  #           **Option 2 - 📱 Open Link**
-
-  #           [exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }}](exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }})
-  #         edit-mode: replace
-
-  delete-eas-branch:
+  preview:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+    permissions:
+      actions: write # Allow updating fingerprint in acton caches
+      contents: read # Required for actions/checkout
+      pull-requests: write # Allow comments on PRs
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v3
+        with:
+          # https://github.com/expo/expo-github-action/issues/229
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: 🔧 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.17.1
+          cache: yarn
 
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
@@ -168,9 +83,66 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🗑️ Delete EAS Branch
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🔍 Determine Channel Config
+        # When not in production we use the preview eas.json config.
+        # This will not necessarily map to the actual deployed channel.
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
+          else
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          fi
+
+      - name: 🧹 Clear All .env files and load eas.json
+        run: |
+          find . -name '*.env*' -delete
+          cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        working-directory: apps/${{ matrix.project }}
+
+      - name: 🚀 Create preview
         uses: expo/expo-github-action/preview@v8
+        id: expo_preview
         with:
-          command: eas branch:delete --non-interactive ${{ github.head_ref_name }}
+          command: eas update --auto
           comment: false
           working-directory: apps/${{ matrix.project }}
+
+      # Because of https://github.com/expo/expo-github-action/issues/214, we have to generate our own QR code for now.
+      # They need to allow publishing a QR code without the schema for ExpoGO to "just work"
+      - name: 📝 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- expo-qr-code -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- expo-qr-code -->
+
+            🚀 Expo preview is ready!
+
+            <table>
+            <tr>
+              <td><b>Project
+              <td><b>Channel
+              <td><b>Project Link
+            <tr>
+              <td>${{ steps.expo_preview.outputs.projectName }}
+              <td>${{ github.event.pull_request.head.ref }}
+              <td><a href="${{ steps.expo_preview.outputs.link }}">${{ steps.expo_preview.outputs.link }}</a>
+            </table>
+
+            -----
+
+            **Option 1 - 📱 Scan QR Code**
+
+            <img src="https://qr.expo.dev/eas-update/?projectId=${{ steps.expo_preview.outputs.projectId }}&groupId=${{ steps.expo_preview.outputs.groupId }}" height="200px" width="200px" />
+
+            **Option 2 - 📱 Open Link**
+
+            [exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }}](exp://u.expo.dev/${{ steps.expo_preview.outputs.projectId }}/group/${{ steps.expo_preview.outputs.groupId }})
+          edit-mode: replace
