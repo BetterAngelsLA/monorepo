@@ -150,15 +150,15 @@ jobs:
         with:
           node-version: 18.17.1
 
-    - name: 🔧 Setup EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-    - name: 🗑️ Delete EAS Branch
-      uses: expo/expo-github-action/preview@v8
-      with:
-        command: eas branch:delete --non-interactive ${{ env.GITHUB_REF_NAME }}
-        comment: false
-        working-directory: apps/${{ matrix.project }}
+      - name: 🗑️ Delete EAS Branch
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: eas branch:delete --non-interactive ${{ github.head_ref_name }}
+          comment: false
+          working-directory: apps/${{ matrix.project }}
