@@ -110,7 +110,7 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         id: expo_preview
         with:
-          command: eas update --auto --channel ${{ env.CHANNEL_CONFIG }} --branch $GITHUB_HEAD_REF
+          command: eas update --auto --channel ${{ env.CHANNEL_CONFIG }} --branch ${{ env.GITHUB_HEAD_REF }}
           comment: false
           working-directory: apps/${{ matrix.project }}
 
