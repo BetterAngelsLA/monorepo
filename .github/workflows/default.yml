@@ -34,8 +34,8 @@ jobs:
   BuildTestDeploy:
     runs-on: ubuntu-latest
     permissions:
-      actions: read # Required to find the last successful workflow run
-      contents: read # Required for actions/checkout
+      actions: write # Required to find the last successful workflow run
+      contents: write # Required for actions/checkout
       id-token: write # Required for requesting the JWT
       pull-requests: write
       deployments: write
