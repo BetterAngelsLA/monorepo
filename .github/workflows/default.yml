@@ -37,7 +37,13 @@ jobs:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
-      pull-requests: read
+      pull-requests: write
+      deployments: write
+      issues: write
+      packages: write
+      pages: write
+      security-events: write
+      statuses: write
 
     steps:
       - name: 🚦 Turnstyle
