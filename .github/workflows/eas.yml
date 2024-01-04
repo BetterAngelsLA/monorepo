@@ -89,11 +89,12 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🔍 Determine Channel Config
+      - name: 🔍 Determine Channel Config and Branch
         # When not in production we use the preview eas.json config.
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
+          echo "BRANCH_NAME=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
           else
@@ -110,9 +111,7 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         id: expo_preview
         with:
-          command: |
-            BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-            eas update --auto --channel ${{ env.CHANNEL_CONFIG }} --branch $BRANCH_NAME
+          command: eas update --auto --channel ${{ env.CHANNEL_CONFIG }} --branch ${{ env.BRANCH_NAME }}
           comment: false
           working-directory: apps/${{ matrix.project }}
 
