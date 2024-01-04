@@ -5,6 +5,7 @@ import {
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
+import InfoModal from './InfoModal';
 
 interface IPublicNoteProps {
   expanded: string | undefined;
@@ -27,6 +28,7 @@ export default function PublicNote(props: IPublicNoteProps) {
         setExpanded(expanded === 'Public Note' ? undefined : 'Public Note')
       }
       title="Public Note"
+      info={<InfoModal />}
       actionName={
         isEmptyOrTemplate && expanded !== 'Public Note' ? (
           <H5 size="sm">Add HMIS note</H5>

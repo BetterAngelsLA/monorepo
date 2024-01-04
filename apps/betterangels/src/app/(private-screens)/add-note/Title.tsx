@@ -1,6 +1,12 @@
 import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
-import { H5, IconButton, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  BodyText,
+  DatePicker,
+  H5,
+  IconButton,
+  Input,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
@@ -20,6 +26,7 @@ export default function Title(props: ITitleProps) {
     formState: { errors },
   } = useFormContext();
   const title = watch('title');
+  const noteDateTime = watch('noteDateTime');
 
   useEffect(() => {
     setValue('title', `Session with ${firstName}`);
@@ -29,24 +36,32 @@ export default function Title(props: ITitleProps) {
     <View style={{ marginBottom: Spacings.xs }}>
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
           height: expanded !== 'Title' ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
-        <H5 mr="sm">{title}</H5>
-        <IconButton
-          onPress={() => setExpanded('Title')}
-          accessibilityLabel="edit"
-          accessibilityHint="edits note title"
-          variant="transparent"
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
         >
-          <SolidPeincilIcon
-            size="md"
-            color={errors.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
-          />
-        </IconButton>
+          <H5 mr="sm">{title}</H5>
+          <IconButton
+            onPress={() => setExpanded('Title')}
+            accessibilityLabel="edit"
+            accessibilityHint="edits note title"
+            variant="transparent"
+          >
+            <SolidPeincilIcon
+              size="md"
+              color={errors.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
+            />
+          </IconButton>
+        </View>
+        <BodyText size="xs" mb="md">
+          {noteDateTime}
+        </BodyText>
       </View>
       <View
         style={{
@@ -63,6 +78,7 @@ export default function Title(props: ITitleProps) {
           control={control}
           name="title"
         />
+        <DatePicker mt="xs" control={control} name="noteDateTime" />
       </View>
     </View>
   );

@@ -1,5 +1,6 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { ReactNode } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
   Platform,
@@ -36,6 +37,8 @@ interface IInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
+  placeholder?: string;
+  icon?: ReactNode;
 }
 
 export function Input(props: IInputProps) {
@@ -48,6 +51,7 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
+    placeholder,
     height = 56,
     mb,
     mt,
@@ -55,6 +59,7 @@ export function Input(props: IInputProps) {
     mx,
     ml,
     mr,
+    icon,
     ...rest
   } = props;
 
@@ -94,16 +99,18 @@ export function Input(props: IInputProps) {
             style={[
               styles.input,
               {
-                borderColor: error ? 'red' : Colors.PRIMARY_EXTRA_DARK,
+                borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
               },
             ]}
           >
+            {icon && icon}
             <TextInput
+              placeholder={placeholder}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
-                paddingLeft: 16,
+                paddingLeft: icon ? Spacings.xs : Spacings.sm,
                 paddingRight: 38,
                 fontFamily: 'Poppins-Regular',
                 fontSize: 16,
@@ -151,7 +158,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 8,
-    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   label: {
     flexDirection: 'row',

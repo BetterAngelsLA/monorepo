@@ -20,6 +20,7 @@ interface IFieldCardProps {
   error?: boolean;
   expanded: string | undefined;
   setExpanded: () => void;
+  info?: ReactNode;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -37,6 +38,7 @@ export function FieldCard(props: IFieldCardProps) {
     error,
     expanded,
     setExpanded,
+    info,
   } = props;
 
   return (
@@ -72,6 +74,7 @@ export function FieldCard(props: IFieldCardProps) {
             <BodyText size="sm">{title}</BodyText>
           )}
           {required && <BodyText color={Colors.ERROR}>*</BodyText>}
+          {info && info}
         </View>
         {actionName}
       </Pressable>

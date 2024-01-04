@@ -85,6 +85,7 @@ export { default as HouseBlankIcon } from './components/HouseBlankIcon';
 export { default as HouseIcon } from './components/HouseIcon';
 export { default as IdMeIcon } from './components/IdMeIcon';
 export { default as ImageIcon } from './components/ImageIcon';
+export { default as InfoIcon } from './components/InfoIcon';
 export { default as LocationDotIcon } from './components/LocationDotIcon';
 export { default as MagnifyingGlassIcon } from './components/MagnifyingGlassIcon';
 export { default as MapIcon } from './components/MapIcon';

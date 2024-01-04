@@ -116,7 +116,7 @@ export function DatePicker(props: IDatePickerProps) {
             style={[
               styles.input,
               {
-                borderColor: error ? 'red' : Colors.PRIMARY_EXTRA_DARK,
+                borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
               },
             ]}
           >
@@ -161,18 +161,23 @@ export function DatePicker(props: IDatePickerProps) {
             </Pressable>
           </View>
           {picker && (
-            <View>
+            <View style={{ marginTop: Spacings.xs }}>
               <DateTimePicker
                 onChange={(event, date) => {
                   setPickerDate(date || new Date());
                 }}
-                style={{ backgroundColor: Colors.WHITE }}
+                style={{
+                  backgroundColor: Colors.WHITE,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                }}
                 display="inline"
                 mode="datetime"
                 minimumDate={new Date()}
                 value={pickerDate}
               />
               <Button
+                mt="xs"
                 style={{ alignSelf: 'flex-end' }}
                 variant="primary"
                 size="sm"

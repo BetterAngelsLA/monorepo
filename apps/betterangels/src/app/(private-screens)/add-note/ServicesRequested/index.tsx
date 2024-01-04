@@ -26,6 +26,7 @@ import {
   FieldCard,
   H3,
   H5,
+  Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -93,11 +94,15 @@ const SERVICES = [
       { Icon: PawIcon, title: 'Pet Care' },
     ],
   },
+  {
+    title: 'Other Items',
+    items: [{ Icon: ArrowTrendUpIcon, title: 'Stabilize' }],
+  },
 ];
 
 export default function ServicesRequested(props: IServicesRequestedProps) {
   const { expanded, setExpanded } = props;
-  const { setValue, watch } = useFormContext();
+  const { setValue, watch, control } = useFormContext();
 
   const services = watch('servicesRequested') || [];
 
@@ -166,37 +171,17 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
               ))}
             </View>
           ))}
-          <View style={{ marginTop: Spacings.xs }}>
-            <H3 mb="xs">Other Items</H3>
-            <Checkbox
-              isChecked={services.includes('Stabilize')}
-              hasBorder
-              onCheck={() => toggleServices('Stabilize')}
-              accessibilityHint="Stabilize"
-              label={
-                <View style={styles.labelContainer}>
-                  <ArrowTrendUpIcon
-                    color={Colors.PRIMARY_EXTRA_DARK}
-                    size="sm"
-                  />
-                  <BodyText ml="xs">Stabilize</BodyText>
-                </View>
-              }
-            />
-            <Checkbox
-              mt="xs"
-              isChecked={services.includes('Other')}
-              hasBorder
-              onCheck={() => toggleServices('Other')}
-              accessibilityHint="Other"
-              label={
-                <View style={styles.labelContainer}>
-                  <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-                  <BodyText ml="xs">Other</BodyText>
-                </View>
-              }
-            />
-          </View>
+          <Input
+            placeholder="Enter other category"
+            icon={
+              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+            }
+            mt="xs"
+            name="otherRequestedCategory"
+            height={40}
+            control={control}
+          />
+
           <Pressable
             style={styles.attach}
             accessible

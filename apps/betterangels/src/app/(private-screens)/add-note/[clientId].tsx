@@ -1,10 +1,6 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BodyText,
-  Button,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
+import { Button, TextButton } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
@@ -23,6 +19,7 @@ interface INote {
   purposes: { value: string }[];
   nextStepActions: { value: string }[];
   hmisNote: string;
+  noteDateTime: string;
 }
 
 export default function AddNote() {
@@ -33,6 +30,7 @@ export default function AddNote() {
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
       hmisNote: 'G: \n\nI: \n\nR: \n\nP: \n',
+      noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
     },
   });
   useFormContext();
@@ -49,9 +47,7 @@ export default function AddNote() {
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title firstName="Test" {...props} />
-          <BodyText size="xs" mb="md">
-            {format(new Date(), 'MM/dd/yy @ hha').toLowerCase()}
-          </BodyText>
+
           <Purpose {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />
