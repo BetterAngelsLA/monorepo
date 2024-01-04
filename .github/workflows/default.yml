@@ -109,6 +109,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           schema: main:apps/betterangels-backend/schema.graphql
           fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
 
       - name: 🧹 Lint
         run: |
