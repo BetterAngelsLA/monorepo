@@ -22,22 +22,48 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
-import { ReactNode, useState } from 'react';
+import { ComponentType, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Neutral from './Neutral';
-import Pleasant from './Pleasant';
-import Unpleasant from './Unpleasant';
+import MoodSelector from './MoodSelector';
+
+interface Mood {
+  Icon: ComponentType<IIconProps>;
+  title: string;
+}
 
 interface IMoodProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
 }
 
-const SELECTED_TAB: { [key: string]: ReactNode } = {
-  pleasant: <Pleasant />,
-  unpleasant: <Unpleasant />,
-  neutral: <Neutral />,
+const MOOD_DATA: { [key: string]: Mood[] } = {
+  pleasant: [
+    { Icon: FaceSmilingHandsIcon, title: 'Agreeable' },
+    { Icon: FaceSmileIcon, title: 'Euthymic' },
+    { Icon: FaceLaughBeamIcon, title: 'Happy' },
+    { Icon: FaceLaughIcon, title: 'Motivated' },
+    { Icon: FaceRelievedIcon, title: 'Optimistic' },
+    { Icon: FaceSunglassesIcon, title: 'Personable' },
+    { Icon: FaceSmileRelaxedIcon, title: 'Pleasant' },
+  ],
+  neutral: [
+    { Icon: FacePoutingIcon, title: 'Agitated' },
+    { Icon: FaceSpiralEyesIcon, title: 'Disorganized Thought' },
+    { Icon: FaceMehBlankIcon, title: 'Flat/blunted' },
+    { Icon: FaceHandYawnIcon, title: 'Indifferent' },
+    { Icon: FaceFrownIcon, title: 'Restless' },
+  ],
+  unpleasant: [
+    { Icon: FaceAnxiousSweatIcon, title: 'Anxious' },
+    { Icon: FaceDisappointedIcon, title: 'Depressed' },
+    { Icon: FaceMehIcon, title: 'Detached' },
+    { Icon: FaceMeltingIcon, title: 'Disoriented' },
+    { Icon: FaceSpiralEyesIcon, title: 'Escalated' },
+    { Icon: FaceWearyIcon, title: 'Hopeless' },
+    { Icon: FaceSwearIcon, title: 'Manic' },
+    { Icon: FaceCloudsIcon, title: 'Suicidal' },
+  ],
 };
 
 const TABS: string[] = ['pleasant', 'neutral', 'unpleasant'];
@@ -71,6 +97,8 @@ export default function Mood(props: IMoodProps) {
   const { watch } = useFormContext();
 
   const moods = watch('moods') || [];
+
+  const moodsData = MOOD_DATA[tab] || [];
 
   const getColor = (tabName: string, light: boolean) => {
     switch (tabName) {
@@ -154,7 +182,7 @@ export default function Mood(props: IMoodProps) {
               </Pressable>
             ))}
           </View>
-          {SELECTED_TAB[tab]}
+          <MoodSelector moodsData={moodsData} />
         </>
       )}
     </FieldCard>

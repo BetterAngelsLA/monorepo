@@ -1,46 +1,35 @@
-import {
-  FaceAnxiousSweatIcon,
-  FaceCloudsIcon,
-  FaceDisappointedIcon,
-  FaceMehIcon,
-  FaceMeltingIcon,
-  FaceSpiralEyesIcon,
-  FaceSwearIcon,
-  FaceWearyIcon,
-} from '@monorepo/expo/shared/icons';
+import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
+import React, { ComponentType } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
-const UNPLEASANT_MOOD = [
-  { Icon: FaceAnxiousSweatIcon, title: 'Anxious' },
-  { Icon: FaceDisappointedIcon, title: 'Depressed' },
-  { Icon: FaceMehIcon, title: 'Detached' },
-  { Icon: FaceMeltingIcon, title: 'Disoriented' },
-  { Icon: FaceSpiralEyesIcon, title: 'Escalated' },
-  { Icon: FaceWearyIcon, title: 'Hopeless' },
-  { Icon: FaceSwearIcon, title: 'Manic' },
-  { Icon: FaceCloudsIcon, title: 'Suicidal' },
-];
+interface Mood {
+  Icon: ComponentType<IIconProps>;
+  title: string;
+}
 
-export default function Unpleasant() {
+interface MoodSelectorProps {
+  moodsData: Mood[];
+}
+
+const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
   const { setValue, watch } = useFormContext();
-
-  const moods = watch('moods') || [];
+  const selectedMoods = watch('moods') || [];
 
   const toggleMood = (mood: string) => {
-    const newMoods = moods.includes(mood)
-      ? moods.filter((m: string) => m !== mood)
-      : [...moods, mood];
+    const newMoods = selectedMoods.includes(mood)
+      ? selectedMoods.filter((m: string) => m !== mood)
+      : [...selectedMoods, mood];
     setValue('moods', newMoods);
   };
 
   return (
     <View style={{ paddingBottom: Spacings.md }}>
-      {UNPLEASANT_MOOD.map((mood, idx) => (
+      {moodsData.map((mood, idx) => (
         <Checkbox
-          isChecked={moods.includes(mood.title)}
+          isChecked={selectedMoods.includes(mood.title)}
           mt={idx !== 0 ? 'xs' : undefined}
           key={mood.title}
           hasBorder
@@ -56,7 +45,7 @@ export default function Unpleasant() {
       ))}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   labelContainer: {
@@ -64,3 +53,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+export default MoodSelector;
