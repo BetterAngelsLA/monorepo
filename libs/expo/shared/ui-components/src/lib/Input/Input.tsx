@@ -112,6 +112,7 @@ export function Input(props: IInputProps) {
                   : Colors.PRIMARY_EXTRA_DARK,
                 paddingLeft: icon ? Spacings.xs : Spacings.sm,
                 paddingRight: 38,
+                flex: 1,
                 fontFamily: 'Poppins-Regular',
                 fontSize: 16,
                 height,
