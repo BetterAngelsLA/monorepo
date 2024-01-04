@@ -94,7 +94,6 @@ jobs:
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
-          echo "BRANCH_NAME=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
           else
@@ -111,7 +110,7 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         id: expo_preview
         with:
-          command: eas update --auto --branch ${{ env.BRANCH_NAME }}
+          command: eas update --auto
           comment: false
           working-directory: apps/${{ matrix.project }}
 
