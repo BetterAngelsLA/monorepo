@@ -27,6 +27,7 @@ jobs:
       pages: write
       security-events: write
       statuses: write
+      checks: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
