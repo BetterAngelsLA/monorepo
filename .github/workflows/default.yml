@@ -113,6 +113,15 @@ jobs:
           yarn nx affected -t typecheck
           EOF
 
+      - name: 🧪 Graphql Check Schema
+        uses: actions/checkout@master
+
+      - uses: kamilkisiela/graphql-inspector-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          schema_path: ./apps/betterangels-backend/out/schema.graphql
+          fail_on_breaking: true
+
       - name: 🧪 Test
         run: |
           docker-compose run better-angels bash <<'EOF'
