@@ -14,6 +14,23 @@ env:
   COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
 jobs:
+  # GraphqlCheck:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     actions: read # Required to find the last successful workflow run
+  #     contents: read # Required for actions/checkout
+  #     id-token: write # Required for requesting the JWT
+
+  #   steps:
+  #     - name: 🧪 Graphql Check Schema
+  #       uses: actions/checkout@v3
+
+  #     - uses: kamilkisiela/graphql-inspector@master
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         schema_path: ./apps/betterangels-backend/out/schema.graphql
+  #         fail_on_breaking: true
+
   BuildTestDeploy:
     runs-on: ubuntu-latest
     permissions:
@@ -32,6 +49,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+
+      - uses: kamilkisiela/graphql-inspector@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          schema_path: ./apps/betterangels-backend/out/schema.graphql
+          fail_on_breaking: true
 
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🔀 Track main if PR
@@ -112,15 +135,6 @@ jobs:
           docker-compose run better-angels bash <<'EOF'
           yarn nx affected -t typecheck
           EOF
-
-      - name: 🧪 Graphql Check Schema
-        uses: actions/checkout@master
-
-      - uses: kamilkisiela/graphql-inspector@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          schema_path: ./apps/betterangels-backend/out/schema.graphql
-          fail_on_breaking: true
 
       - name: 🧪 Test
         run: |
