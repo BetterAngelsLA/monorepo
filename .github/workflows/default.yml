@@ -103,6 +103,12 @@ jobs:
         run: |
           docker-compose up -d
 
+      - name: 📝 Generate GraphQL Schema
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx run betterangels-backend:generate-graphql-schema
+          EOF
+
       - name: 🕵🏻‍♂️ GraphQL Inspector
         uses: kamilkisiela/graphql-inspector@master
         with:
