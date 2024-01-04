@@ -35,11 +35,10 @@ jobs:
       - name: 🧪 Github Checkout
         uses: actions/checkout@v3
 
-      - name: 🧪 Graphql Inspector
-        uses: kamilkisiela/graphql-inspector@master
+      - uses: kamilkisiela/graphql-inspector@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: ./apps/betterangels-backend/out/schema.graphql
+          schema: main:apps/betterangels-backend/out/schema.graphql
           fail-on-breaking: true
 
   BuildTestDeploy:
