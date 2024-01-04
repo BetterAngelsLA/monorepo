@@ -35,6 +35,12 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
+      - uses: kamilkisiela/graphql-inspector@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/out/schema.graphql
+          fail-on-breaking: true
+
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🔀 Track main if PR
         if: github.ref != 'refs/heads/main'
@@ -121,12 +127,6 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t test
           EOF
-
-      - uses: kamilkisiela/graphql-inspector@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: main:apps/betterangels-backend/out/schema.graphql
-          fail-on-breaking: true
 
       - name: 🛠️ Build and Push Artifacts
         run: |
