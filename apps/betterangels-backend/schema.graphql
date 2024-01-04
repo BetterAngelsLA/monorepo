@@ -21,7 +21,6 @@ type Mutation {
   generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
   createNote(input: CreateNoteInput!): NoteType
   updateNote(input: UpdateNoteInput!): NoteType
-  deleteNote(id: ID!): Boolean!
 }
 
 type NoteType {
