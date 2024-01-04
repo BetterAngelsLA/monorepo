@@ -89,7 +89,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🔍 Determine Channel Config and Branch
+      - name: 🔍 Determine Channel Config
         # When not in production we use the preview eas.json config.
         # This will not necessarily map to the actual deployed channel.
         id: set-env
