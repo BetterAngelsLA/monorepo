@@ -14,46 +14,14 @@ env:
   COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
 jobs:
-  GraphqlCheck:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write # Required to find the last successful workflow run
-      contents: write # Required for actions/checkout
-      id-token: write # Required for requesting the JWT
-      pull-requests: write
-      deployments: write
-      issues: write
-      packages: write
-      pages: write
-      security-events: write
-      statuses: write
-      checks: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    steps:
-      - name: 🧪 Github Checkout
-        uses: actions/checkout@v3
-
-      - uses: kamilkisiela/graphql-inspector@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: main:apps/betterangels-backend/out/schema.graphql
-          fail-on-breaking: true
-
   BuildTestDeploy:
     runs-on: ubuntu-latest
     permissions:
-      actions: write # Required to find the last successful workflow run
-      contents: write # Required for actions/checkout
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
-      pull-requests: write
-      deployments: write
-      issues: write
-      packages: write
-      pages: write
-      security-events: write
-      statuses: write
+      pull-requests: read
+      checks: write
 
     steps:
       - name: 🚦 Turnstyle
@@ -153,6 +121,12 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t test
           EOF
+
+      - uses: kamilkisiela/graphql-inspector@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/out/schema.graphql
+          fail-on-breaking: true
 
       - name: 🛠️ Build and Push Artifacts
         run: |

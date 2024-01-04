@@ -19,6 +19,8 @@ type MagicLinkResponse {
 type Mutation {
   logout: Boolean!
   generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
+  createNote(input: CreateNoteInput!): NoteType
+  updateNote(input: UpdateNoteInput!): NoteType
   deleteNote(id: ID!): Boolean!
 }
 
