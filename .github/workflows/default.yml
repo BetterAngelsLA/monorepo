@@ -27,6 +27,8 @@ jobs:
       pages: write
       security-events: write
       statuses: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: 🧪 Graphql Check Schema
