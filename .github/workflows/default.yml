@@ -54,7 +54,7 @@ jobs:
       - name: 🧪 Graphql Check Schema
         uses: kamilkisiela/graphql-inspector@master
         with:
-          schema: ./apps/betterangels-backend/out/schema.graphql
+          schema: main:apps/betterangels-backend/out/schema.graphql
           # fail_on_breaking: true
 
       # This line is needed for nx affected to work when CI is running on a PR
