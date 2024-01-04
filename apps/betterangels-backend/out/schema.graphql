@@ -3,7 +3,9 @@ input CreateNoteInput {
   body: String!
 }
 
-"""Date with time (isoformat)"""
+"""
+Date with time (isoformat)
+"""
 scalar DateTime
 
 input MagicLinkInput {
@@ -17,8 +19,6 @@ type MagicLinkResponse {
 type Mutation {
   logout: Boolean!
   generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
-  createNote(input: CreateNoteInput!): NoteType
-  updateNote(input: UpdateNoteInput!): NoteType
   deleteNote(id: ID!): Boolean!
 }
 
