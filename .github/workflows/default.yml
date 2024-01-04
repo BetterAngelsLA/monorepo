@@ -50,7 +50,8 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-      - uses: kamilkisiela/graphql-inspector@master
+      - name: 🧪 Graphql Check Schema
+        uses: kamilkisiela/graphql-inspector@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           schema_path: ./apps/betterangels-backend/out/schema.graphql
