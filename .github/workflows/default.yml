@@ -21,7 +21,7 @@ jobs:
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
       pull-requests: read
-      checks: read
+      checks: write # Required for graphql inspector
 
     steps:
       - name: 🚦 Turnstyle
@@ -35,7 +35,8 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-      - uses: kamilkisiela/graphql-inspector@master
+      - name: 🕵🏻‍♂️ Graphql Inspector
+        uses: kamilkisiela/graphql-inspector@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           schema: main:apps/betterangels-backend/out/schema.graphql
