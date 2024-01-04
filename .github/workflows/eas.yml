@@ -94,11 +94,12 @@ jobs:
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          else
-            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          fi
+          # if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          #   echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
+          # else
+          #   echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          # fi
+          echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
 
       - name: 🧹 Clear All .env files and load eas.json
         run: |
