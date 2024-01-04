@@ -1,0 +1,93 @@
+name: 🧹 EAS Update Branch Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🔀 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
+
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: yarn
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🧩 Determine Affected Projects for eas-update
+        id: set-matrix
+        run: |
+          # Get the list of affected projects with eas-update target
+          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+          # Convert the list to a JSON matrix
+          MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
+            split("\n") | 
+            map(select(. != "")) | 
+            if length == 0 then 
+                {} 
+            else 
+                {include: map({project: .})} 
+            end'
+          )
+          IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
+          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+
+  delete-eas-branch:
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.is_matrix_empty == 'false'
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v3
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+          cache: yarn
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🗑️ Delete EAS Branch & Channel for Each Project
+        run: |
+          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          MATRIX_JSON='${{ needs.prepare.outputs.matrix }}'
+          for project in $(echo $MATRIX_JSON | jq -r '.include[].project'); do
+            echo "Deleting EAS branch for project: $project"
+            # Change to the project directory
+            cd apps/$project
+            # Run the EAS command in the project directory
+            eas channel:delete --non-interactive $BRANCH_NAME
+            eas branch:delete --non-interactive $BRANCH_NAME
+            # Change back to the original directory
+            cd -
+          done
