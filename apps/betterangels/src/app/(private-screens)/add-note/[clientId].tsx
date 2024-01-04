@@ -1,4 +1,3 @@
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button, TextButton } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
@@ -11,6 +10,8 @@ import NextStep from './NextStep';
 import PrivateNote from './PrivateNote';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
+import { useMutation } from '@apollo/client';
+import { CREATE_NOTE, MainScrollContainer } from '@monorepo/expo/betterangels';
 import Purpose from './Purpose';
 import ServicesRequested from './ServicesRequested';
 import Title from './Title';
@@ -24,6 +25,7 @@ interface INote {
 
 export default function AddNote() {
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string>();
   const methods = useForm<INote>({
     defaultValues: {
@@ -33,7 +35,6 @@ export default function AddNote() {
       noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
     },
   });
-  useFormContext();
 
   const props = {
     expanded,
@@ -42,12 +43,28 @@ export default function AddNote() {
 
   console.log(clientId);
 
+  async function onSubmit(data: any) {
+    try {
+      const { data } = await createNote({
+        variables: {
+          input: {
+            title: 'note title',
+            body: 'note body',
+          },
+        },
+      });
+
+      console.log('Note created:', data.createNote);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title firstName="Test" {...props} />
-
           <Purpose {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />

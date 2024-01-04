@@ -1,3 +1,11 @@
+input CreateNoteInput {
+  title: String!
+  body: String!
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
 input MagicLinkInput {
   email: String!
 }
@@ -9,10 +17,29 @@ type MagicLinkResponse {
 type Mutation {
   logout: Boolean!
   generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
+  createNote(input: CreateNoteInput!): NoteType
+  updateNote(input: UpdateNoteInput!): NoteType
+  deleteNote(id: ID!): Boolean!
+}
+
+type NoteType {
+  id: ID!
+  title: String!
+  body: String!
+  createdAt: DateTime!
+  createdBy: UserType!
 }
 
 type Query {
   currentUser: UserType
+  notes: [NoteType!]!
+  note(id: ID!): NoteType
+}
+
+input UpdateNoteInput {
+  id: ID
+  title: String!
+  body: String!
 }
 
 type UserType {
