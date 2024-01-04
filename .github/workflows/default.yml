@@ -21,7 +21,7 @@ jobs:
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
       pull-requests: read
-      checks: write
+      checks: read
 
     steps:
       - name: 🚦 Turnstyle
