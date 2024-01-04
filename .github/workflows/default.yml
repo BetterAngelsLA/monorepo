@@ -35,7 +35,7 @@ jobs:
       - uses: kamilkisiela/graphql-inspector@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema-path: ./apps/betterangels-backend/out/schema.graphql
+          schema: ./apps/betterangels-backend/out/schema.graphql
           fail-on-breaking: true
 
   BuildTestDeploy:
