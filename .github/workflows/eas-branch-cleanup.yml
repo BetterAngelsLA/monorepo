@@ -79,13 +79,14 @@ jobs:
 
       - name: 🗑️ Delete EAS Branch for Each Project
         run: |
+          BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           MATRIX_JSON='${{ needs.prepare.outputs.matrix }}'
           for project in $(echo $MATRIX_JSON | jq -r '.include[].project'); do
             echo "Deleting EAS branch for project: $project"
             # Change to the project directory
             cd apps/$project
             # Run the EAS command in the project directory
-            eas branch:delete --non-interactive ${{ env.GITHUB_HEAD_REF }}
+            eas branch:delete --non-interactive $BRANCH_NAME
             # Change back to the original directory
             cd -
           done
