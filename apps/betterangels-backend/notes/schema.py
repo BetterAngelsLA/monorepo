@@ -11,7 +11,7 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 @strawberry.type
 class Query:
     @strawberry.field
-    def notess(self, info: Info) -> List[NoteType]:
+    def notes(self, info: Info) -> List[NoteType]:
         user = get_current_user(info)
         if user.is_authenticated:
             # Need to figure out types here
