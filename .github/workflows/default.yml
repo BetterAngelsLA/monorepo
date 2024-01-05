@@ -35,6 +35,20 @@ jobs:
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
+      - name: 📝 Make sure GraphQL Schema is generated
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx run betterangels-backend:compare-graphql-schema
+          EOF
+
+      - name: 🕵🏻‍♂️ GraphQL Inspector
+        uses: kamilkisiela/graphql-inspector@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/schema.graphql
+          fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
+
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🔀 Track main if PR
         if: github.ref != 'refs/heads/main'
@@ -102,20 +116,6 @@ jobs:
       - name: 🔄 Spin up monorepo environment
         run: |
           docker-compose up -d
-
-      - name: 📝 Generate GraphQL Schema
-        run: |
-          docker-compose run better-angels bash <<'EOF'
-          yarn nx run betterangels-backend:generate-graphql-schema
-          EOF
-
-      - name: 🕵🏻‍♂️ GraphQL Inspector
-        uses: kamilkisiela/graphql-inspector@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          schema: main:apps/betterangels-backend/schema.graphql
-          fail-on-breaking: true
-          approve-label: graphql-inspector:approved-breaking-change
 
       - name: 🧹 Lint
         run: |
