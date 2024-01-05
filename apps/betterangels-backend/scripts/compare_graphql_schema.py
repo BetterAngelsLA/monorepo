@@ -6,16 +6,18 @@ from betterangels_backend.schema import schema
 def run() -> int:
     print("Generating graphql schema...")
     schema_str = str(schema)
-    with open("tmp/schema.graphql", "w") as file:
+    with open("copy_schema.graphql", "w") as file:
         file.write(schema_str)
 
+    print("wrote file")
     result = compare_files()
 
+    cleanup()
     return result
 
 
 def compare_files() -> int:
-    file1 = "tmp/schema.graphql"
+    file1 = "copy_schema.graphql"
     file2 = "schema.graphql"
     with open(file1) as f1:
         content1 = normalize_text(f1.read())
