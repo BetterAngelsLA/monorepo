@@ -68,10 +68,10 @@
         "cwd": "apps/betterangels-backend"
       }
     },
-    "compare-graphql-schema": {
+    "validate-graphql-schema": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python manage.py runscript compare_graphql_schema",
+        "command": "poetry run python manage.py runscript validate_graphql_schema",
         "cwd": "apps/betterangels-backend"
       }
     },

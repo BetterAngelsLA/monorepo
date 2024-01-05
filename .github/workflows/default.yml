@@ -112,10 +112,10 @@ jobs:
       - name: 📝 Make sure GraphQL Schema is generated
         run: |
           docker-compose run better-angels bash <<'EOF'
-          yarn nx run betterangels-backend:compare-graphql-schema
+          yarn nx run betterangels-backend:validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
-            echo "Error: The GraphQL schemas do not match!"
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run betterangels-backend:generate-graphql-schema' locally and committed the changes."
             exit 1
           else
             echo "Success: The GraphQL schemas match!"
