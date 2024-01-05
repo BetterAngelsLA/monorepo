@@ -59,4 +59,4 @@ def normalize_text(text: str) -> str:
 
 
 def cleanup() -> None:
-    os.remove("tmp/schema.graphql")
+    os.remove("copy_schema.graphql")
