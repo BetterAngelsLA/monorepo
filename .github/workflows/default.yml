@@ -113,6 +113,13 @@ jobs:
         run: |
           docker-compose run better-angels bash <<'EOF'
           yarn nx run betterangels-backend:compare-graphql-schema
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: The GraphQL schemas do not match!"
+            exit 1
+          else
+            echo "Success: The GraphQL schemas match!"
+          fi
           EOF
 
       - name: 🕵🏻‍♂️ GraphQL Inspector
