@@ -1,5 +1,3 @@
-import difflib
-import filecmp
 import os
 
 from betterangels_backend.schema import schema
