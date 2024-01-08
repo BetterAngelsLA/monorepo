@@ -110,6 +110,7 @@ jobs:
           EOF
 
       - name: 📝 Make sure GraphQL Schema is generated
+        # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
           docker-compose run better-angels bash <<'EOF'
           yarn nx run betterangels-backend:validate-graphql-schema
