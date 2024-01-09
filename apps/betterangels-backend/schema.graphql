@@ -3,7 +3,9 @@ input CreateNoteInput {
   body: String!
 }
 
-"""Date with time (isoformat)"""
+"""
+Date with time (isoformat)
+"""
 scalar DateTime
 
 input MagicLinkInput {

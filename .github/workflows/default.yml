@@ -20,6 +20,8 @@ jobs:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
+      pull-requests: read
+      checks: write # Required for graphql inspector
 
     steps:
       - name: 🚦 Turnstyle
@@ -106,6 +108,28 @@ jobs:
           docker-compose run better-angels bash <<'EOF'
           yarn nx affected -t lint
           EOF
+
+      - name: 📝 Make sure GraphQL Schema is generated
+        # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx run betterangels-backend:validate-graphql-schema
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run betterangels-backend:generate-graphql-schema' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL schemas match!"
+          fi
+          EOF
+
+      - name: 🕵🏻‍♂️ GraphQL Inspector
+        uses: kamilkisiela/graphql-inspector@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/schema.graphql
+          fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
 
       - name: 🔬 Typecheck
         run: |
