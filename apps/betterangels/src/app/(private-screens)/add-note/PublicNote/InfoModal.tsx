@@ -41,19 +41,15 @@ export default function InfoModal() {
           <View
             style={{
               backgroundColor: Colors.WHITE,
-              paddingHorizontal: Spacings.md,
-              paddingTop: 61,
+              paddingLeft: Spacings.md,
+              paddingRight: Spacings.xs,
+              paddingTop: Spacings.md,
               paddingBottom: Spacings.xl,
               borderRadius: 8,
             }}
           >
             <IconButton
-              style={{
-                position: 'absolute',
-                top: 18,
-                right: 10,
-                backgroundColor: Colors.BLACK,
-              }}
+              style={{ alignSelf: 'flex-end' }}
               variant="transparent"
               onPress={hideModal}
               accessibilityLabel="close modal"
@@ -61,13 +57,15 @@ export default function InfoModal() {
             >
               <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
             </IconButton>
-            <H1 mb="sm">About Public Note</H1>
-            <BodyText>
-              Public Note can be integrated to HMIS. LAHSA prefers you to enter
-              in G.I.R.P method. G for Goal, I for Intervention, R for Response,
-              and P for Planning. Please enter information by following the
-              method.
-            </BodyText>
+            <View style={{ paddingRight: Spacings.sm }}>
+              <H1 mb="sm">About Public Note</H1>
+              <BodyText>
+                Public Note can be integrated to HMIS. LAHSA prefers you to
+                enter in G.I.R.P method. G for Goal, I for Intervention, R for
+                Response, and P for Planning. Please enter information by
+                following the method.
+              </BodyText>
+            </View>
           </View>
         </Pressable>
       </Modal>

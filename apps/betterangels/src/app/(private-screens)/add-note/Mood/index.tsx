@@ -98,24 +98,31 @@ export default function Mood(props: IMoodProps) {
 
   const moods = watch('moods') || [];
 
+  const isMood = expanded === 'Mood';
+  const isLessThanOneMood = moods.length < 1;
+  const isGreaterThanOneMood = moods.length > 0;
+  const isPleasantTab = tab === 'pleasant';
+  const isUnpleasantTab = tab === 'unpleasant';
+  const isNeutralTab = tab === 'neutral';
+
   const moodsData = MOOD_DATA[tab] || [];
 
   const getColor = (tabName: string, light: boolean) => {
     switch (tabName) {
       case 'pleasant':
-        return tab === 'pleasant'
+        return isPleasantTab
           ? light
             ? Colors.SUCCESS_EXTRA_LIGHT
             : Colors.SUCCESS
           : 'transparent';
       case 'unpleasant':
-        return tab === 'unpleasant'
+        return isUnpleasantTab
           ? light
             ? Colors.ERROR_EXTRA_LIGHT
             : Colors.ERROR
           : 'transparent';
       case 'neutral':
-        return tab === 'neutral'
+        return isNeutralTab
           ? light
             ? Colors.WARNING_EXTRA_LIGHT
             : Colors.WARNING
@@ -129,9 +136,9 @@ export default function Mood(props: IMoodProps) {
     <FieldCard
       mb="xs"
       actionName={
-        expanded === 'Mood' && moods.length < 1 ? (
+        isMood && isLessThanOneMood ? (
           ''
-        ) : moods.length > 0 ? (
+        ) : isGreaterThanOneMood ? (
           <View
             style={{
               flexDirection: 'row',
@@ -157,9 +164,9 @@ export default function Mood(props: IMoodProps) {
       }
       title="Mood"
       expanded={expanded}
-      setExpanded={() => setExpanded(expanded === 'Mood' ? undefined : 'Mood')}
+      setExpanded={() => setExpanded(isMood ? undefined : 'Mood')}
     >
-      {expanded === 'Mood' && (
+      {isMood && (
         <>
           <View style={styles.tabContainer}>
             {TABS.map((tabName) => (

@@ -105,6 +105,9 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   const { setValue, watch, control } = useFormContext();
 
   const services = watch('servicesRequested') || [];
+  const isServicesRequested = expanded === 'Services Requested';
+  const isLessThanOneServiceRequested = services.length < 1;
+  const isGreaterThanZeroServiceRequested = services.length > 0;
 
   const toggleServices = (service: string) => {
     const newServices = services.includes(service)
@@ -115,9 +118,9 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   return (
     <FieldCard
       actionName={
-        expanded === 'Services Requested' && services.length < 1 ? (
+        isServicesRequested && isLessThanOneServiceRequested ? (
           ''
-        ) : services.length > 0 ? (
+        ) : isGreaterThanZeroServiceRequested ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
               const IconComponent = ICONS[service];
@@ -140,12 +143,10 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
       title="Services Requested"
       expanded={expanded}
       setExpanded={() =>
-        setExpanded(
-          expanded === 'Services Requested' ? undefined : 'Services Requested'
-        )
+        setExpanded(isServicesRequested ? undefined : 'Services Requested')
       }
     >
-      {expanded === 'Services Requested' && (
+      {isServicesRequested && (
         <View style={{ paddingBottom: Spacings.md }}>
           {SERVICES.map((service, idx) => (
             <View

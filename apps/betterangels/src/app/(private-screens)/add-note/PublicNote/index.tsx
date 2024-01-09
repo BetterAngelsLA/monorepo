@@ -20,22 +20,21 @@ export default function PublicNote(props: IPublicNoteProps) {
   const hmisNote = watch('hmisNote');
   const isEmptyOrTemplate =
     !hmisNote || hmisNote === 'G: \n\nI: \n\nR: \n\nP: \n';
+  const isPublicNote = expanded === 'Public Note';
   return (
     <FieldCard
       expanded={expanded}
       mb="xs"
-      setExpanded={() =>
-        setExpanded(expanded === 'Public Note' ? undefined : 'Public Note')
-      }
+      setExpanded={() => setExpanded(isPublicNote ? undefined : 'Public Note')}
       title="Public Note"
       info={<InfoModal />}
       actionName={
-        isEmptyOrTemplate && expanded !== 'Public Note' ? (
+        isEmptyOrTemplate && !isPublicNote ? (
           <H5 size="sm">Add HMIS note</H5>
         ) : null
       }
     >
-      {expanded === 'Public Note' ? (
+      {isPublicNote ? (
         <Textarea
           mb="md"
           name="hmisNote"

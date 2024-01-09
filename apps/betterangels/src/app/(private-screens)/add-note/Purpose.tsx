@@ -41,11 +41,17 @@ export default function Purpose(props: IPurposeProps) {
     name: 'purposes',
     control,
   });
+  const isPurpose = expanded === 'Purpose';
+  const isGreaterThanZeroPurpses = purposes.length > 0;
+  const isLessThanElevenPurpses = purposes.length < 11;
+  const hasFirstValidPurpose = purposes[0].value;
+  const lastPurposeHasValue = purposes[purposes.length - 1].value;
+  const hasAnyValidPurpose = purposes.some((purpose) => purpose.value);
 
   const typedErrors = formState.errors as NoteFormErrors;
 
   useEffect(() => {
-    if (expanded !== 'Purpose') {
+    if (!isPurpose) {
       const requiredField = purposes[0];
       const filteredPurposes = purposes
         .slice(1)
@@ -57,25 +63,19 @@ export default function Purpose(props: IPurposeProps) {
   return (
     <FieldCard
       expanded={expanded}
-      setExpanded={() =>
-        setExpanded(expanded === 'Purpose' ? undefined : 'Purpose')
-      }
+      setExpanded={() => setExpanded(isPurpose ? undefined : 'Purpose')}
       error={!!typedErrors?.purposes}
       required
       mb="xs"
       actionName={
-        !purposes.some((purpose) => purpose.value) && expanded !== 'Purpose' ? (
-          <H5 size="sm">Add Purpose</H5>
-        ) : (
-          ''
-        )
+        !hasAnyValidPurpose && !isPurpose ? <H5 size="sm">Add Purpose</H5> : ''
       }
       title="Purpose"
     >
       <View
         style={{
-          paddingBottom: expanded === 'Purpose' ? Spacings.md : 0,
-          height: expanded === 'Purpose' ? 'auto' : 0,
+          paddingBottom: isPurpose ? Spacings.md : 0,
+          height: isPurpose ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
@@ -92,9 +92,9 @@ export default function Purpose(props: IPurposeProps) {
             name={`purposes[${index}].value`}
           />
         ))}
-        {purposes.length > 0 &&
-          purposes.length <= 10 &&
-          purposes[purposes.length - 1].value && (
+        {isGreaterThanZeroPurpses &&
+          isLessThanElevenPurpses &&
+          lastPurposeHasValue && (
             <H5
               mt="xs"
               textAlign="right"
@@ -107,11 +107,11 @@ export default function Purpose(props: IPurposeProps) {
           )}
       </View>
 
-      {purposes.length > 0 && purposes[0].value && (
+      {isGreaterThanZeroPurpses && hasFirstValidPurpose && (
         <View
           style={{
-            paddingBottom: expanded !== 'Purpose' ? Spacings.md : 0,
-            height: expanded !== 'Purpose' ? 'auto' : 0,
+            paddingBottom: !isPurpose ? Spacings.md : 0,
+            height: !isPurpose ? 'auto' : 0,
             overflow: 'hidden',
           }}
         >

@@ -105,6 +105,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   const { setValue, watch, control } = useFormContext();
 
   const providedServices = watch('providedServices') || [];
+  const isProvidedServices = expanded === 'Provided Services';
+  const isLessThanOneProvidedService = providedServices.length < 1;
+  const isGreaterThanZeroProvidedService = providedServices.length > 0;
 
   const toggleServices = (service: string) => {
     const newServices = providedServices.includes(service)
@@ -115,9 +118,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   return (
     <FieldCard
       actionName={
-        expanded === 'Provided Services' && providedServices.length < 1 ? (
+        isProvidedServices && isLessThanOneProvidedService ? (
           ''
-        ) : providedServices.length > 0 ? (
+        ) : isGreaterThanZeroProvidedService ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {providedServices.map((service: string) => {
               const IconComponent = ICONS[service];
@@ -140,12 +143,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       title="Provided Services"
       expanded={expanded}
       setExpanded={() =>
-        setExpanded(
-          expanded === 'Provided Services' ? undefined : 'Provided Services'
-        )
+        setExpanded(isProvidedServices ? undefined : 'Provided Services')
       }
     >
-      {expanded === 'Provided Services' && (
+      {isProvidedServices && (
         <View style={{ paddingBottom: Spacings.md }}>
           {SERVICES.map((service, idx) => (
             <View

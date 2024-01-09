@@ -27,6 +27,7 @@ export default function Title(props: ITitleProps) {
   } = useFormContext();
   const title = watch('title');
   const noteDateTime = watch('noteDateTime');
+  const isTitle = expanded === 'Title';
 
   useEffect(() => {
     setValue('title', `Session with ${firstName}`);
@@ -36,7 +37,7 @@ export default function Title(props: ITitleProps) {
     <View style={{ marginBottom: Spacings.xs }}>
       <View
         style={{
-          height: expanded !== 'Title' ? 'auto' : 0,
+          height: !isTitle ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
@@ -65,7 +66,7 @@ export default function Title(props: ITitleProps) {
       </View>
       <View
         style={{
-          height: expanded === 'Title' ? 'auto' : 0,
+          height: isTitle ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >

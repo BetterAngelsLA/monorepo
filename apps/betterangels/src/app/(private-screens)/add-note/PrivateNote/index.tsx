@@ -16,21 +16,23 @@ export default function PrivateNote(props: IPrivateNoteProps) {
   const { control, watch } = useFormContext();
 
   const privateNote = watch('privateNote');
+  const isPrivateNote = expanded === 'Private Note';
+
   return (
     <FieldCard
       expanded={expanded}
       mb="xs"
       setExpanded={() =>
-        setExpanded(expanded === 'Private Note' ? undefined : 'Private Note')
+        setExpanded(isPrivateNote ? undefined : 'Private Note')
       }
       title="Private Note (Optional)"
       actionName={
-        !privateNote && expanded !== 'Private Note' ? (
+        !privateNote && !isPrivateNote ? (
           <H5 size="sm">Add private note</H5>
         ) : null
       }
     >
-      {expanded === 'Private Note' ? (
+      {isPrivateNote ? (
         <Textarea mb="md" name="privateNote" control={control} />
       ) : (
         privateNote && <BodyText mb="md">{privateNote}</BodyText>

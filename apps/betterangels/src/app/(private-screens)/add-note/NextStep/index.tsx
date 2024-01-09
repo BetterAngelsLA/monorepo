@@ -28,16 +28,18 @@ export default function NextStep(props: INextStepProps) {
   });
 
   const nextStepDate = watch('nextStepDate');
+  const isNextStep = expanded === 'Next Step';
 
   const nextStepActions: TNextSteps = useWatch({
     name: 'nextStepActions',
     control,
   });
+  const isZeroNextStepActions = nextStepActions.length === 0;
 
   const hasValidActions = nextStepActions.some((action) => action.value);
 
   useEffect(() => {
-    if (expanded !== 'Next Step') {
+    if (!isNextStep) {
       const filteredNextSteps = nextStepActions.filter(
         (field) => !!field.value
       );
@@ -50,13 +52,13 @@ export default function NextStep(props: INextStepProps) {
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
-        if (nextStepActions.length === 0) append({ value: '' });
+        if (isZeroNextStepActions) append({ value: '' });
 
-        setExpanded(expanded === 'Next Step' ? undefined : 'Next Step');
+        setExpanded(isNextStep ? undefined : 'Next Step');
       }}
       title="Next Step"
       actionName={
-        hasValidActions || nextStepDate || expanded === 'Next Step' ? (
+        hasValidActions || nextStepDate || isNextStep ? (
           ''
         ) : (
           <H5 size="sm">Add Plan</H5>
@@ -65,8 +67,8 @@ export default function NextStep(props: INextStepProps) {
     >
       <View
         style={{
-          paddingBottom: expanded === 'Next Step' ? Spacings.md : 0,
-          height: expanded === 'Next Step' ? 'auto' : 0,
+          paddingBottom: isNextStep ? Spacings.md : 0,
+          height: isNextStep ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
@@ -99,8 +101,8 @@ export default function NextStep(props: INextStepProps) {
       {(hasValidActions || nextStepDate) && (
         <View
           style={{
-            paddingBottom: expanded !== 'Next Step' ? Spacings.md : 0,
-            height: expanded !== 'Next Step' ? 'auto' : 0,
+            paddingBottom: !isNextStep ? Spacings.md : 0,
+            height: !isNextStep ? 'auto' : 0,
             overflow: 'hidden',
           }}
         >
