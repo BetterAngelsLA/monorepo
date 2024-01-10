@@ -171,7 +171,7 @@ export function DatePicker(props: IDatePickerProps) {
                   borderRadius: 8,
                   overflow: 'hidden',
                 }}
-                display="inline"
+                display="spinner"
                 mode="datetime"
                 minimumDate={new Date()}
                 value={pickerDate}

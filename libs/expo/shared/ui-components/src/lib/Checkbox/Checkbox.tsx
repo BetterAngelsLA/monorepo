@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 3,
     borderColor: Colors.NEUTRAL_LIGHT,
-    marginRight: Spacings.sm,
   },
   checked: {
     backgroundColor: Colors.PRIMARY_EXTRA_DARK,
