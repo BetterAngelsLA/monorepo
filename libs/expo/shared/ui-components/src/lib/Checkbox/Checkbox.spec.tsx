@@ -1,4 +1,8 @@
+import { PawIcon } from '@monorepo/expo/shared/icons';
+import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render } from '@testing-library/react-native';
+import { View } from 'react-native';
+import BodyText from '../BodyText';
 import { Checkbox } from './Checkbox';
 
 describe('Checkbox Component', () => {
@@ -6,8 +10,14 @@ describe('Checkbox Component', () => {
     const { getByText } = render(
       <Checkbox
         accessibilityHint=""
-        label="Check Me"
+        label={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+            <BodyText ml="xs">Check Me</BodyText>
+          </View>
+        }
         onCheck={() => console.log('Checkbox checked')}
+        isChecked={false}
       />
     );
     expect(getByText('Check Me')).toBeTruthy();
@@ -16,7 +26,17 @@ describe('Checkbox Component', () => {
   it('calls onCheck with true when unchecked and pressed', () => {
     const mockOnCheck = jest.fn();
     const { getByText } = render(
-      <Checkbox accessibilityHint="" label="Check Me" onCheck={mockOnCheck} />
+      <Checkbox
+        accessibilityHint=""
+        label={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+            <BodyText ml="xs">Check Me</BodyText>
+          </View>
+        }
+        onCheck={mockOnCheck}
+        isChecked={false}
+      />
     );
 
     fireEvent.press(getByText('Check Me'));
@@ -26,7 +46,17 @@ describe('Checkbox Component', () => {
   it('calls onCheck with false when checked and pressed', () => {
     const mockOnCheck = jest.fn();
     const { getByText } = render(
-      <Checkbox accessibilityHint="" label="Uncheck Me" onCheck={mockOnCheck} />
+      <Checkbox
+        accessibilityHint=""
+        label={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+            <BodyText ml="xs">Uncheck Me</BodyText>
+          </View>
+        }
+        onCheck={mockOnCheck}
+        isChecked={true}
+      />
     );
 
     const checkboxLabel = getByText('Uncheck Me');
@@ -40,8 +70,14 @@ describe('Checkbox Component', () => {
     const { getByRole } = render(
       <Checkbox
         accessibilityHint=""
-        label="Accessible Checkbox"
+        label={
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+            <BodyText ml="xs">Accessible Checkbox</BodyText>
+          </View>
+        }
         onCheck={() => console.log('Checkbox checked')}
+        isChecked={false}
       />
     );
     expect(getByRole('button')).toBeTruthy();

@@ -4,7 +4,12 @@ import { Button } from './Button';
 describe('Button Component', () => {
   it('renders with correct title', () => {
     const { getByText } = render(
-      <Button title="Click Me" variant="primary" size="sm" />
+      <Button
+        accessibilityHint={''}
+        title="Click Me"
+        variant="primary"
+        size="sm"
+      />
     );
     expect(getByText('Click Me')).toBeTruthy();
   });
@@ -17,6 +22,7 @@ describe('Button Component', () => {
         onPress={mockOnPress}
         variant="primary"
         size="sm"
+        accessibilityHint={''}
       />
     );
 
@@ -28,6 +34,7 @@ describe('Button Component', () => {
     const mockOnPress = jest.fn();
     const { getByText } = render(
       <Button
+        accessibilityHint={''}
         title="Disabled Button"
         onPress={mockOnPress}
         disabled
@@ -47,7 +54,13 @@ describe('Button Component', () => {
     variants.forEach((variant, index) => {
       const testID = `button-${variant}-${index}`;
       const { getByTestId } = render(
-        <Button title={variant} variant={variant} size="sm" testID={testID} />
+        <Button
+          accessibilityHint={''}
+          title={variant}
+          variant={variant}
+          size="sm"
+          testID={testID}
+        />
       );
       expect(getByTestId(testID)).toBeTruthy();
     });
@@ -55,7 +68,12 @@ describe('Button Component', () => {
 
   it('is accessible by role', () => {
     const { getByRole } = render(
-      <Button title="Accessible Button" variant="primary" size="sm" />
+      <Button
+        accessibilityHint={''}
+        title="Accessible Button"
+        variant="primary"
+        size="sm"
+      />
     );
     expect(getByRole('button')).toBeTruthy();
   });

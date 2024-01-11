@@ -30,7 +30,7 @@ type TRules = {
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ITextareaProps {
-  label: string;
+  label?: string;
   control: Control<any>;
   height?: 200;
   name: string;

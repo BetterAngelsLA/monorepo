@@ -40,7 +40,9 @@
     "expo-splash-screen": "~0.20.5",
     "@babel/core": "*",
     "@graphql-typed-document-node/core": "*",
-    "graphql": "*"
+    "graphql": "*",
+    "date-fns": "*",
+    "@react-native-community/datetimepicker": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",

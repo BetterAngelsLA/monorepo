@@ -6,7 +6,13 @@ import {
   H5,
   Input,
 } from '@monorepo/expo/shared/ui-components';
-import { FieldErrors, useFieldArray, useFormContext } from 'react-hook-form';
+import { useEffect } from 'react';
+import {
+  FieldErrors,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { View } from 'react-native';
 
 interface INote {
@@ -26,49 +32,63 @@ interface IPurposeProps {
 
 export default function Purpose(props: IPurposeProps) {
   const { expanded, setExpanded } = props;
-  const { control, formState, watch, setValue } = useFormContext();
+  const { control, formState, setValue } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'purposes',
   });
 
-  const purposes: TPurposes = watch('purposes');
-  const firstPurposeValue = watch('purposes[0].value');
+  const purposes: TPurposes = useWatch({
+    name: 'purposes',
+    control,
+  });
+  const isPurpose = expanded === 'Purpose';
+  const isGreaterThanZeroPurpses = purposes.length > 0;
+  const isLessThanElevenPurpses = purposes.length < 11;
+  const hasFirstValidPurpose = purposes[0].value;
+  const lastPurposeHasValue = purposes[purposes.length - 1].value;
+  const hasAnyValidPurpose = purposes.some((purpose) => purpose.value);
 
   const typedErrors = formState.errors as NoteFormErrors;
+  const hasError = !!typedErrors.purposes;
 
-  console.log(purposes);
+  useEffect(() => {
+    if (!isPurpose) {
+      const requiredField = purposes[0];
+      const filteredPurposes = purposes
+        .slice(1)
+        .filter((field) => !!field.value);
+      setValue('purposes', [requiredField, ...filteredPurposes]);
+    }
+  }, [expanded]);
 
   return (
     <FieldCard
       expanded={expanded}
-      setExpanded={() => {
-        setValue('purposes', [
-          purposes[0],
-          ...purposes.slice(1).filter((field) => !!field.value),
-        ]);
-        setExpanded(expanded === 'Purpose' ? undefined : 'Purpose');
-      }}
-      error={
-        typedErrors?.purposes?.length && typedErrors?.purposes?.length > 0
-          ? true
-          : false
-      }
+      setExpanded={() => setExpanded(isPurpose ? undefined : 'Purpose')}
+      error={!!typedErrors?.purposes}
       required
       mb="xs"
-      actionName={firstPurposeValue ? '' : 'Add Purpose'}
+      actionName={
+        !hasAnyValidPurpose && !isPurpose ? <H5 size="sm">Add Purpose</H5> : ''
+      }
       title="Purpose"
     >
+      {hasError && !isPurpose && (
+        <BodyText mb="sm" size="sm" color={Colors.ERROR}>
+          Please enter the purpose(s) of today's interaction
+        </BodyText>
+      )}
       <View
         style={{
-          paddingBottom: expanded === 'Purpose' ? Spacings.md : 0,
-          height: expanded === 'Purpose' ? 'auto' : 0,
+          paddingBottom: isPurpose ? Spacings.md : 0,
+          height: isPurpose ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
         {fields.map((purpose, index) => (
           <Input
             key={purpose.id}
-            mb="xs"
+            mt={index !== 0 ? 'xs' : undefined}
             error={typedErrors?.purposes?.[0] && index === 0}
             rules={{
               required: index === 0,
@@ -78,21 +98,26 @@ export default function Purpose(props: IPurposeProps) {
             name={`purposes[${index}].value`}
           />
         ))}
-        <H5
-          textAlign="right"
-          color={Colors.PRIMARY}
-          onPress={() => append('')}
-          size="xs"
-        >
-          Add another Purpose
-        </H5>
+        {isGreaterThanZeroPurpses &&
+          isLessThanElevenPurpses &&
+          lastPurposeHasValue && (
+            <H5
+              mt="xs"
+              textAlign="right"
+              color={Colors.PRIMARY}
+              onPress={() => append({ value: '' })}
+              size="sm"
+            >
+              Add another Purpose
+            </H5>
+          )}
       </View>
 
-      {purposes[0].value && (
+      {isGreaterThanZeroPurpses && hasFirstValidPurpose && (
         <View
           style={{
-            paddingBottom: expanded !== 'Purpose' ? Spacings.md : 0,
-            height: expanded !== 'Purpose' ? 'auto' : 0,
+            paddingBottom: !isPurpose ? Spacings.md : 0,
+            height: !isPurpose ? 'auto' : 0,
             overflow: 'hidden',
           }}
         >
@@ -102,7 +127,7 @@ export default function Purpose(props: IPurposeProps) {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                marginBottom: Spacings.xs,
+                marginTop: index === 0 ? 0 : Spacings.xs,
               }}
             >
               <SolidCircleIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />

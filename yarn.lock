@@ -3950,6 +3950,7 @@ __metadata:
     "@nx/storybook": 16.7.4
     "@nx/workspace": 16.6.0
     "@nxlv/python": ^16.1.2
+    "@react-native-community/datetimepicker": ^7.6.2
     "@storybook/addon-essentials": 7.4.0
     "@storybook/addon-react-native-web": ^0.0.21
     "@storybook/core-server": 7.4.0
@@ -3971,6 +3972,7 @@ __metadata:
     babel-plugin-react-native-web: ^0.19.8
     babel-preset-expo: ~9.5.0
     core-js: ^3.6.5
+    date-fns: ^3.0.4
     detox: ^20.11.1
     eas-cli: 5.0.0
     eslint: ~8.15.0
@@ -5983,6 +5985,15 @@ __metadata:
   bin:
     react-native: build/bin.js
   checksum: 704e3d5e252a42a45697384b55f140b4961cbc213a90701ef163d1d0bab4fa8481ae4bf9ffe9c965114817087068186422d96d60aed479466bab036049a32866
+  languageName: node
+  linkType: hard
+
+"@react-native-community/datetimepicker@npm:^7.6.2":
+  version: 7.6.2
+  resolution: "@react-native-community/datetimepicker@npm:7.6.2"
+  dependencies:
+    invariant: ^2.2.4
+  checksum: 24c718c01e7ff6bc4b47867bfdf77b98fb8e3a872a627ce057062c37bf24a27264ac40c46cc66c27b134fc56392dc90d5b81dfb3ad5073af2477da055c13cb17
   languageName: node
   linkType: hard
 
@@ -11990,6 +12001,13 @@ __metadata:
   version: 2.2.2
   resolution: "dataloader@npm:2.2.2"
   checksum: 4dabd247089c29f194e94d5434d504f99156c5c214a03463c20f3f17f40398d7e179edee69a27c16e315519ac8739042a810090087ae26449a0e685156a02c65
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "date-fns@npm:3.0.4"
+  checksum: 94ad7f01fba3b0af5afd1e21a93d4e70c36b505d13cdf2899437677e28836bca9ecd5ee8d81e0fc754bfe21f5cfbc5b2dfde5ed01fb9b9eaebb6db60e6522ed3
   languageName: node
   linkType: hard
 
