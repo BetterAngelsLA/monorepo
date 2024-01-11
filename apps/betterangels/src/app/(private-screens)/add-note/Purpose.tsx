@@ -49,6 +49,7 @@ export default function Purpose(props: IPurposeProps) {
   const hasAnyValidPurpose = purposes.some((purpose) => purpose.value);
 
   const typedErrors = formState.errors as NoteFormErrors;
+  const hasError = !!typedErrors.purposes;
 
   useEffect(() => {
     if (!isPurpose) {
@@ -72,6 +73,11 @@ export default function Purpose(props: IPurposeProps) {
       }
       title="Purpose"
     >
+      {hasError && !isPurpose && (
+        <BodyText mb="sm" size="sm" color={Colors.ERROR}>
+          Please enter the purpose(s) of today's interaction
+        </BodyText>
+      )}
       <View
         style={{
           paddingBottom: isPurpose ? Spacings.md : 0,
