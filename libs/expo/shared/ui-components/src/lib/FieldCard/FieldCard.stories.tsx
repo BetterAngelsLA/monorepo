@@ -1,4 +1,3 @@
-import { NoteIcon } from '@monorepo/expo/shared/icons';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import BodyText from '../BodyText';
@@ -9,7 +8,6 @@ const FieldCardMeta: ComponentMeta<typeof FieldCard> = {
   component: FieldCard,
   args: {
     title: 'title',
-    Icon: NoteIcon,
     children: <BodyText>children</BodyText>,
   },
   decorators: [

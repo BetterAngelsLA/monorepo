@@ -5,6 +5,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, IconButton } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
 import { Link, SplashScreen, Stack, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import client from './apollo';
@@ -51,7 +52,7 @@ function RootLayoutNav() {
   return (
     <ApolloProvider client={client}>
       <UserProvider>
-        {/* <ThemeProvider value={Colorscheme === 'dark' ? DarkTheme : DefaultTheme}> */}
+        <StatusBar style="light" />
         <Stack>
           <Stack.Screen
             name="(tabs)"

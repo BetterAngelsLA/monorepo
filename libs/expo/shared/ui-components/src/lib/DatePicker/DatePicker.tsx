@@ -1,6 +1,8 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { CalendarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
+import { useState } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
   Platform,
@@ -12,6 +14,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import Button from '../Button';
 
 type TRules = Omit<
   RegisterOptions,
@@ -20,7 +23,7 @@ type TRules = Omit<
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IInputProps {
+interface IDatePickerProps {
   label?: string;
   control: Control<any>;
   height?: 40 | 56 | 200;
@@ -37,21 +40,17 @@ interface IInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
-  placeholder?: string;
-  icon?: ReactNode;
 }
 
-export function Input(props: IInputProps) {
+export function DatePicker(props: IDatePickerProps) {
   const {
     label,
     control,
-    rules,
     name,
     error,
     required,
     disabled,
     componentStyle,
-    placeholder,
     height = 56,
     mb,
     mt,
@@ -59,9 +58,11 @@ export function Input(props: IInputProps) {
     mx,
     ml,
     mr,
-    icon,
     ...rest
   } = props;
+
+  const [picker, setPicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(new Date());
 
   const handleBlur = (onBlur: () => void) => {
     onBlur();
@@ -69,11 +70,27 @@ export function Input(props: IInputProps) {
       props.onBlur();
     }
   };
+
+  function setDate(
+    onChange: { (...event: any[]): void; (): void },
+    date: Date | undefined
+  ) {
+    setPicker(false);
+    if (date) {
+      const formattedDate = format(date, 'MM/dd/yy @ HH:mm');
+      onChange(formattedDate);
+    }
+  }
+
   return (
     <Controller
       control={control}
       name={name}
-      rules={rules}
+      rules={{
+        required,
+        pattern:
+          /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4} @ (0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/,
+      }}
       render={({ field: { value, onBlur, onChange } }) => (
         <View
           style={[
@@ -103,16 +120,15 @@ export function Input(props: IInputProps) {
               },
             ]}
           >
-            {icon && icon}
             <TextInput
-              placeholder={placeholder}
+              placeholder={format(new Date(), 'MM/dd/yy @ HH:mm')}
+              maxLength={18}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
-                paddingLeft: icon ? Spacings.xs : Spacings.sm,
+                paddingLeft: 16,
                 paddingRight: 38,
-                flex: 1,
                 fontFamily: 'Poppins-Regular',
                 fontSize: 16,
                 height,
@@ -124,23 +140,56 @@ export function Input(props: IInputProps) {
               }}
               value={value}
               onBlur={() => handleBlur(onBlur)}
-              onChangeText={onChange}
+              onChangeText={(e) => {
+                onChange(e);
+              }}
               editable={!disabled}
               {...rest}
             />
-            {value && (
-              <Pressable
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel="delete icon"
-                accessibilityHint="deletes input's value"
-                onPress={() => onChange('')}
-                style={styles.icon}
-              >
-                <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
-              </Pressable>
-            )}
+            <Pressable
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="delete icon"
+              accessibilityHint="deletes input's value"
+              onPress={() => {
+                value && setPicker(value);
+                setPicker(true);
+              }}
+              style={styles.icon}
+            >
+              <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+            </Pressable>
           </View>
+          {picker && (
+            <View style={{ marginTop: Spacings.xs }}>
+              <DateTimePicker
+                onChange={(event, date) => {
+                  setPickerDate(date || new Date());
+                }}
+                style={{
+                  backgroundColor: Colors.WHITE,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                }}
+                display="spinner"
+                mode="datetime"
+                minimumDate={new Date()}
+                value={pickerDate}
+              />
+              <Button
+                mt="xs"
+                style={{ alignSelf: 'flex-end' }}
+                variant="primary"
+                size="sm"
+                height="sm"
+                accessibilityHint="save date"
+                onPress={() => {
+                  setDate(onChange, pickerDate);
+                }}
+                title="Done"
+              />
+            </View>
+          )}
         </View>
       )}
     />
@@ -159,8 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
+    justifyContent: 'center',
   },
   label: {
     flexDirection: 'row',
@@ -180,11 +228,5 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: 16,
-    height: 16,
-    width: 16,
-    backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
