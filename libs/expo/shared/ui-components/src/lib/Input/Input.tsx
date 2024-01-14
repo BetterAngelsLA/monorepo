@@ -1,7 +1,7 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Controller, RegisterOptions, useForm } from 'react-hook-form';
+import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
   NativeSyntheticEvent,
   Platform,
@@ -24,7 +24,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IInputProps {
   label?: string;
-  control?: ReturnType<typeof useForm>['control'];
+  control?: Control<any>;
   height?: 40 | 56 | 200;
   name: string;
   required?: boolean;
