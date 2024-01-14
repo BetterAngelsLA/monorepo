@@ -1,3 +1,4 @@
+import { OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -26,8 +27,8 @@ import {
   FieldCard,
   H3,
   H5,
-  Input,
 } from '@monorepo/expo/shared/ui-components';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -103,6 +104,9 @@ const SERVICES = [
 export default function ServicesRequested(props: IServicesRequestedProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
+  const [requestedOtherCategory, setRequestedOtherCategory] = useState<
+    string[]
+  >([]);
 
   const services = watch('servicesRequested') || [];
   const isServicesRequested = expanded === 'Services Requested';
@@ -123,11 +127,10 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
         ) : isGreaterThanZeroServiceRequested ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
-              const IconComponent = ICONS[service];
+              const IconComponent = ICONS[service] || PlusIcon;
               return (
                 <IconComponent
                   mr="xs"
-                  my="xs"
                   key={service}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}
@@ -172,15 +175,14 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
               ))}
             </View>
           ))}
-          <Input
-            placeholder="Enter other category"
-            icon={
-              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-            }
-            mt="xs"
-            name="otherRequestedCategory"
-            height={40}
+          <OtherCategory
+            main="servicesRequested"
+            other="requestedOtherCategory"
+            services={services}
+            setValue={setValue}
             control={control}
+            otherCategories={requestedOtherCategory}
+            setOtherCategories={setRequestedOtherCategory}
           />
 
           <Pressable
