@@ -14,7 +14,7 @@
   "dependencies": {
     "@apollo/client": "^3.8.8",
     "@expo/metro-config": "~0.10.6",
-    "@react-native-community/datetimepicker": "7.3.0",
+    "@react-native-community/datetimepicker": "7.2.0",
     "apollo-link-rest": "^0.9.0",
     "date-fns": "^3.0.4",
     "expo": "^49.0.21",
