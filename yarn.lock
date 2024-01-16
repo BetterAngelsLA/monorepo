@@ -3950,7 +3950,7 @@ __metadata:
     "@nx/storybook": 16.7.4
     "@nx/workspace": 16.6.0
     "@nxlv/python": ^16.1.2
-    "@react-native-community/datetimepicker": ^7.6.2
+    "@react-native-community/datetimepicker": 7.2.0
     "@storybook/addon-essentials": 7.4.0
     "@storybook/addon-react-native-web": ^0.0.21
     "@storybook/core-server": 7.4.0
@@ -3991,7 +3991,7 @@ __metadata:
     expo-secure-store: ~12.3.1
     expo-splash-screen: ~0.20.5
     expo-status-bar: ~1.6.0
-    expo-updates: ~0.18.17
+    expo-updates: ~0.18.19
     expo-web-browser: ~12.3.2
     graphql: ^16.8.1
     jest: ^29.4.1
@@ -5988,12 +5988,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/datetimepicker@npm:^7.6.2":
-  version: 7.6.2
-  resolution: "@react-native-community/datetimepicker@npm:7.6.2"
+"@react-native-community/datetimepicker@npm:7.2.0":
+  version: 7.2.0
+  resolution: "@react-native-community/datetimepicker@npm:7.2.0"
   dependencies:
     invariant: ^2.2.4
-  checksum: 24c718c01e7ff6bc4b47867bfdf77b98fb8e3a872a627ce057062c37bf24a27264ac40c46cc66c27b134fc56392dc90d5b81dfb3ad5073af2477da055c13cb17
+  checksum: 4ec9de24573d654a2632818de15a1b7c6f41febbaa52aa543e7ef133f507b8b4fe8c0a08a0af34907c283b7be3cb9d5a52db216a2925c8eb96f52bf49a9f2b33
   languageName: node
   linkType: hard
 
@@ -13942,9 +13942,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-updates@npm:~0.18.17":
-  version: 0.18.17
-  resolution: "expo-updates@npm:0.18.17"
+"expo-updates@npm:~0.18.19":
+  version: 0.18.19
+  resolution: "expo-updates@npm:0.18.19"
   dependencies:
     "@expo/code-signing-certificates": 0.0.5
     "@expo/config": ~8.1.0
@@ -13961,7 +13961,7 @@ __metadata:
     expo: "*"
   bin:
     expo-updates: bin/cli.js
-  checksum: 68d667f786eefdf69d8bd4ca84358158e01ee33c531b3f4d873594368f82287ef277f2a0cbd69ee46518707d4a9b6a16867b3cf9b9977d1d6797b2e221b2fa48
+  checksum: 194a410ca5b8b445ea980fd00528a6c02cd29da6fddb9bef815f668b579a970e7b99aa534b5b95395b4dc34842d152b7a7a7a55db08aa15483f8d73ca9f6370c
   languageName: node
   linkType: hard
 
