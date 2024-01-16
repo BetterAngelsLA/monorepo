@@ -1,3 +1,4 @@
+import { Attachments } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -7,7 +8,6 @@ import {
   BurgerSodaIcon,
   CarIcon,
   IIconProps,
-  PaperclipIcon,
   PawIcon,
   PeopleRoofIcon,
   PlusIcon,
@@ -29,7 +29,7 @@ import {
   Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 interface IProvidedServicesProps {
   expanded: string | undefined;
@@ -182,15 +182,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
             height={40}
             control={control}
           />
-          <Pressable
-            style={styles.attach}
-            accessible
-            accessibilityRole="button"
-            accessibilityHint="attach a file"
-          >
-            <BodyText>Attachments</BodyText>
-            <PaperclipIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-          </Pressable>
+          <Attachments />
         </View>
       )}
     </FieldCard>
@@ -201,12 +193,5 @@ const styles = StyleSheet.create({
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  attach: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: 56,
-    alignItems: 'center',
-    marginTop: Spacings.xs,
   },
 });

@@ -14,7 +14,8 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
+      allowsEditing: false,
+      allowsMultipleSelection: true,
       aspect: [4, 3],
       quality: 1,
     });
@@ -22,7 +23,8 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
     console.log(result);
 
     if (!result.canceled) {
-      setImages([...images, result.assets[0].uri]);
+      const selectedPhotos = result.assets.map((asset) => asset.uri);
+      setImages([...images, ...selectedPhotos]);
     }
   };
 
