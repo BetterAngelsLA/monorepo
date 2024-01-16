@@ -41,7 +41,7 @@
         "ms-python.black-formatter",
         "ms-python.isort",
         "ms-python.python",
-        "nrwl.angular-console",
+        "nrwl.angular-console@18.10.1",
         "tamasfe.even-better-toml",
         "wix.vscode-import-cost",
         "ms-python.flake8",
