@@ -3950,7 +3950,7 @@ __metadata:
     "@nx/storybook": 16.7.4
     "@nx/workspace": 16.6.0
     "@nxlv/python": ^16.1.2
-    "@react-native-community/datetimepicker": 7.3.0
+    "@react-native-community/datetimepicker": 7.2.0
     "@storybook/addon-essentials": 7.4.0
     "@storybook/addon-react-native-web": ^0.0.21
     "@storybook/core-server": 7.4.0
@@ -5988,12 +5988,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/datetimepicker@npm:7.3.0":
-  version: 7.3.0
-  resolution: "@react-native-community/datetimepicker@npm:7.3.0"
+"@react-native-community/datetimepicker@npm:7.2.0":
+  version: 7.2.0
+  resolution: "@react-native-community/datetimepicker@npm:7.2.0"
   dependencies:
     invariant: ^2.2.4
-  checksum: e522f01d0068b9a20f3f8883b814f4cfd84717165c43ff36edd242ae4b64d90202a3750209ca1f47b4b77edbf17358446011aeefacb3df67b96ce53574ba4144
+  checksum: 4ec9de24573d654a2632818de15a1b7c6f41febbaa52aa543e7ef133f507b8b4fe8c0a08a0af34907c283b7be3cb9d5a52db216a2925c8eb96f52bf49a9f2b33
   languageName: node
   linkType: hard
 
