@@ -3984,10 +3984,10 @@ __metadata:
     eslint-plugin-react-native-a11y: ^3.3.0
     expo: ^49.0.21
     expo-auth-session: ~5.0.2
-    expo-camera: ~13.4.4
+    expo-camera: ^13.6.0
     expo-constants: ~14.4.2
     expo-dev-client: ^2.4.12
-    expo-image-picker: ~14.3.2
+    expo-image-picker: ^14.5.0
     expo-linking: ^5.0.2
     expo-router: 2.0.8
     expo-secure-store: ~12.3.1
@@ -13685,14 +13685,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~13.4.4":
-  version: 13.4.4
-  resolution: "expo-camera@npm:13.4.4"
+"expo-camera@npm:^13.6.0":
+  version: 13.9.0
+  resolution: "expo-camera@npm:13.9.0"
   dependencies:
     invariant: ^2.2.4
   peerDependencies:
     expo: "*"
-  checksum: d2730038029e770de2f5106c24d6b5ec58131ac77bb06efc7892fd2dde9e813fd0141950d15ea3a2a997f0271916bc33a659341660b3ad357354630ed56adbbf
+  checksum: bce636c34e99cb3d7ccf39a21cd2646bf1ee8b21931cdebe47306790b34739b19bc873511372ccabcb21ea34025455ce23376687f05b7f9728d692a28ec674ed
   languageName: node
   linkType: hard
 
@@ -13810,23 +13810,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-loader@npm:~4.3.0":
-  version: 4.3.0
-  resolution: "expo-image-loader@npm:4.3.0"
+"expo-image-loader@npm:~4.6.0":
+  version: 4.6.0
+  resolution: "expo-image-loader@npm:4.6.0"
   peerDependencies:
     expo: "*"
-  checksum: 0440ac80a7b2331cdfd0db88aac0ba2fe61689e6347e2c6bedba6bf3220b95410c724ac9004252486870b582fc36d47d4bff008bba7052dcee2830256950974f
+  checksum: 02981667f03dc429cd9db37e0acc302e4a0c4bb5875dc087b1c26388ef64563481e52dddc1d42dd32794eb7051d1acf5bc0c078413469c29025a02d4d4af1154
   languageName: node
   linkType: hard
 
-"expo-image-picker@npm:~14.3.2":
-  version: 14.3.2
-  resolution: "expo-image-picker@npm:14.3.2"
+"expo-image-picker@npm:^14.5.0":
+  version: 14.7.1
+  resolution: "expo-image-picker@npm:14.7.1"
   dependencies:
-    expo-image-loader: ~4.3.0
+    expo-image-loader: ~4.6.0
   peerDependencies:
     expo: "*"
-  checksum: 301a5e11cdd436717051fdd8b0f943210d281ca94d1417bb2e1b29a8fa02d3bc6f9321c4cac49376b6f3b76e78cecb23e42bc32131fce3d78006a44d64bfba56
+  checksum: f9022cc9162365471b8e979df2c7a2156f43819b4717fb6ba376aedb6b55352a7b60b3a50a279dd58cf2551fbdd8a0719c5c903dcde4703436029e0fdca9c035
   languageName: node
   linkType: hard
 
