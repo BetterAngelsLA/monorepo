@@ -2,6 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
+import CancelModal from './CancelModal';
 
 export default function BottomActions() {
   const { handleSubmit } = useFormContext();
@@ -18,12 +19,7 @@ export default function BottomActions() {
         borderTopColor: Colors.NEUTRAL,
       }}
     >
-      <TextButton
-        fontSize="sm"
-        onPress={() => console.log('cancel')}
-        accessibilityHint="cancels note creation"
-        title="Cancel"
-      />
+      <CancelModal />
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TextButton
           mr="sm"

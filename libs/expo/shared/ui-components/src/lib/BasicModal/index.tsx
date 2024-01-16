@@ -1,6 +1,8 @@
+import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { hexToRGBA } from '@monorepo/expo/shared/utils';
 import { Modal, Pressable, TouchableWithoutFeedback, View } from 'react-native';
+import IconButton from '../IconButton';
 
 interface IBasicModalProps {
   children: React.ReactNode;
@@ -43,7 +45,16 @@ export default function BasicModal(props: IBasicModalProps) {
               zIndex: 1,
             }}
           >
-            {children}
+            <IconButton
+              style={{ alignSelf: 'flex-end' }}
+              variant="transparent"
+              onPress={hideModal}
+              accessibilityLabel="close modal"
+              accessibilityHint="closing public note information modal"
+            >
+              <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+            </IconButton>
+            <View style={{ paddingRight: Spacings.sm }}>{children}</View>
           </View>
         </TouchableWithoutFeedback>
       </Pressable>
