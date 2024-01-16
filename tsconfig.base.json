@@ -21,7 +21,8 @@
       "@monorepo/expo/shared/static": ["libs/expo/shared/static/src/index.ts"],
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
-      ]
+      ],
+      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
