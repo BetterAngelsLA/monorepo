@@ -1,11 +1,13 @@
 from accounts.models import User
 from django.db import models
-from imagekit.models import ProcessedImageField
+from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
+
+BASE_UPLOAD_TO = "attachments"
 
 
 class BaseAttachment(models.Model):
-    file = models.FileField(upload_to="attachments/")
+    id = models.BigAutoField(primary_key=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
 
@@ -14,30 +16,34 @@ class BaseAttachment(models.Model):
 
 
 class AudioAttachment(BaseAttachment):
-    bitrate = models.IntegerField()
-    duration = models.DurationField()
-    # Additional fields specific to audio, like sample rate, etc.
-
-
-class DocumentAttachment(BaseAttachment):
-    # Additional fields specific to PDFs, like author, version, etc.
+    # bitrate = models.IntegerField()
+    # duration = models.DurationField()
+    # # Additional fields specific to audio, like sample rate, etc.
     pass
 
 
-class ImageAttachment(models.Model):
-    file = ProcessedImageField(
-        upload_to="attachments/images/thumbnails/",
+class DocumentAttachment(BaseAttachment):
+    file = models.FileField(upload_to=f"{BASE_UPLOAD_TO}/documents/")
+    # author
+    # Add other document-specific fields here
+
+
+class ImageAttachment(BaseAttachment):
+    file = models.FileField(upload_to=f"{BASE_UPLOAD_TO}/images/")
+    thumbnail = ImageSpecField(
+        source="avatar",
         processors=[ResizeToFill(100, 50)],
         format="JPEG",
         options={"quality": 60},
     )
-    # Other fields specific to images...
 
 
 class VideoAttachment(BaseAttachment):
-    duration = models.DurationField()
-    resolution = models.CharField(max_length=50)
+    file = models.ImageField(upload_to=f"{BASE_UPLOAD_TO}/videos/")
+    # duration = models.DurationField()
+    # resolution = models.CharField(max_length=50)
     # Additional fields specific to videos, like frame rate, etc.
+    pass
 
 
 class Note(models.Model):
@@ -51,10 +57,10 @@ class Note(models.Model):
     image_attachments = models.ManyToManyField(ImageAttachment, related_name="notes")
     video_attachments = models.ManyToManyField(VideoAttachment, related_name="notes")
 
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
 
     def __str__(self) -> str:
         return self.body[:50]

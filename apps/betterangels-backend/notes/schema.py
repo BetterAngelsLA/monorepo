@@ -1,11 +1,12 @@
 from typing import List, Optional
 
 import strawberry
+from strawberry.file_uploads import Upload
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
-from .models import Note
-from .types import CreateNoteInput, NoteType, UpdateNoteInput
+from .models import ImageAttachment, Note
+from .types import CreateNoteInput, ImageAttachmentType, NoteType, UpdateNoteInput
 
 
 @strawberry.type
@@ -69,3 +70,37 @@ class Mutation:
             return True
         else:
             return False
+
+    # @strawberry.mutation
+    # def upload_audio(self, file: strawberry.Upload) -> AudioAttachmentType:
+    #     # Handle audio upload logic
+    #     # ...
+    #     pass
+
+    # @strawberry.mutation
+    # def upload_document(self, file: strawberry.Upload) -> DocumentAttachmentType:
+    #     # Handle document upload logic
+    #     # ...
+    #     pass
+
+    @strawberry.mutation
+    def upload_image(self, file: Upload) -> ImageAttachmentType:
+        # Validate that the file is an image
+        # Process the image (e.g., create thumbnails, resize)
+        image_attachment = ImageAttachment(file=file)
+        image_attachment.save()
+
+        image_attachment_type = ImageAttachmentType()
+        image_attachment_type.id = image_attachment.id
+
+        return ImageAttachmentType(
+            id=image_attachment.id,
+            uploaded_at=image_attachment.uploaded_at.isoformat(),
+            description=image_attachment.description,
+        )
+
+    # @strawberry.mutation
+    # def upload_video(self, file: strawberry.Upload) -> VideoAttachmentType:
+    #     # Handle video upload logic
+    #     # ...
+    #     pass
