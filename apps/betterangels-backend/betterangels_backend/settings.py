@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "guardian",
     "post_office",
     "rest_framework",
     "organizations",
@@ -173,6 +174,7 @@ TEMPLATES = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
     "sesame.backends.ModelBackend",
@@ -220,6 +222,7 @@ DATABASES = {
         },
     }
 }
+DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -37,6 +37,7 @@ django-organizations = "^2.2.0"
 django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
 strawberry-graphql-django = "^0.25.0"
+django-guardian = "^2.4.0"
 
 [build-system]
 requires = ["poetry-core"]
