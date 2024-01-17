@@ -47,6 +47,7 @@ class VideoAttachment(BaseAttachment):
 
 
 class Note(models.Model):
+    id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=100)
     body = models.TextField()
 

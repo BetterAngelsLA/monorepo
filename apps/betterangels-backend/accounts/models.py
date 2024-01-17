@@ -8,6 +8,7 @@ from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.BigAutoField(primary_key=True)
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(

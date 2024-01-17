@@ -1,3 +1,5 @@
+import dataclasses
+
 import strawberry_django
 from accounts.types import UserType
 from strawberry import auto
@@ -5,6 +7,7 @@ from strawberry import auto
 from . import models
 
 
+@dataclasses.dataclass
 @strawberry_django.type(models.Note)
 class NoteType:
     id: auto
@@ -27,6 +30,7 @@ class UpdateNoteInput:
     body: auto
 
 
+@dataclasses.dataclass
 @strawberry_django.type(models.AudioAttachment)
 class AudioAttachmentType:
     id: auto
@@ -42,6 +46,7 @@ class AudioAttachmentInput:
     pass
 
 
+@dataclasses.dataclass
 @strawberry_django.type(models.DocumentAttachment)
 class DocumentAttachmentType:
     id: auto
@@ -57,6 +62,7 @@ class DocumentAttachmentInput:
     pass
 
 
+@dataclasses.dataclass
 @strawberry_django.type(models.ImageAttachment)
 class ImageAttachmentType:
     id: auto
@@ -71,6 +77,7 @@ class ImageAttachmentInput:
     pass
 
 
+@dataclasses.dataclass
 @strawberry_django.type(models.VideoAttachment)
 class VideoAttachmentType:
     id: auto

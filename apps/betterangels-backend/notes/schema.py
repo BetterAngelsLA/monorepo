@@ -1,6 +1,8 @@
 from typing import List, Optional
 
 import strawberry
+import strawberry_django
+from accounts.types import UserType
 from strawberry.file_uploads import Upload
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -11,16 +13,28 @@ from .types import CreateNoteInput, ImageAttachmentType, NoteType, UpdateNoteInp
 
 @strawberry.type
 class Query:
-    @strawberry.field
+    @strawberry_django.field()
     def notes(self, info: Info) -> List[NoteType]:
         user = get_current_user(info)
         if user.is_authenticated:
-            # Need to figure out types here
-            return list(Note.objects.filter(created_by=user))  # type: ignore
+            return [
+                NoteType(
+                    id=note.id,
+                    title=note.title,
+                    body=note.body,
+                    created_at=note.created_at.isoformat(),
+                    created_by=UserType(
+                        id=note.created_by.id,
+                        username=note.created_by.username,
+                        email=note.created_by.email,
+                    ),
+                )
+                for note in Note.objects.filter(created_by=user)
+            ]
         else:
             return []
 
-    @strawberry.field
+    @strawberry_django.field()
     def note(self, id: strawberry.ID, info: Info) -> Optional[NoteType]:
         user = get_current_user(info)
         if user.is_authenticated:
@@ -89,9 +103,6 @@ class Mutation:
         # Process the image (e.g., create thumbnails, resize)
         image_attachment = ImageAttachment(file=file)
         image_attachment.save()
-
-        image_attachment_type = ImageAttachmentType()
-        image_attachment_type.id = image_attachment.id
 
         return ImageAttachmentType(
             id=image_attachment.id,
