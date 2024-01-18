@@ -4,6 +4,7 @@ from enum import Enum
 
 
 class NotePermissions(Enum):
-    VIEW = "notesapp.view_note"
-    CHANGE = "notesapp.change_note"
-    DELETE = "notesapp.delete_note"
+    VIEW = "notes.view_note"
+    CHANGE = "notes.change_note"
+    DELETE = "notes.delete_note"
+    ADD = "notes.add_note"

@@ -2,11 +2,11 @@ from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.permissions import HasPerm, IsAuthenticated
+from strawberry_django.permissions import HasPerm, HasRetvalPerm, IsAuthenticated
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -14,22 +14,20 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 @strawberry.type
 class Query:
-    @strawberry_django.field(
-        extensions=[IsAuthenticated(), HasPerm(NotePermissions.VIEW.value)],
+    note: NoteType = strawberry_django.field(
+        extensions=[
+            IsAuthenticated(),
+            HasRetvalPerm(perms=[NotePermissions.VIEW.value]),
+        ],
     )
-    def note(self, info: Info) -> Optional[NoteType]:
-        user = get_current_user(info)
-        note = get_objects_for_user(user, NotePermissions.VIEW.value, Note).first()
-        return cast(Optional[NoteType], note)
 
-    @strawberry_django.field(
-        extensions=[IsAuthenticated(), HasPerm(NotePermissions.VIEW.value)],
+    notes: List[NoteType] = strawberry_django.field(
+        extensions=[
+            IsAuthenticated(),
+            HasRetvalPerm(perms=[NotePermissions.VIEW.value]),
+        ],
         pagination=True,
     )
-    def notes(self, info: Info) -> List[NoteType]:
-        user = get_current_user(info)
-        notes = get_objects_for_user(user, NotePermissions.VIEW.value, Note)
-        return cast(List[NoteType], notes)
 
 
 @strawberry.type
@@ -41,7 +39,10 @@ class Mutation:
             note = Note.objects.create(
                 created_by=user, title=input.title, body=input.body
             )
-            return NoteType(**note.__dict__)
+            assign_perm(NotePermissions.VIEW.value, user, note)
+            assign_perm(NotePermissions.CHANGE.value, user, note)
+            assign_perm(NotePermissions.DELETE.value, user, note)
+            return note
         return None
 
     @strawberry.mutation

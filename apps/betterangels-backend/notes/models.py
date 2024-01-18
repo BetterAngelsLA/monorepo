@@ -10,7 +10,5 @@ class Note(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
 
-    objects = models.Manager()
-
     def __str__(self) -> str:
         return self.body[:50]
