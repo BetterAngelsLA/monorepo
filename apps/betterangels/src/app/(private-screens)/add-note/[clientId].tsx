@@ -6,6 +6,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
+import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
 import PrivateNote from './PrivateNote';
@@ -64,6 +65,7 @@ export default function AddNote() {
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title firstName="Test" {...props} />
+          <Location {...props} />
           <Purpose {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />
