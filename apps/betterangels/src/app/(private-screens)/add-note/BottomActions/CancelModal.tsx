@@ -1,8 +1,9 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicModal,
   BodyText,
   Button,
+  H1,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
@@ -26,6 +27,7 @@ export default function CancelModal() {
         title="Cancel"
       />
       <BasicModal visible={visible} setVisible={setVisible}>
+        <H1 mb="sm">Are you sure?</H1>
         <BodyText mb="md">
           Are you sure you want to cancel? All of your progress will be lost.
         </BodyText>
@@ -36,20 +38,26 @@ export default function CancelModal() {
             justifyContent: 'space-between',
           }}
         >
-          <TextButton
-            fontSize="sm"
-            onPress={cancelNote}
-            color={Colors.ERROR}
-            accessibilityHint="cancels note creation"
-            title="Cancel"
-          />
-          <Button
-            size="sm"
-            accessibilityHint="continue to work on adding note"
-            onPress={() => setVisible(false)}
-            variant="primary"
-            title="Continue"
-          />
+          <View
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <TextButton
+              fontSize="sm"
+              onPress={() => setVisible(false)}
+              color={Colors.PRIMARY}
+              accessibilityHint="cancels note creation"
+              title="Cancel"
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: Spacings.xs }}>
+            <Button
+              size="full"
+              accessibilityHint="continue to work on adding note"
+              onPress={cancelNote}
+              variant="primary"
+              title="Delete"
+            />
+          </View>
         </View>
       </BasicModal>
     </>
