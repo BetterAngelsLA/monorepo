@@ -29,7 +29,7 @@ export default function CancelModal() {
       <BasicModal visible={visible} setVisible={setVisible}>
         <H1 mb="sm">Are you sure?</H1>
         <BodyText mb="md">
-          Are you sure you want to cancel? All of your progress will be lost.
+          All data associated watch this note will be deleted.
         </BodyText>
         <View
           style={{
@@ -45,14 +45,14 @@ export default function CancelModal() {
               fontSize="sm"
               onPress={() => setVisible(false)}
               color={Colors.PRIMARY}
-              accessibilityHint="cancels note creation"
+              accessibilityHint="continue to work on adding note"
               title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               size="full"
-              accessibilityHint="continue to work on adding note"
+              accessibilityHint="deletes the note"
               onPress={cancelNote}
               variant="primary"
               title="Delete"
