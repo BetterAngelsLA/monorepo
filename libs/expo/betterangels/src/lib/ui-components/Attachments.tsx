@@ -9,32 +9,37 @@ import {
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
+type TImages = {
+  [key: string]: string;
+}[];
+
 export default function Attachments() {
-  const [images, setImages] = useState<Array<string>>([]);
+  const [images, setImages] = useState<TImages>([]);
+
   return (
     <View>
       <View style={styles.attach}>
         <BodyText>Attachments</BodyText>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <ImagePicker setImages={setImages} images={images} />
+          <ImagePicker mr="xs" setImages={setImages} images={images} />
           <CameraPicker setImages={setImages} images={images} />
         </View>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {images.map((image) => (
+        {images.map((image, idx) => (
           <View
+            key={idx}
             style={{
-              height: 90,
-              width: 120,
-              borderRadius: 8,
+              height: 82,
+              width: 60,
               margin: Spacings.xs,
               overflow: 'hidden',
             }}
           >
             <Image
               style={{ height: '100%', width: '100%' }}
-              key={image}
-              source={{ uri: image }}
+              source={{ uri: image['uri'] }}
+              resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
             <IconButton

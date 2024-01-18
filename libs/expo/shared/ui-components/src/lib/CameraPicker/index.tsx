@@ -5,9 +5,13 @@ import { useRef, useState } from 'react';
 import { Alert, Button, Modal, StyleSheet, View } from 'react-native';
 import IconButton from '../IconButton';
 
+type TImages = {
+  [key: string]: string;
+}[];
+
 interface ICameraPickerProps {
-  setImages: React.Dispatch<React.SetStateAction<string[]>>;
-  images: string[];
+  setImages: React.Dispatch<React.SetStateAction<TImages>>;
+  images: TImages;
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
@@ -22,8 +26,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const captureImage = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync();
-      console.log('Photo captured:', photo.uri);
-      setImages([...images, photo.uri]);
+      setImages([...images, photo]);
       setIsCameraOpen(false);
     }
   };
@@ -90,7 +93,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
       variant="transparent"
       onPress={getPermissionsAndOpenCamera}
     >
-      <CameraIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+      <CameraIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
     </IconButton>
   );
 }

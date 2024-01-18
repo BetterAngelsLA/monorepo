@@ -2,14 +2,18 @@ import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
+type TImages = {
+  [key: string]: string;
+}[];
 
 interface IImagePickerProps {
-  setImages: (images: Array<string>) => void;
-  images: Array<string>;
+  setImages: React.Dispatch<React.SetStateAction<TImages>>;
+  images: TImages;
+  mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export default function ImagePickerComponent(props: IImagePickerProps) {
-  const { setImages, images } = props;
+  const { setImages, images, mr } = props;
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -23,19 +27,19 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
     console.log(result);
 
     if (!result.canceled) {
-      const selectedPhotos = result.assets.map((asset) => asset.uri);
-      setImages([...images, ...selectedPhotos]);
+      setImages([...images, ...result.assets]);
     }
   };
 
   return (
     <IconButton
+      mr={mr}
       onPress={pickImage}
       accessibilityLabel="library"
       accessibilityHint="opens images library"
       variant="transparent"
     >
-      <ImagesIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+      <ImagesIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
     </IconButton>
   );
 }
