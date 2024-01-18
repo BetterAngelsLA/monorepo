@@ -5,9 +5,7 @@ import { useRef, useState } from 'react';
 import { Alert, Button, Modal, StyleSheet, View } from 'react-native';
 import IconButton from '../IconButton';
 
-type TImages = {
-  [key: string]: string;
-}[];
+type TImages = string[];
 
 interface ICameraPickerProps {
   setImages: React.Dispatch<React.SetStateAction<TImages>>;
@@ -26,7 +24,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const captureImage = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync();
-      setImages([...images, photo]);
+      setImages([...images, photo.uri]);
       setIsCameraOpen(false);
     }
   };

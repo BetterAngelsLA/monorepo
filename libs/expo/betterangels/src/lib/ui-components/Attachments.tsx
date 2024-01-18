@@ -9,12 +9,8 @@ import {
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-type TImages = {
-  [key: string]: string;
-}[];
-
 export default function Attachments() {
-  const [images, setImages] = useState<TImages>([]);
+  const [images, setImages] = useState<Array<string>>([]);
 
   return (
     <View>
@@ -38,12 +34,14 @@ export default function Attachments() {
           >
             <Image
               style={{ height: '100%', width: '100%' }}
-              source={{ uri: image['uri'] }}
+              source={{ uri: image }}
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
             <IconButton
-              onPress={() => setImages(images.filter((i) => i !== image))}
+              onPress={() =>
+                setImages(images.filter((i: string) => i !== image))
+              }
               style={{ position: 'absolute', top: 5, right: 5 }}
               variant="secondary"
               height="xs"
