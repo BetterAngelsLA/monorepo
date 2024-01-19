@@ -1,12 +1,17 @@
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
+from common.graphql.types import PaginatedResponse
+from common.graphql.utils import paginate_queryset
+from django.db.models import QuerySet
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry.types import Info
+from strawberry_django import NodeInput, mutations
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.permissions import HasPerm, HasRetvalPerm, IsAuthenticated
+from strawberry_django.pagination import OffsetPaginationInput
+from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -21,50 +26,42 @@ class Query:
         ],
     )
 
-    notes: List[NoteType] = strawberry_django.field(
-        extensions=[
-            IsAuthenticated(),
-            HasRetvalPerm(perms=[NotePermissions.VIEW.value]),
-        ],
+    @strawberry_django.field(
+        # extensions=[IsAuthenticated()],
         pagination=True,
     )
+    def notes(
+        self,
+        info: strawberry.types.Info,
+        pagination: Optional[OffsetPaginationInput] = None,
+    ) -> PaginatedResponse[NoteType]:
+        user = get_current_user(info)
+        available_notes: QuerySet[Note] = get_objects_for_user(
+            user, [NotePermissions.VIEW.value], Note, use_groups=False
+        )
+        return paginate_queryset(available_notes, pagination)
 
 
 @strawberry.type
 class Mutation:
-    @strawberry.mutation
+    @strawberry.mutation(
+        extensions=[
+            IsAuthenticated(),
+        ]
+    )
     def create_note(self, info: Info, input: CreateNoteInput) -> Optional[NoteType]:
         user = get_current_user(info)
-        if user.is_authenticated:
-            note = Note.objects.create(
-                created_by=user, title=input.title, body=input.body
-            )
-            assign_perm(NotePermissions.VIEW.value, user, note)
-            assign_perm(NotePermissions.CHANGE.value, user, note)
-            assign_perm(NotePermissions.DELETE.value, user, note)
-            return note
-        return None
+        note = Note.objects.create(created_by=user, title=input.title, body=input.body)
+        # Assign object-level permissions to the user who created the note
+        for perm in [
+            NotePermissions.VIEW.value,
+            NotePermissions.CHANGE.value,
+            NotePermissions.DELETE.value,
+        ]:
+            assign_perm(perm, user, note)
+        return cast(NoteType, note)
 
-    @strawberry.mutation
-    def update_note(self, info: Info, input: UpdateNoteInput) -> Optional[NoteType]:
-        user = get_current_user(info)
-        if user.is_authenticated:
-            note = Note.objects.get(id=input.id)
-            note.title = input.title
-            note.body = input.body
-            note.save()
-            return NoteType(**note.__dict__)
-        return None
-
-    @strawberry.mutation
-    def delete_note(
-        self,
-        info: Info,
-        id: strawberry.ID,
-    ) -> bool:
-        user = get_current_user(info)
-        if user.is_authenticated:
-            note = Note.objects.get(id=id)
-            note.delete()
-            return True
-        return False
+    update_note: NoteType = mutations.update(
+        UpdateNoteInput, extensions=[IsAuthenticated()]
+    )
+    delete_note: NoteType = mutations.delete(NodeInput, extensions=[IsAuthenticated()])
