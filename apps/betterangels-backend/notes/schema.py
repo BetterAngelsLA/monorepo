@@ -31,7 +31,7 @@ class Query:
     )
     def notes(
         self,
-        info: strawberry.types.Info,
+        info: Info,
         pagination: Optional[OffsetPaginationInput] = None,
     ) -> PaginatedResponse[NoteType]:
         user = get_current_user(info)
