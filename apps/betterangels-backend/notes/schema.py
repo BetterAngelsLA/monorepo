@@ -61,7 +61,11 @@ class Mutation:
         return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
-        UpdateNoteInput, extensions=[IsAuthenticated()]
+        UpdateNoteInput,
+        extensions=[
+            IsAuthenticated(),
+            HasRetvalPerm(perms=[NotePermissions.CHANGE.value]),
+        ],
     )
 
     @strawberry.mutation(extensions=[IsAuthenticated()])
