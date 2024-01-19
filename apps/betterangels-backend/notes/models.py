@@ -1,5 +1,6 @@
 from accounts.models import User
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 
 class Note(models.Model):
@@ -12,3 +13,15 @@ class Note(models.Model):
 
     def __str__(self) -> str:
         return self.body[:50]
+
+
+class NoteUserObjectPermission(UserObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Note, on_delete=models.CASCADE
+    )
+
+
+class NoteGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Note, on_delete=models.CASCADE
+    )
