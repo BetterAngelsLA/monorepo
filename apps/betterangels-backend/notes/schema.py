@@ -36,7 +36,7 @@ class Query:
     ) -> PaginatedResponse[NoteType]:
         user = get_current_user(info)
         available_notes: QuerySet[Note] = get_objects_for_user(
-            user, [NotePermissions.VIEW.value], Note, use_groups=False
+            user, [NotePermissions.VIEW.value], Note
         )
         return paginate_queryset(available_notes, pagination)
 
