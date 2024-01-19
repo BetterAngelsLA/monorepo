@@ -28,7 +28,6 @@ class Query:
 
     @strawberry_django.field(
         extensions=[IsAuthenticated()],
-        pagination=True,
     )
     def notes(
         self,
