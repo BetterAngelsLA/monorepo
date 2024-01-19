@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry.types import Info
-from strawberry_django import NodeInput, mutations
+from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginationInput
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
@@ -63,4 +63,21 @@ class Mutation:
     update_note: NoteType = mutations.update(
         UpdateNoteInput, extensions=[IsAuthenticated()]
     )
-    delete_note: NoteType = mutations.delete(NodeInput, extensions=[IsAuthenticated()])
+
+    @strawberry.mutation(extensions=[IsAuthenticated()])
+    def delete_note(self, info: Info, id: strawberry.ID) -> bool:
+        user = get_current_user(info)
+
+        # Retrieve notes for which the user has delete permission
+        notes_with_delete_permission = get_objects_for_user(
+            user, NotePermissions.DELETE.value, klass=Note, with_superuser=True
+        )
+
+        # Try to get the specific note from the queryset
+        note = notes_with_delete_permission.filter(id=id).first()
+
+        if note:
+            note.delete()
+            return True
+        else:
+            return False
