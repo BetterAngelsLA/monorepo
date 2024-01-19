@@ -68,14 +68,13 @@ class Mutation:
     def delete_note(self, info: Info, id: strawberry.ID) -> bool:
         user = get_current_user(info)
 
-        note = cast(
-            Optional[Note],
-            get_objects_for_user(user, NotePermissions.DELETE.value, klass=Note)
-            .filter(id=id)
-            .first(),
+        # Get the queryset of notes the user has permission to delete
+        notes_with_delete_permission = cast(
+            QuerySet[Note],
+            get_objects_for_user(user, NotePermissions.DELETE.value, klass=Note),
         )
 
-        if note:
-            note.delete()
-            return True
-        return False
+        # Delete the note with the specified ID, if it exists in the queryset
+        deleted_count, _ = notes_with_delete_permission.filter(id=id).delete()
+
+        return deleted_count > 0
