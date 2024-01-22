@@ -1,6 +1,7 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox, Input } from '@monorepo/expo/shared/ui-components';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -26,6 +27,9 @@ export default function OtherCategory(props: IOtherCategoryProps) {
   } = props;
 
   const handleOtherCategory = (e: string) => {
+    if (otherCategories.includes(e)) {
+      return;
+    }
     setOtherCategories([...otherCategories, e]);
     setValue(main, [...services, e]);
     setValue(other, '');
@@ -37,6 +41,17 @@ export default function OtherCategory(props: IOtherCategoryProps) {
       : [...services, service];
     setValue(main, newServices);
   };
+
+  const otherCategoryError = useMemo(() => {
+    const allIncluded = otherCategories.every((element) =>
+      services.includes(element)
+    );
+    if (!allIncluded) {
+      return true;
+    }
+    return false;
+  }, [otherCategories, services]);
+
   return (
     <>
       {otherCategories?.map((item) => (
@@ -64,6 +79,12 @@ export default function OtherCategory(props: IOtherCategoryProps) {
         height={40}
         control={control}
       />
+      {otherCategoryError && (
+        <BodyText mt="xs" color={Colors.ERROR} size="xs">
+          The unchecked "other" category item will be deleted when the section
+          closes.
+        </BodyText>
+      )}
     </>
   );
 }

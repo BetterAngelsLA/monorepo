@@ -28,7 +28,7 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -120,6 +120,15 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     setValue('providedServices', newServices);
   };
 
+  useEffect(() => {
+    if (!isProvidedServices) {
+      const includedValues = providedOtherCategory.filter((element) =>
+        providedServices.includes(element)
+      );
+      setProvidedOtherCategory(includedValues);
+    }
+  }, [expanded]);
+
   return (
     <FieldCard
       actionName={
@@ -146,9 +155,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       mb="xs"
       title="Provided Services"
       expanded={expanded}
-      setExpanded={() =>
-        setExpanded(isProvidedServices ? undefined : 'Provided Services')
-      }
+      setExpanded={() => {
+        setExpanded(isProvidedServices ? undefined : 'Provided Services');
+      }}
     >
       {isProvidedServices && (
         <View style={{ paddingBottom: Spacings.md }}>

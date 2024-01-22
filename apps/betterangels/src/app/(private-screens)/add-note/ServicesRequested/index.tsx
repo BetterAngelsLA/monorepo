@@ -28,7 +28,7 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -119,6 +119,16 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
       : [...services, service];
     setValue('servicesRequested', newServices);
   };
+
+  useEffect(() => {
+    if (!isServicesRequested) {
+      const includedValues = requestedOtherCategory.filter((element) =>
+        services.includes(element)
+      );
+      setRequestedOtherCategory(includedValues);
+    }
+  }, [expanded]);
+
   return (
     <FieldCard
       actionName={
