@@ -8,7 +8,7 @@
       "executor": "@nx-tools/nx-container:build",
       "options": {
         "context": "apps/nginx",
-        "file": "./Dockerfile",
+        "file": "app/nginx/Dockerfile",
         "push": true,
         "platforms": ["linux/amd64"],
         "cache-from": [
