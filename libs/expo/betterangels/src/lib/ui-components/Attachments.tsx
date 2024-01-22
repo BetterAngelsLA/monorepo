@@ -11,6 +11,12 @@ import { Image, StyleSheet, View } from 'react-native';
 
 export default function Attachments() {
   const [images, setImages] = useState<Array<string>>([]);
+  const [width, setWidth] = useState(0);
+
+  const onLayout = (event: { nativeEvent: { layout: { width: number } } }) => {
+    const { width } = event.nativeEvent.layout;
+    setWidth(width);
+  };
 
   return (
     <View>
@@ -21,13 +27,16 @@ export default function Attachments() {
           <CameraPicker setImages={setImages} images={images} />
         </View>
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View
+        onLayout={onLayout}
+        style={{ flexDirection: 'row', flexWrap: 'wrap' }}
+      >
         {images.map((image, idx) => (
           <View
             key={idx}
             style={{
-              height: 82,
-              width: 60,
+              height: (width / 3) * 1.3 - Spacings.xs * 2,
+              width: width / 3 - Spacings.xs * 2,
               margin: Spacings.xs,
               overflow: 'hidden',
             }}
@@ -38,19 +47,28 @@ export default function Attachments() {
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
-            <IconButton
-              onPress={() =>
-                setImages(images.filter((i: string) => i !== image))
-              }
-              style={{ position: 'absolute', top: 5, right: 5 }}
-              variant="secondary"
-              height="xs"
-              width="xs"
-              accessibilityLabel="delete"
-              accessibilityHint="deletes the image"
+            <View
+              style={{
+                backgroundColor: Colors.WHITE,
+                borderRadius: 100,
+                position: 'absolute',
+                top: 5,
+                right: 5,
+              }}
             >
-              <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-            </IconButton>
+              <IconButton
+                onPress={() =>
+                  setImages(images.filter((i: string) => i !== image))
+                }
+                variant="transparent"
+                height="xs"
+                width="xs"
+                accessibilityLabel="delete"
+                accessibilityHint="deletes the image"
+              >
+                <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+              </IconButton>
+            </View>
           </View>
         ))}
       </View>
