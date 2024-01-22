@@ -146,7 +146,7 @@ In our project, we use GraphQL extensively, and managing the GraphQL schema and 
 
 **A Note on Organizing Queries and Mutations**
 
-It is a common practice to place GraphQL queries and mutations next to their respective components. This approach facilitates easier understanding and management of which components rely on specific parts of the GraphQL schema. However, at this time, we have diverged from this practice by breaking out these queries and mutations into separate folders.
+It is a common practice to place GraphQL queries and mutations next to their respective components. This approach facilitates easier understanding and management of which components rely on specific parts of the GraphQL schema. However, at this time, we have diverged from this practice by breaking out these queries and mutations into separate folders. It is important we document why this decision has been made or revert back to colocating querins and mutations with components.
 
 #### Generating GraphQL Schema
 
