@@ -20,3 +20,13 @@ export const GET_NOTES = gql`
     }
   }
 `;
+
+export const GET_NOTES_TEST = gql`
+  query notes_test {
+    notes {
+      id
+      title
+      body
+    }
+  }
+`;
