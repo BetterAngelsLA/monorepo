@@ -4,6 +4,16 @@
   "sourceRoot": "libs/expo/betterangels/src",
   "projectType": "library",
   "targets": {
+    "generate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/betterangels",
+        "command": "graphql-codegen --config codegen.ts"
+      },
+      "outputs": [
+        "{workspaceRoot}/libs/expo/betterangels/src/lib/apollo/gql-types/"
+      ]
+    },
     "lint": {
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
