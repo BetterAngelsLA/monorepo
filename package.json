@@ -8,8 +8,7 @@
     "storybook:build": "nx build-storybook expo-shared-ui-components",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
-    "ba:build-dev": "nx build betterangels --profile development",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "ba:build-dev": "nx build betterangels --profile development"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",

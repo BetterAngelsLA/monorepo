@@ -1,11 +1,11 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, TextButton } from '@monorepo/expo/shared/ui-components';
+import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
+import BottomActions from './BottomActions';
 import Mood from './Mood';
 import NextStep from './NextStep';
 import PrivateNote from './PrivateNote';
@@ -72,46 +72,7 @@ export default function AddNote() {
           <PublicNote firstName="Test" {...props} />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingVertical: Spacings.md,
-            paddingHorizontal: Spacings.sm,
-            backgroundColor: Colors.WHITE,
-            borderTopWidth: 1,
-            borderTopColor: Colors.NEUTRAL,
-          }}
-        >
-          <TextButton
-            fontSize="sm"
-            onPress={() => console.log('cancel')}
-            accessibilityHint="cancels note creation"
-            title="Cancel"
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TextButton
-              mr="sm"
-              fontSize="sm"
-              onPress={() => console.log('save for later')}
-              accessibilityHint="saves the note for later"
-              title="Save for later"
-            />
-            <Button
-              fontSize="sm"
-              size="full"
-              height="md"
-              variant="primary"
-              accessibilityHint="submit the note"
-              title="Submit"
-              style={{ maxWidth: 85 }}
-              onPress={methods.handleSubmit((data) =>
-                console.log('DATA: ', data)
-              )}
-            />
-          </View>
-        </View>
+        <BottomActions />
       </View>
     </FormProvider>
   );
