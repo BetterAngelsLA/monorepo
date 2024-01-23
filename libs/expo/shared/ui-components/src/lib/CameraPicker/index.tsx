@@ -30,30 +30,9 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   const captureImage = async () => {
     if (cameraRef.current) {
-      const cameraInfo = await cameraRef.current.getCameraInfoAsync();
-      if (cameraInfo) {
-        const maxResolution = cameraInfo.photoSizes.reduce(
-          (
-            max: { width: number; height: number },
-            size: { width: number; height: number }
-          ) => {
-            return size.width * size.height > max.width * max.height
-              ? size
-              : max;
-          },
-          { width: 0, height: 0 }
-        );
-
-        const veryHighResolutionThreshold = 12 * 1000000;
-        const isHighResolution =
-          maxResolution.width * maxResolution.height >=
-          veryHighResolutionThreshold;
-
-        const quality = isHighResolution ? 0.7 : 1;
-        const photo = await cameraRef.current.takePictureAsync({ quality });
-
-        setImages([...images, photo.uri]);
-      }
+      const quality = 0.7;
+      const photo = await cameraRef.current.takePictureAsync({ quality });
+      setImages([...images, photo.uri]);
       setIsCameraOpen(false);
     }
   };
