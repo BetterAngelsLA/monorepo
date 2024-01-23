@@ -109,17 +109,33 @@ jobs:
           yarn nx affected -t lint
           EOF
 
-      - name: 📝 Make sure GraphQL Schema is generated
+      - name: 🔗 Ensure Expo Library Compatibility
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          CI=1 yarn expo install --check
+          EOF
+
+      - name: 📝 Make sure GraphQL Schema is up to date
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
           docker-compose run better-angels bash <<'EOF'
-          yarn nx run betterangels-backend:validate-graphql-schema
+          yarn nx affected -t validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
-            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run betterangels-backend:generate-graphql-schema' locally and committed the changes."
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx affected -t generate-graphql-schema' locally and committed the changes."
             exit 1
           else
             echo "Success: The GraphQL schemas match!"
+          fi
+
+          yarn nx affected -t generate-graphql-types
+          git diff --exit-code '**/gql-types/*';
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: The GraphQL types do not match! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL types match!"
           fi
           EOF
 

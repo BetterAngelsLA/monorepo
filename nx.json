@@ -62,5 +62,10 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": ["@nxlv/python"]
+  "plugins": ["@nxlv/python"],
+  "projects": {
+    "betterangels": {
+      "implicitDependencies": ["betterangels-backend"]
+    }
+  }
 }
