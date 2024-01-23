@@ -212,7 +212,7 @@ export default function TabOneScreen() {
         <Avatar
           accessibilityHint="my avatar"
           accessibilityLabel="My Avatar"
-          size="md"
+          size="lg"
         />
       </View>
       <MainScrollContainer px={0} pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>

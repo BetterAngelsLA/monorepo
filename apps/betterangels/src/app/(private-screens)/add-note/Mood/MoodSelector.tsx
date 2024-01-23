@@ -37,7 +37,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
           accessibilityHint={mood.title}
           label={
             <View style={styles.labelContainer}>
-              <mood.Icon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+              <mood.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
               <BodyText ml="xs">{mood.title}</BodyText>
             </View>
           }

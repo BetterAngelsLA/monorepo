@@ -152,7 +152,7 @@ export default function Mood(props: IMoodProps) {
                   mr="xs"
                   my="xs"
                   key={mood}
-                  size="sm"
+                  size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
               );

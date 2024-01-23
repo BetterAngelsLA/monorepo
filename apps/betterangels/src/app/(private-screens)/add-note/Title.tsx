@@ -55,7 +55,7 @@ export default function Title(props: ITitleProps) {
             variant="transparent"
           >
             <SolidPeincilIcon
-              size="md"
+              size="lg"
               color={errors.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
             />
           </IconButton>

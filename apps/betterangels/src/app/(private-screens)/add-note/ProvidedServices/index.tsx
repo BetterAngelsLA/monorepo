@@ -129,7 +129,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                   mr="xs"
                   my="xs"
                   key={service}
-                  size="sm"
+                  size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
               );
@@ -164,7 +164,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                   accessibilityHint={item.title}
                   label={
                     <View style={styles.labelContainer}>
-                      <item.Icon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+                      <item.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
                       <BodyText ml="xs">{item.title}</BodyText>
                     </View>
                   }
@@ -175,7 +175,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
           <Input
             placeholder="Enter other category"
             icon={
-              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="md" />
             }
             mt="xs"
             name="otherProvidedCategory"
