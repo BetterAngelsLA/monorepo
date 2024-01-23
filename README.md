@@ -178,7 +178,8 @@ Our CI pipeline checks if the generated GraphQL schema and types are up-to-date.
 
 ## Backend Development Guide
 
-</summary>
+<details open>
+<summary>
 
 The betterangels_backend is built on Django, a Python web framework. It also utilizes Celery for distributed task processing, enabling the scheduling and execution of tasks.
 
