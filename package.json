@@ -91,7 +91,6 @@
     "jest-environment-jsdom": "^29.4.1",
     "jest-expo": "~50.0.1",
     "metro": "0.76.7",
-    "metro-react-native-babel-transformer": "^0.77.0",
     "metro-resolver": "0.76.7",
     "nx": "16.6.0",
     "nx-cloud": "latest",
