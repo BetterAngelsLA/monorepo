@@ -383,10 +383,4 @@ class YourModelAdmin(SimpleHistoryAdmin):
 Use the `history` attribute of your model instance to access historical records.
 
 </details>
-
-<details open>
-<summary>
-
-## More
-
 </summary>
