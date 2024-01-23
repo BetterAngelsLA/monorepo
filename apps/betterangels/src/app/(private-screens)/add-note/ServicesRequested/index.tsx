@@ -1,3 +1,4 @@
+import { Attachments } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -29,7 +30,7 @@ import {
   Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 interface IServicesRequestedProps {
   expanded: string | undefined;
@@ -104,10 +105,15 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
 
+  const requestedServicesImages = watch('requestedServicesImages', []);
   const services = watch('servicesRequested') || [];
   const isServicesRequested = expanded === 'Services Requested';
   const isLessThanOneServiceRequested = services.length < 1;
+  const isLessThanOneRequestedServiceImages =
+    requestedServicesImages.length < 1;
   const isGreaterThanZeroServiceRequested = services.length > 0;
+  const isGreaterThanZeroRequestedServiceImages =
+    requestedServicesImages?.length > 0;
 
   const toggleServices = (service: string) => {
     const newServices = services.includes(service)
@@ -118,9 +124,12 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   return (
     <FieldCard
       actionName={
-        isServicesRequested && isLessThanOneServiceRequested ? (
+        isServicesRequested &&
+        isLessThanOneServiceRequested &&
+        isLessThanOneRequestedServiceImages ? (
           ''
-        ) : isGreaterThanZeroServiceRequested ? (
+        ) : isGreaterThanZeroServiceRequested ||
+          isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
               const IconComponent = ICONS[service];
@@ -134,6 +143,9 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
                 />
               );
             })}
+            {isGreaterThanZeroRequestedServiceImages && (
+              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
+            )}
           </View>
         ) : (
           <H5 size="sm">Add Services</H5>
@@ -183,15 +195,10 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
             control={control}
           />
 
-          <Pressable
-            style={styles.attach}
-            accessible
-            accessibilityRole="button"
-            accessibilityHint="attach a file"
-          >
-            <BodyText>Attachments</BodyText>
-            <PaperclipIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-          </Pressable>
+          <Attachments
+            images={requestedServicesImages}
+            setImages={(array) => setValue('requestedServicesImages', array)}
+          />
         </View>
       )}
     </FieldCard>

@@ -1,3 +1,4 @@
+import { Attachments } from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
   FaceCloudsIcon,
@@ -19,6 +20,7 @@ import {
   FaceSwearIcon,
   FaceWearyIcon,
   IIconProps,
+  PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
@@ -94,12 +96,15 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 export default function Mood(props: IMoodProps) {
   const { expanded, setExpanded } = props;
   const [tab, setTab] = useState<string>('pleasant');
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
+  const moodsImages = watch('moodsImages', []);
   const moods = watch('moods') || [];
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods.length < 1;
+  const isLessThanOneMoodImages = moodsImages.length < 1;
+  const isGreaterThanZeroMoodImages = moodsImages?.length > 0;
   const isGreaterThanOneMood = moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
@@ -136,9 +141,9 @@ export default function Mood(props: IMoodProps) {
     <FieldCard
       mb="xs"
       actionName={
-        isMood && isLessThanOneMood ? (
+        isMood && isLessThanOneMood && isLessThanOneMoodImages ? (
           ''
-        ) : isGreaterThanOneMood ? (
+        ) : isGreaterThanOneMood || isGreaterThanZeroMoodImages ? (
           <View
             style={{
               flexDirection: 'row',
@@ -157,6 +162,9 @@ export default function Mood(props: IMoodProps) {
                 />
               );
             })}
+            {isGreaterThanZeroMoodImages && (
+              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
+            )}
           </View>
         ) : (
           <H5 size="sm">Add Mood</H5>
@@ -167,7 +175,7 @@ export default function Mood(props: IMoodProps) {
       setExpanded={() => setExpanded(isMood ? undefined : 'Mood')}
     >
       {isMood && (
-        <>
+        <View style={{ paddingBottom: Spacings.md }}>
           <View style={styles.tabContainer}>
             {TABS.map((tabName) => (
               <Pressable
@@ -190,7 +198,11 @@ export default function Mood(props: IMoodProps) {
             ))}
           </View>
           <MoodSelector moodsData={moodsData} />
-        </>
+          <Attachments
+            images={moodsImages}
+            setImages={(array) => setValue('moodsImages', array)}
+          />
+        </View>
       )}
     </FieldCard>
   );

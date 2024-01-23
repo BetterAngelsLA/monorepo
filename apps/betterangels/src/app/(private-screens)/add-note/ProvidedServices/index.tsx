@@ -8,6 +8,7 @@ import {
   BurgerSodaIcon,
   CarIcon,
   IIconProps,
+  PaperclipIcon,
   PawIcon,
   PeopleRoofIcon,
   PlusIcon,
@@ -104,10 +105,14 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
 
+  const providedServicesImages = watch('providedServicesImages', []);
   const providedServices = watch('providedServices') || [];
   const isProvidedServices = expanded === 'Provided Services';
   const isLessThanOneProvidedService = providedServices.length < 1;
+  const isLessThanOneProvidedServiceImages = providedServicesImages.length < 1;
   const isGreaterThanZeroProvidedService = providedServices.length > 0;
+  const isGreaterThanZeroProvidedServiceImages =
+    providedServicesImages?.length > 0;
 
   const toggleServices = (service: string) => {
     const newServices = providedServices.includes(service)
@@ -118,9 +123,12 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   return (
     <FieldCard
       actionName={
-        isProvidedServices && isLessThanOneProvidedService ? (
+        isProvidedServices &&
+        isLessThanOneProvidedService &&
+        isLessThanOneProvidedServiceImages ? (
           ''
-        ) : isGreaterThanZeroProvidedService ? (
+        ) : isGreaterThanZeroProvidedService ||
+          isGreaterThanZeroProvidedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {providedServices.map((service: string) => {
               const IconComponent = ICONS[service];
@@ -134,6 +142,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                 />
               );
             })}
+            {isGreaterThanZeroProvidedServiceImages && (
+              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
+            )}
           </View>
         ) : (
           <H5 size="sm">Add Services</H5>
@@ -182,7 +193,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
             height={40}
             control={control}
           />
-          <Attachments />
+          <Attachments
+            images={providedServicesImages}
+            setImages={(array) => setValue('providedServicesImages', array)}
+          />
         </View>
       )}
     </FieldCard>

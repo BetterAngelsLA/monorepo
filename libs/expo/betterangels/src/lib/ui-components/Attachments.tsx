@@ -9,8 +9,14 @@ import {
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-export default function Attachments() {
-  const [images, setImages] = useState<Array<string>>([]);
+interface IAttachmentsProps {
+  images: string[];
+  setImages: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+export default function Attachments(props: IAttachmentsProps) {
+  const { images, setImages } = props;
+
   const [width, setWidth] = useState(0);
 
   const onLayout = (event: { nativeEvent: { layout: { width: number } } }) => {
@@ -31,7 +37,7 @@ export default function Attachments() {
         onLayout={onLayout}
         style={{ flexDirection: 'row', flexWrap: 'wrap' }}
       >
-        {images.map((image, idx) => (
+        {images?.map((image, idx) => (
           <View
             key={idx}
             style={{
