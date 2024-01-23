@@ -129,11 +129,6 @@ yarn nx build betterangels
 
 </details>
 
-</details>
-
-<details open>
-<summary>
-
 ### Managing GraphQL Schema and Types
 
 In our project, we use GraphQL extensively, and managing the GraphQL schema and types is a crucial part of our development process. This section aims to clarify how we handle GraphQL schema generation and type generation, and why we organize our GraphQL-related files in specific folders.
@@ -176,10 +171,14 @@ This will update the TypeScript types in the gql-types folder. If there are any 
 
 Our CI pipeline checks if the generated GraphQL schema and types are up-to-date. If there's a discrepancy, the pipeline will fail, prompting you to regenerate and commit these files.
 
-## Backend Development Guide
+</details>
 
 <details open>
 <summary>
+
+## Backend Development Guide
+
+</summary>
 
 The betterangels_backend is built on Django, a Python web framework. It also utilizes Celery for distributed task processing, enabling the scheduling and execution of tasks.
 
@@ -384,4 +383,3 @@ class YourModelAdmin(SimpleHistoryAdmin):
 Use the `history` attribute of your model instance to access historical records.
 
 </details>
-</summary>
