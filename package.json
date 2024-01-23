@@ -77,7 +77,7 @@
     "babel-preset-expo": "~9.5.0",
     "core-js": "^3.6.5",
     "detox": "^20.11.1",
-    "eas-cli": "5.0.0",
+    "eas-cli": "7.0.0",
     "eslint": "~8.15.0",
     "eslint-config-prettier": "8.1.0",
     "eslint-plugin-import": "2.27.5",
