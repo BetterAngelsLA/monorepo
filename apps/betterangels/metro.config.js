@@ -24,8 +24,6 @@ const customConfig = {
   resolver: {
     assetExts: assetExts.filter((ext) => ext !== 'svg'),
     sourceExts: [...sourceExts, 'svg'],
-    unstable_enableSymlinks: true,
-    unstable_enablePackageExports: true,
   },
 };
 
