@@ -1,7 +1,6 @@
 const { withNxMetro } = require('@nx/expo');
 const { getDefaultConfig } = require('@expo/metro-config');
 const { mergeConfig } = require('metro-config');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const defaultConfig = getDefaultConfig(__dirname);
 defaultConfig.transformer.minifierConfig.compress.drop_console = true;
@@ -25,9 +24,6 @@ const customConfig = {
   resolver: {
     assetExts: assetExts.filter((ext) => ext !== 'svg'),
     sourceExts: [...sourceExts, 'svg'],
-    blockList: exclusionList([/^(?!.*node_modules).*\/dist\/.*/]),
-    unstable_enableSymlinks: true,
-    unstable_enablePackageExports: true,
   },
 };
 
