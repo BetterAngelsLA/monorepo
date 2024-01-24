@@ -69,7 +69,6 @@
     "@types/jest": "^29.4.0",
     "@types/node": "18.17.1",
     "@types/react": "~18.2.45",
-    "@types/react-native": "0.72.2",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "@yarnpkg/sdks": "^3.0.0-rc.48",

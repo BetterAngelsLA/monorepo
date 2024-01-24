@@ -3891,7 +3891,6 @@ __metadata:
     "@types/jest": ^29.4.0
     "@types/node": 18.17.1
     "@types/react": ~18.2.45
-    "@types/react-native": 0.72.2
     "@typescript-eslint/eslint-plugin": ^5.60.1
     "@typescript-eslint/parser": ^5.60.1
     "@yarnpkg/sdks": ^3.0.0-rc.48
@@ -6096,18 +6095,6 @@ __metadata:
   peerDependencies:
     react-native: "*"
   checksum: 59826b146cdcff358f27b118b9dcc6fa23534f3880b5e8546c79aedff8cb4e028af652b0371e0080610e30a250c69607f45b2066c83762788783ccf2031938e3
-  languageName: node
-  linkType: hard
-
-"@react-native/virtualized-lists@npm:^0.72.4":
-  version: 0.72.8
-  resolution: "@react-native/virtualized-lists@npm:0.72.8"
-  dependencies:
-    invariant: ^2.2.4
-    nullthrows: ^1.1.1
-  peerDependencies:
-    react-native: "*"
-  checksum: ad9628a04e72420326fd5ef09c746ad9cd6cff745b73850c7297429e3c42927043d1310896a72aa94497dc6b7f1abc2be1081b465734f7673f0e7d36aaae5e53
   languageName: node
   linkType: hard
 
@@ -8445,17 +8432,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-native@npm:0.72.2":
-  version: 0.72.2
-  resolution: "@types/react-native@npm:0.72.2"
-  dependencies:
-    "@react-native/virtualized-lists": ^0.72.4
-    "@types/react": "*"
-  checksum: b2915594381365ea379cb46b9a65219c6b6c7446d97d15f4da9615b8f180972bacba7cae584f4a8f83cce3a180f8a9a08a9c6b57081b37e2543f23f5717693d4
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:*, @types/react@npm:>=16, @types/react@npm:~18.2.45":
+"@types/react@npm:>=16, @types/react@npm:~18.2.45":
   version: 18.2.48
   resolution: "@types/react@npm:18.2.48"
   dependencies:
