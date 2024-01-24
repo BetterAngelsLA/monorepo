@@ -37,14 +37,15 @@
     "@apollo/client": "*",
     "apollo-link-rest": "*",
     "rxjs": "*",
-    "expo-splash-screen": "~0.20.5",
+    "expo-splash-screen": "*",
     "@babel/core": "*",
     "@graphql-typed-document-node/core": "*",
     "graphql": "*",
     "date-fns": "*",
     "@react-native-community/datetimepicker": "*",
     "expo-image-picker": "*",
-    "expo-camera": "*"
+    "expo-camera": "*",
+    "@graphql-codegen/cli": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",

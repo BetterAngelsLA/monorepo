@@ -129,6 +129,48 @@ yarn nx build betterangels
 
 </details>
 
+### Managing GraphQL Schema and Types
+
+In our project, we use GraphQL extensively, and managing the GraphQL schema and types is a crucial part of our development process. This section aims to clarify how we handle GraphQL schema generation and type generation, and why we organize our GraphQL-related files in specific folders.
+
+**Understanding the Folder Structure**
+
+- `graphql`: Contains our GraphQL queries and mutations.
+- `rest-graphql`: Containes `apollo-rest-link` queries and mutations. These queries & mutation do not generate TypeScript types, though in the future we can manually create our own GraphQL schema if we desire.
+- `gql-types`: Types generated from our Django GraphQL schema. They should always be kept up to date with the latest schema.
+
+**A Note on Organizing Queries and Mutations**
+
+It is a common practice to place GraphQL queries and mutations next to their respective components. This approach facilitates easier understanding and management of which components rely on specific parts of the GraphQL schema. However, at this time, we have diverged from this practice by breaking out these queries and mutations into separate folders. It is important we document why this decision has been made or revert back to colocating querins and mutations with components.
+
+#### Generating GraphQL Schema
+
+The GraphQL schema represents the capabilities of our API in terms of types and the operations that can be performed on those types. Keeping the schema up-to-date is vital for frontend and backend consistency.
+
+**How to Generate the Schema:**
+
+Run the schema generation command:
+
+```bash
+yarn nx affected -t generate-graphql-schema
+```
+
+This will update the GraphQL schema files based on the latest API changes.
+
+#### Generating GraphQL Types
+
+Run the type generation command:
+
+```bash
+yarn nx affected -t generate-graphql-types
+```
+
+This will update the TypeScript types in the gql-types folder. If there are any uncommitted changes after running this command, it indicates that the types are out-of-date.
+
+#### Keeping Types Up-to-Date
+
+Our CI pipeline checks if the generated GraphQL schema and types are up-to-date. If there's a discrepancy, the pipeline will fail, prompting you to regenerate and commit these files.
+
 </details>
 
 <details open>
@@ -339,19 +381,5 @@ class YourModelAdmin(SimpleHistoryAdmin):
 #### Step 4: Accessing History in Views/Templates
 
 Use the `history` attribute of your model instance to access historical records.
-
-</details>
-
-<details open>
-<summary>
-
-## More
-
-</summary>
-
-### Versioning
-
-- Production - x.y.z
-- Development - x.y.z-beta.t
 
 </details>

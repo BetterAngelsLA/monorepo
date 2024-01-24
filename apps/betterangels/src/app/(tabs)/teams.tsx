@@ -112,7 +112,7 @@ export default function TeamsScreen() {
           <TouchableOpacity
             accessible
             accessibilityHint={`opens selected ${team.title} single page`}
-            onPress={() => router.push(`/team/${team.id}`)}
+            onPress={() => router.navigate(`/team/${team.id}`)}
             style={{ padding: Spacings.sm, marginTop: Spacings.md }}
             key={idx}
           >
