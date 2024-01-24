@@ -1,3 +1,4 @@
+import { OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -26,8 +27,8 @@ import {
   FieldCard,
   H3,
   H5,
-  Input,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -103,6 +104,9 @@ const SERVICES = [
 export default function ProvidedServices(props: IProvidedServicesProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
+  const [providedOtherCategory, setProvidedOtherCategory] = useState<string[]>(
+    []
+  );
 
   const providedServices = watch('providedServices') || [];
   const isProvidedServices = expanded === 'Provided Services';
@@ -115,6 +119,16 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       : [...providedServices, service];
     setValue('providedServices', newServices);
   };
+
+  useEffect(() => {
+    if (!isProvidedServices) {
+      const includedValues = providedOtherCategory.filter((element) =>
+        providedServices.includes(element)
+      );
+      setProvidedOtherCategory(includedValues);
+    }
+  }, [expanded]);
+
   return (
     <FieldCard
       actionName={
@@ -123,11 +137,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         ) : isGreaterThanZeroProvidedService ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {providedServices.map((service: string) => {
-              const IconComponent = ICONS[service];
+              const IconComponent = ICONS[service] || PlusIcon;
               return (
                 <IconComponent
                   mr="xs"
-                  my="xs"
                   key={service}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}
@@ -142,9 +155,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       mb="xs"
       title="Provided Services"
       expanded={expanded}
-      setExpanded={() =>
-        setExpanded(isProvidedServices ? undefined : 'Provided Services')
-      }
+      setExpanded={() => {
+        setExpanded(isProvidedServices ? undefined : 'Provided Services');
+      }}
     >
       {isProvidedServices && (
         <View style={{ paddingBottom: Spacings.md }}>
@@ -172,15 +185,14 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
               ))}
             </View>
           ))}
-          <Input
-            placeholder="Enter other category"
-            icon={
-              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-            }
-            mt="xs"
-            name="otherProvidedCategory"
-            height={40}
+          <OtherCategory
+            main="providedServices"
+            other="providedOtherCategory"
+            otherCategories={providedOtherCategory}
+            setOtherCategories={setProvidedOtherCategory}
             control={control}
+            setValue={setValue}
+            services={providedServices}
           />
           <Pressable
             style={styles.attach}
