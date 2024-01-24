@@ -4105,12 +4105,12 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     eslint-plugin-react-native-a11y: ^3.3.0
-    expo-camera: ~13.4.4
-    expo-image-picker: ~14.3.2
     expo: 50.0.2
     expo-auth-session: ~5.4.0
+    expo-camera: ~13.4.4
     expo-constants: ~15.4.5
     expo-dev-client: ~3.3.6
+    expo-image-picker: ~14.3.2
     expo-linking: ~6.2.2
     expo-router: ~3.4.4
     expo-secure-store: ~12.8.1
@@ -14261,7 +14261,6 @@ __metadata:
   version: 0.12.3
   resolution: "expo-json-utils@npm:0.12.3"
   checksum: c0f96af008c2c53d82bcc32fe0e3cd43ec9fa6dda1f91871c17a6d2311a2d969bd5a2009a7d06f52b8f8e35cb966012d2f8e234cee96ba9e05db118c9c4d210d
-
   languageName: node
   linkType: hard
 
