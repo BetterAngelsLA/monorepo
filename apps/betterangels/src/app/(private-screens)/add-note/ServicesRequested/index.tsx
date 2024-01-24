@@ -1,4 +1,5 @@
 import { Attachments } from '@monorepo/expo/betterangels';
+import { OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -27,8 +28,8 @@ import {
   FieldCard,
   H3,
   H5,
-  Input,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -104,6 +105,9 @@ const SERVICES = [
 export default function ServicesRequested(props: IServicesRequestedProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
+  const [requestedOtherCategory, setRequestedOtherCategory] = useState<
+    string[]
+  >([]);
 
   const requestedServicesImages = watch('requestedServicesImages', []);
   const services = watch('servicesRequested') || [];
@@ -121,6 +125,16 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
       : [...services, service];
     setValue('servicesRequested', newServices);
   };
+
+  useEffect(() => {
+    if (!isServicesRequested) {
+      const includedValues = requestedOtherCategory.filter((element) =>
+        services.includes(element)
+      );
+      setRequestedOtherCategory(includedValues);
+    }
+  }, [expanded]);
+
   return (
     <FieldCard
       actionName={
@@ -132,11 +146,10 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
-              const IconComponent = ICONS[service];
+              const IconComponent = ICONS[service] || PlusIcon;
               return (
                 <IconComponent
                   mr="xs"
-                  my="xs"
                   key={service}
                   size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
@@ -184,15 +197,14 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
               ))}
             </View>
           ))}
-          <Input
-            placeholder="Enter other category"
-            icon={
-              <PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-            }
-            mt="xs"
-            name="otherRequestedCategory"
-            height={40}
+          <OtherCategory
+            main="servicesRequested"
+            other="requestedOtherCategory"
+            services={services}
+            setValue={setValue}
             control={control}
+            otherCategories={requestedOtherCategory}
+            setOtherCategories={setRequestedOtherCategory}
           />
 
           <Attachments

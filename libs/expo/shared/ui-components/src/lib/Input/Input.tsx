@@ -3,12 +3,14 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   StyleProp,
   StyleSheet,
   Text,
   TextInput,
+  TextInputSubmitEditingEventData,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,7 +24,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IInputProps {
   label?: string;
-  control: Control<any>;
+  control?: Control<any>;
   height?: 40 | 56 | 200;
   name: string;
   required?: boolean;
@@ -39,6 +41,9 @@ interface IInputProps {
   onBlur?: () => void;
   placeholder?: string;
   icon?: ReactNode;
+  onSubmitEditing?:
+    | ((e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void)
+    | undefined;
 }
 
 export function Input(props: IInputProps) {
