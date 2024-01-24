@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from accounts.models import User
 from django.test import TestCase, ignore_warnings
 from notes.models import Note
@@ -13,19 +14,25 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
             created_by=self.user, title="Original Title", body="Original Body"
         )
 
+    def _create_note(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        mutation = """
+            mutation CreateNote($title: String!, $body: String!) {
+                createNote(input: { title: $title, body: $body }) {
+                    id
+                    title
+                    body
+                }
+            }
+            """
+        response = self.execute_graphql(mutation, variables)
+        return response
+
     def test_create_note_mutation_authenticated(self) -> None:
         self.graphql_client.force_login(self.user)
 
-        mutation = """
-          mutation CreateNote($title: String!, $body: String!) {
-              createNote(input: { title: $title, body: $body }) {
-                  title
-                  body
-              }
-          }
-        """
-        variables = {"title": "New Note", "body": "This is a new note."}
-        response = self.execute_graphql(mutation, variables)
+        response = self._create_note(
+            {"title": "New Note", "body": "This is a new note."}
+        )
         data = response["data"]["createNote"]
 
         self.assertIsNotNone(data)
@@ -33,6 +40,11 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
     def test_update_note_mutation_authenticated(self) -> None:
         self.graphql_client.force_login(self.user)
+
+        response = self._create_note(
+            {"title": "New Note", "body": "This is a new note."}
+        )
+        note_data = response["data"]["createNote"]
 
         mutation = """
             mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
@@ -43,7 +55,7 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
             }
         """
         variables = {
-            "id": str(self.note.id),
+            "id": note_data["id"],
             "title": "Updated Title",
             "body": "Updated Body",
         }
@@ -55,6 +67,10 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
     def test_delete_note_mutation_authenticated(self) -> None:
         self.graphql_client.force_login(self.user)
+
+        variables = {"title": "New Note", "body": "This is a new note."}
+        response = self._create_note(variables)
+        data = response["data"]["createNote"]
 
         mutation = """
             mutation DeleteNote($id: ID!) {

@@ -15,4 +15,3 @@ class PageInfo:
 class PaginatedResponse(Generic[T]):
     items: List[T]
     page_info: PageInfo
-    total_count: int

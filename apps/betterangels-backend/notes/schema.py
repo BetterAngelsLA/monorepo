@@ -1,16 +1,13 @@
-from typing import Optional, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
-from common.graphql.types import PaginatedResponse
-from common.graphql.utils import paginate_queryset
 from django.db.models import QuerySet
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.pagination import OffsetPaginationInput
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
 from .models import Note
@@ -26,19 +23,11 @@ class Query:
         ],
     )
 
-    @strawberry_django.field(
-        extensions=[IsAuthenticated()],
+    notes: List[NoteType] = strawberry_django.field(
+        extensions=[
+            IsAuthenticated(),
+        ]
     )
-    def notes(
-        self,
-        info: Info,
-        pagination: Optional[OffsetPaginationInput] = None,
-    ) -> PaginatedResponse[NoteType]:
-        user = get_current_user(info)
-        available_notes: QuerySet[Note] = get_objects_for_user(
-            user, [NotePermissions.VIEW.value], Note
-        )
-        return paginate_queryset(available_notes, pagination)
 
 
 @strawberry.type
