@@ -24,7 +24,7 @@ export default function Auth() {
             accessibilityHint="goes to sign in screen"
             mb="xs"
             onPress={() =>
-              router.push({
+              router.navigate({
                 pathname: '/sign-in',
                 params: {
                   type: 'sign-in',
@@ -38,7 +38,7 @@ export default function Auth() {
           <Button
             accessibilityHint="goes to sign up screen"
             onPress={() =>
-              router.push({
+              router.navigate({
                 pathname: '/sign-in',
                 params: {
                   type: 'sign-up',
