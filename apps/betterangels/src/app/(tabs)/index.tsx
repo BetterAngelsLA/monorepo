@@ -326,7 +326,7 @@ export default function TabOneScreen() {
           </View>
           <ClientCard
             onPress={() =>
-              router.push({
+              router.navigate({
                 pathname: '/add-note/[clientId]',
                 params: {
                   clientId: '1234',
