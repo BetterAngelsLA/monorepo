@@ -150,7 +150,6 @@ export default function Mood(props: IMoodProps) {
               return (
                 <IconComponent
                   mr="xs"
-                  my="xs"
                   key={mood}
                   size="sm"
                   color={Colors.PRIMARY_EXTRA_DARK}
