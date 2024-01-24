@@ -27,7 +27,6 @@
     "expo-crypto": "*",
     "expo-secure-store": "*",
     "axios": "*",
-    "react-native-url-polyfill": "*",
     "react-native-gesture-handler": "*",
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
