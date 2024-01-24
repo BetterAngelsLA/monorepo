@@ -30,7 +30,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   const captureImage = async () => {
     if (cameraRef.current) {
-      const quality = 0.7;
+      const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
       setImages([...images, photo.uri]);
       setIsCameraOpen(false);
@@ -99,7 +99,6 @@ export default function CameraPicker(props: ICameraPickerProps) {
         </View>
         <View style={{ flex: 5 }}>
           <Camera
-            ratio="4:3"
             style={styles.camera}
             type={type}
             flashMode={flash}
