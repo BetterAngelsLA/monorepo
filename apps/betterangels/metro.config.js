@@ -1,7 +1,6 @@
 const { withNxMetro } = require('@nx/expo');
 const { getDefaultConfig } = require('expo/metro-config');
 const { mergeConfig } = require('metro-config');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const defaultConfig = getDefaultConfig(__dirname);
 defaultConfig.transformer.minifierConfig.compress.drop_console = true;
