@@ -30,6 +30,10 @@ input CreateNoteInput {
 """Date with time (isoformat)"""
 scalar DateTime
 
+input DeleteDjangoObjectInput {
+  id: Int!
+}
+
 input MagicLinkInput {
   email: String!
 }
@@ -42,8 +46,8 @@ type Mutation {
   logout: Boolean!
   generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
   updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNote(input: CreateNoteInput!): NoteType @isAuthenticated
-  deleteNote(id: ID!): Boolean! @isAuthenticated
+  deleteNote(data: DeleteDjangoObjectInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
+  createNote(input: CreateNoteInput!): NoteType! @isAuthenticated
 }
 
 type NoteType {
@@ -54,26 +58,15 @@ type NoteType {
   createdBy: UserType!
 }
 
-type NoteTypePaginatedResponse {
-  items: [NoteType!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int! = -1
 }
 
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-}
-
 type Query {
-  currentUser: UserType
+  currentUser: UserType!
   note(pk: ID!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput = null): NoteTypePaginatedResponse! @isAuthenticated
+  notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
 }
 
 input UpdateNoteInput {

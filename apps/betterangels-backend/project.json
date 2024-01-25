@@ -64,14 +64,14 @@
     "generate-graphql-schema": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python manage.py runscript generate_graphql_schema",
+        "command": "poetry run python manage.py export_schema betterangels_backend.schema > schema.graphql",
         "cwd": "apps/betterangels-backend"
       }
     },
     "validate-graphql-schema": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run python manage.py runscript validate_graphql_schema",
+        "command": "bash -c 'diff <(poetry run python manage.py export_schema betterangels_backend.schema) schema.graphql'",
         "cwd": "apps/betterangels-backend"
       }
     },

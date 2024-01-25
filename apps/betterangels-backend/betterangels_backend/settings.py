@@ -100,7 +100,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "organizations",
     "simple_history",
-    "strawberry.django",
+    "strawberry_django",
     # Our Apps
     "accounts",
     "dwelling",
