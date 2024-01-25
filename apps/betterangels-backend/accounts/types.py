@@ -15,11 +15,13 @@ class UserType:
     email: auto
 
 
+@dataclasses.dataclass
 @strawberry.input
 class MagicLinkInput:
     email: str
 
 
+@dataclasses.dataclass
 @strawberry.type
 class MagicLinkResponse:
     message: str
