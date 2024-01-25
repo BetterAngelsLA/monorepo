@@ -5,5 +5,5 @@ import strawberry
 
 @dataclasses.dataclass
 @strawberry.input
-class DeleteModelInput:
+class DeleteDjangoObjectInput:
     id: int

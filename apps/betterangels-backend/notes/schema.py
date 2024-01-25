@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from typing import List, cast
-from common.graphql.types import DeleteModelInput
+from common.graphql.types import DeleteDjangoObjectInput
 
 import strawberry
 import strawberry_django
@@ -71,7 +71,7 @@ class Mutation:
     )
 
     delete_note: NoteType = mutations.delete(
-        DeleteModelInput,
+        DeleteDjangoObjectInput,
         extensions=[
             IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.DELETE.value]),
