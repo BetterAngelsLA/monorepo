@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/apps/betterangels-backend/manage.py",
-      "args": ["runserver"],
+      "args": ["runserver", "0.0.0.0:8000"],
       "django": true,
       "justMyCode": false,
       "gevent": true
