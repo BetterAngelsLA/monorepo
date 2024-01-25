@@ -26,6 +26,8 @@ class NoteType:
     def get_queryset(
         cls, queryset: QuerySet[models.Note], info: Info, **kwargs: Dict[str, Any]
     ) -> QuerySet[models.Note]:
+        # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
+        # Instead we use get_objects_for_user to enforce permissions.
         user = get_current_user(info)
         return cast(
             QuerySet[models.Note],
