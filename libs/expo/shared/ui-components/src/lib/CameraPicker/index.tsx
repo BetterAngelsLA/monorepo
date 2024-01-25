@@ -5,7 +5,12 @@ import {
   CameraIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Camera, CameraType, FlashMode } from 'expo-camera';
+import {
+  CameraType,
+  CameraView,
+  FlashMode,
+  useCameraPermissions,
+} from 'expo-camera/next';
 import { useRef, useState } from 'react';
 import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import H5 from '../H5';
@@ -21,18 +26,21 @@ interface ICameraPickerProps {
 
 export default function CameraPicker(props: ICameraPickerProps) {
   const { setImages, images } = props;
-  const [permission, requestPermission] = Camera.useCameraPermissions();
-  const [type, setType] = useState(CameraType.back);
-  const [flash, setFlash] = useState(FlashMode.off);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [type, setType] = useState<CameraType>('back');
+  const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  const cameraRef = useRef<Camera | null>(null);
+  const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
     if (cameraRef.current) {
       const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
-      setImages([...images, photo.uri]);
+
+      if (photo) {
+        setImages([...images, photo.uri]);
+      }
       setIsCameraOpen(false);
     }
   };
@@ -56,15 +64,11 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const toggleFlashLight = () => {
-    setFlash((current) =>
-      current === FlashMode.off ? FlashMode.on : FlashMode.off
-    );
+    setFlash((current) => (current === 'off' ? 'on' : 'off'));
   };
 
   const toggleCameraType = () => {
-    setType((current) =>
-      current === CameraType.back ? CameraType.front : CameraType.back
-    );
+    setType((current) => (current === 'back' ? 'front' : 'back'));
   };
 
   if (isCameraOpen) {
@@ -98,12 +102,12 @@ export default function CameraPicker(props: ICameraPickerProps) {
           )}
         </View>
         <View style={{ flex: 5 }}>
-          <Camera
+          <CameraView
             style={styles.camera}
             type={type}
             flashMode={flash}
             ref={cameraRef}
-          ></Camera>
+          />
         </View>
         <View
           style={{
