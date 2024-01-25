@@ -1,16 +1,16 @@
 from dataclasses import asdict
 from typing import List, cast
-from common.graphql.types import DeleteDjangoObjectInput
 
 import strawberry
 import strawberry_django
+from common.graphql.types import DeleteDjangoObjectInput
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 from strawberry_django.mutations import resolvers
+from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -44,7 +44,7 @@ class Mutation:
     )
     def create_note(self, info: Info, input: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
-
+    
         note = resolvers.create(
             info,
             Note,
