@@ -17,8 +17,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
       allowsMultipleSelection: true,
-      aspect: [4, 3],
-      quality: 1,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
