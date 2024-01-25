@@ -15,6 +15,7 @@ class Note(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
 
+    # https://github.com/typeddjango/django-stubs/issues/1354
     noteuserobjectpermission_set: "QuerySet[NoteUserObjectPermission]"
     notegroupobjectpermission_set: "QuerySet[NoteGroupObjectPermission]"
 
