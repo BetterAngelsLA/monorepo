@@ -1,16 +1,16 @@
 import dataclasses
-from notes.permissions import NotePermissions
+from typing import Any, Dict, cast
 
 import strawberry_django
 from accounts.types import UserType
-from strawberry import auto
-
-from . import models
-from typing import Any, Dict, cast
 from django.db.models import QuerySet
 from guardian.shortcuts import get_objects_for_user
-from strawberry_django.auth.utils import get_current_user
+from notes.permissions import NotePermissions
+from strawberry import auto
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+
+from . import models
 
 
 @dataclasses.dataclass

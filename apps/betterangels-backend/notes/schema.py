@@ -44,7 +44,7 @@ class Mutation:
     )
     def create_note(self, info: Info, input: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
-    
+
         note = resolvers.create(
             info,
             Note,
