@@ -2,6 +2,7 @@ from typing import Generic, List, TypeVar
 
 import strawberry
 
+
 T = TypeVar("T")
 
 
@@ -15,3 +16,8 @@ class PageInfo:
 class PaginatedResponse(Generic[T]):
     items: List[T]
     page_info: PageInfo
+
+
+@strawberry.input
+class DeleteModelInput:
+    id: int

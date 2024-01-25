@@ -6,7 +6,7 @@ from accounts.types import UserType
 from strawberry import auto
 
 from . import models
-from typing import Any, Dict, cast
+from typing import Any, Dict, Optional, cast
 from django.db.models import QuerySet
 from guardian.shortcuts import get_objects_for_user
 from strawberry_django.auth.utils import get_current_user
@@ -33,12 +33,14 @@ class NoteType:
         )
 
 
+@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
     body: auto
 
 
+@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto

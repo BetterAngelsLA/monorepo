@@ -1,14 +1,16 @@
-from typing import List, Optional, cast
+from dataclasses import asdict
+from typing import List, cast
+from common.graphql.types import DeleteModelInput
 
 import strawberry
 import strawberry_django
-from django.db.models import QuerySet
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
+from strawberry_django.mutations import resolvers
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -26,7 +28,10 @@ class Query:
     notes: List[NoteType] = strawberry_django.field(
         extensions=[
             IsAuthenticated(),
-        ]
+            # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
+            # Instead we enforce permissions within get_queryset on NoteType.
+        ],
+        pagination=True,
     )
 
 
@@ -37,9 +42,17 @@ class Mutation:
             IsAuthenticated(),
         ]
     )
-    def create_note(self, info: Info, input: CreateNoteInput) -> Optional[NoteType]:
+    def create_note(self, info: Info, input: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
-        note = Note.objects.create(created_by=user, title=input.title, body=input.body)
+
+        note = resolvers.create(
+            info,
+            Note,
+            {
+                **asdict(input),
+                "created_by": user,
+            },
+        )
         # Assign object-level permissions to the user who created the note
         for perm in [
             NotePermissions.VIEW.value,
@@ -57,17 +70,10 @@ class Mutation:
         ],
     )
 
-    @strawberry.mutation(extensions=[IsAuthenticated()])
-    def delete_note(self, info: Info, id: strawberry.ID) -> bool:
-        user = get_current_user(info)
-
-        # Get the queryset of notes the user has permission to delete
-        notes_with_delete_permission = cast(
-            QuerySet[Note],
-            get_objects_for_user(user, NotePermissions.DELETE.value, klass=Note),
-        )
-
-        # Delete the note with the specified ID, if it exists in the queryset
-        deleted_count, _ = notes_with_delete_permission.filter(id=id).delete()
-
-        return deleted_count > 0
+    delete_note: NoteType = mutations.delete(
+        DeleteModelInput,
+        extensions=[
+            IsAuthenticated(),
+            HasRetvalPerm(perms=[NotePermissions.DELETE.value]),
+        ],
+    )

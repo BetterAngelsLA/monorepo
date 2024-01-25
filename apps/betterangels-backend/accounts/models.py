@@ -1,13 +1,12 @@
+from accounts.managers import UserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from organizations.models import OrganizationInvitation
 from simple_history.models import HistoricalRecords
 
-from .managers import UserManager
 
-
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
