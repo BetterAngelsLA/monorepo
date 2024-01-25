@@ -93,7 +93,7 @@ gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
 strawberry-graphql = {version = "^0.219.0", extras = ["cli"]}
-strawberry-graphql-django = "^0.25.0"
+strawberry-graphql-django = "^0.29.0"
 whitenoise = "^6.5.0"
 
 [package.source]
@@ -2914,13 +2914,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.25.0"
+version = "0.29.0"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.25.0-py3-none-any.whl", hash = "sha256:ce122a9cda39df65978e592668753cf26cbfec8710a28089a55c4de7cac0ea9e"},
-    {file = "strawberry_graphql_django-0.25.0.tar.gz", hash = "sha256:9f7be3e44dc9cf374046faf8bfbfaed8c1f594afaf6b1ce6a327cc793c58695a"},
+    {file = "strawberry_graphql_django-0.29.0-py3-none-any.whl", hash = "sha256:e0380ad5fa338e6dcca12d6002e26c03bcd0500e6da3cea452cbc216a82342d9"},
+    {file = "strawberry_graphql_django-0.29.0.tar.gz", hash = "sha256:b3c675970bcffe24d4daa7b359a5f79d67a29738926b94bd5764b8e304839c51"},
 ]
 
 [package.dependencies]
