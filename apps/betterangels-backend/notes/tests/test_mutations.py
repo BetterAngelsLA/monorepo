@@ -1,4 +1,5 @@
 from typing import Any, Dict
+
 from accounts.models import User
 from django.test import TestCase, ignore_warnings
 from notes.models import Note
@@ -70,7 +71,6 @@ class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
 
         variables = {"title": "New Note", "body": "This is a new note."}
         response = self._create_note(variables)
-        data = response["data"]["createNote"]
 
         mutation = """
             mutation DeleteNote($id: ID!) {
