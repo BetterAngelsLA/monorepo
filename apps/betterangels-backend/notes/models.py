@@ -1,8 +1,8 @@
-from django.db import models
 from typing import TYPE_CHECKING
-from accounts.models import User
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
+from accounts.models import User
+from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 if TYPE_CHECKING:
     from django.db.models.query import QuerySet
