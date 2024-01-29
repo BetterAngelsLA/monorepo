@@ -1,11 +1,19 @@
+from typing import TYPE_CHECKING
+
 from accounts.managers import UserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from notes.models import NoteGroupObjectPermission, NoteUserObjectPermission
 from organizations.models import OrganizationInvitation
 from simple_history.models import HistoricalRecords
 
+if TYPE_CHECKING:
+    from django.db.models.query import QuerySet
 
+
+# TODO: Figure out why User/Group Perms are failing type checks
+# https://github.com/typeddjango/django-stubs/issues/1354
 class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
@@ -37,6 +45,9 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
             "Unselect this instead of deleting accounts."
         ),
     )
+
+    noteuserobjectpermissions_set: "QuerySet[NoteUserObjectPermission]"
+    notegroupobjectpermissions_set: "QuerySet[NoteGroupObjectPermission]"
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
