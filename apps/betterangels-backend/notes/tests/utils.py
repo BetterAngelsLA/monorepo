@@ -18,7 +18,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
     def _create_note(self, variables: dict) -> dict:
         mutation = """
             mutation CreateNote($title: String!, $body: String!) {
-                createNote(input: { title: $title, body: $body }) {
+                createNote(data: { title: $title, body: $body }) {
                     id
                     title
                     body
