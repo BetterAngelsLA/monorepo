@@ -8,6 +8,7 @@
   "editor.formatOnSave": true,
   "eslint.format.enable": true,
   "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
   "python.defaultInterpreterPath": ".venv/bin/python",
   "djlint.useVenv": true,
   "[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
