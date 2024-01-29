@@ -54,7 +54,19 @@
           "subdomains": ["10.0.2.2", "localhost"]
         }
       ],
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to photos to upload photos from your library."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+        }
+      ]
     ],
     "extra": {
       "router": {

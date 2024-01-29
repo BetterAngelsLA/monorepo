@@ -1,3 +1,4 @@
+import { Attachments } from '@monorepo/expo/betterangels';
 import { OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
@@ -30,7 +31,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 interface IProvidedServicesProps {
   expanded: string | undefined;
@@ -108,10 +109,14 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     []
   );
 
+  const providedServicesImages = watch('providedServicesImages', []);
   const providedServices = watch('providedServices') || [];
   const isProvidedServices = expanded === 'Provided Services';
   const isLessThanOneProvidedService = providedServices.length < 1;
+  const isLessThanOneProvidedServiceImages = providedServicesImages.length < 1;
   const isGreaterThanZeroProvidedService = providedServices.length > 0;
+  const isGreaterThanZeroProvidedServiceImages =
+    providedServicesImages?.length > 0;
 
   const toggleServices = (service: string) => {
     const newServices = providedServices.includes(service)
@@ -132,9 +137,12 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   return (
     <FieldCard
       actionName={
-        isProvidedServices && isLessThanOneProvidedService ? (
+        isProvidedServices &&
+        isLessThanOneProvidedService &&
+        isLessThanOneProvidedServiceImages ? (
           ''
-        ) : isGreaterThanZeroProvidedService ? (
+        ) : isGreaterThanZeroProvidedService ||
+          isGreaterThanZeroProvidedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {providedServices.map((service: string) => {
               const IconComponent = ICONS[service] || PlusIcon;
@@ -142,11 +150,14 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                 <IconComponent
                   mr="xs"
                   key={service}
-                  size="sm"
+                  size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
               );
             })}
+            {isGreaterThanZeroProvidedServiceImages && (
+              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
+            )}
           </View>
         ) : (
           <H5 size="sm">Add Services</H5>
@@ -177,7 +188,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                   accessibilityHint={item.title}
                   label={
                     <View style={styles.labelContainer}>
-                      <item.Icon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+                      <item.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
                       <BodyText ml="xs">{item.title}</BodyText>
                     </View>
                   }
@@ -194,15 +205,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
             setValue={setValue}
             services={providedServices}
           />
-          <Pressable
-            style={styles.attach}
-            accessible
-            accessibilityRole="button"
-            accessibilityHint="attach a file"
-          >
-            <BodyText>Attachments</BodyText>
-            <PaperclipIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-          </Pressable>
+          <Attachments
+            images={providedServicesImages}
+            setImages={(array) => setValue('providedServicesImages', array)}
+          />
         </View>
       )}
     </FieldCard>
@@ -213,12 +219,5 @@ const styles = StyleSheet.create({
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  attach: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: 56,
-    alignItems: 'center',
-    marginTop: Spacings.xs,
   },
 });

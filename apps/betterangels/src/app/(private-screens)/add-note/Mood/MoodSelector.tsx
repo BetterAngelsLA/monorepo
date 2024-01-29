@@ -1,5 +1,5 @@
 import { IIconProps } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
 import React, { ComponentType } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -26,7 +26,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
   };
 
   return (
-    <View style={{ paddingBottom: Spacings.md }}>
+    <View>
       {moodsData.map((mood, idx) => (
         <Checkbox
           isChecked={selectedMoods.includes(mood.title)}
@@ -37,7 +37,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
           accessibilityHint={mood.title}
           label={
             <View style={styles.labelContainer}>
-              <mood.Icon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+              <mood.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
               <BodyText ml="xs">{mood.title}</BodyText>
             </View>
           }

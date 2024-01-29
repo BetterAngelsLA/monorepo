@@ -42,6 +42,8 @@
     "graphql": "*",
     "date-fns": "*",
     "@react-native-community/datetimepicker": "*",
+    "expo-image-picker": "*",
+    "expo-camera": "*",
     "@graphql-codegen/cli": "*"
   },
   "scripts": {
