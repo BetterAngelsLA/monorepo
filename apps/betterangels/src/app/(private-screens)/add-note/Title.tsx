@@ -17,6 +17,8 @@ interface ITitleProps {
   firstName: string;
 }
 
+const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
+
 export default function Title(props: ITitleProps) {
   const { firstName, expanded, setExpanded } = props;
   const {
@@ -79,7 +81,12 @@ export default function Title(props: ITitleProps) {
           control={control}
           name="title"
         />
-        <DatePicker mt="xs" control={control} name="noteDateTime" />
+        <DatePicker
+          maxDate={endOfDay}
+          mt="xs"
+          control={control}
+          name="noteDateTime"
+        />
       </View>
     </View>
   );

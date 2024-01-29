@@ -40,6 +40,8 @@ interface IDatePickerProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -58,6 +60,8 @@ export function DatePicker(props: IDatePickerProps) {
     mx,
     ml,
     mr,
+    minDate,
+    maxDate,
     ...rest
   } = props;
 
@@ -173,7 +177,8 @@ export function DatePicker(props: IDatePickerProps) {
                 }}
                 display="spinner"
                 mode="datetime"
-                minimumDate={new Date()}
+                minimumDate={minDate}
+                maximumDate={maxDate}
                 value={pickerDate}
               />
               <Button
