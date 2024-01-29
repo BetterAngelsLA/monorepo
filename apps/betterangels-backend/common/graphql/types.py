@@ -6,4 +6,4 @@ import strawberry
 @dataclasses.dataclass
 @strawberry.input
 class DeleteDjangoObjectInput:
-    id: int
+    id: strawberry.ID

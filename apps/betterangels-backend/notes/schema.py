@@ -53,7 +53,8 @@ class Mutation:
                 "created_by": user,
             },
         )
-        # Assign object-level permissions to the user who created the note
+        # Assign object-level permissions to the user who created the note.
+        # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
             NotePermissions.VIEW.value,
             NotePermissions.CHANGE.value,
