@@ -39,9 +39,6 @@ django-simple-history = "^3.4.0"
 strawberry-graphql-django = "^0.30.0"
 django-guardian = "^2.4.0"
 
-[tool.poetry.group.dev.dependencies]
-unittest-parametrize = "^1.4.0"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
