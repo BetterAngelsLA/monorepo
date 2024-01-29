@@ -93,7 +93,7 @@ django-simple-history = "^3.4.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
-strawberry-graphql-django = "^0.29.0"
+strawberry-graphql-django = "^0.30.0"
 whitenoise = "^6.5.0"
 
 [package.source]
@@ -176,17 +176,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.28"
+version = "1.34.29"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.28-py3-none-any.whl", hash = "sha256:fb56622ce195c06ae0d15ae9472d44529362a869ad52862a5a28b891530969f9"},
-    {file = "boto3-1.34.28.tar.gz", hash = "sha256:9e0dcca7bb0567f7b4b84d1d26c19b217abfe149d19106af7f120f09142688cf"},
+    {file = "boto3-1.34.29-py3-none-any.whl", hash = "sha256:34b2b404bd2bec869ec2fc6aeeeeb884c72a9b895e2c7716b95381ab8deb9069"},
+    {file = "boto3-1.34.29.tar.gz", hash = "sha256:50776db195a73533f4f2c9d000c69f9d0e9fb9810f9f81584adc283e9516ad0d"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.28,<1.35.0"
+botocore = ">=1.34.29,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -195,13 +195,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.28"
-description = "Type annotations for boto3 1.34.28 generated with mypy-boto3-builder 7.23.1"
+version = "1.34.29"
+description = "Type annotations for boto3 1.34.29 generated with mypy-boto3-builder 7.23.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.28.tar.gz", hash = "sha256:6c3d9efb13e2484e7d2509fe9151fb5e82c31595b58924440ba47f9ae07ad686"},
-    {file = "boto3_stubs-1.34.28-py3-none-any.whl", hash = "sha256:d177934a906069473ba8eff5a183678a89aa9102f6e272464e343639154d561d"},
+    {file = "boto3-stubs-1.34.29.tar.gz", hash = "sha256:e3c68cd0f01c17d5090aafcf1c7bb2d7b94aee4e3a9cd45af8bf9dd882ef644c"},
+    {file = "boto3_stubs-1.34.29-py3-none-any.whl", hash = "sha256:4a4bc5d239c0cb04f4065410abbcf87a7caa973c46bddc1e8c947c9a72860a2b"},
 ]
 
 [package.dependencies]
@@ -258,7 +258,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.28)", "botocore (==1.34.28)"]
+boto3 = ["boto3 (==1.34.29)", "botocore (==1.34.29)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -600,13 +600,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.28"
+version = "1.34.29"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.28-py3-none-any.whl", hash = "sha256:03be8209257ab65f3c8be7377cf8d38bff6a6afbe3d36c72924e48959bb694dc"},
-    {file = "botocore-1.34.28.tar.gz", hash = "sha256:45c99ccc6389ab1a87e996a7cc8797c7e41d5ecd9a5757d567ba3a57cb7655e7"},
+    {file = "botocore-1.34.29-py3-none-any.whl", hash = "sha256:44d918b91a1c1085d99266f8bf6ecc087c8a73a8efbb8e829f0c2dcd1ddf9963"},
+    {file = "botocore-1.34.29.tar.gz", hash = "sha256:34223fdb8ebd47d1fce5724bb1bcb164e81853ea9ca532b50639c749fc347458"},
 ]
 
 [package.dependencies]
@@ -619,13 +619,13 @@ crt = ["awscrt (==0.19.19)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.28"
+version = "1.34.29"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "botocore_stubs-1.34.28-py3-none-any.whl", hash = "sha256:e367bba957b020ee939a088a6886f843330dc58946c424bfd3e4d9fcde794c6f"},
-    {file = "botocore_stubs-1.34.28.tar.gz", hash = "sha256:6710db05b72352901029691873cd26644944107f5eccaa713666dc072df5bdc7"},
+    {file = "botocore_stubs-1.34.29-py3-none-any.whl", hash = "sha256:9a1ff594b59a426df02bc2c9916e17c7cb600c78c77500a5635d67851492aeb5"},
+    {file = "botocore_stubs-1.34.29.tar.gz", hash = "sha256:3cc8db71b7d8aec8c6d13bc84cecec18d64cb142311e1bd060d673cb556d913b"},
 ]
 
 [package.dependencies]
@@ -2412,20 +2412,20 @@ tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
 name = "pytest"
-version = "7.4.4"
+version = "8.0.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-7.4.4-py3-none-any.whl", hash = "sha256:b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8"},
-    {file = "pytest-7.4.4.tar.gz", hash = "sha256:2cf0005922c6ace4a3e2ec8b4080eb0d9753fdc93107415332f50ce9e7994280"},
+    {file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6"},
+    {file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c"},
 ]
 
 [package.dependencies]
 colorama = {version = "*", markers = "sys_platform == \"win32\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=0.12,<2.0"
+pluggy = ">=1.3.0,<2.0"
 
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
@@ -2788,13 +2788,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.219.0"
+version = "0.219.1"
 description = "A library for creating GraphQL APIs"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql-0.219.0-py3-none-any.whl", hash = "sha256:0e994d711a650ca3965d12074dd68dd7ca36e0af7b442839c23a840e9b1c89ae"},
-    {file = "strawberry_graphql-0.219.0.tar.gz", hash = "sha256:21a0009b5c80f010b46d24c793e07483f1208b31ffee24708915a7ae8adf6ea4"},
+    {file = "strawberry_graphql-0.219.1-py3-none-any.whl", hash = "sha256:b152fa7a71f56dabe60454145a33f0aa8ea19c837d00ab12d2833cf86ff28704"},
+    {file = "strawberry_graphql-0.219.1.tar.gz", hash = "sha256:53557e297ef23f8eb527afe33990fe51396065c6fb5ef0f5bdfe276a3c8e578f"},
 ]
 
 [package.dependencies]
@@ -2823,13 +2823,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.29.0"
+version = "0.30.0"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.29.0-py3-none-any.whl", hash = "sha256:e0380ad5fa338e6dcca12d6002e26c03bcd0500e6da3cea452cbc216a82342d9"},
-    {file = "strawberry_graphql_django-0.29.0.tar.gz", hash = "sha256:b3c675970bcffe24d4daa7b359a5f79d67a29738926b94bd5764b8e304839c51"},
+    {file = "strawberry_graphql_django-0.30.0-py3-none-any.whl", hash = "sha256:3fa1a4987ab4fdd2ed90f8d44fcb170e259f0e01bd4b58683e4fe53146e2f67e"},
+    {file = "strawberry_graphql_django-0.30.0.tar.gz", hash = "sha256:3f8e4732a49263c8ec79701ccde4807682d206dc45b8f715d946ab5babf2cb1f"},
 ]
 
 [package.dependencies]
@@ -2909,13 +2909,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "types-awscrt"
-version = "0.20.2"
+version = "0.20.3"
 description = "Type annotations and code completion for awscrt"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "types_awscrt-0.20.2-py3-none-any.whl", hash = "sha256:7b5ccaaecc030ffe9e28f59e876a3013f401181ff04e0458e961d0bb9c7cdfbd"},
-    {file = "types_awscrt-0.20.2.tar.gz", hash = "sha256:5e29986a4ad3968ac3d82caa85d668d3c66224c9ee78be3fe64bce30dae7b798"},
+    {file = "types_awscrt-0.20.3-py3-none-any.whl", hash = "sha256:f61a120d3e98ee1387bc5ca4b93437f258cc5c2af1f55f8634ec4cee5729f178"},
+    {file = "types_awscrt-0.20.3.tar.gz", hash = "sha256:06a859189a329ca8e66d56ceeef2391488e39b878fbd2141f115eab4d416fe22"},
 ]
 
 [[package]]
