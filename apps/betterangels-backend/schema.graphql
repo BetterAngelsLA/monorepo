@@ -44,10 +44,10 @@ type MagicLinkResponse {
 
 type Mutation {
   logout: Boolean!
-  generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
+  generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  createNote(input: CreateNoteInput!): NoteType! @isAuthenticated
+  createNote(data: CreateNoteInput!): NoteType! @isAuthenticated
 }
 
 type NoteType {

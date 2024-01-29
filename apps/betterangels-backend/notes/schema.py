@@ -42,14 +42,14 @@ class Mutation:
             IsAuthenticated(),
         ]
     )
-    def create_note(self, info: Info, input: CreateNoteInput) -> NoteType:
+    def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
 
         note = resolvers.create(
             info,
             Note,
             {
-                **asdict(input),
+                **asdict(data),
                 "created_by": user,
             },
         )
