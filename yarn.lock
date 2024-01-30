@@ -3938,6 +3938,7 @@ __metadata:
     react-hook-form: ^7.47.0
     react-native: 0.73.2
     react-native-gesture-handler: ~2.14.0
+    react-native-maps: 1.8.0
     react-native-safe-area-context: 4.8.2
     react-native-screens: ~3.29.0
     react-native-svg: 14.1.0
@@ -8180,6 +8181,13 @@ __metadata:
   version: 3.2.1
   resolution: "@types/find-cache-dir@npm:3.2.1"
   checksum: bf5c4e96da40247cd9e6327f54dfccda961a0fb2d70e3c71bd05def94de4c2e6fb310fe8ecb0f04ecf5dbc52214e184b55a2337b0f87250d4ae1e2e7d58321e4
+  languageName: node
+  linkType: hard
+
+"@types/geojson@npm:^7946.0.10":
+  version: 7946.0.13
+  resolution: "@types/geojson@npm:7946.0.13"
+  checksum: b3b68457c89bc3f0445dc9eb54d07e6f89658672867c54989bc7f71f87d54e562195b291d43e1b84476493351271d7ccb9f5c6ab2012b29fbafbb0e8e43c4bca
   languageName: node
   linkType: hard
 
@@ -21846,6 +21854,22 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: a037e8c5a88a9fc79c283f3064d7653ec8615cb05fc62622eaccb5f3db489ede9c3a0685b7aad210c7efabfd8f5aa34e4f19204318dfda64c8829266d78e0cae
+  languageName: node
+  linkType: hard
+
+"react-native-maps@npm:1.8.0":
+  version: 1.8.0
+  resolution: "react-native-maps@npm:1.8.0"
+  dependencies:
+    "@types/geojson": ^7946.0.10
+  peerDependencies:
+    react: ">= 17.0.1"
+    react-native: ">= 0.64.3"
+    react-native-web: ">= 0.11"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 50bc0d796bccb1670e5a1c1bb3bd1d1fb30fc814e431e6dfc3ddadc72062ef7eeb349f6b2bfe4078a834da8ca52d64f3cef5aa884b5eb90e78fa13cd37ab6524
   languageName: node
   linkType: hard
 
