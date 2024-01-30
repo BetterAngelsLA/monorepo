@@ -45,6 +45,8 @@ interface ITextareaProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  textAreaChanged?: boolean;
+  setTextAreaChanged?: (e: boolean) => void;
 }
 
 export function Textarea(props: ITextareaProps) {
@@ -64,8 +66,11 @@ export function Textarea(props: ITextareaProps) {
     mx,
     ml,
     mr,
+    textAreaChanged,
+    setTextAreaChanged,
     ...rest
   } = props;
+
   return (
     <Controller
       control={control}
@@ -116,7 +121,14 @@ export function Textarea(props: ITextareaProps) {
               multiline
               value={value}
               onBlur={onBlur}
-              onChangeText={onChange}
+              onChangeText={(e) => {
+                if (!textAreaChanged) {
+                  if (setTextAreaChanged) {
+                    setTextAreaChanged(true);
+                  }
+                }
+                onChange(e);
+              }}
               editable={!disabled}
               {...rest}
             />

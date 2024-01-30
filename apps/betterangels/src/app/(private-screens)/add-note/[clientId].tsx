@@ -26,11 +26,12 @@ export default function AddNote() {
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string>();
+  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
-      hmisNote: 'G: \n\nI: \n\nR: \n\nP: \n',
+      hmisNote: 'G: \nI: \nR: \nP: ',
       noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
     },
   });
@@ -64,12 +65,17 @@ export default function AddNote() {
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title firstName="Test" {...props} />
-          <Purpose {...props} />
+          <Purpose isPublicNoteEdited={isPublicNoteEdited} {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />
           <ServicesRequested {...props} />
-          <NextStep {...props} />
-          <PublicNote firstName="Test" {...props} />
+          <NextStep isPublicNoteEdited={isPublicNoteEdited} {...props} />
+          <PublicNote
+            isPublicNoteEdited={isPublicNoteEdited}
+            setIsPublicNoteEdited={setIsPublicNoteEdited}
+            firstName="Test"
+            {...props}
+          />
           <PrivateNote {...props} />
         </MainScrollContainer>
         <BottomActions />

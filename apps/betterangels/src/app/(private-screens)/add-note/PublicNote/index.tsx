@@ -11,15 +11,22 @@ interface IPublicNoteProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
   firstName: string;
+  isPublicNoteEdited: boolean;
+  setIsPublicNoteEdited: (e: boolean) => void;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const { expanded, setExpanded, firstName } = props;
+  const {
+    expanded,
+    setExpanded,
+    firstName,
+    setIsPublicNoteEdited,
+    isPublicNoteEdited,
+  } = props;
   const { control, watch } = useFormContext();
 
   const hmisNote = watch('hmisNote');
-  const isEmptyOrTemplate =
-    !hmisNote || hmisNote === 'G: \n\nI: \n\nR: \n\nP: \n';
+  const isEmptyOrTemplate = !hmisNote || hmisNote === 'G: \nI: \nR: \nP: ';
   const isPublicNote = expanded === 'Public Note';
   return (
     <FieldCard
@@ -36,6 +43,8 @@ export default function PublicNote(props: IPublicNoteProps) {
     >
       {isPublicNote ? (
         <Textarea
+          textAreaChanged={isPublicNoteEdited}
+          setTextAreaChanged={setIsPublicNoteEdited}
           mb="md"
           name="hmisNote"
           control={control}
