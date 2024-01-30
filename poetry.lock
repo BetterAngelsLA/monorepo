@@ -83,6 +83,7 @@ django = "^4.2.4"
 django-cors-headers = "^4.2.0"
 django-environ = "^0.10.0"
 django-extensions = "^3.2.3"
+django-guardian = "^2.4.0"
 django-jazzmin = "^2.6.0"
 django-organizations = "^2.2.0"
 django-post-office = "^3.7.1"
@@ -92,7 +93,7 @@ django-simple-history = "^3.4.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
-strawberry-graphql-django = "^0.29.0"
+strawberry-graphql-django = "^0.30.0"
 whitenoise = "^6.5.0"
 
 [package.source]
@@ -175,17 +176,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.28"
+version = "1.34.30"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.28-py3-none-any.whl", hash = "sha256:fb56622ce195c06ae0d15ae9472d44529362a869ad52862a5a28b891530969f9"},
-    {file = "boto3-1.34.28.tar.gz", hash = "sha256:9e0dcca7bb0567f7b4b84d1d26c19b217abfe149d19106af7f120f09142688cf"},
+    {file = "boto3-1.34.30-py3-none-any.whl", hash = "sha256:cd6173380768faaecf6236dbdcec15d8d032cbb162ce354fdb111056a74fc298"},
+    {file = "boto3-1.34.30.tar.gz", hash = "sha256:9e1476ce2b26437881a0381bf2daa54de619ac74ab4bd74278668acda6004a64"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.28,<1.35.0"
+botocore = ">=1.34.30,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -194,13 +195,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.28"
-description = "Type annotations for boto3 1.34.28 generated with mypy-boto3-builder 7.23.1"
+version = "1.34.30"
+description = "Type annotations for boto3 1.34.30 generated with mypy-boto3-builder 7.23.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.28.tar.gz", hash = "sha256:6c3d9efb13e2484e7d2509fe9151fb5e82c31595b58924440ba47f9ae07ad686"},
-    {file = "boto3_stubs-1.34.28-py3-none-any.whl", hash = "sha256:d177934a906069473ba8eff5a183678a89aa9102f6e272464e343639154d561d"},
+    {file = "boto3-stubs-1.34.30.tar.gz", hash = "sha256:338e588a5e658484b87b084a3703cb5b5b35eb10892e66be1e15e9e730da850d"},
+    {file = "boto3_stubs-1.34.30-py3-none-any.whl", hash = "sha256:229afc0cdbe426894fcc526bba76b8d6ebaa3e7f9be01b3ba23fe1a466fb07b7"},
 ]
 
 [package.dependencies]
@@ -257,7 +258,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.28)", "botocore (==1.34.28)"]
+boto3 = ["boto3 (==1.34.30)", "botocore (==1.34.30)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -599,13 +600,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.28"
+version = "1.34.30"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.28-py3-none-any.whl", hash = "sha256:03be8209257ab65f3c8be7377cf8d38bff6a6afbe3d36c72924e48959bb694dc"},
-    {file = "botocore-1.34.28.tar.gz", hash = "sha256:45c99ccc6389ab1a87e996a7cc8797c7e41d5ecd9a5757d567ba3a57cb7655e7"},
+    {file = "botocore-1.34.30-py3-none-any.whl", hash = "sha256:caf82d91c2ff61235284a07ffdfba006873e0752e00896052f901a37720cefa4"},
+    {file = "botocore-1.34.30.tar.gz", hash = "sha256:e071a9766e7fc2221ca42ec01dfc54368a7518610787342ea622f6edc57f7891"},
 ]
 
 [package.dependencies]
@@ -618,13 +619,13 @@ crt = ["awscrt (==0.19.19)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.28"
+version = "1.34.30"
 description = "Type annotations and code completion for botocore"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "botocore_stubs-1.34.28-py3-none-any.whl", hash = "sha256:e367bba957b020ee939a088a6886f843330dc58946c424bfd3e4d9fcde794c6f"},
-    {file = "botocore_stubs-1.34.28.tar.gz", hash = "sha256:6710db05b72352901029691873cd26644944107f5eccaa713666dc072df5bdc7"},
+    {file = "botocore_stubs-1.34.30-py3-none-any.whl", hash = "sha256:309be28961281c0aec9ee94dd04018e5071868da599de51c0060f76cbf1e38ab"},
+    {file = "botocore_stubs-1.34.30.tar.gz", hash = "sha256:46ba0d8d8fb40927eba376b5c63bc95e82e475dc1360c47a49a94f23124238e9"},
 ]
 
 [package.dependencies]
@@ -1161,6 +1162,20 @@ files = [
 
 [package.dependencies]
 Django = ">=3.2"
+
+[[package]]
+name = "django-guardian"
+version = "2.4.0"
+description = "Implementation of per object permissions for Django."
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "django-guardian-2.4.0.tar.gz", hash = "sha256:c58a68ae76922d33e6bdc0e69af1892097838de56e93e78a8361090bcd9f89a0"},
+    {file = "django_guardian-2.4.0-py3-none-any.whl", hash = "sha256:440ca61358427e575323648b25f8384739e54c38b3d655c81d75e0cd0d61b697"},
+]
+
+[package.dependencies]
+Django = ">=2.2"
 
 [[package]]
 name = "django-jazzmin"
@@ -2089,13 +2104,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-ec2"
-version = "1.34.27"
-description = "Type annotations for boto3.EC2 1.34.27 service generated with mypy-boto3-builder 7.23.1"
+version = "1.34.30"
+description = "Type annotations for boto3.EC2 1.34.30 service generated with mypy-boto3-builder 7.23.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-ec2-1.34.27.tar.gz", hash = "sha256:5daf18ec79b82b5d4117b292ac80b8498d8225f69e362096b514289cd4e7f63f"},
-    {file = "mypy_boto3_ec2-1.34.27-py3-none-any.whl", hash = "sha256:5ce719e3e1c8148e7ecdf929ad883cd3ae50ac79fefa546319652be1a5f4d20f"},
+    {file = "mypy-boto3-ec2-1.34.30.tar.gz", hash = "sha256:eeb931fe27db9a235d7d6a2dd0fb742f2eedb3c99a14037cb17d18409c10264a"},
+    {file = "mypy_boto3_ec2-1.34.30-py3-none-any.whl", hash = "sha256:d990349a1fa39e81b9976e429992871062a51639653a2cd224b5b2c8a8c50907"},
 ]
 
 [package.dependencies]
@@ -2117,13 +2132,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-rds"
-version = "1.34.27"
-description = "Type annotations for boto3.RDS 1.34.27 service generated with mypy-boto3-builder 7.23.1"
+version = "1.34.30"
+description = "Type annotations for boto3.RDS 1.34.30 service generated with mypy-boto3-builder 7.23.1"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-rds-1.34.27.tar.gz", hash = "sha256:7ef8bacb33f4342d456c967999cc20679710fa5cb561591957e7da4ada05c4cf"},
-    {file = "mypy_boto3_rds-1.34.27-py3-none-any.whl", hash = "sha256:d9180031244cf237531c80a758389c73003e16cea434a446461ce88125b3abe6"},
+    {file = "mypy-boto3-rds-1.34.30.tar.gz", hash = "sha256:48b0a6ec04535fa84e961a6e305f4f4387d0b8b2efd757630b301ca279772d6b"},
+    {file = "mypy_boto3_rds-1.34.30-py3-none-any.whl", hash = "sha256:dffc0bf8b2ef7a929b0940f5e77d40d85da16fa80d3d81e581cf66373bb8c83f"},
 ]
 
 [package.dependencies]
@@ -2397,20 +2412,20 @@ tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
 name = "pytest"
-version = "7.4.4"
+version = "8.0.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-7.4.4-py3-none-any.whl", hash = "sha256:b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8"},
-    {file = "pytest-7.4.4.tar.gz", hash = "sha256:2cf0005922c6ace4a3e2ec8b4080eb0d9753fdc93107415332f50ce9e7994280"},
+    {file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6"},
+    {file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c"},
 ]
 
 [package.dependencies]
 colorama = {version = "*", markers = "sys_platform == \"win32\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=0.12,<2.0"
+pluggy = ">=1.3.0,<2.0"
 
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
@@ -2467,13 +2482,13 @@ postgresql = ["psycopg2"]
 
 [[package]]
 name = "pytz"
-version = "2023.3.post1"
+version = "2023.4"
 description = "World timezone definitions, modern and historical"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
-    {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
+    {file = "pytz-2023.4-py2.py3-none-any.whl", hash = "sha256:f90ef520d95e7c46951105338d918664ebfd6f1d995bd7d153127ce90efafa6a"},
+    {file = "pytz-2023.4.tar.gz", hash = "sha256:31d4583c4ed539cd037956140d695e42c033a19e984bfce9964a3f7d59bc2b40"},
 ]
 
 [[package]]
@@ -2773,13 +2788,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.219.0"
+version = "0.219.1"
 description = "A library for creating GraphQL APIs"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql-0.219.0-py3-none-any.whl", hash = "sha256:0e994d711a650ca3965d12074dd68dd7ca36e0af7b442839c23a840e9b1c89ae"},
-    {file = "strawberry_graphql-0.219.0.tar.gz", hash = "sha256:21a0009b5c80f010b46d24c793e07483f1208b31ffee24708915a7ae8adf6ea4"},
+    {file = "strawberry_graphql-0.219.1-py3-none-any.whl", hash = "sha256:b152fa7a71f56dabe60454145a33f0aa8ea19c837d00ab12d2833cf86ff28704"},
+    {file = "strawberry_graphql-0.219.1.tar.gz", hash = "sha256:53557e297ef23f8eb527afe33990fe51396065c6fb5ef0f5bdfe276a3c8e578f"},
 ]
 
 [package.dependencies]
@@ -2808,13 +2823,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.29.0"
+version = "0.30.0"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.29.0-py3-none-any.whl", hash = "sha256:e0380ad5fa338e6dcca12d6002e26c03bcd0500e6da3cea452cbc216a82342d9"},
-    {file = "strawberry_graphql_django-0.29.0.tar.gz", hash = "sha256:b3c675970bcffe24d4daa7b359a5f79d67a29738926b94bd5764b8e304839c51"},
+    {file = "strawberry_graphql_django-0.30.0-py3-none-any.whl", hash = "sha256:3fa1a4987ab4fdd2ed90f8d44fcb170e259f0e01bd4b58683e4fe53146e2f67e"},
+    {file = "strawberry_graphql_django-0.30.0.tar.gz", hash = "sha256:3f8e4732a49263c8ec79701ccde4807682d206dc45b8f715d946ab5babf2cb1f"},
 ]
 
 [package.dependencies]
@@ -2894,13 +2909,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "types-awscrt"
-version = "0.20.2"
+version = "0.20.3"
 description = "Type annotations and code completion for awscrt"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "types_awscrt-0.20.2-py3-none-any.whl", hash = "sha256:7b5ccaaecc030ffe9e28f59e876a3013f401181ff04e0458e961d0bb9c7cdfbd"},
-    {file = "types_awscrt-0.20.2.tar.gz", hash = "sha256:5e29986a4ad3968ac3d82caa85d668d3c66224c9ee78be3fe64bce30dae7b798"},
+    {file = "types_awscrt-0.20.3-py3-none-any.whl", hash = "sha256:f61a120d3e98ee1387bc5ca4b93437f258cc5c2af1f55f8634ec4cee5729f178"},
+    {file = "types_awscrt-0.20.3.tar.gz", hash = "sha256:06a859189a329ca8e66d56ceeef2391488e39b878fbd2141f115eab4d416fe22"},
 ]
 
 [[package]]
@@ -2970,6 +2985,17 @@ python-versions = ">=2"
 files = [
     {file = "tzdata-2023.4-py2.py3-none-any.whl", hash = "sha256:aa3ace4329eeacda5b7beb7ea08ece826c28d761cda36e747cfbf97996d39bf3"},
     {file = "tzdata-2023.4.tar.gz", hash = "sha256:dd54c94f294765522c77399649b4fefd95522479a664a0cec87f41bebc6148c9"},
+]
+
+[[package]]
+name = "unittest-parametrize"
+version = "1.4.0"
+description = "Parametrize tests within unittest TestCases."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "unittest_parametrize-1.4.0-py3-none-any.whl", hash = "sha256:8b9554fbcfd36bfef6c5c522b9146f13647eb4ec589c17af7f67f22793cecb82"},
+    {file = "unittest_parametrize-1.4.0.tar.gz", hash = "sha256:f9dcaed821ad19724964a49e7f595311b9a2c5253c61cdb1fb2c01b899af67a2"},
 ]
 
 [[package]]
@@ -3308,4 +3334,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "f571329b3091275371bc1b10ed7699fee67454e63b9ba1eb3274497202eaa8a9"
+content-hash = "f1f5dcea0e10baf9267b074dd50abd412e6d9a5e99824fc9e505ad3fae5d5a4f"
