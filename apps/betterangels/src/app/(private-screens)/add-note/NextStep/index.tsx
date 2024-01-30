@@ -113,7 +113,7 @@ export default function NextStep(props: INextStepProps) {
                 alignItems: 'center',
               }}
             >
-              <CalendarIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+              <CalendarIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
               <BodyText ml="xs">{nextStepDate}</BodyText>
             </View>
           )}
@@ -127,7 +127,7 @@ export default function NextStep(props: INextStepProps) {
                   marginTop: index === 0 && !nextStepDate ? 0 : Spacings.xs,
                 }}
               >
-                <SolidCircleIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+                <SolidCircleIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
                 <BodyText ml="xs">{action.value}</BodyText>
               </View>
             ))}
