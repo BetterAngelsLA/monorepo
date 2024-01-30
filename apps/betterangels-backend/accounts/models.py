@@ -1,13 +1,15 @@
+from accounts.managers import UserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import OrganizationInvitation
 from simple_history.models import HistoricalRecords
 
-from .managers import UserManager
 
-
-class User(AbstractBaseUser, PermissionsMixin):
+# TODO: Figure out why User/Group Perms are failing type checks
+# https://github.com/typeddjango/django-stubs/issues/1354
+class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
@@ -63,3 +65,29 @@ class ExtendedOrganizationInvitation(OrganizationInvitation):
         parent_link=True,
         related_name="extended_invitation",
     )
+
+
+class BigGroupObjectPermission(GroupObjectPermissionAbstract):
+    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
+    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+
+    class Meta(GroupObjectPermissionAbstract.Meta):
+        abstract = False
+        indexes = [
+            *GroupObjectPermissionAbstract.Meta.indexes,
+            # TODO: Check if this field order is optimal
+            models.Index(fields=["content_type", "object_pk", "group"]),
+        ]
+
+
+class BigUserObjectPermission(UserObjectPermissionAbstract):
+    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
+    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+
+    class Meta(UserObjectPermissionAbstract.Meta):
+        abstract = False
+        indexes = [
+            *UserObjectPermissionAbstract.Meta.indexes,
+            # TODO: Check if this field order is optimal
+            models.Index(fields=["content_type", "object_pk", "user"]),
+        ]

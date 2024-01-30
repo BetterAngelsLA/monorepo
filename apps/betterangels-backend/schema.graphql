@@ -1,3 +1,27 @@
+"""
+Can only be resolved by authenticated users.
+
+When the condition fails, the following can be returned (following this priority):
+1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
+2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
+3) An empty list in case the field is a list (e.g. `[String]!`)
+4) An empty `Connection` in case the return type is a relay connection
+2) Otherwise, an error will be raised
+"""
+directive @isAuthenticated repeatable on FIELD_DEFINITION
+
+"""
+Will check if the user has any/all permissions for the resolved value of this field before returning it.
+
+When the condition fails, the following can be returned (following this priority):
+1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
+2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
+3) An empty list in case the field is a list (e.g. `[String]!`)
+4) An empty `Connection` in case the return type is a relay connection
+2) Otherwise, an error will be raised
+"""
+directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+
 input CreateNoteInput {
   title: String!
   body: String!
@@ -5,6 +29,10 @@ input CreateNoteInput {
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+input DeleteDjangoObjectInput {
+  id: ID!
+}
 
 input MagicLinkInput {
   email: String!
@@ -16,10 +44,10 @@ type MagicLinkResponse {
 
 type Mutation {
   logout: Boolean!
-  generateMagicLink(input: MagicLinkInput!): MagicLinkResponse!
-  createNote(input: CreateNoteInput!): NoteType
-  updateNote(input: UpdateNoteInput!): NoteType
-  deleteNote(id: ID!): Boolean!
+  generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
+  updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  deleteNote(data: DeleteDjangoObjectInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
+  createNote(data: CreateNoteInput!): NoteType! @isAuthenticated
 }
 
 type NoteType {
@@ -30,10 +58,15 @@ type NoteType {
   createdBy: UserType!
 }
 
+input OffsetPaginationInput {
+  offset: Int! = 0
+  limit: Int! = -1
+}
+
 type Query {
-  currentUser: UserType
-  notes: [NoteType!]!
-  note(id: ID!): NoteType
+  currentUser: UserType!
+  note(pk: ID!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
 }
 
 input UpdateNoteInput {
@@ -46,4 +79,17 @@ type UserType {
   id: ID!
   username: String!
   email: String!
+}
+
+"""Permission definition for schema directives."""
+input PermDefinition {
+  """
+  The app to which we are requiring permission. If this is empty that means that we are checking the permission directly.
+  """
+  app: String
+
+  """
+  The permission itself. If this is empty that means that we are checking for any permission for the given app.
+  """
+  permission: String
 }
