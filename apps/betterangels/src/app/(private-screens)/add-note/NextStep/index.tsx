@@ -14,7 +14,6 @@ import { View } from 'react-native';
 interface INextStepProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
-  isPublicNoteEdited: boolean;
 }
 
 type TNextSteps = {
@@ -22,13 +21,12 @@ type TNextSteps = {
 }[];
 
 export default function NextStep(props: INextStepProps) {
-  const { expanded, setExpanded, isPublicNoteEdited } = props;
+  const { expanded, setExpanded } = props;
   const { control, setValue, watch } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'nextStepActions',
   });
 
-  const publicNote = watch('hmisNote');
   const nextStepDate = watch('nextStepDate');
   const isNextStep = expanded === 'Next Step';
 
@@ -48,31 +46,6 @@ export default function NextStep(props: INextStepProps) {
       setValue('nextStepActions', filteredNextSteps);
     }
   }, [expanded]);
-
-  useEffect(() => {
-    if (isPublicNoteEdited) {
-      return;
-    }
-
-    const changedP = nextStepActions.map((action) => action.value);
-
-    const nonEmptyChangedP = changedP.filter((value) => value);
-
-    if (nonEmptyChangedP.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [G, R, I, _] = publicNote
-        .split('\n')
-        .map((line: string) => line.trim());
-
-      const readyP = nextStepDate
-        ? `${nonEmptyChangedP.join(', ')} ${nextStepDate}`
-        : `${nonEmptyChangedP.join(', ')}`;
-
-      const newPublicNote = `${G}\n${R}\n${I}\nG: ${readyP}`;
-
-      setValue('hmisNote', newPublicNote);
-    }
-  }, [nextStepActions, isPublicNoteEdited, nextStepDate]);
 
   return (
     <FieldCard

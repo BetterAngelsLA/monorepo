@@ -1,5 +1,4 @@
-import { Attachments } from '@monorepo/expo/betterangels';
-import { OtherCategory } from '@monorepo/expo/betterangels';
+import { Attachments, OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,

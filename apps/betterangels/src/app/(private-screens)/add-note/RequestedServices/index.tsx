@@ -1,5 +1,4 @@
-import { Attachments } from '@monorepo/expo/betterangels';
-import { OtherCategory } from '@monorepo/expo/betterangels';
+import { Attachments, OtherCategory } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -33,7 +32,7 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
-interface IServicesRequestedProps {
+interface IRequestedServicesProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
 }
@@ -102,7 +101,7 @@ const SERVICES = [
   },
 ];
 
-export default function ServicesRequested(props: IServicesRequestedProps) {
+export default function RequestedServices(props: IRequestedServicesProps) {
   const { expanded, setExpanded } = props;
   const { setValue, watch, control } = useFormContext();
   const [requestedOtherCategory, setRequestedOtherCategory] = useState<
@@ -110,12 +109,12 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   >([]);
 
   const requestedServicesImages = watch('requestedServicesImages', []);
-  const services = watch('servicesRequested') || [];
-  const isServicesRequested = expanded === 'Services Requested';
-  const isLessThanOneServiceRequested = services.length < 1;
+  const services = watch('requestedServices') || [];
+  const isRequestedServices = expanded === 'Requested Services';
+  const isLessThanOneRequestedService = services.length < 1;
   const isLessThanOneRequestedServiceImages =
     requestedServicesImages.length < 1;
-  const isGreaterThanZeroServiceRequested = services.length > 0;
+  const isGreaterThanZeroRequestedService = services.length > 0;
   const isGreaterThanZeroRequestedServiceImages =
     requestedServicesImages?.length > 0;
 
@@ -123,11 +122,11 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
     const newServices = services.includes(service)
       ? services.filter((m: string) => m !== service)
       : [...services, service];
-    setValue('servicesRequested', newServices);
+    setValue('requestedServices', newServices);
   };
 
   useEffect(() => {
-    if (!isServicesRequested) {
+    if (!isRequestedServices) {
       const includedValues = requestedOtherCategory.filter((element) =>
         services.includes(element)
       );
@@ -138,11 +137,11 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
   return (
     <FieldCard
       actionName={
-        isServicesRequested &&
-        isLessThanOneServiceRequested &&
+        isRequestedServices &&
+        isLessThanOneRequestedService &&
         isLessThanOneRequestedServiceImages ? (
           ''
-        ) : isGreaterThanZeroServiceRequested ||
+        ) : isGreaterThanZeroRequestedService ||
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((service: string) => {
@@ -165,13 +164,13 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
         )
       }
       mb="xs"
-      title="Services Requested"
+      title="Requested Services"
       expanded={expanded}
       setExpanded={() =>
-        setExpanded(isServicesRequested ? undefined : 'Services Requested')
+        setExpanded(isRequestedServices ? undefined : 'Requested Services')
       }
     >
-      {isServicesRequested && (
+      {isRequestedServices && (
         <View style={{ paddingBottom: Spacings.md }}>
           {SERVICES.map((service, idx) => (
             <View
@@ -198,7 +197,7 @@ export default function ServicesRequested(props: IServicesRequestedProps) {
             </View>
           ))}
           <OtherCategory
-            main="servicesRequested"
+            main="requestedServices"
             other="requestedOtherCategory"
             services={services}
             setValue={setValue}

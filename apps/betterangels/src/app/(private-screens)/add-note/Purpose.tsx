@@ -28,12 +28,11 @@ type NoteFormErrors = FieldErrors<INote>;
 interface IPurposeProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
-  isPublicNoteEdited: boolean;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const { expanded, setExpanded, isPublicNoteEdited } = props;
-  const { control, formState, setValue, watch } = useFormContext();
+  const { expanded, setExpanded } = props;
+  const { control, formState, setValue } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'purposes',
   });
@@ -42,7 +41,6 @@ export default function Purpose(props: IPurposeProps) {
     name: 'purposes',
     control,
   });
-  const publicNote = watch('hmisNote');
   const isPurpose = expanded === 'Purpose';
   const isGreaterThanZeroPurpses = purposes.length > 0;
   const isLessThanElevenPurpses = purposes.length < 11;
@@ -62,37 +60,6 @@ export default function Purpose(props: IPurposeProps) {
       setValue('purposes', [requiredField, ...filteredPurposes]);
     }
   }, [expanded]);
-
-  useEffect(() => {
-    if (isPublicNoteEdited) {
-      return;
-    }
-
-    const changedG = purposes.map((purpose, index) => {
-      if (index === 0 && purpose.value) {
-        return `${purpose.value}`;
-      }
-      if (index !== 0 && purpose.value) {
-        return `update re: ${purpose.value}`;
-      }
-      return '';
-    });
-
-    const nonEmptyChangedG = changedG.filter((value) => value);
-
-    if (nonEmptyChangedG.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_, R, I, P] = publicNote
-        .split('\n')
-        .map((line: string) => line.trim());
-
-      const newPublicNote = `G: ${nonEmptyChangedG.join(
-        ', '
-      )}\n${R}\n${I}\n${P}`;
-
-      setValue('hmisNote', newPublicNote);
-    }
-  }, [purposes, isPublicNoteEdited]);
 
   return (
     <FieldCard
