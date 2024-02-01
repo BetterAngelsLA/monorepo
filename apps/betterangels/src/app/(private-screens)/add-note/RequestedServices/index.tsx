@@ -33,8 +33,8 @@ import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 interface IRequestedServicesProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -167,7 +167,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
       title="Requested Services"
       expanded={expanded}
       setExpanded={() =>
-        setExpanded(isRequestedServices ? undefined : 'Requested Services')
+        setExpanded(isRequestedServices ? null : 'Requested Services')
       }
     >
       {isRequestedServices && (

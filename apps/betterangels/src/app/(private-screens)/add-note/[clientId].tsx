@@ -1,4 +1,7 @@
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
+import {
+  MainScrollContainer,
+  generatedPublicNote,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
@@ -29,7 +32,7 @@ interface INote {
 export default function AddNote() {
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
-  const [expanded, setExpanded] = useState<undefined | string>();
+  const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
@@ -43,13 +46,16 @@ export default function AddNote() {
     },
   });
 
+  const watchedValues = methods.watch([
+    'purposes',
+    'moods',
+    'providedServices',
+    'nextStepActions',
+    'nextStepDate',
+    'requestedServices',
+    'hmisNote',
+  ]);
   const publicNote = methods.watch('hmisNote');
-  const purposes = methods.watch('purposes');
-  const moods = methods.watch('moods');
-  const providedServices = methods.watch('providedServices');
-  const nextStepActions = methods.watch('nextStepActions');
-  const nextStepDate = methods.watch('nextStepDate');
-  const requestedServices = methods.watch('requestedServices');
 
   const props = {
     expanded,
@@ -79,66 +85,29 @@ export default function AddNote() {
     if (isPublicNoteEdited) {
       return;
     }
-    const changedG = purposes.map((purpose) => purpose.value).filter(Boolean);
-    const changedP = nextStepActions
-      .map((action) => action.value)
-      .filter(Boolean);
+    const [
+      purposes,
+      moods,
+      providedServices,
+      nextStepActions,
+      nextStepDate,
+      requestedServices,
+    ] = watchedValues;
 
-    const moodIText =
-      moods.length > 0 ? 'CM asked how the client was feeling.' : '';
+    const generateOjbect = {
+      purposes,
+      moods,
+      providedServices,
+      nextStepActions,
+      nextStepDate,
+      requestedServices,
+    };
 
-    const moodRText =
-      moods.length > 0
-        ? 'Client responded that he was ' + moods.join(', ') + '.'
-        : '';
-
-    const serviceIText =
-      providedServices.length > 0
-        ? 'CM provided ' + providedServices.join(', ') + '.'
-        : '';
-
-    const serviceRText =
-      providedServices.length > 0
-        ? 'Client accepted ' + providedServices.join(', ') + '.'
-        : '';
-
-    const requestedText =
-      requestedServices.length > 0
-        ? 'Client requested ' + requestedServices.join(', ') + '.'
-        : '';
-
-    const updatedI =
-      'I:' +
-      (moodIText ? ' ' + moodIText : '') +
-      (serviceIText ? ' ' + serviceIText : '');
-
-    const updatedR =
-      'R:' +
-      (moodRText ? ' ' + moodRText : '') +
-      (serviceRText ? ' ' + serviceRText : '') +
-      (requestedText ? ' ' + requestedText : '');
-
-    const updatedG = changedG.length ? `G: ${changedG.join(', ')}` : 'G:';
-    const updatedP = changedP ? `P: ${changedP.join(', ')}` : 'P:';
-
-    const hasRDate = nextStepDate ? `${updatedP} ${nextStepDate}` : updatedP;
-
-    const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${hasRDate}`;
-
+    const newPublicNote = generatedPublicNote(generateOjbect);
     if (newPublicNote !== publicNote) {
       methods.setValue('hmisNote', newPublicNote);
     }
-  }, [
-    providedServices,
-    moods,
-    isPublicNoteEdited,
-    publicNote,
-    methods,
-    purposes,
-    nextStepActions,
-    nextStepDate,
-    requestedServices,
-  ]);
+  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
 
   return (
     <FormProvider {...methods}>

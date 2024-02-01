@@ -18,7 +18,7 @@ interface IFieldCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   error?: boolean;
-  expanded: string | undefined;
+  expanded: string | undefined | null;
   setExpanded: () => void;
   info?: ReactNode;
 }

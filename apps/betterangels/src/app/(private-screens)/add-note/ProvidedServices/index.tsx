@@ -33,8 +33,8 @@ import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 interface IProvidedServicesProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -166,7 +166,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       title="Provided Services"
       expanded={expanded}
       setExpanded={() => {
-        setExpanded(isProvidedServices ? undefined : 'Provided Services');
+        setExpanded(isProvidedServices ? null : 'Provided Services');
       }}
     >
       {isProvidedServices && (

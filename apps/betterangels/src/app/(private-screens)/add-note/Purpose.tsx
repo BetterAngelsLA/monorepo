@@ -26,8 +26,8 @@ type TPurposes = {
 type NoteFormErrors = FieldErrors<INote>;
 
 interface IPurposeProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 export default function Purpose(props: IPurposeProps) {
@@ -52,20 +52,24 @@ export default function Purpose(props: IPurposeProps) {
   const hasError = !!typedErrors.purposes;
 
   useEffect(() => {
+    console.log(expanded);
     if (!isPurpose) {
-      trigger('purposes');
       const requiredField = purposes[0];
       const filteredPurposes = purposes
         .slice(1)
         .filter((field) => !!field.value);
       setValue('purposes', [requiredField, ...filteredPurposes]);
     }
+    if (!isPurpose && expanded === null) {
+      console.log('trigger');
+      trigger('purposes');
+    }
   }, [expanded]);
 
   return (
     <FieldCard
       expanded={expanded}
-      setExpanded={() => setExpanded(isPurpose ? undefined : 'Purpose')}
+      setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       error={!!typedErrors?.purposes}
       required
       mb="xs"

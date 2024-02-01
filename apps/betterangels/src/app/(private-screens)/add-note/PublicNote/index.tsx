@@ -8,8 +8,8 @@ import { useFormContext } from 'react-hook-form';
 import InfoModal from './InfoModal';
 
 interface IPublicNoteProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
   isPublicNoteEdited: boolean;
   setIsPublicNoteEdited: (e: boolean) => void;
 }
@@ -26,7 +26,7 @@ export default function PublicNote(props: IPublicNoteProps) {
     <FieldCard
       expanded={expanded}
       mb="xs"
-      setExpanded={() => setExpanded(isPublicNote ? undefined : 'Public Note')}
+      setExpanded={() => setExpanded(isPublicNote ? null : 'Public Note')}
       title="Public Note"
       info={<InfoModal />}
       actionName={
