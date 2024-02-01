@@ -1,9 +1,9 @@
 # permissions.py
 
-from enum import Enum
+from enum import StrEnum
 
 
-class NotePermissions(Enum):
+class NotePermissions(StrEnum):
     VIEW = "notes.view_note"
     CHANGE = "notes.change_note"
     DELETE = "notes.delete_note"

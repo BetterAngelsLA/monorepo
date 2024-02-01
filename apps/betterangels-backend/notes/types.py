@@ -31,7 +31,7 @@ class NoteType:
         user = get_current_user(info)
         return cast(
             QuerySet[models.Note],
-            get_objects_for_user(user, NotePermissions.VIEW.value, klass=queryset),
+            get_objects_for_user(user, NotePermissions.VIEW, klass=queryset),
         )
 
 
