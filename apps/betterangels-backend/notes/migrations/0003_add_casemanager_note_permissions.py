@@ -26,15 +26,11 @@ def create_permissions_if_not_exist(apps, schema_editor):
     NoteContentType = ContentType.objects.get_for_model(Note)
     db_alias = schema_editor.connection.alias
 
-    perms = [
-        Permission(
+    for codename, name in PERM_MAP.items():
+        Permission.objects.using(db_alias).get_or_create(
             codename=codename,
-            name=name,
-            content_type=NoteContentType,
+            defaults={"name": name, "content_type": NoteContentType},
         )
-        for codename, name in PERM_MAP.items()
-    ]
-    Permission.objects.using(db_alias).bulk_create(perms)
 
 
 def add_permissions_to_caseworker(apps, schema_editor):
