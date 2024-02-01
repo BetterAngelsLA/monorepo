@@ -12,6 +12,7 @@ PERMISSIONS_TO_ADD = [
     NotePermissions.VIEW.value,
 ]
 
+# Generate readable names based on the enum
 PERM_MAP = {
     perm.value.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " note"
     for perm in NotePermissions
@@ -19,21 +20,17 @@ PERM_MAP = {
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
-    note = apps.get_model("notes", "Note")
+    Note = apps.get_model("notes", "Note")
     Permission = apps.get_model("auth", "Permission")
-    content_type = apps.get_model("contenttypes", "ContentType")
-    # Get user content type object
-    note_content_type = content_type.objects.get_for_model(note)
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    NoteContentType = ContentType.objects.get_for_model(Note)
     db_alias = schema_editor.connection.alias
 
-    # Generate readable names based on the enum
-
-    # Create Permission instances
     perms = [
         Permission(
             codename=codename,
             name=name,
-            content_type=note_content_type,
+            content_type=NoteContentType,
         )
         for codename, name in PERM_MAP.items()
     ]
