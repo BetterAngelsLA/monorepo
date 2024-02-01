@@ -21,7 +21,7 @@ class Query:
     note: NoteType = strawberry_django.field(
         extensions=[
             IsAuthenticated(),
-            HasRetvalPerm(perms=[NotePermissions.VIEW.value]),
+            HasRetvalPerm(perms=[NotePermissions.VIEW]),
         ],
     )
 
@@ -56,9 +56,9 @@ class Mutation:
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
-            NotePermissions.VIEW.value,
-            NotePermissions.CHANGE.value,
-            NotePermissions.DELETE.value,
+            NotePermissions.VIEW,
+            NotePermissions.CHANGE,
+            NotePermissions.DELETE,
         ]:
             assign_perm(perm, user, note)
         return cast(NoteType, note)
@@ -67,7 +67,7 @@ class Mutation:
         UpdateNoteInput,
         extensions=[
             IsAuthenticated(),
-            HasRetvalPerm(perms=[NotePermissions.CHANGE.value]),
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
         ],
     )
 
@@ -75,6 +75,6 @@ class Mutation:
         DeleteDjangoObjectInput,
         extensions=[
             IsAuthenticated(),
-            HasRetvalPerm(perms=[NotePermissions.DELETE.value]),
+            HasRetvalPerm(perms=[NotePermissions.DELETE]),
         ],
     )

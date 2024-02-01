@@ -1,5 +1,5 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class GroupNames(Enum):
+class GroupNames(StrEnum):
     CASEWORKER = "Caseworker"

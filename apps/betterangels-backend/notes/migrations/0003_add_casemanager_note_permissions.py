@@ -6,15 +6,15 @@ from django.contrib.auth.management import create_permissions
 from notes.permissions import NotePermissions
 
 PERMISSIONS_TO_ADD = [
-    NotePermissions.ADD.value,
-    NotePermissions.CHANGE.value,
-    NotePermissions.DELETE.value,
-    NotePermissions.VIEW.value,
+    NotePermissions.ADD,
+    NotePermissions.CHANGE,
+    NotePermissions.DELETE,
+    NotePermissions.VIEW,
 ]
 
 # Generate readable names based on the enum
 PERM_MAP = {
-    perm.value.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " note"
+    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " note"
     for perm in NotePermissions
 }
 
@@ -40,7 +40,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
 def add_permissions_to_caseworker(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
-    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER.value)
+    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER)
 
     for codename, _ in PERM_MAP.items():
         permission, _ = Permission.objects.get_or_create(codename=codename)
@@ -50,7 +50,7 @@ def add_permissions_to_caseworker(apps, schema_editor):
 def remove_permissions_from_caseworker(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
-    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER.value)
+    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER)
 
     for codename, _ in PERM_MAP.items():
         try:
