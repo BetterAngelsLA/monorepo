@@ -10,19 +10,13 @@ import InfoModal from './InfoModal';
 interface IPublicNoteProps {
   expanded: string | undefined;
   setExpanded: (e: string | undefined) => void;
-  firstName: string;
   isPublicNoteEdited: boolean;
   setIsPublicNoteEdited: (e: boolean) => void;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const {
-    expanded,
-    setExpanded,
-    firstName,
-    setIsPublicNoteEdited,
-    isPublicNoteEdited,
-  } = props;
+  const { expanded, setExpanded, setIsPublicNoteEdited, isPublicNoteEdited } =
+    props;
   const { control, watch } = useFormContext();
 
   const hmisNote = watch('hmisNote');
@@ -48,7 +42,6 @@ export default function PublicNote(props: IPublicNoteProps) {
           mb="md"
           name="hmisNote"
           control={control}
-          label={`How was ${firstName} today`}
         />
       ) : (
         !isEmptyOrTemplate && <BodyText mb="md">{hmisNote}</BodyText>

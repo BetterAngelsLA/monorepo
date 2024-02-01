@@ -153,7 +153,6 @@ export default function AddNote() {
           <PublicNote
             isPublicNoteEdited={isPublicNoteEdited}
             setIsPublicNoteEdited={setIsPublicNoteEdited}
-            firstName="Test"
             {...props}
           />
           <PrivateNote {...props} />

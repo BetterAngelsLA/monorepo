@@ -106,7 +106,9 @@ export function Textarea(props: ITextareaProps) {
           >
             <TextInput
               style={{
-                color: disabled ? Colors.NEUTRAL_LIGHT : 'black',
+                color: disabled
+                  ? Colors.NEUTRAL_LIGHT
+                  : Colors.PRIMARY_EXTRA_DARK,
                 paddingHorizontal: Spacings.sm,
                 fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,

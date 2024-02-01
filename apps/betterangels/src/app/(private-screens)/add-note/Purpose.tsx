@@ -87,6 +87,7 @@ export default function Purpose(props: IPurposeProps) {
       >
         {fields.map((purpose, index) => (
           <Input
+            placeholder="Enter a purpose"
             key={purpose.id}
             mt={index !== 0 ? 'xs' : undefined}
             error={typedErrors?.purposes?.[0] && index === 0}

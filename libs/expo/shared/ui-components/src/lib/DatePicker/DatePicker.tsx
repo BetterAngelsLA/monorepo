@@ -223,7 +223,6 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
-    textTransform: 'capitalize',
     fontFamily: 'Poppins-Regular',
   },
   required: {
