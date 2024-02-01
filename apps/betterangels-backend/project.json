@@ -26,6 +26,13 @@
     "deploy": {
       "command": "tools/deploy/ecs_deploy.sh"
     },
+    "makemigrations": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py makemigrations",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "manage": {
       "executor": "@nxlv/python:run-commands",
       "options": {

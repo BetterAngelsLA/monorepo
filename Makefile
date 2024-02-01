@@ -4,8 +4,8 @@ generate-schema:
 generate-types:
 	yarn nx affected -t generate-graphql-types
 
-migrations:
-	cd /workspace/apps/betterangels-backend && python manage.py makemigrations && cd /workspace
+makemigrations:
+	yarn nx run betterangels-backend:makemigrations
 
 migrate:
 	yarn nx run betterangels-backend:migrate
