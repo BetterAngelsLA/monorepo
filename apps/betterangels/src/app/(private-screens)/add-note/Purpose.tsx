@@ -32,7 +32,7 @@ interface IPurposeProps {
 
 export default function Purpose(props: IPurposeProps) {
   const { expanded, setExpanded } = props;
-  const { control, formState, setValue } = useFormContext();
+  const { control, formState, setValue, trigger } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'purposes',
   });
@@ -53,6 +53,7 @@ export default function Purpose(props: IPurposeProps) {
 
   useEffect(() => {
     if (!isPurpose) {
+      trigger('purposes');
       const requiredField = purposes[0];
       const filteredPurposes = purposes
         .slice(1)
