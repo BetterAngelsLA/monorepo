@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, Optional, cast
 
 import strawberry_django
 from accounts.types import UserType
@@ -14,13 +14,36 @@ from . import models
 
 
 @dataclasses.dataclass
+@strawberry_django.type(models.Mood)
+class MoodType:
+    id: auto
+    title: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Mood)
+class CreateMoodInput:
+    title: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.Task)
+class TaskType:
+    id: auto
+    title: auto
+    created_at: auto
+    created_by: UserType
+
+
+@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
     title: auto
     public_details: auto
     created_at: auto
-    created_by: UserType
+    tasks: List[TaskType]
+    moods: List[MoodType]
 
     @classmethod
     def get_queryset(
@@ -40,6 +63,7 @@ class NoteType:
 class CreateNoteInput:
     title: auto
     public_details: auto
+    moods: Optional[List[CreateMoodInput]]
 
 
 @dataclasses.dataclass

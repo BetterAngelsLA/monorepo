@@ -58,7 +58,7 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     title = models.CharField(max_length=100, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     location = models.ForeignKey(
-        Location, on_delete=models.CASCADE, null=True, related_name="notes"
+        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
     tasks = models.ManyToManyField(Task)
     moods = models.ManyToManyField(Mood)

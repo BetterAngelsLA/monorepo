@@ -14,7 +14,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             response = self._create_note(
-                {"title": "New Note", "publicDetails": "This is a new note."}
+                {
+                    "title": "New Note",
+                    "publicDetails": "This is a new note.",
+                    "moods": [],
+                }
             )
         self.assertIsNotNone(response["data"]["createNote"])
         self.assertEqual(response["data"]["createNote"]["title"], "New Note")
@@ -35,7 +39,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 13
+        expected_query_count = 12
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -52,7 +56,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {"id": self.note["id"]}
 
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 13
+        expected_query_count = 17
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
