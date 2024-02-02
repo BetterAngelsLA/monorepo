@@ -13,18 +13,18 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.note = self._create_note(
             {
                 "title": f"User: {self.users[0].id}",
-                "body2": f"{self.users[0].id}'s note",
+                "publicDetais": f"{self.users[0].id}'s note",
             }
         )["data"]["createNote"]
         self.graphql_client.logout()
 
     def _create_note(self, variables: dict) -> dict:
         mutation = """
-            mutation CreateNote($title: String!, $body2: String!) {
-                createNote(data: { title: $title, body2: $body2 }) {
+            mutation CreateNote($title: String!, $publicDetais: String!) {
+                createNote(data: { title: $title, publicDetais: $publicDetais }) {
                     id
                     title
-                    body2
+                    publicDetais
                 }
             }
         """

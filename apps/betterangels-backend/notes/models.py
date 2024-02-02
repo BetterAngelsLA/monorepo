@@ -70,7 +70,8 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     requested_services = models.ManyToManyField(
         Service, related_name="notes_with_provided"
     )
-    body2 = models.TextField(blank=False)
+    # TODO: delete body when you figure out how to replace it
+    body = models.TextField(blank=False)
     public_details = models.TextField(null=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)

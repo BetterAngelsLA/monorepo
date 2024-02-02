@@ -14,12 +14,12 @@ class NotesTest(TestCase):
             password="foo",
         )
         cls.note = Note.objects.create(
-            created_by=cls.user, title="Just a test note", body2="this is a body"
+            created_by=cls.user, title="Just a test note", public_details="this is a body"
         )
 
     def test_notes_fields_exist(self) -> None:
         note = Note.objects.get(id=self.note.id)
-        self.assertEqual(note.body2, self.note.body2)
+        self.assertEqual(note.public_details, self.note.public_details)
         self.assertEqual(note.title, self.note.title)
 
     def test_user_assigned_to_note(self) -> None:
