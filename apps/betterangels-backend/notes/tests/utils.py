@@ -11,17 +11,20 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.users = baker.make(User, _quantity=2)
         self.graphql_client.force_login(self.users[0])
         self.note = self._create_note(
-            {"title": f"User: {self.users[0].id}", "body": f"{self.users[0].id}'s note"}
+            {
+                "title": f"User: {self.users[0].id}",
+                "body2": f"{self.users[0].id}'s note",
+            }
         )["data"]["createNote"]
         self.graphql_client.logout()
 
     def _create_note(self, variables: dict) -> dict:
         mutation = """
-            mutation CreateNote($title: String!, $body: String!) {
-                createNote(data: { title: $title, body: $body }) {
+            mutation CreateNote($title: String!, $body2: String!) {
+                createNote(data: { title: $title, body2: $body2 }) {
                     id
                     title
-                    body
+                    body2
                 }
             }
         """

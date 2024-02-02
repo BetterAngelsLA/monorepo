@@ -14,7 +14,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_create_note_permission(self, user_idx: int, should_succeed: bool) -> None:
         self._handle_user_login(user_idx)
 
-        variables = {"title": "Test Note", "body": "This is a test note."}
+        variables = {"title": "Test Note", "body2": "This is a test note."}
         response = self._create_note(variables)
 
         if should_succeed:
@@ -59,18 +59,18 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_idx)
 
         mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(data: { id: $id, title: $title, body: $body }) {
+            mutation UpdateNote($id: ID!, $title: String!, $body2: String!) {
+                updateNote(data: { id: $id, title: $title, body2: $body2 }) {
                     id
                     title
-                    body
+                    body2
                 }
             }
         """
         variables = {
             "id": self.note["id"],
             "title": "Updated Note",
-            "body": "Updated content",
+            "body2": "Updated content",
         }
         response = self.execute_graphql(mutation, variables)
 
@@ -94,7 +94,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
-                    body
+                    body2
                 }
             }
         """
@@ -121,7 +121,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             query ViewNotes {
                 notes {
                     id
-                    body
+                    body2
                 }
             }
         """

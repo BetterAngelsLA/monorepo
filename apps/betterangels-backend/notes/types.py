@@ -18,7 +18,7 @@ from . import models
 class NoteType:
     id: auto
     title: auto
-    body: auto
+    body2: auto
     created_at: auto
     created_by: UserType
 
@@ -39,7 +39,7 @@ class NoteType:
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
-    body: auto
+    body2: auto
 
 
 @dataclasses.dataclass
@@ -47,4 +47,4 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    body: auto
+    body2: auto

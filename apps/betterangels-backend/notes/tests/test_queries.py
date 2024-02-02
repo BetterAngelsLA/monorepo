@@ -13,7 +13,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
-                    body
+                    body2
                 }
             }
         """
@@ -22,14 +22,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
         note = response["data"]["note"]
-        self.assertEqual(note["body"], self.note["body"])
+        self.assertEqual(note["body2"], self.note["body2"])
 
     def test_notes_query(self) -> None:
         query = """
           {
               notes {
                   id
-                  body
+                  body2
               }
           }
         """
@@ -38,4 +38,4 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(query)
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
-        self.assertEqual(notes[0]["body"], self.note["body"])
+        self.assertEqual(notes[0]["body2"], self.note["body2"])
