@@ -102,7 +102,7 @@ class BigUserObjectPermission(UserObjectPermissionAbstract):
 
 class PermissionGroupTemplate(models.Model):
     name = models.CharField(max_length=255)
-    permissions = models.ManyToManyField(Permission)
+    permissions = models.ManyToManyField(Permission, blank=True)
 
     objects = models.Manager()
 
@@ -110,14 +110,21 @@ class PermissionGroupTemplate(models.Model):
         return self.name
 
 
-class OrganizationPermissionGroup(models.Model):
-    name = models.CharField(max_length=255)
+class PermissionGroup(models.Model):
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
         related_name="permission_groups",
     )
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True)
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        blank=True,
+    )
     template = models.ForeignKey(
         PermissionGroupTemplate,
         on_delete=models.SET_NULL,

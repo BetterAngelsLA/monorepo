@@ -12,7 +12,12 @@ from simple_history.models import HistoricalRecords
 
 from .admin_request_mixin import AdminRequestMixin
 from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
-from .models import ExtendedOrganizationInvitation, OrganizationPermissionGroup, User
+from .models import (
+    ExtendedOrganizationInvitation,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    User,
+)
 
 
 class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
@@ -54,14 +59,31 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     history = HistoricalRecords()
 
 
-class OrganizationPermissionGroupInline(admin.TabularInline):
-    model = OrganizationPermissionGroup
-    extra = 1  # Adjust as needed
+@admin.register(PermissionGroup)
+class PermissionGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "organization", "group", "template")
+    list_filter = ("organization", "template")
 
 
-# Define your custom Organization admin
+@admin.register(PermissionGroupTemplate)
+class PermissionGroupTemplateAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+    ]
+    search_fields = [
+        "name",
+    ]
+
+
+class PermissionGroupInline(admin.TabularInline):
+    model = PermissionGroup
+    extra = 1
+
+
 class CustomOrganizationAdmin(admin.ModelAdmin):
-    inlines = [OrganizationPermissionGroupInline]
+    inlines = [PermissionGroupInline]
+    list_display = ("name",)  # Adjust according to your model fields
+    search_fields = ("name",)  # Enables searching by name in the autocomplete fields
 
 
 admin.site.register(User, UserAdmin)
@@ -70,6 +92,7 @@ admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
+# admin.site.register(OrganizationPermissionGroup, OrganizationPermissionGroupAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
 
 admin.site.login = staff_member_required(  # type: ignore
