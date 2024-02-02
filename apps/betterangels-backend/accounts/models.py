@@ -1,9 +1,16 @@
+from typing import Any, Optional
+
 from accounts.managers import UserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    Group,
+    Permission,
+    PermissionsMixin,
+)
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
-from organizations.models import OrganizationInvitation
+from organizations.models import Organization, OrganizationInvitation
 from simple_history.models import HistoricalRecords
 
 
@@ -91,3 +98,54 @@ class BigUserObjectPermission(UserObjectPermissionAbstract):
             # TODO: Check if this field order is optimal
             models.Index(fields=["content_type", "object_pk", "user"]),
         ]
+
+
+class PermissionGroupTemplate(models.Model):
+    name = models.CharField(max_length=255)
+    permissions = models.ManyToManyField(Permission)
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class OrganizationPermissionGroup(models.Model):
+    name = models.CharField(max_length=255)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="permission_groups",
+    )
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True)
+    template = models.ForeignKey(
+        PermissionGroupTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    objects = models.Manager()
+
+    class Meta:
+        unique_together = ("organization", "group")
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not hasattr(self, "group"):
+            self._create_group()
+        super().save(*args, **kwargs)
+
+    def _create_group(self) -> None:
+        permission_group_name = self.name
+        if self.template:
+            permission_group_name = self.template.name
+            self.name = self.template.name
+
+        group_name = f"{self.organization.name}_{permission_group_name}"
+        group = Group.objects.create(name=group_name)
+
+        if self.template:
+            permissions = self.template.permissions.all()
+            group.permissions.set(permissions)
+
+        self.group = group

@@ -6,13 +6,13 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
-from organizations.models import OrganizationInvitation, OrganizationUser
+from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from simple_history.admin import SimpleHistoryAdmin
 from simple_history.models import HistoricalRecords
 
 from .admin_request_mixin import AdminRequestMixin
 from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
-from .models import ExtendedOrganizationInvitation, User
+from .models import ExtendedOrganizationInvitation, OrganizationPermissionGroup, User
 
 
 class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
@@ -54,9 +54,21 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     history = HistoricalRecords()
 
 
+class OrganizationPermissionGroupInline(admin.TabularInline):
+    model = OrganizationPermissionGroup
+    extra = 1  # Adjust as needed
+
+
+# Define your custom Organization admin
+class CustomOrganizationAdmin(admin.ModelAdmin):
+    inlines = [OrganizationPermissionGroupInline]
+
+
 admin.site.register(User, UserAdmin)
+admin.site.unregister(Organization)
 admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)
+admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
 
