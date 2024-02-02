@@ -24,7 +24,7 @@ directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) 
 
 input CreateNoteInput {
   title: String!
-  publicDetails: String!
+  publicDetails: String
 }
 
 """Date with time (isoformat)"""
@@ -53,7 +53,7 @@ type Mutation {
 type NoteType {
   id: ID!
   title: String!
-  publicDetails: String!
+  publicDetails: String
   createdAt: DateTime!
   createdBy: UserType!
 }
@@ -72,7 +72,7 @@ type Query {
 input UpdateNoteInput {
   id: ID
   title: String!
-  publicDetails: String!
+  publicDetails: String
 }
 
 type UserType {
