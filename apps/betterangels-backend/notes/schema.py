@@ -17,6 +17,20 @@ from .models import Note, Task
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
+from strawberry.unset import UnsetType
+
+
+# TODO: organize this somewhere, maybe refactor to use some strawberry command
+def _update_existing_tasks(attached_tasks: list) -> list[Task]:
+    task_status_updates = {t.id: t.status for t in attached_tasks}
+    existing_tasks = Task.objects.filter(id__in=task_status_updates.keys())
+    for existing_task in existing_tasks:
+        existing_task.status = task_status_updates[existing_task.id]
+        existing_task.save()
+
+    return existing_tasks
+
+
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
@@ -38,6 +52,7 @@ class Query:
 
 @strawberry.type
 class Mutation:
+
     @strawberry.mutation(
         extensions=[
             IsAuthenticated(),
@@ -50,32 +65,14 @@ class Mutation:
         # print("&" * 100)
         # print(data)
 
-        # TODO update status
         # TODO: refactor using resolvers
         # task = resolvers.update(info, Task, task_data)
-        if existing_tasks := Task.objects.filter(
-            id__in=[t.id for t in data.parent_tasks if type(t.id) == int]
-        ):
-            print(existing_tasks)
+        existing_tasks = None
 
-        # TODO: add location + due_date
-        # TODO: refactor using resolvers
-        # task = resolvers.create(info, Task, task_data)
-        if new_tasks := [t for t in data.parent_tasks if type(t.id) != int]:
-            created_tasks = Task.objects.bulk_create(
-                [
-                    Task(
-                        title=t.title,
-                        created_by=user,
-                        # TODO: need to create contract for client
-                        client=user,
-                    )
-                    for t in new_tasks
-                ]
-            )
+        if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
+            if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
+                existing_tasks = _update_existing_tasks(attached_tasks)
 
-        print("&" * 100)
-        print(data)
         note_data = dict(
             title=data.title,
             public_details=data.public_details,
@@ -88,9 +85,6 @@ class Mutation:
         if existing_tasks:
             note.parent_tasks.add(*list(existing_tasks))
 
-        if new_tasks:
-            note.parent_tasks.add(*list(created_tasks))
-
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
@@ -101,14 +95,55 @@ class Mutation:
             assign_perm(perm, user, note)
         return cast(NoteType, note)
 
+
     # TODO: make atomic
-    update_note: NoteType = mutations.update(
-        UpdateNoteInput,
+    @strawberry.mutation(
         extensions=[
             IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ],
+        ]
     )
+    @transaction.atomic()
+    def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        # TODO: clean all this up
+        FLAT_FIELDS = ("title", "public_details")
+        user = get_current_user(info)
+        note = Note.objects.get(pk=data.id)
+        update_fields = [(field, value) for field, value in asdict(data).items() if field in FLAT_FIELDS]
+        for field, value in update_fields:
+            if value is not None:
+                setattr(note, field, value)
+
+        note.save()
+        existing_tasks = None
+        new_tasks = None
+
+        if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
+            if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
+                existing_tasks = _update_existing_tasks(attached_tasks)
+
+            # TODO: add location + due_date
+            if new_tasks := [t for t in data.parent_tasks if isinstance(t.id, UnsetType)]:
+                created_tasks = []
+                for new_task in new_tasks:
+                    task_data = dict(
+                        title=new_task.title,
+                        status=new_task.status,
+                        created_by=user,
+                        client=note.client,
+                    )
+                    # TODO: is there a bulk create available?
+                    created_tasks.append(resolvers.create(info, Task, task_data))
+
+        # All delete tasks that were removed
+        note.parent_tasks.clear()
+        if existing_tasks:
+            note.parent_tasks.add(*list(existing_tasks))
+
+        if new_tasks:
+            note.parent_tasks.add(*list(created_tasks))
+
+        return cast(NoteType, note)
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,

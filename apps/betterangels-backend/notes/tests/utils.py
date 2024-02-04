@@ -42,6 +42,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         default_variables = dict(
             title="Test Note",
             publicDetails="This is a test note",
+            client={"id": self.note_client.id},
             moods=[],
             parentTasks=[],
             childTasks=[],
@@ -83,6 +84,33 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         """
 
         return self.execute_graphql(mutation, default_variables)
+
+    def _update_note(self, variables: dict) -> dict:
+        mutation = """
+            mutation UpdateNote(
+                $id: ID!, $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
+                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!],
+            ) {
+                updateNote(data: {
+                    id: $id, title: $title, publicDetails: $publicDetails, moods: $moods,
+                    parentTasks: $parentTasks, childTasks: $childTasks
+                }) {
+                    id
+                    title
+                    publicDetails
+                    moods {
+                        title
+                    }
+                    parentTasks {
+                        id
+                        title
+                        status
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, variables)
 
     def _create_detailed_note(self) -> Note:
         """
@@ -133,8 +161,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)
         note.moods.add(mood1, mood2)
 
-        print("Note" * 10)
-        print(note.__dict__)
         for perm in [
             NotePermissions.VIEW,
             NotePermissions.CHANGE,

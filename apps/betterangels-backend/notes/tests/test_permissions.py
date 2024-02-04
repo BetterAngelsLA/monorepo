@@ -58,21 +58,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_permission(self, user_idx: int, should_succeed: bool) -> None:
         self._handle_user_login(user_idx)
 
-        mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $publicDetails: String!) {
-                updateNote(data: { id: $id, title: $title, publicDetails: $publicDetails }) {
-                    id
-                    title
-                    publicDetails
-                }
-            }
-        """
         variables = {
             "id": self.note["id"],
             "title": "Updated Note",
             "publicDetails": "Updated content",
         }
-        response = self.execute_graphql(mutation, variables)
+        response = self._update_note(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])

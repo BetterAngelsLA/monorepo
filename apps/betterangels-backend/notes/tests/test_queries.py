@@ -51,8 +51,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         # expected_query_count = 6
         # with self.assertNumQueries(expected_query_count):
         response = self.execute_graphql(query, variables)
-        print("$" * 100)
-        print(response)
         note = response["data"]["note"]
         self.assertEqual(note["publicDetails"], "Some public details")
         self.assertEqual(note["moods"], [{"title": "Anxious"}, {"title": "Euthymic"}])

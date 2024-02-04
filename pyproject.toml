@@ -1,9 +1,6 @@
 [tool.nx]
 autoActivate = true
 
-[tool.black]
-line-length = 120
-
 [tool.poetry]
 name = "@monorepo/source"
 version = "1.0.0"
