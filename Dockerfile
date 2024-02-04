@@ -91,7 +91,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && npm --version
 
 ENV YARN_VERSION 3.6.3
-RUN corepack enable && \ 
+RUN corepack enable && \
     yarn set version $YARN_VERSION && \
     # smoke tests
     yarn --version
@@ -155,4 +155,4 @@ FROM base AS production
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
-RUN source .bashrc
+RUN source /workspace/.bashrc
