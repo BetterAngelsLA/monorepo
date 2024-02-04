@@ -1,6 +1,16 @@
 [tool.nx]
 autoActivate = true
 
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+    | lib
+    | migrations
+    | node_modules
+)/
+'''
+
 [tool.poetry]
 name = "@monorepo/source"
 version = "1.0.0"
