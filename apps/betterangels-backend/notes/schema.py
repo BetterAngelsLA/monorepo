@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import List, cast
+from django.db import transaction
 
 import strawberry
 import strawberry_django
@@ -12,7 +13,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
-from .models import Note
+from .models import Note, Task
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
@@ -42,17 +43,50 @@ class Mutation:
             IsAuthenticated(),
         ]
     )
+    @transaction.atomic()
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
+        # TODO: clean all this up
+        # print("&" * 100)
+        # print(data)
 
-        note = resolvers.create(
-            info,
-            Note,
-            {
-                **asdict(data),
-                "created_by": user,
-            },
+        # TODO update status
+        # TODO: refactor using resolvers
+        # task = resolvers.update(info, Task, task_data)
+        if existing_tasks := Task.objects.filter(
+            id__in=[t.id for t in data.parent_tasks if type(t.id) == int]
+        ):
+            print(existing_tasks)
+
+        # TODO: add location + due_date
+        # TODO: refactor using resolvers
+        # task = resolvers.create(info, Task, task_data)
+        if new_tasks := [t for t in data.parent_tasks if type(t.id) != int]:
+            created_tasks = Task.objects.bulk_create(
+                [
+                    Task(
+                        title=t.title,
+                        created_by=user,
+                        # TODO: need to create contract for client
+                        client=user,
+                    )
+                    for t in new_tasks
+                ]
+            )
+
+        note_data = dict(
+            title=data.title,
+            public_details=data.public_details,
+            # TODO: add rest of fields
         )
+
+        note = resolvers.create(info, Note, note_data)
+        if existing_tasks:
+            note.parent_tasks.add(*list(existing_tasks))
+
+        if new_tasks:
+            note.parent_tasks.add(*list(created_tasks))
+
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
@@ -63,6 +97,7 @@ class Mutation:
             assign_perm(perm, user, note)
         return cast(NoteType, note)
 
+    # TODO: make atomic
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
         extensions=[

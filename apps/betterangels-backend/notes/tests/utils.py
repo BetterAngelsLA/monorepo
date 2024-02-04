@@ -1,3 +1,4 @@
+from typing import Optional
 from accounts.models import User
 from guardian.shortcuts import assign_perm
 from django.contrib.gis.geos import Point
@@ -13,8 +14,10 @@ from unittest_parametrize import ParametrizedTestCase
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.users = baker.make(User, _quantity=2)
+        self.users = baker.make(User, _quantity=3)
+        self.note_client = self.users[2]
         self.graphql_client.force_login(self.users[0])
+        # TODO: put this back
         self.note = self._create_note(
             {
                 "title": f"User: {self.users[0].id}",
@@ -23,24 +26,55 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         )["data"]["createNote"]
         self.graphql_client.logout()
 
+    def _create_task(self, variables: dict) -> Task:
+        default_variables = dict(
+            title="Wellness check",
+            status=TaskStatusEnum.IN_PROGRESS,
+            created_by=self.users[0],
+            client=self.note_client,
+        )
+        if variables:
+            default_variables.update(variables)
+
+        return baker.make(Task, **default_variables)
+
     def _create_note(self, variables: dict) -> dict:
-        default_variables = {
-            "title": "Test Note",
-            "publicDetails": "This is a test note.",
-            "moods": [],
-        }
-        default_variables.update(variables)
+        default_variables = dict(
+            title="Test Note",
+            publicDetails="This is a test note",
+            moods=[],
+            parentTasks=[],
+            childTasks=[],
+        )
+
+        if variables:
+            default_variables.update(variables)
 
         mutation = """
-            mutation CreateNote($title: String!, $publicDetails: String!, $moods: [CreateMoodInput!]) {
-                createNote(data: { title: $title, publicDetails: $publicDetails, moods: $moods }) {
+            mutation CreateNote(
+                $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
+                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!],
+            ) {
+                createNote(data: {
+                    title: $title, publicDetails: $publicDetails, moods: $moods,
+                    parentTasks: $parentTasks, childTasks: $childTasks
+                }) {
                     id
                     title
                     publicDetails
+                    moods {
+                        title
+                    }
+                    parentTasks {
+                        id
+                        title
+                        status
+                    }
                 }
             }
         """
 
+        print(self.execute_graphql(mutation, default_variables))
         return self.execute_graphql(mutation, default_variables)
 
     def _create_detailed_note(self) -> Note:
@@ -59,27 +93,30 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             location=location,
         )
 
-        task1 = baker.make(
-            Task,
-            title="Wellness check week 1",
-            status=TaskStatusEnum.COMPLETED,
-            location=location,
-            client=client,
-            created_by=case_manager,
+        task1 = self._create_task(
+            dict(
+                title="Wellness check week 1",
+                status=TaskStatusEnum.COMPLETED,
+                location=location,
+                client=client,
+                created_by=case_manager,
+            )
         )
-        task2 = baker.make(
-            Task,
-            title="DMV",
-            location=location,
-            client=client,
-            created_by=case_manager,
+        task2 = self._create_task(
+            dict(
+                title="DMV",
+                location=location,
+                client=client,
+                created_by=case_manager,
+            )
         )
-        task3 = baker.make(
-            Task,
-            title="Wellness check week 2",
-            location=location,
-            client=client,
-            created_by=case_manager,
+        task3 = self._create_task(
+            dict(
+                title="Wellness check week 2",
+                location=location,
+                client=client,
+                created_by=case_manager,
+            )
         )
 
         note.parent_tasks.add(task1, task2)

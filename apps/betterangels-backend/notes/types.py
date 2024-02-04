@@ -28,9 +28,12 @@ class CreateMoodInput:
 
 @dataclasses.dataclass
 @strawberry_django.input(models.Task)
-class LinkParentTaskInput:
+class LinkTaskInput:
     id: Optional[int]
     title: Optional[str]
+    status: Optional[str]
+    # location
+    # due_date
 
 
 @dataclasses.dataclass
@@ -74,7 +77,8 @@ class CreateNoteInput:
     public_details: auto
     moods: Optional[List[CreateMoodInput]]
     # TODO: remove optional
-    parent_tasks: Optional[LinkParentTaskInput]
+    parent_tasks: Optional[List[LinkTaskInput]]
+    child_tasks: Optional[List[LinkTaskInput]]
 
 
 @dataclasses.dataclass

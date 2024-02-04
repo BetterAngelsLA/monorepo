@@ -49,6 +49,8 @@ class Task(TimestampedModel):
         User, on_delete=models.CASCADE, null=False, related_name="tasks"
     )
 
+    objects = models.Manager()
+
 
 # TODO: Figure out why User/Group Perms are failing type checks
 # https://github.com/typeddjango/django-stubs/issues/1354
