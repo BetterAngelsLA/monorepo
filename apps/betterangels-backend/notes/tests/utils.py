@@ -2,9 +2,8 @@ from accounts.models import User
 from guardian.shortcuts import assign_perm
 from django.contrib.gis.geos import Point
 from django.test import TestCase
-from graphql import Location
 from model_bakery import baker
-from notes.enums import MoodEnum
+from notes.enums import MoodEnum, TaskStatusEnum
 from notes.models import Location, Mood, Note, Task
 from notes.permissions import NotePermissions
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -41,6 +40,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                 }
             }
         """
+
         return self.execute_graphql(mutation, default_variables)
 
     def _create_detailed_note(self) -> Note:
@@ -61,7 +61,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         task1 = baker.make(
             Task,
-            title="Wellness check",
+            title="Wellness check week 1",
+            status=TaskStatusEnum.COMPLETED,
             location=location,
             client=client,
             created_by=case_manager,
@@ -73,7 +74,16 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             client=client,
             created_by=case_manager,
         )
-        note.tasks.add(task1, task2)
+        task3 = baker.make(
+            Task,
+            title="Wellness check week 2",
+            location=location,
+            client=client,
+            created_by=case_manager,
+        )
+
+        note.parent_tasks.add(task1, task2)
+        note.child_tasks.add(task3)
 
         mood1 = baker.make(Mood, title=MoodEnum.ANXIOUS.value)
         mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)

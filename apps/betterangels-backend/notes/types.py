@@ -27,9 +27,17 @@ class CreateMoodInput:
 
 
 @dataclasses.dataclass
+@strawberry_django.input(models.Task)
+class LinkParentTaskInput:
+    id: Optional[int]
+    title: Optional[str]
+
+
+@dataclasses.dataclass
 @strawberry_django.type(models.Task)
 class TaskType:
     id: auto
+    status: auto
     title: auto
     created_at: auto
     created_by: UserType
@@ -42,7 +50,8 @@ class NoteType:
     title: auto
     public_details: auto
     created_at: auto
-    tasks: List[TaskType]
+    parent_tasks: List[TaskType]
+    child_tasks: List[TaskType]
     moods: List[MoodType]
 
     @classmethod
@@ -64,6 +73,8 @@ class CreateNoteInput:
     title: auto
     public_details: auto
     moods: Optional[List[CreateMoodInput]]
+    # TODO: remove optional
+    parent_tasks: Optional[LinkParentTaskInput]
 
 
 @dataclasses.dataclass

@@ -43,3 +43,9 @@ class ServiceEnum(StrEnum):
     TRANSPORT = "Transport"
     WATER = "Water"
     OTHER = "Other"
+
+
+class TaskStatusEnum(StrEnum):
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+    CANCELED = "Cancel"

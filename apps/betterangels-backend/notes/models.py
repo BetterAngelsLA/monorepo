@@ -3,7 +3,7 @@ from django.contrib.gis.db.models import PointField
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
-from .enums import MoodEnum, ServiceEnum
+from .enums import MoodEnum, ServiceEnum, TaskStatusEnum
 
 
 class TimestampedModel(models.Model):
@@ -34,15 +34,13 @@ class Service(TimestampedModel):
 
 class Task(TimestampedModel):
     title = models.CharField(max_length=100, blank=False)
+    status = models.CharField(
+        choices=[(x, x.value) for x in TaskStatusEnum],
+        default=TaskStatusEnum.IN_PROGRESS,
+    )
     due_date = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, related_name="tasks"
-    )
-    parent_tasks = models.ForeignKey(
-        "self", on_delete=models.PROTECT, null=True, related_name="children"
-    )
-    child_tasks = models.ForeignKey(
-        "self", on_delete=models.PROTECT, null=True, related_name="parents"
     )
     client = models.ForeignKey(
         User, on_delete=models.CASCADE, null=False, related_name="client_tasks"
@@ -60,7 +58,12 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    tasks = models.ManyToManyField(Task)
+    # TODO: rename field and related_names!
+    # Other field names to consider:
+    # parrent_tasks -> source_tasks / purpose_tasks
+    # child_tasks -> next_tasks / followup_tasks
+    parent_tasks = models.ManyToManyField(Task, related_name="notes_created")
+    child_tasks = models.ManyToManyField(Task, related_name="notes_next_task")
     moods = models.ManyToManyField(Mood)
     provided_services = models.ManyToManyField(Service, related_name="notes")
     requested_services = models.ManyToManyField(Service, related_name="notes")

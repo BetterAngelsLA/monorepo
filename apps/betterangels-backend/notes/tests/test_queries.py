@@ -33,7 +33,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     moods {
                         title
                     }
-                    tasks {
+                    parentTasks {
+                        status
+                        title
+
+                    }
+                    childTasks{
+                        status
                         title
                     }
                     publicDetails
@@ -50,7 +56,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
         self.assertEqual(note["publicDetails"], "Some public details")
         self.assertEqual(note["moods"], [{"title": "Anxious"}, {"title": "Euthymic"}])
-        self.assertEqual(note["tasks"], [{"title": "Wellness check"}, {"title": "DMV"}])
+        self.assertEqual(
+            note["parentTasks"],
+            [
+                {"title": "Wellness check week 1", "status": "Completed"},
+                {"title": "DMV", "status": "In Progress"},
+            ],
+        )
+        self.assertEqual(
+            note["childTasks"],
+            [{"title": "Wellness check week 2", "status": "In Progress"}],
+        )
 
     def test_notes_query(self) -> None:
         query = """
