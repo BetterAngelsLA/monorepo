@@ -81,5 +81,5 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
         notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 2)
+        self.assertEqual(len(notes), 1)
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])

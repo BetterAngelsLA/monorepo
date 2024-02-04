@@ -44,6 +44,7 @@ class TaskType:
     title: auto
     created_at: auto
     created_by: UserType
+    # client: UserType
 
 
 @dataclasses.dataclass
@@ -53,6 +54,8 @@ class NoteType:
     title: auto
     public_details: auto
     created_at: auto
+    created_by: UserType
+    client: Optional[UserType]
     parent_tasks: List[TaskType]
     child_tasks: List[TaskType]
     moods: List[MoodType]
@@ -71,6 +74,12 @@ class NoteType:
 
 
 @dataclasses.dataclass
+@strawberry_django.input(models.User)
+class UserInput:
+    id: auto
+
+
+@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
@@ -79,6 +88,8 @@ class CreateNoteInput:
     # TODO: remove optional
     parent_tasks: Optional[List[LinkTaskInput]]
     child_tasks: Optional[List[LinkTaskInput]]
+    # client: auto
+    client: Optional[UserInput]
 
 
 @dataclasses.dataclass

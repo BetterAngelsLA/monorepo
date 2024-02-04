@@ -22,9 +22,17 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+input CreateMoodInput {
+  title: String
+}
+
 input CreateNoteInput {
   title: String!
   publicDetails: String
+  moods: [CreateMoodInput!]
+  parentTasks: [LinkTaskInput!]
+  childTasks: [LinkTaskInput!]
+  client: UserInput
 }
 
 """Date with time (isoformat)"""
@@ -34,12 +42,23 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+input LinkTaskInput {
+  id: Int
+  title: String
+  status: String
+}
+
 input MagicLinkInput {
   email: String!
 }
 
 type MagicLinkResponse {
   message: String!
+}
+
+type MoodType {
+  id: ID!
+  title: String!
 }
 
 type Mutation {
@@ -56,6 +75,10 @@ type NoteType {
   publicDetails: String
   createdAt: DateTime!
   createdBy: UserType!
+  client: UserType
+  parentTasks: [TaskType!]!
+  childTasks: [TaskType!]!
+  moods: [MoodType!]!
 }
 
 input OffsetPaginationInput {
@@ -69,10 +92,22 @@ type Query {
   notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
 }
 
+type TaskType {
+  id: ID!
+  status: String!
+  title: String!
+  createdAt: DateTime!
+  createdBy: UserType!
+}
+
 input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
+}
+
+input UserInput {
+  id: ID
 }
 
 type UserType {

@@ -1,8 +1,9 @@
 from typing import Optional
+
 from accounts.models import User
-from guardian.shortcuts import assign_perm
 from django.contrib.gis.geos import Point
 from django.test import TestCase
+from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from notes.enums import MoodEnum, TaskStatusEnum
 from notes.models import Location, Mood, Note, Task
@@ -17,7 +18,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.users = baker.make(User, _quantity=3)
         self.note_client = self.users[2]
         self.graphql_client.force_login(self.users[0])
-        # TODO: put this back
         self.note = self._create_note(
             {
                 "title": f"User: {self.users[0].id}",
@@ -54,10 +54,12 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             mutation CreateNote(
                 $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
                 $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!],
+                $client: UserInput,
             ) {
                 createNote(data: {
                     title: $title, publicDetails: $publicDetails, moods: $moods,
-                    parentTasks: $parentTasks, childTasks: $childTasks
+                    parentTasks: $parentTasks, childTasks: $childTasks,
+                    client: $client,
                 }) {
                     id
                     title
@@ -70,11 +72,16 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                         title
                         status
                     }
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
                 }
             }
         """
 
-        print(self.execute_graphql(mutation, default_variables))
         return self.execute_graphql(mutation, default_variables)
 
     def _create_detailed_note(self) -> Note:

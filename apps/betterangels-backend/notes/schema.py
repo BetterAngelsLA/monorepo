@@ -1,10 +1,10 @@
 from dataclasses import asdict
 from typing import List, cast
-from django.db import transaction
 
 import strawberry
 import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
+from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
 from strawberry.types import Info
@@ -74,9 +74,13 @@ class Mutation:
                 ]
             )
 
+        print("&" * 100)
+        print(data)
         note_data = dict(
             title=data.title,
             public_details=data.public_details,
+            created_by=user,
+            client=getattr(data.client, "id", None),
             # TODO: add rest of fields
         )
 

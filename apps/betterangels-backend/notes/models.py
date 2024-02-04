@@ -40,7 +40,7 @@ class Task(TimestampedModel):
     )
     due_date = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(
-        Location, on_delete=models.CASCADE, null=True, related_name="tasks"
+        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
     )
     client = models.ForeignKey(
         User, on_delete=models.CASCADE, null=False, related_name="client_tasks"
@@ -78,6 +78,17 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     public_details = models.TextField(null=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
+    # TODO: make unnullable
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="client_notes",
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
+    )
 
     objects = models.Manager()
 

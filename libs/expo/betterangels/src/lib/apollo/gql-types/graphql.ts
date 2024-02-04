@@ -18,13 +18,27 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
 };
 
+export type CreateMoodInput = {
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateNoteInput = {
+  childTasks?: InputMaybe<Array<LinkTaskInput>>;
+  client?: InputMaybe<UserInput>;
+  moods?: InputMaybe<Array<CreateMoodInput>>;
+  parentTasks?: InputMaybe<Array<LinkTaskInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
 
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
+};
+
+export type LinkTaskInput = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type MagicLinkInput = {
@@ -34,6 +48,12 @@ export type MagicLinkInput = {
 export type MagicLinkResponse = {
   __typename?: 'MagicLinkResponse';
   message: Scalars['String']['output'];
+};
+
+export type MoodType = {
+  __typename?: 'MoodType';
+  id: Scalars['ID']['output'];
+  title: Scalars['String']['output'];
 };
 
 export type Mutation = {
@@ -67,9 +87,13 @@ export type MutationUpdateNoteArgs = {
 
 export type NoteType = {
   __typename?: 'NoteType';
+  childTasks: Array<TaskType>;
+  client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
+  moods: Array<MoodType>;
+  parentTasks: Array<TaskType>;
   publicDetails?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
 };
@@ -104,10 +128,23 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type TaskType = {
+  __typename?: 'TaskType';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  id: Scalars['ID']['output'];
+  status: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
+};
+
+export type UserInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserType = {

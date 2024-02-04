@@ -1,6 +1,8 @@
+from accounts.models import User
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
+from model_bakery import baker
 
 
 @ignore_warnings(category=UserWarning)
@@ -23,6 +25,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                     "title": "New Note",
                     "publicDetails": "This is a new note.",
                     "parentTasks": [{"id": task1.id}, {"id": task2.id}],
+                    "client": {"id": self.note_client.id},
+                    # "client": self.note_client.id,
+                    # "createdBy": self.users[0],
                 }
             )
         created_note = response["data"]["createNote"]
@@ -36,6 +41,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             created_note["parentTasks"][1],
             {"id": str(task2.id), "title": "Task 2", "status": "In Progress"},
         )
+        self.assertEqual(created_note["createdBy"]["id"], str(self.users[0].id))
+        self.assertEqual(created_note["client"]["id"], str(self.note_client.id))
 
     def test_create_note_mutation_without_existing_task(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
@@ -73,7 +80,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
