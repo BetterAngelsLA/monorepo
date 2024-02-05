@@ -14,7 +14,7 @@ def get_objects_for_user(
     klass: QuerySet[T],
     any_perm: bool = True,
 ) -> QuerySet[T]:
-    if not user.is_authenticated:
+    if not user.is_authenticated or not perms:
         return klass.none()
 
     model_name = klass.model._meta.model_name

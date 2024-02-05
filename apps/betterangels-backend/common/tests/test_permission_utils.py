@@ -47,67 +47,91 @@ class PermissionUtilsTests(ParametrizedTestCase, TestCase):
         assign_perm("view_note", cls.test_group, cls.note3)
 
     @parametrize(
-        "user_attr,expected_count,expected_queries",
+        "user_attr,permissions,any_perm,expected_count,expected_queries",
         [
-            ("user_with_perms", 2, 1),
-            ("user_with_group_perms", 2, 1),
-            ("user_without_perms", 0, 1),
-            ("anonymous_user", 0, 0),
-        ],
-    )
-    def test_get_objects_for_user(
-        self, user_attr: str, expected_count: int, expected_queries: int
-    ) -> None:
-        user = getattr(self, user_attr)
-        with self.assertNumQueries(expected_queries):
-            queryset = get_objects_for_user(user, ["view_note"], Note.objects.all())
-            self.assertEqual(queryset.count(), expected_count)
-
-    @parametrize(
-        "permissions,any_perm,expected_count,expected_queries",
-        [
-            (["view_note"], True, 2, 1),
+            # Testing direct permissions
             (
+                "user_with_perms",
+                ["view_note"],
+                True,
+                2,
+                1,
+            ),  # Access to note1, note2
+            (
+                "user_with_perms",
                 ["view_note", "edit_note"],
                 True,
                 2,
                 1,
-            ),  # Assumes user_with_perms has "view_note"
+            ),  # Same, assuming "edit_note" not required for access
             (
+                "user_with_perms",
                 ["view_note", "edit_note"],
                 False,
                 0,
                 1,
-            ),  # Needs both, but user_with_perms lacks "edit_note"
+            ),  # Fails because "edit_note" permission is missing
+            # Testing group permissions
+            (
+                "user_with_group_perms",
+                ["view_note"],
+                True,
+                2,
+                1,
+            ),  # Access to note1 and note3 via group
+            (
+                "user_with_group_perms",
+                ["view_note", "edit_note"],
+                True,
+                2,
+                1,
+            ),  # Assuming "edit_note" not required for access
+            (
+                "user_with_group_perms",
+                ["view_note", "edit_note"],
+                False,
+                0,
+                1,
+            ),  # Fails because "edit_note" permission is missing
+            # User without any permissions
+            ("user_without_perms", ["view_note"], True, 0, 1),
+            ("user_without_perms", ["view_note", "edit_note"], False, 0, 1),
+            # Anonymous user
+            (
+                "anonymous_user",
+                ["view_note"],
+                True,
+                0,
+                0,
+            ),  # No DB queries expected for anonymous users without any permissions
+            # Additional scenarios
+            (
+                "user_with_perms",
+                [],
+                True,
+                0,
+                0,
+            ),  # No permissions specified, expects no access
+            (
+                "user_with_group_perms",
+                [],
+                True,
+                0,
+                0,
+            ),  # No permissions specified for group, expects no access
         ],
     )
-    def test_get_objects_with_varying_permissions(
+    def test_permission_checks(
         self,
+        user_attr: str,
         permissions: List[str],
         any_perm: bool,
         expected_count: int,
         expected_queries: int,
     ) -> None:
-        with self.assertNumQueries(expected_queries):
-            queryset = get_objects_for_user(
-                self.user_with_perms, permissions, Note.objects.all(), any_perm=any_perm
-            )
-            self.assertEqual(queryset.count(), expected_count)
-
-    @parametrize(
-        "user_attr,expected_count,expected_queries",
-        [
-            (
-                "user_with_group_perms",
-                2,
-                1,
-            ),  # User with group perms can access note1 and note3
-        ],
-    )
-    def test_get_objects_for_user_with_group_permission_only(
-        self, user_attr: str, expected_count: int, expected_queries: int
-    ) -> None:
         user = getattr(self, user_attr)
         with self.assertNumQueries(expected_queries):
-            queryset = get_objects_for_user(user, ["view_note"], Note.objects.all())
+            queryset = get_objects_for_user(
+                user, permissions, Note.objects.all(), any_perm=any_perm
+            )
             self.assertEqual(queryset.count(), expected_count)
