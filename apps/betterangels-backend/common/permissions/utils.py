@@ -14,6 +14,28 @@ def get_objects_for_user(
     klass: QuerySet[T],
     any_perm: bool = False,
 ) -> QuerySet[T]:
+    """
+    Fetches a queryset of objects for which the user has specified permissions.
+    Acts as a replacement for Django Guardian's `get_objects_for_user`, aiming
+    for flexible and efficient permission checks using Django's ORM.
+
+    Args:
+        user: User for whom to retrieve objects.
+        perms: Permission strings to check.
+        klass: Initial queryset of model objects.
+        any_perm: If True, returns objects for any permissions. Else, all.
+
+    Returns:
+        A queryset of objects with the specified permissions for the user.
+
+    Note:
+        - Dynamically builds queries for user/group permissions.
+        - Requires `klass` as a correct model type queryset and `perms` to be
+          model-appropriate permission codenames.
+        - Custom `UserObjectPermission` and `GroupObjectPermission` models
+          associate permissions with model instances, enabling granular access
+          control.
+    """
     if not user.is_authenticated or not perms:
         return klass.none()
 
@@ -38,19 +60,16 @@ def get_objects_for_user(
                 f"{group_permissions_field}__group__user": user,
             }
         )
-        permission_filters.append(user_perm_query | group_perm_query)
+        permission_filters.append(
+            Exists(klass.filter(user_perm_query | group_perm_query, pk=OuterRef("pk")))
+        )
 
     if any_perm:
-        # For any_perm=True, combine all permission conditions using OR
         combined_condition = reduce(or_, permission_filters)
     else:
-        # For any_perm=False, combine all permission conditions using AND
         combined_condition = reduce(and_, permission_filters)
-
-    # Check permissions using Exists for each condition and filter accordingly
-    permission_query = Exists(klass.filter(combined_condition, pk=OuterRef("pk")))
 
     return cast(
         QuerySet[T],
-        qs.annotate(has_permission=permission_query).filter(has_permission=True),
+        qs.annotate(has_permission=combined_condition).filter(has_permission=True),
     )
