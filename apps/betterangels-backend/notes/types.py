@@ -1,10 +1,10 @@
 import dataclasses
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import strawberry_django
 from accounts.types import UserType
+from common.permissions.utils import get_objects_for_user
 from django.db.models import QuerySet
-from guardian.shortcuts import get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry import auto
 from strawberry.types import Info
@@ -29,10 +29,7 @@ class NoteType:
         # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
         # Instead we use get_objects_for_user to enforce permissions.
         user = get_current_user(info)
-        return cast(
-            QuerySet[models.Note],
-            get_objects_for_user(user, NotePermissions.VIEW, klass=queryset),
-        )
+        return get_objects_for_user(user, [NotePermissions.VIEW], klass=queryset)
 
 
 @dataclasses.dataclass
