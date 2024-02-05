@@ -12,7 +12,7 @@ def get_objects_for_user(
     user: Union[AbstractBaseUser, AnonymousUser],
     perms: List[str],
     klass: QuerySet[T],
-    any_perm: bool = True,
+    any_perm: bool = False,
 ) -> QuerySet[T]:
     if not user.is_authenticated or not perms:
         return klass.none()
