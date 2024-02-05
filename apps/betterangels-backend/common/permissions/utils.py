@@ -1,6 +1,6 @@
 from functools import reduce
 from operator import and_, or_
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, cast
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet
@@ -49,6 +49,8 @@ def get_objects_for_user(
 
     # Check permissions using Exists for each condition and filter accordingly
     permission_query = Exists(klass.filter(combined_condition, pk=OuterRef("pk")))
-    qs = klass.annotate(has_permission=permission_query).filter(has_permission=True)
 
-    return qs
+    return cast(
+        QuerySet[T],
+        qs.annotate(has_permission=permission_query).filter(has_permission=True),
+    )
