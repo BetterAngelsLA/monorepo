@@ -17,7 +17,7 @@ import Title from './Title';
 
 interface INote {
   purposes: { value: string }[];
-  nextStepActions: { value: string }[];
+  nextStepActions: { action: string; date?: Date; location?: string }[];
   hmisNote: string;
   noteDateTime: string;
 }
@@ -29,7 +29,7 @@ export default function AddNote() {
   const methods = useForm<INote>({
     defaultValues: {
       purposes: [{ value: '' }],
-      nextStepActions: [{ value: '' }],
+      nextStepActions: [{ action: '' }],
       hmisNote: 'G: \n\nI: \n\nR: \n\nP: \n',
       noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
     },
