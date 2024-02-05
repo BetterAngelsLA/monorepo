@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import strawberry_django
 from accounts.types import UserType
