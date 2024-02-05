@@ -60,16 +60,16 @@ def get_objects_for_user(
                 f"{group_permissions_field}__group__user": user,
             }
         )
-        permission_filters.append(user_perm_query | group_perm_query)
+        permission_filters.append(
+            Exists(klass.filter(user_perm_query | group_perm_query, pk=OuterRef("pk")))
+        )
 
     if any_perm:
         combined_condition = reduce(or_, permission_filters)
     else:
         combined_condition = reduce(and_, permission_filters)
 
-    permission_query = Exists(klass.filter(combined_condition, pk=OuterRef("pk")))
-
     return cast(
         QuerySet[T],
-        qs.annotate(has_permission=permission_query).filter(has_permission=True),
+        qs.annotate(has_permission=combined_condition).filter(has_permission=True),
     )

@@ -13,39 +13,63 @@ from unittest_parametrize import ParametrizedTestCase, parametrize
 
 class PermissionUtilsTests(ParametrizedTestCase, TestCase):
     user_with_perms: User
+    user_with_all_perms: User
     user_without_perms: User
     user_with_group_perms: User
+    user_with_group_all_perms: User
     anonymous_user: AnonymousUser
     test_group: Group
+    test_group_with_all_perms: Group
     note1: Note
     note2: Note
-    note3: Note  # Additional note for group permission testing
+    note3: Note
+    note4: Note
 
     @classmethod
     def setUpTestData(cls) -> None:
         super().setUpTestData()
         # Create test users
         cls.user_with_perms = baker.make(User)
+        cls.user_with_all_perms = baker.make(User)
         cls.user_without_perms = baker.make(User)
+        cls.user_with_group_all_perms = baker.make(User)
         cls.user_with_group_perms = baker.make(User)
         cls.anonymous_user = AnonymousUser()
 
         # Create a test group and add user_with_group_perms to it
         cls.test_group = baker.make(Group)
         cls.user_with_group_perms.groups.add(cls.test_group)
+        cls.test_group_with_all_perms = baker.make(Group)
+        cls.user_with_group_all_perms.groups.add(cls.test_group_with_all_perms)
 
         # Create test notes
         cls.note1 = baker.make(Note)
         cls.note2 = baker.make(Note)
         cls.note3 = baker.make(Note)
+        cls.note4 = baker.make(Note)
 
         # Assign permissions directly to user_with_perms
         assign_perm(NotePermissions.VIEW, cls.user_with_perms, cls.note1)
         assign_perm(NotePermissions.VIEW, cls.user_with_perms, cls.note2)
 
+        assign_perm(NotePermissions.VIEW, cls.user_with_all_perms, cls.note1)
+        assign_perm(NotePermissions.CHANGE, cls.user_with_all_perms, cls.note1)
+
         # Assign permissions to the group
         assign_perm(NotePermissions.VIEW, cls.test_group, cls.note1)
         assign_perm(NotePermissions.VIEW, cls.test_group, cls.note3)
+
+        # Assign both VIEW and CHANGE permissions to the group for a specific note
+        assign_perm(
+            NotePermissions.VIEW,
+            cls.test_group_with_all_perms,
+            cls.note4,
+        )
+        assign_perm(
+            NotePermissions.CHANGE,
+            cls.test_group_with_all_perms,
+            cls.note4,
+        )
 
     @parametrize(
         "user_attr,permissions,any_perm,expected_count,expected_query_count",
@@ -72,6 +96,13 @@ class PermissionUtilsTests(ParametrizedTestCase, TestCase):
                 0,
                 1,
             ),  # Fails because NotePermissions.CHANGE permission is missing
+            (
+                "user_with_all_perms",
+                [NotePermissions.VIEW, NotePermissions.CHANGE],
+                False,
+                1,  # Assuming the user has both permissions on 1 note
+                1,
+            ),
             # Testing group permissions
             (
                 "user_with_group_perms",
@@ -94,6 +125,13 @@ class PermissionUtilsTests(ParametrizedTestCase, TestCase):
                 0,
                 1,
             ),  # Fails because NotePermissions.CHANGE permission is missing
+            (
+                "user_with_group_all_perms",
+                [NotePermissions.VIEW, NotePermissions.CHANGE],
+                False,
+                1,
+                1,
+            ),  # Assuming the group has both permissions on 1 note
             # User without any permissions
             ("user_without_perms", [NotePermissions.VIEW], True, 0, 1),
             (
