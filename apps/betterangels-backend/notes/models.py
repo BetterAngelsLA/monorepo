@@ -62,7 +62,7 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     )
     # TODO: rename field and related_names!
     # Other field names to consider:
-    # parrent_tasks -> source_tasks / purpose_tasks
+    # parent_tasks -> source_tasks / purpose_tasks
     # child_tasks -> next_tasks / followup_tasks
     parent_tasks = models.ManyToManyField(Task, related_name="notes_created")
     child_tasks = models.ManyToManyField(Task, related_name="notes_next_task")

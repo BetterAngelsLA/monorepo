@@ -31,13 +31,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         task1 = self._create_task({"title": "Task 1"})
         task2 = self._create_task({"title": "Task 2"})
 
-        expected_query_count = 39
+        expected_query_count = 37
         with self.assertNumQueries(expected_query_count):
             response = self._create_note(
                 {
                     "title": "New Note",
                     "publicDetails": "This is a new note.",
-                    "parentTasks": [{"id": task1.id, "status": "In Progress"}, {"id": task2.id, "status": "Completed"}],
+                    "parentTasks": [{"id": task1.id}, {"id": task2.id}],
                     "client": {"id": self.note_client.id},
                 }
             )
@@ -49,7 +49,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         )
         self.assertEqual(
             created_note["parentTasks"][1],
-            {"id": str(task2.id), "title": "Task 2", "status": "Completed"},
+            {"id": str(task2.id), "title": "Task 2", "status": "In Progress"},
         )
 
     def test_update_note_mutation(self) -> None:

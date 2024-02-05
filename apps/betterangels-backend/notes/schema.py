@@ -20,17 +20,6 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 from strawberry.unset import UnsetType
 
 
-# TODO: organize this somewhere, maybe refactor to use some strawberry command
-def _update_existing_tasks(attached_tasks: list) -> list[Task]:
-    task_status_updates = {t.id: t.status for t in attached_tasks}
-    existing_tasks = Task.objects.filter(id__in=task_status_updates.keys())
-    for existing_task in existing_tasks:
-        existing_task.status = task_status_updates[existing_task.id]
-        existing_task.save()
-
-    return existing_tasks
-
-
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
@@ -70,8 +59,8 @@ class Mutation:
         existing_tasks = None
 
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
-            if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
-                existing_tasks = _update_existing_tasks(attached_tasks)
+            if attached_tasks := [t.id for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
+                existing_tasks = Task.objects.filter(id__in=attached_tasks)
 
         note_data = dict(
             title=data.title,
@@ -120,7 +109,14 @@ class Mutation:
 
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
             if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
-                existing_tasks = _update_existing_tasks(attached_tasks)
+                # existing_tasks = _update_existing_tasks(attached_tasks)
+                task_updates = {t.id: {"status": t.status, "title": t.title} for t in attached_tasks}
+                existing_tasks = Task.objects.filter(id__in=task_updates.keys())
+                for existing_task in existing_tasks:
+                    print(existing_task.id)
+                    existing_task.status = task_updates[existing_task.id]["status"]
+                    existing_task.title = task_updates[existing_task.id]["title"]
+                    existing_task.save()
 
             # TODO: add location + due_date
             if new_tasks := [t for t in data.parent_tasks if isinstance(t.id, UnsetType)]:

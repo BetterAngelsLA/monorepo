@@ -46,6 +46,8 @@ class ServiceEnum(StrEnum):
 
 
 class TaskStatusEnum(StrEnum):
-    IN_PROGRESS = "In Progress"
+    CANCELED = "Canceled"
     COMPLETED = "Completed"
-    CANCELED = "Cancel"
+    DRAFT_CANCELED = "Draft Canceled"
+    DRAFT_COMPLETED = "Draft Completed"
+    IN_PROGRESS = "In Progress"
