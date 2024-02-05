@@ -33,6 +33,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
               }
           }
         """
+
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
