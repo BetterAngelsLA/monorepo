@@ -27,11 +27,11 @@ class Query:
 
     notes: List[NoteType] = strawberry_django.field(
         extensions=[
-            IsAuthenticated(),
+            # HasRetvalPerm(perms=[NotePermissions.VIEW]),
             # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
             # Instead we enforce permissions within get_queryset on NoteType.
         ],
-        pagination=True,
+        # pagination=True,
     )
 
 

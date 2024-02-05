@@ -3,8 +3,8 @@ from typing import Any, Dict, cast
 
 import strawberry_django
 from accounts.types import UserType
+from common.permissions.utils import get_objects_for_user
 from django.db.models import QuerySet
-from guardian.shortcuts import get_objects_for_user
 from notes.permissions import NotePermissions
 from strawberry import auto
 from strawberry.types import Info
@@ -31,7 +31,7 @@ class NoteType:
         user = get_current_user(info)
         return cast(
             QuerySet[models.Note],
-            get_objects_for_user(user, NotePermissions.VIEW, klass=queryset),
+            get_objects_for_user(user, [NotePermissions.VIEW], klass=queryset),
         )
 
 

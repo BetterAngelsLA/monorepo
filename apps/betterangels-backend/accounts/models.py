@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
@@ -9,6 +9,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation
 from simple_history.models import HistoricalRecords
@@ -138,21 +139,21 @@ class PermissionGroup(models.Model):
         unique_together = ("organization", "group")
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk and self.template:
+            raise ValidationError(
+                "Updating a PermissionGroup with a template is not allowed."
+            )
+
         if not hasattr(self, "group"):
-            self._create_group()
+            permissions_to_apply = []
+            if self.template:
+                group_name = f"{self.organization.name}_{self.template.name}"
+                permissions_to_apply = self.template.permissions.all()
+                self.name = self.template.name
+            else:
+                group_name = f"{self.organization.name}_{self.name}"
+
+            self.group = Group.objects.create(name=group_name)
+            self.group.permissions.set(permissions_to_apply)
+
         super().save(*args, **kwargs)
-
-    def _create_group(self) -> None:
-        permission_group_name = self.name
-        if self.template:
-            permission_group_name = self.template.name
-            self.name = self.template.name
-
-        group_name = f"{self.organization.name}_{permission_group_name}"
-        group = Group.objects.create(name=group_name)
-
-        if self.template:
-            permissions = self.template.permissions.all()
-            group.permissions.set(permissions)
-
-        self.group = group

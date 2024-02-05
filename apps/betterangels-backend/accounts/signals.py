@@ -1,7 +1,10 @@
 import logging
 from typing import Any
 
-from accounts.utils import add_user_to_org, remove_user_from_org_groups
+from accounts.utils import (
+    add_default_org_permissions_to_user,
+    remove_org_group_permissions_from_user,
+)
 from django.conf import settings
 from django.db.models.signals import post_delete, post_migrate, post_save
 from django.dispatch import receiver
@@ -9,7 +12,6 @@ from organizations.models import Organization, OrganizationUser
 
 from .models import User
 
-# Get a logger instance
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +30,7 @@ def handle_organization_user_added(
     user: User = instance.user
     organization: Organization = instance.organization
     if created:
-        add_user_to_org(user, organization)
+        add_default_org_permissions_to_user(user, organization)
     logger.info(f"User {user.username} was added to organization {organization.name}.")
 
 
@@ -38,7 +40,7 @@ def handle_organization_user_removed(
 ) -> None:
     user: User = instance.user
     organization: Organization = instance.organization
-    remove_user_from_org_groups(user, organization)
+    remove_org_group_permissions_from_user(user, organization)
     logger.info(
         f"User {user.username} was removed from organization {organization.name}."
     )
