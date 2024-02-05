@@ -17,8 +17,9 @@ def get_objects_for_user(
     if not user.is_authenticated or not perms:
         return klass.none()
 
-    user_permissions_field = "user_object_permissions"
-    group_permissions_field = "group_object_permissions"
+    model_name = klass.model._meta.model_name
+    user_permissions_field = f"{model_name}userobjectpermission"
+    group_permissions_field = f"{model_name}groupobjectpermission"
 
     qs = klass
     permission_filters = []
