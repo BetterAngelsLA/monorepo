@@ -26,9 +26,6 @@ def get_objects_for_user(
 
     for perm in perms:
         perm_codename = perm.split(".")[-1]
-        has_required_perms = (
-            f"has_perm_{perm_codename}"  # Use perm name in the annotation
-        )
         user_perm_query = Q(
             **{
                 f"{user_permissions_field}__permission__codename": perm_codename,
@@ -41,16 +38,17 @@ def get_objects_for_user(
                 f"{group_permissions_field}__group__user": user,
             }
         )
-        permission_query = Exists(
-            klass.filter(
-                user_perm_query | group_perm_query,
-                pk=OuterRef("pk"),
-            )
-        )
-        qs = qs.annotate(**{has_required_perms: permission_query})
-        permission_filters.append(Q(**{has_required_perms: True}))
+        permission_filters.append(user_perm_query | group_perm_query)
 
-    # Combine permission filters using reduce based on any_perm flag
-    combined_permission_filter = reduce(or_ if any_perm else and_, permission_filters)
+    if any_perm:
+        # For any_perm=True, combine all permission conditions using OR
+        combined_condition = reduce(or_, permission_filters)
+    else:
+        # For any_perm=False, combine all permission conditions using AND
+        combined_condition = reduce(and_, permission_filters)
 
-    return qs.filter(combined_permission_filter)
+    # Check permissions using Exists for each condition and filter accordingly
+    permission_query = Exists(klass.filter(combined_condition, pk=OuterRef("pk")))
+    qs = klass.annotate(has_permission=permission_query).filter(has_permission=True)
+
+    return qs
