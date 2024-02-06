@@ -10,7 +10,7 @@ from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
-from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
+from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -20,18 +20,12 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 class Query:
     note: NoteType = strawberry_django.field(
         extensions=[
-            IsAuthenticated(),
-            HasRetvalPerm(perms=[NotePermissions.VIEW]),
+            HasPerm(perms=[NotePermissions.VIEW]),
         ],
     )
 
     notes: List[NoteType] = strawberry_django.field(
-        extensions=[
-            # HasRetvalPerm(perms=[NotePermissions.VIEW]),
-            # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
-            # Instead we enforce permissions within get_queryset on NoteType.
-        ],
-        # pagination=True,
+        extensions=[HasPerm(perms=[NotePermissions.VIEW])],
     )
 
 
@@ -39,7 +33,7 @@ class Query:
 class Mutation:
     @strawberry.mutation(
         extensions=[
-            IsAuthenticated(),
+            HasPerm(perms=[NotePermissions.ADD]),
         ]
     )
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
@@ -56,17 +50,16 @@ class Mutation:
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
-            NotePermissions.VIEW,
             NotePermissions.CHANGE,
             NotePermissions.DELETE,
         ]:
             assign_perm(perm, user, note)
+
         return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
         extensions=[
-            IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
         ],
     )
@@ -74,7 +67,6 @@ class Mutation:
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[
-            IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.DELETE]),
         ],
     )

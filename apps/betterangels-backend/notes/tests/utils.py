@@ -10,6 +10,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         super().setUp()
         self.users = baker.make(User, _quantity=2)
         self.graphql_client.force_login(self.users[0])
+        # Create Permission Group for Caseworkers
+        # Add Group To User
         self.note = self._create_note(
             {"title": f"User: {self.users[0].id}", "body": f"{self.users[0].id}'s note"}
         )["data"]["createNote"]
