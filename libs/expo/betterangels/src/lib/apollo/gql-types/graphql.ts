@@ -19,13 +19,11 @@ export type Scalars = {
 };
 
 export type CreateMoodInput = {
-  title?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
 };
 
 export type CreateNoteInput = {
-  childTasks?: InputMaybe<Array<LinkTaskInput>>;
   client?: InputMaybe<UserInput>;
-  moods?: InputMaybe<Array<CreateMoodInput>>;
   parentTasks?: InputMaybe<Array<LinkTaskInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
@@ -52,7 +50,6 @@ export type MagicLinkResponse = {
 
 export type MoodType = {
   __typename?: 'MoodType';
-  id: Scalars['ID']['output'];
   title: Scalars['String']['output'];
 };
 
@@ -92,6 +89,7 @@ export type NoteType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
+  isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
   parentTasks: Array<TaskType>;
   publicDetails?: Maybe<Scalars['String']['output']>;
@@ -138,7 +136,11 @@ export type TaskType = {
 };
 
 export type UpdateNoteInput = {
+  childTasks?: InputMaybe<Array<LinkTaskInput>>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  moods?: InputMaybe<Array<CreateMoodInput>>;
+  parentTasks?: InputMaybe<Array<LinkTaskInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };

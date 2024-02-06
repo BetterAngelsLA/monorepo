@@ -23,15 +23,13 @@ When the condition fails, the following can be returned (following this priority
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 input CreateMoodInput {
-  title: String
+  title: String!
 }
 
 input CreateNoteInput {
   title: String!
   publicDetails: String
-  moods: [CreateMoodInput!]
   parentTasks: [LinkTaskInput!]
-  childTasks: [LinkTaskInput!]
   client: UserInput
 }
 
@@ -57,16 +55,15 @@ type MagicLinkResponse {
 }
 
 type MoodType {
-  id: ID!
   title: String!
 }
 
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): NoteType! @isAuthenticated
+  updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
 }
 
 type NoteType {
@@ -79,6 +76,7 @@ type NoteType {
   parentTasks: [TaskType!]!
   childTasks: [TaskType!]!
   moods: [MoodType!]!
+  isSubmitted: Boolean!
 }
 
 input OffsetPaginationInput {
@@ -104,6 +102,10 @@ input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
+  moods: [CreateMoodInput!]
+  parentTasks: [LinkTaskInput!]
+  childTasks: [LinkTaskInput!]
+  isSubmitted: Boolean
 }
 
 input UserInput {

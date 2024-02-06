@@ -59,6 +59,7 @@ class NoteType:
     parent_tasks: List[TaskType]
     child_tasks: List[TaskType]
     moods: List[MoodType]
+    is_submitted: auto
 
     @classmethod
     def get_queryset(
@@ -84,9 +85,9 @@ class UserInput:
 class CreateNoteInput:
     title: auto
     public_details: auto
-    moods: Optional[List[CreateMoodInput]]
+    # moods: Optional[List[CreateMoodInput]]
     parent_tasks: Optional[List[LinkTaskInput]]
-    child_tasks: Optional[List[LinkTaskInput]]
+    # child_tasks: Optional[List[LinkTaskInput]]
     client: Optional[UserInput]
 
 
@@ -99,3 +100,4 @@ class UpdateNoteInput:
     moods: Optional[List[CreateMoodInput]]
     parent_tasks: Optional[List[LinkTaskInput]]
     child_tasks: Optional[List[LinkTaskInput]]
+    is_submitted: auto

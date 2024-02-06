@@ -43,9 +43,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             title="Test Note",
             publicDetails="This is a test note",
             client={"id": self.note_client.id},
-            moods=[],
             parentTasks=[],
-            childTasks=[],
         )
 
         if variables:
@@ -53,13 +51,13 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         mutation = """
             mutation CreateNote(
-                $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
-                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!],
+                $title: String!, $publicDetails: String!,
+                $parentTasks: [LinkTaskInput!],
                 $client: UserInput,
             ) {
                 createNote(data: {
-                    title: $title, publicDetails: $publicDetails, moods: $moods,
-                    parentTasks: $parentTasks, childTasks: $childTasks,
+                    title: $title, publicDetails: $publicDetails,
+                    parentTasks: $parentTasks,
                     client: $client,
                 }) {
                     id
@@ -89,11 +87,11 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mutation = """
             mutation UpdateNote(
                 $id: ID!, $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
-                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!],
+                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!], $isSubmitted: Boolean!
             ) {
                 updateNote(data: {
                     id: $id, title: $title, publicDetails: $publicDetails, moods: $moods,
-                    parentTasks: $parentTasks, childTasks: $childTasks
+                    parentTasks: $parentTasks, childTasks: $childTasks, isSubmitted: $isSubmitted
                 }) {
                     id
                     title

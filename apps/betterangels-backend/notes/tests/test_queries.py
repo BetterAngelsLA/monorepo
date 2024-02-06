@@ -1,5 +1,3 @@
-from IPython import embed
-from accounts.models import User
 from django.test import ignore_warnings
 from notes.enums import MoodEnum, TaskStatusEnum
 from notes.models import Location, Mood
@@ -18,8 +16,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         case_manager = self.users[0]
         mock_point = Point(1.232433, 2.456546)
         location = baker.make(Location, point=mock_point, zip_code=90000)
-        mood1 = baker.make(Mood, title=MoodEnum.ANXIOUS.value)
-        mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)
+        # mood1 = baker.make(Mood, title=MoodEnum.ANXIOUS.value)
+        # mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)
 
         task1 = self._create_task(
             dict(
@@ -38,47 +36,39 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 created_by=case_manager,
             )
         )
-        task3 = self._create_task(
-            dict(
-                title="Wellness check week 2",
-                location=location,
-                client=self.note_client,
-                created_by=case_manager,
-            )
-        )
         response = self._create_note(
             {
                 "title": "New Note",
                 "publicDetails": "This is a new note.",
                 "client": {"id": self.note_client.id},
-                "parentTasks": [{"id": task1.id}, {"id": task2.id}, {"id": task3.id}],
+                "parentTasks": [{"id": task1.id}, {"id": task2.id}],
             }
         )
         note_id = response["data"]["createNote"]["id"]
-        # from IPython import embed; embed()
         note = self._update_note(
             {
                 "id": note_id,
                 "title": "New Note",
                 "publicDetails": "This is a new note.",
                 "client": {"id": self.note_client.id},
-                "parentTasks": [{"id": task1.id}, {"id": task2.id}, {"id": task3.id}],
-                "moods": [{"title": mood1.title}, {"title": mood2.title}],
+                "parentTasks": [{"id": task1.id}, {"id": task2.id}],
+                "moods": [{"title": MoodEnum.ANXIOUS.value}, {"title": MoodEnum.EUTHYMIC.value}],
+                "isSubmitted": False
             }
         )
         query = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
-                    moods {
-                        title
-                    }
                     parentTasks {
                         status
                         title
                     }
                     childTasks{
                         status
+                        title
+                    }
+                    moods {
                         title
                     }
                     publicDetails
@@ -89,6 +79,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
+
         note = response["data"]["note"]
 
         self.assertEqual(note["publicDetails"], "This is a new note.")
@@ -99,10 +90,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {"title": "Wellness check week 1", "status": "Completed"},
                 {"title": "DMV", "status": "In Progress"},
             ],
-        )
-        self.assertEqual(
-            note["childTasks"],
-            [{"title": "Wellness check week 2", "status": "In Progress"}],
         )
 
     def test_notes_query(self) -> None:

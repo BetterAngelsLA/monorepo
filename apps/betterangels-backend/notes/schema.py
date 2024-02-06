@@ -103,25 +103,29 @@ class Mutation:
             if value is not None:
                 setattr(note, field, value)
 
-        from IPython import embed; embed()
 
         note.save()
         existing_tasks = None
         new_tasks = None
 
         if data.moods:
-            mood_ids = Mood.objects.filter(title__in=[mood.title for mood in data.moods])
-            note.moods.add(moods)
+            moods = Mood.objects.filter(title__in=[mood.title for mood in data.moods])
+            note.moods.set(moods)
 
+        # TODO: refactor using strawberry resolver
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
             if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
-                # existing_tasks = _update_existing_tasks(attached_tasks)
                 task_updates = {t.id: {"status": t.status, "title": t.title} for t in attached_tasks}
                 existing_tasks = Task.objects.filter(id__in=task_updates.keys())
                 for existing_task in existing_tasks:
-                    print(existing_task.id)
-                    existing_task.status = task_updates[existing_task.id]["status"]
-                    existing_task.title = task_updates[existing_task.id]["title"]
+                    updated_status = task_updates[existing_task.id]["status"]
+                    if not isinstance(updated_status, UnsetType):
+                        existing_task.status = updated_status
+
+                    updated_title = task_updates[existing_task.id]["title"]
+                    if not isinstance(updated_title, UnsetType):
+                        existing_task.title = updated_title
+
                     existing_task.save()
 
             # TODO: add location + due_date
@@ -144,6 +148,9 @@ class Mutation:
 
         if new_tasks:
             note.parent_tasks.add(*list(created_tasks))
+
+        print('update note '*20)
+        # from IPython import embed; embed()
 
         return cast(NoteType, note)
 

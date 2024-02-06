@@ -53,12 +53,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             {"id": str(task2.id), "title": "Task 2", "status": "In Progress"},
         )
 
-    def test_create_note_mutation_from_client_page(self) -> None:
-        pass
-
-    def test_create_note_mutation_from_home_page(self) -> None:
-        pass
-
     def test_update_note_mutation(self) -> None:
         # TODO: use two parent tasks
         variables = {
@@ -66,12 +60,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "publicDetails": "Updated Body",
             "parentTasks": [{"title": "Wellness check", "status": "Draft Completed"}],
+            "isSubmitted": False
         }
 
         # I think there as an opportunity to limit the amount of queries needed
-        # expected_query_count = 13
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        expected_query_count = 19
+        with self.assertNumQueries(expected_query_count):
             response = self._update_note(variables)
 
         updated_note = response["data"]["updateNote"]
@@ -95,6 +89,27 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         parent_task = updated_note["parentTasks"][0]
         self.assertEqual(parent_task["title"], "Some other check")
         self.assertEqual(parent_task["status"], "Draft Completed")
+
+    def test_update_note_mutation_is_submitted_true(self) -> None:
+        variables = {
+            "id": self.note["id"],
+            "title": "Updated Title",
+            "publicDetails": "Updated Body",
+            "parentTasks": [{"title": "Wellness check", "status": "Completed"}],
+            "isSubmitted": True
+        }
+
+        # I think there as an opportunity to limit the amount of queries needed
+        expected_query_count = 19
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_note(variables)
+
+        updated_note = response["data"]["updateNote"]
+
+        parent_task = updated_note["parentTasks"][0]
+
+        self.assertEqual(parent_task["title"], "Wellness check")
+        self.assertEqual(parent_task["status"], "Completed")
 
     def test_delete_note_mutation(self) -> None:
         mutation = """

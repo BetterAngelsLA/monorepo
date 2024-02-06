@@ -62,6 +62,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Note",
             "publicDetails": "Updated content",
+            "isSubmitted": False
         }
         response = self._update_note(variables)
 

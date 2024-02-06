@@ -24,11 +24,11 @@ class Location(TimestampedModel):
 
 
 class Mood(models.Model):
-    title = models.CharField(choices=[(x, x.value) for x in MoodEnum], blank=True)
+    title = models.CharField(choices=[(x, x.value) for x in MoodEnum], unique=True)
 
 
 class Service(TimestampedModel):
-    title = models.CharField(choices=[(x, x.value) for x in ServiceEnum], blank=True)
+    title = models.CharField(choices=[(x, x.value) for x in ServiceEnum], unique=True)
     custom_title = models.CharField(max_length=100, blank=True)
 
 

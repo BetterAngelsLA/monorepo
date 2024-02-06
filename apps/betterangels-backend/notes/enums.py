@@ -25,12 +25,6 @@ class MoodEnum(StrEnum):
     SUICIDAL = "Suicidal"
 
 
-class CategoryEnum(StrEnum):
-    Positive = "Positive"
-    NEUTRAL = "Neutral"
-    NEGATIVE = "Negative"
-
-
 class ServiceEnum(StrEnum):
     BLANKET = "Blanket"
     BOOK = "Book"
