@@ -35,7 +35,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

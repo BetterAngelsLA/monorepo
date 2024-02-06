@@ -2,7 +2,7 @@ from accounts.models import User
 from common.permissions.utils import permissions_mapping_to_django_meta_permissions
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from notes.permissions import NotePermissions, PrivateNotePermissions
+from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 
 
@@ -22,12 +22,6 @@ class Note(models.Model):  # type: ignore[django-manager-missing]
     class Meta:
         permissions = permissions_mapping_to_django_meta_permissions(
             {
-                # Default Perms
-                NotePermissions.ADD: "Can add note",
-                NotePermissions.CHANGE: "Can change note",
-                NotePermissions.DELETE: "Can delete note",
-                NotePermissions.VIEW: "Can view note",
-                # Private Note Perms
                 PrivateNotePermissions.ADD: "Can add private note",
                 PrivateNotePermissions.CHANGE: "Can change private note",
                 PrivateNotePermissions.DELETE: "Can delete private note",

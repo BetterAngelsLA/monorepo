@@ -23,7 +23,8 @@ def permissions_mapping_to_django_meta_permissions(
         A tuple suitable for Django's Meta.permissions.
     """
     return tuple(
-        (perm.value, description) for perm, description in permissions_mapping.items()
+        (perm.value.split(".")[-1], description)
+        for perm, description in permissions_mapping.items()
     )
 
 

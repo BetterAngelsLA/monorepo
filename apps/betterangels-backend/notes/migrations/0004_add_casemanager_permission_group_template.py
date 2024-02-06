@@ -13,9 +13,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     Permission = apps.get_model("auth", "Permission")
 
-    note_content_type, _ = ContentType.objects.get_for_model(
-        Note, for_concrete_model=False
-    )
+    NoteContentType = ContentType.objects.get_for_model(Note)
 
     permissions_to_add = [
         PrivateNotePermissions.VIEW,
@@ -34,7 +32,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
             codename=codename,
             defaults={
                 "name": name,
-                "content_type": note_content_type,
+                "content_type": NoteContentType,
             },
         )
 
@@ -103,18 +101,15 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, to="notes.note"
             ),
         ),
+        migrations.RunPython(create_permissions_if_not_exist),
         migrations.AlterModelOptions(
             name="note",
             options={
                 "permissions": (
-                    ("view_note", "Can view note"),
-                    ("change_note", "Can change note"),
-                    ("delete_note", "Can delete note"),
-                    ("add_note", "Can add note"),
-                    ("view_private_note", "Can view private note"),
                     ("add_private_note", "Can add private note"),
                     ("change_private_note", "Can change private note"),
                     ("delete_private_note", "Can delete private note"),
+                    ("view_private_note", "Can view private note"),
                 ),
             },
         ),
