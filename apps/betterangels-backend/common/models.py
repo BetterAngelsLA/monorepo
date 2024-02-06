@@ -7,6 +7,9 @@ class SimpleModel(models.Model):
     name = models.CharField(max_length=255)
     objects = models.Manager()
 
+    simplemodeluserobjectpermission_set: models.QuerySet["SimpleModel"]
+    simplemodelgroupobjectpermission_set: models.QuerySet["SimpleModel"]
+
 
 class SimpleModelUserObjectPermission(UserObjectPermissionBase):
     content_object: ForeignKey = models.ForeignKey(
