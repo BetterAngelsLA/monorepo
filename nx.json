@@ -1,11 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
-    "default": {
-      "options": {
-        "accessToken": "OGMzMjQxMzItM2FhMi00MGI4LWFmZmQtMzBmYjMxYWUyOGIzfHJlYWQtd3JpdGU="
-      }
-    }
+    "default": {}
   },
   "targetDefaults": {
     "build": {
