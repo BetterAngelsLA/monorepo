@@ -53,6 +53,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             {"id": str(task2.id), "title": "Task 2", "status": "In Progress"},
         )
 
+    def test_create_note_mutation_from_client_page(self) -> None:
+        pass
+
+    def test_create_note_mutation_from_home_page(self) -> None:
+        pass
+
     def test_update_note_mutation(self) -> None:
         # TODO: use two parent tasks
         variables = {

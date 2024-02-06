@@ -1,6 +1,7 @@
 from enum import StrEnum
 
 
+# If adding or removing Moods, don't forget to update the Moods table accordingly.
 class MoodEnum(StrEnum):
     AGITATED = "Agitated"
     AGREEABLE = "Agreeable"
@@ -22,6 +23,12 @@ class MoodEnum(StrEnum):
     PLEASANT = "Pleasant"
     RESTLESS = "Restless"
     SUICIDAL = "Suicidal"
+
+
+class CategoryEnum(StrEnum):
+    Positive = "Positive"
+    NEUTRAL = "Neutral"
+    NEGATIVE = "Negative"
 
 
 class ServiceEnum(StrEnum):
