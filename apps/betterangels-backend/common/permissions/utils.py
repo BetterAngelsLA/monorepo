@@ -1,11 +1,30 @@
+from enum import Enum
 from functools import reduce
 from operator import and_, or_
-from typing import List, TypeVar, Union, cast
+from typing import Dict, List, Tuple, TypeVar, Union, cast
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet
+from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
 
 T = TypeVar("T", bound=Model)
+
+
+def permissions_mapping_to_django_meta_permissions(
+    permissions_mapping: Dict[Enum, str]
+) -> Tuple[Tuple[str, str], ...]:
+    """
+    Converts a permissions mapping to the format required for Django's Meta class permissions.
+
+    Args:
+        permissions_mapping (dict): A dictionary mapping StrEnum members to descriptions.
+
+    Returns:
+        A tuple suitable for Django's Meta.permissions.
+    """
+    return tuple(
+        (perm.value, description) for perm, description in permissions_mapping.items()
+    )
 
 
 def get_objects_for_user(
@@ -39,9 +58,12 @@ def get_objects_for_user(
     if not user.is_authenticated or not perms:
         return klass.none()
 
-    model_name = klass.model._meta.model_name
-    user_permissions_field = f"{model_name}userobjectpermission"
-    group_permissions_field = f"{model_name}groupobjectpermission"
+    user_permissions_field = get_user_obj_perms_model(
+        klass.model
+    ).permission.field.related_query_name()
+    group_permissions_field = get_group_obj_perms_model(
+        klass.model
+    ).permission.field.related_query_name()
 
     qs = klass
     permission_filters = []
