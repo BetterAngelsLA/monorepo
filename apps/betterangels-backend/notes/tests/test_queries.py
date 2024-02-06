@@ -1,6 +1,12 @@
+from IPython import embed
+from accounts.models import User
 from django.test import ignore_warnings
+from notes.enums import MoodEnum, TaskStatusEnum
+from notes.models import Location, Mood
 from notes.tests.utils import NoteGraphQLBaseTestCase
+from model_bakery import baker
 
+from django.contrib.gis.geos import Point
 
 @ignore_warnings(category=UserWarning)
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
@@ -9,23 +15,57 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.users[0])
 
     def test_note_query(self) -> None:
-        query = """
-            query ViewNote($id: ID!) {
-                note(pk: $id) {
-                    id
-                    publicDetails
-                }
-            }
-        """
-        variables = {"id": self.note["id"]}
-        expected_query_count = 5
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(query, variables)
-        note = response["data"]["note"]
-        self.assertEqual(note["publicDetails"], self.note["publicDetails"])
+        case_manager = self.users[0]
+        mock_point = Point(1.232433, 2.456546)
+        location = baker.make(Location, point=mock_point, zip_code=90000)
+        mood1 = baker.make(Mood, title=MoodEnum.ANXIOUS.value)
+        mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)
 
-    def test_detailed_note_query(self) -> None:
-        detailed_note = self._create_detailed_note()
+        task1 = self._create_task(
+            dict(
+                title="Wellness check week 1",
+                status=TaskStatusEnum.COMPLETED,
+                location=location,
+                client=self.note_client,
+                created_by=case_manager,
+            )
+        )
+        task2 = self._create_task(
+            dict(
+                title="DMV",
+                location=location,
+                client=self.note_client,
+                created_by=case_manager,
+            )
+        )
+        task3 = self._create_task(
+            dict(
+                title="Wellness check week 2",
+                location=location,
+                client=self.note_client,
+                created_by=case_manager,
+            )
+        )
+        response = self._create_note(
+            {
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "client": {"id": self.note_client.id},
+                "parentTasks": [{"id": task1.id}, {"id": task2.id}, {"id": task3.id}],
+            }
+        )
+        note_id = response["data"]["createNote"]["id"]
+        # from IPython import embed; embed()
+        note = self._update_note(
+            {
+                "id": note_id,
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "client": {"id": self.note_client.id},
+                "parentTasks": [{"id": task1.id}, {"id": task2.id}, {"id": task3.id}],
+                "moods": [{"title": mood1.title}, {"title": mood2.title}],
+            }
+        )
         query = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
@@ -36,7 +76,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     parentTasks {
                         status
                         title
-
                     }
                     childTasks{
                         status
@@ -46,13 +85,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": detailed_note.id}
-        # TODO: turn back on
-        # expected_query_count = 6
-        # with self.assertNumQueries(expected_query_count):
-        response = self.execute_graphql(query, variables)
+        variables = {"id": note_id}
+        expected_query_count = 8
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables)
         note = response["data"]["note"]
-        self.assertEqual(note["publicDetails"], "Some public details")
+
+        self.assertEqual(note["publicDetails"], "This is a new note.")
         self.assertEqual(note["moods"], [{"title": "Anxious"}, {"title": "Euthymic"}])
         self.assertEqual(
             note["parentTasks"],

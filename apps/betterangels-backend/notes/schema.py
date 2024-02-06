@@ -13,7 +13,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
-from .models import Note, Task
+from .models import Mood, Note, Task
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
@@ -103,9 +103,15 @@ class Mutation:
             if value is not None:
                 setattr(note, field, value)
 
+        from IPython import embed; embed()
+
         note.save()
         existing_tasks = None
         new_tasks = None
+
+        if data.moods:
+            mood_ids = Mood.objects.filter(title__in=[mood.title for mood in data.moods])
+            note.moods.add(moods)
 
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
             if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
