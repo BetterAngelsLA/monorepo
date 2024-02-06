@@ -52,7 +52,6 @@ export default function Purpose(props: IPurposeProps) {
   const hasError = !!typedErrors.purposes;
 
   useEffect(() => {
-    console.log(expanded);
     if (!isPurpose) {
       const requiredField = purposes[0];
       const filteredPurposes = purposes
@@ -61,7 +60,6 @@ export default function Purpose(props: IPurposeProps) {
       setValue('purposes', [requiredField, ...filteredPurposes]);
     }
     if (!isPurpose && expanded === null) {
-      console.log('trigger');
       trigger('purposes');
     }
   }, [expanded]);
