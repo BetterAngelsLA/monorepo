@@ -6,9 +6,7 @@
   "targets": {
     "start": {
       "executor": "@nx/expo:start",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {
         "port": 8081
       }
@@ -21,18 +19,14 @@
     },
     "run-ios": {
       "executor": "@nx/expo:run",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {
         "platform": "ios"
       }
     },
     "run-android": {
       "executor": "@nx/expo:run",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {
         "platform": "android"
       }
@@ -59,11 +53,13 @@
       "executor": "@nx/expo:sync-deps",
       "options": {}
     },
+    "ensure-symlink": {
+      "executor": "@nx/expo:ensure-symlink",
+      "options": {}
+    },
     "prebuild": {
       "executor": "@nx/expo:prebuild",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {}
     },
     "install": {
@@ -78,30 +74,37 @@
     },
     "export": {
       "executor": "@nx/expo:export",
-      "dependsOn": [
-        "sync-deps"
-      ],
+      "dependsOn": ["ensure-symlink", "sync-deps"],
       "options": {
         "platform": "all",
-        "outputDir": "dist/apps/betterangels"
-      },
-      "outputs": [
-        "{options.outputDir}"
-      ]
+        "outputDir": "../../dist/apps/betterangels"
+      }
+    },
+    "export-web": {
+      "executor": "@nx/expo:export",
+      "options": {
+        "bundler": "metro"
+      }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/betterangels/**/*.{ts,tsx,js,jsx}"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/betterangels/jest.config.ts"
+        "jestConfig": "apps/betterangels/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
       }
     },
     "typecheck": {

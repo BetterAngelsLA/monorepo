@@ -67,8 +67,11 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/betterangels-e2e/**/*.{ts,tsx,js,jsx}"]
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",

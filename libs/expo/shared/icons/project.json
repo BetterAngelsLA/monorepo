@@ -5,8 +5,11 @@
   "projectType": "library",
   "targets": {
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/expo/shared/icons/**/*.ts"]
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",

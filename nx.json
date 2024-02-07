@@ -1,25 +1,34 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
-    "default": {}
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test",
+          "e2e",
+          "build-storybook"
+        ],
+        "accessToken": "OGMzMjQxMzItM2FhMi00MGI4LWFmZmQtMzBmYjMxYWUyOGIzfHJlYWQtd3JpdGU="
+      }
+    }
   },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
-      "cache": true
+      "inputs": ["production", "^production"]
     },
     "test": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": true
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"]
     },
     "lint": {
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
         "{workspaceRoot}/.eslintignore"
-      ],
-      "cache": true
+      ]
     },
     "build-storybook": {
       "inputs": [
@@ -27,29 +36,7 @@
         "^production",
         "{projectRoot}/.storybook/**/*",
         "{projectRoot}/tsconfig.storybook.json"
-      ],
-      "cache": true
-    },
-    "@nx/jest:jest": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": true,
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
-    },
-    "@nx/eslint:lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/.eslintignore"
-      ],
-      "cache": true
+      ]
     }
   },
   "namedInputs": {
@@ -75,5 +62,10 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": ["@nxlv/python"]
+  "plugins": ["@nxlv/python"],
+  "projects": {
+    "betterangels": {
+      "implicitDependencies": ["betterangels-backend"]
+    }
+  }
 }
