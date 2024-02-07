@@ -37,6 +37,7 @@ django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
 strawberry-graphql-django = "^0.30.0"
 django-guardian = "^2.4.0"
+django-choices-field = "^2.2.2"
 
 [build-system]
 requires = ["poetry-core"]
