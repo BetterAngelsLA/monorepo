@@ -1,9 +1,9 @@
 from accounts.models import User
-from django.test import TestCase
-from notes.enums import MoodEnum, TaskStatusEnum
-from notes.models import Note, Location, Mood, Task
 from django.contrib.gis.geos import Point
+from django.test import TestCase
 from model_bakery import baker
+from notes.enums import MoodEnum, TaskStatusEnum
+from notes.models import Location, Mood, Note, Task
 
 
 class NotesTest(TestCase):

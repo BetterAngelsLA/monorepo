@@ -1,8 +1,8 @@
 from accounts.models import User
 from django.test import ignore_warnings
+from model_bakery import baker
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from model_bakery import baker
 
 
 @ignore_warnings(category=UserWarning)

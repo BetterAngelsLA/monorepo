@@ -1,14 +1,15 @@
 from dataclasses import asdict
 from typing import List, cast
-from notes.enums import TaskStatusEnum
 
 import strawberry
 import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
+from notes.enums import TaskStatusEnum
 from notes.permissions import NotePermissions
 from strawberry.types import Info
+from strawberry.unset import UnsetType
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -16,9 +17,6 @@ from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
 from .models import Mood, Note, Task
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
-
-
-from strawberry.unset import UnsetType
 
 
 @strawberry.type

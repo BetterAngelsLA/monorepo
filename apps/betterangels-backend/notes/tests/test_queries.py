@@ -1,10 +1,9 @@
+from django.contrib.gis.geos import Point
 from django.test import ignore_warnings
+from model_bakery import baker
 from notes.enums import MoodEnum, TaskStatusEnum
 from notes.models import Location, Mood
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from model_bakery import baker
-
-from django.contrib.gis.geos import Point
 
 
 @ignore_warnings(category=UserWarning)
@@ -78,7 +77,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
         variables = {"id": note_id}
-        expected_query_count = 8
+        expected_query_count = 5
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
