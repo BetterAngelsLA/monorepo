@@ -3,7 +3,7 @@
 from django.db import models
 
 
-class NotePermissions(models.TextChoices):
+class SimpleModelPermissions(models.TextChoices):
     VIEW = "simplemodels.view_simplemodel", "Can view simplemodel"
     CHANGE = "simplemodels.change_simplemodel", "Can change simplemodel"
     DELETE = "simplemodels.delete_simplemodel", "Can delete simplemodel"
