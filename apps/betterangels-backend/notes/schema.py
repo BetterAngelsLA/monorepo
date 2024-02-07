@@ -42,7 +42,6 @@ class Query:
 
 @strawberry.type
 class Mutation:
-
     @strawberry.mutation(
         extensions=[
             IsAuthenticated(),
@@ -60,7 +59,9 @@ class Mutation:
         existing_tasks = None
 
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
-            if attached_tasks := [t.id for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
+            if attached_tasks := [
+                t.id for t in data.parent_tasks if not isinstance(t.id, UnsetType)
+            ]:
                 existing_tasks = Task.objects.filter(id__in=attached_tasks)
 
         note_data = dict(
@@ -85,7 +86,6 @@ class Mutation:
             assign_perm(perm, user, note)
         return cast(NoteType, note)
 
-
     # TODO: make atomic
     @strawberry.mutation(
         extensions=[
@@ -105,11 +105,14 @@ class Mutation:
 
         user = get_current_user(info)
         note = Note.objects.get(pk=data.id)
-        update_fields = [(field, value) for field, value in asdict(data).items() if field in FLAT_FIELDS]
+        update_fields = [
+            (field, value)
+            for field, value in asdict(data).items()
+            if field in FLAT_FIELDS
+        ]
         for field, value in update_fields:
             if value is not None:
                 setattr(note, field, value)
-
 
         note.save()
         existing_tasks = None
@@ -119,11 +122,14 @@ class Mutation:
             moods = Mood.objects.filter(title__in=[mood.title for mood in data.moods])
             note.moods.set(moods)
 
-
         # TODO: refactor using strawberry resolver
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
-            if attached_tasks := [t for t in data.parent_tasks if not isinstance(t.id, UnsetType)]:
-                task_updates = {t.id: {"status": t.status, "title": t.title} for t in attached_tasks}
+            if attached_tasks := [
+                t for t in data.parent_tasks if not isinstance(t.id, UnsetType)
+            ]:
+                task_updates = {
+                    t.id: {"status": t.status, "title": t.title} for t in attached_tasks
+                }
                 existing_tasks = Task.objects.filter(id__in=task_updates.keys())
                 for existing_task in existing_tasks:
                     updated_status = task_updates[existing_task.id]["status"]
@@ -135,18 +141,23 @@ class Mutation:
                         existing_task.title = updated_title
 
                     if data.is_submitted:
-                        existing_task.status = TASK_DRAFT_STATUS_MAP[existing_task.status]
+                        existing_task.status = TASK_DRAFT_STATUS_MAP[
+                            existing_task.status
+                        ]
 
                     existing_task.save()
 
-
             # TODO: add location + due_date
-            if new_tasks := [t for t in data.parent_tasks if isinstance(t.id, UnsetType)]:
+            if new_tasks := [
+                t for t in data.parent_tasks if isinstance(t.id, UnsetType)
+            ]:
                 created_tasks = []
                 for new_task in new_tasks:
                     task_data = dict(
                         title=new_task.title,
-                        status=TaskStatusEnum.COMPLETED.value if data.is_submitted else new_task.status,
+                        status=TaskStatusEnum.COMPLETED.value
+                        if data.is_submitted
+                        else new_task.status,
                         created_by=user,
                         client=note.client,
                     )

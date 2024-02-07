@@ -6,6 +6,7 @@ from model_bakery import baker
 
 from django.contrib.gis.geos import Point
 
+
 @ignore_warnings(category=UserWarning)
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -52,8 +53,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "publicDetails": "This is a new note.",
                 "client": {"id": self.note_client.id},
                 "parentTasks": [{"id": task1.id}, {"id": task2.id}],
-                "moods": [{"title": MoodEnum.ANXIOUS.value}, {"title": MoodEnum.EUTHYMIC.value}],
-                "isSubmitted": False
+                "moods": [
+                    {"title": MoodEnum.ANXIOUS.value},
+                    {"title": MoodEnum.EUTHYMIC.value},
+                ],
+                "isSubmitted": False,
             }
         )
         query = """

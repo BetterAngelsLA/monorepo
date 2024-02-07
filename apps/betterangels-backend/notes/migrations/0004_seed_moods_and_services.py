@@ -47,21 +47,25 @@ SERVICES = [
     "Other",
 ]
 
+
 def seed_moods(apps, schema_editor):
     Mood = apps.get_model("notes", "Mood")
     mood_instances = [Mood(title=mood_title) for mood_title in MOODS]
 
     Mood.objects.bulk_create(mood_instances)
 
+
 def reverse_seed_moods(apps, schema_editor):
     Mood = apps.get_model("notes", "Mood")
     Mood.objects.filter(title__in=MOODS).delete()
+
 
 def seed_services(apps, schema_editor):
     Service = apps.get_model("notes", "Service")
     service_instances = [Service(title=service_title) for service_title in SERVICES]
 
     Service.objects.bulk_create(service_instances)
+
 
 def reverse_seed_services(apps, schema_editor):
     Service = apps.get_model("notes", "Service")

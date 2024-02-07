@@ -55,7 +55,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_update_note_mutation_save_note(self) -> None:
         task1 = self._create_task({"title": "Existing task 1", "status": "In Progress"})
-        task2 = self._create_task({"title": "Existing task 2", "status": "Draft Completed"})
+        task2 = self._create_task(
+            {"title": "Existing task 2", "status": "Draft Completed"}
+        )
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
@@ -63,9 +65,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "parentTasks": [
                 {"id": task1.id, "status": "Draft Completed"},
                 {"id": task2.id, "status": "Draft Completed"},
-                {"title": "Task from Note Purpose", "status": "Draft Completed"}
+                {"title": "Task from Note Purpose", "status": "Draft Completed"},
             ],
-            "isSubmitted": False
+            "isSubmitted": False,
         }
 
         # I think there as an opportunity to limit the amount of queries needed
@@ -90,7 +92,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(parent_task_3["status"], "Draft Completed")
 
         # Assert that can delete parentTasks on update
-        variables["parentTasks"] = [{"title": "Some other check", "status": "Draft Completed"}]
+        variables["parentTasks"] = [
+            {"title": "Some other check", "status": "Draft Completed"}
+        ]
 
         response = self._update_note(variables)
 
@@ -110,9 +114,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated Body",
             "parentTasks": [
                 {"id": task1.id, "status": "Draft Completed"},
-                {"title": "Task from Purpose", "status": "Draft Completed"}
+                {"title": "Task from Purpose", "status": "Draft Completed"},
             ],
-            "isSubmitted": True
+            "isSubmitted": True,
         }
 
         # I think there as an opportunity to limit the amount of queries needed
