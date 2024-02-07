@@ -4,6 +4,7 @@ from typing import List, TypeVar, Union, cast
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db.models import Exists, Model, OuterRef, Q, QuerySet
+from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
 
 T = TypeVar("T", bound=Model)
 
@@ -39,9 +40,12 @@ def get_objects_for_user(
     if not user.is_authenticated or not perms:
         return klass.none()
 
-    model_name = klass.model._meta.model_name
-    user_permissions_field = f"{model_name}userobjectpermission"
-    group_permissions_field = f"{model_name}groupobjectpermission"
+    user_permissions_field = get_user_obj_perms_model(
+        klass.model
+    ).permission.field.related_query_name()
+    group_permissions_field = get_group_obj_perms_model(
+        klass.model
+    ).permission.field.related_query_name()
 
     qs = klass
     permission_filters = []

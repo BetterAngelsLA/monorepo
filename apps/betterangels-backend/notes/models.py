@@ -52,9 +52,7 @@ class Task(TimestampedModel):
     objects = models.Manager()
 
 
-# TODO: Figure out why User/Group Perms are failing type checks
-# https://github.com/typeddjango/django-stubs/issues/1354
-class Note(TimestampedModel):  # type: ignore[django-manager-missing]
+class Note(TimestampedModel):
     title = models.CharField(max_length=100, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     location = models.ForeignKey(
@@ -91,6 +89,9 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
     )
 
     objects = models.Manager()
+
+    noteuserobjectpermission_set: models.QuerySet["Note"]
+    notegroupobjectpermission_set: models.QuerySet["Note"]
 
     def __str__(self) -> str:
         return self.public_details[:50]
