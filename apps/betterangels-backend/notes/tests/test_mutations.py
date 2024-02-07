@@ -1,6 +1,4 @@
-from accounts.models import User
 from django.test import ignore_warnings
-from model_bakery import baker
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
@@ -13,7 +11,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         expected_query_count = 35
-        # TODO: add remaining fields; create "expected_note" to assert against, vs str values
+        # TODO: add remaining fields; create "expected_note" to assert against,
+        # vs str values
         with self.assertNumQueries(expected_query_count):
             response = self._create_note(
                 {

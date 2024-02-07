@@ -1,13 +1,8 @@
-from typing import Optional
-
 from accounts.models import User
-from django.contrib.gis.geos import Point
 from django.test import TestCase
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from notes.enums import MoodEnum, TaskStatusEnum
-from notes.models import Location, Mood, Note, Task
-from notes.permissions import NotePermissions
+from notes.enums import TaskStatusEnum
+from notes.models import Task
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -86,12 +81,14 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
     def _update_note(self, variables: dict) -> dict:
         mutation = """
             mutation UpdateNote(
-                $id: ID!, $title: String!, $publicDetails: String!, $moods: [CreateMoodInput!],
-                $parentTasks: [LinkTaskInput!], $childTasks: [LinkTaskInput!], $isSubmitted: Boolean!
+                $id: ID!, $title: String!, $publicDetails: String!,
+                $moods: [CreateMoodInput!], $parentTasks: [LinkTaskInput!],
+                $childTasks: [LinkTaskInput!], $isSubmitted: Boolean!
             ) {
                 updateNote(data: {
-                    id: $id, title: $title, publicDetails: $publicDetails, moods: $moods,
-                    parentTasks: $parentTasks, childTasks: $childTasks, isSubmitted: $isSubmitted
+                    id: $id, title: $title, publicDetails: $publicDetails,
+                    moods: $moods, parentTasks: $parentTasks,
+                    childTasks: $childTasks, isSubmitted: $isSubmitted
                 }) {
                     id
                     title

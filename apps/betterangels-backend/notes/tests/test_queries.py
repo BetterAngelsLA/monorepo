@@ -2,7 +2,7 @@ from django.contrib.gis.geos import Point
 from django.test import ignore_warnings
 from model_bakery import baker
 from notes.enums import MoodEnum, TaskStatusEnum
-from notes.models import Location, Mood
+from notes.models import Location
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
