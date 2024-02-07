@@ -74,7 +74,7 @@ def reverse_seed_services(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notes", "0003_add_note_component_models"),
+        ("notes", "0004_add_note_component_models"),
     ]
 
     operations = [

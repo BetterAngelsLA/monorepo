@@ -10,7 +10,7 @@ import notes.enums
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("notes", "0002_noteuserobjectpermission_notegroupobjectpermission"),
+        ("notes", "0003_add_casemanager_note_permissions"),
     ]
 
     operations = [
