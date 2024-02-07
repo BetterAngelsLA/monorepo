@@ -1,17 +1,23 @@
 from django.db import models
+from django.db.models import ForeignKey
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 
-# TODO: Figure out why User/Group Perms are failing type checks
-# https://github.com/typeddjango/django-stubs/issues/1354
 class SimpleModel(models.Model):
     name = models.CharField(max_length=255)
     objects = models.Manager()
 
+    simplemodeluserobjectpermission_set: models.QuerySet["SimpleModel"]
+    simplemodelgroupobjectpermission_set: models.QuerySet["SimpleModel"]
+
 
 class SimpleModelUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(SimpleModel, on_delete=models.CASCADE)  # type: ignore
+    content_object: ForeignKey = models.ForeignKey(
+        SimpleModel, on_delete=models.CASCADE
+    )
 
 
 class SimpleModelGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(SimpleModel, on_delete=models.CASCADE)  # type: ignore
+    content_object: ForeignKey = models.ForeignKey(
+        SimpleModel, on_delete=models.CASCADE
+    )

@@ -6,9 +6,7 @@ from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 
 
-# TODO: Figure out why User/Group Perms are failing type checks
-# https://github.com/typeddjango/django-stubs/issues/1354
-class Note(models.Model):  # type: ignore[django-manager-missing]
+class Note(models.Model):
     title = models.CharField(max_length=100)
     body = models.TextField()
 
@@ -28,6 +26,9 @@ class Note(models.Model):  # type: ignore[django-manager-missing]
                 PrivateNotePermissions.VIEW: "Can view private note",
             }
         )
+
+    noteuserobjectpermission_set: models.QuerySet["Note"]
+    notegroupobjectpermission_set: models.QuerySet["Note"]
 
     def __str__(self) -> str:
         return self.body[:50]
