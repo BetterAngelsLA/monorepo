@@ -22,26 +22,42 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     .filter(Boolean);
 
   const moodIText =
-    moods.length > 0 ? 'CM asked how the client was feeling.' : '';
+    moods.length > 0 ? 'Case manager asked how client was feeling.' : '';
 
   const moodRText =
     moods.length > 0
-      ? 'Client responded that he was ' + moods.join(', ') + '.'
+      ? 'Client responded that he was ' +
+        moods.slice(0, -1).join(', ') +
+        (moods.length > 1 ? ' and ' : '') +
+        moods[moods.length - 1] +
+        '.'
       : '';
 
   const serviceIText =
     providedServices.length > 0
-      ? 'CM provided ' + providedServices.join(', ') + '.'
+      ? 'Case manager provided ' +
+        providedServices.slice(0, -1).join(', ') +
+        (providedServices.length > 1 ? ' and ' : '') +
+        providedServices[providedServices.length - 1] +
+        '.'
       : '';
 
   const serviceRText =
     providedServices.length > 0
-      ? 'Client accepted ' + providedServices.join(', ') + '.'
+      ? 'Client accepted ' +
+        providedServices.slice(0, -1).join(', ') +
+        (providedServices.length > 1 ? ' and ' : '') +
+        providedServices[providedServices.length - 1] +
+        '.'
       : '';
 
   const requestedText =
     requestedServices.length > 0
-      ? 'Client requested ' + requestedServices.join(', ') + '.'
+      ? 'Client requested ' +
+        requestedServices.slice(0, -1).join(', ') +
+        (requestedServices.length > 1 ? ' and ' : '') +
+        requestedServices[requestedServices.length - 1] +
+        '.'
       : '';
 
   const updatedI =
@@ -55,7 +71,13 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
-  const updatedG = changedG.length ? `G: ${changedG.join(', ')}` : 'G:';
+  const updatedG =
+    changedG.length > 0
+      ? `G: ${changedG.slice(0, -1).join(', ')}${
+          changedG.length > 1 ? ' and ' : ''
+        }${changedG[changedG.length - 1]}.`
+      : 'G:';
+
   const updatedP = changedP ? `P: ${changedP.join(', ')}` : 'P:';
 
   const hasRDate = nextStepDate ? `${updatedP} ${nextStepDate}` : updatedP;
