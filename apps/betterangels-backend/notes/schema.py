@@ -48,12 +48,8 @@ class Mutation:
     @transaction.atomic()
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
-        # TODO: clean all this up
-        # print("&" * 100)
-        # print(data)
 
         # TODO: refactor using resolvers
-        # task = resolvers.update(info, Task, task_data)
         existing_tasks = None
 
         if data.parent_tasks and not isinstance(data.parent_tasks, UnsetType):
@@ -84,7 +80,6 @@ class Mutation:
             assign_perm(perm, user, note)
         return cast(NoteType, note)
 
-    # TODO: make atomic
     @strawberry.mutation(
         extensions=[
             IsAuthenticated(),
@@ -93,12 +88,11 @@ class Mutation:
     )
     @transaction.atomic()
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        # TODO: clean all this up
         FLAT_FIELDS = ("title", "public_details")
         TASK_DRAFT_STATUS_MAP = {
-            TaskStatusEnum.DRAFT_CANCELED.value: TaskStatusEnum.CANCELED.value,
-            TaskStatusEnum.DRAFT_COMPLETED.value: TaskStatusEnum.COMPLETED.value,
-            TaskStatusEnum.IN_PROGRESS.value: TaskStatusEnum.IN_PROGRESS.value,
+            TaskStatusEnum.DRAFT_CANCELED: TaskStatusEnum.CANCELED,
+            TaskStatusEnum.DRAFT_COMPLETED: TaskStatusEnum.COMPLETED,
+            TaskStatusEnum.IN_PROGRESS: TaskStatusEnum.IN_PROGRESS,
         }
 
         user = get_current_user(info)
@@ -153,7 +147,7 @@ class Mutation:
                 for new_task in new_tasks:
                     task_data = dict(
                         title=new_task.title,
-                        status=TaskStatusEnum.COMPLETED.value
+                        status=TaskStatusEnum.COMPLETED
                         if data.is_submitted
                         else new_task.status,
                         created_by=user,
@@ -162,7 +156,6 @@ class Mutation:
 
                     created_tasks.append(resolvers.create(info, Task, task_data))
 
-        # All delete tasks that were removed
         note.parent_tasks.clear()
         if existing_tasks:
             note.parent_tasks.add(*list(existing_tasks))

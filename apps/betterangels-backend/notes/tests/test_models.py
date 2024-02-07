@@ -59,8 +59,8 @@ class NotesTest(TestCase):
         cls.note.parent_tasks.add(cls.task1, cls.task2)
         cls.note.child_tasks.add(cls.task3)
 
-        cls.mood1 = Mood.objects.get(title=MoodEnum.ANXIOUS.value)
-        cls.mood2 = Mood.objects.get(title=MoodEnum.EUTHYMIC.value)
+        cls.mood1 = Mood.objects.get(title=MoodEnum.ANXIOUS)
+        cls.mood2 = Mood.objects.get(title=MoodEnum.EUTHYMIC)
         cls.note.moods.add(cls.mood1, cls.mood2)
 
     def test_notes_fields_exist(self) -> None:

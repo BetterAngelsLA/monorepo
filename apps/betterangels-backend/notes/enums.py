@@ -25,6 +25,7 @@ class MoodEnum(StrEnum):
     SUICIDAL = "Suicidal"
 
 
+# If adding or removing Services, don't forget to update the Services table accordingly.
 class ServiceEnum(StrEnum):
     BLANKET = "Blanket"
     BOOK = "Book"

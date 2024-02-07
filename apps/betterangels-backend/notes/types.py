@@ -16,7 +16,6 @@ from . import models
 @dataclasses.dataclass
 @strawberry_django.type(models.Mood)
 class MoodType:
-    # id: auto
     title: auto
 
 
@@ -32,8 +31,6 @@ class LinkTaskInput:
     id: Optional[int]
     title: Optional[str]
     status: Optional[str]
-    # location
-    # due_date
 
 
 @dataclasses.dataclass
@@ -44,7 +41,6 @@ class TaskType:
     title: auto
     created_at: auto
     created_by: UserType
-    # client: UserType
 
 
 @dataclasses.dataclass
@@ -82,9 +78,7 @@ class UserInput:
 class CreateNoteInput:
     title: auto
     public_details: auto
-    # moods: Optional[List[CreateMoodInput]]
     parent_tasks: Optional[List[LinkTaskInput]]
-    # child_tasks: Optional[List[LinkTaskInput]]
     client: Optional[UserInput]
 
 

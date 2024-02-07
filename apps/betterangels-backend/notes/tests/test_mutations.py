@@ -70,7 +70,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
         }
 
-        # I think there as an opportunity to limit the amount of queries needed
         expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             response = self._update_note(variables)
@@ -119,7 +118,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": True,
         }
 
-        # I think there as an opportunity to limit the amount of queries needed
         expected_query_count = 22
         with self.assertNumQueries(expected_query_count):
             response = self._update_note(variables)
@@ -145,7 +143,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        # I think there as an opportunity to limit the amount of queries needed
         expected_query_count = 18
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)

@@ -51,8 +51,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "client": {"id": self.note_client.id},
                 "parentTasks": [{"id": task1.id}, {"id": task2.id}],
                 "moods": [
-                    {"title": MoodEnum.ANXIOUS.value},
-                    {"title": MoodEnum.EUTHYMIC.value},
+                    {"title": MoodEnum.ANXIOUS},
+                    {"title": MoodEnum.EUTHYMIC},
                 ],
                 "isSubmitted": False,
             }
