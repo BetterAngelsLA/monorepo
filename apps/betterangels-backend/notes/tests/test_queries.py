@@ -17,8 +17,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         case_manager = self.users[0]
         mock_point = Point(1.232433, 2.456546)
         location = baker.make(Location, point=mock_point, zip_code=90000)
-        # mood1 = baker.make(Mood, title=MoodEnum.ANXIOUS.value)
-        # mood2 = baker.make(Mood, title=MoodEnum.EUTHYMIC.value)
 
         task1 = self._create_task(
             dict(
@@ -105,7 +103,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
               }
           }
         """
-        expected_query_count = 5
+
+        expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
         notes = response["data"]["notes"]

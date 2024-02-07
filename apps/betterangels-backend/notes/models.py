@@ -97,12 +97,8 @@ class Note(TimestampedModel):  # type: ignore[django-manager-missing]
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="user_object_permissions"
-    )
+    content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
 
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="group_object_permissions"
-    )
+    content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
