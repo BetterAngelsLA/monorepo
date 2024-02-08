@@ -37,7 +37,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     moods.length > 0
       ? 'Client responded that he was ' +
         moods.slice(0, -1).join(', ').toLowerCase() +
-        (moods.length > 1 ? ' and ' : '') +
+        (moods.length > 1 ? ', and ' : '') +
         moods[moods.length - 1].toLowerCase() +
         '.'
       : '';
@@ -46,7 +46,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     providedServices.length > 0
       ? 'Case Manager provided ' +
         providedServices.slice(0, -1).join(', ').toLowerCase() +
-        (providedServices.length > 1 ? ' and ' : '') +
+        (providedServices.length > 1 ? ', and ' : '') +
         providedServices[providedServices.length - 1].toLowerCase() +
         '.'
       : '';
@@ -55,7 +55,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     providedServices.length > 0
       ? 'Client accepted ' +
         providedServices.slice(0, -1).join(', ').toLowerCase() +
-        (providedServices.length > 1 ? ' and ' : '') +
+        (providedServices.length > 1 ? ', and ' : '') +
         providedServices[providedServices.length - 1].toLowerCase() +
         '.'
       : '';
@@ -64,7 +64,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     requestedServices.length > 0
       ? 'Client requested ' +
         requestedServices.slice(0, -1).join(', ').toLowerCase() +
-        (requestedServices.length > 1 ? ' and ' : '') +
+        (requestedServices.length > 1 ? ', and ' : '') +
         requestedServices[requestedServices.length - 1].toLowerCase() +
         '.'
       : '';
@@ -83,7 +83,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
   const updatedG =
     changedG.length > 0
       ? `G - ${purposeText} ${changedG.slice(0, -1).join(', ')}${
-          changedG.length > 1 ? ' and ' : ''
+          changedG.length > 1 ? ', and ' : ''
         }${changedG[changedG.length - 1]}.`
       : 'G -';
 
