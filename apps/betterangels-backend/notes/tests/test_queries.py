@@ -1,25 +1,30 @@
-from accounts.models import User
-from django.test import TestCase, ignore_warnings
-from notes.models import Note
-from test_utils.mixins import GraphQLTestCaseMixin
+from django.test import ignore_warnings
+from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class NoteGraphQLTestCase(GraphQLTestCaseMixin, TestCase):
+class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        # Create test user and notes here
-        self.user = User.objects.create(email="hoola@test.com", username="hoola")
-        self.note1 = Note.objects.create(
-            created_by=self.user, body="Test Note 1", title="testnote title 1"
-        )
-        self.note2 = Note.objects.create(
-            created_by=self.user, body="Test Note 2", title="testnote title 2"
-        )
+        self.graphql_client.force_login(self.users[0])
 
-    def test_notes_query_authenticated(self) -> None:
-        self.graphql_client.force_login(self.user)
+    def test_note_query(self) -> None:
+        query = """
+            query ViewNote($id: ID!) {
+                note(pk: $id) {
+                    id
+                    body
+                }
+            }
+        """
+        variables = {"id": self.note["id"]}
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables)
+        note = response["data"]["note"]
+        self.assertEqual(note["body"], self.note["body"])
 
+    def test_notes_query(self) -> None:
         query = """
           {
               notes {
@@ -28,23 +33,10 @@ class NoteGraphQLTestCase(GraphQLTestCaseMixin, TestCase):
               }
           }
         """
-        response = self.execute_graphql(query)
-        data = response["data"]["notes"]
 
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]["body"], "Test Note 1")
-        # Add more assertions as necessary
-
-    def test_notes_query_unauthenticated(self) -> None:
-        query = """
-            {
-                notes {
-                    id
-                    body
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-        data = response["data"]["notes"]
-
-        self.assertEqual(len(data), 0)
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query)
+        notes = response["data"]["notes"]
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0]["body"], self.note["body"])

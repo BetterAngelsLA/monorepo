@@ -72,3 +72,5 @@ __pycache__
 tmp
 
 .scripts/
+
+.nx/cache
