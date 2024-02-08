@@ -1,12 +1,30 @@
 from functools import reduce
 from operator import and_, or_
-from typing import List, TypeVar, Union, cast
+from typing import List, Tuple, Type, TypeVar, Union, cast
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
-from django.db.models import Exists, Model, OuterRef, Q, QuerySet
+from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
 from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
 
 T = TypeVar("T", bound=Model)
+
+
+def permission_enum_to_django_metra_permissions(
+    permission_enum: Type[TextChoices],
+) -> Tuple[Tuple[str, str], ...]:
+    """
+    Converts a TextChoices permissions mapping to the format required for Django's Meta
+    class permissions. This function extracts the permission codename and its verbose
+    name.
+
+    Args:
+        permissions_mapping (TextChoices): A TextChoices instance mapping permissions to
+        their descriptions.
+
+    Returns:
+        A tuple suitable for Django's Meta.permissions.
+    """
+    return tuple((perm.value.split(".")[-1], perm.label) for perm in permission_enum)
 
 
 def get_objects_for_user(

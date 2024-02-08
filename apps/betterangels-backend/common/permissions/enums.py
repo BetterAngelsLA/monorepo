@@ -1,10 +1,8 @@
-# permissions.py
-
-from enum import StrEnum
+from django.db import models
 
 
-class SimpleModelPermissions(StrEnum):
-    VIEW = "simplemodels.view_note"
-    CHANGE = "simplemodels.change_note"
-    DELETE = "simplemodels.delete_note"
-    ADD = "simplemodels.add_note"
+class SimpleModelPermissions(models.TextChoices):
+    VIEW = "simplemodels.view_simplemodel", "Can view simplemodel"
+    CHANGE = "simplemodels.change_simplemodel", "Can change simplemodel"
+    DELETE = "simplemodels.delete_simplemodel", "Can delete simplemodel"
+    ADD = "simplemodels.add_simplemodel", "Can add simplemodel"
