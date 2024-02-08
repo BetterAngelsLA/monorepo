@@ -1,15 +1,14 @@
-from accounts.groups import GroupNames
 from django.db import migrations
 
 
 def create_caseworker_group(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
-    Group.objects.get_or_create(name=GroupNames.CASEWORKER)
+    Group.objects.get_or_create(name="Caseworker")
 
 
 def remove_caseworker_group(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
-    Group.objects.filter(name=GroupNames.CASEWORKER).delete()
+    Group.objects.filter(name="Caseworker").delete()
 
 
 class Migration(migrations.Migration):
