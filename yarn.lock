@@ -3981,7 +3981,7 @@ __metadata:
     react-native-screens: ~3.29.0
     react-native-svg: 14.1.0
     react-native-svg-transformer: 1.3.0
-    react-native-web: 0.19.8
+    react-native-web: 0.19.10
     react-test-renderer: 18.2.0
     ts-jest: ^29.1.0
     ts-node: 10.9.1
@@ -20567,9 +20567,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-web@npm:0.19.8":
-  version: 0.19.8
-  resolution: "react-native-web@npm:0.19.8"
+"react-native-web@npm:0.19.10":
+  version: 0.19.10
+  resolution: "react-native-web@npm:0.19.10"
   dependencies:
     "@babel/runtime": ^7.18.6
     "@react-native/normalize-color": ^2.1.0
@@ -20582,7 +20582,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: b10bb37730d9d991b3b12c7cc408a6db62b7a7cd14e4f9f44d1128de2ffb2d8fc2cf2122d5c608d320239d342bfe07f1eb75dccdec2ae2ee93078eb879c5ef03
+  checksum: d0a75d777fdd97ff513e2c2bb90512fbfeca2176916f1257085ee505b37c9c6dda64aefa863c970702aeca99d4d898cce843d74ecdaeb080875131cb1373d0dc
   languageName: node
   linkType: hard
 
