@@ -14,7 +14,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_create_note_permission(self, user_idx: int, should_succeed: bool) -> None:
         self._handle_user_login(user_idx)
 
-        variables = {"title": "Test Note", "body": "This is a test note."}
+        variables = {"title": "Test Note", "publicDetails": "This is a test note."}
         response = self._create_note(variables)
 
         if should_succeed:
@@ -58,21 +58,13 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_permission(self, user_idx: int, should_succeed: bool) -> None:
         self._handle_user_login(user_idx)
 
-        mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(data: { id: $id, title: $title, body: $body }) {
-                    id
-                    title
-                    body
-                }
-            }
-        """
         variables = {
             "id": self.note["id"],
             "title": "Updated Note",
-            "body": "Updated content",
+            "publicDetails": "Updated content",
+            "isSubmitted": False,
         }
-        response = self.execute_graphql(mutation, variables)
+        response = self._update_note(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])
@@ -94,7 +86,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
-                    body
+                    publicDetails
                 }
             }
         """
@@ -121,7 +113,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             query ViewNotes {
                 notes {
                     id
-                    body
+                    publicDetails
                 }
             }
         """

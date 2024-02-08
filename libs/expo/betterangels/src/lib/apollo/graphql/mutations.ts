@@ -14,7 +14,7 @@ export const CREATE_NOTE = gql`
     createNote(data: $data) {
       id
       title
-      body
+      publicDetails
       createdAt
       createdBy {
         id
@@ -30,7 +30,7 @@ export const UPDATE_NOTE = gql`
     updateNote(data: $data) {
       id
       title
-      body
+      publicDetails
       createdAt
       createdBy {
         id

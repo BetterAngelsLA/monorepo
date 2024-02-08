@@ -1119,6 +1119,21 @@ mfa = ["qrcode (>=7.0.0)"]
 saml = ["python3-saml (>=1.15.0,<2.0.0)"]
 
 [[package]]
+name = "django-choices-field"
+version = "2.2.2"
+description = "Django field that set/get django's new TextChoices/IntegerChoices enum."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "django_choices_field-2.2.2-py3-none-any.whl", hash = "sha256:bfdf5a8e098ead77eb1d5e32a85352af4a37a7b3f28fb5e74b8a17c1270a30bc"},
+    {file = "django_choices_field-2.2.2.tar.gz", hash = "sha256:1147a47d3972a49479be002c5c8ad0118863a8b936933597cfb3d8fcf257a578"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+typing_extensions = ">=4.0.0"
+
+[[package]]
 name = "django-cors-headers"
 version = "4.3.1"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
@@ -3350,4 +3365,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "f1f5dcea0e10baf9267b074dd50abd412e6d9a5e99824fc9e505ad3fae5d5a4f"
+content-hash = "d149f2bbd9ef61a0049d356301002d35ff9bd88eb02155f5f505fef685fdc916"

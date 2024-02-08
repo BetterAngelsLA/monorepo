@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import strawberry_django
 from accounts.types import UserType
@@ -14,13 +14,62 @@ from . import models
 
 
 @dataclasses.dataclass
+@strawberry_django.type(models.Mood)
+class MoodType:
+    title: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Mood)
+class CreateMoodInput:
+    title: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.Service)
+class ServiceType:
+    title: auto
+    custom_title: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Service)
+class CreateServiceInput:
+    title: auto
+    custom_title: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Task)
+class LinkTaskInput:
+    id: Optional[int]
+    title: Optional[str]
+    status: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.Task)
+class TaskType:
+    id: auto
+    status: auto
+    title: auto
+    created_at: auto
+    created_by: UserType
+
+
+@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
     created_at: auto
     created_by: UserType
+    client: Optional[UserType]
+    parent_tasks: List[TaskType]
+    child_tasks: List[TaskType]
+    moods: List[MoodType]
+    is_submitted: auto
 
     @classmethod
     def get_queryset(
@@ -33,10 +82,18 @@ class NoteType:
 
 
 @dataclasses.dataclass
+@strawberry_django.input(models.User)
+class UserInput:
+    id: auto
+
+
+@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
-    body: auto
+    public_details: auto
+    parent_tasks: Optional[List[LinkTaskInput]]
+    client: Optional[UserInput]
 
 
 @dataclasses.dataclass
@@ -44,4 +101,8 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
+    moods: Optional[List[CreateMoodInput]]
+    parent_tasks: Optional[List[LinkTaskInput]]
+    child_tasks: Optional[List[LinkTaskInput]]
+    is_submitted: auto

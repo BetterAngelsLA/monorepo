@@ -13,12 +13,14 @@ readme = "README.md"
 profile = "black"
 skip_glob = ["*/migrations/*"]
 
+[tool.poetry.dependencies]
+python = "3.11.5"
+django-choices-field = "^2.2.2"
+
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
 develop = true
 
-[tool.poetry.dependencies]
-python = "3.11.5"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.1.0"
