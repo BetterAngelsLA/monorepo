@@ -107,6 +107,7 @@
     "prettier": "*",
     "ts-jest": "*",
     "ts-node": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "metro": "*"
   }
 }
