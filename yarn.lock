@@ -3957,8 +3957,8 @@ __metadata:
     jest: ^29.4.1
     jest-circus: ^29.4.1
     jest-environment-jsdom: ^29.4.1
-    jest-expo: ~50.0.1
-    metro: 0.76.7
+    jest-expo: ~50.0.2
+    metro: ~0.80.4
     metro-react-native-babel-transformer: ^0.77.0
     metro-resolver: 0.76.7
     nx: 16.6.0
@@ -17038,9 +17038,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-expo@npm:~50.0.1":
-  version: 50.0.1
-  resolution: "jest-expo@npm:50.0.1"
+"jest-expo@npm:~50.0.2":
+  version: 50.0.2
+  resolution: "jest-expo@npm:50.0.2"
   dependencies:
     "@expo/config": ~8.5.0
     "@expo/json-file": ^8.2.37
@@ -17056,7 +17056,7 @@ __metadata:
     stacktrace-js: ^2.0.2
   bin:
     jest: bin/jest.js
-  checksum: 7298162693296e56d49613e70efa11b93538a25a1e0a1e17f35ed935e821d50b98c00428ebb7a2bb26594de493e769d526ed0cd843a0bebcb912e286ded25ce5
+  checksum: cf6971364c0afbe350845880fb22bb39254812ce24e89522009a755d2b6f25751d9d738e9bcbfb8f86812ef15faf211e3f5be19c8b40f79711af99ec4927e685
   languageName: node
   linkType: hard
 
@@ -19152,7 +19152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metro@npm:0.80.5, metro@npm:^0.80.3":
+"metro@npm:0.80.5, metro@npm:^0.80.3, metro@npm:~0.80.4":
   version: 0.80.5
   resolution: "metro@npm:0.80.5"
   dependencies:

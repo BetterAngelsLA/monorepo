@@ -20,8 +20,9 @@ export default function PublicNote(props: IPublicNoteProps) {
   const { control, watch } = useFormContext();
 
   const hmisNote = watch('hmisNote');
-  const isEmptyOrTemplate = !hmisNote || hmisNote === 'G:\nI:\nR:\nP:';
+  const isEmptyOrTemplate = !hmisNote || hmisNote === 'G -\nI -\nR -\nP - ';
   const isPublicNote = expanded === 'Public Note';
+
   return (
     <FieldCard
       expanded={expanded}

@@ -4,7 +4,6 @@ import {
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
-import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -30,7 +29,7 @@ interface INote {
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
@@ -38,8 +37,8 @@ export default function AddNote() {
     defaultValues: {
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
-      hmisNote: 'G:\nI:\nR:\nP:',
-      noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
+      hmisNote: 'G -\nI -\nR -\nP - ',
+      noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
       moods: [],
       providedServices: [],
       requestedServices: [],
@@ -62,7 +61,7 @@ export default function AddNote() {
     setExpanded,
   };
 
-  console.log(clientId);
+  // console.log(clientId);
 
   // async function onSubmit(data: any) {
   //   try {
