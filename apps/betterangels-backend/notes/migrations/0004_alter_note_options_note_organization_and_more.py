@@ -23,7 +23,7 @@ def create_caseworker_permission_template(apps, schema_editor):
 
 def delete_caseworker_permission_template(apps, schema_editor):
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
-    PermissionGroupTemplate.objects.get("Caseworker")
+    PermissionGroupTemplate.objects.get("Caseworker").delete()
 
 
 def delete_old_caseworker_group(apps, schema_editor):
