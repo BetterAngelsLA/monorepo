@@ -115,6 +115,12 @@ jobs:
           CI=1 yarn expo install --check
           EOF
 
+      - name: 🕵️ Check for missing migrations
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx affected -t check-migrations
+          EOF
+
       - name: 📝 Make sure GraphQL Schema is up to date
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
