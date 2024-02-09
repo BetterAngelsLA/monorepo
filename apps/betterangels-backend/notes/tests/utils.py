@@ -34,10 +34,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         self.users[0].groups.add(perm_group.group)
         self.users[0].groups.add(organization_group)
-
         perm_group.organization.add_user(self.users[0])
-        # Create Permission Group for Caseworkers
-        # Add Group To User
+
         self.graphql_client.force_login(self.users[0])
         self.note = self._create_note(
             {"title": f"User: {self.users[0].id}", "body": f"{self.users[0].id}'s note"}
