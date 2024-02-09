@@ -49,17 +49,6 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             create_caseworker_permission_template, delete_caseworker_permission_template
         ),
-        migrations.AlterModelOptions(
-            name="note",
-            options={
-                "permissions": (
-                    ("view_private_note", "Can add private note"),
-                    ("change_private_note", "Can change private note"),
-                    ("delete_private_note", "Can delete private note"),
-                    ("add_private_note", "Can view private note"),
-                )
-            },
-        ),
         migrations.AddField(
             model_name="note",
             name="organization",

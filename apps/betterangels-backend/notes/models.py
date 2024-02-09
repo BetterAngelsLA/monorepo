@@ -1,8 +1,6 @@
 from accounts.models import User
-from common.permissions.utils import permission_enum_to_django_metra_permissions
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 
 
@@ -16,11 +14,6 @@ class Note(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        permissions = permission_enum_to_django_metra_permissions(
-            PrivateNotePermissions
-        )
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
