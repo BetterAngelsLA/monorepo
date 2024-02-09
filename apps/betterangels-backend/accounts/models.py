@@ -11,7 +11,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
-from organizations.models import Organization, OrganizationInvitation
+from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from simple_history.models import HistoricalRecords
 
 
@@ -55,6 +55,8 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
     objects = UserManager()
 
     history = HistoricalRecords()
+
+    organizations_organizationuser: models.QuerySet[OrganizationUser]
 
     def __str__(self: "User") -> str:
         return self.email
@@ -143,8 +145,7 @@ class PermissionGroup(models.Model):
             raise ValidationError(
                 "Updating a PermissionGroup with a template is not allowed."
             )
-
-        if not hasattr(self, "group"):
+        if hasattr(self, "template"):
             permissions_to_apply: Iterable[Permission] = []
             if self.template:
                 group_name = f"{self.organization.name}_{self.template.name}"

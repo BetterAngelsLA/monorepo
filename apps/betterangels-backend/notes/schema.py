@@ -6,6 +6,7 @@ import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
+from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
