@@ -39,23 +39,6 @@ class CreateServiceInput:
     custom_title: Optional[str]
 
 
-@dataclasses.dataclass
-@strawberry_django.input(models.Task)
-class LinkTaskInput:
-    id: Optional[int]
-    title: Optional[str]
-    status: Optional[str]
-
-
-@dataclasses.dataclass
-@strawberry_django.type(models.Task)
-class TaskType:
-    id: auto
-    status: auto
-    title: auto
-    created_at: auto
-    created_by: UserType
-
 
 @dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
@@ -66,8 +49,6 @@ class NoteType:
     created_at: auto
     created_by: UserType
     client: Optional[UserType]
-    parent_tasks: List[TaskType]
-    child_tasks: List[TaskType]
     moods: List[MoodType]
     is_submitted: auto
 
@@ -92,7 +73,6 @@ class UserInput:
 class CreateNoteInput:
     title: auto
     public_details: auto
-    parent_tasks: Optional[List[LinkTaskInput]]
     client: Optional[UserInput]
 
 
@@ -103,6 +83,4 @@ class UpdateNoteInput:
     title: auto
     public_details: auto
     moods: Optional[List[CreateMoodInput]]
-    parent_tasks: Optional[List[LinkTaskInput]]
-    child_tasks: Optional[List[LinkTaskInput]]
     is_submitted: auto

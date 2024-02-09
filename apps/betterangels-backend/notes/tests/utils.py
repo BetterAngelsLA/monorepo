@@ -1,8 +1,6 @@
 from accounts.models import User
 from django.test import TestCase
 from model_bakery import baker
-from notes.enums import TaskStatusEnum
-from notes.models import Task
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -11,34 +9,23 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
     def setUp(self) -> None:
         super().setUp()
         self.users = baker.make(User, _quantity=3)
+        self.case_manager = self.users[0]
         self.note_client = self.users[2]
-        self.graphql_client.force_login(self.users[0])
+        self.graphql_client.force_login(self.case_manager)
         self.note = self._create_note(
             {
-                "title": f"User: {self.users[0].id}",
-                "publicDetails": f"{self.users[0].id}'s note",
+                "title": f"User: {self.case_manager.id}",
+                "publicDetails": f"{self.case_manager.id}'s note",
             }
         )["data"]["createNote"]
         self.graphql_client.logout()
 
-    def _create_task(self, variables: dict) -> Task:
-        default_variables = dict(
-            title="Wellness check",
-            status=TaskStatusEnum.IN_PROGRESS,
-            created_by=self.users[0],
-            client=self.note_client,
-        )
-        if variables:
-            default_variables.update(variables)
-
-        return baker.make(Task, **default_variables)
 
     def _create_note(self, variables: dict) -> dict:
         default_variables = dict(
             title="Test Note",
             publicDetails="This is a test note",
             client={"id": self.note_client.id},
-            parentTasks=[],
         )
 
         if variables:
@@ -47,12 +34,10 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mutation = """
             mutation CreateNote(
                 $title: String!, $publicDetails: String!,
-                $parentTasks: [LinkTaskInput!],
                 $client: UserInput,
             ) {
                 createNote(data: {
                     title: $title, publicDetails: $publicDetails,
-                    parentTasks: $parentTasks,
                     client: $client,
                 }) {
                     id
@@ -60,11 +45,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     publicDetails
                     moods {
                         title
-                    }
-                    parentTasks {
-                        id
-                        title
-                        status
                     }
                     client {
                         id
@@ -82,13 +62,11 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mutation = """
             mutation UpdateNote(
                 $id: ID!, $title: String!, $publicDetails: String!,
-                $moods: [CreateMoodInput!], $parentTasks: [LinkTaskInput!],
-                $childTasks: [LinkTaskInput!], $isSubmitted: Boolean!
+                $moods: [CreateMoodInput!], $isSubmitted: Boolean!
             ) {
                 updateNote(data: {
                     id: $id, title: $title, publicDetails: $publicDetails,
-                    moods: $moods, parentTasks: $parentTasks,
-                    childTasks: $childTasks, isSubmitted: $isSubmitted
+                    moods: $moods, isSubmitted: $isSubmitted
                 }) {
                     id
                     title
@@ -96,10 +74,11 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     moods {
                         title
                     }
-                    parentTasks {
+                    client {
                         id
-                        title
-                        status
+                    }
+                    createdBy {
+                        id
                     }
                 }
             }

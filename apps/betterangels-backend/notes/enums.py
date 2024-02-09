@@ -47,12 +47,5 @@ class ServiceEnum(models.TextChoices):
 
 class ServiceTypeEnum(models.TextChoices):
     PROVIDED = "provided", "Provided"
-    REUQESTED = "reuqested", "Requested"
+    REQUESTED = "requested", "Requested"
 
-
-class TaskStatusEnum(models.TextChoices):
-    CANCELED = "canceled", "Canceled"
-    COMPLETED = "completed", "Completed"
-    DRAFT_CANCELED = "draft_canceled", "Draft Canceled"
-    DRAFT_COMPLETED = "draft_completed", "Draft Completed"
-    IN_PROGRESS = "in_progress", "In Progress"
