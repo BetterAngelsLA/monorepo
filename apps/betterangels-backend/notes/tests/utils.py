@@ -10,11 +10,6 @@ from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
 
-def custom_string_generator(max_length: int) -> str:
-    """Generates a random string with a specified maximum length."""
-    return gen_string(max_length=max_length)
-
-
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -26,7 +21,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assign_perm(NotePermissions.VIEW, organization_group)
         assign_perm(NotePermissions.ADD, organization_group)
 
-        org_name = custom_string_generator(50)
+        org_name = gen_string(max_length=50)
         perm_group: PermissionGroup = baker.make(
             PermissionGroup,
             group=baker.make(Group),

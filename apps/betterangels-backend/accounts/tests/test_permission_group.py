@@ -2,23 +2,25 @@ from accounts.models import PermissionGroup, PermissionGroupTemplate
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase
 from model_bakery import baker
+from model_bakery.random_gen import gen_string
 from organizations.models import Organization
 
 
 class PermissionGroupTests(TestCase):
     def test_group_creation_with_template_permissions(self) -> None:
+        org_name = gen_string(max_length=50)
         organization: Organization = baker.make(
-            Organization, name="OrgWithTemplate", slug="orgwithtemplate"
+            Organization, name=org_name, slug=org_name
         )
-        permission1 = baker.make(Permission, codename="can_view")
-        permission2 = baker.make(Permission, codename="can_edit")
+        permission1 = baker.make(Permission)
+        permission2 = baker.make(Permission)
 
         permission_template = baker.make(
             PermissionGroupTemplate,
-            name="TemplateWithPerms",
+            name=gen_string(max_length=50),
             permissions=[permission1, permission2],
         )
-        expected_group_name = f"{organization.name}_TemplateWithPerms"
+        expected_group_name = f"{organization.name}_{permission_template.name}"
 
         baker.make(
             PermissionGroup,
@@ -27,19 +29,23 @@ class PermissionGroupTests(TestCase):
         )
 
         created_group = Group.objects.get(name=expected_group_name)
-        self.assertTrue(created_group.permissions.filter(codename="can_view").exists())
-        self.assertTrue(created_group.permissions.filter(codename="can_edit").exists())
+        self.assertTrue(
+            created_group.permissions.filter(codename=permission1.codename).exists()
+        )
+        self.assertTrue(
+            created_group.permissions.filter(codename=permission2.codename).exists()
+        )
 
     def test_group_creation_without_template_creates_empty_group(self) -> None:
+        org_name = gen_string(max_length=50)
         organization: Organization = baker.make(
-            Organization, name="OrgWithTemplate", slug="orgwithtemplate"
+            Organization, name=org_name, slug=org_name
         )
-        group_name = "GroupWithoutPerms"
+        permission_group = baker.make(PermissionGroup, organization=organization)
 
-        group = baker.make(Group, name=group_name)
-        baker.make(PermissionGroup, organization=organization, group=group)
-
-        created_group = Group.objects.get(name=group_name)
+        created_group = Group.objects.get(
+            name=f"{organization.name}_{permission_group.name}"
+        )
         self.assertEqual(
             created_group.permissions.count(),
             0,

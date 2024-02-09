@@ -2,19 +2,22 @@ from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from django.test import TestCase
 from model_bakery import baker
+from model_bakery.random_gen import gen_string
 from organizations.models import Organization, OrganizationUser
 
 
 class OrganizationUserTests(TestCase):
     def setUp(self) -> None:
+        org1_name = gen_string(max_length=50)
         self.organization1: Organization = baker.make(
-            Organization, name="OrgOne", slug="orgone"
+            Organization, name=org1_name, slug=org1_name
         )
+        org_name = gen_string(max_length=50)
         self.organization2: Organization = baker.make(
-            Organization, name="OrgTwo", slug="orgtwo"
+            Organization, name=org_name, slug=org_name
         )
 
-        self.user = baker.make(User, username="testuser")
+        self.user = baker.make(User)
 
         self.caseworker_template = PermissionGroupTemplate.objects.get(
             name=GroupTemplateNames.CASEWORKER
@@ -39,7 +42,7 @@ class OrganizationUserTests(TestCase):
         )
         self.assertTrue(
             self.user.groups.filter(
-                name=f"{self.organization1.name}_Caseworker"
+                name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}"
             ).exists()
         )
 
@@ -61,11 +64,11 @@ class OrganizationUserTests(TestCase):
 
         self.assertFalse(
             self.user.groups.filter(
-                name=f"{self.organization1.name}_Caseworker"
+                name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}"
             ).exists()
         )
         self.assertTrue(
             self.user.groups.filter(
-                name=f"{self.organization2.name}_Caseworker"
+                name=f"{self.organization2.name}_{GroupTemplateNames.CASEWORKER}"
             ).exists()
         )
