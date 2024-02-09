@@ -1,9 +1,9 @@
-from simple_history.models import HistoricalRecords
 from accounts.models import User
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from simple_history.models import HistoricalRecords
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 

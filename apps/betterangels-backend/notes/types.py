@@ -39,7 +39,6 @@ class CreateServiceInput:
     custom_title: Optional[str]
 
 
-
 @dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:

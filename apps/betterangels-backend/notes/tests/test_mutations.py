@@ -1,4 +1,5 @@
 from unittest.mock import ANY
+
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -12,10 +13,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         expected_query_count = 35
-        # TODO: add remaining fields; create "expected_note" to assert against,
-        # vs str values
         with self.assertNumQueries(expected_query_count):
-            response = self._create_note(
+            response = self._create_note_fixture(
                 {
                     "title": "New Note",
                     "publicDetails": "This is a new note.",
@@ -29,12 +28,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "publicDetails": "This is a new note.",
-            "createdBy": {
-                "id": str(self.case_manager.pk)
-            },
-            "client": {
-                "id": str(self.note_client.pk)
-            },
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
         }
 
         self.assertEqual(created_note, expected_note)
@@ -49,7 +44,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         expected_query_count = 13
         with self.assertNumQueries(expected_query_count):
-            response = self._update_note(variables)
+            response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
         expected_note = {
@@ -57,12 +52,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [],
             "publicDetails": "Updated Body",
-            "createdBy": {
-                "id": str(self.case_manager.pk)
-            },
-            "client": {
-                "id": str(self.note_client.pk)
-            },
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
         }
         self.assertEqual(updated_note, expected_note)
 

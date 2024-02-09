@@ -77,7 +77,6 @@ class Mutation:
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         FLAT_FIELDS = ("title", "public_details")
 
-        user = get_current_user(info)
         note = Note.objects.get(pk=data.id)
         update_fields = [
             (field, value)

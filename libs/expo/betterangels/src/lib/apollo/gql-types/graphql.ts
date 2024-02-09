@@ -19,24 +19,17 @@ export type Scalars = {
 };
 
 export type CreateMoodInput = {
-  title: Scalars['String']['input'];
+  title: MoodEnum;
 };
 
 export type CreateNoteInput = {
   client?: InputMaybe<UserInput>;
-  parentTasks?: InputMaybe<Array<LinkTaskInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
 
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
-};
-
-export type LinkTaskInput = {
-  id?: InputMaybe<Scalars['Int']['input']>;
-  status?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type MagicLinkInput = {
@@ -48,9 +41,32 @@ export type MagicLinkResponse = {
   message: Scalars['String']['output'];
 };
 
+export enum MoodEnum {
+  Agitated = 'AGITATED',
+  Agreeable = 'AGREEABLE',
+  Anxious = 'ANXIOUS',
+  Depressed = 'DEPRESSED',
+  Detached = 'DETACHED',
+  DisorganizedThought = 'DISORGANIZED_THOUGHT',
+  Disoriented = 'DISORIENTED',
+  Escalated = 'ESCALATED',
+  Euthymic = 'EUTHYMIC',
+  FlatBlunted = 'FLAT_BLUNTED',
+  Happy = 'HAPPY',
+  Hopeless = 'HOPELESS',
+  Indifferent = 'INDIFFERENT',
+  Manic = 'MANIC',
+  Motivated = 'MOTIVATED',
+  Optimistic = 'OPTIMISTIC',
+  Personable = 'PERSONABLE',
+  Pleasant = 'PLEASANT',
+  Restless = 'RESTLESS',
+  Suicidal = 'SUICIDAL'
+}
+
 export type MoodType = {
   __typename?: 'MoodType';
-  title: Scalars['String']['output'];
+  title: MoodEnum;
 };
 
 export type Mutation = {
@@ -84,14 +100,12 @@ export type MutationUpdateNoteArgs = {
 
 export type NoteType = {
   __typename?: 'NoteType';
-  childTasks: Array<TaskType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
-  parentTasks: Array<TaskType>;
   publicDetails?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
 };
@@ -126,21 +140,10 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-export type TaskType = {
-  __typename?: 'TaskType';
-  createdAt: Scalars['DateTime']['output'];
-  createdBy: UserType;
-  id: Scalars['ID']['output'];
-  status: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
 export type UpdateNoteInput = {
-  childTasks?: InputMaybe<Array<LinkTaskInput>>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   moods?: InputMaybe<Array<CreateMoodInput>>;
-  parentTasks?: InputMaybe<Array<LinkTaskInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };

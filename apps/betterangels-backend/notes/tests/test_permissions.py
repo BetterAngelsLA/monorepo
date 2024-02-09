@@ -15,7 +15,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_idx)
 
         variables = {"title": "Test Note", "publicDetails": "This is a test note."}
-        response = self._create_note(variables)
+        response = self._create_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNote"])
@@ -64,7 +64,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated content",
             "isSubmitted": False,
         }
-        response = self._update_note(variables)
+        response = self._update_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])

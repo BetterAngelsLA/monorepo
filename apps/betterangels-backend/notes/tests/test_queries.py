@@ -1,7 +1,4 @@
-from django.contrib.gis.geos import Point
 from django.test import ignore_warnings
-from model_bakery import baker
-from notes.models import Location
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
@@ -12,11 +9,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.case_manager)
 
     def test_note_query(self) -> None:
-        case_manager = self.case_manager
-        mock_point = Point(1.232433, 2.456546)
-        location = baker.make(Location, point=mock_point, zip_code="90210-1234")
-
-        response = self._create_note(
+        response = self._create_note_fixture(
             {
                 "title": "New Note",
                 "publicDetails": "This is a new note.",
@@ -24,7 +17,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         )
         note_id = response["data"]["createNote"]["id"]
-        note = self._update_note(
+        note = self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "New Note",

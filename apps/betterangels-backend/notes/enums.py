@@ -48,4 +48,3 @@ class ServiceEnum(models.TextChoices):
 class ServiceTypeEnum(models.TextChoices):
     PROVIDED = "provided", "Provided"
     REQUESTED = "requested", "Requested"
-

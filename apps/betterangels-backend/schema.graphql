@@ -23,13 +23,12 @@ When the condition fails, the following can be returned (following this priority
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 input CreateMoodInput {
-  title: String!
+  title: MoodEnum!
 }
 
 input CreateNoteInput {
   title: String!
   publicDetails: String
-  parentTasks: [LinkTaskInput!]
   client: UserInput
 }
 
@@ -40,12 +39,6 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
-input LinkTaskInput {
-  id: Int
-  title: String
-  status: String
-}
-
 input MagicLinkInput {
   email: String!
 }
@@ -54,8 +47,31 @@ type MagicLinkResponse {
   message: String!
 }
 
+enum MoodEnum {
+  AGITATED
+  AGREEABLE
+  ANXIOUS
+  DEPRESSED
+  DETACHED
+  DISORGANIZED_THOUGHT
+  DISORIENTED
+  ESCALATED
+  EUTHYMIC
+  FLAT_BLUNTED
+  HAPPY
+  HOPELESS
+  INDIFFERENT
+  MANIC
+  MOTIVATED
+  OPTIMISTIC
+  PERSONABLE
+  PLEASANT
+  RESTLESS
+  SUICIDAL
+}
+
 type MoodType {
-  title: String!
+  title: MoodEnum!
 }
 
 type Mutation {
@@ -73,8 +89,6 @@ type NoteType {
   createdAt: DateTime!
   createdBy: UserType!
   client: UserType
-  parentTasks: [TaskType!]!
-  childTasks: [TaskType!]!
   moods: [MoodType!]!
   isSubmitted: Boolean!
 }
@@ -90,21 +104,11 @@ type Query {
   notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
 }
 
-type TaskType {
-  id: ID!
-  status: String!
-  title: String!
-  createdAt: DateTime!
-  createdBy: UserType!
-}
-
 input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
   moods: [CreateMoodInput!]
-  parentTasks: [LinkTaskInput!]
-  childTasks: [LinkTaskInput!]
   isSubmitted: Boolean
 }
 

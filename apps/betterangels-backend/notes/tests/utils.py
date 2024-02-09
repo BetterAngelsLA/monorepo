@@ -8,11 +8,11 @@ from unittest_parametrize import ParametrizedTestCase
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.users = baker.make(User, _quantity=3)
+        self.users = baker.make(User, _quantity=2)
         self.case_manager = self.users[0]
-        self.note_client = self.users[2]
+        self.note_client = self.users[1]
         self.graphql_client.force_login(self.case_manager)
-        self.note = self._create_note(
+        self.note = self._create_note_fixture(
             {
                 "title": f"User: {self.case_manager.id}",
                 "publicDetails": f"{self.case_manager.id}'s note",
@@ -20,8 +20,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         )["data"]["createNote"]
         self.graphql_client.logout()
 
-
-    def _create_note(self, variables: dict) -> dict:
+    def _create_note_fixture(self, variables: dict) -> dict:
         default_variables = dict(
             title="Test Note",
             publicDetails="This is a test note",
@@ -58,7 +57,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         return self.execute_graphql(mutation, default_variables)
 
-    def _update_note(self, variables: dict) -> dict:
+    def _update_note_fixture(self, variables: dict) -> dict:
         mutation = """
             mutation UpdateNote(
                 $id: ID!, $title: String!, $publicDetails: String!,
