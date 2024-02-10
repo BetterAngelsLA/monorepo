@@ -12,8 +12,8 @@ import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 
 interface ITitleProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
   firstName: string;
 }
 
