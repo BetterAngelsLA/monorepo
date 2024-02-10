@@ -12,7 +12,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(0)
 
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 35
+        expected_query_count = 25
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -38,11 +38,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
+            "moods": [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
 
-        expected_query_count = 13
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -50,7 +51,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "title": "Updated Title",
-            "moods": [],
+            "moods": [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager.pk)},
             "client": {"id": str(self.note_client.pk)},

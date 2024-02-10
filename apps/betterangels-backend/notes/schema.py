@@ -14,6 +14,7 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 
 from .models import Mood, Note
+from .services import NoteService
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
@@ -47,24 +48,19 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
 
-        note_data = dict(
+        # TODO: Handle creating Notes without existing Client.
+        # if not data.client:
+        #     ClientService.create_client()
+
+        client_id = data.client.id if data.client else None
+
+        note = NoteService.create_note(
             title=data.title,
             public_details=data.public_details,
-            created_by=user,
-            client=getattr(data.client, "id", None),
-            # TODO: add rest of fields
+            user=user,
+            client_id=client_id,
         )
 
-        note = resolvers.create(info, Note, note_data)
-
-        # Assign object-level permissions to the user who created the note.
-        # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
-        for perm in [
-            NotePermissions.VIEW,
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-        ]:
-            assign_perm(perm, user, note)
         return cast(NoteType, note)
 
     @strawberry.mutation(
@@ -75,23 +71,15 @@ class Mutation:
     )
     @transaction.atomic()
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        FLAT_FIELDS = ("title", "public_details")
-
-        note = Note.objects.get(pk=data.id)
-        update_fields = [
-            (field, value)
-            for field, value in asdict(data).items()
-            if field in FLAT_FIELDS
-        ]
-        for field, value in update_fields:
-            if value is not None:
-                setattr(note, field, value)
-
-        note.save()
-
-        if data.moods:
-            mood_instances = [Mood(title=mood.title, note=note) for mood in data.moods]
-            Mood.objects.bulk_create(mood_instances)
+        note = NoteService.update_note(
+            id=data.id,
+            title=data.title,
+            public_details=data.public_details,
+            is_submitted=data.is_submitted,
+            mood_titles=[mood.title for mood in data.moods if mood.title]
+            if data.moods
+            else [],
+        )
 
         return cast(NoteType, note)
 
