@@ -22,7 +22,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "id": note_id,
                 "title": "New Note",
                 "publicDetails": "This is a new note.",
-                "client": {"id": self.note_client.id},
                 "moods": [
                     {"title": "ANXIOUS"},
                     {"title": "EUTHYMIC"},

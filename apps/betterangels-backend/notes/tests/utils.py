@@ -31,14 +31,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             default_variables.update(variables)
 
         mutation = """
-            mutation CreateNote(
-                $title: String!, $publicDetails: String!,
-                $client: UserInput,
-            ) {
-                createNote(data: {
-                    title: $title, publicDetails: $publicDetails,
-                    client: $client,
-                }) {
+            mutation CreateNote($data: CreateNoteInput!) {
+                createNote(data: $data) {
                     id
                     title
                     publicDetails
@@ -55,18 +49,12 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             }
         """
 
-        return self.execute_graphql(mutation, default_variables)
+        return self.execute_graphql(mutation, {"data": default_variables})
 
     def _update_note_fixture(self, variables: dict) -> dict:
         mutation = """
-            mutation UpdateNote(
-                $id: ID!, $title: String!, $publicDetails: String!,
-                $moods: [CreateMoodInput!], $isSubmitted: Boolean!
-            ) {
-                updateNote(data: {
-                    id: $id, title: $title, publicDetails: $publicDetails,
-                    moods: $moods, isSubmitted: $isSubmitted
-                }) {
+            mutation UpdateNote($data: UpdateNoteInput!) {
+                updateNote(data: $data) {
                     id
                     title
                     publicDetails
@@ -83,7 +71,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             }
         """
 
-        return self.execute_graphql(mutation, variables)
+        return self.execute_graphql(mutation, {"data": variables})
 
     def _handle_user_login(self, user_idx: int) -> None:
         if user_idx != -1:
