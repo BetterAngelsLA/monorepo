@@ -1,8 +1,10 @@
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
+import {
+  MainScrollContainer,
+  generatedPublicNote,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
-import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import BottomActions from './BottomActions';
@@ -12,7 +14,7 @@ import PrivateNote from './PrivateNote';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
-import ServicesRequested from './ServicesRequested';
+import RequestedServices from './RequestedServices';
 import Title from './Title';
 
 interface INote {
@@ -20,27 +22,46 @@ interface INote {
   nextStepActions: { value: string }[];
   hmisNote: string;
   noteDateTime: string;
+  moods: string[];
+  providedServices: string[];
+  nextStepDate: Date;
+  requestedServices: string[];
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
-  const [expanded, setExpanded] = useState<undefined | string>();
+  const [expanded, setExpanded] = useState<undefined | string | null>();
+  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
-      hmisNote: 'G: \n\nI: \n\nR: \n\nP: \n',
-      noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
+      hmisNote: 'G -\nI -\nR -\nP - ',
+      noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
+      moods: [],
+      providedServices: [],
+      requestedServices: [],
     },
   });
+
+  const watchedValues = methods.watch([
+    'purposes',
+    'moods',
+    'providedServices',
+    'nextStepActions',
+    'nextStepDate',
+    'requestedServices',
+    'hmisNote',
+  ]);
+  const publicNote = methods.watch('hmisNote');
 
   const props = {
     expanded,
     setExpanded,
   };
 
-  console.log(clientId);
+  // console.log(clientId);
 
   // async function onSubmit(data: any) {
   //   try {
@@ -59,6 +80,34 @@ export default function AddNote() {
   //   }
   // }
 
+  useEffect(() => {
+    if (isPublicNoteEdited) {
+      return;
+    }
+    const [
+      purposes,
+      moods,
+      providedServices,
+      nextStepActions,
+      nextStepDate,
+      requestedServices,
+    ] = watchedValues;
+
+    const generateOjbect = {
+      purposes,
+      moods,
+      providedServices,
+      nextStepActions,
+      nextStepDate,
+      requestedServices,
+    };
+
+    const newPublicNote = generatedPublicNote(generateOjbect);
+    if (newPublicNote !== publicNote) {
+      methods.setValue('hmisNote', newPublicNote);
+    }
+  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
@@ -67,9 +116,13 @@ export default function AddNote() {
           <Purpose {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />
-          <ServicesRequested {...props} />
+          <RequestedServices {...props} />
           <NextStep {...props} />
-          <PublicNote firstName="Test" {...props} />
+          <PublicNote
+            isPublicNoteEdited={isPublicNoteEdited}
+            setIsPublicNoteEdited={setIsPublicNoteEdited}
+            {...props}
+          />
           <PrivateNote {...props} />
         </MainScrollContainer>
         <BottomActions />
