@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notes", "0004_alter_notegroupobjectpermission_content_object_and_more"),
+        ("notes", "0003_add_casemanager_note_permissions"),
     ]
 
     operations = [
