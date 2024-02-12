@@ -1,7 +1,12 @@
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import Group
+from organizations.models import Organization
 
-from .models import Organization, PermissionGroup, PermissionGroupTemplate, User
+from .models import PermissionGroup, PermissionGroupTemplate, User
+
+
+def remove_organization_permission_group(organization: Organization) -> None:
+    Group.objects.filter(permissiongroup__organization=organization).delete()
 
 
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:

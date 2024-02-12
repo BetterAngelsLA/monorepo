@@ -1,4 +1,4 @@
-from typing import Any, Iterable
+from typing import Any, Dict, Iterable, Tuple
 
 from accounts.managers import UserManager
 from django.contrib.auth.models import (

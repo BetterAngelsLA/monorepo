@@ -4,9 +4,10 @@ from typing import Any
 from accounts.utils import (
     add_default_org_permissions_to_user,
     remove_org_group_permissions_from_user,
+    remove_organization_permission_group,
 )
 from django.conf import settings
-from django.db.models.signals import post_delete, post_migrate, post_save
+from django.db.models.signals import post_delete, post_migrate, post_save, pre_delete
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
 
@@ -21,6 +22,14 @@ def create_superuser(sender: Any, **kwargs: Any) -> None:
         User.objects.create_superuser(
             username="admin", email="admin@ba.la", password="admin"
         )
+
+
+@receiver(pre_delete, sender=Organization)
+def handle_organization_removed(
+    sender: Any, instance: Organization, **kwargs: Any
+) -> None:
+    remove_organization_permission_group(instance)
+    logger.info(f"Organization {instance.name} was removed.")
 
 
 @receiver(post_save, sender=OrganizationUser)
