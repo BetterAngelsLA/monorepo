@@ -93,7 +93,8 @@ const styles = StyleSheet.create({
   closeIcon: {
     position: 'absolute',
     right: 20,
-    top: 20,
+    top: '10%',
+    zIndex: 1000,
   },
   iconContainer: {
     alignItems: 'center',
