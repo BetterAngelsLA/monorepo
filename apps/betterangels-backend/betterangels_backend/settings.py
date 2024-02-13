@@ -190,6 +190,10 @@ REST_FRAMEWORK = {
     "TOKEN_MODEL": None,
 }
 
+STRAWBERRY_DJANGO = {
+    "MUTATIONS_DEFAULT_HANDLE_ERRORS": True,
+}
+
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
 
 # Celery
