@@ -45,13 +45,15 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
 
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects the
+        # first organization a user is apart of.
+        organization = user.organizations_organization.order_by("id").first()
+
         note = resolvers.create(
             info,
             Note,
-            {
-                **asdict(data),
-                "created_by": user,
-            },
+            {**asdict(data), "created_by": user, "organization": organization},
         )
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?

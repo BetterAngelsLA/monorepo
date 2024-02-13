@@ -6,13 +6,18 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
-from organizations.models import OrganizationInvitation, OrganizationUser
+from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from simple_history.admin import SimpleHistoryAdmin
 from simple_history.models import HistoricalRecords
 
 from .admin_request_mixin import AdminRequestMixin
 from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
-from .models import ExtendedOrganizationInvitation, User
+from .models import (
+    ExtendedOrganizationInvitation,
+    PermissionGroup,
+    PermissionGroupTemplate,
+    User,
+)
 
 
 class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
@@ -54,9 +59,38 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     history = HistoricalRecords()
 
 
+@admin.register(PermissionGroup)
+class PermissionGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "organization", "group", "template")
+    list_filter = ("organization", "template")
+
+
+@admin.register(PermissionGroupTemplate)
+class PermissionGroupTemplateAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+    ]
+    search_fields = [
+        "name",
+    ]
+
+
+class PermissionGroupInline(admin.TabularInline):
+    model = PermissionGroup
+    extra = 1
+
+
+class CustomOrganizationAdmin(admin.ModelAdmin):
+    inlines = [PermissionGroupInline]
+    list_display = ("name",)  # Adjust according to your model fields
+    search_fields = ("name",)  # Enables searching by name in the autocomplete fields
+
+
 admin.site.register(User, UserAdmin)
+admin.site.unregister(Organization)
 admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)
+admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
 
