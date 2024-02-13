@@ -11,7 +11,6 @@ from .baker_recipes import (
 
 
 class PermissionGroupTests(TestCase):
-
     def test_group_creation_inherits_template_permissions(self) -> None:
         permissions = baker.make(Permission, _quantity=2)
         permission_template = permission_group_template_recipe.make(
