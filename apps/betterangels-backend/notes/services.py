@@ -12,31 +12,6 @@ if TYPE_CHECKING:
 
 class NoteService:
     @staticmethod
-    def create_note(
-        title: str,
-        public_details: str,
-        user: "User",
-        client_id: Optional[str],
-    ) -> Note:
-        note = Note.objects.create(
-            title=title,
-            public_details=public_details,
-            created_by=user,
-            client_id=client_id,
-        )
-
-        # Assign object-level permissions to the user who created the note.
-        # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
-        for perm in [
-            NotePermissions.VIEW,
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-        ]:
-            assign_perm(perm, user, note)
-
-        return note
-
-    @staticmethod
     def update_note(
         id: int,
         title: str,
