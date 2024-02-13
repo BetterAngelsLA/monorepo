@@ -1,5 +1,5 @@
 from enum import StrEnum
 
 
-class GroupNames(StrEnum):
+class GroupTemplateNames(StrEnum):
     CASEWORKER = "Caseworker"
