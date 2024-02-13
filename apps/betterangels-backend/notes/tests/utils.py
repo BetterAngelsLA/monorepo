@@ -1,11 +1,14 @@
 from accounts.models import PermissionGroup, User
+from accounts.tests.baker_recipes import (
+    organization_recipe,
+    permission_group_recipe,
+    permission_group_template_recipe,
+)
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from model_bakery.random_gen import gen_string
 from notes.permissions import NotePermissions
-from organizations.models import Organization
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -21,16 +24,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assign_perm(NotePermissions.VIEW, organization_group)
         assign_perm(NotePermissions.ADD, organization_group)
 
-        org_name = gen_string(max_length=50)
-        perm_group: PermissionGroup = baker.make(
-            PermissionGroup,
-            group=baker.make(Group),
-            organization=baker.make(
-                Organization,
-                name=org_name,
-                slug=org_name,
-            ),
-        )
+        perm_group = permission_group_recipe.make()
+        perm_group.group
 
         self.users[0].groups.add(perm_group.group)
         self.users[0].groups.add(organization_group)

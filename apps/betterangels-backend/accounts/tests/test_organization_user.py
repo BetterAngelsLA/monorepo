@@ -2,20 +2,15 @@ from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, PermissionGroupTemplate, User
 from django.test import TestCase
 from model_bakery import baker
-from model_bakery.random_gen import gen_string
-from organizations.models import Organization, OrganizationUser
+from organizations.models import OrganizationUser
+
+from .baker_recipes import organization_recipe
 
 
 class OrganizationUserTests(TestCase):
     def setUp(self) -> None:
-        org1_name = gen_string(max_length=50)
-        self.organization1: Organization = baker.make(
-            Organization, name=org1_name, slug=org1_name
-        )
-        org_name = gen_string(max_length=50)
-        self.organization2: Organization = baker.make(
-            Organization, name=org_name, slug=org_name
-        )
+        self.organization1 = organization_recipe.make()
+        self.organization2 = organization_recipe.make()
 
         self.user = baker.make(User)
 
