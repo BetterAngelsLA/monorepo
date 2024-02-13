@@ -150,8 +150,8 @@ class PermissionGroup(models.Model):
                 "Updating a PermissionGroup with a template is not allowed."
             )
         # TODO: Update the admin so that when a template is defined you can't enter in a
-        # name. Also make it clear that the name of the group will be prefixed by the org
-        # name.
+        # name. Also make it clear that the name of the group will be prefixed by the
+        # org name.
         if hasattr(self, "template"):
             permissions_to_apply: Iterable[Permission] = []
             if self.template:
