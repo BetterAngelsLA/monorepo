@@ -21,8 +21,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assign_perm(NotePermissions.ADD, organization_group)
 
         perm_group = permission_group_recipe.make()
-        perm_group.group
-
         self.users[0].groups.add(perm_group.group)
         self.users[0].groups.add(organization_group)
         perm_group.organization.add_user(self.users[0])
