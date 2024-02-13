@@ -1,50 +1,51 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class MoodEnum(models.TextChoices):
-    AGITATED = "agitated", "Agitated"
-    AGREEABLE = "agreeable", "Agreeable"
-    ANXIOUS = "anxious", "Anxious"
-    DEPRESSED = "depressed", "Depressed"
-    DETACHED = "detached", "Detached"
-    DISORGANIZED_THOUGHT = "disorganized_thought", "Disorganized Thought"
-    DISORIENTED = "disoriented", "Disoriented"
-    ESCALATED = "escalated", "Escalated"
-    EUTHYMIC = "euthymic", "Euthymic"
-    FLAT_BLUNTED = "flat_blunted", "Flat/blunted"
-    HAPPY = "happy", "Happy"
-    HOPELESS = "hopeless", "Hopeless"
-    INDIFFERENT = "indifferent", "Indifferent"
-    MANIC = "manic", "Manic"
-    MOTIVATED = "motivated", "Motivated"
-    OPTIMISTIC = "optimistic", "Optimistic"
-    PERSONABLE = "personable", "Personable"
-    PLEASANT = "pleasant", "Pleasant"
-    RESTLESS = "restless", "Restless"
-    SUICIDAL = "suicidal", "Suicidal"
+    AGITATED = "agitated", _("Agitated")
+    AGREEABLE = "agreeable", _("Agreeable")
+    ANXIOUS = "anxious", _("Anxious")
+    DEPRESSED = "depressed", _("Depressed")
+    DETACHED = "detached", _("Detached")
+    DISORGANIZED_THOUGHT = "disorganized_thought", _("Disorganized Thought")
+    DISORIENTED = "disoriented", _("Disoriented")
+    ESCALATED = "escalated", _("Escalated")
+    EUTHYMIC = "euthymic", _("Euthymic")
+    FLAT_BLUNTED = "flat_blunted", _("Flat/blunted")
+    HAPPY = "happy", _("Happy")
+    HOPELESS = "hopeless", _("Hopeless")
+    INDIFFERENT = "indifferent", _("Indifferent")
+    MANIC = "manic", _("Manic")
+    MOTIVATED = "motivated", _("Motivated")
+    OPTIMISTIC = "optimistic", _("Optimistic")
+    PERSONABLE = "personable", _("Personable")
+    PLEASANT = "pleasant", _("Pleasant")
+    RESTLESS = "restless", _("Restless")
+    SUICIDAL = "suicidal", _("Suicidal")
 
 
 class ServiceEnum(models.TextChoices):
-    BLANKET = "blanket", "Blanket"
-    BOOK = "book", "Book"
-    CLOTHES = "clothes", "Clothes"
-    DENTAL = "dental", "Dental"
-    FOOD = "food", "Food"
-    HARM_REDUCTION = "harm_reduction", "Harm Reduction"
-    HYGIENE_KIT = "hygiene_kit", "Hygiene Kit"
-    MEDICAL = "medical", "Medical"
-    PET_CARE = "pet_care", "Pet Care"
-    PET_FOOD = "pet_food", "Pet Food"
-    SHELTER = "shelter", "Shelter"
-    SHOES = "shoes", "Shoes"
-    SHOWER = "shower", "Shower"
-    STABILIZE = "stabilize", "Stabilize"
-    STORAGE = "storage", "Storage"
-    TRANSPORT = "transport", "Transport"
-    WATER = "water", "Water"
-    OTHER = "other", "Other"
+    BLANKET = "blanket", _("Blanket")
+    BOOK = "book", _("Book")
+    CLOTHES = "clothes", _("Clothes")
+    DENTAL = "dental", _("Dental")
+    FOOD = "food", _("Food")
+    HARM_REDUCTION = "harm_reduction", _("Harm Reduction")
+    HYGIENE_KIT = "hygiene_kit", _("Hygiene Kit")
+    MEDICAL = "medical", _("Medical")
+    PET_CARE = "pet_care", _("Pet Care")
+    PET_FOOD = "pet_food", _("Pet Food")
+    SHELTER = "shelter", _("Shelter")
+    SHOES = "shoes", _("Shoes")
+    SHOWER = "shower", _("Shower")
+    STABILIZE = "stabilize", _("Stabilize")
+    STORAGE = "storage", _("Storage")
+    TRANSPORT = "transport", _("Transport")
+    WATER = "water", _("Water")
+    OTHER = "other", _("Other")
 
 
 class ServiceTypeEnum(models.TextChoices):
-    PROVIDED = "provided", "Provided"
-    REQUESTED = "requested", "Requested"
+    PROVIDED = "provided", _("Provided")
+    REQUESTED = "requested", _("Requested")

@@ -1,4 +1,5 @@
 from accounts.models import User
+from common.models import BaseModel
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
@@ -6,16 +7,6 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from simple_history.models import HistoricalRecords
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
-
-
-class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    objects = models.Manager()
-
-    class Meta:
-        abstract = True
 
 
 class Location(BaseModel):
@@ -28,7 +19,7 @@ class Location(BaseModel):
 
 class Note(BaseModel):
     title = models.CharField(max_length=100)
-    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
