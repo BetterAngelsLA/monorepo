@@ -1,4 +1,4 @@
-from typing import Any, Iterable
+from typing import Any, Dict, Iterable, Tuple
 
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
@@ -123,7 +123,7 @@ class PermissionGroup(models.Model):
         on_delete=models.CASCADE,
         related_name="permission_groups",
     )
-    group = models.ForeignKey(
+    group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
         blank=True,
@@ -139,6 +139,10 @@ class PermissionGroup(models.Model):
 
     class Meta:
         unique_together = ("organization", "group")
+
+    def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
+        self.group.delete()
+        return super().delete(*args, **kwargs)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk and self.template:

@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(blank=True, max_length=255)),
                 (
                     "group",
-                    models.ForeignKey(
+                    models.OneToOneField(
                         blank=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         to="auth.group",
