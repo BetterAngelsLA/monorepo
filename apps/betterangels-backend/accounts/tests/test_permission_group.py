@@ -44,7 +44,7 @@ class PermissionGroupTests(TestCase):
         permission_group.delete()
         self.assertFalse(Group.objects.filter(id=group_id).exists())
 
-    def test_deleting_organization_cascades_to_delete_permission_groups_and_associated_groups(
+    def test_deleting_organization_deletes_permission_groups_and_associated_groups(
         self,
     ) -> None:
         organization = organization_recipe.make()

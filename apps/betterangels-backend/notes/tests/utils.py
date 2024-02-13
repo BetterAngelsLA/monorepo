@@ -1,9 +1,5 @@
-from accounts.models import PermissionGroup, User
-from accounts.tests.baker_recipes import (
-    organization_recipe,
-    permission_group_recipe,
-    permission_group_template_recipe,
-)
+from accounts.models import User
+from accounts.tests.baker_recipes import permission_group_recipe
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from guardian.shortcuts import assign_perm
