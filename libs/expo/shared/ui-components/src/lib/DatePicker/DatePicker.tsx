@@ -43,6 +43,8 @@ interface IDatePickerProps {
   onBlur?: () => void;
   minDate?: Date;
   maxDate?: Date;
+  dateFormat?: string;
+  pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -54,6 +56,7 @@ export function DatePicker(props: IDatePickerProps) {
     required,
     disabled,
     componentStyle,
+    dateFormat = 'MM/dd/yy @ HH:mm',
     height = 56,
     mb,
     mt,
@@ -63,6 +66,7 @@ export function DatePicker(props: IDatePickerProps) {
     mr,
     minDate,
     maxDate,
+    pickerMode = 'datetime',
     ...rest
   } = props;
 
@@ -82,7 +86,7 @@ export function DatePicker(props: IDatePickerProps) {
   ) {
     setPicker(false);
     if (date) {
-      const formattedDate = format(date, 'MM/dd/yy @ HH:mm');
+      const formattedDate = format(date, dateFormat);
       onChange(formattedDate);
     }
   }
@@ -126,7 +130,7 @@ export function DatePicker(props: IDatePickerProps) {
             ]}
           >
             <TextInput
-              placeholder={format(new Date(), 'MM/dd/yy @ HH:mm')}
+              placeholder={format(new Date(), dateFormat)}
               maxLength={18}
               style={{
                 color: disabled
@@ -178,7 +182,7 @@ export function DatePicker(props: IDatePickerProps) {
                   overflow: 'hidden',
                 }}
                 display="spinner"
-                mode="datetime"
+                mode={pickerMode}
                 minimumDate={minDate}
                 maximumDate={maxDate}
                 value={pickerDate}

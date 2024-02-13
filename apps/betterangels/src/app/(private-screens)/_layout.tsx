@@ -41,6 +41,25 @@ export default function PrivateLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="phq-9/index"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          title: 'PHQ-9',
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={navigation.goBack}
+            >
+              <BodyText color={Colors.WHITE}>Back</BodyText>
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 }
