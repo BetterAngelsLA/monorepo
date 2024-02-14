@@ -78,7 +78,14 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])
         else:
-            self.assertFalse(response["data"]["updateNote"])
+            self.assertEqual(
+                response["data"]["updateNote"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_idx, should_succeed",
