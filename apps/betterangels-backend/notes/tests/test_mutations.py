@@ -58,7 +58,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         mutation = """
             mutation DeleteNote($id: ID!) {
                 deleteNote(data: { id: $id }) {
-                    id
+                    ... on NoteType {
+                        id
+                    }
                 }
             }
         """

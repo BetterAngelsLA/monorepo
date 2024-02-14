@@ -28,9 +28,13 @@ export type CreateNoteInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateNotePayload = NoteType | OperationInfo;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
+
+export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -71,11 +75,11 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createNote: NoteType;
-  deleteNote: NoteType;
+  createNote: CreateNotePayload;
+  deleteNote: DeleteNotePayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
-  updateNote: NoteType;
+  updateNote: UpdateNotePayload;
 };
 
 
@@ -115,6 +119,32 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OperationInfo = {
+  __typename?: 'OperationInfo';
+  /** List of messages returned by the operation. */
+  messages: Array<OperationMessage>;
+};
+
+export type OperationMessage = {
+  __typename?: 'OperationMessage';
+  /** The error code, or `null` if no error code was set. */
+  code?: Maybe<Scalars['String']['output']>;
+  /** The field that caused the error, or `null` if it isn't associated with any particular field. */
+  field?: Maybe<Scalars['String']['output']>;
+  /** The kind of this message. */
+  kind: OperationMessageKind;
+  /** The error message. */
+  message: Scalars['String']['output'];
+};
+
+export enum OperationMessageKind {
+  Error = 'ERROR',
+  Info = 'INFO',
+  Permission = 'PERMISSION',
+  Validation = 'VALIDATION',
+  Warning = 'WARNING'
+}
+
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
@@ -148,6 +178,8 @@ export type UpdateNoteInput = {
   title: Scalars['String']['input'];
 };
 
+export type UpdateNotePayload = NoteType | OperationInfo;
+
 export type UserInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
 };
@@ -158,25 +190,6 @@ export type UserType = {
   id: Scalars['ID']['output'];
   username: Scalars['String']['output'];
 };
-
-export type GenerateMagicLinkMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GenerateMagicLinkMutation = { __typename?: 'Mutation', generateMagicLink: { __typename?: 'MagicLinkResponse', message: string } };
-
-export type CreateNoteMutationVariables = Exact<{
-  data: CreateNoteInput;
-}>;
-
-
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } };
-
-export type UpdateNoteMutationVariables = Exact<{
-  data: UpdateNoteInput;
-}>;
-
-
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } };
 
 export type CurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -189,8 +202,5 @@ export type NotesQueryVariables = Exact<{ [key: string]: never; }>;
 export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any }> };
 
 
-export const GenerateMagicLinkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateMagicLink"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateMagicLink"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"email"},"value":{"kind":"StringValue","value":"paul+test@betterangels.la","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
-export const CreateNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateNoteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]}}]} as unknown as DocumentNode<CreateNoteMutation, CreateNoteMutationVariables>;
-export const UpdateNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNoteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateNoteMutation, UpdateNoteMutationVariables>;
 export const CurrentUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"currentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]} as unknown as DocumentNode<CurrentUserQuery, CurrentUserQueryVariables>;
 export const NotesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"notes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<NotesQuery, NotesQueryVariables>;

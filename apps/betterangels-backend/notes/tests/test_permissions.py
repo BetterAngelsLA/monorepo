@@ -20,7 +20,14 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNote"])
         else:
-            self.assertIsNone(response["data"])
+            self.assertEqual(
+                response["data"]["createNote"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createNote",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_idx, should_succeed",
@@ -36,7 +43,9 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         mutation = """
             mutation DeleteNote($id: ID!) {
                 deleteNote(data: { id: $id }) {
-                    id
+                    ... on NoteType {
+                        id
+                    }
                 }
             }
         """
@@ -69,7 +78,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])
         else:
-            self.assertIsNone(response["data"])
+            self.assertFalse(response["data"]["updateNote"])
 
     @parametrize(
         "user_idx, should_succeed",
