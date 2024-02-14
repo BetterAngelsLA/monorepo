@@ -7,8 +7,8 @@ import {
 import { useFormContext } from 'react-hook-form';
 
 interface IPrivateNoteProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 export default function PrivateNote(props: IPrivateNoteProps) {
@@ -22,9 +22,7 @@ export default function PrivateNote(props: IPrivateNoteProps) {
     <FieldCard
       expanded={expanded}
       mb="xs"
-      setExpanded={() =>
-        setExpanded(isPrivateNote ? undefined : 'Private Note')
-      }
+      setExpanded={() => setExpanded(isPrivateNote ? null : 'Private Note')}
       title="Private Note (Optional)"
       actionName={
         !privateNote && !isPrivateNote ? (

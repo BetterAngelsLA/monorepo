@@ -13,8 +13,8 @@ import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 
 interface INextStepProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 type TNextSteps = {
@@ -57,7 +57,7 @@ export default function NextStep(props: INextStepProps) {
         if (isZeroNextStepActions)
           append({ action: '', date: '', location: '' });
 
-        setExpanded(isNextStep ? undefined : 'Next Step');
+        setExpanded(isNextStep ? null : 'Next Step');
       }}
       title="Next Step"
       actionName={

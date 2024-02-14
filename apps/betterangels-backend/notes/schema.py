@@ -10,7 +10,7 @@ from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
-from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
+from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
@@ -20,14 +20,12 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 class Query:
     note: NoteType = strawberry_django.field(
         extensions=[
-            IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.VIEW]),
         ],
     )
 
     notes: List[NoteType] = strawberry_django.field(
         extensions=[
-            IsAuthenticated(),
             # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
             # Instead we enforce permissions within get_queryset on NoteType.
         ],
@@ -37,21 +35,19 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry.mutation(
-        extensions=[
-            IsAuthenticated(),
-        ]
-    )
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
+
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects the
+        # first organization a user is apart of.
+        organization = user.organizations_organization.order_by("id").first()
 
         note = resolvers.create(
             info,
             Note,
-            {
-                **asdict(data),
-                "created_by": user,
-            },
+            {**asdict(data), "created_by": user, "organization": organization},
         )
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
@@ -66,7 +62,6 @@ class Mutation:
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
         extensions=[
-            IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
         ],
     )
@@ -74,7 +69,6 @@ class Mutation:
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[
-            IsAuthenticated(),
             HasRetvalPerm(perms=[NotePermissions.DELETE]),
         ],
     )
