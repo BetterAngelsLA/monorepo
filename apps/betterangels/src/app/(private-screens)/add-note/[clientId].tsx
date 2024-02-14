@@ -37,8 +37,11 @@ export default function AddNote() {
     defaultValues: {
       purposes: [{ value: '' }],
       nextStepActions: [{ action: '' }],
-      hmisNote: 'G: \n\nI: \n\nR: \n\nP: \n',
-      noteDateTime: format(new Date(), 'MM-dd-yyy @ HH:mm'),
+      hmisNote: 'G -\nI -\nR -\nP - ',
+      noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
+      moods: [],
+      providedServices: [],
+      requestedServices: [],
     },
   });
 
