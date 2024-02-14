@@ -1,4 +1,5 @@
 from unittest.mock import ANY
+
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
