@@ -1,10 +1,9 @@
-# permissions.py
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-from enum import StrEnum
 
-
-class SimpleModelPermissions(StrEnum):
-    VIEW = "simplemodels.view_note"
-    CHANGE = "simplemodels.change_note"
-    DELETE = "simplemodels.delete_note"
-    ADD = "simplemodels.add_note"
+class SimpleModelPermissions(models.TextChoices):
+    VIEW = "simplemodels.view_simplemodel", _("Can view simplemodel")
+    CHANGE = "simplemodels.change_simplemodel", _("Can change simplemodel")
+    DELETE = "simplemodels.delete_simplemodel", _("Can delete simplemodel")
+    ADD = "simplemodels.add_simplemodel", _("Can add simplemodel")
