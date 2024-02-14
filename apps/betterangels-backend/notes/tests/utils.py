@@ -1,10 +1,11 @@
 from accounts.models import User
-from accounts.tests.baker_recipes import permission_group_recipe
+from accounts.tests.baker_recipes import organization_recipe, permission_group_recipe
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from notes.permissions import NotePermissions
+from organizations.models import OrganizationUser
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -15,13 +16,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.users = baker.make(User, _quantity=2)
         self.case_manager = self.users[0]
         self.note_client = self.users[1]
-        # self.graphql_client.force_login(self.case_manager)
-        # self.note = self._create_note_fixture(
-        #     {
-        #         "title": f"User: {self.case_manager.id}",
-        #         "publicDetails": f"{self.case_manager.id}'s note",
-        #     }
-
         organization_group = baker.make(
             Group,
         )
@@ -37,12 +31,15 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.note = self._create_note_fixture(
             {
                 "title": f"User: {self.case_manager.id}",
-                "body": f"{self.case_manager.id}'s note",
+                "publicDetails": f"{self.case_manager.id}'s note",
             }
         )["data"]["createNote"]
         self.graphql_client.logout()
 
     def _create_note_fixture(self, variables: dict) -> dict:
+        from IPython import embed
+
+        # embed()
         default_variables = dict(
             title="Test Note",
             publicDetails="This is a test note",

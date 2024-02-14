@@ -9,7 +9,9 @@ from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
+from dataclasses import asdict
 
 from .models import Note
 from .services import NoteService
@@ -54,11 +56,20 @@ class Mutation:
         # TODO: Update once organization selection is implemented. Currently selects the
         # first organization a user is apart of.
         organization = user.organizations_organization.order_by("id").first()
+        from IPython import embed
 
+        # embed()
+        note_data = asdict(data)
+        client_id = note_data.pop("client")["id"]
         note = resolvers.create(
             info,
             Note,
-            {**asdict(data), "created_by": user, "organization": organization},
+            {
+                **note_data,
+                "client_id": client_id,
+                "created_by": user,
+                "organization": organization,
+            },
         )
 
         # Assign object-level permissions to the user who created the note.
