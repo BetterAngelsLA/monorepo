@@ -12,7 +12,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 29
+        expected_query_count = 31
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {"title": "New Note", "publicDetails": "This is a new note."}
@@ -37,12 +37,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
-            "client": {"id": str(self.note_client.pk)},
         }
 
-        expected_query_count = 15
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        expected_query_count = 28
+        with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]

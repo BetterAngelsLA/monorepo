@@ -1,4 +1,5 @@
 from typing import List, cast
+from accounts.models import User
 
 import strawberry
 import strawberry_django
@@ -14,7 +15,6 @@ from strawberry_django.permissions import HasRetvalPerm, IsAuthenticated
 from dataclasses import asdict
 
 from .models import Note
-from .services import NoteService
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
@@ -56,17 +56,16 @@ class Mutation:
         # TODO: Update once organization selection is implemented. Currently selects the
         # first organization a user is apart of.
         organization = user.organizations_organization.order_by("id").first()
-        from IPython import embed
 
-        # embed()
         note_data = asdict(data)
-        client_id = note_data.pop("client")["id"]
+        client_id = int(note_data.pop("client")["id"])
+        client = User.objects.get(id=client_id)
         note = resolvers.create(
             info,
             Note,
             {
                 **note_data,
-                "client_id": client_id,
+                "client": client,
                 "created_by": user,
                 "organization": organization,
             },
@@ -82,49 +81,6 @@ class Mutation:
             assign_perm(perm, user, note)
 
         return cast(NoteType, note)
-
-    # @strawberry.mutation(
-    #     extensions=[
-    #         IsAuthenticated(),
-    #         HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-    #     ]
-    # )
-    # @transaction.atomic()
-    # def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-    #     # note = NoteService.update_note(
-    #     #     id=data.id,
-    #     #     title=data.title,
-    #     #     public_details=data.public_details,
-    #     #     is_submitted=data.is_submitted,
-    #     # )
-    #     from IPython import embed
-
-    #     embed()
-    #     note = Note.objects.get(pk=id)
-
-    #     mood_titles = (
-    #         [mood.title for mood in data.moods if mood.title] if data.moods else []
-    #     )
-
-    #     for field in data:
-    #         note.field = data.field
-    #     # if title:
-    #     #     note.title = title
-    #     # if public_details:
-    #     #     note.public_details = public_details
-    #     # if is_submitted:
-    #     #     note.is_submitted = is_submitted
-
-    #     note.save()
-
-    # if mood_titles:
-    #     Mood.objects.filter(note=note).delete()
-    #     mood_instances = [Mood(title=title, note=note) for title in mood_titles]
-    #     Mood.objects.bulk_create(mood_instances)
-
-    # return note
-
-    # return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,

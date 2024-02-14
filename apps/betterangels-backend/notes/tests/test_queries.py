@@ -42,8 +42,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id}
         expected_query_count = 3
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         note = response["data"]["note"]
@@ -62,8 +61,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         expected_query_count = 2
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)

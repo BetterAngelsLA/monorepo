@@ -37,9 +37,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.graphql_client.logout()
 
     def _create_note_fixture(self, variables: dict) -> dict:
-        from IPython import embed
-
-        # embed()
         default_variables = dict(
             title="Test Note",
             publicDetails="This is a test note",
