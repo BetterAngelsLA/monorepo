@@ -11,7 +11,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 25
+        expected_query_count = 27
         with self.assertNumQueries(expected_query_count):
             response = self._create_note(
                 {"title": "New Note", "body": "This is a new note."}
@@ -23,8 +23,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         mutation = """
             mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
                 updateNote(data: { id: $id, title: $title, body: $body }) {
-                    title
-                    body
+
+                    ... on NoteType {
+                        title
+                        body
+                    }
                 }
             }
         """
@@ -45,7 +48,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         mutation = """
             mutation DeleteNote($id: ID!) {
                 deleteNote(data: { id: $id }) {
-                    id
+                    ... on NoteType {
+                        id
+                    }
                 }
             }
         """
