@@ -58,8 +58,7 @@ class CatchmentZone(TimeStampedModel):
 class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField()
-    # This should probably not be cascaded
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
     services = models.ManyToManyField(Service)
     population = models.ManyToManyField(Population)
     requirements = models.ManyToManyField(Requirement)
