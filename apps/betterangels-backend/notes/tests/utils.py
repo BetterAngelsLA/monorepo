@@ -35,9 +35,18 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mutation = """
             mutation CreateNote($title: String!, $body: String!) {
                 createNote(data: { title: $title, body: $body }) {
-                    id
-                    title
-                    body
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        title
+                        body
+                    }
                 }
             }
         """
