@@ -1,4 +1,5 @@
-from accounts.groups import GroupNames
+from django.db import migrations
+from django.contrib.auth.models import Permission
 from django.contrib.auth.management import create_permissions
 from django.contrib.auth.models import Permission
 from django.db import migrations
@@ -35,7 +36,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
 def add_permissions_to_caseworker(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
-    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER)
+    caseworker_group = Group.objects.get(name="Caseworker")
 
     for codename, _ in PERM_MAP.items():
         permission, _ = Permission.objects.get_or_create(codename=codename)
@@ -45,7 +46,7 @@ def add_permissions_to_caseworker(apps, schema_editor):
 def remove_permissions_from_caseworker(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
-    caseworker_group = Group.objects.get(name=GroupNames.CASEWORKER)
+    caseworker_group = Group.objects.get(name="Caseworker")
 
     for codename, _ in PERM_MAP.items():
         try:

@@ -80,6 +80,7 @@ celery = {version = "^5.3.4", extras = ["redis"]}
 celery-redbeat = "^2.1.1"
 dj-rest-auth = {version = "^5.0.0", extras = ["with-social"]}
 django = "^4.2.4"
+django-choices-field = "^2.2.2"
 django-cors-headers = "^4.2.0"
 django-environ = "^0.10.0"
 django-extensions = "^3.2.3"

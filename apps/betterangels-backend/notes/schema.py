@@ -50,13 +50,15 @@ class Mutation:
         # if not data.client:
         #     User.create_client()
 
-        client_id = data.client.id if data.client else None
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects the
+        # first organization a user is apart of.
+        organization = user.organizations_organization.order_by("id").first()
 
-        note = Note.objects.create(
-            title=data.title,
-            public_details=data.public_details,
-            created_by=user,
-            client_id=client_id,
+        note = resolvers.create(
+            info,
+            Note,
+            {**asdict(data), "created_by": user, "organization": organization},
         )
 
         # Assign object-level permissions to the user who created the note.

@@ -40,6 +40,13 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "check-migrations": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py makemigrations --check",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "migrate": {
       "executor": "@nxlv/python:run-commands",
       "options": {

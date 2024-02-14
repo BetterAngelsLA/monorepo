@@ -7,6 +7,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from simple_history.models import HistoricalRecords
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
+from organizations.models import Organization
 
 
 class Location(BaseModel):
@@ -36,6 +37,7 @@ class Note(BaseModel):
     created_by = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     history = HistoricalRecords()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]

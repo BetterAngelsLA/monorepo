@@ -1,5 +1,4 @@
 from unittest.mock import ANY
-
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -12,15 +11,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(0)
 
     def test_create_note_mutation(self) -> None:
+        # I think there as an opportunity to limit the amount of queries needed
         expected_query_count = 25
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
-                {
-                    "title": "New Note",
-                    "publicDetails": "This is a new note.",
-                    "client": {"id": self.note_client.id},
-                }
+                {"title": "New Note", "body": "This is a new note."}
             )
 
         created_note = response["data"]["createNote"]
@@ -70,9 +65,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
-        # with self.assertNumQueries(expected_query_count):
-        if True:
+        expected_query_count = 11
+        with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteNote"])

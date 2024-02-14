@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
+  Keyboard,
   Platform,
   Pressable,
   StyleProp,
@@ -158,6 +159,7 @@ export function DatePicker(props: IDatePickerProps) {
               onPress={() => {
                 value && setPicker(value);
                 setPicker(true);
+                Keyboard.dismiss();
               }}
               style={styles.icon}
             >
@@ -223,7 +225,6 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,
     color: Colors.PRIMARY_EXTRA_DARK,
-    textTransform: 'capitalize',
     fontFamily: 'Poppins-Regular',
   },
   required: {
