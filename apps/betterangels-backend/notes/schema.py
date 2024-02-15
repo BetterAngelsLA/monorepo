@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -37,6 +36,11 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
+            # TODO: Handle creating Notes without existing Client.
+            # if not data.client:
+            #     User.create_client()
+            client_id = data.client.id if data.client else None
+
             # WARNING: Temporary workaround for organization selection
             # TODO: Update once organization selection is implemented. Currently selects
             # the first organization with a default Caseworker role for the user.
@@ -52,16 +56,26 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            note = mutations.resolvers.create(
-                info,
-                Note,
-                {
-                    **asdict(data),
-                    "created_by": user,
-                    "organization": permission_group.organization,
-                },
+            # note = mutations.resolvers.create(
+            #     info,
+            #     Note,
+            #     {
+            #         **asdict(data),
+            #         "created_by": user,
+            #         "organization": permission_group.organization,
+            #     },
+            # )
+
+            note = Note.objects.create(
+                title=data.title,
+                public_details=data.public_details,
+                created_by=user,
+                client_id=client_id,
+                organization=permission_group.organization,
             )
 
+            # Assign object-level permissions to the user who created the note.
+            # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
             permissions = [
                 NotePermissions.CHANGE,
                 NotePermissions.DELETE,

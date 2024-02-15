@@ -34,7 +34,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notes", "0005_alter_note_options_note_organization_and_more"),
+        ("notes", "0006_add_note_component_fields"),
     ]
 
     operations = [
@@ -56,7 +56,19 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
         ),
-        migrations.AddField(
+        migrations.AlterField(
+            model_name="historicalnote",
+            name="private_details",
+            field=models.ForeignKey(
+                blank=True,
+                db_constraint=False,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="+",
+                to="notes.privatenotedetail",
+            ),
+        ),
+        migrations.AlterField(
             model_name="note",
             name="private_details",
             field=models.OneToOneField(

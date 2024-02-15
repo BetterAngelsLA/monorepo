@@ -22,9 +22,14 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+input CreateMoodInput {
+  descriptor: MoodEnum!
+}
+
 input CreateNoteInput {
   title: String!
-  body: String!
+  publicDetails: String
+  client: UserInput
 }
 
 union CreateNotePayload = NoteType | OperationInfo
@@ -46,6 +51,33 @@ type MagicLinkResponse {
   message: String!
 }
 
+enum MoodEnum {
+  AGITATED
+  AGREEABLE
+  ANXIOUS
+  DEPRESSED
+  DETACHED
+  DISORGANIZED_THOUGHT
+  DISORIENTED
+  ESCALATED
+  EUTHYMIC
+  FLAT_BLUNTED
+  HAPPY
+  HOPELESS
+  INDIFFERENT
+  MANIC
+  MOTIVATED
+  OPTIMISTIC
+  PERSONABLE
+  PLEASANT
+  RESTLESS
+  SUICIDAL
+}
+
+type MoodType {
+  descriptor: MoodEnum!
+}
+
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
@@ -57,9 +89,12 @@ type Mutation {
 type NoteType {
   id: ID!
   title: String!
-  body: String!
+  publicDetails: String
   createdAt: DateTime!
   createdBy: UserType!
+  client: UserType
+  moods: [MoodType!]!
+  isSubmitted: Boolean!
 }
 
 input OffsetPaginationInput {
@@ -105,10 +140,16 @@ type Query {
 input UpdateNoteInput {
   id: ID
   title: String!
-  body: String!
+  publicDetails: String
+  moods: [CreateMoodInput!]
+  isSubmitted: Boolean
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UserInput {
+  id: ID
+}
 
 type UserType {
   id: ID!

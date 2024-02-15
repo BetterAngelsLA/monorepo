@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import strawberry_django
 from accounts.types import UserType
@@ -11,6 +11,31 @@ from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from . import models
+
+
+@strawberry_django.type(models.Mood)
+class MoodType:
+    descriptor: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Mood)
+class CreateMoodInput:
+    descriptor: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.Service)
+class ServiceType:
+    descriptor: auto
+    custom_descriptor: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Service)
+class CreateServiceInput:
+    descriptor: auto
+    custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass
@@ -38,17 +63,27 @@ class PrivateNoteDetailType:
 class NoteType:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
     private_details = auto
     created_at: auto
     created_by: UserType
+    client: Optional[UserType]
+    moods: List[MoodType]
+    is_submitted: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.User)
+class UserInput:
+    id: auto
 
 
 @dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
-    body: auto
+    public_details: auto
+    client: Optional[UserInput]
 
 
 @dataclasses.dataclass
@@ -56,4 +91,6 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
+    moods: Optional[List[CreateMoodInput]]
+    is_submitted: auto
