@@ -56,16 +56,6 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            # note = mutations.resolvers.create(
-            #     info,
-            #     Note,
-            #     {
-            #         **asdict(data),
-            #         "created_by": user,
-            #         "organization": permission_group.organization,
-            #     },
-            # )
-
             note = Note.objects.create(
                 title=data.title,
                 public_details=data.public_details,
