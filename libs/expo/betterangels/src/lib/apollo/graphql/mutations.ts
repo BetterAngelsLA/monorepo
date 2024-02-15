@@ -15,7 +15,7 @@ export const CREATE_NOTE = gql`
       ... on NoteType {
         id
         title
-        body
+        publicDetails
         createdAt
         createdBy {
           id
@@ -33,7 +33,7 @@ export const UPDATE_NOTE = gql`
       ... on NoteType {
         id
         title
-        body
+        publicDetails
         createdAt
         createdBy {
           id

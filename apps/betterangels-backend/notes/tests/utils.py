@@ -13,7 +13,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
     def setUp(self) -> None:
         super().setUp()
         self.users = baker.make(User, _quantity=2)
-
+        self.case_manager = self.users[0]
+        self.note_client = self.users[1]
         organization_group = baker.make(
             Group,
         )
@@ -21,20 +22,32 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assign_perm(NotePermissions.ADD, organization_group)
 
         perm_group = permission_group_recipe.make()
-        self.users[0].groups.add(perm_group.group)
-        self.users[0].groups.add(organization_group)
-        perm_group.organization.add_user(self.users[0])
+        self.case_manager.groups.add(perm_group.group)
+        self.case_manager.groups.add(organization_group)
+        perm_group.organization.add_user(self.case_manager)
 
-        self.graphql_client.force_login(self.users[0])
-        self.note = self._create_note(
-            {"title": f"User: {self.users[0].id}", "body": f"{self.users[0].id}'s note"}
+        self.graphql_client.force_login(self.case_manager)
+        self.note = self._create_note_fixture(
+            {
+                "title": f"User: {self.case_manager.id}",
+                "publicDetails": f"{self.case_manager.id}'s note",
+            }
         )["data"]["createNote"]
         self.graphql_client.logout()
 
-    def _create_note(self, variables: dict) -> dict:
+    def _create_note_fixture(self, variables: dict) -> dict:
+        default_variables = dict(
+            title="Test Note",
+            publicDetails="This is a test note",
+            client={"id": self.note_client.id},
+        )
+
+        if variables:
+            default_variables.update(variables)
+
         mutation = """
-            mutation CreateNote($title: String!, $body: String!) {
-                createNote(data: { title: $title, body: $body }) {
+            mutation CreateNote($data: CreateNoteInput!) {
+                createNote(data: $data) {
                     ... on OperationInfo {
                         messages {
                             kind
@@ -45,12 +58,53 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     ... on NoteType {
                         id
                         title
-                        body
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
                     }
                 }
             }
         """
-        return self.execute_graphql(mutation, variables)
+
+        return self.execute_graphql(mutation, {"data": default_variables})
+
+    def _update_note_fixture(self, variables: dict) -> dict:
+        mutation = """
+            mutation UpdateNote($data: UpdateNoteInput!) {
+                updateNote(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"data": variables})
 
     def _handle_user_login(self, user_idx: int) -> None:
         if user_idx != -1:

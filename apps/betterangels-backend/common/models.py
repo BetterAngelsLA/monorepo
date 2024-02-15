@@ -3,6 +3,16 @@ from django.db.models import ForeignKey
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        abstract = True
+
+
 class SimpleModel(models.Model):
     name = models.CharField(max_length=255)
     objects = models.Manager()
