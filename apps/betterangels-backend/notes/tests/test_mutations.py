@@ -9,7 +9,7 @@ from notes.tests.utils import NoteGraphQLBaseTestCase
 class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login(0)
+        self._handle_user_login("case_manager_1")
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed

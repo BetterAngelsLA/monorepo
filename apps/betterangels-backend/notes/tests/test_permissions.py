@@ -5,14 +5,14 @@ from unittest_parametrize import parametrize
 
 class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
-        "user_idx, should_succeed",
+        "username, should_succeed",
         [
-            (0, True),  # Logged-in user should succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Logged-in user should succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_create_note_permission(self, username: str, should_succeed: bool) -> None:
+        self._handle_user_login(username)
 
         variables = {"title": "Test Note", "publicDetails": "This is a test note."}
         response = self._create_note_fixture(variables)
@@ -30,15 +30,15 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "username, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_delete_note_permission(self, username: str, should_succeed: bool) -> None:
+        self._handle_user_login(username)
 
         mutation = """
             mutation DeleteNote($id: ID!) {
@@ -57,15 +57,15 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "username, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_update_note_permission(self, username: str, should_succeed: bool) -> None:
+        self._handle_user_login(username)
 
         variables = {
             "id": self.note["id"],
@@ -88,15 +88,15 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "username, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_view_note_permission(self, username: str, should_succeed: bool) -> None:
+        self._handle_user_login(username)
 
         mutation = """
             query ViewNote($id: ID!) {
@@ -115,15 +115,15 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["errors"])
 
     @parametrize(
-        "user_idx, should_succeed",
+        "username, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_notes_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_view_notes_permission(self, username: str, should_succeed: bool) -> None:
+        self._handle_user_login(username)
 
         mutation = """
             query ViewNotes {

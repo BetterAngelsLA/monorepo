@@ -1,3 +1,5 @@
+from typing import Optional
+
 from accounts.models import User
 from accounts.tests.baker_recipes import permission_group_recipe
 from django.contrib.auth.models import Group
@@ -12,12 +14,20 @@ from unittest_parametrize import ParametrizedTestCase
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.users = baker.make(User, _quantity=2)
-        self.case_manager = self.users[0]
-        self.note_client = self.users[1]
-        organization_group = baker.make(
-            Group,
-        )
+        self.usernames = [
+            "case_manager_1",
+            "case_manager_2",
+            "note_client_1",
+            "note_client_2",
+        ]
+        self.user_map: dict[str, User] = {
+            username: baker.make(User, email=f"{username}@test.com", username=username)
+            for username in self.usernames
+        }
+        self.case_manager = self.user_map["case_manager_1"]
+        self.note_client = self.user_map["note_client_1"]
+
+        organization_group = baker.make(Group)
         assign_perm(NotePermissions.VIEW, organization_group)
         assign_perm(NotePermissions.ADD, organization_group)
 
@@ -106,8 +116,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _handle_user_login(self, user_idx: int) -> None:
-        if user_idx != -1:
-            self.graphql_client.force_login(self.users[user_idx])
+    def _handle_user_login(self, username: Optional[str]) -> None:
+        if username:
+            self.graphql_client.force_login(self.user_map[username])
         else:
             self.graphql_client.logout()
