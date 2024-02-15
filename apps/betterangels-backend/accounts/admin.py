@@ -92,7 +92,6 @@ admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
-# admin.site.register(OrganizationPermissionGroup, OrganizationPermissionGroupAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
 
 admin.site.login = staff_member_required(  # type: ignore
