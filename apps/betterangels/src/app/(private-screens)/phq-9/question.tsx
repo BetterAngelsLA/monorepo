@@ -7,7 +7,7 @@ import {
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 
-interface IQuestion1Props {
+interface IQuestionProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
   field: string;
@@ -33,24 +33,24 @@ const QUESTIONS = [
   },
 ];
 
-export default function Question1(props: IQuestion1Props) {
+export default function Question(props: IQuestionProps) {
   const { expanded, setExpanded, title, field } = props;
   const { setValue, watch } = useFormContext();
 
   const question = watch(field);
-  const isQuesiton1 = expanded === field;
+  const isQuesiton = expanded === field;
 
   return (
     <FieldCard
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
-        setExpanded(isQuesiton1 ? null : field);
+        setExpanded(isQuesiton ? null : field);
       }}
       title={title}
       actionName={''}
     >
-      {isQuesiton1 && (
+      {isQuesiton && (
         <View style={{ gap: Spacings.xs, marginBottom: Spacings.md }}>
           {QUESTIONS.map((q) => (
             <Radio
@@ -65,7 +65,7 @@ export default function Question1(props: IQuestion1Props) {
           ))}
         </View>
       )}
-      {!isQuesiton1 && question?.label && (
+      {!isQuesiton && question?.label && (
         <BodyText mb="md">{question.label}</BodyText>
       )}
     </FieldCard>
