@@ -15,7 +15,6 @@ skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
 python = "3.11.5"
-django-choices-field = "^2.2.2"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
