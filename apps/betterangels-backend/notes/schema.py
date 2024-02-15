@@ -54,13 +54,12 @@ class Mutation:
             # TODO: Handle creating Notes without existing Client.
             # if not data.client:
             #     User.create_client()
-            notes_data = strawberry.asdict(data)
-            notes_data["client"] = User(pk=data.client.id if data.client else None)
             note = mutations.resolvers.create(
                 info,
                 Note,
                 {
-                    **notes_data,
+                    **strawberry.asdict(data),
+                    "client": User(pk=data.client.id if data.client else None),
                     "created_by": user,
                     "organization": permission_group.organization,
                 },
