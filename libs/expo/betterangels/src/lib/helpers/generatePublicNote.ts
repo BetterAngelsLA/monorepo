@@ -1,6 +1,6 @@
 interface IWatchedValue {
   purposes: { value: string }[];
-  nextStepActions: { value: string }[];
+  nextStepActions: { action: string }[];
   moods: string[];
   providedServices: string[];
   nextStepDate: Date;
@@ -26,9 +26,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
         ? 'The goal for this session was to'
         : 'The goals for this session were to'
       : '';
-  const changedP = nextStepActions
-    .map((action) => action.value)
-    .filter(Boolean);
+  const changedP = nextStepActions.map((item) => item.action).filter(Boolean);
 
   const moodIText =
     moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';

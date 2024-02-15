@@ -1,7 +1,7 @@
 import { CalendarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import DatePicker from '@react-native-community/datetimepicker';
+import { format, setHours, setMinutes } from 'date-fns';
 import { useState } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
@@ -24,7 +24,7 @@ type TRules = Omit<
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IDatePickerProps {
+interface IDateTimePickerProps {
   label?: string;
   control: Control<any>;
   height?: 40 | 56 | 200;
@@ -45,7 +45,7 @@ interface IDatePickerProps {
   maxDate?: Date;
 }
 
-export function DatePicker(props: IDatePickerProps) {
+export function DateTimePicker(props: IDateTimePickerProps) {
   const {
     label,
     control,
@@ -68,6 +68,7 @@ export function DatePicker(props: IDatePickerProps) {
 
   const [picker, setPicker] = useState(false);
   const [pickerDate, setPickerDate] = useState(new Date());
+  const [mode, setMode] = useState<'date' | 'time'>('date');
 
   const handleBlur = (onBlur: () => void) => {
     onBlur();
@@ -86,6 +87,25 @@ export function DatePicker(props: IDatePickerProps) {
       onChange(formattedDate);
     }
   }
+
+  const handleChange = (date: Date, onChange: any) => {
+    if (Platform.OS === 'ios') {
+      setPickerDate(date || new Date());
+    } else {
+      if (mode === 'date') {
+        setPickerDate(date || new Date());
+        setMode('time');
+      } else if (mode === 'time') {
+        const mixed = setMinutes(
+          setHours(pickerDate, date.getHours()),
+          date.getMinutes()
+        );
+        setPicker(false);
+        setMode('date');
+        setDate(onChange, mixed);
+      }
+    }
+  };
 
   return (
     <Controller
@@ -155,7 +175,7 @@ export function DatePicker(props: IDatePickerProps) {
               accessible
               accessibilityRole="button"
               accessibilityLabel="open date picker"
-              accessibilityHint="Opens the date picker to select a date"
+              accessibilityHint="Opens the date picker to select a date and time"
               onPress={() => {
                 value && setPicker(value);
                 setPicker(true);
@@ -168,13 +188,13 @@ export function DatePicker(props: IDatePickerProps) {
           </View>
           {picker && (
             <View style={{ marginTop: Spacings.xs }}>
-              <DateTimePicker
+              <DatePicker
                 onChange={(event, date) => {
                   if (event.type === 'dismissed' || !date) {
+                    setMode('date');
                     return setPicker(false);
                   }
-                  setPickerDate(date || new Date());
-                  Platform.OS !== 'ios' && setDate(onChange, date);
+                  handleChange(date, onChange);
                 }}
                 style={{
                   backgroundColor: Colors.WHITE,
@@ -182,7 +202,7 @@ export function DatePicker(props: IDatePickerProps) {
                   overflow: 'hidden',
                 }}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                mode="date"
+                mode={Platform.OS === 'ios' ? 'datetime' : mode}
                 minimumDate={minDate}
                 maximumDate={maxDate}
                 value={pickerDate}
@@ -240,5 +260,6 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: 16,
+    zIndex: 100,
   },
 });

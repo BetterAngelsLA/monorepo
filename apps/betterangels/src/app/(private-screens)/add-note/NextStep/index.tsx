@@ -2,7 +2,7 @@ import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
-  DatePicker,
+  DateTimePicker,
   FieldCard,
   H3,
   H5,
@@ -82,7 +82,7 @@ export default function NextStep(props: INextStepProps) {
               name={`nextStepActions.${index}.action`}
               label="Action Item"
             />
-            <DatePicker
+            <DateTimePicker
               label="Date and Time (optional)"
               control={control}
               name={`nextStepActions.${index}.date`}

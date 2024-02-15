@@ -2,7 +2,7 @@ import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
-  DatePicker,
+  DateTimePicker,
   H5,
   IconButton,
   Input,
@@ -81,7 +81,7 @@ export default function Title(props: ITitleProps) {
           control={control}
           name="title"
         />
-        <DatePicker
+        <DateTimePicker
           maxDate={endOfDay}
           mt="xs"
           control={control}
