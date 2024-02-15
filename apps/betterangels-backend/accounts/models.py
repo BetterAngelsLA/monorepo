@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, Iterable, Tuple
 
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
@@ -11,7 +11,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
-from organizations.models import Organization, OrganizationInvitation
+from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from simple_history.models import HistoricalRecords
 
 
@@ -55,6 +55,8 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
     objects = UserManager()
 
     history = HistoricalRecords()
+
+    organizations_organizationuser: models.QuerySet[OrganizationUser]
 
     def __str__(self: "User") -> str:
         return self.email
@@ -121,7 +123,7 @@ class PermissionGroup(models.Model):
         on_delete=models.CASCADE,
         related_name="permission_groups",
     )
-    group = models.ForeignKey(
+    group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
         blank=True,
@@ -138,14 +140,20 @@ class PermissionGroup(models.Model):
     class Meta:
         unique_together = ("organization", "group")
 
+    def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
+        self.group.delete()
+        return super().delete(*args, **kwargs)
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk and self.template:
             raise ValidationError(
                 "Updating a PermissionGroup with a template is not allowed."
             )
-
-        if not hasattr(self, "group"):
-            permissions_to_apply = []
+        # TODO: Update the admin so that when a template is defined you can't enter in a
+        # name. Also make it clear that the name of the group will be prefixed by the
+        # org name.
+        if hasattr(self, "template"):
+            permissions_to_apply: Iterable[Permission] = []
             if self.template:
                 group_name = f"{self.organization.name}_{self.template.name}"
                 permissions_to_apply = self.template.permissions.all()

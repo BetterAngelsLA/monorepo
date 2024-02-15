@@ -21,24 +21,30 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        extensions=[HasPerm(perms=[NotePermissions.VIEW])]
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.VIEW]),
+        ],
     )
 
     notes: List[NoteType] = strawberry_django.field(
-        extensions=[HasPerm(perms=[NotePermissions.VIEW])]
+        extensions=[
+            # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
+            # Instead we enforce permissions within get_queryset on NoteType.
+        ],
+        pagination=True,
     )
 
 
 @strawberry.type
 class Mutation:
-    @strawberry.mutation(extensions=[HasPerm(perms=[NotePermissions.ADD])])
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
 
             # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects the
-            # first organization with a default Caseworker role for the user.
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
             permission_group = (
                 PermissionGroup.objects.select_related("organization", "group")
                 .filter(
@@ -77,5 +83,7 @@ class Mutation:
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
-        extensions=[HasRetvalPerm(perms=[NotePermissions.DELETE])],
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.DELETE]),
+        ],
     )

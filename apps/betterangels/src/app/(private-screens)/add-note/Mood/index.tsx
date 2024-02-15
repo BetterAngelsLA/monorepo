@@ -35,8 +35,8 @@ interface Mood {
 }
 
 interface IMoodProps {
-  expanded: string | undefined;
-  setExpanded: (e: string | undefined) => void;
+  expanded: string | undefined | null;
+  setExpanded: (e: string | undefined | null) => void;
 }
 
 const MOOD_DATA: { [key: string]: Mood[] } = {
@@ -171,7 +171,7 @@ export default function Mood(props: IMoodProps) {
       }
       title="Mood"
       expanded={expanded}
-      setExpanded={() => setExpanded(isMood ? undefined : 'Mood')}
+      setExpanded={() => setExpanded(isMood ? null : 'Mood')}
     >
       {isMood && (
         <View style={{ paddingBottom: Spacings.md }}>

@@ -1,17 +1,10 @@
-import random
-import string
-from os import name
-
-from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroup, User
-from django.contrib.auth.models import AnonymousUser, Group, Permission
+from accounts.models import User
+from accounts.tests.baker_recipes import permission_group_recipe
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from model_bakery.random_gen import gen_string
-from notes.permissions import NotePermissions, PrivateNotePermissions
-from organizations.fields import SlugField  # Adjust import path as necessary
-from organizations.models import Organization
+from notes.permissions import NotePermissions
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -32,23 +25,11 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assign_perm(NotePermissions.VIEW, organization_group)
         assign_perm(NotePermissions.ADD, organization_group)
 
-        org_name = custom_string_generator(50)
-        perm_group: PermissionGroup = baker.make(
-            PermissionGroup,
-            group=baker.make(Group),
-            organization=baker.make(
-                Organization,
-                name=org_name,
-                slug=org_name,
-            ),
-        )
-
+        perm_group = permission_group_recipe.make()
         self.users[0].groups.add(perm_group.group)
         self.users[0].groups.add(organization_group)
-
         perm_group.organization.add_user(self.users[0])
-        # Create Permission Group for Caseworkers
-        # Add Group To User
+
         self.graphql_client.force_login(self.users[0])
         self.note = self._create_note(
             {"title": f"User: {self.users[0].id}", "body": f"{self.users[0].id}'s note"}
@@ -59,9 +40,18 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         mutation = """
             mutation CreateNote($title: String!, $body: String!) {
                 createNote(data: { title: $title, body: $body }) {
-                    id
-                    title
-                    body
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        title
+                        body
+                    }
                 }
             }
         """

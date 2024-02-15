@@ -1,16 +1,4 @@
 """
-Can only be resolved by authenticated users.
-
-When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
-2) Otherwise, an error will be raised
-"""
-directive @isAuthenticated repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -22,10 +10,24 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+"""
+Will check if the user has any/all permissions to resolve this.
+
+When the condition fails, the following can be returned (following this priority):
+1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
+2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
+3) An empty list in case the field is a list (e.g. `[String]!`)
+4) An empty `Connection` in case the return type is a relay connection
+2) Otherwise, an error will be raised
+"""
+directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+
 input CreateNoteInput {
   title: String!
   body: String!
 }
+
+union CreateNotePayload = NoteType | OperationInfo
 
 """Date with time (isoformat)"""
 scalar DateTime
@@ -33,6 +35,8 @@ scalar DateTime
 input DeleteDjangoObjectInput {
   id: ID!
 }
+
+union DeleteNotePayload = NoteType | OperationInfo
 
 input MagicLinkInput {
   email: String!
@@ -45,9 +49,9 @@ type MagicLinkResponse {
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  updateNote(data: UpdateNoteInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  deleteNote(data: DeleteDjangoObjectInput!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  createNote(data: CreateNoteInput!): NoteType! @isAuthenticated
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
+  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
 }
 
 type NoteType {
@@ -63,10 +67,39 @@ input OffsetPaginationInput {
   limit: Int! = -1
 }
 
+type OperationInfo {
+  """List of messages returned by the operation."""
+  messages: [OperationMessage!]!
+}
+
+type OperationMessage {
+  """The kind of this message."""
+  kind: OperationMessageKind!
+
+  """The error message."""
+  message: String!
+
+  """
+  The field that caused the error, or `null` if it isn't associated with any particular field.
+  """
+  field: String
+
+  """The error code, or `null` if no error code was set."""
+  code: String
+}
+
+enum OperationMessageKind {
+  INFO
+  WARNING
+  ERROR
+  PERMISSION
+  VALIDATION
+}
+
 type Query {
   currentUser: UserType!
-  note(pk: ID!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
+  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput): [NoteType!]!
 }
 
 input UpdateNoteInput {
@@ -74,6 +107,8 @@ input UpdateNoteInput {
   title: String!
   body: String!
 }
+
+union UpdateNotePayload = NoteType | OperationInfo
 
 type UserType {
   id: ID!

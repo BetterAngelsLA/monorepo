@@ -42,12 +42,12 @@ jobs:
           affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
           # Convert the list to a JSON matrix
           MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
-            split("\n") | 
-            map(select(. != "")) | 
-            if length == 0 then 
-                {} 
-            else 
-                {include: map({project: .})} 
+            split("\n") |
+            map(select(. != "")) |
+            if length == 0 then
+                {}
+            else
+                {include: map({project: .})}
             end'
           )
           IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
@@ -114,3 +114,4 @@ jobs:
           command: eas update --auto
           comment: true
           working-directory: apps/${{ matrix.project }}
+          qr-target: expo-go
