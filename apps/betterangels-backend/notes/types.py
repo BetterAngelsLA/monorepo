@@ -1,10 +1,36 @@
 import dataclasses
+from typing import Any, Dict
 
 import strawberry_django
 from accounts.types import UserType
+from common.permissions.utils import get_objects_for_user
+from django.db.models import QuerySet
+from notes.permissions import PrivateNotePermissions
 from strawberry import auto
+from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 
 from . import models
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.PrivateNoteDetail)
+class PrivateNoteDetailType:
+    id: auto
+    content: auto
+    created_at: auto
+
+    @classmethod
+    def get_queryset(
+        cls,
+        queryset: QuerySet[models.PrivateNoteDetail],
+        info: Info,
+        **kwargs: Dict[str, Any]
+    ) -> QuerySet[models.PrivateNoteDetail]:
+        # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
+        # Instead we use get_objects_for_user to enforce permissions.
+        user = get_current_user(info)
+        return get_objects_for_user(user, [PrivateNotePermissions.VIEW], klass=queryset)
 
 
 @dataclasses.dataclass
@@ -13,6 +39,7 @@ class NoteType:
     id: auto
     title: auto
     body: auto
+    private_details = auto
     created_at: auto
     created_by: UserType
 

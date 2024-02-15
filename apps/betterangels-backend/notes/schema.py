@@ -21,16 +21,11 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.VIEW]),
-        ],
+        extensions=[HasPerm(NotePermissions.VIEW)],
     )
 
     notes: List[NoteType] = strawberry_django.field(
-        extensions=[
-            # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
-            # Instead we enforce permissions within get_queryset on NoteType.
-        ],
+        extensions=[HasPerm(NotePermissions.VIEW)],
         pagination=True,
     )
 
@@ -55,7 +50,7 @@ class Mutation:
             )
 
             if not (permission_group and permission_group.group):
-                raise UserWarning("User lacks proper organization or permissions")
+                raise PermissionError("User lacks proper organization or permissions")
 
             note = mutations.resolvers.create(
                 info,
@@ -70,10 +65,15 @@ class Mutation:
             permissions = [
                 NotePermissions.CHANGE,
                 NotePermissions.DELETE,
-                PrivateNotePermissions.VIEW,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, note)
+
+            private_permission = [
+                PrivateNotePermissions.VIEW,
+            ]
+            for perm in private_permission:
+                assign_perm(perm, permission_group.group, note.private_details)
 
             return cast(NoteType, note)
 
