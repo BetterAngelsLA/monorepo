@@ -48,7 +48,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
 
         self.assertEqual(note["publicDetails"], "This is a new note.")
-        self.assertEqual(note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}])
+        self.assertEqual(
+            note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
+        )
 
     def test_notes_query(self) -> None:
         query = """
