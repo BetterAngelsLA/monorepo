@@ -44,7 +44,7 @@ class Note(BaseModel):
     notegroupobjectpermission_set: models.QuerySet["Note"]
 
     def __str__(self) -> str:
-        return self.public_details[:50]
+        return self.public_details[:50] if self.public_details else str(self.pk)
 
 
 class Mood(BaseModel):
