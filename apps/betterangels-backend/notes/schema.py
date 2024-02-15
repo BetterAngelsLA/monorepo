@@ -3,7 +3,7 @@ from typing import List, cast
 import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroup
+from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
@@ -36,11 +36,6 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
-            # TODO: Handle creating Notes without existing Client.
-            # if not data.client:
-            #     User.create_client()
-            client_id = data.client.id if data.client else None
-
             # WARNING: Temporary workaround for organization selection
             # TODO: Update once organization selection is implemented. Currently selects
             # the first organization with a default Caseworker role for the user.
@@ -56,12 +51,19 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            note = Note.objects.create(
-                title=data.title,
-                public_details=data.public_details,
-                created_by=user,
-                client_id=client_id,
-                organization=permission_group.organization,
+            # TODO: Handle creating Notes without existing Client.
+            # if not data.client:
+            #     User.create_client()
+            notes_data = strawberry.asdict(data)
+            notes_data["client"] = User(pk=data.client.id if data.client else None)
+            note = mutations.resolvers.create(
+                info,
+                Note,
+                {
+                    **notes_data,
+                    "created_by": user,
+                    "organization": permission_group.organization,
+                },
             )
 
             # Assign object-level permissions to the user who created the note.
