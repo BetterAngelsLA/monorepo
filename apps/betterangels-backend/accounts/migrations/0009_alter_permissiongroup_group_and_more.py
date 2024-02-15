@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="permissiongroup",
             name="group",
-            field=models.ForeignKey(
+            field=models.OneToOneField(
                 blank=True, on_delete=django.db.models.deletion.CASCADE, to="auth.group"
             ),
         ),
