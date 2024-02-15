@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from accounts.models import User
@@ -14,15 +15,15 @@ from unittest_parametrize import ParametrizedTestCase
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.usernames = [
+        self.user_labels = [
             "case_manager_1",
             "case_manager_2",
             "note_client_1",
             "note_client_2",
         ]
         self.user_map: dict[str, User] = {
-            username: baker.make(User, email=f"{username}@test.com", username=username)
-            for username in self.usernames
+            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
+            for user_label in self.user_labels
         }
         self.case_manager = self.user_map["case_manager_1"]
         self.note_client = self.user_map["note_client_1"]
@@ -116,8 +117,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _handle_user_login(self, username: Optional[str]) -> None:
-        if username:
-            self.graphql_client.force_login(self.user_map[username])
+    def _handle_user_login(self, user_label: Optional[str]) -> None:
+        if user_label:
+            self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
