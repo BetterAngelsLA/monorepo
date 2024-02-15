@@ -48,19 +48,14 @@ class Mutation:
         # TODO: Update once organization selection is implemented. Currently selects the
         # first organization a user is apart of.
         organization = user.organizations_organization.order_by("id").first()
+        client_id = data.client.id if data.client else None
 
-        note_data = asdict(data)
-        client_id = int(note_data.pop("client")["id"])
-        client = User.objects.get(id=client_id)
-        note = resolvers.create(
-            info,
-            Note,
-            {
-                **note_data,
-                "client": client,
-                "created_by": user,
-                "organization": organization,
-            },
+        note = Note.objects.create(
+            title=data.title,
+            public_details=data.public_details,
+            created_by=user,
+            client_id=client_id,
+            organization=organization,
         )
 
         # Assign object-level permissions to the user who created the note.
