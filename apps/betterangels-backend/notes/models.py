@@ -48,13 +48,13 @@ class Note(BaseModel):
 
 
 class Mood(BaseModel):
-    title = TextChoicesField(choices_enum=MoodEnum)
+    descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
 
 class Service(BaseModel):
-    title = TextChoicesField(choices_enum=ServiceEnum)
-    custom_title = models.CharField(max_length=100, blank=True)
+    descriptor = TextChoicesField(choices_enum=ServiceEnum)
+    custom_descriptor = models.CharField(max_length=100, blank=True)
     service_type = TextChoicesField(choices_enum=ServiceTypeEnum)
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="services")
 

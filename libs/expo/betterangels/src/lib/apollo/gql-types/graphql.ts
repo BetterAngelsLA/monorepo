@@ -19,7 +19,7 @@ export type Scalars = {
 };
 
 export type CreateMoodInput = {
-  title: MoodEnum;
+  descriptor: MoodEnum;
 };
 
 export type CreateNoteInput = {
@@ -70,7 +70,7 @@ export enum MoodEnum {
 
 export type MoodType = {
   __typename?: 'MoodType';
-  title: MoodEnum;
+  descriptor: MoodEnum;
 };
 
 export type Mutation = {

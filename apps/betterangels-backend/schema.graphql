@@ -23,7 +23,7 @@ When the condition fails, the following can be returned (following this priority
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 input CreateMoodInput {
-  title: MoodEnum!
+  descriptor: MoodEnum!
 }
 
 input CreateNoteInput {
@@ -75,7 +75,7 @@ enum MoodEnum {
 }
 
 type MoodType {
-  title: MoodEnum!
+  descriptor: MoodEnum!
 }
 
 type Mutation {

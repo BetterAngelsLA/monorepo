@@ -23,8 +23,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "title": "New Note",
                 "publicDetails": "This is a new note.",
                 "moods": [
-                    {"title": "ANXIOUS"},
-                    {"title": "EUTHYMIC"},
+                    {"descriptor": "ANXIOUS"},
+                    {"descriptor": "EUTHYMIC"},
                 ],
                 "isSubmitted": False,
             }
@@ -34,7 +34,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     moods {
-                        title
+                        descriptor
                     }
                     publicDetails
                 }
@@ -48,7 +48,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
 
         self.assertEqual(note["publicDetails"], "This is a new note.")
-        self.assertEqual(note["moods"], [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}])
+        self.assertEqual(note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}])
 
     def test_notes_query(self) -> None:
         query = """

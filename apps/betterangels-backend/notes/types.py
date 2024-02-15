@@ -16,27 +16,27 @@ from . import models
 @dataclasses.dataclass
 @strawberry_django.type(models.Mood)
 class MoodType:
-    title: auto
+    descriptor: auto
 
 
 @dataclasses.dataclass
 @strawberry_django.input(models.Mood)
 class CreateMoodInput:
-    title: auto
+    descriptor: auto
 
 
 @dataclasses.dataclass
 @strawberry_django.type(models.Service)
 class ServiceType:
-    title: auto
-    custom_title: Optional[str]
+    descriptor: auto
+    custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass
 @strawberry_django.input(models.Service)
 class CreateServiceInput:
-    title: auto
-    custom_title: Optional[str]
+    descriptor: auto
+    custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass

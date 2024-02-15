@@ -60,7 +60,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                         title
                         publicDetails
                         moods {
-                            title
+                            descriptor
                         }
                         client {
                             id
@@ -91,7 +91,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                         title
                         publicDetails
                         moods {
-                            title
+                            descriptor
                         }
                         client {
                             id

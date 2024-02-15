@@ -35,7 +35,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
-            "moods": [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}],
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
@@ -48,7 +48,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "title": "Updated Title",
-            "moods": [{"title": "ANXIOUS"}, {"title": "EUTHYMIC"}],
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager.pk)},
             "client": {"id": str(self.note_client.pk)},
