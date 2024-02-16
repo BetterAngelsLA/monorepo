@@ -16,11 +16,8 @@ export const CREATE_NOTE = gql`
         id
         title
         publicDetails
-        createdAt
-        createdBy {
+        client {
           id
-          username
-          email
         }
       }
     }
@@ -34,11 +31,8 @@ export const UPDATE_NOTE = gql`
         id
         title
         publicDetails
-        createdAt
-        createdBy {
+        client {
           id
-          username
-          email
         }
       }
     }

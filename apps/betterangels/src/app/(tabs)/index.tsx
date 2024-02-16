@@ -7,7 +7,9 @@ import {
   View,
 } from 'react-native';
 
+import { useMutation } from '@apollo/client';
 import {
+  CREATE_NOTE,
   MainScrollContainer,
   useSignOut,
   useUser,
@@ -150,10 +152,34 @@ const TOOLS = [
 
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
+  const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
   const router = useRouter();
+
+  async function createNoteFunction() {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            title: 'note title',
+            publicDetails: 'note public details',
+            client: {
+              id: '1234',
+            },
+          },
+        },
+      });
+      console.log('DATA:', data);
+      // router.navigate({
+      //   pathname: `/add-note/${data?.createNote?.client.id}`,
+      // });
+      // console.log('Note created:', data?.createNote);
+    } catch (e) {
+      console.log(e);
+    }
+  }
 
   useEffect(() => {
     navigation.setOptions({
@@ -325,14 +351,7 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
-            onPress={() =>
-              router.navigate({
-                pathname: '/add-note/[clientId]',
-                params: {
-                  clientId: '1234',
-                },
-              })
-            }
+            onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
             address="123 sdaf dasfda"
