@@ -140,25 +140,25 @@ export default function AddNote() {
     <FormProvider {...methods}>
       {/* <form onSubmit={console.log('yo')}> */}
       {/* <form onSubmit={methods.handleSubmit(consoleLog)}> */}
-      <form onSubmit={methods.handleSubmit(updateNoteFunction)}>
-        <View style={{ flex: 1 }}>
-          <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-            <Title firstName="Test" {...props} />
-            <Purpose {...props} />
-            <Mood {...props} />
-            <ProvidedServices {...props} />
-            <RequestedServices {...props} />
-            <NextStep {...props} />
-            <PublicNote
-              isPublicNoteEdited={isPublicNoteEdited}
-              setIsPublicNoteEdited={setIsPublicNoteEdited}
-              {...props}
-            />
-            <PrivateNote {...props} />
-          </MainScrollContainer>
-          <BottomActions updateNoteFunction={updateNoteFunction} />
-        </View>
-      </form>
+      {/* <form onSubmit={methods.handleSubmit(updateNoteFunction)}> */}
+      <View style={{ flex: 1 }}>
+        <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
+          <Title firstName="Test" {...props} />
+          <Purpose {...props} />
+          <Mood {...props} />
+          <ProvidedServices {...props} />
+          <RequestedServices {...props} />
+          <NextStep {...props} />
+          <PublicNote
+            isPublicNoteEdited={isPublicNoteEdited}
+            setIsPublicNoteEdited={setIsPublicNoteEdited}
+            {...props}
+          />
+          <PrivateNote {...props} />
+        </MainScrollContainer>
+        <BottomActions updateNoteFunction={updateNoteFunction} />
+      </View>
+      {/* </form> */}
     </FormProvider>
   );
 }

@@ -173,9 +173,9 @@ export default function TabOneScreen() {
       });
       console.log('CREATE NOTE DATA:', data);
       router.navigate({
+        // pathname: `/add-note/2`,
         pathname: `/add-note/${data?.createNote?.client.id}`,
       });
-      // console.log('Note created:', data?.createNote);
     } catch (e) {
       console.log(e);
     }

@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -5,6 +6,7 @@ import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
+from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -12,7 +14,6 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
-from organizations.models import Organization
 
 
 @strawberry.type
@@ -34,10 +35,14 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation()
+    # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        user = get_current_user(info)
+        print("WHAT" * 100)
+        # from IPython import embed
 
+        # embed()
+        user = get_current_user(info)
         # TODO: Handle creating Notes without existing Client.
         # if not data.client:
         #     User.create_client()
@@ -66,6 +71,25 @@ class Mutation:
             assign_perm(perm, user, note)
 
         return cast(NoteType, note)
+
+    # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
+    # def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+    #     FLAT_FIELDS = ("title", "public_details")
+    #     # user = get_current_user(info)
+
+    #     note = Note.objects.get(pk=data.id)
+    #     update_fields = [
+    #         (field, value)
+    #         for field, value in asdict(data).items()
+    #         if field in FLAT_FIELDS
+    #     ]
+    #     for field, value in update_fields:
+    #         if value is not None:
+    #             setattr(note, field, value)
+
+    #     note.save()
+
+    #     return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
