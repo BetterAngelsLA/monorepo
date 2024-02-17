@@ -24,6 +24,23 @@ def create_superuser(sender: Any, **kwargs: Any) -> None:
         )
 
 
+@receiver(post_migrate)
+def create_test_client(sender: Any, **kwargs: Any) -> None:
+    if settings.IS_LOCAL_DEV and not User.objects.filter(username="client").exists():
+        User.objects.create(username="client", email="client@ba.la", password="client")
+
+
+@receiver(post_migrate)
+def create_test_organization(sender: Any, **kwargs: Any) -> None:
+    if (
+        settings.IS_LOCAL_DEV
+        and not Organization.objects.filter(name="test_org").exists()
+    ):
+        test_org = Organization.objects.create(name="test_org")
+        admin = User.objects.filter(username="admin").first()
+        test_org.add_user(admin)
+
+
 @receiver(pre_delete, sender=Organization)
 def handle_organization_removed(
     sender: Any, instance: Organization, **kwargs: Any

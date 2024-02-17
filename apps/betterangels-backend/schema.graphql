@@ -22,10 +22,6 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
-input CreateMoodInput {
-  descriptor: MoodEnum!
-}
-
 input CreateNoteInput {
   title: String!
   publicDetails: String
@@ -141,8 +137,6 @@ input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
-  moods: [CreateMoodInput!]
-  isSubmitted: Boolean
 }
 
 union UpdateNotePayload = NoteType | OperationInfo

@@ -12,6 +12,7 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
+from organizations.models import Organization
 
 
 @strawberry.type

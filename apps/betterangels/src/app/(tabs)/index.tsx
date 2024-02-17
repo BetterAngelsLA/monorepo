@@ -166,15 +166,15 @@ export default function TabOneScreen() {
             title: 'note title',
             publicDetails: 'note public details',
             client: {
-              id: '1234',
+              id: '2',
             },
           },
         },
       });
-      console.log('DATA:', data);
-      // router.navigate({
-      //   pathname: `/add-note/${data?.createNote?.client.id}`,
-      // });
+      console.log('CREATE NOTE DATA:', data);
+      router.navigate({
+        pathname: `/add-note/${data?.createNote?.client.id}`,
+      });
       // console.log('Note created:', data?.createNote);
     } catch (e) {
       console.log(e);

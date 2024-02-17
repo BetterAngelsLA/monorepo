@@ -1,9 +1,12 @@
+import { useMutation } from '@apollo/client';
 import {
   MainScrollContainer,
+  UPDATE_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -29,8 +32,8 @@ interface INote {
 }
 
 export default function AddNote() {
-  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  // const [createNote] = useMutation(CREATE_NOTE);
+  const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
@@ -60,6 +63,31 @@ export default function AddNote() {
     expanded,
     setExpanded,
   };
+
+  function consoleLog() {
+    console.log('yo');
+  }
+
+  async function updateNoteFunction() {
+    try {
+      const { data } = await updateNote({
+        variables: {
+          data: {
+            id: '1',
+            title: 'updated title',
+            publicDetails: 'updated public details',
+          },
+        },
+      });
+      console.log('UPDATE NOTE DATA:', data);
+      // router.navigate({
+      //   pathname: `/add-note/${data?.createNote?.client.id}`,
+      // });
+      // console.log('Note updated:', data?.createNote);
+    } catch (e) {
+      // console.log(e);
+    }
+  }
 
   // console.log(clientId);
 
@@ -110,23 +138,27 @@ export default function AddNote() {
 
   return (
     <FormProvider {...methods}>
-      <View style={{ flex: 1 }}>
-        <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title firstName="Test" {...props} />
-          <Purpose {...props} />
-          <Mood {...props} />
-          <ProvidedServices {...props} />
-          <RequestedServices {...props} />
-          <NextStep {...props} />
-          <PublicNote
-            isPublicNoteEdited={isPublicNoteEdited}
-            setIsPublicNoteEdited={setIsPublicNoteEdited}
-            {...props}
-          />
-          <PrivateNote {...props} />
-        </MainScrollContainer>
-        <BottomActions />
-      </View>
+      {/* <form onSubmit={console.log('yo')}> */}
+      {/* <form onSubmit={methods.handleSubmit(consoleLog)}> */}
+      <form onSubmit={methods.handleSubmit(updateNoteFunction)}>
+        <View style={{ flex: 1 }}>
+          <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
+            <Title firstName="Test" {...props} />
+            <Purpose {...props} />
+            <Mood {...props} />
+            <ProvidedServices {...props} />
+            <RequestedServices {...props} />
+            <NextStep {...props} />
+            <PublicNote
+              isPublicNoteEdited={isPublicNoteEdited}
+              setIsPublicNoteEdited={setIsPublicNoteEdited}
+              {...props}
+            />
+            <PrivateNote {...props} />
+          </MainScrollContainer>
+          <BottomActions updateNoteFunction={updateNoteFunction} />
+        </View>
+      </form>
     </FormProvider>
   );
 }
