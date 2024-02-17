@@ -177,6 +177,28 @@ export default function TabOneScreen() {
     fetchPolicy: 'network-only',
   });
 
+  async function createNoteFunction() {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            title: 'note title',
+            publicDetails: 'note public details',
+            client: {
+              id: '2',
+            },
+          },
+        },
+      });
+      console.log('CREATE NOTE DATA:', data);
+      router.navigate({
+        pathname: `/add-note/2`,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   useEffect(() => {
     if (data && !isLoading) {
       setNotes(data.notes);
@@ -359,7 +381,7 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
-            // onPress={createNoteFunction}
+            onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
             address="361 S Spring St. Create"
