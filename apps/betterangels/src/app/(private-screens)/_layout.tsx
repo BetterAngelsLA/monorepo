@@ -42,7 +42,7 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="edit-note/[noteId]"
+        name="update-note/[noteId]"
         options={{
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,

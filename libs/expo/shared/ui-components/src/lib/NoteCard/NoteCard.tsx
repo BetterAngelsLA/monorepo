@@ -1,5 +1,6 @@
 import { LocationDotIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import BodyText from '../BodyText';
@@ -20,31 +21,23 @@ interface INoteCardProps {
   onPress?: () => void;
 }
 
-// async function viewNoteFunction() {
-//   try {
-//     const { data } = await createNote({
-//       variables: {
-//         data: {
-//           title: 'note title',
-//           publicDetails: 'note public details',
-//           client: {
-//             id: '2',
-//           },
-//         },
-//       },
-//     });
-//     console.log('CREATE NOTE DATA:', data);
-//     router.navigate({
-//       // pathname: `/add-note/2`,
-//       pathname: `/add-note/${data?.createNote?.client.id}`,
-//     });
-//   } catch (e) {
-//     console.log(e);
-//   }
-// }
+async function viewNoteFunction() {
+  try {
+    router.navigate({
+      pathname: `/update-note/2`,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+// router.navigate({
+//   pathname: `/add-note/${id}`,
+// });
 
 export function NoteCard(props: INoteCardProps) {
   const { id, title, mb, mt, mr, ml, my, mx, onPress } = props;
+
   return (
     <View
       style={[
@@ -76,12 +69,12 @@ export function NoteCard(props: INoteCardProps) {
           }}
         >
           <LocationDotIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-          <BodyText size="sm"> {title}</BodyText>
+          <BodyText size="sm">update {title}</BodyText>
         </View>
         <IconButton
           accessibilityHint={`goes to edit ${title} note`}
           accessibilityLabel={`Update ${title} note`}
-          onPress={onPress}
+          onPress={viewNoteFunction}
           mb="xs"
           variant="secondary"
           borderColor={Colors.PRIMARY}

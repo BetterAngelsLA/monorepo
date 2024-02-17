@@ -8,7 +8,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import BottomActions from './BottomActions';
@@ -34,16 +34,15 @@ interface INote {
   requestedServices: string[];
 }
 
-export default function AddNote() {
+export default function UpdateNote() {
   const [note, setNote] = useState<INote | undefined>();
   const {
     data,
     loading: isLoading,
-    // refetch,
+    refetch,
   } = useQuery(VIEW_NOTE, {
     fetchPolicy: 'network-only',
   });
-  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
@@ -61,17 +60,19 @@ export default function AddNote() {
       requestedServices: [],
     },
   });
+  // const { getValues } = useFormContext();
+  // const formValues = getValues();
 
-  // const refetchNote = useCallback(async () => {
-  //   try {
-  //     const response = await refetch();
-  //     if (response.data) {
-  //       setNote(response.data.note);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error refetching note data:', error);
-  //   }
-  // }, [refetch]);
+  const refetchNote = useCallback(async () => {
+    try {
+      const response = await refetch();
+      if (response.data) {
+        setNote(response.data.note);
+      }
+    } catch (error) {
+      console.error('Error refetching note data:', error);
+    }
+  }, [refetch]);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -80,15 +81,15 @@ export default function AddNote() {
     }
   }, [data, isLoading]);
 
-  // const value = useMemo(
-  //   () => ({
-  //     note,
-  //     setNote,
-  //     isLoading,
-  //     refetchNote,
-  //   }),
-  //   [note, isLoading, refetchNote, setNote]
-  // );
+  const value = useMemo(
+    () => ({
+      note,
+      setNote,
+      isLoading,
+      refetchNote,
+    }),
+    [note, isLoading, refetchNote, setNote]
+  );
 
   //   query ViewNote($id: ID!) {
   //     note(pk: $id) {
@@ -120,16 +121,20 @@ export default function AddNote() {
   };
 
   async function updateNoteFunction() {
+    // console.log(formValues);
+
     try {
       const { data } = await updateNote({
         variables: {
           data: {
-            id: note?.id,
-            title: note?.title,
-            publicDetails: note?.publicDetails,
+            id: noteId,
+            title: 'updated title',
+            publicDetails: 'updated public note',
           },
         },
       });
+      // console.log('formValues.id: ', formValues.id);
+      // console.log('formValues.title: ', formValues.title);
       console.log(note?.id);
       console.log(note?.title);
       console.log(note?.publicDetails);

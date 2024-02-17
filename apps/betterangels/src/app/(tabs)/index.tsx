@@ -7,9 +7,10 @@ import {
   View,
 } from 'react-native';
 
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {
   CREATE_NOTE,
+  GET_NOTES,
   MainScrollContainer,
   useSignOut,
   useUser,
@@ -150,89 +151,43 @@ const TOOLS = [
     link: '',
   },
 ];
-
+interface INote {
+  id: string;
+  title: string;
+  purposes: { value: string }[];
+  nextStepActions: { value: string }[];
+  publicDetails: string;
+  noteDateTime: string;
+  moods: string[];
+  providedServices: string[];
+  nextStepDate: Date;
+  requestedServices: string[];
+}
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
-  // const [notes, setNotes] = useState(GET_NOTES);
+  const [notes, setNotes] = useState<INote[] | undefined>([]);
+  // const [notes, setNotes] = useState([]);
   const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
   const router = useRouter();
 
-  // const {
-  //   data,
-  //   loading: isLoading,
-  //   // refetch,
-  // } = useQuery(GET_NOTES, {
-  //   fetchPolicy: 'network-only',
-  // });
+  const { data, loading: isLoading } = useQuery(GET_NOTES, {
+    fetchPolicy: 'network-only',
+  });
 
-  // const refetchNotes = useCallback(async () => {
-  //   try {
-  //     const response = await refetch();
-  //     if (response.data) {
-  //       setNotes(response.data.notes);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error refetching notes data:', error);
-  //   }
-  // }, [refetch]);
-
-  // async function createNoteFunction() {
-  //   try {
-  //     const { data } = await createNote({
-  //       variables: {
-  //         data: {
-  //           title: 'note title',
-  //           publicDetails: 'note public details',
-  //           client: {
-  //             id: '2',
-  //           },
-  //         },
-  //       },
-  //     });
-  //     console.log('CREATE NOTE DATA:', data);
-  //     router.navigate({
-  //       // pathname: `/add-note/2`,
-  //       pathname: `/add-note/${data?.createNote?.client.id}`,
-  //     });
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // }
-
-  async function createNoteFunction() {
-    try {
-      const { data } = await createNote({
-        variables: {
-          data: {
-            title: 'note title',
-            publicDetails: 'note public details',
-            client: {
-              id: '2',
-            },
-          },
-        },
-      });
-      console.log('CREATE NOTE DATA:', data);
-      router.navigate({
-        pathname: `/add-note/2`,
-        // pathname: `/edit-note/${data?.viewNote?.note.id}`,
-      });
-    } catch (e) {
-      console.log(e);
+  useEffect(() => {
+    if (data && !isLoading) {
+      setNotes(data.notes);
+      console.log('setNotes:', data.notes);
     }
-  }
+  }, [data, isLoading]);
 
   // useEffect(() => {
-  //   if (data && !isLoading) {
-  //     setNotes(data.notes);
-  //   }
-  // }, [data, isLoading]);
-  // if (data && !isLoading) {
-  //   console.log(notes);
-  // }
+  //   console.log('State has been updated to:', { notes });
+  //   // console.log('Data has:', data);
+  // }, [notes]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -404,7 +359,7 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
-            onPress={createNoteFunction}
+            // onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
             address="361 S Spring St. Create"
@@ -412,15 +367,28 @@ export default function TabOneScreen() {
             lastName="l"
             progress="10%"
           />
-          <NoteCard
-            // onPress={viewNoteFunction}
-            mb="sm"
-            id="id"
-            // key={note.id}
-            // title={note.title}
-            // key={note.id}
-            title="title"
-          />
+          <View>
+            {/* {notes.map((note: NoteType) => {
+              <Text>{note.id}</Text>;
+            })} */}
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+            }}
+          >
+            {notes?.map((note: INote) => {
+              return (
+                <NoteCard
+                  // onPress={viewNoteFunction}
+                  mb="sm"
+                  id={note.id}
+                  key={note.id}
+                  title={note.title}
+                />
+              );
+            })}
+          </View>
           <Button
             accessibilityHint="loads more active clients"
             borderColor={Colors.PRIMARY}

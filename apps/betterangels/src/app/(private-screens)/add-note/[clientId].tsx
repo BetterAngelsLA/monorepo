@@ -1,8 +1,7 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import {
   MainScrollContainer,
   UPDATE_NOTE,
-  VIEW_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -35,14 +34,6 @@ interface INote {
 }
 
 export default function AddNote() {
-  const [note, setNote] = useState<INote | undefined>();
-  const {
-    data,
-    loading: isLoading,
-    // refetch,
-  } = useQuery(VIEW_NOTE, {
-    fetchPolicy: 'network-only',
-  });
   // const { clientId } = useLocalSearchParams<{ clientId: string }>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const [updateNote] = useMutation(UPDATE_NOTE);
@@ -62,45 +53,6 @@ export default function AddNote() {
     },
   });
 
-  // const refetchNote = useCallback(async () => {
-  //   try {
-  //     const response = await refetch();
-  //     if (response.data) {
-  //       setNote(response.data.note);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error refetching note data:', error);
-  //   }
-  // }, [refetch]);
-
-  useEffect(() => {
-    if (data && !isLoading) {
-      setNote(data.note);
-      console.log(data.note);
-    }
-  }, [data, isLoading]);
-
-  // const value = useMemo(
-  //   () => ({
-  //     note,
-  //     setNote,
-  //     isLoading,
-  //     refetchNote,
-  //   }),
-  //   [note, isLoading, refetchNote, setNote]
-  // );
-
-  //   query ViewNote($id: ID!) {
-  //     note(pk: $id) {
-  //         id
-  //         title
-  //         publicDetails
-  //         moods {
-  //             descriptor
-  //         }
-  //     }
-  // }
-
   const watchedValues = methods.watch([
     'id',
     'title',
@@ -118,30 +70,6 @@ export default function AddNote() {
     expanded,
     setExpanded,
   };
-
-  async function updateNoteFunction() {
-    try {
-      const { data } = await updateNote({
-        variables: {
-          data: {
-            id: note?.id,
-            title: note?.title,
-            publicDetails: note?.publicDetails,
-          },
-        },
-      });
-      console.log(note?.id);
-      console.log(note?.title);
-      console.log(note?.publicDetails);
-      console.log('UPDATE NOTE DATA:', data);
-      // router.navigate({
-      //   pathname: `/add-note/${data?.createNote?.client.id}`,
-      // });
-      // console.log('Note updated:', data?.createNote);
-    } catch (e) {
-      // console.log(e);
-    }
-  }
 
   // console.log(clientId);
 
@@ -193,6 +121,23 @@ export default function AddNote() {
       methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+
+  async function updateNoteFunction() {
+    try {
+      // const { data } = await updateNote({
+      //   variables: {
+      //     data: {
+      //       title: ,
+      //       publicDetails: publicDetails,
+      //     },
+      //   },
+      // });
+      // console.log('UPDATE NOTE DATA:', data);
+      console.log('UPDATE NOTE DATA:', 'update note');
+    } catch (e) {
+      console.log(e);
+    }
+  }
 
   return (
     <FormProvider {...methods}>
