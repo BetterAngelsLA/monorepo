@@ -1,6 +1,5 @@
 import { LocationDotIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import BodyText from '../BodyText';
@@ -18,22 +17,9 @@ interface INoteCardProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  mr?: TSpacing;
   onPress?: () => void;
 }
-
-async function viewNoteFunction() {
-  try {
-    router.navigate({
-      pathname: `/update-note/2`,
-    });
-  } catch (e) {
-    console.log(e);
-  }
-}
-
-// router.navigate({
-//   pathname: `/add-note/${id}`,
-// });
 
 export function NoteCard(props: INoteCardProps) {
   const { id, title, mb, mt, mr, ml, my, mx, onPress } = props;
@@ -74,7 +60,7 @@ export function NoteCard(props: INoteCardProps) {
         <IconButton
           accessibilityHint={`goes to edit ${title} note`}
           accessibilityLabel={`Update ${title} note`}
-          onPress={viewNoteFunction}
+          onPress={onPress}
           mb="xs"
           variant="secondary"
           borderColor={Colors.PRIMARY}

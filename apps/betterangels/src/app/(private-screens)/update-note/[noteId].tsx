@@ -8,7 +8,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import BottomActions from './BottomActions';
@@ -36,14 +36,11 @@ interface INote {
 
 export default function UpdateNote() {
   const [note, setNote] = useState<INote | undefined>();
-  const {
-    data,
-    loading: isLoading,
-    refetch,
-  } = useQuery(VIEW_NOTE, {
+  const { noteId } = useLocalSearchParams<{ noteId: string }>();
+  const { data, loading: isLoading } = useQuery(VIEW_NOTE, {
+    variables: { id: noteId },
     fetchPolicy: 'network-only',
   });
-  const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
@@ -60,19 +57,6 @@ export default function UpdateNote() {
       requestedServices: [],
     },
   });
-  // const { getValues } = useFormContext();
-  // const formValues = getValues();
-
-  const refetchNote = useCallback(async () => {
-    try {
-      const response = await refetch();
-      if (response.data) {
-        setNote(response.data.note);
-      }
-    } catch (error) {
-      console.error('Error refetching note data:', error);
-    }
-  }, [refetch]);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -80,27 +64,11 @@ export default function UpdateNote() {
       console.log(data.note);
     }
   }, [data, isLoading]);
-
-  const value = useMemo(
-    () => ({
-      note,
-      setNote,
-      isLoading,
-      refetchNote,
-    }),
-    [note, isLoading, refetchNote, setNote]
-  );
-
-  //   query ViewNote($id: ID!) {
-  //     note(pk: $id) {
-  //         id
-  //         title
-  //         publicDetails
-  //         moods {
-  //             descriptor
-  //         }
-  //     }
-  // }
+  // useEffect(() => {
+  //   if (note) {
+  //     console.log(note);
+  //   }
+  // }, [note]);
 
   const watchedValues = methods.watch([
     'id',
@@ -121,8 +89,6 @@ export default function UpdateNote() {
   };
 
   async function updateNoteFunction() {
-    // console.log(formValues);
-
     try {
       const { data } = await updateNote({
         variables: {
@@ -133,18 +99,13 @@ export default function UpdateNote() {
           },
         },
       });
-      // console.log('formValues.id: ', formValues.id);
-      // console.log('formValues.title: ', formValues.title);
-      console.log(note?.id);
-      console.log(note?.title);
-      console.log(note?.publicDetails);
       console.log('UPDATE NOTE DATA:', data);
       // router.navigate({
       //   pathname: `/add-note/${data?.createNote?.client.id}`,
       // });
       // console.log('Note updated:', data?.createNote);
     } catch (e) {
-      // console.log(e);
+      console.log(e);
     }
   }
 

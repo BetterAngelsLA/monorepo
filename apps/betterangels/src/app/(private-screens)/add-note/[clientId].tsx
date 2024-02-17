@@ -6,7 +6,6 @@ import {
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
-import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -35,13 +34,11 @@ interface INote {
 
 export default function AddNote() {
   // const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
-      id: noteId,
       title: '',
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
@@ -54,7 +51,6 @@ export default function AddNote() {
   });
 
   const watchedValues = methods.watch([
-    'id',
     'title',
     'purposes',
     'moods',
@@ -95,7 +91,6 @@ export default function AddNote() {
       return;
     }
     const [
-      id,
       title,
       purposes,
       moods,
@@ -106,7 +101,6 @@ export default function AddNote() {
     ] = watchedValues;
 
     const generateOjbect = {
-      id,
       title,
       purposes,
       moods,
@@ -124,16 +118,16 @@ export default function AddNote() {
 
   async function updateNoteFunction() {
     try {
-      // const { data } = await updateNote({
-      //   variables: {
-      //     data: {
-      //       title: ,
-      //       publicDetails: publicDetails,
-      //     },
-      //   },
-      // });
-      // console.log('UPDATE NOTE DATA:', data);
-      console.log('UPDATE NOTE DATA:', 'update note');
+      const { data } = await updateNote({
+        variables: {
+          data: {
+            id: 30,
+            title: 'updated title',
+            publicDetails: 'updated public note',
+          },
+        },
+      });
+      console.log('UPDATE NOTE DATA:', data);
     } catch (e) {
       console.log(e);
     }

@@ -38,10 +38,6 @@ class Mutation:
     @strawberry_django.mutation()
     # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        print("WHAT" * 100)
-        # from IPython import embed
-
-        # embed()
         user = get_current_user(info)
         # TODO: Handle creating Notes without existing Client.
         # if not data.client:
@@ -74,11 +70,10 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        from IPython import embed
+        # from IPython import embed
 
         # embed()
         FLAT_FIELDS = ("title", "public_details")
-        # user = get_current_user(info)
 
         note = Note.objects.get(pk=data.id)
         update_fields = [

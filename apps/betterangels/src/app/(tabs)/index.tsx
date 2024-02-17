@@ -166,7 +166,6 @@ interface INote {
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
   const [notes, setNotes] = useState<INote[] | undefined>([]);
-  // const [notes, setNotes] = useState([]);
   const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
@@ -192,8 +191,21 @@ export default function TabOneScreen() {
       });
       console.log('CREATE NOTE DATA:', data);
       router.navigate({
-        pathname: `/add-note/2`,
+        pathname: `/add-note/[clientId]`,
+        // pathname: `/add-note/`,
+        // params: { id: id } });
       });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async function viewNoteFunction(id: string) {
+    try {
+      // router.navigate({
+      //   pathname: `/update-note/${id}`,
+      // });
+      console.log('GOING TO UPDATE NOTE', id);
     } catch (e) {
       console.log(e);
     }
@@ -205,11 +217,6 @@ export default function TabOneScreen() {
       console.log('setNotes:', data.notes);
     }
   }, [data, isLoading]);
-
-  // useEffect(() => {
-  //   console.log('State has been updated to:', { notes });
-  //   // console.log('Data has:', data);
-  // }, [notes]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -384,16 +391,11 @@ export default function TabOneScreen() {
             onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
-            address="361 S Spring St. Create"
+            address="361 S Spring St."
             firstName="f"
             lastName="l"
             progress="10%"
           />
-          <View>
-            {/* {notes.map((note: NoteType) => {
-              <Text>{note.id}</Text>;
-            })} */}
-          </View>
           <View
             style={{
               flexDirection: 'row',
@@ -402,11 +404,11 @@ export default function TabOneScreen() {
             {notes?.map((note: INote) => {
               return (
                 <NoteCard
-                  // onPress={viewNoteFunction}
                   mb="sm"
                   id={note.id}
                   key={note.id}
                   title={note.title}
+                  onPress={viewNoteFunction}
                 />
               );
             })}
