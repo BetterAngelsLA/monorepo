@@ -1,16 +1,17 @@
 import { gql, useQuery } from '@apollo/client';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import UserContext, { TUser } from './UserContext';
+import { GET_CURRENT_USER } from '../../apollo/graphql/queries';
 
-const GET_CURRENT_USER = gql`
-  query currentUser {
-    currentUser {
-      id
-      username
-      email
-    }
-  }
-`;
+// const GET_CURRENT_USER = gql`
+//   query currentUser {
+//     currentUser {
+//       id
+//       username
+//       email
+//     }
+//   }
+// `;
 
 interface UserProviderProps {
   children: ReactNode;

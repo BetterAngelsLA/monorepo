@@ -72,31 +72,34 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
-    # def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-    #     FLAT_FIELDS = ("title", "public_details")
-    #     # user = get_current_user(info)
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
+    def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        from IPython import embed
 
-    #     note = Note.objects.get(pk=data.id)
-    #     update_fields = [
-    #         (field, value)
-    #         for field, value in asdict(data).items()
-    #         if field in FLAT_FIELDS
-    #     ]
-    #     for field, value in update_fields:
-    #         if value is not None:
-    #             setattr(note, field, value)
+        # embed()
+        FLAT_FIELDS = ("title", "public_details")
+        # user = get_current_user(info)
 
-    #     note.save()
+        note = Note.objects.get(pk=data.id)
+        update_fields = [
+            (field, value)
+            for field, value in asdict(data).items()
+            if field in FLAT_FIELDS
+        ]
+        for field, value in update_fields:
+            if value is not None:
+                setattr(note, field, value)
 
-    #     return cast(NoteType, note)
+        note.save()
 
-    update_note: NoteType = mutations.update(
-        UpdateNoteInput,
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ],
-    )
+        return cast(NoteType, note)
+
+    # update_note: NoteType = mutations.update(
+    #     UpdateNoteInput,
+    #     extensions=[
+    #         HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+    #     ],
+    # )
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,

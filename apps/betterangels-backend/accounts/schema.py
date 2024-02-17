@@ -22,6 +22,5 @@ class Mutation:
     ) -> MagicLinkResponse:
         request = get_request(info)
         base_url = request.build_absolute_uri()
-        print(data.email, base_url)
         send_magic_link(data.email, base_url)
         return MagicLinkResponse(message="Email link sent.")

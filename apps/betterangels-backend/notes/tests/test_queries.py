@@ -26,10 +26,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
+                    title
+                    publicDetails
                     moods {
                         descriptor
                     }
-                    publicDetails
                 }
             }
         """

@@ -33,6 +33,7 @@ import {
   H1,
   H2,
   H4,
+  NoteCard,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -152,11 +153,54 @@ const TOOLS = [
 
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
+  // const [notes, setNotes] = useState(GET_NOTES);
   const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
   const router = useRouter();
+
+  // const {
+  //   data,
+  //   loading: isLoading,
+  //   // refetch,
+  // } = useQuery(GET_NOTES, {
+  //   fetchPolicy: 'network-only',
+  // });
+
+  // const refetchNotes = useCallback(async () => {
+  //   try {
+  //     const response = await refetch();
+  //     if (response.data) {
+  //       setNotes(response.data.notes);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error refetching notes data:', error);
+  //   }
+  // }, [refetch]);
+
+  // async function createNoteFunction() {
+  //   try {
+  //     const { data } = await createNote({
+  //       variables: {
+  //         data: {
+  //           title: 'note title',
+  //           publicDetails: 'note public details',
+  //           client: {
+  //             id: '2',
+  //           },
+  //         },
+  //       },
+  //     });
+  //     console.log('CREATE NOTE DATA:', data);
+  //     router.navigate({
+  //       // pathname: `/add-note/2`,
+  //       pathname: `/add-note/${data?.createNote?.client.id}`,
+  //     });
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // }
 
   async function createNoteFunction() {
     try {
@@ -173,13 +217,22 @@ export default function TabOneScreen() {
       });
       console.log('CREATE NOTE DATA:', data);
       router.navigate({
-        // pathname: `/add-note/2`,
-        pathname: `/add-note/${data?.createNote?.client.id}`,
+        pathname: `/add-note/2`,
+        // pathname: `/edit-note/${data?.viewNote?.note.id}`,
       });
     } catch (e) {
       console.log(e);
     }
   }
+
+  // useEffect(() => {
+  //   if (data && !isLoading) {
+  //     setNotes(data.notes);
+  //   }
+  // }, [data, isLoading]);
+  // if (data && !isLoading) {
+  //   console.log(notes);
+  // }
 
   useEffect(() => {
     navigation.setOptions({
@@ -354,10 +407,19 @@ export default function TabOneScreen() {
             onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
-            address="123 sdaf dasfda"
+            address="361 S Spring St. Create"
             firstName="f"
             lastName="l"
             progress="10%"
+          />
+          <NoteCard
+            // onPress={viewNoteFunction}
+            mb="sm"
+            id="id"
+            // key={note.id}
+            // title={note.title}
+            // key={note.id}
+            title="title"
           />
           <Button
             accessibilityHint="loads more active clients"
