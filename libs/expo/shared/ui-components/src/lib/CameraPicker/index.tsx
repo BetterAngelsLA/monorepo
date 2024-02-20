@@ -68,6 +68,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const toggleCameraType = () => {
+    console.log('TYPE');
     setType((current) => (current === 'back' ? 'front' : 'back'));
   };
 
@@ -104,8 +105,8 @@ export default function CameraPicker(props: ICameraPickerProps) {
         <View style={{ flex: 5 }}>
           <CameraView
             style={styles.camera}
-            type={type}
-            flashMode={flash}
+            facing={type}
+            flash={flash}
             ref={cameraRef}
           />
         </View>
