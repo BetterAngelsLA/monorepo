@@ -9,14 +9,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.case_manager)
 
     def test_note_query(self) -> None:
-        response = self._create_note_fixture(
-            {
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
-                "client": {"id": self.note_client.id},
-            }
-        )
-        note_id = response["data"]["createNote"]["id"]
+        note_id = self.note["id"]
         note = self._update_note_fixture(
             {
                 "id": note_id,
