@@ -61,14 +61,14 @@ export default function UpdateNote() {
   useEffect(() => {
     if (data && !isLoading) {
       setNote(data.note);
-      console.log(data.note);
+      console.log('data.note', data.note);
     }
   }, [data, isLoading]);
-  // useEffect(() => {
-  //   if (note) {
-  //     console.log(note);
-  //   }
-  // }, [note]);
+  useEffect(() => {
+    if (note) {
+      console.log('note', note);
+    }
+  }, [note]);
 
   const watchedValues = methods.watch([
     'id',
@@ -99,11 +99,8 @@ export default function UpdateNote() {
           },
         },
       });
-      console.log('UPDATE NOTE DATA:', data);
-      // router.navigate({
-      //   pathname: `/add-note/${data?.createNote?.client.id}`,
-      // });
-      // console.log('Note updated:', data?.createNote);
+      console.log(data);
+      console.log('UPDATE NOTE DATA:', note?.id);
     } catch (e) {
       console.log(e);
     }
