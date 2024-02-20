@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 from accounts.models import User
 from accounts.tests.baker_recipes import permission_group_recipe
@@ -20,9 +20,11 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
     def _setup_users(self) -> None:
         self.users = baker.make(User, _quantity=3)
-        self.case_manager, self.note_client, self.case_manager_in_another_org = (
-            self.users
-        )
+        (
+            self.case_manager,
+            self.note_client,
+            self.case_manager_in_another_org,
+        ) = self.users
 
     def _setup_groups_and_permissions(self) -> None:
         # Create a group and assign note permissions
@@ -71,7 +73,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
-            mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{
+            mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{ # noqa: B950
                 {operation}Note(data: $data) {{
                     ... on OperationInfo {{
                         messages {{
