@@ -21,7 +21,7 @@ export const GET_NOTES = gql`
   }
 `;
 
-export const VIEW_NOTE = gql`
+export const GET_NOTE = gql`
   query ViewNote($id: ID!) {
     note(id: $id) {
       id

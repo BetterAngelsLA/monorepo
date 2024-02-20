@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def create_superuser(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
         User.objects.create_superuser(
-            username="admin", email="admin@ba.la", password="admin"
+            username="admin", email="admin@ba.la", password="password"
         )
 
 
@@ -70,3 +70,19 @@ def handle_organization_user_removed(
     logger.info(
         f"User {user.username} was removed from organization {organization.name}."
     )
+
+
+# @receiver(post_save, sender=User)
+# def add_user_to_org(sender: Any, instance: User, created: Any, **kwargs: Any) -> None:
+#     from IPython import embed
+
+#     embed()
+#     if (
+#         not instance.organizations_organizationuser.count()
+#         # not instance.organizations_organization.order_by("id").first()
+#         # not instance.organizations_organization.count()
+#         and instance.email.split("@")[1] in "betterangels.la"
+#     ):
+#         embed()
+#         organization = Organization.objects.get(name="test_org")
+#         organization.add_user(instance)

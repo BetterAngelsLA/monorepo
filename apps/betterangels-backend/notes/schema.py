@@ -6,7 +6,8 @@ import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
-from organizations.models import Organization
+
+# from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -38,6 +39,9 @@ class Mutation:
     @strawberry_django.mutation()
     # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
+        from IPython import embed
+
+        # embed()
         user = get_current_user(info)
         # TODO: Handle creating Notes without existing Client.
         # if not data.client:

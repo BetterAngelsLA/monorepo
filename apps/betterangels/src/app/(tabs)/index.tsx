@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery } from '@apollo/client';
 import {
   CREATE_NOTE,
+  GET_NOTE,
   GET_NOTES,
   MainScrollContainer,
   useSignOut,
@@ -166,6 +167,7 @@ interface INote {
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
   const [notes, setNotes] = useState<INote[] | undefined>([]);
+  // const [note, setNote] = useState<INote>;
   const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
@@ -191,21 +193,8 @@ export default function TabOneScreen() {
       });
       console.log('CREATE NOTE DATA:', data);
       router.navigate({
-        pathname: `/add-note/[clientId]`,
-        // pathname: `/add-note/`,
-        // params: { id: id } });
+        pathname: `/edit-note/${data?.createNote?.id}`,
       });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  async function viewNoteFunction(id: string) {
-    try {
-      // router.navigate({
-      //   pathname: `/update-note/${id}`,
-      // });
-      console.log('GOING TO UPDATE NOTE', id);
     } catch (e) {
       console.log(e);
     }
@@ -408,7 +397,7 @@ export default function TabOneScreen() {
                   id={note.id}
                   key={note.id}
                   title={note.title}
-                  onPress={viewNoteFunction}
+                  onPress={() => router.navigate(`/edit-note/${note.id}`)}
                 />
               );
             })}

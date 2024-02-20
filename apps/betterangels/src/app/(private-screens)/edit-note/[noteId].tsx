@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@apollo/client';
 import {
+  GET_NOTE,
   MainScrollContainer,
   UPDATE_NOTE,
-  VIEW_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -37,7 +37,7 @@ interface INote {
 export default function UpdateNote() {
   const [note, setNote] = useState<INote | undefined>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
-  const { data, loading: isLoading } = useQuery(VIEW_NOTE, {
+  const { data, loading: isLoading } = useQuery(GET_NOTE, {
     variables: { id: noteId },
     fetchPolicy: 'network-only',
   });
@@ -159,6 +159,12 @@ export default function UpdateNote() {
       methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+
+  useEffect(() => {
+    if (noteId) {
+      console.log('NOTE ID, ', noteId);
+    }
+  }, [noteId]);
 
   return (
     <FormProvider {...methods}>
