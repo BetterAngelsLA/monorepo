@@ -1,9 +1,13 @@
 interface IWatchedValue {
   purposes: { value: string }[];
-  nextStepActions: { action: string }[];
+  nextStepActions: {
+    action: string;
+    date?: Date | undefined;
+    location?: string;
+    time?: Date | undefined;
+  }[];
   moods: string[];
   providedServices: string[];
-  nextStepDate: Date;
   requestedServices: string[];
 }
 
@@ -13,7 +17,6 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
     moods,
     providedServices,
     nextStepActions,
-    nextStepDate,
     requestedServices,
   } = watchedValues;
   const changedG = purposes
@@ -26,7 +29,12 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
         ? 'The goal for this session was to'
         : 'The goals for this session were to'
       : '';
-  const changedP = nextStepActions.map((item) => item.action).filter(Boolean);
+  const changedP = nextStepActions
+    .filter((item) => !!item.action)
+    .map(
+      (filtered) =>
+        `${filtered.action} ${filtered.date || ''} ${filtered.time || ''}`
+    );
 
   const moodIText =
     moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
@@ -87,9 +95,7 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
 
   const updatedP = changedP ? `P - ${changedP.join(', ')}` : 'P -';
 
-  const hasRDate = nextStepDate ? `${updatedP} ${nextStepDate}` : updatedP;
-
-  const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${hasRDate}`;
+  const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
 
   return newPublicNote;
 }

@@ -2,7 +2,7 @@ import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
-  DateTimePicker,
+  DatePicker,
   H5,
   IconButton,
   Input,
@@ -28,7 +28,8 @@ export default function Title(props: ITitleProps) {
     formState: { errors },
   } = useFormContext();
   const title = watch('title');
-  const noteDateTime = watch('noteDateTime');
+  const noteDate = watch('noteDate');
+  const noteTime = watch('noteTime');
   const isTitle = expanded === 'Title';
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function Title(props: ITitleProps) {
           </IconButton>
         </View>
         <BodyText size="xs" mb="md">
-          {noteDateTime}
+          {noteDate} {noteTime || ''}
         </BodyText>
       </View>
       <View
@@ -81,11 +82,23 @@ export default function Title(props: ITitleProps) {
           control={control}
           name="title"
         />
-        <DateTimePicker
+        <DatePicker
           maxDate={endOfDay}
+          mode="date"
+          format="MM/dd/yyyy"
+          placeholder="MM/DD/YYYY"
           mt="xs"
           control={control}
-          name="noteDateTime"
+          name="noteDate"
+        />
+        <DatePicker
+          maxDate={endOfDay}
+          mode="time"
+          format="HH:mm"
+          placeholder="HH:MM"
+          mt="xs"
+          control={control}
+          name="noteTime"
         />
       </View>
     </View>

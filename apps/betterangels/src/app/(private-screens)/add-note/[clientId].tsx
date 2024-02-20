@@ -19,12 +19,17 @@ import Title from './Title';
 
 interface INote {
   purposes: { value: string }[];
-  nextStepActions: { action: string; date?: Date; location?: string }[];
+  nextStepActions: {
+    action: string;
+    date?: Date | undefined;
+    location?: string;
+    time?: Date | undefined;
+  }[];
   hmisNote: string;
-  noteDateTime: string;
+  noteDate: string;
+  noteTime: string;
   moods: string[];
   providedServices: string[];
-  nextStepDate: Date;
   requestedServices: string[];
 }
 
@@ -38,7 +43,8 @@ export default function AddNote() {
       purposes: [{ value: '' }],
       nextStepActions: [{ action: '' }],
       hmisNote: 'G -\nI -\nR -\nP - ',
-      noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
+      noteDate: format(new Date(), 'MM/dd/yyyy'),
+      noteTime: format(new Date(), 'MM/dd/yyyy'),
       moods: [],
       providedServices: [],
       requestedServices: [],
@@ -50,7 +56,6 @@ export default function AddNote() {
     'moods',
     'providedServices',
     'nextStepActions',
-    'nextStepDate',
     'requestedServices',
     'hmisNote',
   ]);
@@ -89,7 +94,6 @@ export default function AddNote() {
       moods,
       providedServices,
       nextStepActions,
-      nextStepDate,
       requestedServices,
     ] = watchedValues;
 
@@ -98,7 +102,6 @@ export default function AddNote() {
       moods,
       providedServices,
       nextStepActions,
-      nextStepDate,
       requestedServices,
     };
 

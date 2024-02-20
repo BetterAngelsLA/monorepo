@@ -7,7 +7,6 @@ export { default as CameraPicker } from './CameraPicker';
 export { default as Checkbox } from './Checkbox';
 export { default as ClientCard } from './ClientCard';
 export { default as DatePicker } from './DatePicker';
-export { default as DateTimePicker } from './DateTimePicker';
 export { default as EventCard } from './EventCard';
 export { default as FieldCard } from './FieldCard';
 export { default as H1 } from './H1';

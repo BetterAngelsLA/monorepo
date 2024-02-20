@@ -1,7 +1,7 @@
 import { CalendarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format } from 'date-fns';
+import { format as dateFnsFormat } from 'date-fns';
 import { useState } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
@@ -27,12 +27,15 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IDatePickerProps {
   label?: string;
   control: Control<any>;
+  mode: 'date' | 'time';
   height?: 40 | 56 | 200;
   name: string;
+  placeholder?: string;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
   rules?: TRules;
+  format: string;
   componentStyle?: StyleProp<ViewStyle>;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -63,6 +66,9 @@ export function DatePicker(props: IDatePickerProps) {
     mr,
     minDate,
     maxDate,
+    mode,
+    placeholder,
+    format = 'MM/dd/yyyy',
     ...rest
   } = props;
 
@@ -82,7 +88,7 @@ export function DatePicker(props: IDatePickerProps) {
   ) {
     setPicker(false);
     if (date) {
-      const formattedDate = format(date, 'MM/dd/yy @ HH:mm');
+      const formattedDate = dateFnsFormat(date, format);
       onChange(formattedDate);
     }
   }
@@ -93,8 +99,6 @@ export function DatePicker(props: IDatePickerProps) {
       name={name}
       rules={{
         required,
-        pattern:
-          /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4} @ (0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/,
       }}
       render={({ field: { value, onBlur, onChange } }) => (
         <View
@@ -126,7 +130,7 @@ export function DatePicker(props: IDatePickerProps) {
             ]}
           >
             <TextInput
-              placeholder={format(new Date(), 'MM/dd/yy @ HH:mm')}
+              placeholder={placeholder}
               maxLength={18}
               style={{
                 color: disabled
@@ -182,7 +186,7 @@ export function DatePicker(props: IDatePickerProps) {
                   overflow: 'hidden',
                 }}
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                mode="date"
+                mode={mode}
                 minimumDate={minDate}
                 maximumDate={maxDate}
                 value={pickerDate}
