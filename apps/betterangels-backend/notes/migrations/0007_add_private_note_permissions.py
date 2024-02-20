@@ -14,10 +14,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     NoteContentType = ContentType.objects.get_for_model(Note)
 
     permissions_to_add = [
-        ("notes.view_private_note", "Can add private note"),
-        ("notes.change_private_note", "Can change private note"),
-        ("notes.delete_private_note", "Can delete private note"),
-        ("notes.add_private_note", "Can view private note"),
+        ("notes.view_note_private_details", "Can add private note"),
     ]
 
     for perm, description in permissions_to_add:
@@ -39,137 +36,14 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.CreateModel(
-            name="PrivateNoteDetail",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("content", models.TextField()),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-            ],
-        ),
-        migrations.AddField(
-            model_name="privatenotedetail",
-            name="note",
-            field=models.OneToOneField(
-                blank=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="private_details",
-                to="notes.note",
-            ),
-        ),
         migrations.AlterField(
             model_name="historicalnote",
             name="private_details",
-            field=models.ForeignKey(
-                blank=True,
-                db_constraint=False,
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to="notes.privatenotedetail",
-            ),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
             model_name="note",
             name="private_details",
-            field=models.OneToOneField(
-                blank=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="note",
-                to="notes.privatenotedetail",
-            ),
-        ),
-        migrations.CreateModel(
-            name="PrivateNoteDetailUserObjectPermission",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "content_object",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="notes.privatenotedetail",
-                    ),
-                ),
-                (
-                    "permission",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="auth.permission",
-                    ),
-                ),
-                (
-                    "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-                "unique_together": {("user", "permission", "content_object")},
-            },
-        ),
-        migrations.CreateModel(
-            name="PrivateNoteDetailGroupObjectPermission",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "content_object",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="notes.privatenotedetail",
-                    ),
-                ),
-                (
-                    "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
-                ),
-                (
-                    "permission",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="auth.permission",
-                    ),
-                ),
-            ],
-            options={
-                "abstract": False,
-                "unique_together": {("group", "permission", "content_object")},
-            },
-        ),
-        migrations.RemoveField(
-            model_name="historicalnote",
-            name="private_details",
-        ),
-        migrations.RemoveField(
-            model_name="note",
-            name="private_details",
+            field=models.TextField(blank=True, null=True),
         ),
     ]
