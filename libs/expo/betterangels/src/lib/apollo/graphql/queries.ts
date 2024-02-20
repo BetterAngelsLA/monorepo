@@ -23,7 +23,7 @@ export const GET_NOTES = gql`
 
 export const GET_NOTE = gql`
   query ViewNote($id: ID!) {
-    note(id: $id) {
+    note(pk: $id) {
       id
       title
       publicDetails
