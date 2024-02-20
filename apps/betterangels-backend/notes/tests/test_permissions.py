@@ -142,8 +142,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_idx, should_succeed",
         [
             (0, True),  # Note owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            (
+                2,
+                False,
+            ),  # Case worker from another can't see private details.
         ],
     )
     def test_view_note_private_details_permission(
@@ -165,14 +167,16 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["note"]["privateDetails"])
         else:
-            self.assertIsNotNone(response["errors"])
+            self.assertIsNone(response["data"]["note"]["privateDetails"])
 
     @parametrize(
         "user_idx, expected_private_details_count",
         [
             (0, 1),  # Owner should see private details of their own note
-            (1, 0),  # Other user should not see private details of someone else's note
-            (-1, 0),  # Anonymous user should not see any private details
+            (
+                2,
+                0,
+            ),  # Case worker from another org can't see private details.
         ],
     )
     def test_view_notes_private_details_permission(

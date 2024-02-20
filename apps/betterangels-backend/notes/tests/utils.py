@@ -19,8 +19,10 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self._setup_note()
 
     def _setup_users(self) -> None:
-        self.users = baker.make(User, _quantity=2)
-        self.case_manager, self.note_client = self.users
+        self.users = baker.make(User, _quantity=3)
+        self.case_manager, self.note_client, self.case_manager_in_another_org = (
+            self.users
+        )
 
     def _setup_groups_and_permissions(self) -> None:
         # Create a group and assign note permissions
@@ -35,6 +37,14 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         # Add the organization group to the case manager as well
         self.case_manager.groups.add(organization_group)
+
+        # Create Another Org
+        organization_group_2: Group = baker.make(Group)
+        assign_perm(NotePermissions.VIEW.value, organization_group_2)
+        assign_perm(NotePermissions.ADD.value, organization_group_2)
+        perm_group_2 = permission_group_recipe.make()
+        perm_group_2.organization.add_user(self.case_manager_in_another_org)
+        self.case_manager_in_another_org.groups.add(perm_group_2.group)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note

@@ -3,10 +3,9 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from common.permissions.utils import get_objects_for_user
-from notes.permissions import NotePermissions, PrivateNotePermissions
+from notes.permissions import PrivateNotePermissions
 from strawberry import auto
-from strawberry_django.permissions import HasRetvalPerm, HasSourcePerm
+from strawberry_django.permissions import HasSourcePerm
 
 from . import models
 
@@ -49,7 +48,7 @@ class NoteType:
 
     created_at: auto
     created_by: UserType
-    private_details: auto = strawberry_django.field(
+    private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
 
