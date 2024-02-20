@@ -26,7 +26,7 @@ class Query:
     )
 
     notes: List[NoteType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(NotePermissions.CHANGE)],
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
 
