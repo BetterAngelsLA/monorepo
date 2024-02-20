@@ -49,7 +49,8 @@
     "expo-linking": "*",
     "react-dom": "*",
     "react-native-svg-transformer": "*",
-    "tslib": "*"
+    "tslib": "*",
+    "react-native-maps": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
