@@ -115,6 +115,19 @@ jobs:
           CI=1 yarn expo install --check
           EOF
 
+      - name: 🕵️ Check for missing Django migrations
+        run: |
+          docker-compose run better-angels bash <<'EOF'
+          yarn nx affected -t check-migrations
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: Missing Django migrations! Make sure you have run 'python manage.py makemigrations <app_name>' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: No missing Django migrations!"
+          fi
+          EOF
+
       - name: 📝 Make sure GraphQL Schema is up to date
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
@@ -129,10 +142,11 @@ jobs:
           fi
 
           yarn nx affected -t generate-graphql-types
+          TYPE_GEN_STATUS=$?
           git diff --exit-code '**/gql-types/*';
-          STATUS=$?
-          if [ $STATUS -ne 0 ]; then
-            echo "Error: The GraphQL types do not match! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
+          DIFF_STATUS=$?
+          if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
+            echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
             exit 1
           else
             echo "Success: The GraphQL types match!"

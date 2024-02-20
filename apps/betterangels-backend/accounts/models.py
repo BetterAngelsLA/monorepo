@@ -1,13 +1,23 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from typing import Any, Dict, Iterable, Tuple
+
+from accounts.managers import UserManager
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    Group,
+    Permission,
+    PermissionsMixin,
+)
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from organizations.models import OrganizationInvitation
+from django.forms import ValidationError
+from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
+from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from simple_history.models import HistoricalRecords
 
-from .managers import UserManager
 
-
-class User(AbstractBaseUser, PermissionsMixin):
+# TODO: Figure out why User/Group Perms are failing type checks
+# https://github.com/typeddjango/django-stubs/issues/1354
+class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
@@ -46,6 +56,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     history = HistoricalRecords()
 
+    organizations_organizationuser: models.QuerySet[OrganizationUser]
+
     def __str__(self: "User") -> str:
         return self.email
 
@@ -63,3 +75,93 @@ class ExtendedOrganizationInvitation(OrganizationInvitation):
         parent_link=True,
         related_name="extended_invitation",
     )
+
+
+class BigGroupObjectPermission(GroupObjectPermissionAbstract):
+    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
+    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+
+    class Meta(GroupObjectPermissionAbstract.Meta):
+        abstract = False
+        indexes = [
+            *GroupObjectPermissionAbstract.Meta.indexes,
+            # TODO: Check if this field order is optimal
+            models.Index(fields=["content_type", "object_pk", "group"]),
+        ]
+
+
+class BigUserObjectPermission(UserObjectPermissionAbstract):
+    # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
+    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+
+    class Meta(UserObjectPermissionAbstract.Meta):
+        abstract = False
+        indexes = [
+            *UserObjectPermissionAbstract.Meta.indexes,
+            # TODO: Check if this field order is optimal
+            models.Index(fields=["content_type", "object_pk", "user"]),
+        ]
+
+
+class PermissionGroupTemplate(models.Model):
+    name = models.CharField(max_length=255)
+    permissions = models.ManyToManyField(Permission, blank=True)
+
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class PermissionGroup(models.Model):
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="permission_groups",
+    )
+    group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        blank=True,
+    )
+    template = models.ForeignKey(
+        PermissionGroupTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    objects = models.Manager()
+
+    class Meta:
+        unique_together = ("organization", "group")
+
+    def delete(self, *args: Any, **kwargs: Any) -> Tuple[int, Dict[str, int]]:
+        self.group.delete()
+        return super().delete(*args, **kwargs)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk and self.template:
+            raise ValidationError(
+                "Updating a PermissionGroup with a template is not allowed."
+            )
+        # TODO: Update the admin so that when a template is defined you can't enter in a
+        # name. Also make it clear that the name of the group will be prefixed by the
+        # org name.
+        if hasattr(self, "template"):
+            permissions_to_apply: Iterable[Permission] = []
+            if self.template:
+                group_name = f"{self.organization.name}_{self.template.name}"
+                permissions_to_apply = self.template.permissions.all()
+                self.name = self.template.name
+            else:
+                group_name = f"{self.organization.name}_{self.name}"
+
+            self.group = Group.objects.create(name=group_name)
+            self.group.permissions.set(permissions_to_apply)
+
+        super().save(*args, **kwargs)

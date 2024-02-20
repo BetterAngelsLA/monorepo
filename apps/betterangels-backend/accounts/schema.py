@@ -1,5 +1,3 @@
-from typing import Optional
-
 import strawberry
 from accounts.services import send_magic_link
 from strawberry.types import Info
@@ -11,7 +9,7 @@ from .types import MagicLinkInput, MagicLinkResponse, UserType
 
 @strawberry.type
 class Query:
-    current_user: Optional[UserType] = auth.current_user()
+    current_user: UserType = auth.current_user()
 
 
 @strawberry.type
@@ -20,9 +18,9 @@ class Mutation:
 
     @strawberry.mutation
     def generate_magic_link(
-        self, info: Info, input: MagicLinkInput
+        self, info: Info, data: MagicLinkInput
     ) -> MagicLinkResponse:
         request = get_request(info)
         base_url = request.build_absolute_uri()
-        send_magic_link(input.email, base_url)
+        send_magic_link(data.email, base_url)
         return MagicLinkResponse(message="Email link sent.")

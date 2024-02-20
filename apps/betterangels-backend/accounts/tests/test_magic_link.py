@@ -83,13 +83,13 @@ class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
         user = baker.make(User, email="test@example.com", username="testuser")
 
         query = """
-        mutation GenerateMagicLink($input: MagicLinkInput!) {
-            generateMagicLink(input: $input) {
+        mutation GenerateMagicLink($data: MagicLinkInput!) {
+            generateMagicLink(data: $data) {
                 message
             }
         }
         """
-        variables = {"input": {"email": user.email}}
+        variables = {"data": {"email": user.email}}
         response = self.execute_graphql(query, variables=variables)
 
         self.assertIsNone(response.get("errors"))

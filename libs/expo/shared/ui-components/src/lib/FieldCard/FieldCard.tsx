@@ -18,7 +18,7 @@ interface IFieldCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   error?: boolean;
-  expanded: string | undefined;
+  expanded: string | undefined | null;
   setExpanded: () => void;
   info?: ReactNode;
 }
@@ -62,24 +62,26 @@ export function FieldCard(props: IFieldCardProps) {
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}
-        style={[
-          styles.header,
-          { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
-        ]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {expanded === title ? (
-            <H2>{title}</H2>
-          ) : (
-            <BodyText size="sm">{title}</BodyText>
-          )}
-          {required && <BodyText color={Colors.ERROR}>*</BodyText>}
-          {info && info}
+        <View
+          style={[
+            styles.header,
+            { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {expanded === title ? (
+              <H2>{title}</H2>
+            ) : (
+              <BodyText size="sm">{title}</BodyText>
+            )}
+            {required && <BodyText color={Colors.ERROR}>*</BodyText>}
+            {info && info}
+          </View>
+          {actionName}
         </View>
-        {actionName}
+        {children}
       </Pressable>
-
-      {children}
     </View>
   );
 }

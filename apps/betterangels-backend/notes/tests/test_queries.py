@@ -1,50 +1,70 @@
-from accounts.models import User
-from django.test import TestCase, ignore_warnings
-from notes.models import Note
-from test_utils.mixins import GraphQLTestCaseMixin
+from django.test import ignore_warnings
+from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class NoteGraphQLTestCase(GraphQLTestCaseMixin, TestCase):
+class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        # Create test user and notes here
-        self.user = User.objects.create(email="hoola@test.com", username="hoola")
-        self.note1 = Note.objects.create(
-            created_by=self.user, body="Test Note 1", title="testnote title 1"
-        )
-        self.note2 = Note.objects.create(
-            created_by=self.user, body="Test Note 2", title="testnote title 2"
-        )
+        self.graphql_client.force_login(self.case_manager)
 
-    def test_notes_query_authenticated(self) -> None:
-        self.graphql_client.force_login(self.user)
-
+    def test_note_query(self) -> None:
+        response = self._create_note_fixture(
+            {
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "client": {"id": self.note_client.id},
+            }
+        )
+        note_id = response["data"]["createNote"]["id"]
+        note = self._update_note_fixture(
+            {
+                "id": note_id,
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "moods": [
+                    {"descriptor": "ANXIOUS"},
+                    {"descriptor": "EUTHYMIC"},
+                ],
+                "isSubmitted": False,
+            }
+        )
         query = """
-          {
-              notes {
-                  id
-                  body
-              }
-          }
+            query ViewNote($id: ID!) {
+                note(pk: $id) {
+                    id
+                    moods {
+                        descriptor
+                    }
+                    publicDetails
+                }
+            }
         """
-        response = self.execute_graphql(query)
-        data = response["data"]["notes"]
+        variables = {"id": note_id}
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]["body"], "Test Note 1")
-        # Add more assertions as necessary
+        note = response["data"]["note"]
 
-    def test_notes_query_unauthenticated(self) -> None:
+        self.assertEqual(note["publicDetails"], "This is a new note.")
+        self.assertEqual(
+            note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
+        )
+
+    def test_notes_query(self) -> None:
         query = """
             {
                 notes {
                     id
-                    body
+                    publicDetails
                 }
             }
         """
-        response = self.execute_graphql(query)
-        data = response["data"]["notes"]
 
-        self.assertEqual(len(data), 0)
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query)
+        notes = response["data"]["notes"]
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])

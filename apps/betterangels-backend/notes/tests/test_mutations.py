@@ -1,71 +1,76 @@
-from accounts.models import User
-from django.test import TestCase, ignore_warnings
+from unittest.mock import ANY
+
+from django.test import ignore_warnings
 from notes.models import Note
-from test_utils.mixins import GraphQLTestCaseMixin
+from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class NoteGraphQLMutationTestCase(GraphQLTestCaseMixin, TestCase):
+class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.user = User.objects.create(email="hoola@test.com", username="hoola")
-        self.note = Note.objects.create(
-            created_by=self.user, title="Original Title", body="Original Body"
-        )
+        self._handle_user_login(0)
 
-    def test_create_note_mutation_authenticated(self) -> None:
-        self.graphql_client.force_login(self.user)
+    def test_create_note_mutation(self) -> None:
+        # I think there as an opportunity to limit the amount of queries needed
+        expected_query_count = 26
+        with self.assertNumQueries(expected_query_count):
+            response = self._create_note_fixture(
+                {"title": "New Note", "publicDetails": "This is a new note."}
+            )
 
+        created_note = response["data"]["createNote"]
+        expected_note = {
+            "id": ANY,
+            "title": "New Note",
+            "moods": [],
+            "publicDetails": "This is a new note.",
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
+        }
+
+        self.assertEqual(created_note, expected_note)
+
+    def test_update_note_mutation(self) -> None:
+        variables = {
+            "id": self.note["id"],
+            "title": "Updated Title",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "publicDetails": "Updated Body",
+            "isSubmitted": False,
+        }
+
+        expected_query_count = 28
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_note_fixture(variables)
+
+        updated_note = response["data"]["updateNote"]
+        expected_note = {
+            "id": self.note["id"],
+            "title": "Updated Title",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "publicDetails": "Updated Body",
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
+        }
+        self.assertEqual(updated_note, expected_note)
+
+    def test_delete_note_mutation(self) -> None:
         mutation = """
-          mutation CreateNote($title: String!, $body: String!) {
-              createNote(input: { title: $title, body: $body }) {
-                  title
-                  body
-              }
-          }
-        """
-        variables = {"title": "New Note", "body": "This is a new note."}
-        response = self.execute_graphql(mutation, variables)
-        data = response["data"]["createNote"]
-
-        self.assertIsNotNone(data)
-        self.assertEqual(data["title"], "New Note")
-
-    def test_update_note_mutation_authenticated(self) -> None:
-        self.graphql_client.force_login(self.user)
-
-        mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(input: { id: $id, title: $title, body: $body }) {
-                    title
-                    body
+            mutation DeleteNote($id: ID!) {
+                deleteNote(data: { id: $id }) {
+                    ... on NoteType {
+                        id
+                    }
                 }
             }
         """
-        variables = {
-            "id": str(self.note.id),
-            "title": "Updated Title",
-            "body": "Updated Body",
-        }
-        response = self.execute_graphql(mutation, variables)
-        data = response["data"]["updateNote"]
+        variables = {"id": self.note["id"]}
 
-        self.assertIsNotNone(data)
-        self.assertEqual(data["title"], "Updated Title")
+        expected_query_count = 14
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
 
-    def test_delete_note_mutation_authenticated(self) -> None:
-        self.graphql_client.force_login(self.user)
-
-        mutation = """
-            mutation DeleteNote($id: ID!) {
-                deleteNote(id: $id)
-            }
-        """
-        variables = {"id": str(self.note.id)}
-        response = self.execute_graphql(mutation, variables)
-        success = response["data"]["deleteNote"]
-
-        self.assertTrue(success)
-        # Check if the note is actually deleted from the database
+        self.assertIsNotNone(response["data"]["deleteNote"])
         with self.assertRaises(Note.DoesNotExist):
-            Note.objects.get(id=self.note.id)
+            Note.objects.get(id=self.note["id"])

@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-
 import os
 from pathlib import Path
 from typing import List
@@ -95,6 +94,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "guardian",
     "post_office",
     "rest_framework",
     "organizations",
@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     "strawberry_django",
     # Our Apps
     "accounts",
+    "common",
     "dwelling",
     "notes",
 ]
@@ -173,6 +174,7 @@ TEMPLATES = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
     "sesame.backends.ModelBackend",
@@ -186,6 +188,10 @@ REST_FRAMEWORK = {
     # We want to use session auth by default for now.
     "TOKEN_CREATOR": None,
     "TOKEN_MODEL": None,
+}
+
+STRAWBERRY_DJANGO = {
+    "MUTATIONS_DEFAULT_HANDLE_ERRORS": True,
 }
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
@@ -220,6 +226,7 @@ DATABASES = {
         },
     }
 }
+DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -313,6 +320,12 @@ POST_OFFICE = {
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
+
+# Django Guardian
+# https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
+# https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
+GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
+GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
 SITE_ID = 1
 

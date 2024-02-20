@@ -20,11 +20,12 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             }
         }
         """
+
         response = self.execute_graphql(query)
 
         self.assertEqual(len(response["errors"]), 1, "Expected exactly one error")
         self.assertEqual(response["errors"][0]["message"], "User is not logged in.")
-        self.assertIsNone(response["data"]["currentUser"])
+        self.assertIsNone(response["data"])
 
     def test_logged_in_user_query(self) -> None:
         """
