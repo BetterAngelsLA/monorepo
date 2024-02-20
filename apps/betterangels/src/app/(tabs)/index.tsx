@@ -10,7 +10,6 @@ import {
 import { useMutation, useQuery } from '@apollo/client';
 import {
   CREATE_NOTE,
-  GET_NOTE,
   GET_NOTES,
   MainScrollContainer,
   useSignOut,
@@ -186,7 +185,7 @@ export default function TabOneScreen() {
             title: 'note title',
             publicDetails: 'note public details',
             client: {
-              id: '2',
+              id: user?.id,
             },
           },
         },

@@ -1,13 +1,9 @@
-import { useMutation, useQuery } from '@apollo/client';
 import {
-  GET_NOTE,
   MainScrollContainer,
-  UPDATE_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
-import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -20,12 +16,11 @@ import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import Title from './Title';
+
 interface INote {
-  id: string;
-  title: string;
   purposes: { value: string }[];
   nextStepActions: { value: string }[];
-  publicDetails: string;
+  hmisNote: string;
   noteDateTime: string;
   moods: string[];
   providedServices: string[];
@@ -34,22 +29,15 @@ interface INote {
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  const { noteId } = useLocalSearchParams<{ noteId: string }>();
-  const { data, loading: isLoading } = useQuery(GET_NOTE, {
-    variables: { id: noteId },
-    fetchPolicy: 'network-only',
-  });
-  const [note, setNote] = useState<INote | undefined>();
-  const [updateNote] = useMutation(UPDATE_NOTE);
+  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  // const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
-      title: '',
       purposes: [{ value: '' }],
       nextStepActions: [{ value: '' }],
-      publicDetails: 'G -\nI -\nR -\nP - ',
+      hmisNote: 'G -\nI -\nR -\nP - ',
       noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
       moods: [],
       providedServices: [],
@@ -58,16 +46,15 @@ export default function AddNote() {
   });
 
   const watchedValues = methods.watch([
-    'title',
     'purposes',
     'moods',
     'providedServices',
     'nextStepActions',
     'nextStepDate',
     'requestedServices',
-    'publicDetails',
+    'hmisNote',
   ]);
-  const publicNote = methods.watch('publicDetails');
+  const publicNote = methods.watch('hmisNote');
 
   const props = {
     expanded,
@@ -75,26 +62,6 @@ export default function AddNote() {
   };
 
   // console.log(clientId);
-
-  // async function viewNoteFunction(noteId: string) {
-  //   try {
-  //     const { data } = await viewNote({
-  //       variables: {
-  //         data: {
-  //           id: noteId,
-  //         },
-  //       },
-  //     });
-
-  //     // router.navigate({
-  //     //   pathname: `/add-note/${data?.createNote?.client.id}`,
-  //     // });
-  //     // console.log('!!!!!!!!noteId!!!!!!!!!!!', noteId);
-  //     console.log('GOING TO UPDATE NOTE', noteId);
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // }
 
   // async function onSubmit(data: any) {
   //   try {
@@ -113,22 +80,11 @@ export default function AddNote() {
   //   }
   // }
 
-  // useEffect(() => {
-  //   console.log('!!!!!!!!noteId!!!!!!!!!!!', noteId);
-  // }, [noteId]);
-
-  useEffect(() => {
-    if (data && !isLoading) {
-      setNote(data.note);
-      console.log(data.note);
-    }
-  }, [data, isLoading]);
   useEffect(() => {
     if (isPublicNoteEdited) {
       return;
     }
     const [
-      title,
       purposes,
       moods,
       providedServices,
@@ -138,7 +94,6 @@ export default function AddNote() {
     ] = watchedValues;
 
     const generateOjbect = {
-      title,
       purposes,
       moods,
       providedServices,
@@ -149,26 +104,9 @@ export default function AddNote() {
 
     const newPublicNote = generatedPublicNote(generateOjbect);
     if (newPublicNote !== publicNote) {
-      methods.setValue('publicDetails', newPublicNote);
+      methods.setValue('hmisNote', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
-
-  async function updateNoteFunction() {
-    try {
-      const { data } = await updateNote({
-        variables: {
-          data: {
-            id: 30,
-            title: 'updated title',
-            publicDetails: 'updated public note',
-          },
-        },
-      });
-      console.log('UPDATE NOTE DATA:', data);
-    } catch (e) {
-      console.log(e);
-    }
-  }
 
   return (
     <FormProvider {...methods}>
@@ -187,7 +125,7 @@ export default function AddNote() {
           />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        <BottomActions updateNoteFunction={updateNoteFunction} />
+        <BottomActions />
       </View>
     </FormProvider>
   );

@@ -27,6 +27,9 @@ export const GET_NOTE = gql`
       id
       title
       publicDetails
+      client {
+        id
+      }
     }
   }
 `;

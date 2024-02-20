@@ -4,14 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import CancelModal from './CancelModal';
 
-interface IBottomActionsProps {
-  updateNoteFunction;
-}
-
-export default function BottomActions(props: IBottomActionsProps) {
+export default function BottomActions() {
   const { handleSubmit } = useFormContext();
-  const { updateNoteFunction } = props;
-
   return (
     <View
       style={{
@@ -42,8 +36,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={handleSubmit(updateNoteFunction)}
-          // onPress={handleSubmit((data) => console.log('DATA: ', data))}
+          onPress={handleSubmit((data) => console.log('DATA: ', data))}
         />
       </View>
     </View>
