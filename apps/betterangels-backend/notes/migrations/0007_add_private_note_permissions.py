@@ -56,13 +56,22 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
         ),
+        migrations.AddField(
+            model_name="privatenotedetail",
+            name="note",
+            field=models.OneToOneField(
+                blank=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="private_details",
+                to="notes.note",
+            ),
+        ),
         migrations.AlterField(
             model_name="historicalnote",
             name="private_details",
             field=models.ForeignKey(
                 blank=True,
                 db_constraint=False,
-                null=True,
                 on_delete=django.db.models.deletion.DO_NOTHING,
                 related_name="+",
                 to="notes.privatenotedetail",
@@ -73,7 +82,6 @@ class Migration(migrations.Migration):
             name="private_details",
             field=models.OneToOneField(
                 blank=True,
-                null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="note",
                 to="notes.privatenotedetail",
@@ -155,5 +163,13 @@ class Migration(migrations.Migration):
                 "abstract": False,
                 "unique_together": {("group", "permission", "content_object")},
             },
+        ),
+        migrations.RemoveField(
+            model_name="historicalnote",
+            name="private_details",
+        ),
+        migrations.RemoveField(
+            model_name="note",
+            name="private_details",
         ),
     ]

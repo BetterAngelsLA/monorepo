@@ -10,19 +10,6 @@ from simple_history.models import HistoricalRecords
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 
 
-class PrivateNoteDetail(models.Model):
-    content = models.TextField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    privatenotedetailuserobjectpermission_set: models.QuerySet["PrivateNoteDetail"]
-    privatenotedetailgroupobjectpermission_set: models.QuerySet["PrivateNoteDetail"]
-
-    def __str__(self) -> str:
-        return f"Private note for {self.note.title}"
-
-
 class Location(BaseModel):
     point = PointField()
     address = models.CharField(max_length=255, blank=True)
@@ -38,13 +25,7 @@ class Note(BaseModel):
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
     public_details = models.TextField(null=True)
-    private_details = models.OneToOneField(
-        PrivateNoteDetail,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="note",
-    )
+    private_details = models.TextField(blank=True, null=True)
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,
@@ -84,11 +65,3 @@ class NoteUserObjectPermission(UserObjectPermissionBase):
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
-
-
-class PrivateNoteDetailUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(PrivateNoteDetail, on_delete=models.CASCADE)
-
-
-class PrivateNoteDetailGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(PrivateNoteDetail, on_delete=models.CASCADE)

@@ -137,3 +137,60 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(mutation, variables)
 
         self.assertTrue(len(response["data"]["notes"]) == should_succeed)
+
+
+# class PrivateNoteDetailPermissionTestCase(NoteGraphQLBaseTestCase):
+#     def setUp(self):
+#         super().setUp()
+#         # Create a PrivateNoteDetail instance and link it to the existing Note instance
+#         self.private_note_detail = PrivateNoteDetail.objects.create(
+#             content="This is a private note", note=self.note
+#         )
+#         self.note.private_details = self.private_note_detail
+#         self.note.save()
+
+#     @parametrize(
+#         "user_idx, permission, should_succeed",
+#         [
+#             (0, True, True),  # User with permission should succeed
+#             (0, False, False),  # User without permission should not succeed
+#             (1, False, False),  # Other user without permission should not succeed
+#             (-1, False, False),  # Anonymous user should not succeed
+#         ],
+#     )
+#     def test_private_note_detail_view_permission(
+#         self, user_idx: int, permission: bool, should_succeed: bool
+#     ):
+#         query = """
+#             query NoteDetail($id: ID!) {
+#                 note(pk: $id) {
+#                     id
+#                     privateDetails {
+#                         content
+#                     }
+#                 }
+#             }
+#         """
+#         variables = {"id": self.note.pk}
+
+#         # Handle user login based on the user_idx parameter
+#         self._handle_user_login(user_idx)
+
+#         response = self.execute_graphql(query, variables)
+
+#         # Check if the private details are accessible based on 'should_succeed' parameter
+#         if should_succeed:
+#             self.assertIsNotNone(
+#                 response["data"]["note"]["privateDetails"],
+#                 "User with permission should access private details",
+#             )
+#             self.assertEqual(
+#                 response["data"]["note"]["privateDetails"]["content"],
+#                 "This is a private note",
+#             )
+#         else:
+#             self.assertTrue(
+#                 response["data"]["note"]["privateDetails"] is None
+#                 or "errors" in response,
+#                 "User without permission should not access private details",
+#             )

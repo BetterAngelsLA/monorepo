@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -7,13 +8,14 @@ from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
+from notes.models import Note
 from notes.permissions import NotePermissions, PrivateNotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .models import Note
 from .types import CreateNoteInput, NoteType, UpdateNoteInput
 
 
@@ -24,13 +26,13 @@ class Query:
     )
 
     notes: List[NoteType] = strawberry_django.field(
-        extensions=[HasPerm(NotePermissions.VIEW)],
-        pagination=True,
+        extensions=[HasRetvalPerm(NotePermissions.CHANGE)],
     )
 
 
 @strawberry.type
 class Mutation:
+    # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
@@ -54,13 +56,15 @@ class Mutation:
             # TODO: Handle creating Notes without existing Client.
             # if not data.client:
             #     User.create_client()
-            note = mutations.resolvers.create(
+            client = User(id=data.client.id) if data.client else None
+            note_data = asdict(data)
+            note = resolvers.create(
                 info,
                 Note,
                 {
-                    **strawberry.asdict(data),
-                    "client": User(pk=data.client.id if data.client else None),
+                    **note_data,
                     "created_by": user,
+                    "client": client,
                     "organization": permission_group.organization,
                 },
             )
@@ -70,15 +74,10 @@ class Mutation:
             permissions = [
                 NotePermissions.CHANGE,
                 NotePermissions.DELETE,
+                PrivateNotePermissions.VIEW,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, note)
-
-            private_permission = [
-                PrivateNotePermissions.VIEW,
-            ]
-            for perm in private_permission:
-                assign_perm(perm, permission_group.group, note.private_details)
 
             return cast(NoteType, note)
 
