@@ -63,6 +63,9 @@ export function Checkbox(props: ICheckboxProps) {
         styles.container,
         {
           borderColor: hasBorder ? Colors.NEUTRAL_LIGHT : 'transparent',
+          backgroundColor: isChecked
+            ? Colors.PRIMARY_EXTRA_LIGHT
+            : Colors.WHITE,
           paddingHorizontal: hasBorder ? Spacings.sm : 0,
           paddingVertical: hasBorder ? Spacings.xs : 0,
           justifyContent,

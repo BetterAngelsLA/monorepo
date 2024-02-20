@@ -133,7 +133,7 @@ export default function AddNote() {
           <Link
             style={{ padding: 10 }}
             href={{
-              pathname: '/phq-9',
+              pathname: '/form',
               params: { clientId, hmisId: '12345678', mood: 'suicidal' },
             }}
           >
@@ -142,7 +142,7 @@ export default function AddNote() {
           <Link
             style={{ padding: 10 }}
             href={{
-              pathname: '/phq-9',
+              pathname: '/form',
               params: { clientId, mood: 'anxious', hmisId: '12345678' },
             }}
           >
@@ -151,7 +151,7 @@ export default function AddNote() {
           <Link
             style={{ padding: 10 }}
             href={{
-              pathname: '/phq-9',
+              pathname: '/form',
               params: { clientId, mood: 'depressed', hmisId: '12345678' },
             }}
           >

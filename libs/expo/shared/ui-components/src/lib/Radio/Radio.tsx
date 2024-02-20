@@ -44,8 +44,7 @@ export function Radio(props: IRadioProps) {
         {
           backgroundColor:
             value === label ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
-          borderColor:
-            value === label ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL_LIGHT,
+          borderColor: Colors.NEUTRAL_LIGHT,
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,
           justifyContent: 'space-between',
