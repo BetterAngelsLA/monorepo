@@ -24,8 +24,8 @@ class Note(BaseModel):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    public_details = models.TextField(null=True)
-    private_details = models.TextField(blank=True, null=True)
+    public_details = models.TextField(blank=True)
+    private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,

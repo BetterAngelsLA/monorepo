@@ -38,12 +38,25 @@ class Migration(migrations.Migration):
         migrations.RunPython(create_permissions_if_not_exist),
         migrations.AlterField(
             model_name="historicalnote",
-            name="private_details",
-            field=models.TextField(blank=True, null=True),
+            name="public_details",
+            field=models.TextField(blank=True, default=""),
+            preserve_default=False,
         ),
         migrations.AlterField(
             model_name="note",
-            name="private_details",
-            field=models.TextField(blank=True, null=True),
+            name="public_details",
+            field=models.TextField(blank=True, default=""),
+            preserve_default=False,
+        ),
+        migrations.AlterField(
+            model_name="note",
+            name="location",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="notes",
+                to="notes.location",
+            ),
         ),
     ]

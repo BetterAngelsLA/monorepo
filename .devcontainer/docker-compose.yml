@@ -17,7 +17,6 @@ services:
 
     volumes:
       # Update this to wherever you want VS Code to mount the folder of your project
-      - .scripts/.bash_aliases:/home/betterangels/.bash_aliases
       - .:/workspace:cached
       - node_modules:/workspace/node_modules
       - venv:/workspace/.venv
