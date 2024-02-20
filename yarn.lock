@@ -3691,9 +3691,9 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     eslint-plugin-react-native-a11y: ^3.3.0
-    expo: ~50.0.6
+    expo: ~50.0.7
     expo-auth-session: ~5.4.0
-    expo-camera: ~14.0.4
+    expo-camera: ~14.0.5
     expo-constants: ~15.4.5
     expo-dev-client: ~3.3.8
     expo-image-picker: ~14.7.1
@@ -3702,7 +3702,7 @@ __metadata:
     expo-secure-store: ~12.8.1
     expo-splash-screen: ~0.26.4
     expo-status-bar: ~1.11.1
-    expo-updates: ~0.24.10
+    expo-updates: ~0.24.11
     expo-web-browser: ~12.8.2
     graphql: ^16.8.1
     jest: ^29.4.1
@@ -12903,14 +12903,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~14.0.4":
-  version: 14.0.4
-  resolution: "expo-camera@npm:14.0.4"
+"expo-camera@npm:~14.0.5":
+  version: 14.0.5
+  resolution: "expo-camera@npm:14.0.5"
   dependencies:
     invariant: ^2.2.4
   peerDependencies:
     expo: "*"
-  checksum: 566841a6667fea83e3418266293a57e2cf81c6378e5e942ddf03f06395666ffb467798dfd9ec0169a3ea9b4ea62964bbef21bb824e8607b556464e3afd20d7f9
+  checksum: 92c4675cefe976b9bade02877399c1c0a2f43d13dbf33455438d7e3ae148e7ead4e5c0ca743eba4554512913b32b09b3c6890768a4aa35ef1e14b1c2c0ea294d
   languageName: node
   linkType: hard
 
@@ -13003,14 +13003,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-font@npm:~11.10.2":
-  version: 11.10.2
-  resolution: "expo-font@npm:11.10.2"
+"expo-font@npm:~11.10.3":
+  version: 11.10.3
+  resolution: "expo-font@npm:11.10.3"
   dependencies:
     fontfaceobserver: ^2.1.0
   peerDependencies:
     expo: "*"
-  checksum: 334f4bc26fc9519b0053c344ca3f460d841c09a9c5a4b514cb594bcff7971d2865992c3f45d10df057cd5daf73dc06485c14811dd84de1df7e2b53100a1eb479
+  checksum: fdcae7709a2bb9d9893af9467bc0bb9dd903d5340a5764ab07118323d5a86cfa19c2d2867f0ab3098bc2f62f2c3e94fa1fe492d82eed7acd785fb4b3bba215ba
   languageName: node
   linkType: hard
 
@@ -13088,12 +13088,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-modules-core@npm:1.11.8":
-  version: 1.11.8
-  resolution: "expo-modules-core@npm:1.11.8"
+"expo-modules-core@npm:1.11.9":
+  version: 1.11.9
+  resolution: "expo-modules-core@npm:1.11.9"
   dependencies:
     invariant: ^2.2.4
-  checksum: 2d337837e911cd46cd446591b010165fc1dc4d8f8b2d212d29afd4ac29aa005444be38995620057b08fc6c732dcf796c3bf77bcf7707c9d3eba20b5503f4be20
+  checksum: 1364e94802c63f6cfce3be39be37a9fe5d8defa7fe5de3fab1404ea2ff34e513d889ea595ec67cb99eefa268dcd5a1338986329b40ae19f9343ed809f0b4699f
   languageName: node
   linkType: hard
 
@@ -13173,9 +13173,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-updates@npm:~0.24.10":
-  version: 0.24.10
-  resolution: "expo-updates@npm:0.24.10"
+"expo-updates@npm:~0.24.11":
+  version: 0.24.11
+  resolution: "expo-updates@npm:0.24.11"
   dependencies:
     "@expo/code-signing-certificates": 0.0.5
     "@expo/config": ~8.5.0
@@ -13192,7 +13192,7 @@ __metadata:
     expo: "*"
   bin:
     expo-updates: bin/cli.js
-  checksum: 012e276908c43df980fe9cba4ac20ebb5186941c8beb74a14497880d3be5645ee29ab9f7213c8b39a4423c2083a82ab5b0b79bf08a239685efcec888e79341a9
+  checksum: ce32190e1819138179d02632405370499e27d2baab516abd26e8eae8cf7a77116c910eafd69cfce8da7ae9e18fdddc7b51a4b01a7ec13e8d3f2b11db16b65e6b
   languageName: node
   linkType: hard
 
@@ -13208,9 +13208,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~50.0.6":
-  version: 50.0.6
-  resolution: "expo@npm:50.0.6"
+"expo@npm:~50.0.7":
+  version: 50.0.7
+  resolution: "expo@npm:50.0.7"
   dependencies:
     "@babel/runtime": ^7.20.0
     "@expo/cli": 0.17.5
@@ -13221,15 +13221,15 @@ __metadata:
     babel-preset-expo: ~10.0.1
     expo-asset: ~9.0.2
     expo-file-system: ~16.0.6
-    expo-font: ~11.10.2
+    expo-font: ~11.10.3
     expo-keep-awake: ~12.8.2
     expo-modules-autolinking: 1.10.3
-    expo-modules-core: 1.11.8
+    expo-modules-core: 1.11.9
     fbemitter: ^3.0.0
     whatwg-url-without-unicode: 8.0.0-3
   bin:
     expo: bin/cli
-  checksum: 5da9be32560935e1a1ffe6410ef2148072b877261f6eb80c8ed081e880a8e9c762f5cee43ad35c1578aa290a781a597a979ac40aa5b5c26b740e96b14a57d24f
+  checksum: 0df4d94bb4acce1a278ec06f1f8a848bb8d171704a84178c6df61eeefdcfc71f8c831390a02175b9cfa6a2f155965217a7f5beb63d109e68c3ad867f36c3a21a
   languageName: node
   linkType: hard
 
