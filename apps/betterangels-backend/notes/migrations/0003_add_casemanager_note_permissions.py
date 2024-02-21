@@ -1,7 +1,8 @@
 from django.db import migrations
 from django.contrib.auth.models import Permission
 from django.contrib.auth.management import create_permissions
-
+from django.contrib.auth.models import Permission
+from django.db import migrations
 from notes.permissions import NotePermissions
 
 PERMISSIONS_TO_ADD = [

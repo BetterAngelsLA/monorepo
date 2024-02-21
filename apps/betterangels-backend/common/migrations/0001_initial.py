@@ -1,5 +1,5 @@
-from common.permissions.enums import SimpleModelPermissions
 import django
+from common.permissions.enums import SimpleModelPermissions
 from django.conf import settings
 from django.db import migrations, models
 

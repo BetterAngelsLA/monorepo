@@ -1,3 +1,5 @@
+from unittest.mock import ANY
+
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -7,41 +9,51 @@ from notes.tests.utils import NoteGraphQLBaseTestCase
 class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login(0)
+        self._handle_user_login("case_manager_1")
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 27
+        expected_query_count = 26
         with self.assertNumQueries(expected_query_count):
-            response = self._create_note(
-                {"title": "New Note", "body": "This is a new note."}
+            response = self._create_note_fixture(
+                {"title": "New Note", "publicDetails": "This is a new note."}
             )
-        self.assertIsNotNone(response["data"]["createNote"])
-        self.assertEqual(response["data"]["createNote"]["title"], "New Note")
+
+        created_note = response["data"]["createNote"]
+        expected_note = {
+            "id": ANY,
+            "title": "New Note",
+            "moods": [],
+            "publicDetails": "This is a new note.",
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
+        }
+
+        self.assertEqual(created_note, expected_note)
 
     def test_update_note_mutation(self) -> None:
-        mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(data: { id: $id, title: $title, body: $body }) {
-                    ... on NoteType {
-                        title
-                        body
-                    }
-                }
-            }
-        """
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
-            "body": "Updated Body",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "publicDetails": "Updated Body",
+            "isSubmitted": False,
         }
 
-        # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 12
+        expected_query_count = 28
         with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
+            response = self._update_note_fixture(variables)
 
-        self.assertEqual(response["data"]["updateNote"]["title"], "Updated Title")
+        updated_note = response["data"]["updateNote"]
+        expected_note = {
+            "id": self.note["id"],
+            "title": "Updated Title",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "publicDetails": "Updated Body",
+            "createdBy": {"id": str(self.case_manager.pk)},
+            "client": {"id": str(self.note_client.pk)},
+        }
+        self.assertEqual(updated_note, expected_note)
 
     def test_delete_note_mutation(self) -> None:
         mutation = """
@@ -55,8 +67,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 11
+        expected_query_count = 14
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

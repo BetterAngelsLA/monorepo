@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -9,7 +8,6 @@ from notes.permissions import NotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .models import Note
@@ -39,16 +37,24 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         user = get_current_user(info)
 
+        # TODO: Handle creating Notes without existing Client.
+        # if not data.client:
+        #     User.create_client()
+
         # WARNING: Temporary workaround for organization selection
         # TODO: Update once organization selection is implemented. Currently selects the
         # first organization a user is apart of.
         organization = user.organizations_organization.order_by("id").first()
+        client_id = data.client.id if data.client else None
 
-        note = resolvers.create(
-            info,
-            Note,
-            {**asdict(data), "created_by": user, "organization": organization},
+        note = Note.objects.create(
+            title=data.title,
+            public_details=data.public_details,
+            created_by=user,
+            client_id=client_id,
+            organization=organization,
         )
+
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [
@@ -57,6 +63,7 @@ class Mutation:
             NotePermissions.DELETE,
         ]:
             assign_perm(perm, user, note)
+
         return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(

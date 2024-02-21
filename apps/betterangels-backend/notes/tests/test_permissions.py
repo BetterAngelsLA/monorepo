@@ -5,17 +5,19 @@ from unittest_parametrize import parametrize
 
 class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
-        "user_idx, should_succeed",
+        "user_label, should_succeed",
         [
-            (0, True),  # Logged-in user should succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Logged-in user should succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_create_note_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
 
-        variables = {"title": "Test Note", "body": "This is a test note."}
-        response = self._create_note(variables)
+        variables = {"title": "Test Note", "publicDetails": "This is a test note."}
+        response = self._create_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNote"])
@@ -30,15 +32,17 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "user_label, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_delete_note_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
 
         mutation = """
             mutation DeleteNote($id: ID!) {
@@ -57,55 +61,54 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "user_label, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_update_note_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
 
-        mutation = """
-            mutation UpdateNote($id: ID!, $title: String!, $body: String!) {
-                updateNote(data: { id: $id, title: $title, body: $body }) {
-                    ... on NoteType {
-                        id
-                        title
-                        body
-                    }
-                }
-            }
-        """
         variables = {
             "id": self.note["id"],
             "title": "Updated Note",
-            "body": "Updated content",
+            "publicDetails": "Updated content",
+            "isSubmitted": False,
         }
-        response = self.execute_graphql(mutation, variables)
+        response = self._update_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])
         else:
-            self.assertFalse(response["data"]["updateNote"])
+            self.assertEqual(
+                response["data"]["updateNote"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
-        "user_idx, should_succeed",
+        "user_label, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_note_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_view_note_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
 
         mutation = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
-                    body
+                    publicDetails
                 }
             }
         """
@@ -118,21 +121,21 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["errors"])
 
     @parametrize(
-        "user_idx, should_succeed",
+        "user_label, should_succeed",
         [
-            (0, True),  # Owner should succeed
-            (1, False),  # Other user should not succeed
-            (-1, False),  # Anonymous user should not succeed
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", False),  # Other user should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_notes_permission(self, user_idx: int, should_succeed: bool) -> None:
-        self._handle_user_login(user_idx)
+    def test_view_notes_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
 
         mutation = """
             query ViewNotes {
                 notes {
                     id
-                    body
+                    publicDetails
                 }
             }
         """
