@@ -48,7 +48,6 @@ export default function UpdateNote() {
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
-      id: noteId,
       title: '',
       purposes: [{ value: 'Purpose' }],
       nextStepActions: [{ value: '' }],
@@ -68,7 +67,6 @@ export default function UpdateNote() {
   }, [data, isLoading]);
 
   const watchedValues = methods.watch([
-    'id',
     'title',
     'purposes',
     'moods',
@@ -79,7 +77,7 @@ export default function UpdateNote() {
     'publicDetails',
     'privateDetails',
   ]);
-  const publicNote = methods.watch('publicDetails');
+  const publicDetails = methods.watch('publicDetails');
 
   const props = {
     expanded,
@@ -124,7 +122,6 @@ export default function UpdateNote() {
       return;
     }
     const [
-      id,
       title,
       purposes,
       moods,
@@ -135,7 +132,6 @@ export default function UpdateNote() {
     ] = watchedValues;
 
     const generateOjbect = {
-      id,
       title,
       purposes,
       moods,
@@ -146,10 +142,10 @@ export default function UpdateNote() {
     };
 
     const newPublicNote = generatedPublicNote(generateOjbect);
-    if (newPublicNote !== publicNote) {
+    if (newPublicNote !== publicDetails) {
       methods.setValue('publicDetails', newPublicNote);
     }
-  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+  }, [isPublicNoteEdited, methods, publicDetails, watchedValues]);
 
   return (
     <FormProvider {...methods}>

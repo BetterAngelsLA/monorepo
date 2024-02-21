@@ -61,14 +61,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
     def __str__(self: "User") -> str:
         return self.email
 
-    def add_to_organization(self) -> None:
-        if (
-            self.email.split("@")[1] in "betterangels.la"
-            and not self.organizations_organizationuser.count()
-        ):
-            organization = Organization.objects.get(name="test_org")
-            organization.add_user(self)
-
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)

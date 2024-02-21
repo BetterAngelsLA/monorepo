@@ -84,5 +84,4 @@ class UpdateNoteInput:
     public_details: auto
     private_details: auto
     is_submitted: auto
-    # moods: Optional[List[CreateMoodInput]]
-    # is_submitted: auto
+    moods: Optional[List[CreateMoodInput]]

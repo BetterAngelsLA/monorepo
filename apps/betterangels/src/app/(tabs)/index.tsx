@@ -166,7 +166,6 @@ interface INote {
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
   const [notes, setNotes] = useState<INote[] | undefined>([]);
-  // const [note, setNote] = useState<INote>;
   const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();

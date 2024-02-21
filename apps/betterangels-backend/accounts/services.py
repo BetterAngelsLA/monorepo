@@ -23,7 +23,6 @@ def send_magic_link(email: str, base_url: str) -> str:
 
     text_template = loader.get_template("account/messages/email_magic_link.txt")
     text_message = text_template.render(context)
-    print(text_message)
     send_mail(
         subject=subject,
         message=text_message,

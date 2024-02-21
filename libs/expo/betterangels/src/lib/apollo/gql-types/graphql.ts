@@ -18,6 +18,10 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
 };
 
+export type CreateMoodInput = {
+  descriptor: MoodEnum;
+};
+
 export type CreateNoteInput = {
   client?: InputMaybe<UserInput>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
@@ -170,6 +174,7 @@ export type QueryNotesArgs = {
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  moods?: InputMaybe<Array<CreateMoodInput>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];

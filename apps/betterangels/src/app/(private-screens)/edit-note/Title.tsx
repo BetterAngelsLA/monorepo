@@ -14,7 +14,6 @@ import { View } from 'react-native';
 interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-  firstName: string;
   noteTitle: string | undefined;
 }
 

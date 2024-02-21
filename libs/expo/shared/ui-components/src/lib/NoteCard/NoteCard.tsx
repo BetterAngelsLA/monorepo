@@ -9,7 +9,6 @@ import IconButton from '../IconButton';
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface INoteCardProps {
-  id: string;
   title: string;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -22,7 +21,7 @@ interface INoteCardProps {
 }
 
 export function NoteCard(props: INoteCardProps) {
-  const { id, title, mb, mt, mr, ml, my, mx, onPress } = props;
+  const { title, mb, mt, mr, ml, my, mx, onPress } = props;
 
   return (
     <View
@@ -42,7 +41,6 @@ export function NoteCard(props: INoteCardProps) {
         <Avatar
           accessibilityHint={`shows avatar of ${title} if available`}
           accessibilityLabel={`Avatar of ${title} Note`}
-          // imageUrl={imageUrl}
           mb="xs"
           size="lg"
         />

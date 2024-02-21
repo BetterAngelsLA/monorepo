@@ -87,6 +87,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         return self.execute_graphql(mutation, {"data": default_variables})
 
     def _update_note_fixture(self, variables: dict) -> dict:
+        print(variables)
         mutation = """
             mutation UpdateNote($data: UpdateNoteInput!) {
                 updateNote(data: $data) {

@@ -22,6 +22,10 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+input CreateMoodInput {
+  descriptor: MoodEnum!
+}
+
 input CreateNoteInput {
   title: String!
   publicDetails: String
@@ -78,7 +82,7 @@ type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  createNote(data: CreateNoteInput!): CreateNotePayload!
+  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
 }
 
@@ -140,6 +144,7 @@ input UpdateNoteInput {
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
+  moods: [CreateMoodInput!]
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
