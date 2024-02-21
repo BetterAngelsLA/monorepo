@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -6,7 +5,6 @@ import strawberry_django
 from common.graphql.types import DeleteDjangoObjectInput
 from guardian.shortcuts import assign_perm
 from notes.permissions import NotePermissions
-
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -67,23 +65,32 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
-    def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        FLAT_FIELDS = ("title", "public_details", "private_details")
+    update_note: NoteType = mutations.update(
+        UpdateNoteInput,
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+        ],
+    )
 
-        note = Note.objects.get(pk=data.id)
-        update_fields = [
-            (field, value)
-            for field, value in asdict(data).items()
-            if field in FLAT_FIELDS
-        ]
-        for field, value in update_fields:
-            if value is not None:
-                setattr(note, field, value)
+    # NOTE: Leaving this here for now because we may need it
+    # once we add tasks, moods, etc.
+    # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
+    # def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+    #     FLAT_FIELDS = ("title", "public_details", "private_details")
 
-        note.save()
+    #     note = Note.objects.get(pk=data.id)
+    #     update_fields = [
+    #         (field, value)
+    #         for field, value in asdict(data).items()
+    #         if field in FLAT_FIELDS
+    #     ]
+    #     for field, value in update_fields:
+    #         if value is not None:
+    #             setattr(note, field, value)
 
-        return cast(NoteType, note)
+    #     note.save()
+
+    #     return cast(NoteType, note)
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
