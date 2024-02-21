@@ -83,6 +83,9 @@ export default function Title(props: ITitleProps) {
           name="title"
         />
         <DatePicker
+          error={!!errors.noteDate}
+          required
+          pattern={Regex.date}
           maxDate={endOfDay}
           mode="date"
           format="MM/dd/yyyy"
@@ -92,6 +95,9 @@ export default function Title(props: ITitleProps) {
           name="noteDate"
         />
         <DatePicker
+          error={!!errors.noteTime}
+          pattern={Regex.time}
+          required
           maxDate={endOfDay}
           mode="time"
           format="HH:mm"

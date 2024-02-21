@@ -1,5 +1,5 @@
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   DatePicker,
@@ -9,7 +9,12 @@ import {
   Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect } from 'react';
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import {
+  FieldErrors,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { View } from 'react-native';
 
 interface INextStepProps {
@@ -17,20 +22,28 @@ interface INextStepProps {
   setExpanded: (e: string | undefined | null) => void;
 }
 
+interface INextStepsObject {
+  nextStepActions: TNextSteps;
+}
+
 type TNextSteps = {
   action: string;
   date?: Date;
+  time?: Date;
   location?: string;
 }[];
 
+type NextStepFormErrors = FieldErrors<INextStepsObject>;
+
 export default function NextStep(props: INextStepProps) {
   const { expanded, setExpanded } = props;
-  const { control, setValue } = useFormContext();
+  const { control, setValue, formState } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'nextStepActions',
   });
 
   const isNextStep = expanded === 'Next Step';
+  const typedErrors = formState.errors as NextStepFormErrors;
 
   const nextStepActions: TNextSteps = useWatch({
     name: 'nextStepActions',
@@ -83,6 +96,8 @@ export default function NextStep(props: INextStepProps) {
               label="Action Item"
             />
             <DatePicker
+              error={!!typedErrors.nextStepActions?.[index]?.date}
+              pattern={Regex.date}
               label="Date (optional)"
               control={control}
               mode="date"
@@ -91,6 +106,8 @@ export default function NextStep(props: INextStepProps) {
               name={`nextStepActions.${index}.date`}
             />
             <DatePicker
+              error={!!typedErrors.nextStepActions?.[index]?.time}
+              pattern={Regex.time}
               label="Time (optional)"
               control={control}
               format="HH:mm"

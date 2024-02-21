@@ -1,4 +1,4 @@
-import { CalendarIcon } from '@monorepo/expo/shared/icons';
+import { CalendarIcon, ClockIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
@@ -32,6 +32,7 @@ interface IDatePickerProps {
   name: string;
   placeholder?: string;
   required?: boolean;
+  pattern?: RegExp;
   disabled?: boolean;
   error?: boolean;
   rules?: TRules;
@@ -69,6 +70,7 @@ export function DatePicker(props: IDatePickerProps) {
     mode,
     placeholder,
     format = 'MM/dd/yyyy',
+    pattern,
     ...rest
   } = props;
 
@@ -99,6 +101,7 @@ export function DatePicker(props: IDatePickerProps) {
       name={name}
       rules={{
         required,
+        pattern,
       }}
       render={({ field: { value, onBlur, onChange } }) => (
         <View
@@ -167,12 +170,18 @@ export function DatePicker(props: IDatePickerProps) {
               }}
               style={styles.icon}
             >
-              <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+              {mode === 'time' ? (
+                <ClockIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+              ) : (
+                <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+              )}
             </Pressable>
           </View>
           {picker && (
             <View style={{ marginTop: Spacings.xs }}>
               <DateTimePicker
+                locale={mode === 'time' ? 'en_GB' : 'en_US'}
+                is24Hour
                 onChange={(event, date) => {
                   if (event.type === 'dismissed' || !date) {
                     return setPicker(false);

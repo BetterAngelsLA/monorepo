@@ -44,7 +44,7 @@ export default function AddNote() {
       nextStepActions: [{ action: '' }],
       hmisNote: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
-      noteTime: format(new Date(), 'MM/dd/yyyy'),
+      noteTime: format(new Date(), 'HH:mm'),
       moods: [],
       providedServices: [],
       requestedServices: [],
