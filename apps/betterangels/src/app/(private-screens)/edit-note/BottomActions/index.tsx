@@ -30,7 +30,8 @@ export default function BottomActions(props: IBottomActionsProps) {
         <TextButton
           mr="sm"
           fontSize="sm"
-          onPress={() => console.log('save for later')}
+          // onPress={() => console.log('save for later')}
+          onPress={handleSubmit((values) => updateNoteFunction(values, false))}
           accessibilityHint="saves the note for later"
           title="Save for later"
         />
@@ -42,7 +43,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={handleSubmit((values) => updateNoteFunction(values))}
+          onPress={handleSubmit((values) => updateNoteFunction(values, true))}
         />
       </View>
     </View>

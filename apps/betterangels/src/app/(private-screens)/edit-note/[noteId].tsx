@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -35,6 +35,7 @@ interface INote {
 }
 
 export default function UpdateNote() {
+  const router = useRouter();
   const [note, setNote] = useState<INote | undefined>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const { data, loading: isLoading } = useQuery(GET_NOTE, {
@@ -88,20 +89,32 @@ export default function UpdateNote() {
     setExpanded,
   };
 
-  async function updateNoteFunction(values) {
+  async function updateNoteFunction(values, is_submitted: boolean) {
     console.log(values);
     try {
-      const { data } = await updateNote({
-        variables: {
-          data: {
-            id: noteId,
-            title: values.title,
-            publicDetails: values.publicDetails,
+      if (is_submitted === true) {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              title: values.title,
+              publicDetails: values.publicDetails,
+              isSubmitted: true,
+            },
           },
-        },
-      });
-      console.log(data);
-      console.log('UPDATE NOTE DATA:', note?.id);
+        });
+        router.navigate(`/`);
+      } else {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              title: values.title,
+              publicDetails: values.publicDetails,
+            },
+          },
+        });
+      }
     } catch (e) {
       console.log(e);
     }
