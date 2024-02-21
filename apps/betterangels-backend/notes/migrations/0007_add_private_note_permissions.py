@@ -29,6 +29,13 @@ def create_permissions_if_not_exist(apps, schema_editor):
         )
 
 
+def remove_change_and_delete_from_caseworker_permission_template(apps, schema_editor):
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+    PermissionGroupTemplate.objects.get(name="Caseworker").permissions.filter(
+        codename__in=["change_note", "delete_note"]
+    ).delete()
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("notes", "0006_add_note_component_fields"),
@@ -36,6 +43,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
+        migrations.RunPython(
+            remove_change_and_delete_from_caseworker_permission_template
+        ),
         migrations.AlterField(
             model_name="historicalnote",
             name="public_details",

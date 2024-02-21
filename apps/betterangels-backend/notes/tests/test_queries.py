@@ -6,17 +6,10 @@ from notes.tests.utils import NoteGraphQLBaseTestCase
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager)
+        self.graphql_client.force_login(self.case_manager_1)
 
     def test_note_query(self) -> None:
-        response = self._create_note_fixture(
-            {
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
-                "client": {"id": self.note_client.id},
-            }
-        )
-        note_id = response["data"]["createNote"]["id"]
+        note_id = self.note["id"]
         note = self._update_note_fixture(
             {
                 "id": note_id,
@@ -42,7 +35,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
         variables = {"id": note_id}
-        expected_query_count = 7
+        expected_query_count = 5
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 

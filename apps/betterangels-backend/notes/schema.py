@@ -82,12 +82,12 @@ class Mutation:
             return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
-        UpdateNoteInput, extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
+        UpdateNoteInput, extensions=[HasRetvalPerm(perms=NotePermissions.CHANGE)]
     )
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[
-            HasRetvalPerm(perms=[NotePermissions.DELETE]),
+            HasRetvalPerm(perms=NotePermissions.DELETE),
         ],
     )
