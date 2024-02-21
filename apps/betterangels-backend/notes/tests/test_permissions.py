@@ -36,7 +36,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", False),  # Other CM should not succeed
-            ("note_client_1", False),  # Other CM should not succeed
+            ("note_client_1", False),  # Non CM should fail
             (None, False),  # Anonymous user should not succeed
         ],
     )
