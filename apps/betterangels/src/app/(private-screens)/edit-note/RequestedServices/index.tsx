@@ -142,9 +142,10 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     }
   }, [
     expanded,
-    isRequestedServices,
-    requestedOtherCategory,
-    requestedServices,
+    // NOTE: adding these causes infinte rerender
+    // isRequestedServices,
+    // requestedOtherCategory,
+    // requestedServices,
   ]);
 
   return (

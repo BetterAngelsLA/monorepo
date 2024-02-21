@@ -141,10 +141,11 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     }
   }, [
     expanded,
-    isProvidedServices,
-    providedOtherCategory,
-    providedServices,
-    setValue,
+    // NOTE: adding these causes infinte rerender
+    // isProvidedServices,
+    // providedOtherCategory,
+    // providedServices,
+    // setValue,
   ]);
 
   return (

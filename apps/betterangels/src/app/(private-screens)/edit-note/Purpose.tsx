@@ -67,7 +67,14 @@ export default function Purpose(props: IPurposeProps) {
     if (!isPurpose && expanded === null) {
       trigger('purposes');
     }
-  }, [expanded, isPurpose, purposes, setValue, trigger]);
+  }, [
+    expanded,
+    // NOTE: adding these causes infinte rerender
+    // isPurpose,
+    // purposes,
+    // setValue,
+    // trigger,
+  ]);
 
   return (
     <FieldCard
