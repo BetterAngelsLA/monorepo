@@ -28,7 +28,7 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -114,30 +114,38 @@ export default function RequestedServices(props: IRequestedServicesProps) {
   >([]);
 
   const requestedServicesImages = watch('requestedServicesImages', []);
-  const services = watch('requestedServices') || [];
+  const watchedRequestedServices = watch('requestedServices');
+  const requestedServices = useMemo(() => {
+    return watchedRequestedServices || [];
+  }, [watchedRequestedServices]);
   const isRequestedServices = expanded === 'Requested Services';
-  const isLessThanOneRequestedService = services.length < 1;
+  const isLessThanOneRequestedService = requestedServices.length < 1;
   const isLessThanOneRequestedServiceImages =
     requestedServicesImages.length < 1;
-  const isGreaterThanZeroRequestedService = services.length > 0;
+  const isGreaterThanZeroRequestedService = requestedServices.length > 0;
   const isGreaterThanZeroRequestedServiceImages =
     requestedServicesImages?.length > 0;
 
   const toggleServices = (service: string) => {
-    const newServices = services.includes(service)
-      ? services.filter((m: string) => m !== service)
-      : [...services, service];
+    const newServices = requestedServices.includes(service)
+      ? requestedServices.filter((m: string) => m !== service)
+      : [...requestedServices, service];
     setValue('requestedServices', newServices);
   };
 
   useEffect(() => {
     if (!isRequestedServices) {
       const includedValues = requestedOtherCategory.filter((element) =>
-        services.includes(element)
+        requestedServices.includes(element)
       );
       setRequestedOtherCategory(includedValues);
     }
-  }, [expanded]);
+  }, [
+    expanded,
+    isRequestedServices,
+    requestedOtherCategory,
+    requestedServices,
+  ]);
 
   return (
     <FieldCard
@@ -149,7 +157,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         ) : isGreaterThanZeroRequestedService ||
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {services.map((service: string) => {
+            {requestedServices.map((service: string) => {
               const IconComponent = ICONS[service] || PlusIcon;
               return (
                 <IconComponent
@@ -185,7 +193,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
               <H3 mb="xs">{service.title}</H3>
               {service.items.map((item, idx) => (
                 <Checkbox
-                  isChecked={services.includes(item.title)}
+                  isChecked={requestedServices.includes(item.title)}
                   mt={idx !== 0 ? 'xs' : undefined}
                   key={item.title}
                   hasBorder
@@ -204,7 +212,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
           <OtherCategory
             main="requestedServices"
             other="requestedOtherCategory"
-            services={services}
+            services={requestedServices}
             setValue={setValue}
             control={control}
             otherCategories={requestedOtherCategory}

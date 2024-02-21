@@ -318,9 +318,7 @@ export default function TabOneScreen() {
                 />
               ))}
             </ScrollView>
-          ) : (
-            <></>
-          )}
+          ) : null}
         </View>
         <View style={{ paddingHorizontal: Spacings.sm }}>
           <H2 mb="sm">Useful Tools</H2>

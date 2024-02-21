@@ -152,7 +152,10 @@ export default function UpdateNote() {
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title noteTitle={note?.title} {...props} />
-          <Purpose notePurposes={note?.purposes} {...props} />
+          <Purpose
+            // notePurposes={note?.purposes}
+            {...props}
+          />
           <Mood {...props} />
           <ProvidedServices
             // noteProvidedServices={note?.providedServices}

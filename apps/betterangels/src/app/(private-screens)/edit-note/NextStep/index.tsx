@@ -45,7 +45,7 @@ export default function NextStep(props: INextStepProps) {
       );
       setValue('nextStepActions', filteredNextSteps);
     }
-  }, [expanded]);
+  }, [expanded, isNextStep, nextStepActions, setValue]);
 
   return (
     <FieldCard

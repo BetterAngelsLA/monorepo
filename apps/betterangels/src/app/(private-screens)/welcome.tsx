@@ -9,7 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 export default function Welcome() {
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style={'dark'} />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
       >

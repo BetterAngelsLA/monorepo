@@ -28,7 +28,7 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
@@ -114,7 +114,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   );
 
   const providedServicesImages = watch('providedServicesImages', []);
-  const providedServices = watch('providedServices') || [];
+  const watchedProvidedServices = watch('providedServices');
+  const providedServices = useMemo(() => {
+    return watchedProvidedServices || [];
+  }, [watchedProvidedServices]);
   const isProvidedServices = expanded === 'Provided Services';
   const isLessThanOneProvidedService = providedServices.length < 1;
   const isLessThanOneProvidedServiceImages = providedServicesImages.length < 1;
@@ -136,7 +139,13 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       );
       setProvidedOtherCategory(includedValues);
     }
-  }, [expanded]);
+  }, [
+    expanded,
+    isProvidedServices,
+    providedOtherCategory,
+    providedServices,
+    setValue,
+  ]);
 
   return (
     <FieldCard
