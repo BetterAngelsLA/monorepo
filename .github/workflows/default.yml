@@ -112,7 +112,7 @@ jobs:
       - name: 🔗 Ensure Expo Library Compatibility
         run: |
           docker-compose run better-angels bash <<'EOF'
-          CI=1 yarn dhx expo-doctor
+          CI=1 yarn dlx expo-doctor
           EOF
 
       - name: 🕵️ Check for missing Django migrations
