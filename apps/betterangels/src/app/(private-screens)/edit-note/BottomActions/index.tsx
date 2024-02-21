@@ -30,7 +30,6 @@ export default function BottomActions(props: IBottomActionsProps) {
         <TextButton
           mr="sm"
           fontSize="sm"
-          // onPress={() => console.log('save for later')}
           onPress={handleSubmit((values) => updateNoteFunction(values, false))}
           accessibilityHint="saves the note for later"
           title="Save for later"

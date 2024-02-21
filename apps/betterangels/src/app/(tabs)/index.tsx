@@ -190,10 +190,7 @@ export default function TabOneScreen() {
           },
         },
       });
-      console.log('CREATE NOTE DATA:', data);
-      router.navigate({
-        pathname: `/edit-note/${data?.createNote?.id}`,
-      });
+      router.navigate(`/edit-note/${data?.createNote?.id}`);
     } catch (e) {
       console.log(e);
     }
@@ -202,7 +199,6 @@ export default function TabOneScreen() {
   useEffect(() => {
     if (data && !isLoading) {
       setNotes(data.notes);
-      console.log('setNotes:', data.notes);
     }
   }, [data, isLoading]);
 
