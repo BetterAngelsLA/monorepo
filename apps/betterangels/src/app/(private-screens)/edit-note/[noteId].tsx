@@ -88,14 +88,15 @@ export default function UpdateNote() {
     setExpanded,
   };
 
-  async function updateNoteFunction() {
+  async function updateNoteFunction(values) {
+    console.log(values);
     try {
       const { data } = await updateNote({
         variables: {
           data: {
             id: noteId,
-            title: 'updated title',
-            publicDetails: 'updated public note',
+            title: values.title,
+            publicDetails: values.publicDetails,
           },
         },
       });
@@ -105,25 +106,6 @@ export default function UpdateNote() {
       console.log(e);
     }
   }
-
-  // console.log(clientId);
-
-  // async function onSubmit(data: any) {
-  //   try {
-  //     const { data } = await createNote({
-  //       variables: {
-  //         input: {
-  //           title: 'note title',
-  //           body: 'note body',
-  //         },
-  //       },
-  //     });
-
-  //     console.log('Note created:', data.createNote);
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // }
 
   useEffect(() => {
     if (isPublicNoteEdited) {

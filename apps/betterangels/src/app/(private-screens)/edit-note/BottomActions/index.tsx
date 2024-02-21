@@ -42,8 +42,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={handleSubmit(updateNoteFunction)}
-          // onPress={handleSubmit((data) => console.log('DATA: ', data))}
+          onPress={handleSubmit((values) => updateNoteFunction(values))}
         />
       </View>
     </View>
