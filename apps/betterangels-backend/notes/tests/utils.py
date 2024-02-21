@@ -53,9 +53,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         # Create Another Org
         perm_group_2 = permission_group_recipe.make()
         perm_group_2.organization.add_user(self.case_manager_2)
-        print("t")
-        # self.case_manager_2.groups.add(perm_group_2.group)
-        # self.case_manager_2.groups.add(caseworker_group)
+        self.case_manager_2.groups.add(perm_group_2.group)
+        self.case_manager_2.groups.add(caseworker_group)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
