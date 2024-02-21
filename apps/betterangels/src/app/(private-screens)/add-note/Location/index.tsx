@@ -56,6 +56,7 @@ export default function Location(props: ILocationProps) {
 
   return (
     <FieldCard
+      required
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
