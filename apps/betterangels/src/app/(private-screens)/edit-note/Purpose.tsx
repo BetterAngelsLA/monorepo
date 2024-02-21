@@ -28,10 +28,11 @@ type NoteFormErrors = FieldErrors<INote>;
 interface IPurposeProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  notePurposes: TPurposes | undefined;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const { expanded, setExpanded } = props;
+  const { expanded, setExpanded, notePurposes } = props;
   const { control, formState, setValue, trigger } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'purposes',

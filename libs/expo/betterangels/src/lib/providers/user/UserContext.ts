@@ -4,6 +4,8 @@ export type TUser = {
   id: string;
   username?: string;
   email?: string;
+  firstName?: boolean;
+  lastName?: boolean;
   hasOrganization: boolean;
 };
 

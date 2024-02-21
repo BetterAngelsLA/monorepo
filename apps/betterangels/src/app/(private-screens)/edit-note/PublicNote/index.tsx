@@ -4,6 +4,7 @@ import {
   H5,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import InfoModal from './InfoModal';
 
@@ -12,17 +13,27 @@ interface IPublicNoteProps {
   setExpanded: (e: string | undefined | null) => void;
   isPublicNoteEdited: boolean;
   setIsPublicNoteEdited: (e: boolean) => void;
+  notePublicDetails: string | undefined;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const { expanded, setExpanded, setIsPublicNoteEdited, isPublicNoteEdited } =
-    props;
-  const { control, watch } = useFormContext();
+  const {
+    expanded,
+    setExpanded,
+    setIsPublicNoteEdited,
+    isPublicNoteEdited,
+    notePublicDetails,
+  } = props;
+  const { setValue, control, watch } = useFormContext();
 
   const publicDetails = watch('publicDetails');
   const isEmptyOrTemplate =
     !publicDetails || publicDetails === 'G -\nI -\nR -\nP - ';
   const isPublicNote = expanded === 'Public Note';
+
+  useEffect(() => {
+    setValue('publicDetails', notePublicDetails);
+  }, [notePublicDetails, setValue]);
 
   return (
     <FieldCard

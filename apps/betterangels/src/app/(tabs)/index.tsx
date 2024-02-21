@@ -182,8 +182,8 @@ export default function TabOneScreen() {
       const { data } = await createNote({
         variables: {
           data: {
-            title: 'note title',
-            publicDetails: 'note public details',
+            // TODO: This should be client name once we're fetching and mapping clients
+            title: `Session with ${user?.firstName}`,
             client: {
               id: user?.id,
             },

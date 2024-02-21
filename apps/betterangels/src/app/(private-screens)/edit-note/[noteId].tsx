@@ -32,6 +32,7 @@ interface INote {
   providedServices: string[];
   nextStepDate: Date;
   requestedServices: string[];
+  privateDetails: string;
 }
 
 export default function UpdateNote() {
@@ -49,27 +50,22 @@ export default function UpdateNote() {
     defaultValues: {
       id: noteId,
       title: '',
-      purposes: [{ value: '' }],
+      purposes: [{ value: 'Purpose' }],
       nextStepActions: [{ value: '' }],
       publicDetails: 'G -\nI -\nR -\nP - ',
       noteDateTime: format(new Date(), 'MM/dd/yyy @ HH:mm'),
       moods: [],
       providedServices: [],
       requestedServices: [],
+      privateDetails: '',
     },
   });
 
   useEffect(() => {
     if (data && !isLoading) {
       setNote(data.note);
-      console.log('data.note', data.note);
     }
   }, [data, isLoading]);
-  useEffect(() => {
-    if (note) {
-      console.log('note', note);
-    }
-  }, [note]);
 
   const watchedValues = methods.watch([
     'id',
@@ -81,6 +77,7 @@ export default function UpdateNote() {
     'nextStepDate',
     'requestedServices',
     'publicDetails',
+    'privateDetails',
   ]);
   const publicNote = methods.watch('publicDetails');
 
@@ -99,6 +96,7 @@ export default function UpdateNote() {
               id: noteId,
               title: values.title,
               publicDetails: values.publicDetails,
+              privateDetails: values.privateDetails,
               isSubmitted: true,
             },
           },
@@ -111,6 +109,7 @@ export default function UpdateNote() {
               id: noteId,
               title: values.title,
               publicDetails: values.publicDetails,
+              privateDetails: values.privateDetails,
             },
           },
         });
@@ -152,28 +151,29 @@ export default function UpdateNote() {
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
 
-  useEffect(() => {
-    if (noteId) {
-      console.log('NOTE ID, ', noteId);
-    }
-  }, [noteId]);
-
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title firstName="Test" {...props} />
-          <Purpose {...props} />
+          <Title noteTitle={note?.title} {...props} />
+          <Purpose notePurposes={note?.purposes} {...props} />
           <Mood {...props} />
-          <ProvidedServices {...props} />
-          <RequestedServices {...props} />
+          <ProvidedServices
+            // noteProvidedServices={note?.providedServices}
+            {...props}
+          />
+          <RequestedServices
+            // noteRequestedServices={note?.requestedServices}
+            {...props}
+          />
           <NextStep {...props} />
           <PublicNote
+            notePublicDetails={note?.publicDetails}
             isPublicNoteEdited={isPublicNoteEdited}
             setIsPublicNoteEdited={setIsPublicNoteEdited}
             {...props}
           />
-          <PrivateNote {...props} />
+          <PrivateNote notePrivateDetails={note?.privateDetails} {...props} />
         </MainScrollContainer>
         <BottomActions updateNoteFunction={updateNoteFunction} />
       </View>

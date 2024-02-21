@@ -35,6 +35,7 @@ import { StyleSheet, View } from 'react-native';
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  // noteRequestedServices: string[] | undefined;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -102,7 +103,11 @@ const SERVICES = [
 ];
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { expanded, setExpanded } = props;
+  const {
+    expanded,
+    setExpanded,
+    // noteRequestedServices
+  } = props;
   const { setValue, watch, control } = useFormContext();
   const [requestedOtherCategory, setRequestedOtherCategory] = useState<
     string[]

@@ -41,25 +41,6 @@ export default function PrivateLayout() {
           ),
         }}
       />
-      {/* <Stack.Screen
-        name="edit-note/[noteId]"
-        options={{
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          title: 'Edit note',
-          headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={navigation.goBack}
-            >
-              <BodyText color={Colors.WHITE}>Back</BodyText>
-            </Pressable>
-          ),
-        }}
-      /> */}
     </Stack>
   );
 }

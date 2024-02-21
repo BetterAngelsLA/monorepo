@@ -77,7 +77,7 @@ class Mutation:
         # from IPython import embed
 
         # embed()
-        FLAT_FIELDS = ("title", "public_details")
+        FLAT_FIELDS = ("title", "public_details", "private_details")
 
         note = Note.objects.get(pk=data.id)
         update_fields = [

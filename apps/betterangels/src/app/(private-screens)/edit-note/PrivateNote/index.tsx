@@ -4,36 +4,42 @@ import {
   H5,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 interface IPrivateNoteProps {
+  notePrivateDetails: string | undefined;
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
 }
 
 export default function PrivateNote(props: IPrivateNoteProps) {
-  const { expanded, setExpanded } = props;
-  const { control, watch } = useFormContext();
+  const { notePrivateDetails, expanded, setExpanded } = props;
+  const { setValue, control, watch } = useFormContext();
 
-  const privateNote = watch('privateNote');
-  const isPrivateNote = expanded === 'Private Note';
+  const privateDetails = watch('privateDetails');
+  const isPrivateDetails = expanded === 'Private Note';
+
+  useEffect(() => {
+    setValue('privateDetails', notePrivateDetails);
+  }, [notePrivateDetails, setValue]);
 
   return (
     <FieldCard
       expanded={expanded}
       mb="xs"
-      setExpanded={() => setExpanded(isPrivateNote ? null : 'Private Note')}
+      setExpanded={() => setExpanded(isPrivateDetails ? null : 'Private Note')}
       title="Private Note (Optional)"
       actionName={
-        !privateNote && !isPrivateNote ? (
+        !privateDetails && !isPrivateDetails ? (
           <H5 size="sm">Add private note</H5>
         ) : null
       }
     >
-      {isPrivateNote ? (
-        <Textarea mb="md" name="privateNote" control={control} />
+      {isPrivateDetails ? (
+        <Textarea mb="md" name="privateDetails" control={control} />
       ) : (
-        privateNote && <BodyText mb="md">{privateNote}</BodyText>
+        privateDetails && <BodyText mb="md">{privateDetails}</BodyText>
       )}
     </FieldCard>
   );

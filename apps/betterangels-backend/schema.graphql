@@ -86,6 +86,7 @@ type NoteType {
   id: ID!
   title: String!
   publicDetails: String
+  privateDetails: String!
   createdAt: DateTime!
   createdBy: UserType!
   client: UserType
@@ -137,6 +138,8 @@ input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
+  privateDetails: String
+  isSubmitted: Boolean
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
@@ -148,6 +151,8 @@ input UserInput {
 type UserType {
   id: ID!
   username: String!
+  firstName: String!
+  lastName: String!
   email: String!
 }
 
