@@ -7,3 +7,7 @@ class NotePermissions(models.TextChoices):
     CHANGE = "notes.change_note", _("Can change note")
     DELETE = "notes.delete_note", _("Can delete note")
     ADD = "notes.add_note", _("Can view note")
+
+
+class PrivateNotePermissions(models.TextChoices):
+    VIEW = "notes.view_note_private_details", _("Can view note private details")

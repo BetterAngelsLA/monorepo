@@ -47,6 +47,7 @@ interface IDatePickerProps {
   onBlur?: () => void;
   minDate?: Date;
   maxDate?: Date;
+  pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
 }
 
 export function DatePicker(props: IDatePickerProps) {

@@ -3,11 +3,16 @@ import {
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
+import {
+  BottomActions,
+  CancelModal,
+  TextButton,
+} from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
+import { Link, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
-import BottomActions from './BottomActions';
 import Mood from './Mood';
 import NextStep from './NextStep';
 import PrivateNote from './PrivateNote';
@@ -34,7 +39,7 @@ interface INote {
 }
 
 export default function AddNote() {
-  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
@@ -66,24 +71,22 @@ export default function AddNote() {
     setExpanded,
   };
 
-  // console.log(clientId);
-
-  // async function onSubmit(data: any) {
-  //   try {
-  //     const { data } = await createNote({
-  //       variables: {
-  //         input: {
-  //           title: 'note title',
-  //           body: 'note body',
-  //         },
-  //       },
-  //     });
-
-  //     console.log('Note created:', data.createNote);
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // }
+  async function onSubmit(data: any) {
+    console.log(data);
+    // try {
+    //   const { data } = await createNote({
+    //     variables: {
+    //       input: {
+    //         title: 'note title',
+    //         body: 'note body',
+    //       },
+    //     },
+    //   });
+    //   console.log('Note created:', data.createNote);
+    // } catch (e) {
+    //   console.log(e);
+    // }
+  }
 
   useEffect(() => {
     if (isPublicNoteEdited) {
@@ -128,7 +131,54 @@ export default function AddNote() {
           />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        <BottomActions />
+        {/* TODO: remove in future, only for testing */}
+        <View>
+          <Link
+            style={{ padding: 10 }}
+            href={{
+              pathname: '/form',
+              params: { clientId, hmisId: '12345678', mood: 'suicidal' },
+            }}
+          >
+            suicidal
+          </Link>
+          <Link
+            style={{ padding: 10 }}
+            href={{
+              pathname: '/form',
+              params: { clientId, mood: 'anxious', hmisId: '12345678' },
+            }}
+          >
+            anxious
+          </Link>
+          <Link
+            style={{ padding: 10 }}
+            href={{
+              pathname: '/form',
+              params: { clientId, mood: 'depressed', hmisId: '12345678' },
+            }}
+          >
+            depressed
+          </Link>
+        </View>
+        <BottomActions
+          cancel={
+            <CancelModal
+              body="All data associated with this note will be deleted"
+              title="Delete note?"
+            />
+          }
+          optionalAction={
+            <TextButton
+              mr="sm"
+              fontSize="sm"
+              onPress={() => console.log('save for later')}
+              accessibilityHint="saves the note for later"
+              title="Save for later"
+            />
+          }
+          onSubmit={methods.handleSubmit(onSubmit)}
+        />
       </View>
     </FormProvider>
   );

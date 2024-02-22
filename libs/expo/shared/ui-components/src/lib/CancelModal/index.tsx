@@ -1,16 +1,21 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BasicModal,
-  BodyText,
-  Button,
-  H1,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
+import { Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+import BasicModal from '../BasicModal';
+import BodyText from '../BodyText';
+import Button from '../Button';
+import H1 from '../H1';
+import TextButton from '../TextButton';
 
-export default function CancelModal() {
+export default function CancelModal({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
   const [visible, setVisible] = useState(false);
   const router = useRouter();
 
@@ -23,14 +28,12 @@ export default function CancelModal() {
       <TextButton
         fontSize="sm"
         onPress={() => setVisible(true)}
-        accessibilityHint="cancels note creation"
+        accessibilityHint="cancels creation"
         title="Cancel"
       />
       <BasicModal visible={visible} setVisible={setVisible}>
-        <H1 mb="sm">Delete Note?</H1>
-        <BodyText mb="md">
-          All data associated with this note will be deleted.
-        </BodyText>
+        <H1 mb="sm">{title}</H1>
+        <BodyText mb="md">{body}</BodyText>
         <View
           style={{
             flexDirection: 'row',
