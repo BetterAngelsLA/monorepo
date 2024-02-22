@@ -14,6 +14,7 @@ import {
   H5,
   IconButton,
   Input,
+  InputBasic,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import { useMemo, useState } from 'react';
@@ -30,7 +31,6 @@ interface ILocationProps {
 type locationLongLat = {
   longitude: number;
   latitude: number;
-  address: string;
 };
 
 const INITIAL_LOCATION = {
@@ -42,6 +42,7 @@ export default function Location(props: ILocationProps) {
   const { expanded, setExpanded } = props;
   const { control, watch, setValue } = useFormContext();
   const [pin, setPin] = useState(false);
+  const [address, setAddress] = useState('');
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const [currentLocation, setCurrentLocation] = useState<
@@ -61,10 +62,11 @@ export default function Location(props: ILocationProps) {
     setValue('location', {
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
-      address: currentLocation?.address,
+      address,
     });
     setCurrentLocation(undefined);
     setPin(false);
+    closeModal();
   }
 
   async function placePin(e: any) {
@@ -79,8 +81,14 @@ export default function Location(props: ILocationProps) {
         setCurrentLocation({
           longitude,
           latitude,
-          address: data.results[0].formatted_address,
         });
+
+        const addressWithoutCountry = data.results[0].formatted_address
+          .split(', ')
+          .slice(0, -1)
+          .join(', ');
+
+        setAddress(addressWithoutCountry);
       } catch (e) {
         console.log(e);
       }
@@ -100,6 +108,8 @@ export default function Location(props: ILocationProps) {
     };
   }, [location]);
 
+  console.log(location);
+
   return (
     <FieldCard
       required
@@ -111,25 +121,36 @@ export default function Location(props: ILocationProps) {
       }}
       title="Location "
       actionName={
-        location && !location.address && !isLocation ? (
+        (!location || (location && !location.address)) && !isLocation ? (
           <H5 size="sm">Add Location</H5>
-        ) : null
+        ) : (
+          <H5 size="sm">{location?.address}</H5>
+        )
       }
     >
       <View style={{ paddingBottom: Spacings.md }}>
-        <View style={{ position: 'relative' }}>
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: '100%',
-              width: '100%',
-              zIndex: 100,
-            }}
-          />
-          <Input mb="xs" name="location.address" control={control} />
-        </View>
+        {!(location && location.address) && (
+          <View style={{ position: 'relative' }}>
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                height: '100%',
+                width: '100%',
+                zIndex: 100,
+              }}
+            />
+
+            <Input
+              placeholder="Enter a location"
+              required
+              mb="xs"
+              name="location.address"
+              control={control}
+            />
+          </View>
+        )}
 
         {location && location.address && (
           <MapView
@@ -221,13 +242,13 @@ export default function Location(props: ILocationProps) {
                 width: '100%',
               }}
             >
-              <Input
-                icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
+              <InputBasic
                 componentStyle={{
                   top: Spacings.sm,
                 }}
-                name="location.address"
-                control={control}
+                icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
+                value={address}
+                onChangeText={(e) => setAddress(e)}
               />
             </View>
             <View
@@ -293,7 +314,7 @@ export default function Location(props: ILocationProps) {
                   }}
                 >
                   <H3 mb="xs">Dropped Pin</H3>
-                  <BodyText mb="md">{currentLocation.address}</BodyText>
+                  <BodyText mb="md">{address}</BodyText>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -375,6 +396,9 @@ export default function Location(props: ILocationProps) {
 const styles = StyleSheet.create({
   map: {
     width: '100%',
-    height: 97,
+    height: 120,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.NEUTRAL_LIGHT,
   },
 });

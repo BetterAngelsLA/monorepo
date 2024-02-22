@@ -96,9 +96,10 @@ export function InputBasic(props: IInputBasicProps) {
               },
             }),
           }}
-          onChangeText={onChangeText}
           editable={!disabled}
           {...rest}
+          value={value}
+          onChangeText={onChangeText}
         />
         {value && (
           <Pressable
