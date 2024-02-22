@@ -1,11 +1,20 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, TextButton } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { ReactNode } from 'react';
 import { View } from 'react-native';
-import CancelModal from './CancelModal';
+import Button from '../Button';
 
-export default function BottomActions() {
-  const { handleSubmit } = useFormContext();
+interface IBottomActionsProps {
+  onSubmit: () => void;
+  optionalAction?: ReactNode;
+  cancel: ReactNode;
+  /**
+   * Optional action to be displayed on the right side of the bottom actions.
+   */
+}
+
+export default function BottomActions(props: IBottomActionsProps) {
+  const { onSubmit, optionalAction, cancel } = props;
+
   return (
     <View
       style={{
@@ -19,15 +28,9 @@ export default function BottomActions() {
         borderTopColor: Colors.NEUTRAL,
       }}
     >
-      <CancelModal />
+      {cancel}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <TextButton
-          mr="sm"
-          fontSize="sm"
-          onPress={() => console.log('save for later')}
-          accessibilityHint="saves the note for later"
-          title="Save for later"
-        />
+        {optionalAction}
         <Button
           fontSize="sm"
           size="full"
@@ -36,7 +39,7 @@ export default function BottomActions() {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={handleSubmit((data) => console.log('DATA: ', data))}
+          onPress={onSubmit}
         />
       </View>
     </View>

@@ -1,12 +1,12 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
-import { Redirect, Stack, useNavigation } from 'expo-router';
+import { Redirect, Stack, useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 
 export default function PrivateLayout() {
   const { user } = useUser();
-  const navigation = useNavigation();
+  const router = useRouter();
 
   if (!user) {
     return <Redirect href="/auth" />;
@@ -34,7 +34,25 @@ export default function PrivateLayout() {
               accessibilityRole="button"
               accessible
               accessibilityHint="goes to previous screen"
-              onPress={navigation.goBack}
+              onPress={router.back}
+            >
+              <BodyText color={Colors.WHITE}>Back</BodyText>
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="form/index"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
             >
               <BodyText color={Colors.WHITE}>Back</BodyText>
             </Pressable>

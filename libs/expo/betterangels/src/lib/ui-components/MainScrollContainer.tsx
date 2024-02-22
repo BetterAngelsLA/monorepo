@@ -10,7 +10,7 @@ export default function MainScrollContainer({
 }: {
   children: ReactNode;
   bg?: string;
-  pt?: 'sm' | 'md';
+  pt?: 'sm' | 'md' | 'lg';
   px?: 'sm' | 'md' | 0;
 }) {
   return (
