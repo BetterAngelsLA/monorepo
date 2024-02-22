@@ -38,19 +38,19 @@ export default function Question(props: IQuestionProps) {
   const { setValue, watch } = useFormContext();
 
   const question = watch(field);
-  const isQuesiton = expanded === field;
+  const isQuestion = expanded === field;
 
   return (
     <FieldCard
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
-        setExpanded(isQuesiton ? null : field);
+        setExpanded(isQuestion ? null : field);
       }}
       title={title}
       actionName={''}
     >
-      {isQuesiton && (
+      {isQuestion && (
         <View style={{ gap: Spacings.xs, marginBottom: Spacings.md }}>
           {QUESTIONS.map((q) => (
             <Radio
@@ -65,7 +65,7 @@ export default function Question(props: IQuestionProps) {
           ))}
         </View>
       )}
-      {!isQuesiton && question?.label && (
+      {!isQuestion && question?.label && (
         <BodyText mb="md">{question.label}</BodyText>
       )}
     </FieldCard>

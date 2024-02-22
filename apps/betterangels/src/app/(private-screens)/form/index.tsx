@@ -148,7 +148,7 @@ export default function FormScreen() {
   }>();
 
   if (!clientId || !mood) {
-    throw new Error('clientId and mood are required');
+    throw new Error('Something went wrong!');
   }
 
   const formType = QUESTIONS[mood].type;
