@@ -3678,6 +3678,7 @@ __metadata:
     "@typescript-eslint/parser": 6.21.0
     "@yarnpkg/sdks": ^3.0.0-rc.48
     apollo-link-rest: ^0.9.0
+    axios: ^1.6.7
     babel-jest: ^29.4.1
     babel-plugin-react-native-web: ^0.19.8
     babel-preset-expo: 10.0.1
@@ -9286,7 +9287,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.0":
+"axios@npm:^1.6.0, axios@npm:^1.6.7":
   version: 1.6.7
   resolution: "axios@npm:1.6.7"
   dependencies:

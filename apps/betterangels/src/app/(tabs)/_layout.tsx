@@ -1,4 +1,4 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
@@ -34,11 +34,11 @@ export default function TabLayout() {
     setModalVisible(false);
   };
 
-  if (isLoading) return <Text>Loading</Text>;
+  // if (isLoading) return <Text>Loading</Text>;
 
-  if (!user) {
-    return <Redirect href="/auth" />;
-  }
+  // if (!user) {
+  //   return <Redirect href="/auth" />;
+  // }
 
   // For testing the logout flow case, this has been commented out so the home (/) is available.
   // if (user && !user.hasOrganization) {

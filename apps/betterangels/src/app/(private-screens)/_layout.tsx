@@ -1,16 +1,16 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
-import { Redirect, Stack, useNavigation } from 'expo-router';
+import { Stack, useNavigation } from 'expo-router';
 import { Pressable } from 'react-native';
 
 export default function PrivateLayout() {
   const { user } = useUser();
   const navigation = useNavigation();
 
-  if (!user) {
-    return <Redirect href="/auth" />;
-  }
+  // if (!user) {
+  //   return <Redirect href="/auth" />;
+  // }
 
   return (
     <Stack

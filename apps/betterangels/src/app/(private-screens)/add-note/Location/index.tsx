@@ -2,6 +2,7 @@ import {
   LocationArrowIcon,
   LocationPinIcon,
   SearchIcon,
+  TargetIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -14,7 +15,8 @@ import {
   IconButton,
   Input,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import axios from 'axios';
+import { useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -28,6 +30,7 @@ interface ILocationProps {
 type locationLongLat = {
   longitude: number;
   latitude: number;
+  address: string;
 };
 
 const INITIAL_LOCATION = {
@@ -54,6 +57,49 @@ export default function Location(props: ILocationProps) {
     setExpanded(undefined);
   };
 
+  function selectLocation() {
+    setValue('location', {
+      longitude: currentLocation?.longitude,
+      latitude: currentLocation?.latitude,
+      address: currentLocation?.address,
+    });
+    setCurrentLocation(undefined);
+    setPin(false);
+  }
+
+  async function placePin(e: any) {
+    if (isLocation && pin) {
+      const latitude = e.nativeEvent.coordinate.latitude;
+      const longitude = e.nativeEvent.coordinate.longitude;
+      try {
+        const { data } = await axios.get(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY}`
+        );
+        setValue('location', undefined);
+        setCurrentLocation({
+          longitude,
+          latitude,
+          address: data.results[0].formatted_address,
+        });
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }
+
+  const coords = useMemo(() => {
+    if (location && location.address) {
+      return {
+        longitude: location.longitude,
+        latitude: location.latitude,
+      };
+    }
+    return {
+      longitude: INITIAL_LOCATION.longitude,
+      latitude: INITIAL_LOCATION.latitude,
+    };
+  }, [location]);
+
   return (
     <FieldCard
       required
@@ -65,39 +111,54 @@ export default function Location(props: ILocationProps) {
       }}
       title="Location "
       actionName={
-        !location && !isLocation ? <H5 size="sm">Add Location</H5> : null
+        location && !location.address && !isLocation ? (
+          <H5 size="sm">Add Location</H5>
+        ) : null
       }
     >
       <View style={{ paddingBottom: Spacings.md }}>
-        <MapView
-          zoomEnabled={false}
-          scrollEnabled={false}
-          provider={PROVIDER_GOOGLE}
-          region={{
-            longitudeDelta: 0.005,
-            latitudeDelta: 0.005,
-            latitude: location ? location.latitude : INITIAL_LOCATION.latitude,
-            longitude: location
-              ? location.longitude
-              : INITIAL_LOCATION.longitude,
-          }}
-          initialRegion={{
-            longitudeDelta: 0.005,
-            latitudeDelta: 0.005,
-            longitude: INITIAL_LOCATION.longitude,
-            latitude: INITIAL_LOCATION.latitude,
-          }}
-          style={styles.map}
-        >
-          {location && (
+        <View style={{ position: 'relative' }}>
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%',
+              width: '100%',
+              zIndex: 100,
+            }}
+          />
+          <Input mb="xs" name="location.address" control={control} />
+        </View>
+
+        {location && location.address && (
+          <MapView
+            zoomEnabled={false}
+            scrollEnabled={false}
+            provider={PROVIDER_GOOGLE}
+            region={{
+              longitudeDelta: 0.005,
+              latitudeDelta: 0.005,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            }}
+            style={styles.map}
+          >
             <Marker
               coordinate={{
-                latitude: location.latitude,
-                longitude: location.longitude,
+                latitude:
+                  location && location.address
+                    ? location.latitude
+                    : currentLocation?.latitude,
+                longitude: location
+                  ? location.longitude
+                  : currentLocation?.longitude,
               }}
-            />
-          )}
-        </MapView>
+            >
+              <LocationPinIcon size="2xl" />
+            </Marker>
+          </MapView>
+        )}
       </View>
       <Modal
         style={{ flex: 1 }}
@@ -165,7 +226,7 @@ export default function Location(props: ILocationProps) {
                 componentStyle={{
                   top: Spacings.sm,
                 }}
-                name="searchLocation"
+                name="location.address"
                 control={control}
               />
             </View>
@@ -232,16 +293,22 @@ export default function Location(props: ILocationProps) {
                   }}
                 >
                   <H3 mb="xs">Dropped Pin</H3>
-                  <BodyText mb="md">
-                    Near 25 Flower St. Los Angeles, CA 90012
-                  </BodyText>
-                  <Button
-                    onPress={() => {
-                      setValue('location', currentLocation);
-                      setCurrentLocation(undefined);
-                      setPin(false);
-                      // closeModal();
+                  <BodyText mb="md">{currentLocation.address}</BodyText>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: Spacings.sm,
+                      marginBottom: Spacings.sm,
                     }}
+                  >
+                    <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                    <H3>
+                      {currentLocation.latitude} {currentLocation.longitude}
+                    </H3>
+                  </View>
+                  <Button
+                    onPress={selectLocation}
                     size="full"
                     title="Select this location"
                     accessibilityHint="select pinned location"
@@ -261,24 +328,16 @@ export default function Location(props: ILocationProps) {
             <MapView
               zoomEnabled
               scrollEnabled
-              onPress={(e) => {
-                if (isLocation && pin) {
-                  setValue('location', undefined);
-                  setCurrentLocation({
-                    longitude: e.nativeEvent.coordinate.longitude,
-                    latitude: e.nativeEvent.coordinate.latitude,
-                  });
-                }
-              }}
+              onPress={placePin}
               provider={PROVIDER_GOOGLE}
               region={{
                 longitudeDelta: 0.005,
                 latitudeDelta: 0.005,
-                latitude: location
-                  ? location.latitude
+                latitude: currentLocation
+                  ? currentLocation.latitude
                   : INITIAL_LOCATION.latitude,
-                longitude: location
-                  ? location.longitude
+                longitude: currentLocation
+                  ? currentLocation.longitude
                   : INITIAL_LOCATION.longitude,
               }}
               initialRegion={{
