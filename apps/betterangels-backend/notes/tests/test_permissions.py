@@ -35,8 +35,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other CM should not succeed
-            ("note_client_1", False),  # Non CM should fail
+            ("case_manager_2", False),  # Other org CM should not succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -99,7 +99,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should fail
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -127,7 +127,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should fail
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -154,7 +154,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (
                 "case_manager_2",
                 False,
-            ),  # Case worker from another org can't see private details.
+            ),  # Other org case manager should not succeed
         ],
     )
     def test_view_note_private_details_permission(
@@ -185,7 +185,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (
                 "case_manager_2",
                 0,
-            ),  # Case worker from another org can't see private details.
+            ),  # Other org case manager should not succeed
         ],
     )
     def test_view_notes_private_details_permission(
