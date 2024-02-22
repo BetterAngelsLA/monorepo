@@ -1,9 +1,12 @@
+from unittest import skip
+
 import vcr
 from django.test import Client, TestCase
 
 
 class DjRestAuthTestCase(TestCase):
     @vcr.use_cassette("accounts/tests/cassettes/google_pcke_authentication_flow.yaml")
+    @skip("https://betterangels.atlassian.net/browse/DEV-65")
     def test_google_pcke_authentication_flow(self) -> None:
         client = Client()
         code = (

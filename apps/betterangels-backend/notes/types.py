@@ -1,19 +1,15 @@
 import dataclasses
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from common.permissions.utils import get_objects_for_user
-from django.db.models import QuerySet
-from notes.permissions import NotePermissions
+from notes.permissions import PrivateNotePermissions
 from strawberry import auto
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import HasSourcePerm
 
 from . import models
 
 
-@dataclasses.dataclass
 @strawberry_django.type(models.Mood)
 class MoodType:
     descriptor: auto
@@ -45,20 +41,16 @@ class NoteType:
     id: auto
     title: auto
     public_details: auto
-    created_at: auto
-    created_by: UserType
     client: Optional[UserType]
     moods: List[MoodType]
+
     is_submitted: auto
 
-    @classmethod
-    def get_queryset(
-        cls, queryset: QuerySet[models.Note], info: Info, **kwargs: Dict[str, Any]
-    ) -> QuerySet[models.Note]:
-        # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
-        # Instead we use get_objects_for_user to enforce permissions.
-        user = get_current_user(info)
-        return get_objects_for_user(user, [NotePermissions.VIEW], klass=queryset)
+    created_at: auto
+    created_by: UserType
+    private_details: Optional[str] = strawberry_django.field(
+        extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
+    )
 
 
 @dataclasses.dataclass
@@ -72,6 +64,7 @@ class UserInput:
 class CreateNoteInput:
     title: auto
     public_details: auto
+    private_details: auto
     client: Optional[UserInput]
 
 
@@ -81,5 +74,6 @@ class UpdateNoteInput:
     id: auto
     title: auto
     public_details: auto
+    private_details: auto
     moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
