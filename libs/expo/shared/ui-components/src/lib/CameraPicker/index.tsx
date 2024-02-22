@@ -68,6 +68,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const toggleCameraType = () => {
+    console.log('TYPE');
     setType((current) => (current === 'back' ? 'front' : 'back'));
   };
 

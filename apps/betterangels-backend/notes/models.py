@@ -1,9 +1,11 @@
 from accounts.models import User
 from common.models import BaseModel
+from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
 
@@ -24,7 +26,7 @@ class Note(BaseModel):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    public_details = models.TextField(null=True)
+    public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
@@ -45,6 +47,9 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return self.title
+
+    class Meta:
+        permissions = permission_enum_to_django_meta_permissions(PrivateNotePermissions)
 
 
 class Mood(BaseModel):

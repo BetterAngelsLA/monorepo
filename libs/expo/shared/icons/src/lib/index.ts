@@ -27,6 +27,7 @@ export { default as CarIcon } from './components/CarIcon';
 export { default as CheckIcon } from './components/CheckIcon';
 export { default as ChevronLeftIcon } from './components/ChevronLeftIcon';
 export { default as CircleXmarkIcon } from './components/CircleXmarkIcon';
+export { default as ClockIcon } from './components/ClockIcon';
 export { default as EditIcon } from './components/EditIcon';
 export { default as EyeIcon } from './components/EyeIcon';
 export { default as FaceAngryIcon } from './components/FaceAngryIcon';
