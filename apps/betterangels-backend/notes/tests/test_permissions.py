@@ -154,7 +154,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (
                 "case_manager_2",
                 False,
-            ),  # Case worker from another can't see private details.
+            ),  # Case worker from another org can't see private details.
         ],
     )
     def test_view_note_private_details_permission(

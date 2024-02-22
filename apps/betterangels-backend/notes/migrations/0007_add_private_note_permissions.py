@@ -14,7 +14,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     NoteContentType = ContentType.objects.get_for_model(Note)
 
     permissions_to_add = [
-        ("notes.view_note_private_details", "Can add private note"),
+        ("notes.view_note_private_details", "Can view note private details"),
     ]
 
     for perm, description in permissions_to_add:
