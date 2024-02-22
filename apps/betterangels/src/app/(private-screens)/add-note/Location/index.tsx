@@ -75,7 +75,7 @@ export default function Location(props: ILocationProps) {
       const longitude = e.nativeEvent.coordinate.longitude;
       try {
         const { data } = await axios.get(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY}`
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${process.env.GOOGLEMAPS_APIKEY}`
         );
         setValue('location', undefined);
         setCurrentLocation({
