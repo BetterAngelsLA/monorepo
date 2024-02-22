@@ -2,11 +2,13 @@ import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
 export default function PrivateLayout() {
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
   const router = useRouter();
+
+  if (isLoading) return <Text>Loading</Text>;
 
   if (!user) {
     return <Redirect href="/auth" />;

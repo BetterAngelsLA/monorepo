@@ -38,8 +38,8 @@ export default function DateComponent(props: IDateProps) {
     >
       {isDate && (
         <DatePicker
-          pickerMode="date"
-          dateFormat="MM/dd/yy"
+          mode="date"
+          format="MM/dd/yy"
           mb="md"
           maxDate={endOfDay}
           control={control}
