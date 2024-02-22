@@ -9,7 +9,7 @@ from .types import MagicLinkInput, MagicLinkResponse, UserType
 
 @strawberry.type
 class Query:
-    current_user: UserType = auth.current_user()
+    current_user: UserType = auth.current_user()  # type: ignore
 
 
 @strawberry.type
