@@ -103,12 +103,12 @@ type NoteType {
   id: ID!
   title: String!
   publicDetails: String!
+  privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
+  createdAt: DateTime!
+  createdBy: UserType!
   client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
-  createdAt: DateTime!
-  createdBy: UserType!
-  privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
 }
 
 input OffsetPaginationInput {
@@ -156,8 +156,8 @@ input UpdateNoteInput {
   title: String!
   publicDetails: String
   privateDetails: String
-  moods: [CreateMoodInput!]
   isSubmitted: Boolean
+  moods: [CreateMoodInput!]
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
@@ -169,6 +169,8 @@ input UserInput {
 type UserType {
   id: ID!
   username: String!
+  firstName: String!
+  lastName: String!
   email: String!
 }
 

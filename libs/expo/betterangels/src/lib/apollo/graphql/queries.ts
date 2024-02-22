@@ -5,6 +5,8 @@ export const GET_CURRENT_USER = gql`
     currentUser {
       id
       username
+      firstName
+      lastName
       email
     }
   }
@@ -17,6 +19,19 @@ export const GET_NOTES = gql`
       title
       publicDetails
       createdAt
+    }
+  }
+`;
+
+export const GET_NOTE = gql`
+  query ViewNote($id: ID!) {
+    note(pk: $id) {
+      id
+      title
+      publicDetails
+      client {
+        id
+      }
     }
   }
 `;

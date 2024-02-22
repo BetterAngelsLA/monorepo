@@ -85,6 +85,26 @@ class Mutation:
         UpdateNoteInput, extensions=[HasRetvalPerm(perms=NotePermissions.CHANGE)]
     )
 
+    # NOTE: Leaving this here for now because we may need it
+    # once we add tasks, moods, etc.
+    # @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.CHANGE)])
+    # def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+    #     FLAT_FIELDS = ("title", "public_details", "private_details")
+
+    #     note = Note.objects.get(pk=data.id)
+    #     update_fields = [
+    #         (field, value)
+    #         for field, value in asdict(data).items()
+    #         if field in FLAT_FIELDS
+    #     ]
+    #     for field, value in update_fields:
+    #         if value is not None:
+    #             setattr(note, field, value)
+
+    #     note.save()
+
+    #     return cast(NoteType, note)
+
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[

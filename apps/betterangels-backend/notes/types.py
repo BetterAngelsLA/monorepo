@@ -41,6 +41,9 @@ class NoteType:
     id: auto
     title: auto
     public_details: auto
+    private_details: auto
+    created_at: auto
+    created_by: UserType
     client: Optional[UserType]
     moods: List[MoodType]
 
@@ -75,5 +78,5 @@ class UpdateNoteInput:
     title: auto
     public_details: auto
     private_details: auto
-    moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
+    moods: Optional[List[CreateMoodInput]]

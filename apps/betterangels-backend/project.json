@@ -54,6 +54,13 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "reset_db": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py reset_db",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
     "start": {
       "executor": "@nxlv/python:run-commands",
       "options": {

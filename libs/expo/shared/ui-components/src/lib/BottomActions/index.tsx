@@ -15,6 +15,14 @@ interface IBottomActionsProps {
 export default function BottomActions(props: IBottomActionsProps) {
   const { onSubmit, optionalAction, cancel } = props;
 
+interface IBottomActionsProps {
+  updateNoteFunction;
+}
+
+export default function BottomActions(props: IBottomActionsProps) {
+  const { handleSubmit } = useFormContext();
+  const { updateNoteFunction } = props;
+
   return (
     <View
       style={{
@@ -39,7 +47,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={onSubmit}
+          onPress={handleSubmit((values) => updateNoteFunction(values, true))}
         />
       </View>
     </View>
