@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from accounts.models import User
 from accounts.tests.baker_recipes import permission_group_recipe
@@ -15,106 +15,98 @@ from unittest_parametrize import ParametrizedTestCase
 class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
+        self._setup_users()
+        self._setup_groups_and_permissions()
+        self._setup_note()
+
+    def _setup_users(self) -> None:
         self.user_labels = [
             "case_manager_1",
             "case_manager_2",
             "note_client_1",
             "note_client_2",
         ]
-        self.user_map: dict[str, User] = {
+        self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
             for user_label in self.user_labels
         }
-        self.case_manager = self.user_map["case_manager_1"]
-        self.note_client = self.user_map["note_client_1"]
 
-        organization_group = baker.make(Group)
-        assign_perm(NotePermissions.VIEW, organization_group)
-        assign_perm(NotePermissions.ADD, organization_group)
+        self.case_manager_1 = self.user_map["case_manager_1"]
+        self.case_manager_2 = self.user_map["case_manager_2"]
+        self.note_client_1 = self.user_map["note_client_1"]
+        self.note_client_2 = self.user_map["note_client_2"]
 
+    def _setup_groups_and_permissions(self) -> None:
+        # Create a group and assign note permissions
+        caseworker_group: Group = baker.make(Group)
+        assign_perm(NotePermissions.VIEW.value, caseworker_group)
+        assign_perm(NotePermissions.ADD.value, caseworker_group)
+
+        # Create a permission group and add the case manager to it
         perm_group = permission_group_recipe.make()
-        self.case_manager.groups.add(perm_group.group)
-        self.case_manager.groups.add(organization_group)
-        perm_group.organization.add_user(self.case_manager)
+        perm_group.organization.add_user(self.case_manager_1)
+        self.case_manager_1.groups.add(perm_group.group)
 
-        self.graphql_client.force_login(self.case_manager)
-        self.note = self._create_note_fixture(
+        # Add the caseworker group to the case manager as well
+        self.case_manager_1.groups.add(caseworker_group)
+
+        # Create Another Org
+        perm_group_2 = permission_group_recipe.make()
+        perm_group_2.organization.add_user(self.case_manager_2)
+        self.case_manager_2.groups.add(perm_group_2.group)
+        self.case_manager_2.groups.add(caseworker_group)
+
+    def _setup_note(self) -> None:
+        # Force login the case manager to create a note
+        self.graphql_client.force_login(self.case_manager_1)
+        self.note: Dict[str, Any] = self._create_note_fixture(
             {
-                "title": f"User: {self.case_manager.id}",
-                "publicDetails": f"{self.case_manager.id}'s note",
-            }
+                "title": f"User: {self.case_manager_1.id}",
+                "publicDetails": f"{self.case_manager_1.id}'s note",
+                "client": {"id": self.note_client_1.id},
+            },
         )["data"]["createNote"]
+        # Logout after setting up the note
         self.graphql_client.logout()
 
-    def _create_note_fixture(self, variables: dict) -> dict:
-        default_variables = dict(
-            title="Test Note",
-            publicDetails="This is a test note",
-            client={"id": self.note_client.id},
-        )
+    def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_note_fixture("create", variables)
 
-        if variables:
-            default_variables.update(variables)
+    def _update_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_note_fixture("update", variables)
 
-        mutation = """
-            mutation CreateNote($data: CreateNoteInput!) {
-                createNote(data: $data) {
-                    ... on OperationInfo {
-                        messages {
+    def _create_or_update_note_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+
+        mutation: str = f"""
+            mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{ # noqa: B950
+                {operation}Note(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
                             kind
                             field
                             message
-                        }
-                    }
-                    ... on NoteType {
+                        }}
+                    }}
+                    ... on NoteType {{
                         id
                         title
                         publicDetails
-                        moods {
+                        moods {{
                             descriptor
-                        }
-                        client {
+                        }}
+                        client {{
                             id
-                        }
-                        createdBy {
+                        }}
+                        createdBy {{
                             id
-                        }
-                    }
-                }
-            }
+                        }}
+                    }}
+                }}
+            }}
         """
-
-        return self.execute_graphql(mutation, {"data": default_variables})
-
-    def _update_note_fixture(self, variables: dict) -> dict:
-        mutation = """
-            mutation UpdateNote($data: UpdateNoteInput!) {
-                updateNote(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        moods {
-                            descriptor
-                        }
-                        client {
-                            id
-                        }
-                        createdBy {
-                            id
-                        }
-                    }
-                }
-            }
-        """
-
         return self.execute_graphql(mutation, {"data": variables})
 
     def _handle_user_login(self, user_label: Optional[str]) -> None:

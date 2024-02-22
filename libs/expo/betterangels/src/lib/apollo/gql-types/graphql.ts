@@ -24,6 +24,7 @@ export type CreateMoodInput = {
 
 export type CreateNoteInput = {
   client?: InputMaybe<UserInput>;
+  privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
@@ -110,7 +111,8 @@ export type NoteType = {
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
-  publicDetails?: Maybe<Scalars['String']['output']>;
+  privateDetails?: Maybe<Scalars['String']['output']>;
+  publicDetails: Scalars['String']['output'];
   title: Scalars['String']['output'];
 };
 
@@ -174,6 +176,7 @@ export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   moods?: InputMaybe<Array<CreateMoodInput>>;
+  privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
@@ -201,14 +204,14 @@ export type CreateNoteMutationVariables = Exact<{
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
 export type UpdateNoteMutationVariables = Exact<{
   data: UpdateNoteInput;
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
 export type CurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -218,7 +221,7 @@ export type CurrentUserQuery = { __typename?: 'Query', currentUser: { __typename
 export type NotesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, title: string, publicDetails?: string | null, createdAt: any }> };
+export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any }> };
 
 
 export const GenerateMagicLinkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateMagicLink"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateMagicLink"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"email"},"value":{"kind":"StringValue","value":"paul+test@betterangels.la","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;

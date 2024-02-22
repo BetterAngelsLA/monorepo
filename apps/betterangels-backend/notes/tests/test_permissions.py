@@ -35,7 +35,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_2", False),  # Other org CM should not succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -97,7 +98,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_2", True),  # Other case manager should succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -124,7 +126,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_2", True),  # Other case manager should succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -143,3 +146,66 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(mutation, variables)
 
         self.assertTrue(len(response["data"]["notes"]) == should_succeed)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Note owner should succeed
+            (
+                "case_manager_2",
+                False,
+            ),  # Other org case manager should not succeed
+        ],
+    )
+    def test_view_note_private_details_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewNotePrivateDetails($id: ID!) {
+                note(pk: $id) {
+                    id
+                    privateDetails
+                }
+            }
+        """
+        variables = {"id": self.note["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["note"]["privateDetails"])
+        else:
+            self.assertIsNone(response["data"]["note"]["privateDetails"])
+
+    @parametrize(
+        "user_label, expected_private_details_count",
+        [
+            ("case_manager_1", 1),  # Owner should see private details of their own note
+            (
+                "case_manager_2",
+                0,
+            ),  # Other org case manager should not succeed
+        ],
+    )
+    def test_view_notes_private_details_permission(
+        self, user_label: str, expected_private_details_count: int
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewNotes {
+                notes {
+                    id
+                    privateDetails
+                }
+            }
+        """
+        response = self.execute_graphql(query, {})
+        notes_data = response["data"]["notes"]
+
+        private_details_visible = len(
+            [note for note in notes_data if note.get("privateDetails") is not None]
+        )
+
+        self.assertEqual(private_details_visible, expected_private_details_count)
