@@ -13,10 +13,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 26
+        expected_query_count = 32
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
-                {"title": "New Note", "publicDetails": "This is a new note."}
+                {
+                    "title": "New Note",
+                    "publicDetails": "This is a new note.",
+                    "client": {"id": str(self.note_client_1.pk)},
+                }
             )
 
         created_note = response["data"]["createNote"]
@@ -25,8 +29,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "publicDetails": "This is a new note.",
-            "createdBy": {"id": str(self.case_manager.pk)},
-            "client": {"id": str(self.note_client.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "client": {"id": str(self.note_client_1.pk)},
         }
 
         self.assertEqual(created_note, expected_note)
@@ -40,7 +44,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
         }
 
-        expected_query_count = 28
+        expected_query_count = 30
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -50,8 +54,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
-            "createdBy": {"id": str(self.case_manager.pk)},
-            "client": {"id": str(self.note_client.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "client": {"id": str(self.note_client_1.pk)},
         }
         self.assertEqual(updated_note, expected_note)
 
@@ -67,7 +71,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

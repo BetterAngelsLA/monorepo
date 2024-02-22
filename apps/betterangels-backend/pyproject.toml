@@ -26,7 +26,6 @@ django-extensions = "^3.2.3"
 dj-rest-auth = { extras = ["with-social"], version = "^5.0.0" }
 django-cors-headers = "^4.2.0"
 whitenoise = "^6.5.0"
-boto3 = "^1.28.62"
 django-post-office = "^3.7.1"
 celery-redbeat = "^2.1.1"
 celery = { extras = ["redis"], version = "^5.3.4" }
@@ -36,7 +35,7 @@ django-jazzmin = "^2.6.0"
 django-organizations = "^2.2.0"
 django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
-strawberry-graphql-django = "^0.30.0"
+strawberry-graphql-django = "^0.32.0"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.2.2"
 
