@@ -1,14 +1,20 @@
-import { CalendarIcon, SolidCircleIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   DatePicker,
   FieldCard,
+  H3,
   H5,
   Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect } from 'react';
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import {
+  FieldErrors,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { View } from 'react-native';
 
 interface INextStepProps {
@@ -16,19 +22,28 @@ interface INextStepProps {
   setExpanded: (e: string | undefined | null) => void;
 }
 
+interface INextStepsObject {
+  nextStepActions: TNextSteps;
+}
+
 type TNextSteps = {
-  value: string;
+  action: string;
+  date?: Date;
+  time?: Date;
+  location?: string;
 }[];
+
+type NextStepFormErrors = FieldErrors<INextStepsObject>;
 
 export default function NextStep(props: INextStepProps) {
   const { expanded, setExpanded } = props;
-  const { control, setValue, watch } = useFormContext();
+  const { control, setValue, formState } = useFormContext();
   const { fields, append } = useFieldArray({
     name: 'nextStepActions',
   });
 
-  const nextStepDate = watch('nextStepDate');
   const isNextStep = expanded === 'Next Step';
+  const typedErrors = formState.errors as NextStepFormErrors;
 
   const nextStepActions: TNextSteps = useWatch({
     name: 'nextStepActions',
@@ -36,12 +51,12 @@ export default function NextStep(props: INextStepProps) {
   });
   const isZeroNextStepActions = nextStepActions.length === 0;
 
-  const hasValidActions = nextStepActions.some((action) => action.value);
+  const hasValidActions = nextStepActions.some((item) => item.action);
 
   useEffect(() => {
     if (!isNextStep) {
       const filteredNextSteps = nextStepActions.filter(
-        (field) => !!field.value
+        (field) => !!field.action
       );
       setValue('nextStepActions', filteredNextSteps);
     }
@@ -52,17 +67,14 @@ export default function NextStep(props: INextStepProps) {
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
-        if (isZeroNextStepActions) append({ value: '' });
+        if (isZeroNextStepActions)
+          append({ action: '', date: '', location: '' });
 
         setExpanded(isNextStep ? null : 'Next Step');
       }}
       title="Next Step"
       actionName={
-        hasValidActions || nextStepDate || isNextStep ? (
-          ''
-        ) : (
-          <H5 size="sm">Add Plan</H5>
-        )
+        hasValidActions || isNextStep ? '' : <H5 size="sm">Add Plan</H5>
       }
     >
       <View
@@ -72,33 +84,50 @@ export default function NextStep(props: INextStepProps) {
           overflow: 'hidden',
         }}
       >
-        <DatePicker
-          label="Date and Time"
-          control={control}
-          name={`nextStepDate`}
-        />
         {fields.map((item, index) => (
-          <View key={item.id}>
+          <View
+            style={{ gap: Spacings.xs, marginBottom: Spacings.xs }}
+            key={item.id}
+          >
+            {fields.length > 1 && <H3>Action {index + 1}</H3>}
             <Input
-              mt="xs"
               control={control}
-              name={`nextStepActions.${index}.value`}
+              name={`nextStepActions.${index}.action`}
               label="Action Item"
+            />
+            <DatePicker
+              error={!!typedErrors.nextStepActions?.[index]?.date}
+              pattern={Regex.date}
+              label="Date (optional)"
+              control={control}
+              mode="date"
+              placeholder="MM/DD/YYYY"
+              format="MM/dd/yyyy"
+              name={`nextStepActions.${index}.date`}
+            />
+            <DatePicker
+              error={!!typedErrors.nextStepActions?.[index]?.time}
+              pattern={Regex.time}
+              label="Time (optional)"
+              control={control}
+              format="HH:mm"
+              placeholder="HH:MM"
+              mode="time"
+              name={`nextStepActions.${index}.time`}
             />
           </View>
         ))}
         <H5
-          mt="xs"
           textAlign="right"
           color={Colors.PRIMARY}
-          onPress={() => append({ value: '' })}
+          onPress={() => append({ action: '', date: '', location: '' })}
           size="sm"
         >
           Add another plan
         </H5>
       </View>
 
-      {(hasValidActions || nextStepDate) && (
+      {hasValidActions && (
         <View
           style={{
             paddingBottom: !isNextStep ? Spacings.md : 0,
@@ -106,17 +135,6 @@ export default function NextStep(props: INextStepProps) {
             overflow: 'hidden',
           }}
         >
-          {nextStepDate && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <CalendarIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-              <BodyText ml="xs">{nextStepDate}</BodyText>
-            </View>
-          )}
           {hasValidActions &&
             nextStepActions.map((action, index) => (
               <View
@@ -124,11 +142,11 @@ export default function NextStep(props: INextStepProps) {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  marginTop: index === 0 && !nextStepDate ? 0 : Spacings.xs,
+                  marginTop: index === 0 ? 0 : Spacings.xs,
                 }}
               >
                 <SolidCircleIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-                <BodyText ml="xs">{action.value}</BodyText>
+                <BodyText ml="xs">{action.action + ' ' + action.date}</BodyText>
               </View>
             ))}
         </View>
