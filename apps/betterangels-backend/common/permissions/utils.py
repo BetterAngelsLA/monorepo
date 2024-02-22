@@ -9,7 +9,7 @@ from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
 T = TypeVar("T", bound=Model)
 
 
-def permission_enum_to_django_metra_permissions(
+def permission_enum_to_django_meta_permissions(
     permission_enum: Type[TextChoices],
 ) -> Tuple[Tuple[str, str], ...]:
     """

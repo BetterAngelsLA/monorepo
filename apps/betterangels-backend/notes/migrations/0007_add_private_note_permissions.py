@@ -69,4 +69,12 @@ class Migration(migrations.Migration):
                 to="notes.location",
             ),
         ),
+        migrations.AlterModelOptions(
+            name="note",
+            options={
+                "permissions": (
+                    ("view_note_private_details", "Can view note private details"),
+                )
+            },
+        ),
     ]
