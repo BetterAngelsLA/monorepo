@@ -13,7 +13,6 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
-import BottomActions from './BottomActions';
 import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
