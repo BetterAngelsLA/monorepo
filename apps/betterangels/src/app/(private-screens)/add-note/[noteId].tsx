@@ -1,5 +1,8 @@
+import { useMutation, useQuery } from '@apollo/client';
 import {
+  GET_NOTE,
   MainScrollContainer,
+  UPDATE_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -9,7 +12,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -24,6 +27,8 @@ import RequestedServices from './RequestedServices';
 import Title from './Title';
 
 interface INote {
+  id: string;
+  title: string;
   purposes: { value: string }[];
   nextStepActions: {
     action: string;
@@ -31,31 +36,47 @@ interface INote {
     location?: string;
     time?: Date | undefined;
   }[];
-  hmisNote: string;
+  publicDetails: string;
   noteDate: string;
   noteTime: string;
   moods: string[];
   providedServices: string[];
   requestedServices: string[];
+  privateDetails: string;
 }
 
 export default function AddNote() {
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  // const [createNote] = useMutation(CREATE_NOTE);
+  const router = useRouter();
+  const [note, setNote] = useState<INote | undefined>();
+  const { noteId } = useLocalSearchParams<{ noteId: string }>();
+  const { data, loading: isLoading } = useQuery(GET_NOTE, {
+    variables: { id: noteId },
+    fetchPolicy: 'network-only',
+  });
+  const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
+      title: '',
       purposes: [{ value: '' }],
       nextStepActions: [{ action: '' }],
-      hmisNote: 'G -\nI -\nR -\nP - ',
+      publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
       noteTime: format(new Date(), 'HH:mm'),
       moods: [],
       providedServices: [],
       requestedServices: [],
+      privateDetails: '',
     },
   });
+
+  useEffect(() => {
+    if (data && !isLoading) {
+      setNote(data.note);
+    }
+  }, [data, isLoading]);
 
   const watchedValues = methods.watch([
     'purposes',
@@ -63,9 +84,9 @@ export default function AddNote() {
     'providedServices',
     'nextStepActions',
     'requestedServices',
-    'hmisNote',
+    'publicDetails',
   ]);
-  const publicNote = methods.watch('hmisNote');
+  const publicNote = methods.watch('publicDetails');
 
   const props = {
     expanded,
@@ -111,7 +132,7 @@ export default function AddNote() {
 
     const newPublicNote = generatedPublicNote(generateOjbect);
     if (newPublicNote !== publicNote) {
-      methods.setValue('hmisNote', newPublicNote);
+      methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
 
