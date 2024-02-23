@@ -34,6 +34,7 @@ import {
   H1,
   H2,
   H4,
+  NoteCard,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -380,6 +381,23 @@ export default function TabOneScreen() {
             lastName="l"
             progress="10%"
           />
+          <View
+            style={{
+              flexDirection: 'row',
+            }}
+          >
+            {notes?.map((note: INote) => {
+              return (
+                <NoteCard
+                  mb="sm"
+                  key={note.id}
+                  title={note.title}
+                  onPress={() => router.navigate(`/add-note/${note.id}`)}
+                />
+              );
+            })}
+          </View>
+
           <Button
             accessibilityHint="loads more active clients"
             borderColor={Colors.PRIMARY}
