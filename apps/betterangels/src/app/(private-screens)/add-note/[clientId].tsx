@@ -9,7 +9,6 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { Link, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -40,7 +39,7 @@ interface INote {
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
+  // const { clientId } = useLocalSearchParams<{ clientId: string }>();
   // const [createNote] = useMutation(CREATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
@@ -133,36 +132,6 @@ export default function AddNote() {
           />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        {/* TODO: remove in future, only for testing */}
-        <View>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, hmisId: '12345678', mood: 'suicidal' },
-            }}
-          >
-            suicidal
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'anxious', hmisId: '12345678' },
-            }}
-          >
-            anxious
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'depressed', hmisId: '12345678' },
-            }}
-          >
-            depressed
-          </Link>
-        </View>
         <BottomActions
           cancel={
             <CancelModal

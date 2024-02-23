@@ -7490,12 +7490,12 @@ __metadata:
   linkType: hard
 
 "@types/eslint@npm:*":
-  version: 8.56.2
-  resolution: "@types/eslint@npm:8.56.2"
+  version: 8.56.3
+  resolution: "@types/eslint@npm:8.56.3"
   dependencies:
     "@types/estree": "*"
     "@types/json-schema": "*"
-  checksum: 38e054971596f5c0413f66a62dc26b10e0a21ac46ceacb06fbf8cfb838d20820787209b17218b3916e4c23d990ff77cfdb482d655cac0e0d2b837d430fcc5db8
+  checksum: 6e596e583496aeebb7c0b36d1e328cb8173844f8b82c213496e533ec7990c3451811b523d98a99e5b216056e4be8c417c87504b7b31fe32389b25b3294ce767a
   languageName: node
   linkType: hard
 
@@ -22841,9 +22841,9 @@ __metadata:
   linkType: hard
 
 "tiny-invariant@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "tiny-invariant@npm:1.3.1"
-  checksum: 872dbd1ff20a21303a2fd20ce3a15602cfa7fcf9b228bd694a52e2938224313b5385a1078cb667ed7375d1612194feaca81c4ecbe93121ca1baebe344de4f84c
+  version: 1.3.2
+  resolution: "tiny-invariant@npm:1.3.2"
+  checksum: 6d53a692a8398b40adc4d379a517ad75c7c0bb14437d8b8ed3a40bb51c2970e9970d59cb42ffb4ededd27efb5b802d645ea1666cc61e1da1fdd8fcd80a252fa3
   languageName: node
   linkType: hard
 
