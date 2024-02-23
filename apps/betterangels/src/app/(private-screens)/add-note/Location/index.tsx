@@ -40,7 +40,13 @@ export default function Location(props: ILocationProps) {
         (!location || (location && !location.address)) && !isLocation ? (
           <H5 size="sm">Add Location</H5>
         ) : (
-          <H5 size="sm">{location?.name ? location.name : 'Dropped Pin'}</H5>
+          <H5 size="sm">
+            {location && location.latitude
+              ? location?.name
+                ? location.name
+                : 'Dropped Pin'
+              : 'Add Location'}
+          </H5>
         )
       }
     >
