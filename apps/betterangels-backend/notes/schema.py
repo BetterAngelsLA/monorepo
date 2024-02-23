@@ -35,54 +35,44 @@ class Mutation:
     # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        with transaction.atomic():
-            user = get_current_user(info)
+        user = get_current_user(info)
+        # TODO: Handle creating Notes without existing Client.
+        # if not data.client:
+        #     User.create_client()
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects the
+        # first organization a user is apart of.
+        organization = user.organizations_organization.order_by("id").first()
+        client_id = data.client.id if data.client else None
 
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+        note = Note.objects.create(
+            title=data.title,
+            public_details=data.public_details,
+            created_by=user,
+            client_id=client_id,
+            organization=organization,
+        )
 
-            # TODO: Handle creating Notes without existing Client.
-            # if not data.client:
-            #     User.create_client()
-            client = User(id=data.client.id) if data.client else None
-            note_data = asdict(data)
-            note = resolvers.create(
-                info,
-                Note,
-                {
-                    **note_data,
-                    "created_by": user,
-                    "client": client,
-                    "organization": permission_group.organization,
-                },
-            )
+        print("note" * 50)
+        print(note)
 
-            # Assign object-level permissions to the user who created the note.
-            # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
-            permissions = [
-                NotePermissions.CHANGE,
-                NotePermissions.DELETE,
-                PrivateNotePermissions.VIEW,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, note)
+        # Assign object-level permissions to the user who created the note.
+        # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
+        for perm in [
+            NotePermissions.VIEW,
+            NotePermissions.CHANGE,
+            NotePermissions.DELETE,
+        ]:
+            assign_perm(perm, user, note)
 
-            return cast(NoteType, note)
+        return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
-        UpdateNoteInput, extensions=[HasRetvalPerm(perms=NotePermissions.CHANGE)]
+        UpdateNoteInput,
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+        ],
     )
 
     delete_note: NoteType = mutations.delete(

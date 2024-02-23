@@ -7,7 +7,10 @@ import {
   View,
 } from 'react-native';
 
+import { useMutation, useQuery } from '@apollo/client';
 import {
+  CREATE_NOTE,
+  GET_NOTES,
   MainScrollContainer,
   useSignOut,
   useUser,
@@ -148,12 +151,58 @@ const TOOLS = [
   },
 ];
 
+interface INote {
+  id: string;
+  title: string;
+  purposes: { value: string }[];
+  nextStepActions: { value: string }[];
+  publicDetails: string;
+  noteDateTime: string;
+  moods: string[];
+  providedServices: string[];
+  nextStepDate: Date;
+  requestedServices: string[];
+}
+
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
+  const [notes, setNotes] = useState<INote[] | undefined>([]);
+  const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
   const router = useRouter();
+
+  const { data, loading: isLoading } = useQuery(GET_NOTES, {
+    fetchPolicy: 'network-only',
+  });
+
+  async function createNoteFunction() {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            // TODO: This should be client name once we're fetching and mapping clients
+            title: `Session with ${user?.firstName}`,
+            client: {
+              id: user?.id,
+            },
+          },
+        },
+      });
+      console.log('MAKING A NOTE');
+      router.navigate(`/add-note/${data?.createNote?.id}`);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  useEffect(() => {
+    if (data && !isLoading) {
+      setNotes(data.notes);
+      console.log(data.notes);
+    }
+  }, [data, isLoading]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -272,9 +321,7 @@ export default function TabOneScreen() {
                 />
               ))}
             </ScrollView>
-          ) : (
-            <></>
-          )}
+          ) : null}
         </View>
         <View style={{ paddingHorizontal: Spacings.sm }}>
           <H2 mb="sm">Useful Tools</H2>
@@ -325,14 +372,10 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
-            onPress={() =>
-              router.navigate({
-                pathname: `/add-note/${'1234'}`,
-              })
-            }
+            onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
-            address="123 sdaf dasfda"
+            address="361 S Spring St."
             firstName="f"
             lastName="l"
             progress="10%"
