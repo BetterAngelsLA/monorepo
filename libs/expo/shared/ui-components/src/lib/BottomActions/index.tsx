@@ -1,10 +1,11 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import Button from '../Button';
 
 interface IBottomActionsProps {
-  onSubmit: () => void;
+  updateNoteFunction: (values: any, submit: boolean) => void;
   optionalAction?: ReactNode;
   cancel: ReactNode;
   /**
@@ -13,7 +14,8 @@ interface IBottomActionsProps {
 }
 
 export default function BottomActions(props: IBottomActionsProps) {
-  const { onSubmit, optionalAction, cancel } = props;
+  const { handleSubmit } = useFormContext();
+  const { updateNoteFunction, optionalAction, cancel } = props;
 
   return (
     <View
@@ -39,7 +41,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           accessibilityHint="submit the note"
           title="Submit"
           style={{ maxWidth: 85 }}
-          onPress={onSubmit}
+          onPress={handleSubmit((values) => updateNoteFunction(values, true))}
         />
       </View>
     </View>

@@ -93,21 +93,37 @@ export default function AddNote() {
     setExpanded,
   };
 
-  async function onSubmit(data: any) {
-    console.log(data);
-    // try {
-    //   const { data } = await createNote({
-    //     variables: {
-    //       input: {
-    //         title: 'note title',
-    //         body: 'note body',
-    //       },
-    //     },
-    //   });
-    //   console.log('Note created:', data.createNote);
-    // } catch (e) {
-    //   console.log(e);
-    // }
+  async function updateNoteFunction(values, is_submitted: boolean) {
+    console.log(values);
+    try {
+      if (is_submitted === true) {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              title: values.title,
+              publicDetails: values.publicDetails,
+              privateDetails: values.privateDetails,
+              isSubmitted: true,
+            },
+          },
+        });
+        router.navigate(`/`);
+      } else {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              title: values.title,
+              publicDetails: values.publicDetails,
+              privateDetails: values.privateDetails,
+            },
+          },
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   useEffect(() => {
@@ -195,12 +211,13 @@ export default function AddNote() {
             <TextButton
               mr="sm"
               fontSize="sm"
+              // NOTE: Not sure how to access form values here, without handleSubmit & useFormContext
               onPress={() => console.log('save for later')}
               accessibilityHint="saves the note for later"
               title="Save for later"
             />
           }
-          onSubmit={methods.handleSubmit(onSubmit)}
+          updateNoteFunction={updateNoteFunction}
         />
       </View>
     </FormProvider>
