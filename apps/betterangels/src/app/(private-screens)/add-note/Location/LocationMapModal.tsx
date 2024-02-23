@@ -303,7 +303,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               width: '100%',
             }}
           >
-            {(currentLocation || location) && (
+            {(currentLocation || (location && location.address)) && (
               <Marker
                 coordinate={{
                   latitude: location
