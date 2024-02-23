@@ -54,9 +54,6 @@ class Mutation:
             organization=organization,
         )
 
-        print("note" * 50)
-        print(note)
-
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
         for perm in [

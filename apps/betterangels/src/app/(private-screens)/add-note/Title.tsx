@@ -14,13 +14,13 @@ import { View } from 'react-native';
 interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-  firstName: string;
+  noteTitle: string;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { firstName, expanded, setExpanded } = props;
+  const { noteTitle, expanded, setExpanded } = props;
   const {
     setValue,
     control,
@@ -33,8 +33,8 @@ export default function Title(props: ITitleProps) {
   const isTitle = expanded === 'Title';
 
   useEffect(() => {
-    setValue('title', `Session with ${firstName}`);
-  }, []);
+    setValue('title', noteTitle);
+  }, [noteTitle, setValue]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
