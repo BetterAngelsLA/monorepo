@@ -1,6 +1,6 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -13,6 +13,7 @@ export function H3({
   ml,
   my,
   mx,
+  style,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
@@ -22,11 +23,13 @@ export function H3({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  style?: TextStyle;
 }) {
   return (
     <Text
       style={[
         styles.text,
+        style,
         {
           textTransform,
           marginBottom: mb && Spacings[mb],

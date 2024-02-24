@@ -44,7 +44,7 @@ export default function Location(props: ILocationProps) {
             {location && location.latitude
               ? location?.name
                 ? location.name
-                : 'Dropped Pin'
+                : location.address.split(', ')[0]
               : 'Add Location'}
           </H5>
         )

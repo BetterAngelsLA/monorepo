@@ -44,7 +44,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const { trigger, setValue, watch } = useFormContext();
   const [pin, setPin] = useState(false);
   const [initialRegion, setInitialRegion] = useState(INITIAL_LOCATION);
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState<
+    { short: string; full: string } | undefined
+  >({
+    short: '',
+    full: '',
+  });
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
@@ -63,17 +68,18 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setValue('location', {
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
-      address,
+      address: address?.full,
       name: currentLocation?.name,
     });
     setCurrentLocation(undefined);
     setPin(false);
+    setAddress(undefined);
     closeModal();
   }
 
   function onMapPress(e: any) {
     if (pin) {
-      setAddress('');
+      setAddress(undefined);
       setCurrentLocation(undefined);
       setPin(false);
     }
@@ -105,19 +111,18 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         const googleAddress = isId
           ? data.result.formatted_address
           : data.results[0].formatted_address;
+        const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
-        const addressWithoutCountry = googleAddress
-          .split(', ')
-          .slice(0, -1)
-          .join(', ');
-
-        setAddress(addressWithoutCountry);
+        setAddress({
+          short: shortAddress,
+          full: googleAddress,
+        });
         setPin(true);
       } catch (e) {
         console.log(e);
       }
     } else {
-      setAddress('');
+      setAddress(undefined);
       setCurrentLocation(undefined);
       setPin(false);
     }
@@ -189,8 +194,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                 top: Spacings.sm,
               }}
               icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-              value={address}
-              onChangeText={(e) => setAddress(e)}
+              value={address?.short}
+              onChangeText={(e) =>
+                setAddress({
+                  full: e,
+                  short: e,
+                })
+              }
             />
           </View>
           <View
@@ -242,9 +252,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                 <H3 mb="xs">
                   {currentLocation?.name
                     ? currentLocation?.name
-                    : 'Dropped Pin'}
+                    : address?.short}
                 </H3>
-                <BodyText mb="md">{address}</BodyText>
+                <BodyText mb="md">{address?.full}</BodyText>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -254,7 +264,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                   }}
                 >
                   <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
-                  <H3>
+                  <H3 style={{ flex: 1 }}>
                     {currentLocation.latitude} {currentLocation.longitude}
                   </H3>
                 </View>
