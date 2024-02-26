@@ -35,53 +35,54 @@ class Mutation:
     # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        user = get_current_user(info)
-        # TODO: Handle creating Notes without existing Client.
-        # if not data.client:
-        #     User.create_client()
+        with transaction.atomic():
+            user = get_current_user(info)
+            # TODO: Handle creating Notes without existing Client.
+            # if not data.client:
+            #     User.create_client()
 
-        # TODO: Update once organization selection is implemented. Currently selects
-        # the first organization with a default Caseworker role for the user.
-        permission_group = (
-            PermissionGroup.objects.select_related("organization", "group")
-            .filter(
-                organization__users=user,
-                name=GroupTemplateNames.CASEWORKER,
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
             )
-            .first()
-        )
 
-        # WARNING: Temporary workaround for organization selection
-        # TODO: Update once organization selection is implemented. Currently selects the
-        # first organization a user is apart of.
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented.
+            # Currently selects the first organization a user is apart of.
 
-        if not (permission_group and permission_group.group):
-            raise PermissionError("User lacks proper organization or permissions")
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
 
-        client = User(id=data.client.id) if data.client else None
-        note_data = asdict(data)
-        note = resolvers.create(
-            info,
-            Note,
-            {
-                **note_data,
-                "created_by": user,
-                "client": client,
-                "organization": permission_group.organization,
-            },
-        )
+            client = User(id=data.client.id) if data.client else None
+            note_data = asdict(data)
+            note = resolvers.create(
+                info,
+                Note,
+                {
+                    **note_data,
+                    "created_by": user,
+                    "client": client,
+                    "organization": permission_group.organization,
+                },
+            )
 
-        # Assign object-level permissions to the user who created the note.
-        # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
-        permissions = [
-            NotePermissions.CHANGE,
-            NotePermissions.DELETE,
-            PrivateNotePermissions.VIEW,
-        ]
-        for perm in permissions:
-            assign_perm(perm, permission_group.group, note)
+            # Assign object-level permissions to the user who created the note.
+            # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
+            permissions = [
+                NotePermissions.CHANGE,
+                NotePermissions.DELETE,
+                PrivateNotePermissions.VIEW,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, note)
 
-        return cast(NoteType, note)
+            return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
