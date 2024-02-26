@@ -93,33 +93,22 @@ export default function AddNote() {
     setExpanded,
   };
 
-  async function updateNoteFunction(values, is_submitted: boolean) {
+  async function updateNoteFunction(values, isSubmitted: boolean) {
     console.log(values);
     try {
-      if (is_submitted === true) {
-        await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              title: values.title,
-              publicDetails: values.publicDetails,
-              privateDetails: values.privateDetails,
-              isSubmitted: true,
-            },
+      await updateNote({
+        variables: {
+          data: {
+            id: noteId,
+            title: values.title,
+            publicDetails: values.publicDetails,
+            privateDetails: values.privateDetails,
+            isSubmitted: isSubmitted,
           },
-        });
+        },
+      });
+      if (isSubmitted === true) {
         router.navigate(`/`);
-      } else {
-        await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              title: values.title,
-              publicDetails: values.publicDetails,
-              privateDetails: values.privateDetails,
-            },
-          },
-        });
       }
     } catch (e) {
       console.log(e);
