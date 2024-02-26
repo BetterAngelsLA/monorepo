@@ -97,6 +97,14 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                         moods {{
                             descriptor
                         }}
+                        providedServices {{
+                            descriptor
+                            customDescriptor
+                        }}
+                        requestedServices {{
+                            descriptor
+                            customDescriptor
+                        }}
                         client {{
                             id
                         }}

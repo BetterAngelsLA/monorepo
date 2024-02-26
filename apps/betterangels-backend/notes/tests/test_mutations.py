@@ -13,7 +13,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_create_note_mutation(self) -> None:
         # I think there as an opportunity to limit the amount of queries needed
-        expected_query_count = 32
+        expected_query_count = 34
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -28,6 +28,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "title": "New Note",
             "moods": [],
+            "providedServices": [],
+            "requestedServices": [],
             "publicDetails": "This is a new note.",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.note_client_1.pk)},
@@ -40,11 +42,21 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "services": [
+                {"descriptor": "BLANKET", "serviceType": "PROVIDED"},
+                {"descriptor": "WATER", "serviceType": "PROVIDED"},
+                {"descriptor": "WATER", "serviceType": "REQUESTED"},
+                {
+                    "descriptor": "OTHER",
+                    "customDescriptor": "another service",
+                    "serviceType": "REQUESTED",
+                },
+            ],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
 
-        expected_query_count = 30
+        expected_query_count = 53
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -53,10 +65,49 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "providedServices": [
+                {"descriptor": "BLANKET", "customDescriptor": ""},
+                {"descriptor": "WATER", "customDescriptor": ""},
+            ],
+            "requestedServices": [
+                {"descriptor": "WATER", "customDescriptor": ""},
+                {
+                    "descriptor": "OTHER",
+                    "customDescriptor": "another service",
+                },
+            ],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.note_client_1.pk)},
         }
+
+        # TODO: Break this out into its own test.
+        # Verify that Note isn't returned with another note's properties.
+        another_response = self._create_note_fixture(
+            {
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "client": {"id": str(self.note_client_1.pk)},
+            }
+        )
+        another_note = another_response["data"]["createNote"]
+        another_note_variables = {
+            "id": another_note["id"],
+            "title": "Another Updated Title",
+            "moods": [{"descriptor": "INDIFFERENT"}, {"descriptor": "RESTLESS"}],
+            "services": [
+                {"descriptor": "FOOD", "serviceType": "PROVIDED"},
+                {"descriptor": "DENTAL", "serviceType": "PROVIDED"},
+                {"descriptor": "SHELTER", "serviceType": "REQUESTED"},
+                {
+                    "descriptor": "OTHER",
+                    "customDescriptor": "moar svc",
+                    "serviceType": "REQUESTED",
+                },
+            ],
+        }
+        self._update_note_fixture(another_note_variables)
+
         self.assertEqual(updated_note, expected_note)
 
     def test_delete_note_mutation(self) -> None:

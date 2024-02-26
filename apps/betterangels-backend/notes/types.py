@@ -1,10 +1,12 @@
 import dataclasses
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import strawberry_django
 from accounts.types import UserType
+from notes.enums import ServiceTypeEnum
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
+from strawberry.types import Info
 from strawberry_django.permissions import HasSourcePerm
 
 from . import models
@@ -33,6 +35,7 @@ class ServiceType:
 class CreateServiceInput:
     descriptor: auto
     custom_descriptor: Optional[str]
+    service_type: auto
 
 
 @dataclasses.dataclass
@@ -43,14 +46,22 @@ class NoteType:
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]
-
     is_submitted: auto
-
     created_at: auto
     created_by: UserType
     private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
+
+    @strawberry_django.field
+    def requested_services(self, info: Info) -> List[ServiceType]:
+        services = self.services.filter(service_type=ServiceTypeEnum.REQUESTED)
+        return [cast(ServiceType, service) for service in services]
+
+    @strawberry_django.field
+    def provided_services(self, info: Info) -> List[ServiceType]:
+        services = self.services.filter(service_type=ServiceTypeEnum.PROVIDED)
+        return [cast(ServiceType, service) for service in services]
 
 
 @dataclasses.dataclass
@@ -76,4 +87,5 @@ class UpdateNoteInput:
     public_details: auto
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
+    services: Optional[List[CreateServiceInput]]
     is_submitted: auto

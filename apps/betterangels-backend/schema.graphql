@@ -47,6 +47,12 @@ input CreateNoteInput {
 
 union CreateNotePayload = NoteType | OperationInfo
 
+input CreateServiceInput {
+  descriptor: ServiceEnum!
+  customDescriptor: String
+  serviceType: ServiceTypeEnum!
+}
+
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -55,6 +61,10 @@ input DeleteDjangoObjectInput {
 }
 
 union DeleteNotePayload = NoteType | OperationInfo
+
+type DjangoModelType {
+  pk: ID!
+}
 
 input MagicLinkInput {
   email: String!
@@ -106,9 +116,12 @@ type NoteType {
   client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
+  services: [DjangoModelType!]!
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
+  requestedServices: [ServiceType!]!
+  providedServices: [ServiceType!]!
 }
 
 input OffsetPaginationInput {
@@ -151,12 +164,44 @@ type Query {
   notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
 }
 
+enum ServiceEnum {
+  BLANKET
+  BOOK
+  CLOTHES
+  DENTAL
+  FOOD
+  HARM_REDUCTION
+  HYGIENE_KIT
+  MEDICAL
+  PET_CARE
+  PET_FOOD
+  SHELTER
+  SHOES
+  SHOWER
+  STABILIZE
+  STORAGE
+  TRANSPORT
+  WATER
+  OTHER
+}
+
+type ServiceType {
+  descriptor: ServiceEnum!
+  customDescriptor: String
+}
+
+enum ServiceTypeEnum {
+  PROVIDED
+  REQUESTED
+}
+
 input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
+  services: [CreateServiceInput!]
   isSubmitted: Boolean
 }
 
