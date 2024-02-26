@@ -40,28 +40,46 @@ class Mutation:
         # if not data.client:
         #     User.create_client()
 
+        # TODO: Update once organization selection is implemented. Currently selects
+        # the first organization with a default Caseworker role for the user.
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization__users=user,
+                name=GroupTemplateNames.CASEWORKER,
+            )
+            .first()
+        )
+
         # WARNING: Temporary workaround for organization selection
         # TODO: Update once organization selection is implemented. Currently selects the
         # first organization a user is apart of.
-        organization = user.organizations_organization.order_by("id").first()
-        client_id = data.client.id if data.client else None
 
-        note = Note.objects.create(
-            title=data.title,
-            public_details=data.public_details,
-            created_by=user,
-            client_id=client_id,
-            organization=organization,
+        if not (permission_group and permission_group.group):
+            raise PermissionError("User lacks proper organization or permissions")
+
+        client = User(id=data.client.id) if data.client else None
+        note_data = asdict(data)
+        note = resolvers.create(
+            info,
+            Note,
+            {
+                **note_data,
+                "created_by": user,
+                "client": client,
+                "organization": permission_group.organization,
+            },
         )
 
         # Assign object-level permissions to the user who created the note.
         # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
-        for perm in [
-            NotePermissions.VIEW,
+        permissions = [
             NotePermissions.CHANGE,
             NotePermissions.DELETE,
-        ]:
-            assign_perm(perm, user, note)
+            PrivateNotePermissions.VIEW,
+        ]
+        for perm in permissions:
+            assign_perm(perm, permission_group.group, note)
 
         return cast(NoteType, note)
 
