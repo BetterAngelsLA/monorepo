@@ -71,9 +71,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       address: address?.full,
       name: currentLocation?.name,
     });
-    setCurrentLocation(undefined);
-    setPin(false);
-    setAddress(undefined);
     closeModal();
   }
 
@@ -81,6 +78,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (pin) {
       setAddress(undefined);
       setCurrentLocation(undefined);
+      setValue('location', undefined);
       setPin(false);
     }
   }
@@ -89,7 +87,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (!pin) {
       const latitude = e.nativeEvent.coordinate.latitude;
       const longitude = e.nativeEvent.coordinate.longitude;
-      const name = e.nativeEvent.name || undefined;
+      const name =
+        e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
+      console.log(e.nativeEvent);
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
         ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address&key=${apiKey}`
@@ -265,7 +265,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                 >
                   <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
                   <H3 style={{ flex: 1 }}>
-                    {currentLocation.latitude} {currentLocation.longitude}
+                    {currentLocation.latitude.toFixed(7)}{' '}
+                    {currentLocation.longitude.toFixed(7)}
                   </H3>
                 </View>
                 <Button
