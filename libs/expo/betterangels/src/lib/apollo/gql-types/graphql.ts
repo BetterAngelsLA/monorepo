@@ -112,7 +112,9 @@ export type NoteType = {
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
+  providedServices: Array<ProvidedServiceType>;
   publicDetails: Scalars['String']['output'];
+  requestedServices: Array<RequestedServiceType>;
   title: Scalars['String']['output'];
 };
 
@@ -155,6 +157,17 @@ export type PermDefinition = {
   permission?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ProvidedServiceInput = {
+  customDescriptor?: InputMaybe<Scalars['String']['input']>;
+  descriptor: ServiceEnum;
+};
+
+export type ProvidedServiceType = {
+  __typename?: 'ProvidedServiceType';
+  customDescriptor?: Maybe<Scalars['String']['output']>;
+  descriptor: ServiceEnum;
+};
+
 export type Query = {
   __typename?: 'Query';
   currentUser: UserType;
@@ -172,12 +185,46 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type RequestedServiceInput = {
+  customDescriptor?: InputMaybe<Scalars['String']['input']>;
+  descriptor: ServiceEnum;
+};
+
+export type RequestedServiceType = {
+  __typename?: 'RequestedServiceType';
+  customDescriptor?: Maybe<Scalars['String']['output']>;
+  descriptor: ServiceEnum;
+};
+
+export enum ServiceEnum {
+  Blanket = 'BLANKET',
+  Book = 'BOOK',
+  Clothes = 'CLOTHES',
+  Dental = 'DENTAL',
+  Food = 'FOOD',
+  HarmReduction = 'HARM_REDUCTION',
+  HygieneKit = 'HYGIENE_KIT',
+  Medical = 'MEDICAL',
+  Other = 'OTHER',
+  PetCare = 'PET_CARE',
+  PetFood = 'PET_FOOD',
+  Shelter = 'SHELTER',
+  Shoes = 'SHOES',
+  Shower = 'SHOWER',
+  Stabilize = 'STABILIZE',
+  Storage = 'STORAGE',
+  Transport = 'TRANSPORT',
+  Water = 'WATER'
+}
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   moods?: InputMaybe<Array<CreateMoodInput>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
+  providedServices?: InputMaybe<Array<ProvidedServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
+  requestedServices?: InputMaybe<Array<RequestedServiceInput>>;
   title: Scalars['String']['input'];
 };
 
