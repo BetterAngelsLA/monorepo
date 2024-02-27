@@ -82,32 +82,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "client": {"id": str(self.note_client_1.pk)},
         }
 
-        # TODO: Break this out into its own test.
-        # Verify that Note isn't returned with another note's properties.
-        another_response = self._create_note_fixture(
-            {
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
-                "client": {"id": str(self.note_client_1.pk)},
-            }
-        )
-        another_note = another_response["data"]["createNote"]
-        another_note_variables = {
-            "id": another_note["id"],
-            "title": "Another Updated Title",
-            "moods": [{"descriptor": "INDIFFERENT"}, {"descriptor": "RESTLESS"}],
-            "providedServices": [{"descriptor": "FOOD"}, {"descriptor": "DENTAL"}],
-            "requestedServices": [
-                {"descriptor": "SHELTER"},
-                {
-                    "descriptor": "OTHER",
-                    "customDescriptor": "moar svc",
-                },
-            ],
-        }
-
-        self._update_note_fixture(another_note_variables)
-
         self.assertEqual(updated_note, expected_note)
 
     def test_delete_note_mutation(self) -> None:

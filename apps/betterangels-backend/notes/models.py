@@ -9,7 +9,7 @@ from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
 
-from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
+from .enums import MoodEnum, ServiceEnum
 
 
 class Location(BaseModel):

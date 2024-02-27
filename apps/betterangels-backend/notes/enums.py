@@ -46,6 +46,7 @@ class ServiceEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+# TODO: Remove after squashing migrations
 class ServiceTypeEnum(models.TextChoices):
     PROVIDED = "provided", _("Provided")
     REQUESTED = "requested", _("Requested")

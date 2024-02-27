@@ -1,12 +1,10 @@
 import dataclasses
-from typing import List, Optional, cast
+from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from notes.enums import ServiceTypeEnum
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
-from strawberry.types import Info
 from strawberry_django.permissions import HasSourcePerm
 
 from . import models
@@ -67,16 +65,6 @@ class NoteType:
     private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
-
-    # @strawberry_django.field
-    # def requested_services(self, info: Info) -> List[ServiceType]:
-    #     services = self.services.filter(service_type=ServiceTypeEnum.REQUESTED)
-    #     return [cast(ServiceType, service) for service in services]
-
-    # @strawberry_django.field
-    # def provided_services(self, info: Info) -> List[ServiceType]:
-    #     services = self.services.filter(service_type=ServiceTypeEnum.PROVIDED)
-    #     return [cast(ServiceType, service) for service in services]
 
 
 @dataclasses.dataclass
