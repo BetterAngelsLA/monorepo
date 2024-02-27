@@ -33,12 +33,6 @@ class Requirement(models.Model):
                              unique=True)
 
 
-# I think we can use the enum directly in the Shelter
-# class HowToEnter(models.Model):
-#     title = models.CharField(choices=[(x, x.value) for x in HowToEnterEnum],
-#                              unique=True)
-
-
 # Primary Models
 class Location(TimeStampedModel):
     point = PointField()
@@ -50,15 +44,10 @@ class Location(TimeStampedModel):
     confidential = models.BooleanField()
 
 
-class CatchmentZone(TimeStampedModel):
-    # TODO -- create a polygon object
-    pass
-
-
 class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField()
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True)
     services = models.ManyToManyField(Service)
     population = models.ManyToManyField(Population)
     requirements = models.ManyToManyField(Requirement)
@@ -78,6 +67,12 @@ class Shelter(TimeStampedModel):
     typical_stay_description = models.TextField()
 
     # TODO -- handle notes
+
+
+# Future Classes
+class CatchmentZone(TimeStampedModel):
+    # TODO -- create a polygon object
+    pass
 
 
 class Program(TimeStampedModel):
