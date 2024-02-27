@@ -2,6 +2,7 @@ import dataclasses
 from typing import Any, Dict, cast
 
 import strawberry_django
+import strawberry
 from accounts.types import UserType
 from django.db.models import QuerySet
 
@@ -30,6 +31,13 @@ class LocationType:
     longitude: auto
 
 
+@strawberry.type
+class DescriptionType:
+    description: str
+    bed_layout_description: str
+    typical_stay_description: str
+
+
 @dataclasses.dataclass
 @strawberry_django.type(models.Shelter, pagination=True)
 class ShelterType:
@@ -44,21 +52,24 @@ class ShelterType:
     phone: auto
     website: auto
 
-    description: auto
-    bed_layout_description: auto
-    typical_stay_description: auto
-
     services: List[str]
-    def resolve_services(self, info) -> List[str]:
+    populations: List[str]
+    requirements: List[str]
+
+    description: DescriptionType
+
+    def resolve_services(self, info: Info) -> List[str]:
         return [service.title for service in self.services.all()]
 
-    population: List[str]
-    def resolve_populations(self, info) -> List[str]:
+    def resolve_populations(self, info: Info) -> List[str]:
         return [population.title for population in self.populations.all()]
 
-    requirements: List[str]
-    def resolve_requirements(self, info) -> List[str]:
+    def resolve_requirements(self, info: Info) -> List[str]:
         return [requirement.title for requirement in self.requirements.all()]
 
-
-
+    def resolve_description(self, info: Info) -> DescriptionType:
+        return DescriptionType(
+            description=self.description,
+            bed_layout_description=self.bed_layout_description,
+            typical_stay_description=self.typical_stay_description,
+        )

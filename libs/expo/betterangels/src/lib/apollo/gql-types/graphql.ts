@@ -27,6 +27,13 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DescriptionType = {
+  __typename?: 'DescriptionType';
+  bedLayoutDescription: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  typicalStayDescription: Scalars['String']['output'];
+};
+
 export type LocationType = {
   __typename?: 'LocationType';
   address: Scalars['String']['output'];
@@ -125,7 +132,7 @@ export type QuerySheltersArgs = {
 export type ShelterType = {
   __typename?: 'ShelterType';
   bedLayoutDescription?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
+  description: DescriptionType;
   email?: Maybe<Scalars['String']['output']>;
   howToEnter: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -133,7 +140,7 @@ export type ShelterType = {
   location: LocationType;
   maxStay?: Maybe<Scalars['Int']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
-  population: Array<Scalars['String']['output']>;
+  populations: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;
   services: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];

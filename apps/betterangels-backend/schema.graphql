@@ -34,6 +34,12 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+type DescriptionType {
+  description: String!
+  bedLayoutDescription: String!
+  typicalStayDescription: String!
+}
+
 type LocationType {
   address: String!
   city: String!
@@ -86,17 +92,17 @@ type ShelterType {
   title: String!
   imageUrl: String!
   location: LocationType!
-  services: [String!]!
-  population: [String!]!
-  requirements: [String!]!
   howToEnter: String!
   maxStay: Int
   email: String
   phone: String
   website: String
-  description: String
+  services: [String!]!
+  populations: [String!]!
+  requirements: [String!]!
   bedLayoutDescription: String
   typicalStayDescription: String
+  description: DescriptionType!
 }
 
 input UpdateNoteInput {
