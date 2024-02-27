@@ -47,12 +47,6 @@ input CreateNoteInput {
 
 union CreateNotePayload = NoteType | OperationInfo
 
-input CreateServiceInput {
-  descriptor: ServiceEnum!
-  customDescriptor: String
-  serviceType: ServiceTypeEnum!
-}
-
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -61,10 +55,6 @@ input DeleteDjangoObjectInput {
 }
 
 union DeleteNotePayload = NoteType | OperationInfo
-
-type DjangoModelType {
-  pk: ID!
-}
 
 input MagicLinkInput {
   email: String!
@@ -113,15 +103,14 @@ type NoteType {
   id: ID!
   title: String!
   publicDetails: String!
+  providedServices: [ProvidedServiceType!]!
+  requestedServices: [RequestedServiceType!]!
   client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
-  services: [DjangoModelType!]!
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
-  requestedServices: [ServiceType!]!
-  providedServices: [ServiceType!]!
 }
 
 input OffsetPaginationInput {
@@ -158,10 +147,30 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+input ProvidedServiceInput {
+  descriptor: ServiceEnum!
+  customDescriptor: String
+}
+
+type ProvidedServiceType {
+  descriptor: ServiceEnum!
+  customDescriptor: String
+}
+
 type Query {
   currentUser: UserType!
   note(pk: ID!): NoteType! @hasPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+}
+
+input RequestedServiceInput {
+  descriptor: ServiceEnum!
+  customDescriptor: String
+}
+
+type RequestedServiceType {
+  descriptor: ServiceEnum!
+  customDescriptor: String
 }
 
 enum ServiceEnum {
@@ -185,23 +194,14 @@ enum ServiceEnum {
   OTHER
 }
 
-type ServiceType {
-  descriptor: ServiceEnum!
-  customDescriptor: String
-}
-
-enum ServiceTypeEnum {
-  PROVIDED
-  REQUESTED
-}
-
 input UpdateNoteInput {
   id: ID
   title: String!
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
-  services: [CreateServiceInput!]
+  providedServices: [ProvidedServiceInput!]
+  requestedServices: [RequestedServiceInput!]
   isSubmitted: Boolean
 }
 

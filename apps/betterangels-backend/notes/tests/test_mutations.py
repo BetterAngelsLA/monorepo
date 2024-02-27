@@ -42,21 +42,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "services": [
-                {"descriptor": "BLANKET", "serviceType": "PROVIDED"},
-                {"descriptor": "WATER", "serviceType": "PROVIDED"},
-                {"descriptor": "WATER", "serviceType": "REQUESTED"},
+            "providedServices": [
+                {"descriptor": "BLANKET"},
+                {"descriptor": "WATER"},
+            ],
+            "requestedServices": [
+                {"descriptor": "WATER"},
                 {
                     "descriptor": "OTHER",
                     "customDescriptor": "another service",
-                    "serviceType": "REQUESTED",
                 },
             ],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
 
-        expected_query_count = 53
+        expected_query_count = 54
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -95,17 +96,16 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": another_note["id"],
             "title": "Another Updated Title",
             "moods": [{"descriptor": "INDIFFERENT"}, {"descriptor": "RESTLESS"}],
-            "services": [
-                {"descriptor": "FOOD", "serviceType": "PROVIDED"},
-                {"descriptor": "DENTAL", "serviceType": "PROVIDED"},
-                {"descriptor": "SHELTER", "serviceType": "REQUESTED"},
+            "providedServices": [{"descriptor": "FOOD"}, {"descriptor": "DENTAL"}],
+            "requestedServices": [
+                {"descriptor": "SHELTER"},
                 {
                     "descriptor": "OTHER",
                     "customDescriptor": "moar svc",
-                    "serviceType": "REQUESTED",
                 },
             ],
         }
+
         self._update_note_fixture(another_note_variables)
 
         self.assertEqual(updated_note, expected_note)
@@ -122,7 +122,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

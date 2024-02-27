@@ -24,18 +24,31 @@ class CreateMoodInput:
 
 
 @dataclasses.dataclass
-@strawberry_django.type(models.Service)
-class ServiceType:
+@strawberry_django.type(models.ProvidedService)
+class ProvidedServiceType:
     descriptor: auto
     custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass
-@strawberry_django.input(models.Service)
-class CreateServiceInput:
+@strawberry_django.type(models.RequestedService)
+class RequestedServiceType:
     descriptor: auto
     custom_descriptor: Optional[str]
-    service_type: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.ProvidedService)
+class ProvidedServiceInput:
+    descriptor: auto
+    custom_descriptor: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.RequestedService)
+class RequestedServiceInput:
+    descriptor: auto
+    custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass
@@ -44,6 +57,8 @@ class NoteType:
     id: auto
     title: auto
     public_details: auto
+    provided_services: List[ProvidedServiceType]
+    requested_services: List[RequestedServiceType]
     client: Optional[UserType]
     moods: List[MoodType]
     is_submitted: auto
@@ -53,15 +68,15 @@ class NoteType:
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
 
-    @strawberry_django.field
-    def requested_services(self, info: Info) -> List[ServiceType]:
-        services = self.services.filter(service_type=ServiceTypeEnum.REQUESTED)
-        return [cast(ServiceType, service) for service in services]
+    # @strawberry_django.field
+    # def requested_services(self, info: Info) -> List[ServiceType]:
+    #     services = self.services.filter(service_type=ServiceTypeEnum.REQUESTED)
+    #     return [cast(ServiceType, service) for service in services]
 
-    @strawberry_django.field
-    def provided_services(self, info: Info) -> List[ServiceType]:
-        services = self.services.filter(service_type=ServiceTypeEnum.PROVIDED)
-        return [cast(ServiceType, service) for service in services]
+    # @strawberry_django.field
+    # def provided_services(self, info: Info) -> List[ServiceType]:
+    #     services = self.services.filter(service_type=ServiceTypeEnum.PROVIDED)
+    #     return [cast(ServiceType, service) for service in services]
 
 
 @dataclasses.dataclass
@@ -87,5 +102,6 @@ class UpdateNoteInput:
     public_details: auto
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
-    services: Optional[List[CreateServiceInput]]
+    provided_services: Optional[List[ProvidedServiceInput]]
+    requested_services: Optional[List[RequestedServiceInput]]
     is_submitted: auto
