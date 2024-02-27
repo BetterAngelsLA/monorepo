@@ -1,4 +1,5 @@
 from django.db import models
+
 # from django.contrib.gis.db.models import PointField
 from .enums import (
     ServiceEnum,
@@ -7,6 +8,8 @@ from .enums import (
     HowToEnterEnum,
     BedStateEnum,
 )
+
+from django_choices_field import TextChoicesField
 
 
 # Base Classes
@@ -20,23 +23,21 @@ class TimeStampedModel(models.Model):
 
 # Models with enumerated types
 class Service(models.Model):
-    title = models.CharField(choices=[(x, x.value) for x in ServiceEnum], unique=True)
+    title = TextChoicesField(choices_enum=ServiceEnum)
 
     def __str__(self) -> str:
         return self.title
 
 
 class Population(models.Model):
-    title = models.CharField(choices=[(x, x.value) for x in PopulationEnum],
-                             unique=True)
+    title = TextChoicesField(choices_enum=PopulationEnum)
 
     def __str__(self) -> str:
         return self.title
 
 
 class Requirement(models.Model):
-    title = models.CharField(choices=[(x, x.value) for x in RequirementEnum],
-                             unique=True)
+    title = TextChoicesField(choices_enum=RequirementEnum)
 
     def __str__(self) -> str:
         return self.title
@@ -51,7 +52,7 @@ class Location(TimeStampedModel):
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
-    zip_code = models.PositiveSmallIntegerField()
+    zip_code = models.PositiveIntegerField()
     confidential = models.BooleanField()
 
     # TODO -- get this working
@@ -65,7 +66,7 @@ class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField()
     location = models.ForeignKey(Location, on_delete=models.CASCADE,
-                                 blank=True, null=True)
+                                 blank=True, null=True, related_name='shelters')
     services = models.ManyToManyField(Service)
     population = models.ManyToManyField(Population)
     requirements = models.ManyToManyField(Requirement)

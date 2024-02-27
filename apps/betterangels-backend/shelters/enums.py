@@ -1,55 +1,55 @@
-from enum import StrEnum
+from django.db import models
 
 
 # If adding or removing Services, don't forget to update the Services table accordingly.
-class ServiceEnum(StrEnum):
-    FOOD = "Food"
-    SHOWERS = "Shower"
-    CLOTHING = "Clothing"
-    MAIL = "Mail"
-    PHONE = "Phone"
-    COMPUTERS = "Computers"
-    JOB_TRAINING = "Job Training"
-    TUTORING = "Tutoring"
-    LIFE_SKILLS_TRAINING = "Life Skills Training"
-    MEDICAL_SERVICES = "Medical Services"
-    MENTAL_HEALTH = "Mental Health"
-    DRUG_TREATMENT = "Drug Treatment"
-    FINANCIAL_PLANNING = "Financial Planning"
-    LEGAL_ASSISTANCE = "Legal Assistance"
-    TRANSPORTATION = "Transportation"
+class ServiceEnum(models.TextChoices):
+    FOOD = "Food", "Food"
+    SHOWERS = "Shower", "Shower"
+    CLOTHING = "Clothing", "Clothing"
+    MAIL = "Mail", "Mail"
+    PHONE = "Phone", "Phone"
+    COMPUTERS = "Computers", "Computes"
+    JOB_TRAINING = "Job Training", "Job Training"
+    TUTORING = "Tutoring", "Tutoring"
+    LIFE_SKILLS_TRAINING = "Life Skills Training", "Life Skills Training"
+    MEDICAL_SERVICES = "Medical Services", "Medical Services"
+    MENTAL_HEALTH = "Mental Health", "Mental Health"
+    DRUG_TREATMENT = "Drug Treatment", "Drug Treatment"
+    FINANCIAL_PLANNING = "Financial Planning", "Financial Planning"
+    LEGAL_ASSISTANCE = "Legal Assistance", "Legal Assistance"
+    TRANSPORTATION = "Transportation", "Transportation"
 
 
-class PopulationEnum(StrEnum):
-    ADULTS = "Adults"
-    MEN = "Men"
-    WOMEN = "Women"
-    FAMILIES = "Families"
-    YOUTH = "Youth"
-    BOYS = "Boys"
-    GIRLS = "Girls"
-    SENIORS = "Seniors"
-    VETERANS = "Veterans"
-    LGBTQ = "LGBTQ"
+class PopulationEnum(models.TextChoices):
+    ADULTS = "Adults", "Adults"
+    MEN = "Men", "Men"
+    WOMEN = "Women", "Women"
+    FAMILIES = "Families", "Families"
+    YOUTH = "Youth", "Youth"
+    BOYS = "Boys", "Boys"
+    GIRLS = "Girls", "Girls"
+    SENIORS = "Seniors", "Seniors"
+    VETERANS = "Veterans", "Veterans"
+    LGBTQ = "LGBTQ", "LGBTQ"
 
 
-class RequirementEnum(StrEnum):
-    PHOTO_ID = "Photo ID"
-    MEDICAID_OR_MEDICARE = "Medicaid or Medicare"
-    VETERAN = "Veteran"
+class RequirementEnum(models.TextChoices):
+    PHOTO_ID = "Photo ID", "Photo ID"
+    MEDICAID_OR_MEDICARE = "Medicaid or Medicare", "Medicaid or Medicare"
+    VETERAN = "Veteran", "Veteran"
 
     # TODO - does this belong in how to enter?
-    RESERVATION = "Reservation"
-    REFERRAL = "Referral"
+    RESERVATION = "Reservation", "Reservation"
+    REFERRAL = "Referral", "Referral"
 
 
-class HowToEnterEnum(StrEnum):
-    CALL = "Call"
-    REFERRAL = "Referral"
-    WALK_IN = "Walk-In"
+class HowToEnterEnum(models.TextChoices):
+    CALL = "Call", "Call"
+    REFERRAL = "Referral", "Referral"
+    WALK_IN = "Walk-In", "Walk-In"
 
 
-class BedStateEnum(StrEnum):
-    RESERVED = "Reserved"
-    OCCUPIED = "Occupied"
-    EMPTY = "Empty"
+class BedStateEnum(models.TextChoices):
+    RESERVED = "Reserved", "Reserved"
+    OCCUPIED = "Occupied", "Occupied"
+    EMPTY = "Empty", "Empty"
