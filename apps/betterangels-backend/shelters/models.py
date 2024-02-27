@@ -67,23 +67,23 @@ class Shelter(TimeStampedModel):
     image_url = models.URLField()
     location = models.ForeignKey(Location, on_delete=models.CASCADE,
                                  blank=True, null=True, related_name='shelters')
-    services = models.ManyToManyField(Service)
-    population = models.ManyToManyField(Population)
-    requirements = models.ManyToManyField(Requirement)
+    services = models.ManyToManyField(Service, blank=True)
+    population = models.ManyToManyField(Population, blank=True)
+    requirements = models.ManyToManyField(Requirement, blank=True)
     how_to_enter = models.CharField(choices=[(x, x.value) for x in HowToEnterEnum])
 
-    max_stay = models.PositiveSmallIntegerField()
-    average_bed_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    max_stay = models.PositiveSmallIntegerField(null=True, blank=True)
+    average_bed_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # Contact Information
-    email = models.EmailField(max_length=254)
-    phone = models.CharField(max_length=20)
-    website = models.URLField()
+    email = models.EmailField(max_length=254, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    website = models.URLField(null=True, blank=True)
 
     # Description
-    description = models.TextField()
-    bed_layout_description = models.TextField()
-    typical_stay_description = models.TextField()
+    description = models.TextField(null=True, blank=True)
+    bed_layout_description = models.TextField(null=True, blank=True)
+    typical_stay_description = models.TextField(null=True, blank=True)
 
     # TODO -- handle notes
 
