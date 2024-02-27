@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Modal, Pressable, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
@@ -89,7 +90,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const longitude = e.nativeEvent.coordinate.longitude;
       const name =
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
-      console.log(e.nativeEvent);
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
         ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address&key=${apiKey}`
@@ -254,7 +254,19 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                     ? currentLocation?.name
                     : address?.short}
                 </H3>
-                <BodyText mb="md">{address?.full}</BodyText>
+                <Pressable
+                  onPress={() =>
+                    openMap({
+                      latitude: currentLocation.latitude,
+                      longitude: currentLocation.longitude,
+                      query: address?.full,
+                    })
+                  }
+                  accessibilityHint="opens map apps"
+                  accessibilityRole="button"
+                >
+                  <BodyText mb="md">{address?.full}</BodyText>
+                </Pressable>
                 <View
                   style={{
                     flexDirection: 'row',
