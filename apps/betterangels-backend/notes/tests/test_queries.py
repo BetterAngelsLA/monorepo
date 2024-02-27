@@ -28,6 +28,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     id
                     title
                     publicDetails
+                    timestamp
                     moods {
                         descriptor
                     }
@@ -58,7 +59,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 6
+        expected_query_count = 4
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
         notes = response["data"]["notes"]

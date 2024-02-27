@@ -38,6 +38,7 @@ django-simple-history = "^3.4.0"
 strawberry-graphql-django = "^0.32.0"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.2.2"
+freezegun = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core"]

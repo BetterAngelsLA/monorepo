@@ -727,6 +727,20 @@ django = ">=3.0"
 pytz = "*"
 
 [[package]]
+name = "freezegun"
+version = "1.4.0"
+description = "Let your Python tests travel through time"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "freezegun-1.4.0-py3-none-any.whl", hash = "sha256:55e0fc3c84ebf0a96a5aa23ff8b53d70246479e9a68863f1fcac5a3e52f19dd6"},
+    {file = "freezegun-1.4.0.tar.gz", hash = "sha256:10939b0ba0ff5adaecf3b06a5c2f73071d9678e507c5eaedb23c761d56ac774b"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7"
+
+[[package]]
 name = "gevent"
 version = "24.2.1"
 description = "Coroutine-based network library"
@@ -1562,4 +1576,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "6d6567558a38e6c185322a9ff618091a62ac262e869b3bd480cdec218970fe6e"
+content-hash = "ff87b50e7479d34839360b92cedbc5ead967205bf4eeb07890da60f5d850443c"
