@@ -27,6 +27,17 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type LocationType = {
+  __typename?: 'LocationType';
+  address: Scalars['String']['output'];
+  city: Scalars['String']['output'];
+  confidential: Scalars['Boolean']['output'];
+  latitude?: Maybe<Scalars['Float']['output']>;
+  longitude?: Maybe<Scalars['Float']['output']>;
+  state: Scalars['String']['output'];
+  zipCode: Scalars['Int']['output'];
+};
+
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
 };
@@ -92,6 +103,8 @@ export type Query = {
   currentUser: UserType;
   note: NoteType;
   notes: Array<NoteType>;
+  shelter: ShelterType;
+  shelters: Array<ShelterType>;
 };
 
 
@@ -102,6 +115,43 @@ export type QueryNoteArgs = {
 
 export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySheltersArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export enum ServiceEnum {
+  Clothing = 'CLOTHING',
+  Computers = 'COMPUTERS',
+  DrugTreatment = 'DRUG_TREATMENT',
+  FinancialPlanning = 'FINANCIAL_PLANNING',
+  Food = 'FOOD',
+  JobTraining = 'JOB_TRAINING',
+  LegalAssistance = 'LEGAL_ASSISTANCE',
+  LifeSkillsTraining = 'LIFE_SKILLS_TRAINING',
+  Mail = 'MAIL',
+  MedicalServices = 'MEDICAL_SERVICES',
+  MentalHealth = 'MENTAL_HEALTH',
+  Phone = 'PHONE',
+  Showers = 'SHOWERS',
+  Transportation = 'TRANSPORTATION',
+  Tutoring = 'TUTORING'
+}
+
+export type ServiceType = {
+  __typename?: 'ServiceType';
+  title: ServiceEnum;
+};
+
+export type ShelterType = {
+  __typename?: 'ShelterType';
+  id: Scalars['ID']['output'];
+  imageUrl: Scalars['String']['output'];
+  location: LocationType;
+  services: Array<ServiceType>;
+  title: Scalars['String']['output'];
 };
 
 export type UpdateNoteInput = {

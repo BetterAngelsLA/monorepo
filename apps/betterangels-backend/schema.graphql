@@ -34,6 +34,16 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+type LocationType {
+  address: String!
+  city: String!
+  state: String!
+  zipCode: Int!
+  confidential: Boolean!
+  latitude: Float
+  longitude: Float
+}
+
 input MagicLinkInput {
   email: String!
 }
@@ -67,6 +77,38 @@ type Query {
   currentUser: UserType!
   note(pk: ID!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
+  shelter: ShelterType!
+  shelters(pagination: OffsetPaginationInput): [ShelterType!]!
+}
+
+enum ServiceEnum {
+  FOOD
+  SHOWERS
+  CLOTHING
+  MAIL
+  PHONE
+  COMPUTERS
+  JOB_TRAINING
+  TUTORING
+  LIFE_SKILLS_TRAINING
+  MEDICAL_SERVICES
+  MENTAL_HEALTH
+  DRUG_TREATMENT
+  FINANCIAL_PLANNING
+  LEGAL_ASSISTANCE
+  TRANSPORTATION
+}
+
+type ServiceType {
+  title: ServiceEnum!
+}
+
+type ShelterType {
+  id: ID!
+  title: String!
+  imageUrl: String!
+  location: LocationType!
+  services: [ServiceType!]!
 }
 
 input UpdateNoteInput {
