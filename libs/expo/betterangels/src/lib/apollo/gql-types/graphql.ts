@@ -122,36 +122,23 @@ export type QuerySheltersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-export enum ServiceEnum {
-  Clothing = 'CLOTHING',
-  Computers = 'COMPUTERS',
-  DrugTreatment = 'DRUG_TREATMENT',
-  FinancialPlanning = 'FINANCIAL_PLANNING',
-  Food = 'FOOD',
-  JobTraining = 'JOB_TRAINING',
-  LegalAssistance = 'LEGAL_ASSISTANCE',
-  LifeSkillsTraining = 'LIFE_SKILLS_TRAINING',
-  Mail = 'MAIL',
-  MedicalServices = 'MEDICAL_SERVICES',
-  MentalHealth = 'MENTAL_HEALTH',
-  Phone = 'PHONE',
-  Showers = 'SHOWERS',
-  Transportation = 'TRANSPORTATION',
-  Tutoring = 'TUTORING'
-}
-
-export type ServiceType = {
-  __typename?: 'ServiceType';
-  title: ServiceEnum;
-};
-
 export type ShelterType = {
   __typename?: 'ShelterType';
+  bedLayoutDescription?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  howToEnter: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   imageUrl: Scalars['String']['output'];
   location: LocationType;
-  services: Array<ServiceType>;
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
+  population: Array<Scalars['String']['output']>;
+  requirements: Array<Scalars['String']['output']>;
+  services: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
+  typicalStayDescription?: Maybe<Scalars['String']['output']>;
+  website?: Maybe<Scalars['String']['output']>;
 };
 
 export type UpdateNoteInput = {

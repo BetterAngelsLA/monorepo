@@ -81,34 +81,22 @@ type Query {
   shelters(pagination: OffsetPaginationInput): [ShelterType!]!
 }
 
-enum ServiceEnum {
-  FOOD
-  SHOWERS
-  CLOTHING
-  MAIL
-  PHONE
-  COMPUTERS
-  JOB_TRAINING
-  TUTORING
-  LIFE_SKILLS_TRAINING
-  MEDICAL_SERVICES
-  MENTAL_HEALTH
-  DRUG_TREATMENT
-  FINANCIAL_PLANNING
-  LEGAL_ASSISTANCE
-  TRANSPORTATION
-}
-
-type ServiceType {
-  title: ServiceEnum!
-}
-
 type ShelterType {
   id: ID!
   title: String!
   imageUrl: String!
   location: LocationType!
-  services: [ServiceType!]!
+  services: [String!]!
+  population: [String!]!
+  requirements: [String!]!
+  howToEnter: String!
+  maxStay: Int
+  email: String
+  phone: String
+  website: String
+  description: String
+  bedLayoutDescription: String
+  typicalStayDescription: String
 }
 
 input UpdateNoteInput {
