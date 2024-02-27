@@ -9,7 +9,7 @@ from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
 
-from .enums import MoodEnum, ServiceEnum
+from .enums import MoodEnum, ServiceEnum, TaskStatusEnum
 
 
 class Location(BaseModel):
@@ -20,6 +20,27 @@ class Location(BaseModel):
     zip_code = models.CharField(max_length=50, blank=True)
 
 
+class Task(BaseModel):
+    title = models.CharField(max_length=100, blank=False)
+    status = TextChoicesField(choices_enum=TaskStatusEnum)
+    due_date = models.DateTimeField(blank=True, null=True)
+    location = models.ForeignKey(
+        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
+    )
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="client_tasks",
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=False, related_name="tasks"
+    )
+
+    objects = models.Manager()
+
+
 class Note(BaseModel):
     title = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -28,6 +49,8 @@ class Note(BaseModel):
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
+    parent_tasks = models.ManyToManyField(Task, related_name="notes_created")
+    child_tasks = models.ManyToManyField(Task, related_name="notes_next_task")
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,

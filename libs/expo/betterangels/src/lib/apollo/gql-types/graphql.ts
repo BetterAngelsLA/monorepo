@@ -31,6 +31,17 @@ export type CreateNoteInput = {
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
+export type CreateTaskInput = {
+  client: OneToManyInput;
+  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status: TaskStatusEnum;
+  title: Scalars['String']['input'];
+};
+
+export type CreateTaskPayload = OperationInfo | TaskType;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -77,15 +88,22 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
   updateNote: UpdateNotePayload;
+  updateTask: UpdateTaskPayload;
 };
 
 
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
+};
+
+
+export type MutationCreateTaskArgs = {
+  data: CreateTaskInput;
 };
 
 
@@ -101,6 +119,11 @@ export type MutationGenerateMagicLinkArgs = {
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
+};
+
+
+export type MutationUpdateTaskArgs = {
+  data: UpdateTaskInput;
 };
 
 export type NoteType = {
@@ -122,6 +145,10 @@ export type NoteType = {
 export type OffsetPaginationInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
+};
+
+export type OneToManyInput = {
+  set?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type OperationInfo = {
@@ -218,6 +245,26 @@ export enum ServiceEnum {
   Water = 'WATER'
 }
 
+export enum TaskStatusEnum {
+  Canceled = 'CANCELED',
+  Completed = 'COMPLETED',
+  DraftCanceled = 'DRAFT_CANCELED',
+  DraftCompleted = 'DRAFT_COMPLETED',
+  InProgress = 'IN_PROGRESS',
+  ToDo = 'TO_DO'
+}
+
+export type TaskType = {
+  __typename?: 'TaskType';
+  client?: Maybe<UserType>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  dueDate?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  status: TaskStatusEnum;
+  title: Scalars['String']['output'];
+};
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -226,10 +273,21 @@ export type UpdateNoteInput = {
   providedServices?: InputMaybe<Array<ProvidedServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   requestedServices?: InputMaybe<Array<RequestedServiceInput>>;
-  title: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateTaskInput = {
+  client?: InputMaybe<OneToManyInput>;
+  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UserInput = {
   id?: InputMaybe<Scalars['ID']['input']>;

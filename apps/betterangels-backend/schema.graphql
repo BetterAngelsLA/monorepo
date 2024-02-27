@@ -47,6 +47,17 @@ input CreateNoteInput {
 
 union CreateNotePayload = NoteType | OperationInfo
 
+input CreateTaskInput {
+  id: ID
+  title: String!
+  status: TaskStatusEnum!
+  dueDate: DateTime
+  client: OneToManyInput!
+  createdAt: DateTime
+}
+
+union CreateTaskPayload = TaskType | OperationInfo
+
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -95,8 +106,10 @@ type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  createTask(data: CreateTaskInput!): CreateTaskPayload!
 }
 
 type NoteType {
@@ -106,9 +119,9 @@ type NoteType {
   publicDetails: String!
   providedServices: [ProvidedServiceType!]!
   requestedServices: [RequestedServiceType!]!
-  client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
+  client: UserType
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
@@ -117,6 +130,10 @@ type NoteType {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int! = -1
+}
+
+input OneToManyInput {
+  set: ID
 }
 
 type OperationInfo {
@@ -195,9 +212,28 @@ enum ServiceEnum {
   OTHER
 }
 
+enum TaskStatusEnum {
+  CANCELED
+  COMPLETED
+  DRAFT_CANCELED
+  DRAFT_COMPLETED
+  IN_PROGRESS
+  TO_DO
+}
+
+type TaskType {
+  id: ID!
+  title: String!
+  status: TaskStatusEnum!
+  dueDate: DateTime
+  client: UserType
+  createdAt: DateTime!
+  createdBy: UserType!
+}
+
 input UpdateNoteInput {
   id: ID
-  title: String!
+  title: String
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
@@ -207,6 +243,17 @@ input UpdateNoteInput {
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateTaskInput {
+  id: ID
+  title: String
+  status: TaskStatusEnum
+  dueDate: DateTime
+  client: OneToManyInput
+  createdAt: DateTime
+}
+
+union UpdateTaskPayload = TaskType | OperationInfo
 
 input UserInput {
   id: ID

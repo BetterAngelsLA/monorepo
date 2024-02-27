@@ -50,6 +50,40 @@ class RequestedServiceInput:
 
 
 @dataclasses.dataclass
+@strawberry_django.type(models.Task)
+class TaskType:
+    id: auto
+    title: auto
+    status: auto
+    due_date: auto
+    client: Optional[UserType]
+    created_at: auto
+    created_by: UserType
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Task)
+class CreateTaskInput:
+    id: auto
+    title: auto
+    status: auto
+    due_date: auto
+    client: Optional[UserType]
+    created_at: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Task, partial=True)
+class UpdateTaskInput:
+    id: auto
+    title: auto
+    status: auto
+    due_date: auto
+    client: Optional[UserType]
+    created_at: auto
+
+
+@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
@@ -58,9 +92,9 @@ class NoteType:
     public_details: auto
     provided_services: List[ProvidedServiceType]
     requested_services: List[RequestedServiceType]
-    client: Optional[UserType]
     moods: List[MoodType]
     is_submitted: auto
+    client: Optional[UserType]
     created_at: auto
     created_by: UserType
     private_details: Optional[str] = strawberry_django.field(
@@ -84,7 +118,7 @@ class CreateNoteInput:
 
 
 @dataclasses.dataclass
-@strawberry_django.input(models.Note)
+@strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: auto
     title: auto

@@ -101,7 +101,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 15
+        expected_query_count = 17
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
