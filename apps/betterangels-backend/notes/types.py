@@ -10,6 +10,12 @@ from strawberry_django.permissions import HasSourcePerm
 from . import models
 
 
+@dataclasses.dataclass
+@strawberry_django.input(models.User)
+class UserInput:
+    id: auto
+
+
 @strawberry_django.type(models.Mood)
 class MoodType:
     descriptor: auto
@@ -56,7 +62,7 @@ class TaskType:
     title: auto
     status: auto
     due_date: auto
-    client: Optional[UserType]
+    client: UserType
     created_at: auto
     created_by: UserType
 
@@ -68,7 +74,7 @@ class CreateTaskInput:
     title: auto
     status: auto
     due_date: auto
-    client: Optional[UserType]
+    client: UserInput
     created_at: auto
 
 
@@ -79,7 +85,6 @@ class UpdateTaskInput:
     title: auto
     status: auto
     due_date: auto
-    client: Optional[UserType]
     created_at: auto
 
 
@@ -100,12 +105,6 @@ class NoteType:
     private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.User)
-class UserInput:
-    id: auto
 
 
 @dataclasses.dataclass

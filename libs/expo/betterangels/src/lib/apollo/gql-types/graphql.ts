@@ -32,7 +32,7 @@ export type CreateNoteInput = {
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateTaskInput = {
-  client: OneToManyInput;
+  client: UserInput;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -147,10 +147,6 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
-export type OneToManyInput = {
-  set?: InputMaybe<Scalars['ID']['input']>;
-};
-
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -201,6 +197,8 @@ export type Query = {
   currentUser: UserType;
   note: NoteType;
   notes: Array<NoteType>;
+  task: TaskType;
+  tasks: Array<TaskType>;
 };
 
 
@@ -211,6 +209,11 @@ export type QueryNoteArgs = {
 
 export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTaskArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 export type RequestedServiceInput = {
@@ -256,7 +259,7 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  client?: Maybe<UserType>;
+  client: UserType;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueDate?: Maybe<Scalars['DateTime']['output']>;
@@ -279,7 +282,6 @@ export type UpdateNoteInput = {
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateTaskInput = {
-  client?: InputMaybe<OneToManyInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;

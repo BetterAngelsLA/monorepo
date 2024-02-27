@@ -99,6 +99,13 @@ class Mutation:
         ],
     )
 
+    delete_note: NoteType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=NotePermissions.DELETE),
+        ],
+    )
+
     @strawberry_django.mutation()
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         with transaction.atomic():
@@ -118,10 +125,4 @@ class Mutation:
             return cast(TaskType, task)
 
     update_task: TaskType = mutations.update(UpdateTaskInput)
-
-    delete_note: NoteType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=NotePermissions.DELETE),
-        ],
-    )
+    delete_task: TaskType = mutations.delete(DeleteDjangoObjectInput)

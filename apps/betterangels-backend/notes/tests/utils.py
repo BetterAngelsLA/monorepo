@@ -22,8 +22,8 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.user_labels = [
             "case_manager_1",
             "case_manager_2",
-            "note_client_1",
-            "note_client_2",
+            "task_client_1",
+            "task_client_2",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
@@ -32,16 +32,17 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         self.case_manager_1 = self.user_map["case_manager_1"]
         self.case_manager_2 = self.user_map["case_manager_2"]
-        self.note_client_1 = self.user_map["note_client_1"]
-        self.note_client_2 = self.user_map["note_client_2"]
+        self.task_client_1 = self.user_map["task_client_1"]
+        self.task_client_2 = self.user_map["task_client_2"]
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
         self.graphql_client.force_login(self.case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"{self.case_manager_1.id}'s test task",
+                "title": f"User: {self.case_manager_1.id}",
                 "status": "TO_DO",
+                "client": {"id": self.task_client_1.id},
             },
         )["data"]["createTask"]
         # Logout after setting up the task

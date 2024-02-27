@@ -75,7 +75,6 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
 
     def test_task_query(self) -> None:
         task_id = self.task["id"]
-
         expected_task = {
             "id": task_id,
             "title": self.task["title"],
