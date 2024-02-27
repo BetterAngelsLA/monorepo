@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.gis.db.models import PointField
+# from django.contrib.gis.db.models import PointField
 from .enums import (
     ServiceEnum,
     PopulationEnum,
@@ -22,20 +22,31 @@ class TimeStampedModel(models.Model):
 class Service(models.Model):
     title = models.CharField(choices=[(x, x.value) for x in ServiceEnum], unique=True)
 
+    def __str__(self) -> str:
+        return self.title
+
 
 class Population(models.Model):
     title = models.CharField(choices=[(x, x.value) for x in PopulationEnum],
                              unique=True)
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class Requirement(models.Model):
     title = models.CharField(choices=[(x, x.value) for x in RequirementEnum],
                              unique=True)
 
+    def __str__(self) -> str:
+        return self.title
+
 
 # Primary Models
 class Location(TimeStampedModel):
-    point = PointField()
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+
     spa = models.PositiveSmallIntegerField()
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
@@ -43,11 +54,18 @@ class Location(TimeStampedModel):
     zip_code = models.PositiveSmallIntegerField()
     confidential = models.BooleanField()
 
+    # TODO -- get this working
+    # coordinates = PointField()
+
+    def __str__(self) -> str:
+        return self.address
+
 
 class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField()
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE,
+                                 blank=True, null=True)
     services = models.ManyToManyField(Service)
     population = models.ManyToManyField(Population)
     requirements = models.ManyToManyField(Requirement)
@@ -67,6 +85,9 @@ class Shelter(TimeStampedModel):
     typical_stay_description = models.TextField()
 
     # TODO -- handle notes
+
+    def __str__(self) -> str:
+        return self.title
 
 
 # Future Classes
