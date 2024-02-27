@@ -1,10 +1,7 @@
 import dataclasses
-from typing import Any, Dict, cast
 
 import strawberry_django
 import strawberry
-from accounts.types import UserType
-from django.db.models import QuerySet
 
 from strawberry import auto
 from strawberry.types import Info

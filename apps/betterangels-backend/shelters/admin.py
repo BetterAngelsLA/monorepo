@@ -10,7 +10,8 @@ class ShelterAdmin(admin.ModelAdmin):
         }),
         ('Details', {
             'fields': ('services', 'requirements', 'population', 'max_stay',
-                       'how_to_enter', 'description', 'bed_layout_description', 'typical_stay_description')
+                       'how_to_enter', 'description', 'bed_layout_description',
+                       'typical_stay_description')
         }),
         ('Other Information', {
             'fields': ('image_url',)

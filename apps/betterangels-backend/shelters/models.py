@@ -1,4 +1,5 @@
 from django.db import models
+from django_choices_field import TextChoicesField
 
 # from django.contrib.gis.db.models import PointField
 from .enums import (
@@ -8,8 +9,6 @@ from .enums import (
     HowToEnterEnum,
     BedStateEnum,
 )
-
-from django_choices_field import TextChoicesField
 
 
 # Base Classes
@@ -26,21 +25,21 @@ class Service(models.Model):
     title = TextChoicesField(choices_enum=ServiceEnum)
 
     def __str__(self) -> str:
-        return self.title
+        return str(self.title)
 
 
 class Population(models.Model):
     title = TextChoicesField(choices_enum=PopulationEnum)
 
     def __str__(self) -> str:
-        return self.title
+        return str(self.title)
 
 
 class Requirement(models.Model):
     title = TextChoicesField(choices_enum=RequirementEnum)
 
     def __str__(self) -> str:
-        return self.title
+        return str(self.title)
 
 
 # Primary Models
@@ -73,7 +72,8 @@ class Shelter(TimeStampedModel):
     how_to_enter = models.CharField(choices=[(x, x.value) for x in HowToEnterEnum])
 
     max_stay = models.PositiveSmallIntegerField(null=True, blank=True)
-    average_bed_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    average_bed_rate = models.DecimalField(max_digits=10, decimal_places=2,
+                                           null=True, blank=True)
 
     # Contact Information
     email = models.EmailField(max_length=254, null=True, blank=True)
