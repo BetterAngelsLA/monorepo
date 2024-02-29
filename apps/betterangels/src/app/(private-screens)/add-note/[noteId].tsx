@@ -94,7 +94,6 @@ export default function AddNote() {
   };
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {
-    console.log(values);
     try {
       await updateNote({
         variables: {

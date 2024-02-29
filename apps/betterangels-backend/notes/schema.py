@@ -41,6 +41,7 @@ class Mutation:
             # if not data.client:
             #     User.create_client()
 
+            # WARNING: Temporary workaround for organization selection
             # TODO: Update once organization selection is implemented. Currently selects
             # the first organization with a default Caseworker role for the user.
             permission_group = (
@@ -51,10 +52,6 @@ class Mutation:
                 )
                 .first()
             )
-
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented.
-            # Currently selects the first organization a user is apart of.
 
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
