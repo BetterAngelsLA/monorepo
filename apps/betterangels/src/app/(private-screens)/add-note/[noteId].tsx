@@ -93,7 +93,7 @@ export default function AddNote() {
     setExpanded,
   };
 
-  async function updateNoteFunction(values, isSubmitted: boolean) {
+  async function updateNoteFunction(values: INote, isSubmitted: boolean) {
     console.log(values);
     try {
       await updateNote({
@@ -206,7 +206,9 @@ export default function AddNote() {
               title="Save for later"
             />
           }
-          updateNoteFunction={updateNoteFunction}
+          onSubmit={methods.handleSubmit((values) =>
+            updateNoteFunction(values, true)
+          )}
         />
       </View>
     </FormProvider>

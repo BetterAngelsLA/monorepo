@@ -14,7 +14,7 @@ import { View } from 'react-native';
 interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-  noteTitle: string;
+  noteTitle?: string;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));

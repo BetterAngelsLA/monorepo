@@ -16,7 +16,6 @@ interface INoteCardProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  mr?: TSpacing;
   onPress?: () => void;
 }
 
