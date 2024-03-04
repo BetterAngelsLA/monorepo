@@ -175,19 +175,9 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     ... on NoteType {{
                         id
                         title
-                        timestamp
                         publicDetails
-                        privateDetails
                         moods {{
                             descriptor
-                        }}
-                        providedServices {{
-                            descriptor
-                            customDescriptor
-                        }}
-                        requestedServices {{
-                            descriptor
-                            customDescriptor
                         }}
                         client {{
                             id

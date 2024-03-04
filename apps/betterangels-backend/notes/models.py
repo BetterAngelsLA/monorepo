@@ -9,7 +9,7 @@ from organizations.models import Organization
 from simple_history.models import HistoricalRecords
 from tasks.models import Task
 
-from .enums import MoodEnum, ServiceEnum
+from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 
 
 class Note(BaseModel):
@@ -46,25 +46,16 @@ class Note(BaseModel):
         permissions = permission_enum_to_django_meta_permissions(PrivateNotePermissions)
 
 
-class ProvidedService(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
-    custom_descriptor = models.CharField(max_length=100, blank=True)
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="provided_services"
-    )
-
-
-class RequestedService(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
-    custom_descriptor = models.CharField(max_length=100, blank=True)
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="requested_services"
-    )
-
-
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+
+
+class Service(BaseModel):
+    descriptor = TextChoicesField(choices_enum=ServiceEnum)
+    custom_descriptor = models.CharField(max_length=100, blank=True)
+    service_type = TextChoicesField(choices_enum=ServiceTypeEnum)
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="services")
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
