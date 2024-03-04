@@ -18,6 +18,12 @@ class UserType:
 
 
 @dataclasses.dataclass
+@strawberry_django.input(User)
+class UserInput:
+    id: auto
+
+
+@dataclasses.dataclass
 @strawberry.input
 class MagicLinkInput:
     email: str

@@ -2,18 +2,12 @@ import dataclasses
 from typing import List, Optional
 
 import strawberry_django
-from accounts.types import UserType
+from accounts.types import UserInput, UserType
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
 
 from . import models
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.User)
-class UserInput:
-    id: auto
 
 
 @strawberry_django.type(models.Mood)
@@ -53,39 +47,6 @@ class ProvidedServiceInput:
 class RequestedServiceInput:
     descriptor: auto
     custom_descriptor: Optional[str]
-
-
-@dataclasses.dataclass
-@strawberry_django.type(models.Task)
-class TaskType:
-    id: auto
-    title: auto
-    status: auto
-    due_date: auto
-    client: UserType
-    created_at: auto
-    created_by: UserType
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.Task)
-class CreateTaskInput:
-    id: auto
-    title: auto
-    status: auto
-    due_date: auto
-    client: UserInput
-    created_at: auto
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.Task, partial=True)
-class UpdateTaskInput:
-    id: auto
-    title: auto
-    status: auto
-    due_date: auto
-    created_at: auto
 
 
 @dataclasses.dataclass

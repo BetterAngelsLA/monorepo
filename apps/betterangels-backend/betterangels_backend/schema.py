@@ -5,13 +5,15 @@ from notes.schema import Query as NoteQuery
 from strawberry import Schema
 from strawberry.tools import merge_types
 from strawberry_django.optimizer import DjangoOptimizerExtension
+from tasks.schema import Mutation as TaskMutation
+from tasks.schema import Query as TaskQuery
 
 # Schema Stiching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountQuery, NoteQuery)
+queries = (AccountQuery, NoteQuery, TaskQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountMutation, NoteMutation)
+mutations = (AccountMutation, NoteMutation, TaskMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(
