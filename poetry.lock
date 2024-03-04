@@ -101,10 +101,12 @@ django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
+freezegun = "^1.4.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
 strawberry-graphql-django = "^0.32.0"
+types-freezegun = "^1.1.10"
 whitenoise = "^6.5.0"
 
 [package.source]
@@ -3409,4 +3411,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "a73f75a0daf43428e81d0c7f4284a83c609707f6ab21936cc15ae24cd9343cfa"
+content-hash = "f1f5dcea0e10baf9267b074dd50abd412e6d9a5e99824fc9e505ad3fae5d5a4f"

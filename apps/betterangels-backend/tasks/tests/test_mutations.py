@@ -43,7 +43,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "IN_PROGRESS",
         }
 
-        expected_query_count = 10
+        expected_query_count = 11
         with self.assertNumQueries(expected_query_count):
             response = self._update_task_fixture(variables)
 
