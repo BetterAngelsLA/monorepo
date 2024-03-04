@@ -314,7 +314,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                   accessibilityRole="button"
                   onPress={() => onSuggestionsSelect(item)}
                 >
-                  <BodyText>{item.description}</BodyText>
+                  <BodyText>{item.description.split(', ')[0]}</BodyText>
+                  <BodyText color={Colors.NEUTRAL_DARK} size="xxs">
+                    {item.description.split(', ')[1]},{' '}
+                    {item.description.split(', ')[2]}
+                  </BodyText>
                 </TouchableOpacity>
               )}
             />
