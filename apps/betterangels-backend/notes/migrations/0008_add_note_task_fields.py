@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
     dependencies = [
         ("common", "0002_location"),
-        ("tasks", "0001_initial"),
+        ("tasks", "0001_add_task_model"),
         ("notes", "0007_add_private_note_permissions"),
     ]
 
