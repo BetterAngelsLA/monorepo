@@ -107,7 +107,7 @@ export default function AddNote() {
         },
       });
       if (isSubmitted === true) {
-        router.navigate(`/`);
+        router.back();
       }
     } catch (e) {
       console.log(e);
