@@ -25,7 +25,7 @@ export default function PrivateLayout() {
     >
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen
-        name="add-note/[clientId]"
+        name="add-note/[noteId]"
         options={{
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
