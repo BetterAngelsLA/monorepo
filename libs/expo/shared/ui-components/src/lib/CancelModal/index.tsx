@@ -1,8 +1,7 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import BasicModal from '../BasicModal';
 import BodyText from '../BodyText';
 import Button from '../Button';
