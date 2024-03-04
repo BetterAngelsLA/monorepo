@@ -2952,6 +2952,17 @@ files = [
 ]
 
 [[package]]
+name = "types-freezegun"
+version = "1.1.10"
+description = "Typing stubs for freezegun"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-freezegun-1.1.10.tar.gz", hash = "sha256:cb3a2d2eee950eacbaac0673ab50499823365ceb8c655babb1544a41446409ec"},
+    {file = "types_freezegun-1.1.10-py3-none-any.whl", hash = "sha256:fadebe72213e0674036153366205038e1f95c8ca96deb4ef9b71ddc15413543e"},
+]
+
+[[package]]
 name = "types-pytz"
 version = "2024.1.0.20240203"
 description = "Typing stubs for pytz"
@@ -3367,4 +3378,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "f1f5dcea0e10baf9267b074dd50abd412e6d9a5e99824fc9e505ad3fae5d5a4f"
+content-hash = "fefe55d36f63ddf5f233019f048668cec6bbce2d37ff70ec2363dd5a5f5ac5ea"
