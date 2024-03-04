@@ -16,6 +16,7 @@ skip_glob = ["*/migrations/*"]
 [tool.poetry.dependencies]
 python = "3.11.5"
 types-freezegun = "^1.1.10"
+freezegun = "^1.4.0"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
