@@ -15,7 +15,7 @@ import {
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IInputBasicProps extends TextInputProps {
+interface IBasicInputProps extends TextInputProps {
   label?: string;
   height?: 40 | 56 | 200;
   required?: boolean;
@@ -31,7 +31,7 @@ interface IInputBasicProps extends TextInputProps {
   icon?: ReactNode;
 }
 
-export function InputBasic(props: IInputBasicProps) {
+export function BasicInput(props: IBasicInputProps) {
   const {
     label,
     onChangeText,
@@ -106,7 +106,7 @@ export function InputBasic(props: IInputBasicProps) {
             accessible
             accessibilityRole="button"
             accessibilityLabel="delete icon"
-            accessibilityHint="deletes inputBasic's value"
+            accessibilityHint="deletes input's value"
             onPress={() => onChangeText && onChangeText('')}
             style={styles.icon}
           >

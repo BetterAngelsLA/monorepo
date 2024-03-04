@@ -1,11 +1,11 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { InputBasic } from './InputBasic';
+import { BasicInput } from './BasicInput';
 
-const InputBasicMeta: ComponentMeta<typeof InputBasic> = {
-  title: 'InputBasic',
-  component: InputBasic,
+const BasicInputMeta: ComponentMeta<typeof BasicInput> = {
+  title: 'BasicInput',
+  component: BasicInput,
   decorators: [
     (Story) => {
       return (
@@ -19,14 +19,14 @@ const InputBasicMeta: ComponentMeta<typeof InputBasic> = {
   ],
 };
 
-export default InputBasicMeta;
+export default BasicInputMeta;
 
-type InputBasicStory = ComponentStory<typeof InputBasic>;
+type BasicInputStory = ComponentStory<typeof BasicInput>;
 
-export const Basic: InputBasicStory = (args, context) => {
+export const Basic: BasicInputStory = (args, context) => {
   const [value, setValue] = useState('');
   return (
-    <InputBasic
+    <BasicInput
       label="Test"
       height={56}
       value={value}

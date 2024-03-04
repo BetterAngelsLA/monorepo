@@ -6,12 +6,12 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BasicInput,
   BodyText,
   Button,
   H3,
   H4,
   IconButton,
-  InputBasic,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import { useState } from 'react';
@@ -44,7 +44,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const { isModalVisible, toggleModal, setExpanded } = props;
   const { trigger, setValue, watch } = useFormContext();
   const [pin, setPin] = useState(false);
-  const [initialRegion, setInitialRegion] = useState(INITIAL_LOCATION);
+  const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -103,7 +103,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           name,
         });
 
-        setInitialRegion({
+        setInitialLocation({
           longitude,
           latitude,
         });
@@ -189,13 +189,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               width: '100%',
             }}
           >
-            <InputBasic
+            <BasicInput
               componentStyle={{
                 top: Spacings.sm,
               }}
               icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
               value={address?.short}
-              onChangeText={(e) =>
+              onChangeText={(e: string) =>
                 setAddress({
                   full: e,
                   short: e,
@@ -310,16 +310,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               latitudeDelta: 0.005,
               latitude: currentLocation
                 ? currentLocation.latitude
-                : initialRegion.latitude,
+                : initialLocation.latitude,
               longitude: currentLocation
                 ? currentLocation.longitude
-                : initialRegion.longitude,
+                : initialLocation.longitude,
             }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
-              longitude: initialRegion.longitude,
-              latitude: initialRegion.latitude,
+              longitude: initialLocation.longitude,
+              latitude: initialLocation.latitude,
             }}
             style={{
               height: '100%',
