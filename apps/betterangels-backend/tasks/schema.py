@@ -6,11 +6,11 @@ import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
-from notes.models import Task
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from tasks.models import Task
 from tasks.types import CreateTaskInput, TaskType, UpdateTaskInput
 
 

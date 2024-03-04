@@ -43,7 +43,6 @@ class NoteType:
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]
-
     is_submitted: auto
     created_at: auto
     created_by: UserType

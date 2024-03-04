@@ -57,7 +57,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdAt": "2024-02-26T00:00:00+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
         }
-
         self.assertEqual(updated_task, expected_task)
 
     def test_delete_task_mutation(self) -> None:
@@ -72,7 +71,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 8
+        expected_query_count = 6
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

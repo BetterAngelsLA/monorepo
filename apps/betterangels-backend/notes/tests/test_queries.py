@@ -65,4 +65,3 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
-

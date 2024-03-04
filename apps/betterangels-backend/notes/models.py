@@ -7,7 +7,6 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
-from tasks.models import Task
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 
@@ -20,8 +19,6 @@ class Note(BaseModel):
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
-    parent_tasks = models.ManyToManyField(Task, related_name="notes_created")
-    child_tasks = models.ManyToManyField(Task, related_name="notes_next_task")
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,

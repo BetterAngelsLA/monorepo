@@ -2,10 +2,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from accounts.models import User
-from accounts.tests.baker_recipes import permission_group_recipe
-from django.contrib.auth.models import Group
 from django.test import TestCase
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
