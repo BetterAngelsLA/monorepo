@@ -175,7 +175,7 @@ export default function TabOneScreen() {
   const router = useRouter();
 
   const { data, loading: isLoading } = useQuery(GET_NOTES, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
   });
 
   async function createNoteFunction() {

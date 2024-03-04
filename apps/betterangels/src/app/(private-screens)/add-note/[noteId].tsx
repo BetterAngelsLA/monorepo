@@ -52,7 +52,7 @@ export default function AddNote() {
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   const { data, loading: isLoading } = useQuery(GET_NOTE, {
     variables: { id: noteId },
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
   });
   const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
