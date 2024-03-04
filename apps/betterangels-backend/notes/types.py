@@ -22,20 +22,6 @@ class CreateMoodInput:
 
 
 @dataclasses.dataclass
-@strawberry_django.type(models.Service)
-class ServiceType:
-    descriptor: auto
-    custom_descriptor: Optional[str]
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.Service)
-class CreateServiceInput:
-    descriptor: auto
-    custom_descriptor: Optional[str]
-
-
-@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
@@ -44,6 +30,7 @@ class NoteType:
     client: Optional[UserType]
     moods: List[MoodType]
     is_submitted: auto
+    timestamp: auto
     created_at: auto
     created_by: UserType
     private_details: Optional[str] = strawberry_django.field(
@@ -61,7 +48,7 @@ class CreateNoteInput:
 
 
 @dataclasses.dataclass
-@strawberry_django.input(models.Note, partial=True)
+@strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto
     title: auto

@@ -122,6 +122,7 @@ type NoteType {
   client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
+  timestamp: DateTime!
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
@@ -190,7 +191,7 @@ type TaskType {
 
 input UpdateNoteInput {
   id: ID
-  title: String
+  title: String!
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]

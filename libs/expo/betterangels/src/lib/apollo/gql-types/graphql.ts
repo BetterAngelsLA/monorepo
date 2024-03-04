@@ -144,6 +144,7 @@ export type NoteType = {
   moods: Array<MoodType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   publicDetails: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
 };
 
@@ -236,7 +237,7 @@ export type UpdateNoteInput = {
   moods?: InputMaybe<Array<CreateMoodInput>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
