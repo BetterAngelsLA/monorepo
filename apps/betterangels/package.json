@@ -50,7 +50,8 @@
     "react-dom": "*",
     "react-native-svg-transformer": "*",
     "tslib": "*",
-    "react-native-maps": "*"
+    "react-native-maps": "*",
+    "@teovilla/react-native-web-maps": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",

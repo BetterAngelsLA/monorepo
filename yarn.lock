@@ -2146,9 +2146,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/cli@npm:0.17.5":
-  version: 0.17.5
-  resolution: "@expo/cli@npm:0.17.5"
+"@expo/cli@npm:0.17.6":
+  version: 0.17.6
+  resolution: "@expo/cli@npm:0.17.6"
   dependencies:
     "@babel/runtime": ^7.20.0
     "@expo/code-signing-certificates": 0.0.5
@@ -2228,7 +2228,7 @@ __metadata:
     ws: ^8.12.1
   bin:
     expo-internal: build/bin/cli
-  checksum: f623dc48e93f1ff2f22e964dfb0ecdf806ff300a3dafbd7bdf43bdaad0dbe28b91aa34a24edee88f68c634ab3b83b98b14c04005a8cf299ed0e48d97c02e8d28
+  checksum: a8f360feff4d4880bf0e729f374f8382ba2516420f78b866181e9e144c7435f6de8f74e75adb29ce8dea7f45f2d295c1d5c72b70f8e7522d504e468de5cff328
   languageName: node
   linkType: hard
 
@@ -2400,6 +2400,36 @@ __metadata:
   peerDependencies:
     "@react-native/babel-preset": "*"
   checksum: eab02801275868aa65bc972ff949ce71f9dd8d112a4001b8bb69c7b117c427222249a1a585e8e97b1086c56799fff8264644e09b810c6c23930b20c797a728b9
+  languageName: node
+  linkType: hard
+
+"@expo/metro-config@npm:0.17.5":
+  version: 0.17.5
+  resolution: "@expo/metro-config@npm:0.17.5"
+  dependencies:
+    "@babel/core": ^7.20.0
+    "@babel/generator": ^7.20.5
+    "@babel/parser": ^7.20.0
+    "@babel/types": ^7.20.0
+    "@expo/config": ~8.5.0
+    "@expo/env": ~0.2.0
+    "@expo/json-file": ~8.3.0
+    "@expo/spawn-async": ^1.7.2
+    babel-preset-fbjs: ^3.4.0
+    chalk: ^4.1.0
+    debug: ^4.3.2
+    find-yarn-workspace-root: ~2.0.0
+    fs-extra: ^9.1.0
+    getenv: ^1.0.0
+    glob: ^7.2.3
+    jsc-safe-url: ^0.2.4
+    lightningcss: ~1.19.0
+    postcss: ~8.4.32
+    resolve-from: ^5.0.0
+    sucrase: 3.34.0
+  peerDependencies:
+    "@react-native/babel-preset": "*"
+  checksum: ea176dfe0c4fd9de7eb8083b6700bf54337d262386b8a2f8c5ae3ce4017d9618c0b0eb475f4c51445c3216873bec87a63c78ddb4bbf97fadd51842fdf5043319
   languageName: node
   linkType: hard
 
@@ -2609,6 +2639,25 @@ __metadata:
   version: 1.1.3
   resolution: "@gar/promisify@npm:1.1.3"
   checksum: 4059f790e2d07bf3c3ff3e0fec0daa8144fe35c1f6e0111c9921bd32106adaa97a4ab096ad7dab1e28ee6a9060083c4d1a4ada42a7f5f3f7a96b8812e2b757c1
+  languageName: node
+  linkType: hard
+
+"@googlemaps/js-api-loader@npm:1.16.2":
+  version: 1.16.2
+  resolution: "@googlemaps/js-api-loader@npm:1.16.2"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+  checksum: 122ee57cc6a936e50358aedc4e79042353590467210e901fb42d4e7d9123c248c4db5cd5407a350cb5bea6de9e9ef1a508c08ba593475285d90bc4b93db42f51
+  languageName: node
+  linkType: hard
+
+"@googlemaps/markerclusterer@npm:2.5.3":
+  version: 2.5.3
+  resolution: "@googlemaps/markerclusterer@npm:2.5.3"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+    supercluster: ^8.0.1
+  checksum: aa74e9b59d302a0c7444c48818f017532172973dece223c9a3f9b5cdb8aeba7ea3dd87ee785420972d24e7738937e76373e8aae8a0cf10f045bf9869d1b6b9ee
   languageName: node
   linkType: hard
 
@@ -3668,6 +3717,7 @@ __metadata:
     "@storybook/react-native": ^6.5.6
     "@storybook/react-webpack5": 7.6.12
     "@svgr/webpack": ^8.1.0
+    "@teovilla/react-native-web-maps": ^0.9.4
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/jest-native": 5.4.3
     "@testing-library/react-native": 12.4.3
@@ -3691,14 +3741,14 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     eslint-plugin-react-native-a11y: ^3.3.0
-    expo: ~50.0.7
+    expo: ~50.0.8
     expo-auth-session: ~5.4.0
     expo-camera: ~14.0.5
     expo-constants: ~15.4.5
     expo-dev-client: ~3.3.8
     expo-image-picker: ~14.7.1
     expo-linking: ~6.2.2
-    expo-router: ~3.4.7
+    expo-router: ~3.4.8
     expo-secure-store: ~12.8.1
     expo-splash-screen: ~0.26.4
     expo-status-bar: ~1.11.1
@@ -5196,6 +5246,37 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.13.10
   checksum: aeec13b234a946052512d05239067d2d63422f9ec70bf2fe7acfd6b9196693fc33fbaf43c2667c167f777d90a095c6604eb487e0bce79e230b6df0f6cacd6a55
+  languageName: node
+  linkType: hard
+
+"@react-google-maps/api@npm:^2.12.0":
+  version: 2.19.3
+  resolution: "@react-google-maps/api@npm:2.19.3"
+  dependencies:
+    "@googlemaps/js-api-loader": 1.16.2
+    "@googlemaps/markerclusterer": 2.5.3
+    "@react-google-maps/infobox": 2.19.2
+    "@react-google-maps/marker-clusterer": 2.19.2
+    "@types/google.maps": 3.55.2
+    invariant: 2.2.4
+  peerDependencies:
+    react: ^16.8 || ^17 || ^18
+    react-dom: ^16.8 || ^17 || ^18
+  checksum: fd12a3ee4ee2c987dff07f791396b57b16c60dcffc53cd151afe2c6a0cb3f1fc1c21d341871b8b0b362cfc6a17541d42ff5e6f5960e6795bc05314bd81b10250
+  languageName: node
+  linkType: hard
+
+"@react-google-maps/infobox@npm:2.19.2":
+  version: 2.19.2
+  resolution: "@react-google-maps/infobox@npm:2.19.2"
+  checksum: e2022d857931492d0fd457b72fa729076da1e3e0c5281a402a71127e35d683cb7ca4074e2888682a612ca4b5d2b0d6abc26cce94aa9a315abeaa61b4f6239f24
+  languageName: node
+  linkType: hard
+
+"@react-google-maps/marker-clusterer@npm:2.19.2":
+  version: 2.19.2
+  resolution: "@react-google-maps/marker-clusterer@npm:2.19.2"
+  checksum: fde23240ae153ec8aeddd1d702f1e2a8ee51412fe3b5079a88d4e1697f8c580e743afe6bb815214b218cefddb1a2097a9d982440c2207906dd1dd2a88b8068cb
   languageName: node
   linkType: hard
 
@@ -7243,6 +7324,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@teovilla/react-native-web-maps@npm:^0.9.4":
+  version: 0.9.4
+  resolution: "@teovilla/react-native-web-maps@npm:0.9.4"
+  dependencies:
+    "@react-google-maps/api": ^2.12.0
+    expo-location: ~15.1.1
+    supercluster: ^7.1.5
+  peerDependencies:
+    "@react-google-maps/api": "*"
+    expo-location: "*"
+    react: "*"
+    react-native: "*"
+    react-native-maps: "*"
+  checksum: 6b5a11d0421a6dd1136704c46ce58cafd766f647145de8602f51ebb1345d67f7eb80ad94f752ad13a0e6cac64c9f2399ee266061de126bc19baee1e6b7fd5b5b
+  languageName: node
+  linkType: hard
+
 "@testing-library/jest-dom@npm:5.16.5":
   version: 5.16.5
   resolution: "@testing-library/jest-dom@npm:5.16.5"
@@ -7547,6 +7645,13 @@ __metadata:
   version: 7946.0.14
   resolution: "@types/geojson@npm:7946.0.14"
   checksum: ae511bee6488ae3bd5a3a3347aedb0371e997b14225b8983679284e22fa4ebd88627c6e3ff8b08bf4cc35068cb29310c89427311ffc9322c255615821a922e71
+  languageName: node
+  linkType: hard
+
+"@types/google.maps@npm:3.55.2":
+  version: 3.55.2
+  resolution: "@types/google.maps@npm:3.55.2"
+  checksum: c0b554fddb0a59ddbe7cfb1ef8bc4aeacd9660b726546ec75fca62619680572338ceb3bcc5c63b035c87e6cc91532fa78f7f0d1aa2b5be4ac7fdebcffb396b39
   languageName: node
   linkType: hard
 
@@ -13023,12 +13128,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-file-system@npm:~16.0.0, expo-file-system@npm:~16.0.6":
+"expo-file-system@npm:~16.0.0":
   version: 16.0.6
   resolution: "expo-file-system@npm:16.0.6"
   peerDependencies:
     expo: "*"
   checksum: ce49fac8cebf073caf242d4fb1bad5eaa76d944986d86f1b19f65db1d0a2cc0983f1400584f72d664892e4a27683802edf7880361c79595834fa25ee99367fa2
+  languageName: node
+  linkType: hard
+
+"expo-file-system@npm:~16.0.7":
+  version: 16.0.7
+  resolution: "expo-file-system@npm:16.0.7"
+  peerDependencies:
+    expo: "*"
+  checksum: 4166bfd0c51d618be20fbb5e3734d75a85c27487f9eaf81240bbf597b3afaba5ef3647f8724f55e4fcb5bd1fbdd5ee9958336603039f6fb82ddcca07e6a37e38
   languageName: node
   linkType: hard
 
@@ -13089,6 +13203,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-location@npm:~15.1.1":
+  version: 15.1.1
+  resolution: "expo-location@npm:15.1.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 96bf55821fbee5176d44fe81214923545d914860e7f769ee1380bdb5eeef0c98346bbcb759c29cba99488b3367498f57e3b750ad42cc1a5ae270640b7331d148
+  languageName: node
+  linkType: hard
+
 "expo-manifests@npm:~0.13.0":
   version: 0.13.2
   resolution: "expo-manifests@npm:0.13.2"
@@ -13126,9 +13249,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-router@npm:~3.4.7":
-  version: 3.4.7
-  resolution: "expo-router@npm:3.4.7"
+"expo-router@npm:~3.4.8":
+  version: 3.4.8
+  resolution: "expo-router@npm:3.4.8"
   dependencies:
     "@expo/metro-runtime": 3.1.3
     "@expo/server": ^0.3.0
@@ -13155,7 +13278,7 @@ __metadata:
       optional: true
     react-native-reanimated:
       optional: true
-  checksum: b88d39ade6f7a6be105d9c1cffef28ec254dfeb094aea6c9aade5058eb944f605db5d45751c2c1dd2d9bf295029210395922522fbe1a0416729a55d64ca01f3f
+  checksum: f36b108aa3d65ca1b4f69dfa68ff76b3070fa53bbac6b47378db845904943aaae06314805db771599e5e2af5b35521339e44a7a47c7e3ef601f0dbfa4432953a
   languageName: node
   linkType: hard
 
@@ -13237,19 +13360,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~50.0.7":
-  version: 50.0.7
-  resolution: "expo@npm:50.0.7"
+"expo@npm:~50.0.8":
+  version: 50.0.8
+  resolution: "expo@npm:50.0.8"
   dependencies:
     "@babel/runtime": ^7.20.0
-    "@expo/cli": 0.17.5
+    "@expo/cli": 0.17.6
     "@expo/config": 8.5.4
     "@expo/config-plugins": 7.8.4
-    "@expo/metro-config": 0.17.4
+    "@expo/metro-config": 0.17.5
     "@expo/vector-icons": ^14.0.0
     babel-preset-expo: ~10.0.1
     expo-asset: ~9.0.2
-    expo-file-system: ~16.0.6
+    expo-file-system: ~16.0.7
     expo-font: ~11.10.3
     expo-keep-awake: ~12.8.2
     expo-modules-autolinking: 1.10.3
@@ -13258,7 +13381,7 @@ __metadata:
     whatwg-url-without-unicode: 8.0.0-3
   bin:
     expo: bin/cli
-  checksum: 0df4d94bb4acce1a278ec06f1f8a848bb8d171704a84178c6df61eeefdcfc71f8c831390a02175b9cfa6a2f155965217a7f5beb63d109e68c3ad867f36c3a21a
+  checksum: c25556f718f044e8ab795146693a4f86028a107fd6d1b2b96c9c0cde77fe62a8a487b9fc68629880bf6ae50c40857a7aa5ccbdfac45697e433dbaafa2ef62656
   languageName: node
   linkType: hard
 
@@ -15103,7 +15226,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -16726,6 +16849,20 @@ __metadata:
     object.assign: ^4.1.4
     object.values: ^1.1.6
   checksum: f4b05fa4d7b5234230c905cfa88d36dc8a58a6666975a3891429b1a8cdc8a140bca76c297225cb7a499fad25a2c052ac93934449a2c31a44fc9edd06c773780a
+  languageName: node
+  linkType: hard
+
+"kdbush@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "kdbush@npm:3.0.0"
+  checksum: bc5fa433958e42664a8a92457e4f0d1db55b3b8e36956aac0102964adb2eab043bdbff156570dc8d867144ceff588fb7a1c6e099ba9be068cd1767a73e1ace92
+  languageName: node
+  linkType: hard
+
+"kdbush@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "kdbush@npm:4.0.2"
+  checksum: 6782ef2cdaec9322376b9955a16b0163beda0cefa2f87da76e8970ade2572d8b63bec915347aaeac609484b0c6e84d7b591f229ef353b68b460238095bacde2d
   languageName: node
   linkType: hard
 
@@ -22461,6 +22598,24 @@ __metadata:
   version: 9.2.1
   resolution: "sudo-prompt@npm:9.2.1"
   checksum: 50a29eec2f264f2b78d891452a64112d839a30bffbff4ec065dba4af691a35b23cdb8f9107d413e25c1a9f1925644a19994c00602495cab033d53f585fdfd665
+  languageName: node
+  linkType: hard
+
+"supercluster@npm:^7.1.5":
+  version: 7.1.5
+  resolution: "supercluster@npm:7.1.5"
+  dependencies:
+    kdbush: ^3.0.0
+  checksum: 69863238870093b96617135884721b6343746e14f396b2d67d6b55c52c362ec0516c5e386aa21815e75a9cef2054e831ac34023d0d8b600091d28cea0794f027
+  languageName: node
+  linkType: hard
+
+"supercluster@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "supercluster@npm:8.0.1"
+  dependencies:
+    kdbush: ^4.0.2
+  checksum: 39d141f768a511efa53260252f9dab9a2ce0228b334e55482c8d3019e151932f05e1a9a0252d681737651b13c741c665542a6ddb40ec27de96159ea7ad41f7f4
   languageName: node
   linkType: hard
 

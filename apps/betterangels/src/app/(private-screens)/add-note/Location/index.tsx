@@ -13,11 +13,13 @@ import {
   H5,
   IconButton,
   Input,
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ILocationProps {
@@ -53,6 +55,10 @@ export default function Location(props: ILocationProps) {
     toggleModal(false);
     setExpanded(undefined);
   };
+
+  if (!MapView || !Marker || !PROVIDER_GOOGLE) {
+    return null;
+  }
 
   return (
     <FieldCard
@@ -261,7 +267,7 @@ export default function Location(props: ILocationProps) {
             <MapView
               zoomEnabled
               scrollEnabled
-              onPress={(e) => {
+              onPress={(e: any) => {
                 if (isLocation && pin) {
                   setValue('location', undefined);
                   setCurrentLocation({
