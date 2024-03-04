@@ -56,6 +56,8 @@ input DeleteDjangoObjectInput {
 
 union DeleteNotePayload = NoteType | OperationInfo
 
+union DiscardNoteChangesPayload = NoteType | OperationInfo
+
 input MagicLinkInput {
   email: String!
 }
@@ -97,6 +99,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  discardNoteChanges(data: DeleteDjangoObjectInput!): DiscardNoteChangesPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
 }
 
 type NoteType {
@@ -157,6 +160,7 @@ input UpdateNoteInput {
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
+  isSaved: Boolean
   isSubmitted: Boolean
 }
 

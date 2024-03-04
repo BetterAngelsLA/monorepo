@@ -81,6 +81,17 @@ class Mutation:
 
             return cast(NoteType, note)
 
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def discard_note_changes(
+        self, info: Info, data: DeleteDjangoObjectInput
+    ) -> NoteType:
+        note = Note.objects.get(id=data.id)
+
+        last_saved_note = note.history.as_of(note.last_saved_at)
+        last_saved_note.save()
+
+        return cast(NoteType, last_saved_note)
+
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
         extensions=[

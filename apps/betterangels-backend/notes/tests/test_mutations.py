@@ -44,7 +44,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
         }
 
-        expected_query_count = 30
+        expected_query_count = 32
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -58,6 +58,68 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "client": {"id": str(self.note_client_1.pk)},
         }
         self.assertEqual(updated_note, expected_note)
+
+    def test_discard_note_changes_mutation(self) -> None:
+        """
+        Asserts that when discard mutation is called, the Note is
+        reverted to the last saved version.
+        """
+
+        # Edit 1 - should be persisted
+        persisted_update_variables = {
+            "id": self.note["id"],
+            "title": "Updated Title",
+            "moods": [{"descriptor": "ANXIOUS"}],
+            "publicDetails": "Updated Body",
+            "isSaved": False,
+            "isSubmitted": False,
+        }
+
+        response = self._update_note_fixture(persisted_update_variables)
+        self.assertEqual(len(response["data"]["updateNote"]["moods"]), 1)
+
+        # Edit 2 - user hits Save button
+        persisted_update_variables["isSaved"] = True
+        response = self._update_note_fixture(persisted_update_variables)
+        self.assertEqual(len(response["data"]["updateNote"]["moods"]), 1)
+
+        # Edit 3 - should be discarded
+        discarded_update_variables = {
+            "id": self.note["id"],
+            "title": "Discarded Title",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "publicDetails": "Discarded Body",
+            "isSaved": False,
+            "isSubmitted": False,
+        }
+
+        response = self._update_note_fixture(discarded_update_variables)
+        self.assertEqual(len(response["data"]["updateNote"]["moods"]), 2)
+
+        mutation = """
+            mutation DiscardNoteChanges($id: ID!) {
+                discardNoteChanges(data: { id: $id }) {
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"id": self.note["id"]}
+
+        expected_query_count = 12
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        reverted_note = response["data"]["discardNoteChanges"]
+        self.assertEqual(len(reverted_note["moods"]), 1)
+        self.assertEqual(reverted_note["title"], "Updated Title")
+        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
     def test_delete_note_mutation(self) -> None:
         mutation = """
