@@ -3,10 +3,10 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
+from notes.models import Note
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
-from notes.models import Note
 
 from . import models
 

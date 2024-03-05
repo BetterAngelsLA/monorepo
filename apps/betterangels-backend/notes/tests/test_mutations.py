@@ -1,6 +1,6 @@
+import time
 from unittest.mock import ANY
 
-import time
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase

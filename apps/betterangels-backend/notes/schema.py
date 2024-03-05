@@ -1,6 +1,6 @@
 from dataclasses import asdict
-from typing import List, cast
 from datetime import timedelta
+from typing import List, cast
 
 import strawberry
 import strawberry_django
@@ -17,7 +17,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .types import CreateNoteInput, NoteType, UpdateNoteInput, RevertNoteVersionInput
+from .types import CreateNoteInput, NoteType, RevertNoteVersionInput, UpdateNoteInput
 
 
 @strawberry.type
@@ -83,14 +83,14 @@ class Mutation:
             return cast(NoteType, note)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
-    def revert_note_version(
-        self, info: Info, data: RevertNoteVersionInput
-    ) -> NoteType:
-        historical_as_of = Note.history.model.objects.get(id=data.id, history_id=data.history_id).history_date
+    def revert_note_version(self, info: Info, data: RevertNoteVersionInput) -> NoteType:
+        historical_as_of = Note.history.model.objects.get(
+            id=data.id, history_id=data.history_id
+        ).history_date
         # TODO: The way to handle this without having to add a 1 second delay would be to
         # modify the updateNote mutation to be a custom function within an atomic block, and pass the "update_at"
         # field directly to the Note instance and related model instances.
-        historical_as_of +=  timedelta(seconds=1)
+        historical_as_of += timedelta(seconds=1)
         revert_to_note = Note.objects.get(id=data.id).history.as_of(historical_as_of)
         # saving a historical note reverts the current note object to this moment in history
         revert_to_note.save()

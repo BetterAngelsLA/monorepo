@@ -3,17 +3,15 @@ from common.models import BaseModel
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.gis.db.models import PointField
 from django.db import models
+from django.db.models import OuterRef, Subquery
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
-from django.db.models import OuterRef, Subquery
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 from .managers import NoteManager
-
-
 
 
 class Location(BaseModel):
