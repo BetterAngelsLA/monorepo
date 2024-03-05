@@ -27,4 +27,3 @@ class GraphQLTestCaseMixin:
         if not isinstance(json_data, dict):
             raise ValueError("Response JSON is not a dictionary")
         return json_data
-
