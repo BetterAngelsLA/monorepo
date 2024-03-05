@@ -4,16 +4,16 @@ import { View } from 'react-native';
 import Button from '../Button';
 
 interface IBottomActionsProps {
-  onSubmit: () => void;
   optionalAction?: ReactNode;
   cancel: ReactNode;
+  onSubmit: () => void;
   /**
    * Optional action to be displayed on the right side of the bottom actions.
    */
 }
 
 export default function BottomActions(props: IBottomActionsProps) {
-  const { onSubmit, optionalAction, cancel } = props;
+  const { optionalAction, cancel, onSubmit } = props;
 
   return (
     <View
