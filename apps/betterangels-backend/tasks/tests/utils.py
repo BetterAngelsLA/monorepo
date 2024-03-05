@@ -34,7 +34,6 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             {
                 "title": f"User: {self.case_manager_1.id}",
                 "status": "TO_DO",
-                "client": {"id": self.task_client_1.id},
             },
         )["data"]["createTask"]
         # Logout after setting up the task

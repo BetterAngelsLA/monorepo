@@ -32,7 +32,7 @@ export type CreateNoteInput = {
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateTaskInput = {
-  client: UserInput;
+  client?: InputMaybe<UserInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -222,7 +222,7 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  client: UserType;
+  client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueDate?: Maybe<Scalars['DateTime']['output']>;
@@ -243,6 +243,7 @@ export type UpdateNoteInput = {
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateTaskInput = {
+  client?: InputMaybe<UserInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;

@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Optional
 
 import strawberry_django
 from accounts.types import UserInput, UserType
@@ -14,7 +15,7 @@ class TaskType:
     title: auto
     status: auto
     due_date: auto
-    client: UserType
+    client: Optional[UserType]
     created_at: auto
     created_by: UserType
 
@@ -26,7 +27,7 @@ class CreateTaskInput:
     title: auto
     status: auto
     due_date: auto
-    client: UserInput
+    client: Optional[UserInput]
     created_at: auto
 
 
@@ -37,4 +38,5 @@ class UpdateTaskInput:
     title: auto
     status: auto
     due_date: auto
+    client: Optional[UserInput]
     created_at: auto
