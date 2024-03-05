@@ -16,7 +16,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .types import CreateNoteInput, NoteType, UpdateNoteInput
+from .types import CreateNoteInput, NoteType, UpdateNoteInput, RevertNoteVersionInput
 
 
 @strawberry.type
@@ -82,15 +82,14 @@ class Mutation:
             return cast(NoteType, note)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
-    def discard_note_changes(
-        self, info: Info, data: DeleteDjangoObjectInput
+    def revert_note_version(
+        self, info: Info, data: RevertNoteVersionInput
     ) -> NoteType:
-        note = Note.objects.get(id=data.id)
+        historical_instance = Note.history.model.objects.get(id=data.id, history_id=data.revert_to_history_id).instance
+        # saving a historical note reverts the current note object to this moment in history
+        historical_instance.save()
 
-        last_saved_note = note.history.as_of(note.last_saved_at)
-        last_saved_note.save()
-
-        return cast(NoteType, last_saved_note)
+        return cast(NoteType, historical_instance)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,

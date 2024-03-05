@@ -94,6 +94,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                         id
                         title
                         publicDetails
+                        historyId
                         moods {{
                             descriptor
                         }}

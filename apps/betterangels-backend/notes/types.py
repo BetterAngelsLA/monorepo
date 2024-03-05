@@ -6,6 +6,7 @@ from accounts.types import UserType
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
+from notes.models import Note
 
 from . import models
 
@@ -52,6 +53,14 @@ class NoteType:
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
 
+    @strawberry_django.field
+    def history_id(self) -> int:
+        # history_id will be annotated inside the NoteManager if instance came from the queryset
+        if history_id := getattr(self, "history_id", None):
+            return history_id
+
+        return self.history.latest().history_id
+
 
 @dataclasses.dataclass
 @strawberry_django.input(models.User)
@@ -76,5 +85,11 @@ class UpdateNoteInput:
     public_details: auto
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
-    is_saved: auto
     is_submitted: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Note)
+class RevertNoteVersionInput:
+    id: auto
+    revert_to_history_id: int

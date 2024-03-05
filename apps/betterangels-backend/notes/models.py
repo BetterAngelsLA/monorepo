@@ -8,8 +8,12 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
+from django.db.models import OuterRef, Subquery
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
+from .managers import NoteManager
+
+
 
 
 class Location(BaseModel):
@@ -28,7 +32,6 @@ class Note(BaseModel):
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
-    is_saved = models.BooleanField(default=False)
     is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,
@@ -41,11 +44,12 @@ class Note(BaseModel):
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    last_saved_at = models.DateTimeField(null=True, blank=True, default=None)
     history = HistoricalRecords()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
+
+    objects = NoteManager()
 
     def __str__(self) -> str:
         return self.title
