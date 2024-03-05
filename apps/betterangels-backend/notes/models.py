@@ -7,6 +7,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
+from tasks.models import Task
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 
@@ -14,6 +15,7 @@ from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 class Note(BaseModel):
     title = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
+    purposes = models.ManyToManyField(Task)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )

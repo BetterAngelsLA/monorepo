@@ -12,7 +12,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.handle_user_login("case_manager_1")
 
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 32
+        expected_query_count = 33
         with self.assertNumQueries(expected_query_count):
             response = self.create_note_fixture(
                 {
@@ -27,6 +27,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "title": "New Note",
             "moods": [],
+            "purposes": [],
             "publicDetails": "This is a new note.",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
@@ -39,11 +40,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "purposes": [t.id for t in self.tasks],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
 
-        expected_query_count = 30
+        expected_query_count = 44
         with self.assertNumQueries(expected_query_count):
             response = self.update_note_fixture(variables)
 
@@ -52,6 +54,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "purposes": [
+                {"id": str(self.tasks[0].id), "title": self.tasks[0].title},
+                {"id": str(self.tasks[1].id), "title": self.tasks[1].title},
+            ],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
@@ -70,7 +76,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

@@ -1,8 +1,11 @@
 from django.test import ignore_warnings
+from freezegun import freeze_time
+from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
+@freeze_time("2024-03-04")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -29,6 +32,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     title
                     publicDetails
                     timestamp
+                    purposes {
+                        id
+                        title
+                    }
                     moods {
                         descriptor
                     }
@@ -38,16 +45,28 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
         variables = {"id": note_id}
-        expected_query_count = 5
+        expected_query_count = 6
+
+        note = Note.objects.get(id=note_id)
+        note.purposes.add(*self.tasks)
+
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        note = response["data"]["note"]
-
-        self.assertEqual(note["publicDetails"], "This is a new note.")
-        self.assertEqual(
-            note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
-        )
+        returned_note = response["data"]["note"]
+        expected_note = {
+            "id": note_id,
+            "title": "New Note",
+            "publicDetails": "This is a new note.",
+            "timestamp": "2024-03-04T00:00:00+00:00",
+            "purposes": [
+                {"id": str(self.tasks[0].id), "title": self.tasks[0].title},
+                {"id": str(self.tasks[1].id), "title": self.tasks[1].title},
+            ],
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "privateDetails": "",
+        }
+        self.assertEqual(returned_note, expected_note)
 
     def test_notes_query(self) -> None:
         query = """

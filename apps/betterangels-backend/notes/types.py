@@ -4,8 +4,9 @@ from typing import List, Optional
 import strawberry_django
 from accounts.types import UserInput, UserType
 from notes.permissions import PrivateNotePermissions
-from strawberry import auto
+from strawberry import ID, auto
 from strawberry_django.permissions import HasSourcePerm
+from tasks.types import TaskType
 
 from . import models
 
@@ -26,6 +27,7 @@ class CreateMoodInput:
 class NoteType:
     id: auto
     title: auto
+    purposes: List[TaskType]
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]
@@ -52,6 +54,7 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
+    purposes: Optional[List[ID]]
     public_details: auto
     private_details: auto
     moods: Optional[List[CreateMoodInput]]

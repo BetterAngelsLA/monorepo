@@ -117,6 +117,7 @@ type Mutation {
 type NoteType {
   id: ID!
   title: String!
+  purposes: [TaskType!]!
   publicDetails: String!
   client: UserType
   moods: [MoodType!]!
@@ -187,6 +188,7 @@ type TaskType {
 input UpdateNoteInput {
   id: ID
   title: String!
+  purposes: [ID!]
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]

@@ -84,6 +84,10 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                         moods {{
                             descriptor
                         }}
+                        purposes {{
+                            id
+                            title
+                        }}
                         client {{
                             id
                         }}
