@@ -12,6 +12,8 @@ from .models import User
 class UserType:
     id: auto
     username: auto
+    first_name: auto
+    last_name: auto
     email: auto
 
 

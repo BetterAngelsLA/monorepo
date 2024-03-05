@@ -3,6 +3,8 @@ import { createContext, Dispatch, SetStateAction } from 'react';
 export type TUser = {
   id: string;
   username?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   hasOrganization: boolean;
 };

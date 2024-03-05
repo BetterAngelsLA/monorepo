@@ -20,3 +20,16 @@ export const GET_NOTES = gql`
     }
   }
 `;
+
+export const GET_NOTE = gql`
+  query ViewNote($id: ID!) {
+    note(pk: $id) {
+      id
+      title
+      publicDetails
+      client {
+        id
+      }
+    }
+  }
+`;

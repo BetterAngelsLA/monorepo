@@ -7,6 +7,8 @@ const GET_CURRENT_USER = gql`
     currentUser {
       id
       username
+      firstName
+      lastName
       email
     }
   }
