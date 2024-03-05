@@ -23,7 +23,6 @@ class TaskType:
 @dataclasses.dataclass
 @strawberry_django.input(models.Task)
 class CreateTaskInput:
-    id: auto
     title: auto
     status: auto
     due_date: auto

@@ -35,7 +35,6 @@ export type CreateTaskInput = {
   client?: InputMaybe<UserInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
 };
@@ -212,11 +211,7 @@ export type QueryTaskArgs = {
 };
 
 export enum TaskStatusEnum {
-  Canceled = 'CANCELED',
   Completed = 'COMPLETED',
-  DraftCanceled = 'DRAFT_CANCELED',
-  DraftCompleted = 'DRAFT_COMPLETED',
-  InProgress = 'IN_PROGRESS',
   ToDo = 'TO_DO'
 }
 

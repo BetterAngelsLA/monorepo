@@ -48,7 +48,6 @@ input CreateNoteInput {
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateTaskInput {
-  id: ID
   title: String!
   status: TaskStatusEnum!
   dueDate: DateTime
@@ -171,11 +170,7 @@ type Query {
 }
 
 enum TaskStatusEnum {
-  CANCELED
   COMPLETED
-  DRAFT_CANCELED
-  DRAFT_COMPLETED
-  IN_PROGRESS
   TO_DO
 }
 

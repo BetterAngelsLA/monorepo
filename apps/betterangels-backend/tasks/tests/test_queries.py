@@ -1,5 +1,5 @@
 from django.test import ignore_warnings
-from notes.tests.utils import TaskGraphQLBaseTestCase
+from tasks.tests.utils import TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)

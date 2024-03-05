@@ -39,7 +39,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "id": self.task["id"],
             "title": "Updated task title",
             "client": {"id": str(self.task_client_1.pk)},
-            "status": "IN_PROGRESS",
+            "status": "COMPLETED",
         }
 
         expected_query_count = 10
@@ -50,7 +50,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "status": "IN_PROGRESS",
+            "status": "COMPLETED",
             "dueDate": None,
             "client": {"id": str(self.task_client_1.pk)},
             "createdAt": "2024-02-26T00:00:00+00:00",

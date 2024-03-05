@@ -57,5 +57,4 @@ class Mutation:
 
             return cast(TaskType, task)
 
-    # update_task: TaskType = mutations.update(UpdateTaskInput)
     delete_task: TaskType = mutations.delete(DeleteDjangoObjectInput)
