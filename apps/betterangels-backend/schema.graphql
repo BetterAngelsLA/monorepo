@@ -118,6 +118,7 @@ type NoteType {
   id: ID!
   title: String!
   purposes: [TaskType!]!
+  nextSteps: [TaskType!]!
   publicDetails: String!
   client: UserType
   moods: [MoodType!]!
@@ -189,6 +190,7 @@ input UpdateNoteInput {
   id: ID
   title: String!
   purposes: [ID!]
+  nextSteps: [ID!]
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]

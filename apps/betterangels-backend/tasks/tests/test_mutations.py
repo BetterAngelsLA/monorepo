@@ -70,7 +70,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 7
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

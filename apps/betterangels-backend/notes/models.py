@@ -15,7 +15,8 @@ from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 class Note(BaseModel):
     title = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
-    purposes = models.ManyToManyField(Task)
+    purposes = models.ManyToManyField(Task, related_name="purpose_notes")
+    next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )

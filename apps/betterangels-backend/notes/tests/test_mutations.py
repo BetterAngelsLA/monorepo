@@ -12,7 +12,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.handle_user_login("case_manager_1")
 
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 33
+        expected_query_count = 34
         with self.assertNumQueries(expected_query_count):
             response = self.create_note_fixture(
                 {
@@ -28,6 +28,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "purposes": [],
+            "nextSteps": [],
             "publicDetails": "This is a new note.",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
@@ -40,12 +41,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "purposes": [t.id for t in self.tasks],
+            "purposes": [t.id for t in self.purposes],
+            "nextSteps": [t.id for t in self.next_steps],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
 
-        expected_query_count = 44
+        expected_query_count = 58
         with self.assertNumQueries(expected_query_count):
             response = self.update_note_fixture(variables)
 
@@ -55,8 +57,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [
-                {"id": str(self.tasks[0].id), "title": self.tasks[0].title},
-                {"id": str(self.tasks[1].id), "title": self.tasks[1].title},
+                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
+            ],
+            "nextSteps": [
+                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
+                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
             ],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager_1.pk)},
@@ -76,7 +82,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 17
+        expected_query_count = 18
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

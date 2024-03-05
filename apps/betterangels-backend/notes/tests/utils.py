@@ -11,7 +11,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.setup_users()
         self.setup_groups_and_permissions()
         self._setup_note()
-        self.tasks = baker.make(Task, _quantity=2)
+        self.purposes = baker.make(Task, _quantity=2)
+        self.next_steps = baker.make(Task, _quantity=2)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note

@@ -36,6 +36,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                         id
                         title
                     }
+                    nextSteps {
+                        id
+                        title
+                    }
                     moods {
                         descriptor
                     }
@@ -45,10 +49,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
         variables = {"id": note_id}
-        expected_query_count = 6
+        expected_query_count = 7
 
         note = Note.objects.get(id=note_id)
-        note.purposes.add(*self.tasks)
+        note.purposes.add(*self.purposes)
+        note.next_steps.add(*self.next_steps)
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -60,8 +65,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "This is a new note.",
             "timestamp": "2024-03-04T00:00:00+00:00",
             "purposes": [
-                {"id": str(self.tasks[0].id), "title": self.tasks[0].title},
-                {"id": str(self.tasks[1].id), "title": self.tasks[1].title},
+                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
+            ],
+            "nextSteps": [
+                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
+                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
             ],
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "privateDetails": "",

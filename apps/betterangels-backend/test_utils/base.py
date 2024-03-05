@@ -88,6 +88,10 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                             id
                             title
                         }}
+                        nextSteps {{
+                            id
+                            title
+                        }}
                         client {{
                             id
                         }}

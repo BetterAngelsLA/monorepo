@@ -28,6 +28,7 @@ class NoteType:
     id: auto
     title: auto
     purposes: List[TaskType]
+    next_steps: List[TaskType]
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]
@@ -55,6 +56,7 @@ class UpdateNoteInput:
     id: auto
     title: auto
     purposes: Optional[List[ID]]
+    next_steps: Optional[List[ID]]
     public_details: auto
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
