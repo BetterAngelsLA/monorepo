@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import List, cast
+from datetime import timedelta
 
 import strawberry
 import strawberry_django
@@ -85,11 +86,16 @@ class Mutation:
     def revert_note_version(
         self, info: Info, data: RevertNoteVersionInput
     ) -> NoteType:
-        historical_instance = Note.history.model.objects.get(id=data.id, history_id=data.revert_to_history_id).instance
+        historical_as_of = Note.history.model.objects.get(id=data.id, history_id=data.history_id).history_date
+        # TODO: The way to handle this without having to add a 1 second delay would be to
+        # modify the updateNote mutation to be a custom function within an atomic block, and pass the "update_at"
+        # field directly to the Note instance and related model instances.
+        historical_as_of +=  timedelta(seconds=1)
+        revert_to_note = Note.objects.get(id=data.id).history.as_of(historical_as_of)
         # saving a historical note reverts the current note object to this moment in history
-        historical_instance.save()
+        revert_to_note.save()
 
-        return cast(NoteType, historical_instance)
+        return cast(NoteType, revert_to_note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,

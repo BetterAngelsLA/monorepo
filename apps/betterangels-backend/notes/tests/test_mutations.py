@@ -1,5 +1,6 @@
 from unittest.mock import ANY
 
+import time
 from django.test import ignore_warnings
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
@@ -97,7 +98,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["note"]
 
         self.assertEqual(len(returned_note["moods"]), 1)
-        revert_to_history_id = returned_note["historyId"]
+        history_id = returned_note["historyId"]
+        time.sleep(1)
 
         # Edit 2 - should be discarded
         discarded_update_variables = {
@@ -125,15 +127,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": note_id, "revertToHistoryId": revert_to_history_id}
+        variables = {"id": note_id, "historyId": history_id}
 
-        expected_query_count = 7
+        expected_query_count = 9
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
         reverted_note = response["data"]["revertNoteVersion"]
-        # TODO: figure this out
-        # self.assertEqual(len(reverted_note["moods"]), 1)
+        self.assertEqual(len(reverted_note["moods"]), 1)
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 

@@ -154,7 +154,7 @@ type Query {
 }
 
 input RevertNoteVersionInput {
-  id: String!
+  id: ID
   historyId: Int!
 }
 
@@ -166,7 +166,6 @@ input UpdateNoteInput {
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
-  isSaved: Boolean
   isSubmitted: Boolean
 }
 

@@ -92,4 +92,4 @@ class UpdateNoteInput:
 @strawberry_django.input(models.Note)
 class RevertNoteVersionInput:
     id: auto
-    revert_to_history_id: int
+    history_id: int
