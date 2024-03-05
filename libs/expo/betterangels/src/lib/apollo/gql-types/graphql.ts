@@ -31,11 +31,23 @@ export type CreateNoteInput = {
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
+export type CreateTaskInput = {
+  client?: InputMaybe<UserInput>;
+  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  status: TaskStatusEnum;
+  title: Scalars['String']['input'];
+};
+
+export type CreateTaskPayload = OperationInfo | TaskType;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
 export type DeleteNotePayload = NoteType | OperationInfo;
+
+export type DeleteTaskPayload = OperationInfo | TaskType;
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -77,10 +89,13 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
+  deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
   updateNote: UpdateNotePayload;
+  updateTask: UpdateTaskPayload;
 };
 
 
@@ -89,7 +104,17 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateTaskArgs = {
+  data: CreateTaskInput;
+};
+
+
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -103,6 +128,11 @@ export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
 
+
+export type MutationUpdateTaskArgs = {
+  data: UpdateTaskInput;
+};
+
 export type NoteType = {
   __typename?: 'NoteType';
   client?: Maybe<UserType>;
@@ -113,6 +143,7 @@ export type NoteType = {
   moods: Array<MoodType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   publicDetails: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
 };
 
@@ -160,6 +191,8 @@ export type Query = {
   currentUser: UserType;
   note: NoteType;
   notes: Array<NoteType>;
+  task: TaskType;
+  tasks: Array<TaskType>;
 };
 
 
@@ -172,6 +205,27 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type QueryTaskArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+export enum TaskStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type TaskType = {
+  __typename?: 'TaskType';
+  client?: Maybe<UserType>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  dueDate?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  status: TaskStatusEnum;
+  title: Scalars['String']['output'];
+};
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -182,6 +236,17 @@ export type UpdateNoteInput = {
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateTaskInput = {
+  client?: InputMaybe<UserInput>;
+  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UserInput = {
   id?: InputMaybe<Scalars['ID']['input']>;

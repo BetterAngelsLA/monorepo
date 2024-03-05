@@ -2,7 +2,7 @@ import dataclasses
 from typing import List, Optional
 
 import strawberry_django
-from accounts.types import UserType
+from accounts.types import UserInput, UserType
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
@@ -22,20 +22,6 @@ class CreateMoodInput:
 
 
 @dataclasses.dataclass
-@strawberry_django.type(models.Service)
-class ServiceType:
-    descriptor: auto
-    custom_descriptor: Optional[str]
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.Service)
-class CreateServiceInput:
-    descriptor: auto
-    custom_descriptor: Optional[str]
-
-
-@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
@@ -43,20 +29,13 @@ class NoteType:
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]
-
     is_submitted: auto
-
+    timestamp: auto
     created_at: auto
     created_by: UserType
     private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
-
-
-@dataclasses.dataclass
-@strawberry_django.input(models.User)
-class UserInput:
-    id: auto
 
 
 @dataclasses.dataclass
