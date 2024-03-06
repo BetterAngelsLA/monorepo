@@ -1,5 +1,6 @@
 export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
+export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
 export { default as BodyText } from './BodyText';
 export { default as BottomActions } from './BottomActions';
