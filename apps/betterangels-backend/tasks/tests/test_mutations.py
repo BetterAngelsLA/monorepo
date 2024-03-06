@@ -11,12 +11,12 @@ from tasks.tests.utils import TaskGraphQLBaseTestCase
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.handle_user_login("case_manager_1")
+        self._handle_user_login("case_manager_1")
 
     def test_create_task_mutation(self) -> None:
         expected_query_count = 7
         with self.assertNumQueries(expected_query_count):
-            response = self.create_task_fixture(
+            response = self._create_task_fixture(
                 {
                     "title": "New Task",
                     "status": "TO_DO",
@@ -38,13 +38,13 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.task_client_1.pk)},
             "status": "COMPLETED",
         }
 
         expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
-            response = self.update_task_fixture(variables)
+            response = self._update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
         expected_task = {

@@ -14,10 +14,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_create_note_permission(
         self, user_label: str, should_succeed: bool
     ) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         variables = {"title": "Test Note", "publicDetails": "This is a test note."}
-        response = self.create_note_fixture(variables)
+        response = self._create_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNote"])
@@ -36,14 +36,14 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", False),  # Other org CM should not succeed
-            ("client_1", False),  # Non CM should not succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
     def test_delete_note_permission(
         self, user_label: str, should_succeed: bool
     ) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         mutation = """
             mutation DeleteNote($id: ID!) {
@@ -72,7 +72,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_permission(
         self, user_label: str, should_succeed: bool
     ) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         variables = {
             "id": self.note["id"],
@@ -80,7 +80,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated content",
             "isSubmitted": False,
         }
-        response = self.update_note_fixture(variables)
+        response = self._update_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"])
@@ -99,12 +99,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("client_1", False),  # Non CM should not succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
     def test_view_note_permission(self, user_label: str, should_succeed: bool) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         mutation = """
             query ViewNote($id: ID!) {
@@ -127,12 +127,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("client_1", False),  # Non CM should not succeed
+            ("note_client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
     def test_view_notes_permission(self, user_label: str, should_succeed: bool) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         mutation = """
             query ViewNotes {
@@ -160,7 +160,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_view_note_private_details_permission(
         self, user_label: str, should_succeed: bool
     ) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         query = """
             query ViewNotePrivateDetails($id: ID!) {
@@ -191,7 +191,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_view_notes_private_details_permission(
         self, user_label: str, expected_private_details_count: int
     ) -> None:
-        self.handle_user_login(user_label)
+        self._handle_user_login(user_label)
 
         query = """
             query ViewNotes {

@@ -10,7 +10,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
-        self.update_note_fixture(
+        self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "New Note",

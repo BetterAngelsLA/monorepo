@@ -1,11 +1,9 @@
-from unittest import TestCase
-
 from django.test import ignore_warnings
 from tasks.tests.utils import TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
-class TaskQueryTestCase(TaskGraphQLBaseTestCase, TestCase):
+class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.case_manager_1)
