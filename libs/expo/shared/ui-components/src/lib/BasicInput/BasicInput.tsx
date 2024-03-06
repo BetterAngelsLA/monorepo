@@ -35,7 +35,6 @@ interface IBasicInputProps extends TextInputProps {
 export function BasicInput(props: IBasicInputProps) {
   const {
     label,
-    onChangeText,
     error,
     required,
     disabled,
@@ -101,7 +100,6 @@ export function BasicInput(props: IBasicInputProps) {
           editable={!disabled}
           {...rest}
           value={value}
-          onChangeText={onChangeText}
         />
         {value && (
           <Pressable
