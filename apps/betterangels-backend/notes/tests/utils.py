@@ -7,24 +7,22 @@ from django.contrib.auth.models import Group
 from django.test import TestCase
 from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from notes.permissions import NotePermissions
+from notes.permissions import NotePermissions, TaskPermissions
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
 
-class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
         self._setup_groups_and_permissions()
-        self._setup_note()
 
     def _setup_users(self) -> None:
         self.user_labels = [
             "case_manager_1",
             "case_manager_2",
             "client_1",
-            "client_2",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
@@ -34,13 +32,14 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.case_manager_1 = self.user_map["case_manager_1"]
         self.case_manager_2 = self.user_map["case_manager_2"]
         self.client_1 = self.user_map["client_1"]
-        self.client_2 = self.user_map["client_2"]
 
     def _setup_groups_and_permissions(self) -> None:
         # Create a group and assign note permissions
         caseworker_group: Group = baker.make(Group)
         assign_perm(NotePermissions.VIEW.value, caseworker_group)
         assign_perm(NotePermissions.ADD.value, caseworker_group)
+        assign_perm(TaskPermissions.VIEW.value, caseworker_group)
+        assign_perm(TaskPermissions.ADD.value, caseworker_group)
 
         # Create a permission group and add the case manager to it
         perm_group = permission_group_recipe.make()
@@ -55,6 +54,12 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         perm_group_2.organization.add_user(self.case_manager_2)
         self.case_manager_2.groups.add(perm_group_2.group)
         self.case_manager_2.groups.add(caseworker_group)
+
+
+class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_note()
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -116,24 +121,10 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             self.graphql_client.logout()
 
 
-class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._setup_users()
         self._setup_task()
-
-    def _setup_users(self) -> None:
-        self.user_labels = [
-            "case_manager_1",
-            "client_1",
-        ]
-        self.user_map = {
-            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
-            for user_label in self.user_labels
-        }
-
-        self.case_manager_1 = self.user_map["case_manager_1"]
-        self.client_1 = self.user_map["client_1"]
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task

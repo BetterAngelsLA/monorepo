@@ -92,7 +92,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 1
+        expected_query_count = 4
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -110,7 +110,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 1
+        expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
         tasks = response["data"]["tasks"]
