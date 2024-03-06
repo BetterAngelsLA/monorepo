@@ -1,4 +1,4 @@
-import time
+from copy import copy
 from unittest.mock import ANY
 
 from django.test import ignore_warnings
@@ -99,7 +99,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(returned_note["moods"]), 1)
         history_id = returned_note["historyId"]
-        time.sleep(1)
 
         # Edit 2 - should be discarded
         discarded_update_variables = {
