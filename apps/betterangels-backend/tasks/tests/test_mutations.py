@@ -38,7 +38,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "client": {"id": str(self.task_client_1.pk)},
+            "client": {"id": str(self.client_1.pk)},
             "status": "COMPLETED",
         }
 

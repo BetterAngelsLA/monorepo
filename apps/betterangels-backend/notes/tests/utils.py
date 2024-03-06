@@ -23,8 +23,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.user_labels = [
             "case_manager_1",
             "case_manager_2",
-            "note_client_1",
-            "note_client_2",
+            "client_1",
+            "client_2",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
@@ -33,8 +33,8 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
 
         self.case_manager_1 = self.user_map["case_manager_1"]
         self.case_manager_2 = self.user_map["case_manager_2"]
-        self.note_client_1 = self.user_map["note_client_1"]
-        self.note_client_2 = self.user_map["note_client_2"]
+        self.client_1 = self.user_map["client_1"]
+        self.client_2 = self.user_map["client_2"]
 
     def _setup_groups_and_permissions(self) -> None:
         # Create a group and assign note permissions
@@ -63,7 +63,7 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             {
                 "title": f"User: {self.case_manager_1.id}",
                 "publicDetails": f"{self.case_manager_1.id}'s note",
-                "client": {"id": self.note_client_1.id},
+                "client": {"id": self.client_1.id},
             },
         )["data"]["createNote"]
         # Logout after setting up the note

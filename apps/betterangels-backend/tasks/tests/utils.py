@@ -17,7 +17,7 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
     def _setup_users(self) -> None:
         self.user_labels = [
             "case_manager_1",
-            "task_client_1",
+            "client_1",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
@@ -25,7 +25,7 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         }
 
         self.case_manager_1 = self.user_map["case_manager_1"]
-        self.task_client_1 = self.user_map["task_client_1"]
+        self.client_1 = self.user_map["client_1"]
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
@@ -63,7 +63,7 @@ class TaskGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     ... on TaskType {{
                         id
                         title
-                        dueDate
+                        dueBy
                         status
                         client {{
                             id

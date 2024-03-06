@@ -18,7 +18,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 {
                     "title": "New Note",
                     "publicDetails": "This is a new note.",
-                    "client": {"id": str(self.note_client_1.pk)},
+                    "client": {"id": str(self.client_1.pk)},
                 }
             )
 
@@ -29,7 +29,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [],
             "publicDetails": "This is a new note.",
             "createdBy": {"id": str(self.case_manager_1.pk)},
-            "client": {"id": str(self.note_client_1.pk)},
+            "client": {"id": str(self.client_1.pk)},
         }
 
         self.assertEqual(created_note, expected_note)
@@ -54,7 +54,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "createdBy": {"id": str(self.case_manager_1.pk)},
-            "client": {"id": str(self.note_client_1.pk)},
+            "client": {"id": str(self.client_1.pk)},
         }
         self.assertEqual(updated_note, expected_note)
 

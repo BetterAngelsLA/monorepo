@@ -36,7 +36,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", False),  # Other org CM should not succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -99,7 +99,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -127,7 +127,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
