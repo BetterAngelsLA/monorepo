@@ -8,7 +8,7 @@ from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.models import Note
+from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -16,7 +16,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .types import CreateNoteInput, NoteType, UpdateNoteInput
+from .types import CreateNoteInput, CreateTaskInput, NoteType, TaskType, UpdateNoteInput, UpdateTaskInput
 
 
 @strawberry.type
