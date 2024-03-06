@@ -293,6 +293,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             <BasicInput
               onDelete={onSearchDelete}
               mt="sm"
+              placeholder="Type location"
               icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
               value={address?.short}
               onChangeText={onSearchChange}

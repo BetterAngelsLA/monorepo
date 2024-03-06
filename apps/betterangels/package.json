@@ -109,6 +109,7 @@
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*",
-    "metro": "*"
+    "metro": "*",
+    "expo-dev-client": "*"
   }
 }
