@@ -34,7 +34,7 @@ export type CreateNotePayload = NoteType | OperationInfo;
 export type CreateTaskInput = {
   client?: InputMaybe<UserInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
-  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
 };
@@ -210,6 +210,11 @@ export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
 
+
+export type QueryTasksArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -220,7 +225,7 @@ export type TaskType = {
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
-  dueDate?: Maybe<Scalars['DateTime']['output']>;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
@@ -240,7 +245,7 @@ export type UpdateNotePayload = NoteType | OperationInfo;
 export type UpdateTaskInput = {
   client?: InputMaybe<UserInput>;
   createdAt?: InputMaybe<Scalars['DateTime']['input']>;
-  dueDate?: InputMaybe<Scalars['DateTime']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;

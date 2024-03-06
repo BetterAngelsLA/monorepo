@@ -50,7 +50,7 @@ union CreateNotePayload = NoteType | OperationInfo
 input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
-  dueDate: DateTime
+  dueBy: DateTime
   client: UserInput
   createdAt: DateTime
 }
@@ -166,7 +166,7 @@ type Query {
   note(pk: ID!): NoteType! @hasPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   task(pk: ID!): TaskType!
-  tasks: [TaskType!]!
+  tasks(pagination: OffsetPaginationInput): [TaskType!]!
 }
 
 enum TaskStatusEnum {
@@ -178,7 +178,7 @@ type TaskType {
   id: ID!
   title: String!
   status: TaskStatusEnum!
-  dueDate: DateTime
+  dueBy: DateTime
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
@@ -199,7 +199,7 @@ input UpdateTaskInput {
   id: ID
   title: String
   status: TaskStatusEnum
-  dueDate: DateTime
+  dueBy: DateTime
   client: UserInput
   createdAt: DateTime
 }

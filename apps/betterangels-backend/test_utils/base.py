@@ -120,7 +120,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                     ... on TaskType {{
                         id
                         title
-                        dueDate
+                        dueBy
                         status
                         client {{
                             id

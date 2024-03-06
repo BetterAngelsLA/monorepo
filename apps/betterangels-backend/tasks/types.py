@@ -9,12 +9,12 @@ from . import models
 
 
 @dataclasses.dataclass
-@strawberry_django.type(models.Task)
+@strawberry_django.type(models.Task, pagination=True)
 class TaskType:
     id: auto
     title: auto
     status: auto
-    due_date: auto
+    due_by: auto
     client: Optional[UserType]
     created_at: auto
     created_by: UserType
@@ -25,7 +25,7 @@ class TaskType:
 class CreateTaskInput:
     title: auto
     status: auto
-    due_date: auto
+    due_by: auto
     client: Optional[UserInput]
     created_at: auto
 
@@ -36,6 +36,6 @@ class UpdateTaskInput:
     id: auto
     title: auto
     status: auto
-    due_date: auto
+    due_by: auto
     client: Optional[UserInput]
     created_at: auto

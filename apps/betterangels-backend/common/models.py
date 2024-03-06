@@ -35,7 +35,7 @@ class SimpleModelGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class Location(BaseModel):
-    point = PointField()
+    point = PointField(geography=True)
     address = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)

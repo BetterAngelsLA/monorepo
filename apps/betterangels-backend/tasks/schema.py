@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -27,7 +28,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             client = User(id=data.client.id) if data.client else None
-            task_data = vars(data)
+            task_data = asdict(data)
             task = resolvers.create(
                 info,
                 Task,
@@ -44,7 +45,7 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         with transaction.atomic():
             client = User(id=data.client.id) if data.client else None
-            task_data = vars(data)
+            task_data = asdict(data)
             task = Task.objects.get(id=data.id)
             task = resolvers.update(
                 info,

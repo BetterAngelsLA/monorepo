@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                         max_length=9,
                     ),
                 ),
-                ("due_date", models.DateTimeField(blank=True, null=True)),
+                ("due_by", models.DateTimeField(blank=True, null=True)),
                 (
                     "client",
                     models.ForeignKey(

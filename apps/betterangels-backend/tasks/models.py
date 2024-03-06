@@ -8,7 +8,7 @@ from tasks.enums import TaskStatusEnum
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     status = TextChoicesField(choices_enum=TaskStatusEnum)
-    due_date = models.DateTimeField(blank=True, null=True)
+    due_by = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
     )
