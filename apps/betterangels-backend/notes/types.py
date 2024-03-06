@@ -1,4 +1,3 @@
-import dataclasses
 from typing import List, Optional
 
 import strawberry_django
@@ -10,7 +9,6 @@ from strawberry_django.permissions import HasSourcePerm
 from . import models
 
 
-@dataclasses.dataclass
 @strawberry_django.type(models.Task, pagination=True)
 class TaskType:
     id: auto
@@ -22,7 +20,6 @@ class TaskType:
     created_by: UserType
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Task)
 class CreateTaskInput:
     title: auto
@@ -32,7 +29,6 @@ class CreateTaskInput:
     created_at: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
     id: auto
@@ -48,13 +44,11 @@ class MoodType:
     descriptor: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Mood)
 class CreateMoodInput:
     descriptor: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
@@ -71,7 +65,6 @@ class NoteType:
     )
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
@@ -80,7 +73,6 @@ class CreateNoteInput:
     client: Optional[UserInput]
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto

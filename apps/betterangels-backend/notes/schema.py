@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -10,6 +9,7 @@ from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
+from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
