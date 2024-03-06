@@ -12,16 +12,35 @@ import TextButton from '../TextButton';
 export default function CancelModal({
   title,
   body,
+  noteId,
+  deleteNote,
 }: {
   title: string;
   body: string;
+  noteId: string | undefined;
+  deleteNote: (noteId) => void;
 }) {
   const [visible, setVisible] = useState(false);
   const router = useRouter();
-
-  function cancelNote() {
-    router.back();
-    setVisible(false);
+  console.log('HEY LOOK AT MEEEEEEEE DELETE');
+  console.log(title);
+  console.log(body);
+  console.log(noteId);
+  async function deleteNoteFunction() {
+    try {
+      console.log('OY OY OY ', noteId);
+      await deleteNote({
+        variables: {
+          data: {
+            id: noteId,
+          },
+        },
+      });
+      router.back();
+      setVisible(false);
+    } catch (e) {
+      console.log(e);
+    }
   }
   return (
     <>
@@ -56,7 +75,7 @@ export default function CancelModal({
             <Button
               size="full"
               accessibilityHint="deletes the note"
-              onPress={cancelNote}
+              onPress={deleteNoteFunction}
               variant="primary"
               title="Delete"
             />

@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client';
 import {
+  DELETE_NOTE,
   GET_NOTE,
   MainScrollContainer,
   UPDATE_NOTE,
@@ -54,6 +55,7 @@ export default function AddNote() {
     fetchPolicy: 'cache-and-network',
   });
   const [updateNote] = useMutation(UPDATE_NOTE);
+  const [deleteNote] = useMutation(DELETE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
@@ -74,6 +76,7 @@ export default function AddNote() {
   useEffect(() => {
     if (data && !isLoading) {
       setNote(data.note);
+      console.log(data.note.id);
     }
   }, [data, isLoading]);
 
@@ -94,6 +97,7 @@ export default function AddNote() {
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {
     try {
+      console.log(noteId);
       await updateNote({
         variables: {
           data: {
@@ -138,6 +142,8 @@ export default function AddNote() {
       methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+  console.log('HEY LOOK AT MEEEEEEEE NOTE');
+  console.log(noteId);
 
   return (
     <FormProvider {...methods}>
@@ -162,6 +168,8 @@ export default function AddNote() {
             <CancelModal
               body="All data associated with this note will be deleted"
               title="Delete note?"
+              noteId={noteId}
+              deleteNote={deleteNote}
             />
           }
           optionalAction={
