@@ -16,7 +16,14 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .types import CreateNoteInput, CreateTaskInput, NoteType, TaskType, UpdateNoteInput, UpdateTaskInput
+from .types import (
+    CreateNoteInput,
+    CreateTaskInput,
+    NoteType,
+    TaskType,
+    UpdateNoteInput,
+    UpdateTaskInput,
+)
 
 
 @strawberry.type
