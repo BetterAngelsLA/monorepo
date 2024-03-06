@@ -29,6 +29,10 @@ class Query:
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
+    task: TaskType = strawberry_django.field()
+
+    tasks: List[TaskType] = strawberry_django.field()
+
 
 @strawberry.type
 class Mutation:
@@ -94,3 +98,40 @@ class Mutation:
             HasRetvalPerm(perms=NotePermissions.DELETE),
         ],
     )
+
+    @strawberry_django.mutation()
+    def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
+            task = resolvers.create(
+                info,
+                Task,
+                {
+                    **task_data,
+                    "created_by": user,
+                    "client": client,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation()
+    def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
+        with transaction.atomic():
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
+            task = Task.objects.get(id=data.id)
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    **task_data,
+                    "client": client,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    delete_task: TaskType = mutations.delete(DeleteDjangoObjectInput)
