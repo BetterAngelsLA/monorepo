@@ -37,6 +37,9 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
+            # TODO: Handle creating Notes without existing Client.
+            # if not data.client:
+            #     User.create_client()
 
             # WARNING: Temporary workaround for organization selection
             # TODO: Update once organization selection is implemented. Currently selects
@@ -53,9 +56,6 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            # TODO: Handle creating Notes without existing Client.
-            # if not data.client:
-            #     User.create_client()
             client = User(id=data.client.id) if data.client else None
             note_data = asdict(data)
             note = resolvers.create(
@@ -82,7 +82,10 @@ class Mutation:
             return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(
-        UpdateNoteInput, extensions=[HasRetvalPerm(perms=NotePermissions.CHANGE)]
+        UpdateNoteInput,
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+        ],
     )
 
     delete_note: NoteType = mutations.delete(

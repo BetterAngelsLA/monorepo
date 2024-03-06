@@ -51,10 +51,7 @@
     "react-native-svg-transformer": "*",
     "tslib": "*",
     "react-native-maps": "*",
-    "react-native-open-maps": "*",
-    "add": "*",
-    "react-native-google-places-autocomplete": "*",
-    "yarn": "*"
+    "react-native-open-maps": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
