@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from datetime import timedelta
 from typing import List, cast
 
 import strawberry
@@ -88,7 +87,8 @@ class Mutation:
             id=data.id, history_id=data.history_id
         ).history_date
         revert_to_note = Note.objects.get(id=data.id).history.as_of(historical_as_of)
-        # saving a historical note reverts the current note object to this moment in history
+        # saving a historical note as of a specific moment reverts the note and
+        # it's associated models to their states at that moment in history
         revert_to_note.save()
 
         return cast(NoteType, revert_to_note)

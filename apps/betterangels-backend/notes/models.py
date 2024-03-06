@@ -3,8 +3,6 @@ from common.models import BaseModel
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.gis.db.models import PointField
 from django.db import models
-from django.db.models import OuterRef, Subquery
-from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
@@ -48,7 +46,7 @@ class Note(BaseModel):
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
 
-    objects = NoteManager()
+    objects = NoteManager()  # type: ignore[misc]
 
     def __str__(self) -> str:
         return self.title
@@ -61,11 +59,6 @@ class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
     history = HistoricalRecords()
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.note.updated_at = timezone.now()
-        self.note.save()
 
 
 class Service(BaseModel):

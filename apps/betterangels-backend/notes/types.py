@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from notes.models import Note
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
@@ -55,11 +54,12 @@ class NoteType:
 
     @strawberry_django.field
     def history_id(self) -> int:
-        # history_id will be annotated inside the NoteManager if instance came from the queryset
+        # history_id will be annotated inside the NoteManager if the instance
+        # came from the queryset
         if history_id := getattr(self, "history_id", None):
-            return history_id
+            return int(history_id)
 
-        return self.history.latest().history_id
+        return int(self.history.latest().history_id)  # type: ignore[attr-defined]
 
 
 @dataclasses.dataclass

@@ -49,7 +49,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
         )
-        self.assertEqual(note["historyId"], 36)
+        self.assertEqual(note["historyId"], 50)
 
     def test_notes_query(self) -> None:
         self._create_note_fixture(
@@ -76,7 +76,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        # TODO: update the NoteManager to prefetch permission records to lower this count
         expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
