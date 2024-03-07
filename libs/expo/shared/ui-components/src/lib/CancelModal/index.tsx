@@ -1,5 +1,4 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
@@ -13,35 +12,15 @@ export default function CancelModal({
   title,
   body,
   noteId,
-  deleteNote,
+  onDelete,
 }: {
   title: string;
   body: string;
   noteId: string | undefined;
-  deleteNote: (noteId) => void;
+  onDelete: () => void;
 }) {
   const [visible, setVisible] = useState(false);
-  const router = useRouter();
-  console.log('HEY LOOK AT MEEEEEEEE DELETE');
-  console.log(title);
-  console.log(body);
-  console.log(noteId);
-  async function deleteNoteFunction() {
-    try {
-      console.log('OY OY OY ', noteId);
-      await deleteNote({
-        variables: {
-          data: {
-            id: noteId,
-          },
-        },
-      });
-      router.back();
-      setVisible(false);
-    } catch (e) {
-      console.log(e);
-    }
-  }
+
   return (
     <>
       <TextButton
@@ -75,7 +54,10 @@ export default function CancelModal({
             <Button
               size="full"
               accessibilityHint="deletes the note"
-              onPress={deleteNoteFunction}
+              onPress={async () => {
+                await onDelete();
+                setVisible(false);
+              }}
               variant="primary"
               title="Delete"
             />

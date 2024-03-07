@@ -73,6 +73,20 @@ export default function AddNote() {
     },
   });
 
+  async function deleteNoteFunction() {
+    try {
+      console.log(noteId);
+      await deleteNote({
+        variables: {
+          data: { id: noteId },
+        },
+      });
+      router.back();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   useEffect(() => {
     if (data && !isLoading) {
       setNote(data.note);
@@ -142,8 +156,6 @@ export default function AddNote() {
       methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
-  console.log('HEY LOOK AT MEEEEEEEE NOTE');
-  console.log(noteId);
 
   return (
     <FormProvider {...methods}>
@@ -169,7 +181,7 @@ export default function AddNote() {
               body="All data associated with this note will be deleted"
               title="Delete note?"
               noteId={noteId}
-              deleteNote={deleteNote}
+              onDelete={deleteNoteFunction}
             />
           }
           optionalAction={
