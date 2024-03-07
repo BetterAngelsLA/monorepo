@@ -379,7 +379,8 @@ export default function TabOneScreen() {
             lastName="l"
             progress="10%"
           />
-          <View
+          <ScrollView
+            horizontal
             style={{
               flexDirection: 'row',
             }}
@@ -394,7 +395,7 @@ export default function TabOneScreen() {
                 />
               );
             })}
-          </View>
+          </ScrollView>
 
           <Button
             accessibilityHint="loads more active clients"

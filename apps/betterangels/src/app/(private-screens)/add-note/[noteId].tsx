@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 import {
   DELETE_NOTE,
   GET_NOTE,
+  GET_NOTES,
   MainScrollContainer,
   UPDATE_NOTE,
   generatedPublicNote,
@@ -61,8 +62,8 @@ const initialValues = {
 
 export default function AddNote() {
   const router = useRouter();
-  const [note, setNote] = useState<INote | undefined>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
+  const client = useApolloClient();
   const { data, loading: isLoading } = useQuery(GET_NOTE, {
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
@@ -70,20 +71,11 @@ export default function AddNote() {
   const [updateNote] = useMutation(UPDATE_NOTE);
   const [deleteNote] = useMutation(DELETE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
+  const [isPublicNoteEdited, setIsPublicNoteEdited] = useState<boolean | null>(
+    null
+  );
   const methods = useForm<INote>({
-    defaultValues: {
-      title: '',
-      purposes: [{ value: '' }],
-      nextStepActions: [{ action: '' }],
-      publicDetails: 'G -\nI -\nR -\nP - ',
-      noteDate: format(new Date(), 'MM/dd/yyyy'),
-      noteTime: format(new Date(), 'HH:mm'),
-      moods: [],
-      providedServices: [],
-      requestedServices: [],
-      privateDetails: '',
-    },
+    defaultValues: initialValues,
   });
 
   async function deleteNoteFunction() {
@@ -93,6 +85,9 @@ export default function AddNote() {
           data: { id: noteId },
         },
       });
+      client.refetchQueries({
+        include: [GET_NOTES],
+      });
       router.back();
     } catch (e) {
       console.log(e);
@@ -101,15 +96,22 @@ export default function AddNote() {
 
   useEffect(() => {
     if (data && !isLoading) {
-      setNote(data.note);
-      console.log('watchedValues');
-      console.log(watchedValues);
+      let publicDetails = initialValues.publicDetails;
+
+      if (data.note.publicDetails) {
+        setIsPublicNoteEdited(true);
+        publicDetails = data.note.publicDetails;
+      } else {
+        setIsPublicNoteEdited(false);
+      }
+
+      const title = data.note.title ? data.note.title : 'Session with ';
+
       methods.reset({
         ...initialValues,
-        publicDetails: data.note.publicDetails,
+        publicDetails,
+        title,
       });
-      console.log('data.note.publicDetails');
-      console.log(data.note.publicDetails);
     }
   }, [data, isLoading]);
 
@@ -120,10 +122,8 @@ export default function AddNote() {
     'nextStepActions',
     'requestedServices',
     'publicDetails',
+    'title',
   ]);
-  const publicNote = methods.watch('publicDetails');
-  console.log('publicNotepublicNotepublicNotepublicNote');
-  console.log(publicNote);
 
   const props = {
     expanded,
@@ -132,7 +132,6 @@ export default function AddNote() {
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {
     try {
-      console.log(noteId);
       await updateNote({
         variables: {
           data: {
@@ -145,6 +144,9 @@ export default function AddNote() {
         },
       });
       if (isSubmitted === true) {
+        client.refetchQueries({
+          include: [GET_NOTES],
+        });
         router.back();
       }
     } catch (e) {
@@ -153,15 +155,17 @@ export default function AddNote() {
   }
 
   useEffect(() => {
-    if (isPublicNoteEdited) {
+    if (isPublicNoteEdited || isPublicNoteEdited === null) {
       return;
     }
+
     const [
       purposes,
       moods,
       providedServices,
       nextStepActions,
       requestedServices,
+      publicDetails,
     ] = watchedValues;
 
     const generateOjbect = {
@@ -173,16 +177,17 @@ export default function AddNote() {
     };
 
     const newPublicNote = generatedPublicNote(generateOjbect);
-    if (newPublicNote !== publicNote) {
+
+    if (newPublicNote !== publicDetails) {
       methods.setValue('publicDetails', newPublicNote);
     }
-  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+  }, [isPublicNoteEdited, methods, watchedValues]);
 
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title noteTitle={note?.title} {...props} />
+          <Title noteTitle={watchedValues[6]} {...props} />
           <Location {...props} />
           <Purpose {...props} />
           <Mood {...props} />

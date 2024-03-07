@@ -45,7 +45,7 @@ interface ITextareaProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  textAreaChanged?: boolean;
+  textAreaChanged?: boolean | null;
   setTextAreaChanged?: (e: boolean) => void;
 }
 

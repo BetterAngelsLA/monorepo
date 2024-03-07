@@ -7,7 +7,6 @@ import {
   IconButton,
   Input,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 
@@ -22,19 +21,14 @@ const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 export default function Title(props: ITitleProps) {
   const { noteTitle, expanded, setExpanded } = props;
   const {
-    setValue,
     control,
     watch,
     formState: { errors },
   } = useFormContext();
-  const title = watch('title');
+  const title = noteTitle;
   const noteDate = watch('noteDate');
   const noteTime = watch('noteTime');
   const isTitle = expanded === 'Title';
-
-  useEffect(() => {
-    setValue('title', noteTitle);
-  }, [noteTitle, setValue]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>

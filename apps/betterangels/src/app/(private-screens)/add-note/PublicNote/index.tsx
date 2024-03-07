@@ -10,7 +10,7 @@ import InfoModal from './InfoModal';
 interface IPublicNoteProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-  isPublicNoteEdited: boolean;
+  isPublicNoteEdited: boolean | null;
   setIsPublicNoteEdited: (e: boolean) => void;
 }
 
