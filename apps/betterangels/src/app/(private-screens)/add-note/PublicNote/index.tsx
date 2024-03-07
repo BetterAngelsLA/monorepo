@@ -19,8 +19,9 @@ export default function PublicNote(props: IPublicNoteProps) {
     props;
   const { control, watch } = useFormContext();
 
-  const hmisNote = watch('hmisNote');
-  const isEmptyOrTemplate = !hmisNote || hmisNote === 'G -\nI -\nR -\nP - ';
+  const publicDetails = watch('publicDetails');
+  const isEmptyOrTemplate =
+    !publicDetails || publicDetails === 'G -\nI -\nR -\nP - ';
   const isPublicNote = expanded === 'Public Note';
 
   return (
@@ -41,11 +42,11 @@ export default function PublicNote(props: IPublicNoteProps) {
           textAreaChanged={isPublicNoteEdited}
           setTextAreaChanged={setIsPublicNoteEdited}
           mb="md"
-          name="hmisNote"
+          name="publicDetails"
           control={control}
         />
       ) : (
-        !isEmptyOrTemplate && <BodyText mb="md">{hmisNote}</BodyText>
+        !isEmptyOrTemplate && <BodyText mb="md">{publicDetails}</BodyText>
       )}
     </FieldCard>
   );

@@ -46,6 +46,19 @@ interface INote {
   privateDetails: string;
 }
 
+const initialValues = {
+  title: '',
+  purposes: [{ value: '' }],
+  nextStepActions: [{ action: '' }],
+  publicDetails: 'G -\nI -\nR -\nP - ',
+  noteDate: format(new Date(), 'MM/dd/yyyy'),
+  noteTime: format(new Date(), 'HH:mm'),
+  moods: [],
+  providedServices: [],
+  requestedServices: [],
+  privateDetails: '',
+};
+
 export default function AddNote() {
   const router = useRouter();
   const [note, setNote] = useState<INote | undefined>();
@@ -90,7 +103,14 @@ export default function AddNote() {
   useEffect(() => {
     if (data && !isLoading) {
       setNote(data.note);
-      console.log(data.note.id);
+      console.log('watchedValues');
+      console.log(watchedValues);
+      methods.reset({
+        ...initialValues,
+        publicDetails: data.note.publicDetails,
+      });
+      console.log('data.note.publicDetails');
+      console.log(data.note.publicDetails);
     }
   }, [data, isLoading]);
 
@@ -103,6 +123,8 @@ export default function AddNote() {
     'publicDetails',
   ]);
   const publicNote = methods.watch('publicDetails');
+  console.log('publicNotepublicNotepublicNotepublicNote');
+  console.log(publicNote);
 
   const props = {
     expanded,
