@@ -88,7 +88,6 @@ export default function AddNote() {
 
   async function deleteNoteFunction() {
     try {
-      console.log(noteId);
       await deleteNote({
         variables: {
           data: { id: noteId },
@@ -202,7 +201,6 @@ export default function AddNote() {
             <CancelModal
               body="All data associated with this note will be deleted"
               title="Delete note?"
-              noteId={noteId}
               onDelete={deleteNoteFunction}
             />
           }

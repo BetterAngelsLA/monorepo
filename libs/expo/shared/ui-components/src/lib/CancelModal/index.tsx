@@ -11,12 +11,10 @@ import TextButton from '../TextButton';
 export default function CancelModal({
   title,
   body,
-  noteId,
   onDelete,
 }: {
   title: string;
   body: string;
-  noteId: string | undefined;
   onDelete: () => void;
 }) {
   const [visible, setVisible] = useState(false);

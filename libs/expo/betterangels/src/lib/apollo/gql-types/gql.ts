@@ -16,7 +16,7 @@ const documents = {
     "\n  mutation GenerateMagicLink {\n    generateMagicLink(data: { email: \"paul+test@betterangels.la\" }) {\n      message\n    }\n  }\n": types.GenerateMagicLinkDocument,
     "\n  mutation CreateNote($data: CreateNoteInput!) {\n    createNote(data: $data) {\n      ... on NoteType {\n        id\n        title\n        publicDetails\n        client {\n          id\n          username\n          firstName\n          lastName\n          email\n        }\n        createdAt\n        createdBy {\n          id\n          username\n          email\n        }\n      }\n    }\n  }\n": types.CreateNoteDocument,
     "\n  mutation UpdateNote($data: UpdateNoteInput!) {\n    updateNote(data: $data) {\n      ... on NoteType {\n        id\n        title\n        publicDetails\n        client {\n          id\n          username\n          firstName\n          lastName\n          email\n        }\n        createdAt\n        createdBy {\n          id\n          username\n          email\n        }\n      }\n    }\n  }\n": types.UpdateNoteDocument,
-    "\n  mutation DeleteNote($id: ID!) {\n    deleteNote(data: { id: $id }) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n": types.DeleteNoteDocument,
+    "\n  mutation DeleteNote($data: DeleteDjangoObjectInput!) {\n    deleteNote(data: $data) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n": types.DeleteNoteDocument,
     "\n  query currentUser {\n    currentUser {\n      id\n      username\n      email\n    }\n  }\n": types.CurrentUserDocument,
     "\n  query notes {\n    notes {\n      id\n      title\n      publicDetails\n      createdAt\n    }\n  }\n": types.NotesDocument,
     "\n  query ViewNote($id: ID!) {\n    note(pk: $id) {\n      id\n      title\n      publicDetails\n      client {\n        id\n      }\n    }\n  }\n": types.ViewNoteDocument,
@@ -51,7 +51,7 @@ export function graphql(source: "\n  mutation UpdateNote($data: UpdateNoteInput!
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation DeleteNote($id: ID!) {\n    deleteNote(data: { id: $id }) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteNote($id: ID!) {\n    deleteNote(data: { id: $id }) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation DeleteNote($data: DeleteDjangoObjectInput!) {\n    deleteNote(data: $data) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteNote($data: DeleteDjangoObjectInput!) {\n    deleteNote(data: $data) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
