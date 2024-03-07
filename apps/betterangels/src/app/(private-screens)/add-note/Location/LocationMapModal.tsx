@@ -14,9 +14,15 @@ import {
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Modal, Pressable, View } from 'react-native';
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import openMap from 'react-native-open-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,7 +50,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const { isModalVisible, toggleModal, setExpanded } = props;
   const { trigger, setValue, watch } = useFormContext();
   const [pin, setPin] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
+  const [suggestions, setSuggestions] = useState<any>([]);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -127,6 +136,95 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setPin(false);
     }
   }
+
+  const searchPlacesInCalifornia = async (query: string) => {
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
+    if (query.length < 3) return;
+
+    try {
+      const response = await axios.get(url, {
+        params: {
+          input: query,
+          key: apiKey,
+          region: 'US-CA',
+        },
+      });
+
+      setIsSearch(true);
+
+      setSuggestions(response.data.predictions);
+    } catch (error) {
+      console.error('Error fetching place data:', error);
+      return [];
+    }
+  };
+
+  const onSuggestionsSelect = async (place: any) => {
+    try {
+      setValue('location', undefined);
+      const response = await axios.get(
+        'https://maps.googleapis.com/maps/api/place/details/json',
+        {
+          params: {
+            place_id: place.place_id,
+            fields: 'geometry',
+            key: apiKey,
+          },
+        }
+      );
+      const { location } = response.data.result.geometry;
+      setIsSearch(false);
+      setSuggestions([]);
+
+      setCurrentLocation({
+        longitude: location.lng,
+        latitude: location.lat,
+        name: place.description.split(', ')[0],
+      });
+
+      setInitialLocation({
+        longitude: location.lng,
+        latitude: location.lat,
+      });
+
+      setAddress({
+        short: place.description,
+        full: place.description,
+      });
+      setPin(true);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const onSearchChange = (query: string) => {
+    setAddress({
+      full: query,
+      short: query,
+    });
+    setSearchQuery(query);
+  };
+
+  const onSearchDelete = () => {
+    setAddress(undefined);
+    setCurrentLocation(undefined);
+    setValue('location', undefined);
+    setPin(false);
+    setSearchQuery('');
+    setIsSearch(false);
+    setSuggestions([]);
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchQuery) {
+        searchPlacesInCalifornia(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   return (
     <Modal
       style={{ flex: 1 }}
@@ -184,23 +282,46 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           <View
             style={{
               position: 'absolute',
-              zIndex: 100,
+              zIndex: 1000,
               paddingHorizontal: Spacings.sm,
+              backgroundColor: isSearch ? Colors.WHITE : 'transparent',
               width: '100%',
+              height: isSearch ? '100%' : 'auto',
+              flex: 1,
             }}
           >
             <BasicInput
-              componentStyle={{
-                top: Spacings.sm,
-              }}
+              onDelete={onSearchDelete}
+              mt="sm"
+              placeholder="Type location"
               icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
               value={address?.short}
-              onChangeText={(e: string) =>
-                setAddress({
-                  full: e,
-                  short: e,
-                })
-              }
+              onChangeText={onSearchChange}
+            />
+            <FlatList
+              style={{
+                backgroundColor: Colors.WHITE,
+                flex: 1,
+              }}
+              data={suggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: Colors.NEUTRAL_LIGHT,
+                    paddingVertical: Spacings.sm,
+                  }}
+                  accessibilityRole="button"
+                  onPress={() => onSuggestionsSelect(item)}
+                >
+                  <BodyText>{item.description.split(', ')[0]}</BodyText>
+                  <BodyText color={Colors.NEUTRAL_DARK} size="xxs">
+                    {item.description.split(', ')[1]},{' '}
+                    {item.description.split(', ')[2]}
+                  </BodyText>
+                </TouchableOpacity>
+              )}
             />
           </View>
           <View

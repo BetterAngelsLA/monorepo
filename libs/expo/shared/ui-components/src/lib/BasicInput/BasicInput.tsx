@@ -29,12 +29,12 @@ interface IBasicInputProps extends TextInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   icon?: ReactNode;
+  onDelete?: () => void;
 }
 
 export function BasicInput(props: IBasicInputProps) {
   const {
     label,
-    onChangeText,
     error,
     required,
     disabled,
@@ -48,6 +48,7 @@ export function BasicInput(props: IBasicInputProps) {
     mr,
     icon,
     value,
+    onDelete,
     ...rest
   } = props;
 
@@ -99,7 +100,6 @@ export function BasicInput(props: IBasicInputProps) {
           editable={!disabled}
           {...rest}
           value={value}
-          onChangeText={onChangeText}
         />
         {value && (
           <Pressable
@@ -107,7 +107,7 @@ export function BasicInput(props: IBasicInputProps) {
             accessibilityRole="button"
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
-            onPress={() => onChangeText && onChangeText('')}
+            onPress={onDelete}
             style={styles.icon}
           >
             <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
