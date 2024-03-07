@@ -98,7 +98,6 @@
     "eslint-plugin-react": "*",
     "eslint-plugin-react-hooks": "*",
     "eslint-plugin-react-native-a11y": "*",
-    "expo-dev-client": "*",
     "jest": "*",
     "jest-circus": "*",
     "jest-environment-jsdom": "*",
@@ -110,6 +109,7 @@
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*",
-    "metro": "*"
+    "metro": "*",
+    "expo-dev-client": "*"
   }
 }
