@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
+from django.db.models import OuterRef, Subquery
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.permissions import HasSourcePerm
@@ -35,8 +36,10 @@ class CreateServiceInput:
     custom_descriptor: Optional[str]
 
 
-@dataclasses.dataclass
-@strawberry_django.type(models.Note, pagination=True)
+@strawberry_django.type(
+    models.Note,
+    pagination=True,
+)
 class NoteType:
     id: auto
     title: auto
@@ -48,27 +51,25 @@ class NoteType:
 
     created_at: auto
     created_by: UserType
+
     private_details: Optional[str] = strawberry_django.field(
         extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
     )
 
-    @strawberry_django.field
-    def history_id(self) -> int:
-        # history_id will be annotated inside the NoteManager if the instance
-        # came from the queryset
-        if history_id := getattr(self, "history_id", None):
-            return int(history_id)
+    history_id: int = strawberry_django.field(
+        annotate=Subquery(
+            models.Note.history.model.objects.filter(id=OuterRef("pk"))
+            .order_by("-history_date")
+            .values("id")[:1]
+        )
+    )
 
-        return int(self.history.latest().history_id)  # type: ignore[attr-defined]
 
-
-@dataclasses.dataclass
 @strawberry_django.input(models.User)
 class UserInput:
     id: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
@@ -77,7 +78,6 @@ class CreateNoteInput:
     client: Optional[UserInput]
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto

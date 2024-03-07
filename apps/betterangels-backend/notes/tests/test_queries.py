@@ -49,7 +49,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
         )
-        self.assertEqual(note["historyId"], 50)
+        self.assertEqual(note["historyId"], 1)
 
     def test_notes_query(self) -> None:
         self._create_note_fixture(

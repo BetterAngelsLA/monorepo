@@ -13,7 +13,7 @@ from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
-from .managers import MoodManager, NoteManager
+from .managers import MoodManager
 
 
 class Location(BaseModel):
@@ -43,13 +43,14 @@ class Note(BaseModel):
     created_by = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    objects = models.Manager()
     history = HistoricalRecords()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
-
-    objects = NoteManager()  # type: ignore[misc]
 
     def __str__(self) -> str:
         return self.title
