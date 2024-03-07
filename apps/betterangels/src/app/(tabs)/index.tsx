@@ -38,6 +38,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import client from '../apollo';
 
 const EVENTS = [
   {
@@ -192,6 +193,9 @@ export default function TabOneScreen() {
         },
       });
       router.navigate(`/add-note/${data?.createNote?.id}`);
+      client.refetchQueries({
+        include: [GET_NOTES],
+      });
     } catch (e) {
       console.log(e);
     }
