@@ -8,6 +8,7 @@ from .enums import (
     RequirementEnum,
     HowToEnterEnum,
     BedStateEnum,
+    ShelterTypeEnum
 )
 
 
@@ -42,6 +43,13 @@ class Requirement(models.Model):
         return str(self.title)
 
 
+class ShelterType(models.Model):
+    title = TextChoicesField(choices_enum=ShelterTypeEnum)
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
 # Primary Models
 class Location(TimeStampedModel):
     latitude = models.FloatField(blank=True, null=True)
@@ -66,6 +74,8 @@ class Shelter(TimeStampedModel):
     image_url = models.URLField()
     location = models.ForeignKey(Location, on_delete=models.CASCADE,
                                  blank=True, null=True, related_name='shelters')
+    shelter_type = models.ForeignKey(ShelterType, blank=True, null=True,
+                                     on_delete=models.PROTECT)
     services = models.ManyToManyField(Service, blank=True)
     population = models.ManyToManyField(Population, blank=True)
     requirements = models.ManyToManyField(Requirement, blank=True)
@@ -85,52 +95,15 @@ class Shelter(TimeStampedModel):
     bed_layout_description = models.TextField(null=True, blank=True)
     typical_stay_description = models.TextField(null=True, blank=True)
 
+    # Bed Information
+    total_beds = models.PositiveIntegerField(blank=True, null=True)
+    private_beds = models.PositiveIntegerField(blank=True, null=True)
+    max_day = models.PositiveIntegerField(blank=True, null=True)
+    average_bed_rate = models.DecimalField(blank=True, null=True,
+                                           max_digits=10, decimal_places=2)
+
+
     # TODO -- handle notes
 
     def __str__(self) -> str:
         return self.title
-
-
-# Future Classes
-class CatchmentZone(TimeStampedModel):
-    # TODO -- create a polygon object
-    pass
-
-
-class Program(TimeStampedModel):
-    title = models.CharField(max_length=255)
-    requirements = models.ManyToManyField(Requirement)
-    catchment_zones = models.ManyToManyField(CatchmentZone)
-
-
-class Room(TimeStampedModel):
-    # How are rooms identified?
-    title = models.CharField(max_length=255, blank=True, null=True)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="rooms")
-    temporary = models.BooleanField(default=False)
-    population = models.ManyToManyField(Population)
-    private = models.BooleanField()
-
-
-class Bed(TimeStampedModel):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="beds")
-    state = models.CharField(choices=[(x, x.value) for x in BedStateEnum])
-    # TODO - keep?
-    program = models.ForeignKey(Program, on_delete=models.PROTECT, related_name='beds')
-    # Do we want to know which program this bed is currently associated with?
-    # When a bed has a person using it, it may cause the pop. of the room to change
-    # The room has a population field, but does the bed need something similar?
-    # TODO -- all bed characteristics (ie bunk bed)
-
-
-class ProgramBedAllocation(TimeStampedModel):
-    """Used to show which beds are allocated to a program in a specific shelter."""
-
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
-                                related_name='allocations')
-    program = models.ForeignKey(Program, on_delete=models.CASCADE,
-                                related_name='allocations')
-    beds_allocated = models.PositiveSmallIntegerField(default=0)
-    remaining_beds = models.PositiveSmallIntegerField(default=0)
-    # My current thought is that we don't need to reference specific beds here, as
-    # it shouldn't make a difference to the allocation

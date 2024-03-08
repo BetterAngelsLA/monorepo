@@ -1,4 +1,5 @@
 import dataclasses
+import decimal
 
 import strawberry_django
 import strawberry
@@ -35,6 +36,14 @@ class DescriptionType:
     typical_stay_description: str
 
 
+@strawberry.type
+class BedsType:
+    total_beds: int
+    private_beds: int
+    max_stay: int
+    average_bed_rate: float
+
+
 @dataclasses.dataclass
 @strawberry_django.type(models.Shelter, pagination=True)
 class ShelterType:
@@ -55,6 +64,8 @@ class ShelterType:
 
     description: DescriptionType
 
+    beds: BedsType
+
     def resolve_services(self, info: Info) -> List[str]:
         return [service.title for service in self.services.all()]
 
@@ -69,4 +80,12 @@ class ShelterType:
             description=self.description,
             bed_layout_description=self.bed_layout_description,
             typical_stay_description=self.typical_stay_description,
+        )
+
+    def resolve_beds(self, info: Info) -> BedsType:
+        return BedsType(
+            total_beds=self.total_beds,
+            private_beds=self.private_beds,
+            max_stay=self.max_stay,
+            average_bed_rate=self.average_bed_rate
         )

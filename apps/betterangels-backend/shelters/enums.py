@@ -53,3 +53,19 @@ class BedStateEnum(models.TextChoices):
     RESERVED = "Reserved", "Reserved"
     OCCUPIED = "Occupied", "Occupied"
     EMPTY = "Empty", "Empty"
+
+
+class ShelterTypeEnum(models.TextChoices):
+    INTERIM_HOUSING = "Interim Housing", "Interim Housing"
+    PERMANENT_HOUSING = "Permanent Housing", "Permanent Housing"
+    A_BRIDGE_HOME = "A Bridge Home (ABH)", "A Bridge Home"
+    PROJECT_HOMEKEY = "Project Homekey (PHK)", "Project Homekey (PHK)"
+    TINY_HOME_VILLAGE = "Tiny Home Village", "Tiny Home Village"
+    WINTER_SHELTER = "Winter Shelter", "Winter Shelter"
+    EMERGENCY_SHELTER = "Emergency Shelter", "Emergency Shelter"
+    CRISIS_HOUSING = "Crisis Housing", "Crisis Housing"
+    RECUPERATIVE_CARE = "Recuperative Care", "Recuperative Care"
+    TRANSITIONAL_HOUSING = "Transitional Housing", "Transitional Housing"
+    ROADMAP_HOME = "Roadmap Home", "Roadmap Home"
+    RAPID_REHOUSING = "Rapid Re-housing", "Rapid Re-housing"
+    SOBER_LIVING = "Sober Living", "Sober Living"
