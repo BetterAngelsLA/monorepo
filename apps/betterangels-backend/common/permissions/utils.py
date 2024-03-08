@@ -3,7 +3,7 @@ from operator import and_, or_
 from typing import List, Tuple, Type, TypeVar, Union, cast
 
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
-from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
+from django.db.models import Exists, Model, OuterRef, Q, QuerySet, Subquery, TextChoices
 from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
 
 T = TypeVar("T", bound=Model)
@@ -93,5 +93,5 @@ def get_objects_for_user(
 
     return cast(
         QuerySet[T],
-        qs.annotate(has_permission=combined_condition).filter(has_permission=True),
+        qs.filter(combined_condition),
     )
