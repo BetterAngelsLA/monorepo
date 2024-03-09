@@ -29,6 +29,12 @@ class Task(BaseModel):
         User, on_delete=models.CASCADE, null=False, related_name="tasks"
     )
 
+    taskuserobjectpermission_set: models.QuerySet["Task"]
+    taskgroupobjectpermission_set: models.QuerySet["Task"]
+
+    def __str__(self) -> str:
+        return self.title
+
 
 class Note(BaseModel):
     title = models.CharField(max_length=100)
@@ -80,3 +86,11 @@ class NoteUserObjectPermission(UserObjectPermissionBase):
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
+
+
+class TaskUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+
+class TaskGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
