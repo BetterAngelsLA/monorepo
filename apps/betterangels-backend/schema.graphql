@@ -52,7 +52,6 @@ input CreateTaskInput {
   status: TaskStatusEnum!
   dueBy: DateTime
   client: UserInput
-  createdAt: DateTime
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -201,7 +200,6 @@ input UpdateTaskInput {
   status: TaskStatusEnum
   dueBy: DateTime
   client: UserInput
-  createdAt: DateTime
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo

@@ -26,7 +26,6 @@ class CreateTaskInput:
     status: auto
     due_by: auto
     client: Optional[UserInput]
-    created_at: auto
 
 
 @strawberry_django.input(models.Task, partial=True)
@@ -36,7 +35,6 @@ class UpdateTaskInput:
     status: auto
     due_by: auto
     client: Optional[UserInput]
-    created_at: auto
 
 
 @strawberry_django.type(models.Mood)

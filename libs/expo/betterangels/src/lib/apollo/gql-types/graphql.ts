@@ -33,7 +33,6 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateTaskInput = {
   client?: InputMaybe<UserInput>;
-  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
@@ -244,7 +243,6 @@ export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateTaskInput = {
   client?: InputMaybe<UserInput>;
-  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
