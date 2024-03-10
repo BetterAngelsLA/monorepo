@@ -93,5 +93,5 @@ def get_objects_for_user(
 
     return cast(
         QuerySet[T],
-        qs.annotate(has_permission=combined_condition).filter(has_permission=True),
+        qs.filter(combined_condition),
     )
