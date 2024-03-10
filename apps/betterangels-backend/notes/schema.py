@@ -22,7 +22,7 @@ from .types import CreateNoteInput, NoteType, UpdateNoteInput
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        extensions=[HasPerm(NotePermissions.VIEW)],
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
     notes: List[NoteType] = strawberry_django.field(

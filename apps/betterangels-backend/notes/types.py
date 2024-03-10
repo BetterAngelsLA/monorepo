@@ -3,10 +3,10 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from common.permissions.utils import get_objects_for_user
 from django.db.models import Case, Exists, F, Value, When
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
+from strawberry_django.utils.query import filter_for_user
 
 from . import models
 
@@ -55,10 +55,10 @@ class NoteType:
             "_private_details": lambda info: Case(
                 When(
                     Exists(
-                        get_objects_for_user(
+                        filter_for_user(
+                            models.Note.objects.all(),
                             info.context.request.user,
                             [PrivateNotePermissions.VIEW],
-                            models.Note.objects.all(),
                         )
                     ),
                     then=F("private_details"),
