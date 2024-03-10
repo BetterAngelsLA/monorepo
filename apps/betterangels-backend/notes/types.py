@@ -65,7 +65,7 @@ class NoteType:
                     output_field=CharField(),
                 ),
                 Value(None),
-            )
+            ),
         },
     )
     def private_details(self, root: models.Note) -> Optional[str]:
