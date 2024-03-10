@@ -69,7 +69,7 @@ class NoteType:
         },
     )
     def private_details(self, root: models.Note) -> Optional[str]:
-        return root._private_details  # type: ignore
+        return root._private_details
 
 
 @dataclasses.dataclass

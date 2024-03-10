@@ -45,6 +45,8 @@ class Note(BaseModel):
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
 
+    _private_details: str  # Type Hint for annotation
+
     def __str__(self) -> str:
         return self.title
 
