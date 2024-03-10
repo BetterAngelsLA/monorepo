@@ -79,7 +79,10 @@ class Mutation:
             for perm in permissions:
                 assign_perm(perm, permission_group.group, note)
 
+            # Annotated Fields for Permission Checks. This is a workaround since
+            # annotations are not applied during mutations.
             note._private_details = note.private_details
+
             return cast(NoteType, note)
 
     update_note: NoteType = mutations.update(

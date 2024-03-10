@@ -1,3 +1,5 @@
+from typing import Optional
+
 from accounts.models import User
 from common.models import BaseModel
 from common.permissions.utils import permission_enum_to_django_meta_permissions
@@ -45,7 +47,8 @@ class Note(BaseModel):
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
 
-    _private_details: str  # Type Hint for annotation
+    # Type hints for permission annotations
+    _private_details: Optional[str]
 
     def __str__(self) -> str:
         return self.title
