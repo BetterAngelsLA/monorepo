@@ -69,8 +69,6 @@ class NoteType:
         },
     )
     def private_details(self, root: models.Note) -> Optional[str]:
-        if not hasattr(root, "_private_details"):
-            return None
         return root._private_details  # type: ignore
 
 
