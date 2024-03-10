@@ -135,7 +135,7 @@ enum OperationMessageKind {
 
 type Query {
   currentUser: UserType!
-  note(pk: ID!): NoteType! @hasPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
 }
 
