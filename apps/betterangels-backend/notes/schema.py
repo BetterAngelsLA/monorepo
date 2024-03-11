@@ -22,7 +22,7 @@ from .types import CreateNoteInput, NoteType, RevertNoteVersionInput, UpdateNote
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        extensions=[HasPerm(NotePermissions.VIEW)],
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
     notes: List[NoteType] = strawberry_django.field(
@@ -78,6 +78,10 @@ class Mutation:
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, note)
+
+            # Annotated Fields for Permission Checks. This is a workaround since
+            # annotations are not applied during mutations.
+            note._private_details = note.private_details
 
             return cast(NoteType, note)
 

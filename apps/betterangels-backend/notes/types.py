@@ -3,11 +3,10 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from common.permissions.utils import get_objects_for_user
-from django.db.models import CharField, OuterRef, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Case, Exists, F, OuterRef, Subquery, Value, When
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
+from strawberry_django.utils.query import filter_for_user
 
 from . import models
 
@@ -55,23 +54,23 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_private_details": lambda info: Coalesce(
-                Subquery(
-                    get_objects_for_user(
-                        info.context.request.user,
-                        [PrivateNotePermissions.VIEW],
-                        models.Note.objects.all(),
-                    )
-                    .filter(id=OuterRef("pk"))
-                    .values("private_details")[:1],
-                    output_field=CharField(),
+            "_private_details": lambda info: Case(
+                When(
+                    Exists(
+                        filter_for_user(
+                            models.Note.objects.all(),
+                            info.context.request.user,
+                            [PrivateNotePermissions.VIEW],
+                        )
+                    ),
+                    then=F("private_details"),
                 ),
-                Value(None),
-            )
-        },
+                default=Value(None),
+            ),
+        }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
-        return root._private_details  # type: ignore
+        return root._private_details
 
     history_id: int = strawberry_django.field(
         annotate=Subquery(

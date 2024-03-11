@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Optional, Self
 
 from accounts.models import User
 from common.models import BaseModel
@@ -51,6 +51,9 @@ class Note(BaseModel):
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
+
+    # Type hints for permission annotations
+    _private_details: Optional[str]
 
     def __str__(self) -> str:
         return self.title
