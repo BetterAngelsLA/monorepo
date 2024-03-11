@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from django.db.models import Case, Exists, F, OuterRef, Subquery, Value, When
+from django.db.models import Case, Exists, F, Max, Value, When
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.utils.query import filter_for_user
@@ -52,6 +52,10 @@ class NoteType:
     created_at: auto
     created_by: UserType
 
+    last_saved_date: int = strawberry_django.field(
+        annotate=Max("note_history__history_date")
+    )
+
     @strawberry_django.field(
         annotate={
             "_private_details": lambda info: Case(
@@ -71,14 +75,6 @@ class NoteType:
     )
     def private_details(self, root: models.Note) -> Optional[str]:
         return root._private_details
-
-    history_id: int = strawberry_django.field(
-        annotate=Subquery(
-            models.Note.history.model.objects.filter(id=OuterRef("pk"))
-            .order_by("-history_date")
-            .values("id")[:1]
-        )
-    )
 
 
 @strawberry_django.input(models.User)
