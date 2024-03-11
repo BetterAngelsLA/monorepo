@@ -10,6 +10,34 @@ from strawberry_django.utils.query import filter_for_user
 from . import models
 
 
+@strawberry_django.type(models.ServiceRequest, pagination=True)
+class ServiceRequestType:
+    id: auto
+    service: auto
+    custom_service: auto
+    status: auto
+    completed_on: auto
+    client: Optional[UserType]
+    created_at: auto
+    created_by: UserType
+
+
+@strawberry_django.input(models.ServiceRequest)
+class CreateServiceRequestInput:
+    service: auto
+    status: auto
+    custom_service: auto
+    client: Optional[UserInput]
+
+
+@strawberry_django.input(models.ServiceRequest, partial=True)
+class UpdateServiceRequestInput:
+    id: auto
+    custom_service: auto
+    status: auto
+    client: Optional[UserInput]
+
+
 @strawberry_django.type(models.Task, pagination=True)
 class TaskType:
     id: auto

@@ -13,6 +13,13 @@ class PrivateNotePermissions(models.TextChoices):
     VIEW = "notes.view_note_private_details", _("Can view note private details")
 
 
+class ServiceRequestPermissions(models.TextChoices):
+    VIEW = "notes.view_service_request", _("Can add service request")
+    CHANGE = "notes.change_service_request", _("Can change service request")
+    DELETE = "notes.delete_service_request", _("Can delete service request")
+    ADD = "notes.add_service_request", _("Can view service request")
+
+
 class TaskPermissions(models.TextChoices):
     VIEW = "notes.view_task", _("Can add task")
     CHANGE = "notes.change_task", _("Can change task")

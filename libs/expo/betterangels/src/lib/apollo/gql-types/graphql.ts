@@ -31,6 +31,15 @@ export type CreateNoteInput = {
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
+export type CreateServiceRequestInput = {
+  client?: InputMaybe<UserInput>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
+
+export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type CreateTaskInput = {
   client?: InputMaybe<UserInput>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
@@ -45,6 +54,8 @@ export type DeleteDjangoObjectInput = {
 };
 
 export type DeleteNotePayload = NoteType | OperationInfo;
+
+export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
 
@@ -88,12 +99,15 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
+  deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
   updateNote: UpdateNotePayload;
+  updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
 };
 
@@ -103,12 +117,22 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateServiceRequestArgs = {
+  data: CreateServiceRequestInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -125,6 +149,11 @@ export type MutationGenerateMagicLinkArgs = {
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
+};
+
+
+export type MutationUpdateServiceRequestArgs = {
+  data: UpdateTaskInput;
 };
 
 
@@ -190,6 +219,8 @@ export type Query = {
   currentUser: UserType;
   note: NoteType;
   notes: Array<NoteType>;
+  serviceRequest: ServiceRequestType;
+  serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -205,6 +236,16 @@ export type QueryNotesArgs = {
 };
 
 
+export type QueryServiceRequestArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceRequestsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -212,6 +253,44 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export enum ServiceEnum {
+  Blanket = 'BLANKET',
+  Book = 'BOOK',
+  Clothes = 'CLOTHES',
+  Dental = 'DENTAL',
+  Food = 'FOOD',
+  HarmReduction = 'HARM_REDUCTION',
+  HygieneKit = 'HYGIENE_KIT',
+  Medical = 'MEDICAL',
+  Other = 'OTHER',
+  PetCare = 'PET_CARE',
+  PetFood = 'PET_FOOD',
+  Shelter = 'SHELTER',
+  Shoes = 'SHOES',
+  Shower = 'SHOWER',
+  Stabilize = 'STABILIZE',
+  Storage = 'STORAGE',
+  Transport = 'TRANSPORT',
+  Water = 'WATER'
+}
+
+export enum ServiceRequestStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type ServiceRequestType = {
+  __typename?: 'ServiceRequestType';
+  client?: Maybe<UserType>;
+  completedOn?: Maybe<Scalars['DateTime']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  customService?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
 };
 
 export enum TaskStatusEnum {
@@ -240,6 +319,8 @@ export type UpdateNoteInput = {
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
   client?: InputMaybe<UserInput>;

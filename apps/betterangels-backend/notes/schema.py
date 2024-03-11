@@ -7,8 +7,13 @@ from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.models import Note, Task
-from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
+from notes.models import Note, ServiceRequest, Task
+from notes.permissions import (
+    NotePermissions,
+    PrivateNotePermissions,
+    ServiceRequestPermissions,
+    TaskPermissions,
+)
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -18,10 +23,13 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .types import (
     CreateNoteInput,
+    CreateServiceRequestInput,
     CreateTaskInput,
     NoteType,
+    ServiceRequestType,
     TaskType,
     UpdateNoteInput,
+    UpdateServiceRequestInput,
     UpdateTaskInput,
 )
 
@@ -34,6 +42,14 @@ class Query:
 
     notes: List[NoteType] = strawberry_django.field(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    service_request: ServiceRequestType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
+    )
+
+    service_requests: List[ServiceRequestType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
     )
 
     task: TaskType = strawberry_django.field(
@@ -179,5 +195,77 @@ class Mutation:
         DeleteDjangoObjectInput,
         extensions=[
             HasRetvalPerm(perms=TaskPermissions.DELETE),
+        ],
+    )
+
+    @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
+    def create_service_request(
+        self, info: Info, data: CreateServiceRequestInput
+    ) -> ServiceRequestType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            client = User(id=data.client.id) if data.client else None
+            service_request_data = asdict(data)
+            service_request = resolvers.create(
+                info,
+                ServiceRequest,
+                {
+                    **service_request_data,
+                    "created_by": user,
+                    "client": client,
+                },
+            )
+
+            permissions = [
+                ServiceRequestPermissions.VIEW,
+                ServiceRequestPermissions.CHANGE,
+                ServiceRequestPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, service_request)
+
+            return cast(ServiceRequestType, service_request)
+
+    @strawberry_django.mutation(
+        extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])]
+    )
+    def update_service_request(
+        self, info: Info, data: UpdateServiceRequestInput
+    ) -> ServiceRequestType:
+        with transaction.atomic():
+            client = User(id=data.client.id) if data.client else None
+            service_request_data = asdict(data)
+            service_request = ServiceRequest.objects.get(id=data.id)
+            service_request = resolvers.update(
+                info,
+                service_request,
+                {
+                    **service_request_data,
+                    "client": client,
+                },
+            )
+
+            return cast(ServiceRequestType, service_request)
+
+    delete_service_request: ServiceRequestType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=ServiceRequestPermissions.DELETE),
         ],
     )

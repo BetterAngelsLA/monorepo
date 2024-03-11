@@ -112,6 +112,74 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.graphql_client.logout()
 
 
+class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_service_request()
+
+    def _setup_service_request(self) -> None:
+        # Force login the case manager to create a service_request
+        self.graphql_client.force_login(self.case_manager_1)
+        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "status": "TO_DO",
+            },
+        )["data"]["createServiceRequest"]
+        # Logout after setting up the service request
+        self.graphql_client.logout()
+
+    def _create_service_request_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self._create_or_update_service_request_fixture("create", variables)
+
+    def _update_service_request_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self._create_or_update_service_request_fixture("update", variables)
+
+    def _create_or_update_service_request_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+
+        mutation: str = f"""
+            mutation {operation.capitalize()}ServiceRequest($data: {operation.capitalize()}ServiceRequestInput!) {{ # noqa: B950
+                {operation}ServiceRequest(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ServiceRequestType {{
+                        id
+                        service
+                        customService
+                        status
+                        completedOn
+                        client {{
+                            id
+                        }}
+                        createdAt
+                        createdBy {{
+                            id
+                        }}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _handle_user_login(self, user_label: Optional[str]) -> None:
+        if user_label:
+            self.graphql_client.force_login(self.user_map[user_label])
+        else:
+            self.graphql_client.logout()
+
+
 class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
