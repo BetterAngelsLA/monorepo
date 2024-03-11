@@ -1,5 +1,3 @@
-import dataclasses
-
 import strawberry
 import strawberry_django
 from strawberry import auto
@@ -7,7 +5,6 @@ from strawberry import auto
 from .models import User
 
 
-@dataclasses.dataclass
 @strawberry_django.type(User)
 class UserType:
     id: auto
@@ -17,19 +14,16 @@ class UserType:
     email: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(User)
 class UserInput:
     id: auto
 
 
-@dataclasses.dataclass
 @strawberry.input
 class MagicLinkInput:
     email: str
 
 
-@dataclasses.dataclass
 @strawberry.type
 class MagicLinkResponse:
     message: str
