@@ -1,12 +1,12 @@
 from django.test import ignore_warnings
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
+
 @ignore_warnings(category=UserWarning)
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.case_manager_1)
-
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
@@ -83,4 +83,4 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
-        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+        # TODO: Add more validations once sort is implemented

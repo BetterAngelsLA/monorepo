@@ -11,13 +11,13 @@ if TYPE_CHECKING:
 class MoodQuerySet(QuerySet):
     def delete(self) -> Tuple[int, Dict[str, int]]:
         """
-        Overriding this method so that the Note associated with a deleted Mood can have
-        it's updated_at timestamp reflect the change in moods in order to be able to
-        roll back via simple history.
+        Overriding this method so that when the moods from a single Note instance are deleted,
+        the associated Note can have it's updated_at timestamp reflect the change in moods,
+        in order to be able to roll back via simple history.
         """
 
-        if mood := self.first():
-            note: "Note" = mood.note
+        if self.values_list("note_id").distinct().count() == 1:
+            note: "Note" = self.get().note
 
         resp = super().delete()
 
