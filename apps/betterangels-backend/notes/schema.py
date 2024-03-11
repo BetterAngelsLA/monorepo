@@ -36,7 +36,9 @@ class Query:
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
-    task: TaskType = strawberry_django.field(extensions=[HasPerm(TaskPermissions.VIEW)])
+    task: TaskType = strawberry_django.field(
+        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+    )
 
     tasks: List[TaskType] = strawberry_django.field(
         extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
