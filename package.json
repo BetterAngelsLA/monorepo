@@ -17,7 +17,7 @@
     "apollo-link-rest": "^0.9.0",
     "axios": "^1.6.7",
     "date-fns": "^3.0.4",
-    "expo": "~50.0.8",
+    "expo": "~50.0.11",
     "expo-auth-session": "~5.4.0",
     "expo-camera": "~14.0.6",
     "expo-constants": "~15.4.5",
