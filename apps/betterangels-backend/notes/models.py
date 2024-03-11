@@ -65,14 +65,14 @@ class Note(BaseModel):
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
-    history = HistoricalRecords()
+    log = HistoricalRecords(related_name="history")
 
     objects = MoodManager()  # type: ignore[misc]
 
-    def save(self: Self, *args: Any, **kwargs: Any) -> None:
-        super().save(*args, **kwargs)
-        self.note.updated_at = timezone.now()
-        self.note.save()
+    # def save(self: Self, *args: Any, **kwargs: Any) -> None:
+    #     super().save(*args, **kwargs)
+    #     self.note.updated_at = timezone.now()
+    #     self.note.save()
 
 
 class Service(BaseModel):

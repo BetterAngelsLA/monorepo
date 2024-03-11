@@ -1,10 +1,11 @@
 import dataclasses
 from datetime import datetime
 from typing import List, Optional
+from django.db.models.functions import Greatest
 
 import strawberry_django
 from accounts.types import UserType
-from django.db.models import Case, Exists, F, Max, Value, When
+from django.db.models import Case, Exists, F, Max, Value, When, DateTimeField
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.utils.query import filter_for_user
@@ -54,7 +55,12 @@ class NoteType:
     created_by: UserType
 
     last_saved_at: Optional[datetime] = strawberry_django.field(
-        annotate=Max("history__history_date")
+        #  annotate=Max("history__history_date")
+        annotate=Greatest(
+            Max("history__history_date"),
+            Max("moods__history__history_date"),
+            output_field=DateTimeField(),
+        )
     )
 
     @strawberry_django.field(

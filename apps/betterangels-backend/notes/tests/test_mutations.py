@@ -44,7 +44,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
         }
 
-        expected_query_count = 36
+        expected_query_count = 32
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -66,9 +66,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Update note title and add 1 mood
-        2. Get note and save it's lastSavedAt
+        2. Get note and save lastSavedAt
         3. Add another mood
         4. Revert to lastSavedAt from Step 2
+        5. Assert note has only 1 mood
         """
         note_id = self.note["id"]
 
@@ -141,26 +142,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         reverted to the specified version.
 
         Test actions:
-        1. Update note title and add 1 mood
-        2. Delete 1 mood
-        3. Get note and save lastSavedAt
-        4. Add 1 mood
-        5. Revert to lastSavedAt from Step 3
+        1. Update note title and add 2 moods
+        2. Get note and save lastSavedAt
+        3. Delete 1 mood
+        4. Revert to lastSavedAt from Step 2
+        5. Assert note has 2 moods again
         """
         note_id = self.note["id"]
 
-        # Update - should be overriden
+        # Update - should be persisted
         persisted_update_variables = {
             "id": note_id,
             "title": "Updated Title",
-            "moods": [{"descriptor": "ANXIOUS"}],
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
-        self._update_note_fixture(persisted_update_variables)
-
-        # Update - should be persisted
-        persisted_update_variables["moods"] = []
         self._update_note_fixture(persisted_update_variables)
 
         query = """
@@ -177,7 +174,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query, {"id": note_id})
         returned_note = response["data"]["note"]
 
-        self.assertEqual(len(returned_note["moods"]), 0)
+        self.assertEqual(len(returned_note["moods"]), 2)
         last_saved_at = returned_note["lastSavedAt"]
 
         # Update - should be discarded
@@ -212,7 +209,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(mutation, {"data": variables})
 
         reverted_note = response["data"]["revertNoteVersion"]
-        self.assertEqual(len(reverted_note["moods"]), 0)
+        self.assertEqual(len(reverted_note["moods"]), 2)
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
