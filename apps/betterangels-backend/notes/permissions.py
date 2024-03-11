@@ -11,3 +11,10 @@ class NotePermissions(models.TextChoices):
 
 class PrivateNotePermissions(models.TextChoices):
     VIEW = "notes.view_note_private_details", _("Can view note private details")
+
+
+class TaskPermissions(models.TextChoices):
+    VIEW = "notes.view_task", _("Can add task")
+    CHANGE = "notes.change_task", _("Can change task")
+    DELETE = "notes.delete_task", _("Can delete task")
+    ADD = "notes.add_task", _("Can view task")

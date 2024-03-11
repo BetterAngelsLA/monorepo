@@ -1,9 +1,8 @@
 from typing import Optional
 
 from accounts.models import User
-from common.models import BaseModel
+from common.models import BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
-from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -11,15 +10,32 @@ from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords
 
-from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
+from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum, TaskStatusEnum
 
 
-class Location(BaseModel):
-    point = PointField()
-    address = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
-    zip_code = models.CharField(max_length=50, blank=True)
+class Task(BaseModel):
+    title = models.CharField(max_length=100, blank=False)
+    status = TextChoicesField(choices_enum=TaskStatusEnum)
+    due_by = models.DateTimeField(blank=True, null=True)
+    location = models.ForeignKey(
+        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
+    )
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="client_tasks",
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=False, related_name="tasks"
+    )
+
+    taskuserobjectpermission_set: models.QuerySet["Task"]
+    taskgroupobjectpermission_set: models.QuerySet["Task"]
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class Note(BaseModel):
@@ -75,3 +91,11 @@ class NoteUserObjectPermission(UserObjectPermissionBase):
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
+
+
+class TaskUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+
+class TaskGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)

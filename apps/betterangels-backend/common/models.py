@@ -1,3 +1,4 @@
+from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -31,3 +32,11 @@ class SimpleModelGroupObjectPermission(GroupObjectPermissionBase):
     content_object: ForeignKey = models.ForeignKey(
         SimpleModel, on_delete=models.CASCADE
     )
+
+
+class Location(BaseModel):
+    point = PointField(geography=True)
+    address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    zip_code = models.CharField(max_length=50, blank=True)
