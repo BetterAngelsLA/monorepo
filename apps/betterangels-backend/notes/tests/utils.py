@@ -1,13 +1,10 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from accounts.models import User
+from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
-from django.contrib.auth.models import Group
 from django.test import TestCase
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from notes.permissions import NotePermissions, TaskPermissions
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -22,6 +19,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.user_labels = [
             "case_manager_1",
             "case_manager_2",
+            "case_manager_3",
             "client_1",
         ]
         self.user_map = {
@@ -31,29 +29,22 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
         self.case_manager_1 = self.user_map["case_manager_1"]
         self.case_manager_2 = self.user_map["case_manager_2"]
+        self.case_manager_3 = self.user_map["case_manager_3"]
         self.client_1 = self.user_map["client_1"]
 
     def _setup_groups_and_permissions(self) -> None:
-        # Create a group and assign note permissions
-        caseworker_group: Group = baker.make(Group)
-        assign_perm(NotePermissions.VIEW.value, caseworker_group)
-        assign_perm(NotePermissions.ADD.value, caseworker_group)
-        assign_perm(TaskPermissions.VIEW.value, caseworker_group)
-        assign_perm(TaskPermissions.ADD.value, caseworker_group)
-
-        # Create a permission group and add the case manager to it
-        perm_group = permission_group_recipe.make()
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
+            name="Caseworker"
+        )
+        perm_group = permission_group_recipe.make(
+            template=caseworker_permission_group_template
+        )
         perm_group.organization.add_user(self.case_manager_1)
-        self.case_manager_1.groups.add(perm_group.group)
-
-        # Add the caseworker group to the case manager as well
-        self.case_manager_1.groups.add(caseworker_group)
+        perm_group.organization.add_user(self.case_manager_2)
 
         # Create Another Org
         perm_group_2 = permission_group_recipe.make()
-        perm_group_2.organization.add_user(self.case_manager_2)
-        self.case_manager_2.groups.add(perm_group_2.group)
-        self.case_manager_2.groups.add(caseworker_group)
+        perm_group_2.organization.add_user(self.case_manager_3)
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):

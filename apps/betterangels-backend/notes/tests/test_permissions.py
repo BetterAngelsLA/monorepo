@@ -4,6 +4,9 @@ from unittest_parametrize import parametrize
 
 
 class NotePermissionTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
     @parametrize(
         "user_label, should_succeed",
         [
@@ -35,7 +38,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other org CM should not succeed
+            ("case_manager_3", False),  # Other org CM should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -65,7 +68,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_3", False),  # Other user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -126,7 +129,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other case manager should succeed
+            ("case_manager_3", True),  # Other case manager should succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -152,7 +155,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Note owner should succeed
             (
-                "case_manager_2",
+                "case_manager_3",
                 False,
             ),  # Other org case manager should not succeed
         ],
@@ -183,7 +186,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", 1),  # Owner should see private details of their own note
             (
-                "case_manager_2",
+                "case_manager_3",
                 0,
             ),  # Other org case manager should not succeed
         ],
@@ -243,7 +246,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other org CM should not succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -273,7 +277,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -306,7 +311,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other case manager should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -334,7 +340,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other case manager should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],

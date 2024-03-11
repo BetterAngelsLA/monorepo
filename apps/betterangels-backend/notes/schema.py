@@ -147,6 +147,7 @@ class Mutation:
             )
 
             permissions = [
+                TaskPermissions.VIEW,
                 TaskPermissions.CHANGE,
                 TaskPermissions.DELETE,
             ]

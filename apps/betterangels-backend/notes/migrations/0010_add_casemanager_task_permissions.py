@@ -33,6 +33,38 @@ def create_permissions_if_not_exist(apps, schema_editor):
         )
 
 
+def update_caseworker_permission_template(apps, schema_editor):
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+    Permission = apps.get_model("auth", "Permission")
+    caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+
+    perm_map = [
+        perm.split(".")[1]
+        for perm in [
+            "notes.add_task",
+        ]
+    ]
+
+    permissions = Permission.objects.filter(codename__in=perm_map)
+    caseworker_template.permissions.add(*permissions)
+
+
+def revert_caseworker_permission_template(apps, schema_editor):
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+    Permission = apps.get_model("auth", "Permission")
+    caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+
+    perm_map = [
+        perm.split(".")[1]
+        for perm in [
+            "notes.add_task",
+        ]
+    ]
+
+    permissions = Permission.objects.filter(codename__in=perm_map)
+    caseworker_template.permissions.remove(*permissions)
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
@@ -42,4 +74,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
+        migrations.RunPython(
+            update_caseworker_permission_template, revert_caseworker_permission_template
+        ),
     ]

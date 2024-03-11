@@ -88,7 +88,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         self._handle_user_login("case_manager_1")
 
     def test_create_task_mutation(self) -> None:
-        expected_query_count = 22
+        expected_query_count = 28
         with self.assertNumQueries(expected_query_count):
             response = self._create_task_fixture(
                 {
@@ -116,10 +116,9 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
         }
 
-        expected_query_count = 13
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_task_fixture(variables)
-
         updated_task = response["data"]["updateTask"]
         expected_task = {
             "id": self.task["id"],
@@ -144,7 +143,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 11
+        expected_query_count = 13
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
