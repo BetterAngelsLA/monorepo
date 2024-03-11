@@ -1,12 +1,12 @@
 from django.test import ignore_warnings
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
-
 @ignore_warnings(category=UserWarning)
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.case_manager_1)
+
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
@@ -33,7 +33,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     }
                     publicDetails
                     privateDetails
-                    historyId
+                    lastSavedAt
                 }
             }
         """
@@ -49,7 +49,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
         )
-        self.assertEqual(note["historyId"], 1)
+        # TODO: Assert on this after freezegun dep is added
+        self.assertIsNotNone(note["lastSavedAt"])
 
     def test_notes_query(self) -> None:
         self._create_note_fixture(
@@ -72,7 +73,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     id
                     publicDetails
                     privateDetails
-                    historyId
+                    lastSavedAt
                 }
             }
         """

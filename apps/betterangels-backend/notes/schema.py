@@ -87,10 +87,7 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note_version(self, info: Info, data: RevertNoteVersionInput) -> NoteType:
-        historical_as_of = Note.history.model.objects.get(
-            id=data.id, history_id=data.history_id
-        ).history_date
-        revert_to_note = Note.objects.get(id=data.id).history.as_of(historical_as_of)
+        revert_to_note = Note.objects.get(id=data.id).history.as_of(data.last_saved_at)
         # saving a historical note as of a specific moment reverts the note and
         # it's associated models to their states at that moment in history
         revert_to_note.save()

@@ -26,7 +26,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         created_note = response["data"]["createNote"]
         expected_note = {
             "id": ANY,
-            "historyId": 2,
             "title": "New Note",
             "moods": [],
             "publicDetails": "This is a new note.",
@@ -52,7 +51,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "historyId": 19,
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
@@ -68,9 +66,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Update note title and add 1 mood
-        2. Get note and save history_id
+        2. Get note and save it's lastSavedAt
         3. Add another mood
-        4. Revert to history_id from Step 2
+        4. Revert to lastSavedAt from Step 2
         """
         note_id = self.note["id"]
 
@@ -91,7 +89,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                     moods {
                         descriptor
                     }
-                    historyId
+                    lastSavedAt
                 }
             }
         """
@@ -99,7 +97,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["note"]
 
         self.assertEqual(len(returned_note["moods"]), 1)
-        history_id = returned_note["historyId"]
+        last_saved_at = returned_note["lastSavedAt"]
 
         # Update - should be discarded
         discarded_update_variables = {
@@ -126,9 +124,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": note_id, "historyId": history_id}
+        variables = {"id": note_id, "lastSavedAt": last_saved_at}
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -145,9 +143,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         Test actions:
         1. Update note title and add 1 mood
         2. Delete 1 mood
-        3. Get note and save history_id
+        3. Get note and save lastSavedAt
         4. Add 1 mood
-        5. Revert to history_id from Step 3
+        5. Revert to lastSavedAt from Step 3
         """
         note_id = self.note["id"]
 
@@ -172,7 +170,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                     moods {
                         descriptor
                     }
-                    historyId
+                    lastSavedAt
                 }
             }
         """
@@ -180,7 +178,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["note"]
 
         self.assertEqual(len(returned_note["moods"]), 0)
-        history_id = returned_note["historyId"]
+        last_saved_at = returned_note["lastSavedAt"]
 
         # Update - should be discarded
         discarded_update_variables = {
@@ -207,9 +205,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": note_id, "historyId": history_id}
+        variables = {"id": note_id, "lastSavedAt": last_saved_at}
 
-        expected_query_count = 9
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 

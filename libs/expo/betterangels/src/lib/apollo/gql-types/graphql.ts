@@ -114,9 +114,9 @@ export type NoteType = {
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
-  historyId: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
+  lastSavedAt: Scalars['DateTime']['output'];
   moods: Array<MoodType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   publicDetails: Scalars['String']['output'];
@@ -180,8 +180,8 @@ export type QueryNotesArgs = {
 };
 
 export type RevertNoteVersionInput = {
-  historyId: Scalars['Int']['input'];
   id?: InputMaybe<Scalars['ID']['input']>;
+  lastSavedAt: Scalars['DateTime']['input'];
 };
 
 export type RevertNoteVersionPayload = NoteType | OperationInfo;

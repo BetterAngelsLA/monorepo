@@ -97,7 +97,7 @@ type NoteType {
   isSubmitted: Boolean!
   createdAt: DateTime!
   createdBy: UserType!
-  historyId: Int!
+  lastSavedAt: DateTime!
   privateDetails: String
 }
 
@@ -143,7 +143,7 @@ type Query {
 
 input RevertNoteVersionInput {
   id: ID
-  historyId: Int!
+  lastSavedAt: DateTime!
 }
 
 union RevertNoteVersionPayload = NoteType | OperationInfo

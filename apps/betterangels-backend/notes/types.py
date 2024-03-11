@@ -7,6 +7,7 @@ from django.db.models import Case, Exists, F, Max, Value, When
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.utils.query import filter_for_user
+from datetime import datetime
 
 from . import models
 
@@ -52,8 +53,17 @@ class NoteType:
     created_at: auto
     created_by: UserType
 
-    last_saved_date: int = strawberry_django.field(
-        annotate=Max("note_history__history_date")
+    # TODO: make the smaller annotate work
+    # last_saved_at: datetime = strawberry_django.field(
+    #     annotate=Max("note_history__history_date")
+    # )
+    from django.db.models import OuterRef, Subquery
+    last_saved_at: datetime = strawberry_django.field(
+        annotate=Subquery(
+            models.Note.history.model.objects.filter(id=OuterRef("pk"))
+            .order_by("-history_date")
+            .values("history_date")[:1]
+        )
     )
 
     @strawberry_django.field(
@@ -100,8 +110,7 @@ class UpdateNoteInput:
     is_submitted: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class RevertNoteVersionInput:
     id: auto
-    history_id: int
+    last_saved_at: datetime
