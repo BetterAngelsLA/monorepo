@@ -165,7 +165,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             ServiceRequest.objects.get(id=self.service_request["id"])
 
 
-@freeze_time("2024-02-26")
+@freeze_time("2024-02-26 10:11:12")
 @ignore_warnings(category=UserWarning)
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -188,7 +188,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdAt": "2024-02-26T00:00:00+00:00",
+            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
         }
         self.assertEqual(created_task, expected_task)
@@ -211,7 +211,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-02-26T00:00:00+00:00",
+            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
         }
         self.assertEqual(updated_task, expected_task)
