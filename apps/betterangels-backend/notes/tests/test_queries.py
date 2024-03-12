@@ -1,5 +1,5 @@
 from django.test import ignore_warnings
-from notes.tests.utils import NoteGraphQLBaseTestCase
+from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
@@ -10,7 +10,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
-        note = self._update_note_fixture(
+        self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "New Note",
@@ -28,6 +28,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     id
                     title
                     publicDetails
+                    timestamp
                     moods {
                         descriptor
                     }
@@ -54,14 +55,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "title": "Note 2",
                 "publicDetails": "Note 2 details",
-                "client": {"id": self.note_client_1.id},
+                "client": {"id": self.client_1.id},
             }
         )
         self._create_note_fixture(
             {
                 "title": "Note 3",
                 "publicDetails": "Note 3 details",
-                "client": {"id": self.note_client_1.id},
+                "client": {"id": self.client_1.id},
             }
         )
         query = """
@@ -80,3 +81,55 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
         # TODO: Add more validations once sort is implemented
+        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+
+
+@ignore_warnings(category=UserWarning)
+class TaskQueryTestCase(TaskGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.case_manager_1)
+
+    def test_task_query(self) -> None:
+        task_id = self.task["id"]
+        expected_task = {
+            "id": task_id,
+            "title": self.task["title"],
+            "status": "TO_DO",
+        }
+
+        query = """
+            query ViewTask($id: ID!) {
+                task(pk: $id) {
+                    id
+                    title
+                    status
+                }
+            }
+        """
+        variables = {"id": task_id}
+
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        task = response["data"]["task"]
+
+        self.assertEqual(task, expected_task)
+
+    def test_tasks_query(self) -> None:
+        query = """
+            {
+                tasks {
+                    id
+                    title
+                    status
+                }
+            }
+        """
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query)
+        tasks = response["data"]["tasks"]
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["title"], self.task["title"])

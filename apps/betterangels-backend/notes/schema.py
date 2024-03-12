@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import List, cast
 
 import strawberry
@@ -8,15 +7,24 @@ from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.models import Note
-from notes.permissions import NotePermissions, PrivateNotePermissions
+from notes.models import Note, Task
+from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
+from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
-from .types import CreateNoteInput, NoteType, RevertNoteInput, UpdateNoteInput
+from .types import (
+    CreateNoteInput,
+    CreateTaskInput,
+    NoteType,
+    RevertNoteInput,
+    TaskType,
+    UpdateNoteInput,
+    UpdateTaskInput,
+)
 
 
 @strawberry.type
@@ -27,6 +35,14 @@ class Query:
 
     notes: List[NoteType] = strawberry_django.field(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    task: TaskType = strawberry_django.field(
+        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+    )
+
+    tasks: List[TaskType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
     )
 
 
@@ -105,5 +121,73 @@ class Mutation:
         DeleteDjangoObjectInput,
         extensions=[
             HasRetvalPerm(perms=NotePermissions.DELETE),
+        ],
+    )
+
+    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
+    def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
+            task = resolvers.create(
+                info,
+                Task,
+                {
+                    **task_data,
+                    "created_by": user,
+                    "client": client,
+                },
+            )
+
+            permissions = [
+                TaskPermissions.VIEW,
+                TaskPermissions.CHANGE,
+                TaskPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, task)
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation(
+        extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])]
+    )
+    def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
+        with transaction.atomic():
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
+            task = Task.objects.get(id=data.id)
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    **task_data,
+                    "client": client,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    delete_task: TaskType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=TaskPermissions.DELETE),
         ],
     )
