@@ -63,6 +63,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         mutation = """
             mutation DeleteNote($id: ID!) {
                 deleteNote(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                     ... on NoteType {
                         id
                     }
@@ -135,6 +142,13 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         mutation = """
             mutation DeleteTask($id: ID!) {
                 deleteTask(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
                     ... on TaskType {
                         id
                     }
