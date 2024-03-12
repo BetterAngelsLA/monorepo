@@ -448,13 +448,27 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             onPress={onMapPress}
             onLongPress={(e) => placePin(e, false)}
             provider={PROVIDER_GOOGLE}
+            region={{
+              longitudeDelta: 0.005,
+              latitudeDelta: 0.005,
+              longitude: currentLocation
+                ? currentLocation.longitude
+                : initialLocation.longitude,
+              latitude: currentLocation
+                ? currentLocation.latitude
+                : initialLocation.latitude,
+            }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
-              longitude: userLocation
+              longitude: currentLocation
+                ? currentLocation.longitude
+                : userLocation
                 ? userLocation.coords.longitude
                 : initialLocation.longitude,
-              latitude: userLocation
+              latitude: currentLocation
+                ? currentLocation.latitude
+                : userLocation
                 ? userLocation.coords.latitude
                 : initialLocation.latitude,
             }}
