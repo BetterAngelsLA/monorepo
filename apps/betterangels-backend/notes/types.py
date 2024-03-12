@@ -3,9 +3,10 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
+from django.db.models import Case, Exists, F, Value, When
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
-from strawberry_django.permissions import HasSourcePerm
+from strawberry_django.utils.query import filter_for_user
 
 from . import models
 
@@ -48,9 +49,26 @@ class NoteType:
 
     created_at: auto
     created_by: UserType
-    private_details: Optional[str] = strawberry_django.field(
-        extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
+
+    @strawberry_django.field(
+        annotate={
+            "_private_details": lambda info: Case(
+                When(
+                    Exists(
+                        filter_for_user(
+                            models.Note.objects.all(),
+                            info.context.request.user,
+                            [PrivateNotePermissions.VIEW],
+                        )
+                    ),
+                    then=F("private_details"),
+                ),
+                default=Value(None),
+            ),
+        }
     )
+    def private_details(self, root: models.Note) -> Optional[str]:
+        return root._private_details
 
 
 @dataclasses.dataclass
