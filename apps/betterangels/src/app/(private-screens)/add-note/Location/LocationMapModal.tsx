@@ -87,15 +87,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     closeModal();
   }
 
-  function onMapPress(e: any) {
-    if (pin) {
-      setAddress(undefined);
-      setCurrentLocation(undefined);
-      setValue('location', undefined);
-      setPin(false);
-    }
-  }
-
   async function placePin(e: any, isId: boolean) {
     if (!pin) {
       const latitude = e.nativeEvent.coordinate.latitude;
@@ -114,6 +105,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           latitude,
           name,
         });
+
+        mapRef.current?.animateToRegion(
+          {
+            latitude,
+            longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          500
+        );
 
         setInitialLocation({
           longitude,
@@ -136,6 +137,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } else {
       setAddress(undefined);
       setCurrentLocation(undefined);
+      setValue('location', undefined);
       setPin(false);
     }
   }
@@ -144,12 +146,22 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
+    const center = { lat: 34.04499, lng: -118.251601 };
+    const defaultBounds = {
+      north: center.lat + 0.1,
+      south: center.lat - 0.1,
+      east: center.lng + 0.1,
+      west: center.lng - 0.1,
+    };
+
     try {
       const response = await axios.get(url, {
         params: {
+          bounds: defaultBounds,
           input: query,
           key: apiKey,
-          region: 'US-CA',
+          components: 'country:us',
+          strictBounds: true,
         },
       });
 
@@ -184,6 +196,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         latitude: location.lat,
         name: place.description.split(', ')[0],
       });
+
+      mapRef.current?.animateToRegion(
+        {
+          latitude: location.lat,
+          longitude: location.lng,
+          latitudeDelta: 0.005, // Adjust these values as needed for zoom level
+          longitudeDelta: 0.005,
+        },
+        500
+      );
 
       setInitialLocation({
         longitude: location.lng,
@@ -445,19 +467,18 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             onPoiClick={(e) => placePin(e, true)}
             zoomEnabled
             scrollEnabled
-            onPress={onMapPress}
-            onLongPress={(e) => placePin(e, false)}
+            onPress={(e) => placePin(e, false)}
             provider={PROVIDER_GOOGLE}
-            region={{
-              longitudeDelta: 0.005,
-              latitudeDelta: 0.005,
-              longitude: currentLocation
-                ? currentLocation.longitude
-                : initialLocation.longitude,
-              latitude: currentLocation
-                ? currentLocation.latitude
-                : initialLocation.latitude,
-            }}
+            // region={{
+            //   longitudeDelta: 0.005,
+            //   latitudeDelta: 0.005,
+            //   longitude: currentLocation
+            //     ? currentLocation.longitude
+            //     : initialLocation.longitude,
+            //   latitude: currentLocation
+            //     ? currentLocation.latitude
+            //     : initialLocation.latitude,
+            // }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
