@@ -112,17 +112,17 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
-  updateServiceRequest(data: UpdateTaskInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
+  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
 }
 
 type NoteType {
   id: ID!
   title: String!
   publicDetails: String!
-  client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
   timestamp: DateTime!
+  client: UserType
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String
@@ -205,8 +205,8 @@ type ServiceRequestType {
   status: ServiceRequestStatusEnum!
   completedOn: DateTime
   client: UserType
-  createdAt: DateTime!
   createdBy: UserType!
+  createdAt: DateTime!
 }
 
 enum TaskStatusEnum {
@@ -234,6 +234,13 @@ input UpdateNoteInput {
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateServiceRequestInput {
+  id: ID
+  customService: String
+  status: ServiceRequestStatusEnum
+  client: UserInput
+}
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 

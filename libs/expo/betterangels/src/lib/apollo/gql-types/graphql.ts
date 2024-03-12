@@ -153,7 +153,7 @@ export type MutationUpdateNoteArgs = {
 
 
 export type MutationUpdateServiceRequestArgs = {
-  data: UpdateTaskInput;
+  data: UpdateServiceRequestInput;
 };
 
 
@@ -319,6 +319,13 @@ export type UpdateNoteInput = {
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
+
+export type UpdateServiceRequestInput = {
+  client?: InputMaybe<UserInput>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<ServiceRequestStatusEnum>;
+};
 
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 

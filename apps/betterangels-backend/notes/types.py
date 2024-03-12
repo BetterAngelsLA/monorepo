@@ -18,8 +18,8 @@ class ServiceRequestType:
     status: auto
     completed_on: auto
     client: Optional[UserType]
-    created_at: auto
     created_by: UserType
+    created_at: auto
 
 
 @strawberry_django.input(models.ServiceRequest)
@@ -81,10 +81,10 @@ class NoteType:
     id: auto
     title: auto
     public_details: auto
-    client: Optional[UserType]
     moods: List[MoodType]
     is_submitted: auto
     timestamp: auto
+    client: Optional[UserType]
     created_at: auto
     created_by: UserType
 

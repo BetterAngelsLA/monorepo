@@ -57,8 +57,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.case_manager_1)
         self.note: Dict[str, Any] = self._create_note_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
-                "publicDetails": f"{self.case_manager_1.id}'s note",
+                "title": f"New note for: {self.case_manager_1.id}",
+                "publicDetails": f"{self.case_manager_1.id}'s new note",
                 "client": {"id": self.client_1.id},
             },
         )["data"]["createNote"]
@@ -89,16 +89,19 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on NoteType {{
                         id
                         title
-                        publicDetails
                         moods {{
                             descriptor
                         }}
+                        publicDetails
+                        privateDetails
+                        isSubmitted
                         client {{
                             id
                         }}
                         createdBy {{
                             id
                         }}
+                        timestamp
                     }}
                 }}
             }}
@@ -163,10 +166,10 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
                         client {{
                             id
                         }}
-                        createdAt
                         createdBy {{
                             id
                         }}
+                        createdAt
                     }}
                 }}
             }}
@@ -190,7 +193,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
+                "title": f"{self.case_manager_1.id}'s new task",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]
@@ -221,15 +224,15 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on TaskType {{
                         id
                         title
-                        dueBy
                         status
+                        dueBy
                         client {{
                             id
                         }}
-                        createdAt
                         createdBy {{
                             id
                         }}
+                        createdAt
                     }}
                 }}
             }}
