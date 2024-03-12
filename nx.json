@@ -64,7 +64,10 @@
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/.storybook/**/*",
-      "!{projectRoot}/tsconfig.storybook.json"
+      "!{projectRoot}/tsconfig.storybook.json",
+      "!{projectRoot}/cypress/**/*",
+      "!{projectRoot}/**/*.cy.[jt]s?(x)",
+      "!{projectRoot}/cypress.config.[jt]s"
     ],
     "sharedGlobals": [
       "{workspaceRoot}/Dockerfile",
@@ -75,5 +78,34 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": ["@nxlv/python"]
+  "plugins": [
+    "@nxlv/python",
+    {
+      "plugin": "@nx/expo/plugin",
+      "options": {
+        "startTargetName": "start",
+        "serveTargetName": "serve",
+        "runIosTargetName": "run-ios",
+        "runAndroidTargetName": "run-android",
+        "exportTargetName": "export",
+        "prebuildTargetName": "prebuild",
+        "installTargetName": "install",
+        "buildTargetName": "build",
+        "submitTargetName": "submit"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/cypress/plugin",
+      "options": {
+        "targetName": "e2e",
+        "componentTestingTargetName": "component-test"
+      }
+    }
+  ]
 }
