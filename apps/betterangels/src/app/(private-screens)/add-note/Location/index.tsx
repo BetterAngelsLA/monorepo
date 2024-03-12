@@ -42,7 +42,11 @@ export default function LocationComponent(props: ILocationProps) {
           setExpanded(isLocation ? undefined : 'Location');
           let currentLocation = null;
           if (status === 'granted') {
-            currentLocation = await Location.getCurrentPositionAsync({});
+            currentLocation = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.High,
+              timeInterval: 5000,
+              distanceInterval: 5,
+            });
           }
           setUserLocation(currentLocation);
           toggleModal(true);
