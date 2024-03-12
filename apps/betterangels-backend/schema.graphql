@@ -85,7 +85,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  revertNoteVersion(data: RevertNoteVersionInput!): RevertNoteVersionPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
 }
 
 type NoteType {
@@ -140,12 +140,12 @@ type Query {
   notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
 }
 
-input RevertNoteVersionInput {
+input RevertNoteInput {
   id: ID
-  lastSavedAt: DateTime!
+  savedAt: DateTime!
 }
 
-union RevertNoteVersionPayload = NoteType | OperationInfo
+union RevertNotePayload = NoteType | OperationInfo
 
 input UpdateNoteInput {
   id: ID

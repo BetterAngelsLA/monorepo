@@ -101,7 +101,7 @@ export type MutationGenerateMagicLinkArgs = {
 
 
 export type MutationRevertNoteVersionArgs = {
-  data: RevertNoteVersionInput;
+  data: RevertNoteInput;
 };
 
 
@@ -178,9 +178,9 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-export type RevertNoteVersionInput = {
+export type RevertNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
-  lastSavedAt: Scalars['DateTime']['input'];
+  savedAt: Scalars['DateTime']['input'];
 };
 
 export type RevertNoteVersionPayload = NoteType | OperationInfo;

@@ -95,6 +95,6 @@ class UpdateNoteInput:
 
 
 @strawberry_django.input(models.Note)
-class RevertNoteVersionInput:
+class RevertNoteInput:
     id: auto
-    last_saved_at: datetime
+    saved_at: datetime
