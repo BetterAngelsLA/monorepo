@@ -95,8 +95,8 @@ def update_group_permissions(sender: Any, **kwargs: Any) -> None:
     caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
         name="Caseworker"
     )
+    permissions = caseworker_permission_group_template.permissions.all()
     permission_groups = caseworker_permission_group_template.permissiongroup_set.all()
+
     for permission_group in permission_groups:
-        permission_group.group.permissions.set(
-            caseworker_permission_group_template.permissions.all()
-        )
+        permission_group.group.permissions.set(permissions)
