@@ -80,7 +80,7 @@ export type Mutation = {
   deleteNote: DeleteNotePayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
-  revertNoteVersion: RevertNoteVersionPayload;
+  revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
 };
 
@@ -100,7 +100,7 @@ export type MutationGenerateMagicLinkArgs = {
 };
 
 
-export type MutationRevertNoteVersionArgs = {
+export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
 
@@ -183,7 +183,7 @@ export type RevertNoteInput = {
   savedAt: Scalars['DateTime']['input'];
 };
 
-export type RevertNoteVersionPayload = NoteType | OperationInfo;
+export type RevertNotePayload = NoteType | OperationInfo;
 
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
