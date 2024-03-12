@@ -93,6 +93,7 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
+  revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
   updateTask: UpdateTaskPayload;
 };
@@ -120,6 +121,11 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
+};
+
+
+export type MutationRevertNoteArgs = {
+  data: RevertNoteInput;
 };
 
 
@@ -213,6 +219,13 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type RevertNoteInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  savedAt: Scalars['DateTime']['input'];
+};
+
+export type RevertNotePayload = NoteType | OperationInfo;
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
