@@ -14,7 +14,8 @@ import {
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   FlatList,
@@ -44,11 +45,13 @@ interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
   setExpanded: (e: string | undefined | null) => void;
+  userLocation?: Location.LocationObject | null;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { isModalVisible, toggleModal, setExpanded } = props;
+  const { isModalVisible, toggleModal, setExpanded, userLocation } = props;
   const { trigger, setValue, watch } = useFormContext();
+  const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
@@ -205,6 +208,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setSearchQuery(query);
   };
 
+  const goToUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    }
+  };
+
   const onSearchDelete = () => {
     setAddress(undefined);
     setCurrentLocation(undefined);
@@ -333,32 +350,35 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               zIndex: 100,
             }}
           >
-            <View
-              style={{
-                alignSelf: 'flex-end',
-                paddingRight: Spacings.sm,
-                marginBottom: Spacings.md,
-                position: 'absolute',
-                bottom: '100%',
-                right: 0,
-                zIndex: 100,
-              }}
-            >
-              <IconButton
+            {userLocation && (
+              <View
                 style={{
-                  elevation: 5,
-                  shadowColor: Colors.NEUTRAL_DARK,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
+                  alignSelf: 'flex-end',
+                  paddingRight: Spacings.sm,
+                  marginBottom: Spacings.md,
+                  position: 'absolute',
+                  bottom: '100%',
+                  right: 0,
+                  zIndex: 100,
                 }}
-                accessibilityLabel="user location"
-                variant="secondary"
-                accessibilityHint="get user location"
               >
-                <LocationArrowIcon color={Colors.PRIMARY} />
-              </IconButton>
-            </View>
+                <IconButton
+                  onPress={goToUserLocation}
+                  style={{
+                    elevation: 5,
+                    shadowColor: Colors.NEUTRAL_DARK,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                  }}
+                  accessibilityLabel="user location"
+                  variant="secondary"
+                  accessibilityHint="get user location"
+                >
+                  <LocationArrowIcon color={Colors.PRIMARY} />
+                </IconButton>
+              </View>
+            )}
             {currentLocation && (
               <View
                 style={{
@@ -419,6 +439,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             />
           </View>
           <MapView
+            ref={mapRef}
+            showsUserLocation={userLocation ? true : false}
             mapType="standard"
             onPoiClick={(e) => placePin(e, true)}
             zoomEnabled
@@ -426,21 +448,15 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             onPress={onMapPress}
             onLongPress={(e) => placePin(e, false)}
             provider={PROVIDER_GOOGLE}
-            region={{
-              longitudeDelta: 0.005,
-              latitudeDelta: 0.005,
-              latitude: currentLocation
-                ? currentLocation.latitude
-                : initialLocation.latitude,
-              longitude: currentLocation
-                ? currentLocation.longitude
-                : initialLocation.longitude,
-            }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
-              longitude: initialLocation.longitude,
-              latitude: initialLocation.latitude,
+              longitude: userLocation
+                ? userLocation.coords.longitude
+                : initialLocation.longitude,
+              latitude: userLocation
+                ? userLocation.coords.latitude
+                : initialLocation.latitude,
             }}
             style={{
               height: '100%',
