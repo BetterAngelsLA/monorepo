@@ -45,11 +45,10 @@ interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
   setExpanded: (e: string | undefined | null) => void;
-  userLocation?: Location.LocationObject | null;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { isModalVisible, toggleModal, setExpanded, userLocation } = props;
+  const { isModalVisible, toggleModal, setExpanded } = props;
   const { trigger, setValue, watch } = useFormContext();
   const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
@@ -57,6 +56,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
   const [suggestions, setSuggestions] = useState<any>([]);
+  const [userLocation, setUserLocation] =
+    useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -263,6 +264,57 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  useEffect(() => {
+    getLocation();
+    console.log('test');
+  }, []);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+    const userLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+    const { latitude, longitude } = userLocation.coords;
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+    try {
+      const { data } = await axios.get(url);
+      setValue('location', undefined);
+      setCurrentLocation({
+        longitude,
+        latitude,
+        name: undefined,
+      });
+
+      setInitialLocation({
+        longitude,
+        latitude,
+      });
+
+      const googleAddress = data.results[0].formatted_address;
+      const shortAddress = googleAddress.split(', ')[0];
+
+      setAddress({
+        short: shortAddress,
+        full: googleAddress,
+      });
+      setPin(true);
+
+      setValue('location', {
+        longitude: longitude,
+        latitude: latitude,
+        address: googleAddress,
+        name: undefined,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <Modal

@@ -1,7 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
-import * as Location from 'expo-location';
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -20,9 +19,6 @@ export default function LocationComponent(props: ILocationProps) {
     watch,
     formState: { errors },
   } = useFormContext();
-
-  const [userLocation, setUserLocation] =
-    useState<Location.LocationObject | null>(null);
   const [isModalVisible, toggleModal] = useState(false);
 
   const location = watch('location');
@@ -34,19 +30,12 @@ export default function LocationComponent(props: ILocationProps) {
       expanded={expanded}
       mb="xs"
       error={errors.location ? 'Please enter a location' : undefined}
-      setExpanded={async () => {
+      setExpanded={() => {
         if (isLocation) {
           setExpanded(undefined);
         } else {
-          const { status } = await Location.requestForegroundPermissionsAsync();
           setExpanded(isLocation ? undefined : 'Location');
-          let currentLocation = null;
-          if (status === 'granted') {
-            currentLocation = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            });
-          }
-          setUserLocation(currentLocation);
+
           toggleModal(true);
           setExpanded('Location');
         }
@@ -107,7 +96,6 @@ export default function LocationComponent(props: ILocationProps) {
         </View>
       )}
       <LocationMapModal
-        userLocation={userLocation}
         toggleModal={toggleModal}
         setExpanded={setExpanded}
         isModalVisible={isModalVisible}
