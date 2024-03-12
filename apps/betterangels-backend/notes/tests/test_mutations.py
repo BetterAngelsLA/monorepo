@@ -1,12 +1,10 @@
 from unittest.mock import ANY
 
 from django.test import ignore_warnings
+from django.utils import timezone
 from freezegun import freeze_time
 from notes.models import Note, Task
 from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
-from django.utils import timezone
-from notes.models import Note
-from notes.tests.utils import NoteGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)

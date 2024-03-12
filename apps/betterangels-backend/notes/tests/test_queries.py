@@ -55,14 +55,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "title": "Note 2",
                 "publicDetails": "Note 2 details",
-                "client": {"id": self.note_client_1.id},
+                "client": {"id": self.client_1.id},
             }
         )
         self._create_note_fixture(
             {
                 "title": "Note 3",
                 "publicDetails": "Note 3 details",
-                "client": {"id": self.note_client_1.id},
+                "client": {"id": self.client_1.id},
             }
         )
         query = """
@@ -79,7 +79,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(query)
 
         notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
+        self.assertEqual(len(notes), 3)
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
 
 

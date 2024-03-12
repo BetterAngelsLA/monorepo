@@ -20,11 +20,11 @@ from .types import (
     CreateNoteInput,
     CreateTaskInput,
     NoteType,
+    RevertNoteInput,
     TaskType,
     UpdateNoteInput,
     UpdateTaskInput,
 )
-from .types import CreateNoteInput, NoteType, RevertNoteInput, UpdateNoteInput
 
 
 @strawberry.type

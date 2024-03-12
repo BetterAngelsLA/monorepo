@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
         ("accounts", "0007_add_caseworker_role"),
-        ("notes", "0009_add_task_and_taskpermission"),
+        ("notes", "0010_add_task_and_taskpermission"),
     ]
 
     operations = [
