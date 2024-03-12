@@ -5,7 +5,6 @@ from notes.tests.utils import (
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
 )
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
@@ -119,16 +118,13 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
 
     def test_service_request_query(self) -> None:
         service_request_id = self.service_request["id"]
-        self.expected_service_request = {
-            "id": service_request_id,
-            "service": self.service_request["service"],
-            "customService": None,
-            "status": "TO_DO",
-            "completedOn": None,
-            "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
-        }
+        self._update_service_request_fixture(
+            {
+                "id": service_request_id,
+                "status": "COMPLETED",
+                "client": {"id": self.client_1.id},
+            }
+        )
 
         query = """
             query ViewServiceRequest($id: ID!) {
@@ -155,7 +151,18 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables)
 
         service_request = response["data"]["serviceRequest"]
-        self.assertEqual(service_request, self.expected_service_request)
+        expected_service_request = {
+            "id": service_request_id,
+            "service": self.service_request["service"],
+            "customService": None,
+            "status": "COMPLETED",
+            "completedOn": "2024-03-11T10:11:12+00:00",
+            "client": {"id": str(self.client_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+        }
+
+        self.assertEqual(service_request, expected_service_request)
 
     def test_service_requests_query(self) -> None:
         query = """

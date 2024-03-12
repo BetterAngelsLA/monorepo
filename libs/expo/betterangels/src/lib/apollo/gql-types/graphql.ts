@@ -328,7 +328,8 @@ export type UpdateNoteInput = {
   moods?: InputMaybe<Array<CreateMoodInput>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title: Scalars['String']['input'];
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;

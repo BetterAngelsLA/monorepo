@@ -119,7 +119,7 @@ class CreateNoteInput:
     client: Optional[UserInput]
 
 
-@strawberry_django.input(models.Note)
+@strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: auto
     title: auto
@@ -127,6 +127,7 @@ class UpdateNoteInput:
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
+    timestamp: auto
 
 
 @strawberry_django.input(models.Note)

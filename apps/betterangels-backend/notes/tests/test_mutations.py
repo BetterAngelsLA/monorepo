@@ -1,6 +1,7 @@
 from unittest.mock import ANY
 
 from django.test import ignore_warnings
+from django.utils import timezone
 from freezegun import freeze_time
 from notes.models import Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -8,10 +9,6 @@ from notes.tests.utils import (
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
 )
-from django.utils import timezone
-from freezegun import freeze_time
-from notes.models import Note, Task
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
@@ -20,6 +17,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("case_manager_1")
 
+    @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
         expected_query_count = 32
         with self.assertNumQueries(expected_query_count):
@@ -37,19 +35,23 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "publicDetails": "This is a new note.",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        self.assertEqual(created_note, expected_note)
+        self.assertEqual(expected_note, created_note)
 
+    @freeze_time("03-12-2024 10:11:12")
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Updated Body",
+            "publicDetails": "Updated public details",
             "isSubmitted": False,
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
         expected_query_count = 32
@@ -61,11 +63,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Updated Body",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "publicDetails": "Updated public details",
+            "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
-        self.assertEqual(updated_note, expected_note)
+        self.assertEqual(expected_note, updated_note)
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """

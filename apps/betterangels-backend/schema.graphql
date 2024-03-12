@@ -234,11 +234,12 @@ type TaskType {
 
 input UpdateNoteInput {
   id: ID
-  title: String!
+  title: String
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
   isSubmitted: Boolean
+  timestamp: DateTime
 }
 
 union UpdateNotePayload = NoteType | OperationInfo

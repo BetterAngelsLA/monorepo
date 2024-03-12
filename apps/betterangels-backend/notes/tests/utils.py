@@ -93,7 +93,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             descriptor
                         }}
                         publicDetails
-                        privateDetails
                         isSubmitted
                         client {{
                             id
