@@ -80,6 +80,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
+        # TODO: Add more validations once sort is implemented
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
 
 
