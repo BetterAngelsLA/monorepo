@@ -1,3 +1,5 @@
+import dataclasses
+from datetime import datetime
 from typing import List, Optional
 
 import strawberry_django
@@ -125,3 +127,9 @@ class UpdateNoteInput:
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
+
+
+@strawberry_django.input(models.Note)
+class RevertNoteInput:
+    id: auto
+    saved_at: datetime

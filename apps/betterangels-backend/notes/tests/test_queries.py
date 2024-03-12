@@ -5,6 +5,7 @@ from notes.tests.utils import (
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
 )
+from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
 
 @ignore_warnings(category=UserWarning)
@@ -34,6 +35,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     title
+                    publicDetails
                     timestamp
                     moods {
                         descriptor
@@ -50,6 +52,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
+
         variables = {"id": note_id}
         expected_query_count = 3
         with self.assertNumQueries(expected_query_count):
@@ -74,6 +77,20 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:
+        self._create_note_fixture(
+            {
+                "title": "Note 2",
+                "publicDetails": "Note 2 details",
+                "client": {"id": self.client_1.id},
+            }
+        )
+        self._create_note_fixture(
+            {
+                "title": "Note 3",
+                "publicDetails": "Note 3 details",
+                "client": {"id": self.client_1.id},
+            }
+        )
         query = """
             {
                 notes {
@@ -86,8 +103,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
+
         notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
+        self.assertEqual(len(notes), 3)
+        # TODO: Add more validations once sort is implemented
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
 
 

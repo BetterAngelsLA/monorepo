@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("notes", "0010_add_casemanager_task_permissions"),
+        ("notes", "0011_add_casemanager_task_permissions"),
     ]
 
     operations = [

@@ -65,7 +65,7 @@ def revert_caseworker_permission_template(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notes", "0011_add_servicerequest_and_servicerequestpermission"),
+        ("notes", "0012_add_servicerequest_and_servicerequestpermission"),
     ]
 
     operations = [

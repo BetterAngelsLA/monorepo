@@ -14,6 +14,8 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
+from notes.models import Note, Task
+from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -30,6 +32,11 @@ from .types import (
     TaskType,
     UpdateNoteInput,
     UpdateServiceRequestInput,
+    CreateTaskInput,
+    NoteType,
+    RevertNoteInput,
+    TaskType,
+    UpdateNoteInput,
     UpdateTaskInput,
 )
 
@@ -115,6 +122,15 @@ class Mutation:
             note._private_details = note.private_details
 
             return cast(NoteType, note)
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
+        revert_to_note = Note.objects.get(id=data.id).log.as_of(data.saved_at)
+        # saving a historical note as of a specific moment reverts the note and
+        # its associated models to their states at that moment in history
+        revert_to_note.save()
+
+        return cast(NoteType, revert_to_note)
 
     update_note: NoteType = mutations.update(
         UpdateNoteInput,
