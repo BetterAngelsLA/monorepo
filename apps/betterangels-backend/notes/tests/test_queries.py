@@ -36,6 +36,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
+
         variables = {"id": note_id}
         expected_query_count = 3
         with self.assertNumQueries(expected_query_count):
@@ -49,6 +50,20 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
 
     def test_notes_query(self) -> None:
+        self._create_note_fixture(
+            {
+                "title": "Note 2",
+                "publicDetails": "Note 2 details",
+                "client": {"id": self.note_client_1.id},
+            }
+        )
+        self._create_note_fixture(
+            {
+                "title": "Note 3",
+                "publicDetails": "Note 3 details",
+                "client": {"id": self.note_client_1.id},
+            }
+        )
         query = """
             {
                 notes {
@@ -61,6 +76,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
+
         notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
-        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+        self.assertEqual(len(notes), 3)
+        # TODO: Add more validations once sort is implemented

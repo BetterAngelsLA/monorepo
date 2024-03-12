@@ -1,4 +1,5 @@
 import dataclasses
+from datetime import datetime
 from typing import List, Optional
 
 import strawberry_django
@@ -36,7 +37,6 @@ class CreateServiceInput:
     custom_descriptor: Optional[str]
 
 
-@dataclasses.dataclass
 @strawberry_django.type(models.Note, pagination=True)
 class NoteType:
     id: auto
@@ -71,13 +71,11 @@ class NoteType:
         return root._private_details
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.User)
 class UserInput:
     id: auto
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
@@ -86,7 +84,6 @@ class CreateNoteInput:
     client: Optional[UserInput]
 
 
-@dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto
@@ -95,3 +92,9 @@ class UpdateNoteInput:
     private_details: auto
     moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
+
+
+@strawberry_django.input(models.Note)
+class RevertNoteInput:
+    id: auto
+    saved_at: datetime

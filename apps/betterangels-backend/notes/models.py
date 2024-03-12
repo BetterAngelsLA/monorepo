@@ -9,7 +9,7 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
 from organizations.models import Organization
-from simple_history.models import HistoricalRecords
+from simple_history.models import HistoricalRecords, HistoricForeignKey
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
 
@@ -41,8 +41,11 @@ class Note(BaseModel):
     created_by = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    history = HistoricalRecords()
+
+    log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
@@ -59,7 +62,10 @@ class Note(BaseModel):
 
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
-    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+    note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+
+    log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
 
 class Service(BaseModel):
