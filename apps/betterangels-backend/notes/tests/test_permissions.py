@@ -1,9 +1,12 @@
-from notes.models import Note
-from notes.tests.utils import NoteGraphQLBaseTestCase
+from notes.models import Note, Task
+from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
 class NotePermissionTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
     @parametrize(
         "user_label, should_succeed",
         [
@@ -35,8 +38,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other org CM should not succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("case_manager_3", False),  # Other org CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -65,7 +68,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", False),  # Other user should not succeed
+            ("case_manager_3", False),  # Other user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -99,7 +102,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Owner should succeed
             ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -126,8 +129,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other case manager should succeed
-            ("note_client_1", False),  # Non CM should not succeed
+            ("case_manager_3", True),  # Other case manager should succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -152,7 +155,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", True),  # Note owner should succeed
             (
-                "case_manager_2",
+                "case_manager_3",
                 False,
             ),  # Other org case manager should not succeed
         ],
@@ -183,7 +186,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("case_manager_1", 1),  # Owner should see private details of their own note
             (
-                "case_manager_2",
+                "case_manager_3",
                 0,
             ),  # Other org case manager should not succeed
         ],
@@ -209,3 +212,152 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         )
 
         self.assertEqual(private_details_visible, expected_private_details_count)
+
+
+class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Logged-in user should succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_task_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"title": "Test Task", "status": "TO_DO"}
+        response = self._create_task_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createTask"])
+        else:
+            self.assertEqual(
+                response["data"]["createTask"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createTask",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_task_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            mutation DeleteTask($id: ID!) {
+                deleteTask(data: { id: $id }) {
+                    ... on TaskType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.task["id"]}
+        self.execute_graphql(mutation, variables)
+
+        self.assertTrue(
+            Task.objects.filter(id=self.task["id"]).exists() != should_succeed
+        )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_task_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.task["id"],
+            "title": "Updated Task",
+            "status": "COMPLETED",
+        }
+
+        response = self._update_task_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateTask"])
+        else:
+            self.assertEqual(
+                response["data"]["updateTask"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "updateTask",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_task_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewTask($id: ID!) {
+                task(pk: $id) {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.task["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_tasks_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewTasks {
+                tasks {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.task["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertTrue(len(response["data"]["tasks"]) == should_succeed)
