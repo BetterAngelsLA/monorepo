@@ -202,7 +202,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         {
           latitude: location.lat,
           longitude: location.lng,
-          latitudeDelta: 0.005, // Adjust these values as needed for zoom level
+          latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         },
         500
