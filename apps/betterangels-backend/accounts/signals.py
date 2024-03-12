@@ -91,3 +91,16 @@ def handle_organization_user_removed(
     logger.info(
         f"User {user.username} was removed from organization {organization.name}."
     )
+
+
+@receiver(post_migrate)
+def update_group_permissions(sender: Any, **kwargs: Any) -> None:
+    caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
+        name="Caseworker"
+    )
+    for (
+        permission_group
+    ) in caseworker_permission_group_template.permissiongroup_set.all():
+        permission_group.group.permissions.set(
+            caseworker_permission_group_template.permissions.all()
+        )
