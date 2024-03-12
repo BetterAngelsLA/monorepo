@@ -43,9 +43,7 @@ export default function LocationComponent(props: ILocationProps) {
           let currentLocation = null;
           if (status === 'granted') {
             currentLocation = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.High,
-              timeInterval: 5000,
-              distanceInterval: 5,
+              accuracy: Location.Accuracy.Balanced,
             });
           }
           setUserLocation(currentLocation);
