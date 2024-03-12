@@ -267,7 +267,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   useEffect(() => {
     getLocation();
-    console.log('test');
   }, []);
 
   const getLocation = async () => {
@@ -275,10 +274,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (status !== 'granted') {
       return;
     }
-    const userLocation = await Location.getCurrentPositionAsync({
+    const userCurrentLocation = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
     });
-    const { latitude, longitude } = userLocation.coords;
+    const { latitude, longitude } = userCurrentLocation.coords;
+
+    setUserLocation(userCurrentLocation);
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
@@ -521,16 +522,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             scrollEnabled
             onPress={(e) => placePin(e, false)}
             provider={PROVIDER_GOOGLE}
-            // region={{
-            //   longitudeDelta: 0.005,
-            //   latitudeDelta: 0.005,
-            //   longitude: currentLocation
-            //     ? currentLocation.longitude
-            //     : initialLocation.longitude,
-            //   latitude: currentLocation
-            //     ? currentLocation.latitude
-            //     : initialLocation.latitude,
-            // }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
