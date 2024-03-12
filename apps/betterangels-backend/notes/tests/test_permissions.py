@@ -176,7 +176,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["note"]["privateDetails"])
         else:
-            self.assertFalse(response["data"]["note"]["privateDetails"])
+            self.assertIsNone(response["data"]["note"]["privateDetails"])
 
     @parametrize(
         "user_label, expected_private_details_count",

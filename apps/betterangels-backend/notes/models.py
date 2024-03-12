@@ -1,11 +1,10 @@
-from typing import Any, Optional, Self
+from typing import Optional
 
 from accounts.models import User
 from common.models import BaseModel
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.gis.db.models import PointField
 from django.db import models
-from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateNotePermissions
@@ -13,7 +12,6 @@ from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
 from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum
-from .managers import MoodManager
 
 
 class Location(BaseModel):
@@ -46,8 +44,8 @@ class Note(BaseModel):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    objects = models.Manager()
     log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
@@ -65,14 +63,9 @@ class Note(BaseModel):
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+
     log = HistoricalRecords(related_name="history")
-
-    objects = MoodManager()  # type: ignore[misc]
-
-    # def save(self: Self, *args: Any, **kwargs: Any) -> None:
-    #     super().save(*args, **kwargs)
-    #     self.note.updated_at = timezone.now()
-    #     self.note.save()
+    objects = models.Manager()
 
 
 class Service(BaseModel):

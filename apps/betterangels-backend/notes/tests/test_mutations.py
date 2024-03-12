@@ -1,6 +1,7 @@
 from unittest.mock import ANY
 
 from django.test import ignore_warnings
+from django.utils import timezone
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase
 
@@ -61,14 +62,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_revert_note_version_mutation_removes_added_moods(self) -> None:
         """
-        Asserts that when revert note version mutation is called, the Note is
-        reverted to the specified version.
+        Asserts that when revertNoteVersion mutation is called, the Note and
+        its related models are reverted to their state at the specified moment.
 
         Test actions:
         1. Update note title and add 1 mood
-        2. Get note and save lastSavedAt
+        2. Save now as last_saved_at
         3. Add another mood
-        4. Revert to lastSavedAt from Step 2
+        4. Revert to last_saved_at from Step 2
         5. Assert note has only 1 mood
         """
         note_id = self.note["id"]
@@ -81,24 +82,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
-        self._update_note_fixture(persisted_update_variables)
-
-        query = """
-            query ViewNote($id: ID!) {
-                note(pk: $id) {
-                    id
-                    moods {
-                        descriptor
-                    }
-                    lastSavedAt
-                }
-            }
-        """
-        response = self.execute_graphql(query, {"id": note_id})
-        returned_note = response["data"]["note"]
-
+        response = self._update_note_fixture(persisted_update_variables)
+        returned_note = response["data"]["updateNote"]
         self.assertEqual(len(returned_note["moods"]), 1)
-        last_saved_at = returned_note["lastSavedAt"]
+
+        # Select a moment to revert to
+        last_saved_at = timezone.now()
 
         # Update - should be discarded
         discarded_update_variables = {
@@ -138,12 +127,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_revert_note_version_mutation_returns_removed_moods(self) -> None:
         """
-        Asserts that when revert note version mutation is called, the Note is
-        reverted to the specified version.
+        Asserts that when revertNoteVersion mutation is called, the Note and
+        its related models are reverted to their state at the specified moment.
 
         Test actions:
         1. Update note title and add 2 moods
-        2. Get note and save lastSavedAt
+        2. Save now as last_saved_at
         3. Delete 1 mood
         4. Revert to lastSavedAt from Step 2
         5. Assert note has 2 moods again
@@ -158,24 +147,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
-        self._update_note_fixture(persisted_update_variables)
-
-        query = """
-            query ViewNote($id: ID!) {
-                note(pk: $id) {
-                    id
-                    moods {
-                        descriptor
-                    }
-                    lastSavedAt
-                }
-            }
-        """
-        response = self.execute_graphql(query, {"id": note_id})
-        returned_note = response["data"]["note"]
-
+        response = self._update_note_fixture(persisted_update_variables)
+        returned_note = response["data"]["updateNote"]
         self.assertEqual(len(returned_note["moods"]), 2)
-        last_saved_at = returned_note["lastSavedAt"]
+
+        # Select a moment to revert to
+        last_saved_at = timezone.now()
 
         # Update - should be discarded
         discarded_update_variables = {

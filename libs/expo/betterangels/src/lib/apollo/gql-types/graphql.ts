@@ -116,7 +116,6 @@ export type NoteType = {
   createdBy: UserType;
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
-  lastSavedAt: Scalars['DateTime']['output'];
   moods: Array<MoodType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   publicDetails: Scalars['String']['output'];

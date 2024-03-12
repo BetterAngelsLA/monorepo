@@ -33,7 +33,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     }
                     publicDetails
                     privateDetails
-                    lastSavedAt
                 }
             }
         """
@@ -49,8 +48,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
         )
-        # TODO: Assert on this after freezegun dep is added
-        self.assertIsNotNone(note["lastSavedAt"])
 
     def test_notes_query(self) -> None:
         self._create_note_fixture(
@@ -73,7 +70,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     id
                     publicDetails
                     privateDetails
-                    lastSavedAt
                 }
             }
         """

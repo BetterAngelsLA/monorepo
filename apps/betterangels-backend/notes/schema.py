@@ -89,7 +89,7 @@ class Mutation:
     def revert_note_version(self, info: Info, data: RevertNoteVersionInput) -> NoteType:
         revert_to_note = Note.objects.get(id=data.id).log.as_of(data.last_saved_at)
         # saving a historical note as of a specific moment reverts the note and
-        # it's associated models to their states at that moment in history
+        # its associated models to their states at that moment in history
         revert_to_note.save()
 
         return cast(NoteType, revert_to_note)

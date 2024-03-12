@@ -97,7 +97,6 @@ type NoteType {
   isSubmitted: Boolean!
   createdAt: DateTime!
   createdBy: UserType!
-  lastSavedAt: DateTime!
   privateDetails: String
 }
 
