@@ -11,7 +11,7 @@ from django.db.models.signals import post_delete, post_migrate, post_save, pre_d
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
 
-from .models import User
+from .models import PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -88,3 +88,16 @@ def handle_organization_user_removed(
     logger.info(
         f"User {user.username} was removed from organization {organization.name}."
     )
+
+
+@receiver(post_migrate)
+def update_group_permissions(sender: Any, **kwargs: Any) -> None:
+    caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
+        name="Caseworker"
+    )
+    for (
+        permission_group
+    ) in caseworker_permission_group_template.permissiongroup_set.all():
+        permission_group.group.permissions.set(
+            caseworker_permission_group_template.permissions.all()
+        )
