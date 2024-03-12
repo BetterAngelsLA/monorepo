@@ -275,7 +275,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       return;
     }
     const userCurrentLocation = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
+      accuracy: Location.Accuracy.Balanced,
     });
     const { latitude, longitude } = userCurrentLocation.coords;
 
