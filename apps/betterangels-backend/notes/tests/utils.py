@@ -58,7 +58,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note: Dict[str, Any] = self._create_note_fixture(
             {
                 "title": f"New note for: {self.case_manager_1.id}",
-                "publicDetails": f"{self.case_manager_1.id}'s new note",
+                "publicDetails": f"{self.case_manager_1.id}'s public details.",
+                "privateDetails": f"{self.case_manager_1.id}'s private details.",
                 "client": {"id": self.client_1.id},
             },
         )["data"]["createNote"]

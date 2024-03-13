@@ -108,6 +108,10 @@ class NoteType:
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
+        print("~" * 500)
+        from IPython import embed
+
+        # embed()
         return root._private_details
 
 

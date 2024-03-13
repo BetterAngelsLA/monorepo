@@ -8,7 +8,7 @@ from notes.tests.utils import (
 
 
 @ignore_warnings(category=UserWarning)
-@freeze_time("03-12-2024 10:11:12")
+# @freeze_time("03-12-2024 10:11:12")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -20,13 +20,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "publicDetails": "Updated public details.",
-                "privateDetails": "Updated private details.",
                 "moods": [
                     {"descriptor": "ANXIOUS"},
                     {"descriptor": "EUTHYMIC"},
                 ],
+                "publicDetails": "Updated public details.",
+                "privateDetails": "Updated private details.",
                 "isSubmitted": False,
+                "timestamp": "2024-03-12T11:12:13+00:00",
             }
         )
         query = """
@@ -34,8 +35,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     title
-                    publicDetails
-                    timestamp
                     moods {
                         descriptor
                     }
@@ -48,6 +47,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     createdBy {
                         id
                     }
+                    timestamp
                 }
             }
         """
@@ -61,7 +61,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "title": "Updated Note",
-            "timestamp": "2024-03-12T10:11:12+00:00",
             "moods": [
                 {"descriptor": "ANXIOUS"},
                 {"descriptor": "EUTHYMIC"},
@@ -69,8 +68,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details.",
             "privateDetails": "Updated private details.",
             "isSubmitted": False,
-            "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T11:12:13+00:00",
         }
 
         self.assertEqual(expected_note, note)
@@ -79,14 +79,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self._create_note_fixture(
             {
                 "title": "Note 2",
-                "publicDetails": "Note 2 details",
+                "publicDetails": "Note 2 public details",
+                "privateDetails": "Note 2 private details",
                 "client": {"id": self.client_1.id},
             }
         )
         self._create_note_fixture(
             {
                 "title": "Note 3",
-                "publicDetails": "Note 3 details",
+                "publicDetails": "Note 3 public details",
+                "privateDetails": "Note 3 private details",
                 "client": {"id": self.client_1.id},
             }
         )
@@ -94,19 +96,35 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 notes {
                     id
+                    title
+                    moods {
+                        descriptor
+                    }
                     publicDetails
                     privateDetails
+                    isSubmitted
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    timestamp
                 }
             }
         """
-        expected_query_count = 2
+        expected_query_count = 3
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
         # TODO: Add more validations once sort is implemented
-        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+        from IPython import embed
+
+        # embed()
+        self.assertEqual(notes[0], self.note)
+        # self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
 
 
 @freeze_time("2024-03-11 10:11:12")

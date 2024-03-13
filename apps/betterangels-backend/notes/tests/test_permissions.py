@@ -1,5 +1,9 @@
-from notes.models import Note, Task
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
+from notes.models import Note, ServiceRequest, Task
+from notes.tests.utils import (
+    NoteGraphQLBaseTestCase,
+    ServiceRequestGraphQLBaseTestCase,
+    TaskGraphQLBaseTestCase,
+)
 from unittest_parametrize import parametrize
 
 
@@ -212,6 +216,159 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         )
 
         self.assertEqual(private_details_visible, expected_private_details_count)
+
+
+class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Logged-in user should succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"service": "BLANKET", "status": "TO_DO"}
+        response = self._create_service_request_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createServiceRequest"])
+        else:
+            self.assertEqual(
+                response["data"]["createServiceRequest"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createServiceRequest",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on ServiceRequestType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        self.execute_graphql(mutation, variables)
+
+        self.assertTrue(
+            ServiceRequest.objects.filter(id=self.service_request["id"]).exists()
+            != should_succeed
+        )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.service_request["id"],
+            "status": "COMPLETED",
+        }
+
+        response = self._update_service_request_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateServiceRequest"])
+        else:
+            self.assertEqual(
+                response["data"]["updateServiceRequest"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "updateServiceRequest",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewServiceRequest($id: ID!) {
+                serviceRequest(pk: $id) {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),  # Owner should succeed
+            ("case_manager_2", True),  # Other CM in owner's org should succeed
+            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_service_requests_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewServiceRequests {
+                serviceRequests {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertTrue(len(response["data"]["serviceRequests"]) == should_succeed)
 
 
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):

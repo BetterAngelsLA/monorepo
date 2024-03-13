@@ -253,8 +253,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "completedOn": None,
             "status": "TO_DO",
             "client": None,
-            "createdAt": "2024-03-11T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(created_service_request, expected_service_request)
 
@@ -277,8 +277,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "completedOn": "2024-03-11T12:34:56+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(updated_service_request, expected_service_request)
 
@@ -333,8 +333,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(created_task, expected_task)
 
@@ -342,8 +342,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "client": {"id": str(self.client_1.pk)},
             "status": "COMPLETED",
+            "client": {"id": str(self.client_1.pk)},
         }
 
         expected_query_count = 15
@@ -356,8 +356,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(updated_task, expected_task)
 
