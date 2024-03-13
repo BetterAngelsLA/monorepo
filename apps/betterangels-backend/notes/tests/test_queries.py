@@ -72,7 +72,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
-
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:

@@ -59,7 +59,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "title": f"New note for: {self.case_manager_1.id}",
                 "publicDetails": f"{self.case_manager_1.id}'s public details.",
-                "privateDetails": f"{self.case_manager_1.id}'s private details.",
                 "client": {"id": self.client_1.id},
             },
         )["data"]["createNote"]
@@ -94,6 +93,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             descriptor
                         }}
                         publicDetails
+                        privateDetails
                         isSubmitted
                         client {{
                             id
