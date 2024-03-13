@@ -330,7 +330,7 @@ export type UpdateNoteInput = {
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
@@ -340,7 +340,7 @@ export type UpdateServiceRequestInput = {
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<ServiceRequestStatusEnum>;
+  status: ServiceRequestStatusEnum;
 };
 
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
@@ -349,8 +349,8 @@ export type UpdateTaskInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<TaskStatusEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
+  status: TaskStatusEnum;
+  title: Scalars['String']['input'];
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;

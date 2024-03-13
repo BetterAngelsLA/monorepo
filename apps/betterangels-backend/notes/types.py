@@ -32,7 +32,7 @@ class CreateServiceRequestInput:
     client: Optional[ID]
 
 
-@strawberry_django.input(models.ServiceRequest, partial=True)
+@strawberry_django.input(models.ServiceRequest)
 class UpdateServiceRequestInput:
     id: auto
     custom_service: auto
@@ -60,7 +60,7 @@ class CreateTaskInput:
     client: Optional[ID]
 
 
-@strawberry_django.input(models.Task, partial=True)
+@strawberry_django.input(models.Task)
 class UpdateTaskInput:
     id: auto
     title: auto
@@ -120,7 +120,7 @@ class CreateNoteInput:
     client: Optional[ID]
 
 
-@strawberry_django.input(models.Note, partial=True)
+@strawberry_django.input(models.Note)
 class UpdateNoteInput:
     id: auto
     title: auto
