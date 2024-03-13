@@ -31,6 +31,7 @@ class ServiceRequest(BaseModel):
         related_name="client_service_requests",
     )
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
+    due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.CASCADE, related_name="service_requests"

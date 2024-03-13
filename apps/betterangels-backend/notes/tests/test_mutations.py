@@ -252,6 +252,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": ANY,
             "service": "BLANKET",
             "customService": None,
+            "dueBy": None,
             "completedOn": None,
             "status": "TO_DO",
             "client": None,
@@ -264,6 +265,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
     def test_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
+            "dueBy": "2024-03-11T11:12:13+00:00",
             "status": "COMPLETED",
             "client": {"id": str(self.client_1.pk)},
         }
@@ -277,6 +279,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "service": "BLANKET",
             "customService": None,
             "status": "COMPLETED",
+            "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.case_manager_1.pk)},

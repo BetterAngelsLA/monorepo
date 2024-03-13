@@ -162,6 +162,7 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
                         service
                         customService
                         status
+                        dueBy
                         completedOn
                         client {{
                             id

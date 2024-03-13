@@ -68,6 +68,7 @@ class Migration(migrations.Migration):
                         max_length=9,
                     ),
                 ),
+                ("due_by", models.DateTimeField(blank=True, null=True)),
                 ("completed_on", models.DateTimeField(blank=True, null=True)),
                 (
                     "client",

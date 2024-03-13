@@ -146,6 +146,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     service
                     customService
                     status
+                    dueBy
                     completedOn
                     client {
                         id
@@ -169,6 +170,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "service": self.service_request["service"],
             "customService": None,
             "status": "COMPLETED",
+            "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": {"id": str(self.client_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
@@ -185,6 +187,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     service
                     customService
                     status
+                    dueBy
                     completedOn
                     client {
                         id

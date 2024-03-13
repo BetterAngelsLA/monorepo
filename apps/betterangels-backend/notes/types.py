@@ -17,6 +17,7 @@ class ServiceRequestType:
     service: auto
     custom_service: auto
     status: auto
+    due_by: auto
     completed_on: auto
     client: Optional[UserType]
     created_by: UserType
@@ -36,6 +37,7 @@ class UpdateServiceRequestInput:
     id: auto
     custom_service: auto
     status: auto
+    due_by: auto
     client: Optional[UserInput]
 
 

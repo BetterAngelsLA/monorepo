@@ -301,6 +301,7 @@ export type ServiceRequestType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   customService?: Maybe<Scalars['String']['output']>;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
   status: ServiceRequestStatusEnum;
@@ -337,6 +338,7 @@ export type UpdateNotePayload = NoteType | OperationInfo;
 export type UpdateServiceRequestInput = {
   client?: InputMaybe<UserInput>;
   customService?: InputMaybe<Scalars['String']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<ServiceRequestStatusEnum>;
 };
