@@ -9,7 +9,7 @@ class NotePermissions(models.TextChoices):
     ADD = "notes.add_note", _("Can view note")
 
 
-class PrivateNotePermissions(models.TextChoices):
+class PrivateDetailsPermissions(models.TextChoices):
     VIEW = "notes.view_note_private_details", _("Can view note private details")
 
 

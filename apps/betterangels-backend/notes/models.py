@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from accounts.models import User
 from common.models import BaseModel, Location
@@ -7,7 +7,7 @@ from django.db import models
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from notes.permissions import PrivateNotePermissions
+from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
@@ -40,7 +40,6 @@ class ServiceRequest(BaseModel):
     servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-
         if self.status == ServiceRequestStatusEnum.COMPLETED:
             if self.pk:
                 original_instance = ServiceRequest.objects.get(pk=self.pk)
@@ -115,7 +114,9 @@ class Note(BaseModel):
         return self.title
 
     class Meta:
-        permissions = permission_enum_to_django_meta_permissions(PrivateNotePermissions)
+        permissions = permission_enum_to_django_meta_permissions(
+            PrivateDetailsPermissions
+        )
 
 
 class Mood(BaseModel):

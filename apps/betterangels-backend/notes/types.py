@@ -1,11 +1,10 @@
-import dataclasses
 from datetime import datetime
 from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserInput, UserType
 from django.db.models import Case, Exists, F, Value, When
-from notes.permissions import PrivateNotePermissions
+from notes.permissions import PrivateDetailsPermissions
 from strawberry import auto
 from strawberry_django.utils.query import filter_for_user
 
@@ -98,7 +97,7 @@ class NoteType:
                         filter_for_user(
                             models.Note.objects.all(),
                             info.context.request.user,
-                            [PrivateNotePermissions.VIEW],
+                            [PrivateDetailsPermissions.VIEW],
                         )
                     ),
                     then=F("private_details"),
@@ -108,10 +107,6 @@ class NoteType:
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
-        print("~" * 500)
-        from IPython import embed
-
-        # embed()
         return root._private_details
 
 

@@ -120,11 +120,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
         # TODO: Add more validations once sort is implemented
-        from IPython import embed
-
-        # embed()
         self.assertEqual(notes[0], self.note)
-        # self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
 
 
 @freeze_time("2024-03-11 10:11:12")

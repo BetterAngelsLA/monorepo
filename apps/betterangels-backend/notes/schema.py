@@ -10,12 +10,10 @@ from guardian.shortcuts import assign_perm
 from notes.models import Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
-    PrivateNotePermissions,
+    PrivateDetailsPermissions,
     ServiceRequestPermissions,
     TaskPermissions,
 )
-from notes.models import Note, Task
-from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -28,15 +26,11 @@ from .types import (
     CreateServiceRequestInput,
     CreateTaskInput,
     NoteType,
+    RevertNoteInput,
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
     UpdateServiceRequestInput,
-    CreateTaskInput,
-    NoteType,
-    RevertNoteInput,
-    TaskType,
-    UpdateNoteInput,
     UpdateTaskInput,
 )
 
@@ -112,7 +106,7 @@ class Mutation:
             permissions = [
                 NotePermissions.CHANGE,
                 NotePermissions.DELETE,
-                PrivateNotePermissions.VIEW,
+                PrivateDetailsPermissions.VIEW,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, note)
