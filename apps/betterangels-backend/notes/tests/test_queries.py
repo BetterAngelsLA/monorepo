@@ -74,8 +74,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         (
             "case_manager_label, client_label, is_submitted, "
-            "expected_results_count, returned_note_id_1, "
-            "returned_note_id_2"
+            "expected_results_count, returned_note_label_1, "
+            "returned_note_label_2"
         ),
         [
             # Filter by:
@@ -99,8 +99,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         client_label: Optional[str],
         is_submitted: Optional[bool],
         expected_results_count: int,
-        returned_note_id_1: Optional[str],
-        returned_note_id_2: Optional[str],
+        returned_note_label_1: Optional[str],
+        returned_note_label_2: Optional[str],
     ) -> None:
         self.graphql_client.force_login(self.case_manager_2)
 
@@ -144,11 +144,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), expected_results_count)
 
-        if returned_note_id_1:
-            self.assertEqual(notes[0]["id"], getattr(self, returned_note_id_1)["id"])
+        if returned_note_label_1:
+            self.assertEqual(notes[0]["id"], getattr(self, returned_note_label_1)["id"])
 
-        if returned_note_id_2:
-            self.assertEqual(notes[1]["id"], getattr(self, returned_note_id_2)["id"])
+        if returned_note_label_2:
+            self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
 
 
 @ignore_warnings(category=UserWarning)
