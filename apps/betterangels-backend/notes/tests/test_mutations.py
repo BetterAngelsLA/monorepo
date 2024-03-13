@@ -30,6 +30,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "publicDetails": "This is a new note.",
+            "privateDetails": "",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
         }
@@ -42,6 +43,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
+            "privateDetails": "Updated private details",
             "isSubmitted": False,
         }
 
@@ -55,6 +57,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
+            "privateDetails": "Updated private details",
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
         }

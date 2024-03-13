@@ -92,7 +92,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 response["data"]["updateNote"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": None,
+                    "field": "updateNote",
                     "message": "You don't have permission to access this app.",
                 },
             )
