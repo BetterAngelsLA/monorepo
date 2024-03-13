@@ -90,6 +90,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         title
                         publicDetails
+                        privateDetails
                         moods {{
                             descriptor
                         }}
