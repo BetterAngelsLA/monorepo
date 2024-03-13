@@ -8,7 +8,6 @@ from notes.tests.utils import (
 
 
 @ignore_warnings(category=UserWarning)
-# @freeze_time("03-12-2024 10:11:12")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -119,7 +118,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 3)
         # TODO: Add more validations once sort is implemented
-        self.assertEqual(notes[0], self.note)
+        self.assertEqual(self.note, notes[0])
 
 
 @freeze_time("2024-03-11 10:11:12")
@@ -151,10 +150,10 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     client {
                         id
                     }
-                    createdAt
                     createdBy {
                         id
                     }
+                    createdAt
                 }
             }
         """
@@ -173,11 +172,11 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
-        self.assertEqual(service_request, expected_service_request)
+        self.assertEqual(expected_service_request, service_request)
 
     def test_service_requests_query(self) -> None:
         query = """
@@ -192,23 +191,23 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     client {
                         id
                     }
-                    createdAt
                     createdBy {
                         id
                     }
+                    createdAt
                 }
             }
         """
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
+
         service_requests = response["data"]["serviceRequests"]
         self.assertEqual(len(service_requests), 1)
-        self.assertEqual(
-            service_requests[0]["service"], self.service_request["service"]
-        )
+        self.assertEqual(self.service_request, service_requests[0])
 
 
+@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -221,6 +220,10 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "id": task_id,
             "title": self.task["title"],
             "status": "TO_DO",
+            "dueBy": None,
+            "client": None,
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
         query = """
@@ -229,6 +232,14 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     id
                     title
                     status
+                    dueBy
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
                 }
             }
         """
@@ -239,8 +250,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables)
 
         task = response["data"]["task"]
-
-        self.assertEqual(task, expected_task)
+        self.assertEqual(expected_task, task)
 
     def test_tasks_query(self) -> None:
         query = """
@@ -249,12 +259,21 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     id
                     title
                     status
+                    dueBy
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
                 }
             }
         """
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
+
         tasks = response["data"]["tasks"]
         self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0]["title"], self.task["title"])
+        self.assertEqual(self.task, tasks[0])

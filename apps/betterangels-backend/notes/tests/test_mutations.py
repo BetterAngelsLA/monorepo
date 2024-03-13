@@ -259,7 +259,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
-        self.assertEqual(created_service_request, expected_service_request)
+        self.assertEqual(expected_service_request, created_service_request)
 
     @freeze_time("2024-03-11 12:34:56")
     def test_update_service_request_mutation(self) -> None:
@@ -285,7 +285,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
-        self.assertEqual(updated_service_request, expected_service_request)
+        self.assertEqual(expected_service_request, updated_service_request)
 
     def test_delete_service_request_mutation(self) -> None:
         mutation = """
@@ -341,7 +341,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(created_task, expected_task)
+        self.assertEqual(expected_task, created_task)
 
     def test_update_task_mutation(self) -> None:
         variables = {
@@ -364,7 +364,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(updated_task, expected_task)
+        self.assertEqual(expected_task, updated_task)
 
     def test_delete_task_mutation(self) -> None:
         mutation = """

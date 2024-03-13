@@ -194,7 +194,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
+                "title": f"New task for: {self.case_manager_1.id}",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]
