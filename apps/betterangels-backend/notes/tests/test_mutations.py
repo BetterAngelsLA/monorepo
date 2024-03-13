@@ -267,12 +267,13 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": self.service_request["id"],
             "dueBy": "2024-03-11T11:12:13+00:00",
             "status": "COMPLETED",
-            "client": {"id": str(self.client_1.pk)},
+            "client": self.client_1.pk,
         }
 
         expected_query_count = 16
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
+
         updated_service_request = response["data"]["updateServiceRequest"]
         expected_service_request = {
             "id": self.service_request["id"],
@@ -311,6 +312,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteServiceRequest"])
+
         with self.assertRaises(ServiceRequest.DoesNotExist):
             ServiceRequest.objects.get(id=self.service_request["id"])
 

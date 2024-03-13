@@ -5,7 +5,7 @@ import strawberry_django
 from accounts.types import UserInput, UserType
 from django.db.models import Case, Exists, F, Value, When
 from notes.permissions import PrivateDetailsPermissions
-from strawberry import auto
+from strawberry import ID, auto
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
@@ -29,7 +29,7 @@ class CreateServiceRequestInput:
     service: auto
     status: auto
     custom_service: auto
-    client: Optional[UserInput]
+    client: Optional[ID]
 
 
 @strawberry_django.input(models.ServiceRequest, partial=True)
@@ -38,7 +38,7 @@ class UpdateServiceRequestInput:
     custom_service: auto
     status: auto
     due_by: auto
-    client: Optional[UserInput]
+    client: Optional[ID]
 
 
 @strawberry_django.type(models.Task, pagination=True)

@@ -32,7 +32,7 @@ export type CreateNoteInput = {
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateServiceRequestInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
   service: ServiceEnum;
   status: ServiceRequestStatusEnum;
@@ -186,6 +186,10 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OneToManyInput = {
+  set?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -336,7 +340,7 @@ export type UpdateNoteInput = {
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateServiceRequestInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<OneToManyInput>;
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;

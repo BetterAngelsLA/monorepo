@@ -134,7 +134,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": {"id": self.client_1.id},
+                "client": self.client_1.id,
             }
         )
 
