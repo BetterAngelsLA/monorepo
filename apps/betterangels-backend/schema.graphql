@@ -235,7 +235,7 @@ type TaskType {
 
 input UpdateNoteInput {
   id: ID
-  title: String!
+  title: String
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
@@ -248,7 +248,7 @@ union UpdateNotePayload = NoteType | OperationInfo
 input UpdateServiceRequestInput {
   id: ID
   customService: String
-  status: ServiceRequestStatusEnum!
+  status: ServiceRequestStatusEnum
   dueBy: DateTime
   client: ID
 }
@@ -257,8 +257,8 @@ union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input UpdateTaskInput {
   id: ID
-  title: String!
-  status: TaskStatusEnum!
+  title: String
+  status: TaskStatusEnum
   dueBy: DateTime
   client: ID
 }
