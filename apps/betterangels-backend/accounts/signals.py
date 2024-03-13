@@ -7,6 +7,7 @@ from accounts.utils import (
     remove_organization_permission_group,
 )
 from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_delete, post_migrate, post_save, pre_delete
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
@@ -92,11 +93,14 @@ def handle_organization_user_removed(
 
 @receiver(post_migrate)
 def update_group_permissions(sender: Any, **kwargs: Any) -> None:
-    caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
-        name="Caseworker"
-    )
-    permissions = caseworker_permission_group_template.permissions.all()
-    permission_groups = caseworker_permission_group_template.permissiongroup_set.all()
+    with transaction.atomic():
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
+            name="Caseworker"
+        )
+        permissions = caseworker_permission_group_template.permissions.all()
+        permission_groups = (
+            caseworker_permission_group_template.permissiongroup_set.all()
+        )
 
-    for permission_group in permission_groups:
-        permission_group.group.permissions.set(permissions)
+        for permission_group in permission_groups:
+            permission_group.group.permissions.set(permissions)
