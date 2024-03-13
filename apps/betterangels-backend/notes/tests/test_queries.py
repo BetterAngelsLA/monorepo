@@ -79,7 +79,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "title": "Note 2",
                 "publicDetails": "Note 2 public details",
                 "privateDetails": "Note 2 private details",
-                "client": {"id": self.client_1.id},
+                "client": self.client_1.id,
             }
         )
         self._create_note_fixture(
@@ -87,7 +87,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "title": "Note 3",
                 "publicDetails": "Note 3 public details",
                 "privateDetails": "Note 3 private details",
-                "client": {"id": self.client_1.id},
+                "client": self.client_1.id,
             }
         )
         query = """

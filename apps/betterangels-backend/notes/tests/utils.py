@@ -59,7 +59,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "title": f"New note for: {self.case_manager_1.id}",
                 "publicDetails": f"{self.case_manager_1.id}'s public details.",
-                "client": {"id": self.client_1.id},
+                "client": self.client_1.id,
             },
         )["data"]["createNote"]
         # Logout after setting up the note

@@ -19,13 +19,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 32
+        expected_query_count = 33
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
                     "title": "New Note",
                     "publicDetails": "New public details",
-                    "client": {"id": str(self.client_1.pk)},
+                    "client": self.client_1.pk,
                 }
             )
 
@@ -350,7 +350,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "id": self.task["id"],
             "title": "Updated task title",
             "status": "COMPLETED",
-            "client": {"id": str(self.client_1.pk)},
+            "client": self.client_1.pk,
         }
 
         expected_query_count = 15

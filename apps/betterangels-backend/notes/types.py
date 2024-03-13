@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import strawberry_django
-from accounts.types import UserInput, UserType
+from accounts.types import UserType
 from django.db.models import Case, Exists, F, Value, When
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, auto
@@ -57,7 +57,7 @@ class CreateTaskInput:
     title: auto
     status: auto
     due_by: auto
-    client: Optional[UserInput]
+    client: Optional[ID]
 
 
 @strawberry_django.input(models.Task, partial=True)
@@ -66,7 +66,7 @@ class UpdateTaskInput:
     title: auto
     status: auto
     due_by: auto
-    client: Optional[UserInput]
+    client: Optional[ID]
 
 
 @strawberry_django.type(models.Mood)
@@ -117,7 +117,7 @@ class CreateNoteInput:
     title: auto
     public_details: auto
     private_details: auto
-    client: Optional[UserInput]
+    client: Optional[ID]
 
 
 @strawberry_django.input(models.Note, partial=True)

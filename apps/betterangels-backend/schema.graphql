@@ -30,7 +30,7 @@ input CreateNoteInput {
   title: String!
   publicDetails: String
   privateDetails: String
-  client: UserInput
+  client: ID
 }
 
 union CreateNotePayload = NoteType | OperationInfo
@@ -48,7 +48,7 @@ input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: UserInput
+  client: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -132,10 +132,6 @@ type NoteType {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int! = -1
-}
-
-input OneToManyInput {
-  set: ID
 }
 
 type OperationInfo {
@@ -254,7 +250,7 @@ input UpdateServiceRequestInput {
   customService: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
-  client: OneToManyInput
+  client: ID
 }
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
@@ -264,14 +260,10 @@ input UpdateTaskInput {
   title: String
   status: TaskStatusEnum
   dueBy: DateTime
-  client: UserInput
+  client: ID
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
-
-input UserInput {
-  id: ID
-}
 
 type UserType {
   id: ID!

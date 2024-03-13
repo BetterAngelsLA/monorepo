@@ -3,7 +3,7 @@ from typing import List, cast
 import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroup, User
+from accounts.models import PermissionGroup
 from common.graphql.types import DeleteDjangoObjectInput
 from django.db import transaction
 from guardian.shortcuts import assign_perm
@@ -88,7 +88,6 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            client = User(id=data.client.id) if data.client else None
             note_data = asdict(data)
             note = resolvers.create(
                 info,
@@ -96,7 +95,6 @@ class Mutation:
                 {
                     **note_data,
                     "created_by": user,
-                    "client": client,
                     "organization": permission_group.organization,
                 },
             )
@@ -242,7 +240,6 @@ class Mutation:
             if not (permission_group and permission_group.group):
                 raise PermissionError("User lacks proper organization or permissions")
 
-            client = User(id=data.client.id) if data.client else None
             task_data = asdict(data)
             task = resolvers.create(
                 info,
@@ -250,7 +247,6 @@ class Mutation:
                 {
                     **task_data,
                     "created_by": user,
-                    "client": client,
                 },
             )
 
@@ -269,7 +265,6 @@ class Mutation:
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         with transaction.atomic():
-            client = User(id=data.client.id) if data.client else None
             task_data = asdict(data)
             task = Task.objects.get(id=data.id)
             task = resolvers.update(
@@ -277,7 +272,6 @@ class Mutation:
                 task,
                 {
                     **task_data,
-                    "client": client,
                 },
             )
 

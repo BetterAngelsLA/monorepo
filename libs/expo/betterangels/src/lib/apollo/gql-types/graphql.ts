@@ -23,7 +23,7 @@ export type CreateMoodInput = {
 };
 
 export type CreateNoteInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
@@ -41,7 +41,7 @@ export type CreateServiceRequestInput = {
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
@@ -184,10 +184,6 @@ export type NoteType = {
 export type OffsetPaginationInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
-};
-
-export type OneToManyInput = {
-  set?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type OperationInfo = {
@@ -340,7 +336,7 @@ export type UpdateNoteInput = {
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateServiceRequestInput = {
-  client?: InputMaybe<OneToManyInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -350,7 +346,7 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -358,10 +354,6 @@ export type UpdateTaskInput = {
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
-
-export type UserInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
 
 export type UserType = {
   __typename?: 'UserType';
