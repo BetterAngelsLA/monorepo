@@ -46,6 +46,12 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         perm_group_2 = permission_group_recipe.make()
         perm_group_2.organization.add_user(self.case_manager_3)
 
+    def _handle_user_login(self, user_label: Optional[str]) -> None:
+        if user_label:
+            self.graphql_client.force_login(self.user_map[user_label])
+        else:
+            self.graphql_client.logout()
+
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -107,12 +113,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
-
-    def _handle_user_login(self, user_label: Optional[str]) -> None:
-        if user_label:
-            self.graphql_client.force_login(self.user_map[user_label])
-        else:
-            self.graphql_client.logout()
 
 
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -177,12 +177,6 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _handle_user_login(self, user_label: Optional[str]) -> None:
-        if user_label:
-            self.graphql_client.force_login(self.user_map[user_label])
-        else:
-            self.graphql_client.logout()
-
 
 class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -239,9 +233,3 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
-
-    def _handle_user_login(self, user_label: Optional[str]) -> None:
-        if user_label:
-            self.graphql_client.force_login(self.user_map[user_label])
-        else:
-            self.graphql_client.logout()
