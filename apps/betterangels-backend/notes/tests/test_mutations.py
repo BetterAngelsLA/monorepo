@@ -25,7 +25,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 {
                     "title": "New Note",
                     "publicDetails": "New public details",
-                    "privateDetails": "New private details",
                     "client": {"id": str(self.client_1.pk)},
                 }
             )
@@ -36,7 +35,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note",
             "moods": [],
             "publicDetails": "New public details",
-            "privateDetails": "New private details",
+            "privateDetails": "",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.case_manager_1.pk)},
@@ -66,9 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated public details",
-            # TODO: Fix this. privateDetails not returned on updateNote payload.
-            # createNote, viewNote, viewNotes all work.
-            "privateDetails": None,
+            "privateDetails": "Updated private details",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.case_manager_1.pk)},

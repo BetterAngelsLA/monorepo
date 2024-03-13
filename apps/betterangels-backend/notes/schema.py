@@ -126,12 +126,26 @@ class Mutation:
 
         return cast(NoteType, revert_to_note)
 
-    update_note: NoteType = mutations.update(
-        UpdateNoteInput,
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ],
+    @strawberry_django.mutation(
+        extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
     )
+    def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        with transaction.atomic():
+            note_data = asdict(data)
+            note = Note.objects.get(id=data.id)
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    **note_data,
+                },
+            )
+
+            # Annotated Fields for Permission Checks. This is a workaround since
+            # annotations are not applied during mutations.
+            note._private_details = note.private_details
+
+            return cast(NoteType, note)
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
