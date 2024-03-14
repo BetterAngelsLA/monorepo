@@ -1,69 +1,114 @@
 from typing import Any, Optional
 
 from django.test import ignore_warnings
+from freezegun import freeze_time
+from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
+@freeze_time("03-12-2024 10:11:12")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.case_manager_1)
+        self.maxDiff = None
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
         self._update_note_fixture(
             {
                 "id": note_id,
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
+                "title": "Updated Note",
+                "purposes": [t.id for t in self.purposes],
                 "moods": [
                     {"descriptor": "ANXIOUS"},
                     {"descriptor": "EUTHYMIC"},
                 ],
+                "nextSteps": [t.id for t in self.next_steps],
+                "publicDetails": "Updated public details",
+                "privateDetails": "Updated private details",
                 "isSubmitted": False,
             }
         )
+
         query = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
                     title
-                    publicDetails
-                    timestamp
                     moods {
                         descriptor
                     }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
+                    }
                     publicDetails
                     privateDetails
+                    timestamp
                 }
             }
         """
 
         variables = {"id": note_id}
-        expected_query_count = 3
+        expected_query_count = 5
+
+        note = Note.objects.get(id=note_id)
+        note.purposes.add(*self.purposes)
+        note.next_steps.add(*self.next_steps)
+
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        note = response["data"]["note"]
-
-        self.assertEqual(note["publicDetails"], "This is a new note.")
-        self.assertEqual(
-            note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
-        )
+        returned_note = response["data"]["note"]
+        expected_note = {
+            "id": note_id,
+            "title": "Updated Note",
+            "timestamp": "2024-03-12T10:11:12+00:00",
+            "purposes": [
+                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
+            ],
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "nextSteps": [
+                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
+                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
+            ],
+            "publicDetails": "Updated public details",
+            "privateDetails": "Updated private details",
+        }
+        self.assertEqual(expected_note, returned_note)
 
     def test_notes_query(self) -> None:
         query = """
             {
                 notes {
                     id
+                    title
+                    moods {
+                        descriptor
+                    }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
+                    }
                     publicDetails
                     privateDetails
+                    timestamp
                 }
             }
         """
-        expected_query_count = 2
+        expected_query_count = 5
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 

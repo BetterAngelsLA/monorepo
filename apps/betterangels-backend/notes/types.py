@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.types import UserInput, UserType
 from django.db.models import Case, Exists, F, Value, When
 from notes.permissions import PrivateNotePermissions
-from strawberry import auto
+from strawberry import ID, auto
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
@@ -80,13 +80,15 @@ class NoteFilter:
 class NoteType:
     id: auto
     title: auto
-    public_details: auto
-    client: Optional[UserType]
+    purposes: List[TaskType]
     moods: List[MoodType]
+    next_steps: List[TaskType]
+    public_details: auto
     is_submitted: auto
-    timestamp: auto
+    client: Optional[UserType]
     created_at: auto
     created_by: UserType
+    timestamp: auto
 
     @strawberry_django.field(
         annotate={
@@ -117,14 +119,17 @@ class CreateNoteInput:
     client: Optional[UserInput]
 
 
-@strawberry_django.input(models.Note)
+@strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: auto
     title: auto
+    purposes: Optional[List[ID]]
+    moods: Optional[List[CreateMoodInput]]
+    next_steps: Optional[List[ID]]
     public_details: auto
     private_details: auto
-    moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
+    timestamp: auto
 
 
 @strawberry_django.input(models.Note)

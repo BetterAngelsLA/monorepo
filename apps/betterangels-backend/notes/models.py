@@ -34,16 +34,19 @@ class Task(BaseModel):
     taskuserobjectpermission_set: models.QuerySet["Task"]
     taskgroupobjectpermission_set: models.QuerySet["Task"]
 
+    log = HistoricalRecords(related_name="history")
+
     def __str__(self) -> str:
         return self.title
 
 
 class Note(BaseModel):
     title = models.CharField(max_length=100)
-    timestamp = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
+    purposes = models.ManyToManyField(Task, related_name="purpose_notes")
+    next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
@@ -57,10 +60,11 @@ class Note(BaseModel):
     created_by = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    log = HistoricalRecords(related_name="history")
+    log = HistoricalRecords(related_name="history", m2m_fields=[purposes, next_steps])
     objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
