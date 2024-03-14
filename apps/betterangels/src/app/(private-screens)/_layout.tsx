@@ -31,6 +31,7 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           title: 'Add note',
+          headerTitleAlign: 'center',
           headerLeft: () => (
             <Pressable
               accessibilityRole="button"
