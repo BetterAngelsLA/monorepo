@@ -55,6 +55,10 @@ union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteTaskPayload = TaskType | OperationInfo
 
+input DjangoModelFilterInput {
+  pk: ID!
+}
+
 input MagicLinkInput {
   email: String!
 }
@@ -100,6 +104,15 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
+}
+
+input NoteFilter {
+  client: DjangoModelFilterInput
+  createdBy: DjangoModelFilterInput
+  isSubmitted: Boolean
+  AND: NoteFilter
+  OR: NoteFilter
+  NOT: NoteFilter
 }
 
 type NoteType {
@@ -152,7 +165,7 @@ enum OperationMessageKind {
 type Query {
   currentUser: UserType!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
