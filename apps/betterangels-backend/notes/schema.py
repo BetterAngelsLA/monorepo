@@ -62,22 +62,16 @@ class Mutation:
     ) -> NoteAttachmentType:
         user = get_current_user(info)
         note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
-            id=1
+            id=data.note
         )
-
-        # check if note doesn't exist throw error if none
-
-        # Detect type
-        file_type = FileType.IMAGE  # Hack for now
 
         # Create Attachment
         content_type = ContentType.objects.get_for_model(Note)
         attachment = Attachment.objects.create(
             file=data.file,
-            file_type=file_type,
             namespace=data.namespace,
             content_type=content_type,
-            object_id=note,
+            object_id=note.id,
         )
         return cast(NoteAttachmentType, attachment)
 

@@ -1,5 +1,6 @@
 from typing import Any
 
+import magic
 from common.enums import FileType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -41,6 +42,7 @@ class Attachment(BaseModel):
 
     file = models.FileField(upload_to=get_unique_file_path)
     file_type = TextChoicesField(choices_enum=FileType)
+    original_filename = models.CharField(max_length=255, blank=True, null=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -81,6 +83,19 @@ class Attachment(BaseModel):
         """
         if not self.id:
             self.original_filename = self.file.name
+
+            # Determine the MIME type of the file
+            mime_type = magic.from_buffer(self.file.read(1024), mime=True)
+            # Map MIME type to FileType enum
+            if mime_type.startswith("image"):
+                self.file_type = FileType.IMAGE
+            elif mime_type.startswith("audio"):
+                self.file_type = FileType.AUDIO
+            elif mime_type.startswith("video"):
+                self.file_type = FileType.VIDEO
+            else:
+                self.file_type = FileType.DOCUMENT
+            self.file.seek(0)
         super().save(*args, **kwargs)
 
 
