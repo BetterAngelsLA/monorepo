@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 from django.test import ignore_warnings
 from freezegun import freeze_time
+from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -11,10 +12,12 @@ from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
+@freeze_time("03-12-2024 10:11:12")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.case_manager_1)
+        self.maxDiff = None
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
@@ -22,16 +25,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
+                "purposes": [t.id for t in self.purposes],
                 "moods": [
                     {"descriptor": "ANXIOUS"},
                     {"descriptor": "EUTHYMIC"},
                 ],
-                "publicDetails": "Updated public details.",
-                "privateDetails": "Updated private details.",
+                "nextSteps": [t.id for t in self.next_steps],
+                "publicDetails": "Updated public details",
+                "privateDetails": "Updated private details",
                 "isSubmitted": False,
                 "timestamp": "2024-03-12T11:12:13+00:00",
             }
         )
+
         query = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
@@ -39,6 +45,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     title
                     moods {
                         descriptor
+                    }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
                     }
                     publicDetails
                     privateDetails
@@ -55,7 +69,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 3
+        expected_query_count = 5
+
+        note = Note.objects.get(id=note_id)
+        note.purposes.add(*self.purposes)
+        note.next_steps.add(*self.next_steps)
+
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -63,12 +82,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "title": "Updated Note",
-            "moods": [
-                {"descriptor": "ANXIOUS"},
-                {"descriptor": "EUTHYMIC"},
+            "purposes": [
+                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
             ],
-            "publicDetails": "Updated public details.",
-            "privateDetails": "Updated private details.",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "nextSteps": [
+                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
+                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
+            ],
+            "publicDetails": "Updated public details",
+            "privateDetails": "Updated private details",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.case_manager_1.pk)},
@@ -85,6 +109,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     moods {
                         descriptor
                     }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
+                    }
                     publicDetails
                     privateDetails
                     isSubmitted
@@ -98,7 +130,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 

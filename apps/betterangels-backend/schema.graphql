@@ -132,13 +132,15 @@ input NoteFilter {
 type NoteType {
   id: ID!
   title: String!
-  publicDetails: String!
   moods: [MoodType!]!
+  purposes(pagination: OffsetPaginationInput): [TaskType!]!
+  nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  publicDetails: String!
   isSubmitted: Boolean!
-  timestamp: DateTime!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
+  timestamp: DateTime!
   privateDetails: String
 }
 
@@ -249,9 +251,11 @@ type TaskType {
 input UpdateNoteInput {
   id: ID
   title: String
+  purposes: [ID!]
+  moods: [CreateMoodInput!]
+  nextSteps: [ID!]
   publicDetails: String
   privateDetails: String
-  moods: [CreateMoodInput!]
   isSubmitted: Boolean
   timestamp: DateTime
 }

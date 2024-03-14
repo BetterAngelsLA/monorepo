@@ -5,6 +5,7 @@ from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
 from django.test import TestCase
 from model_bakery import baker
+from notes.models import Task
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -59,6 +60,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_note()
+        self.purposes = baker.make(Task, _quantity=2)
+        self.next_steps = baker.make(Task, _quantity=2)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -66,7 +69,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note: Dict[str, Any] = self._create_note_fixture(
             {
                 "title": f"New note for: {self.case_manager_1.id}",
-                "publicDetails": f"{self.case_manager_1.id}'s public details.",
+                "publicDetails": f"{self.case_manager_1.id}'s public details",
                 "client": self.client_1.id,
             },
         )["data"]["createNote"]
@@ -83,7 +86,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self, operation: str, variables: Dict[str, Any]
     ) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
-
         mutation: str = f"""
             mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{ # noqa: B950
                 {operation}Note(data: $data) {{
@@ -99,6 +101,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         title
                         moods {{
                             descriptor
+                        }}
+                        purposes {{
+                            id
+                            title
+                        }}
+                        nextSteps {{
+                            id
+                            title
                         }}
                         publicDetails
                         privateDetails

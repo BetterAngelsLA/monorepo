@@ -188,10 +188,22 @@ export type NoteType = {
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
+  nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   publicDetails: Scalars['String']['output'];
+  purposes: Array<TaskType>;
   timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
+};
+
+
+export type NoteTypeNextStepsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypePurposesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OffsetPaginationInput = {
@@ -341,8 +353,10 @@ export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   moods?: InputMaybe<Array<CreateMoodInput>>;
+  nextSteps?: InputMaybe<Array<Scalars['ID']['input']>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purposes?: InputMaybe<Array<Scalars['ID']['input']>>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
