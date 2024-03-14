@@ -68,9 +68,9 @@ export default function Selected(props: ISelectedProps) {
           Platform.OS === 'ios'
             ? handleIosDirections()
             : openMap({
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
+                end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
                 query: address?.full,
+                provider: 'google',
               });
         }}
         fontSize="sm"

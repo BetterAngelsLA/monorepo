@@ -60,8 +60,7 @@ export default function Directions(props: IDirectionsProps) {
         <Pressable
           onPress={() => {
             openMap({
-              latitude: currentLocation?.latitude,
-              longitude: currentLocation?.longitude,
+              end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
               query: address?.full,
               provider: 'google',
             });
