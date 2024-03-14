@@ -42,12 +42,7 @@ class ServiceRequest(BaseModel):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.status == ServiceRequestStatusEnum.COMPLETED:
-            if self.pk:
-                original_instance = ServiceRequest.objects.get(pk=self.pk)
-                if original_instance.status != ServiceRequestStatusEnum.COMPLETED:
-                    self.completed_on = timezone.now()
-            else:
-                self.completed_on = timezone.now()
+            self.completed_on = self.completed_on or timezone.now()
 
         super().save(*args, **kwargs)
 
@@ -89,6 +84,12 @@ class Note(BaseModel):
     )
     purposes = models.ManyToManyField(Task, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
+    requested_services = models.ManyToManyField(
+        ServiceRequest, related_name="requested_notes"
+    )
+    provided_services = models.ManyToManyField(
+        ServiceRequest, related_name="provided_notes"
+    )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)

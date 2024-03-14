@@ -21,7 +21,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 37
+        expected_query_count = 39
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -38,6 +38,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [],
             "purposes": [],
             "nextSteps": [],
+            "providedServices": [],
+            "requestedServices": [],
             "publicDetails": "New public details",
             "privateDetails": "",
             "isSubmitted": False,
@@ -55,13 +57,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [t.id for t in self.purposes],
             "nextSteps": [t.id for t in self.next_steps],
+            "providedServices": [t.id for t in self.provided_services],
+            "requestedServices": [t.id for t in self.requested_services],
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 62
+        expected_query_count = 90
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -77,6 +81,30 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "nextSteps": [
                 {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
                 {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
+            ],
+            "providedServices": [
+                {
+                    "id": str(self.provided_services[0].id),
+                    "service": self.provided_services[0].service,
+                    "customService": self.provided_services[0].custom_service,
+                },
+                {
+                    "id": str(self.provided_services[1].id),
+                    "service": self.provided_services[1].service,
+                    "customService": self.provided_services[1].custom_service,
+                },
+            ],
+            "requestedServices": [
+                {
+                    "id": str(self.requested_services[0].id),
+                    "service": self.requested_services[0].service,
+                    "customService": self.requested_services[0].custom_service,
+                },
+                {
+                    "id": str(self.requested_services[1].id),
+                    "service": self.requested_services[1].service,
+                    "customService": self.requested_services[1].custom_service,
+                },
             ],
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -95,7 +123,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 24
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -106,6 +134,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [],
             "purposes": [],
             "nextSteps": [],
+            "providedServices": [],
+            "requestedServices": [],
             "publicDetails": f"{self.case_manager_1.id}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
@@ -329,7 +359,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 20
+        expected_query_count = 22
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -377,7 +407,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -439,7 +469,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": self.service_request["id"]}
 
-        expected_query_count = 13
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

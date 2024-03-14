@@ -5,7 +5,7 @@ from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
 from django.test import TestCase
 from model_bakery import baker
-from notes.models import Task
+from notes.models import ServiceRequest, Task
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -62,6 +62,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note()
         self.purposes = baker.make(Task, _quantity=2)
         self.next_steps = baker.make(Task, _quantity=2)
+        self.provided_services = baker.make(ServiceRequest, _quantity=2)
+        self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -109,6 +111,16 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         nextSteps {{
                             id
                             title
+                        }}
+                        providedServices {{
+                            id
+                            service
+                            customService
+                        }}
+                        requestedServices {{
+                            id
+                            service
+                            customService
                         }}
                         publicDetails
                         privateDetails

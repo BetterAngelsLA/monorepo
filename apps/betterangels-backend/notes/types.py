@@ -98,6 +98,8 @@ class NoteType:
     moods: List[MoodType]
     purposes: List[TaskType]
     next_steps: List[TaskType]
+    provided_services: List[ServiceRequestType]
+    requested_services: List[ServiceRequestType]
     public_details: auto
     is_submitted: auto
     client: Optional[UserType]
@@ -138,9 +140,11 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    purposes: Optional[List[ID]]
     moods: Optional[List[CreateMoodInput]]
+    purposes: Optional[List[ID]]
     next_steps: Optional[List[ID]]
+    provided_services: Optional[List[ID]]
+    requested_services: Optional[List[ID]]
     public_details: auto
     private_details: auto
     is_submitted: auto

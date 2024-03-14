@@ -190,8 +190,10 @@ export type NoteType = {
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
+  providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
   purposes: Array<TaskType>;
+  requestedServices: Array<ServiceRequestType>;
   timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
 };
@@ -202,7 +204,17 @@ export type NoteTypeNextStepsArgs = {
 };
 
 
+export type NoteTypeProvidedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type NoteTypePurposesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -355,8 +367,10 @@ export type UpdateNoteInput = {
   moods?: InputMaybe<Array<CreateMoodInput>>;
   nextSteps?: InputMaybe<Array<Scalars['ID']['input']>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
+  providedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purposes?: InputMaybe<Array<Scalars['ID']['input']>>;
+  requestedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };

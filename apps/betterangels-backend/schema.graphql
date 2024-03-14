@@ -135,6 +135,8 @@ type NoteType {
   moods: [MoodType!]!
   purposes(pagination: OffsetPaginationInput): [TaskType!]!
   nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
   isSubmitted: Boolean!
   client: UserType
@@ -251,9 +253,11 @@ type TaskType {
 input UpdateNoteInput {
   id: ID
   title: String
-  purposes: [ID!]
   moods: [CreateMoodInput!]
+  purposes: [ID!]
   nextSteps: [ID!]
+  providedServices: [ID!]
+  requestedServices: [ID!]
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
