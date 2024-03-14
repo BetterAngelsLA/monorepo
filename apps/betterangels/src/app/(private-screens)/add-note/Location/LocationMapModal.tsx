@@ -147,6 +147,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
+    // geocode for approx center of LA COUNTY
     const center = { lat: 34.04499, lng: -118.251601 };
     const defaultBounds = {
       north: center.lat + 0.1,
