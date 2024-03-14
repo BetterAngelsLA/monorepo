@@ -21,7 +21,7 @@ from .enums import (
 
 
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=ServiceEnum)
+    service = TextChoicesField(choices_enum=MoodEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",
@@ -30,7 +30,7 @@ class ServiceRequest(BaseModel):
         blank=True,
         related_name="client_service_requests",
     )
-    status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
+    status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
@@ -52,7 +52,7 @@ class ServiceRequest(BaseModel):
 
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
-    status = TextChoicesField(choices_enum=TaskStatusEnum)
+    status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
@@ -126,7 +126,7 @@ class Note(BaseModel):
 
 
 class Mood(BaseModel):
-    descriptor = TextChoicesField(choices_enum=MoodEnum)
+    descriptor = TextChoicesField(choices_enum=ServiceEnum)
     note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
     log = HistoricalRecords(related_name="history")
