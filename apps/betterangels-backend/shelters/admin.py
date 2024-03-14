@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Shelter, Location, Service, Population, Requirement, \
+from .models import Shelter, Service, Population, Requirement, \
     ShelterType
 
 
@@ -8,7 +8,7 @@ class ShelterAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Basic Information', {
             'fields': ('title', 'shelter_type', 'email', 'phone',
-                       'website', 'location'),
+                       'website'),
         }),
         ('Details', {
             'fields': ('services', 'requirements', 'population', 'max_stay',
@@ -30,4 +30,3 @@ admin.site.register(Requirement)
 admin.site.register(Population)
 admin.site.register(Service)
 admin.site.register(Shelter, ShelterAdmin)
-admin.site.register(Location)

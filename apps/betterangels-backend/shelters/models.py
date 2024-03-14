@@ -50,30 +50,10 @@ class ShelterType(models.Model):
         return str(self.title)
 
 
-# Primary Models
-class Location(TimeStampedModel):
-    latitude = models.FloatField(blank=True, null=True)
-    longitude = models.FloatField(blank=True, null=True)
-
-    spa = models.PositiveSmallIntegerField()
-    address = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    state = models.CharField(max_length=255)
-    zip_code = models.PositiveIntegerField()
-    confidential = models.BooleanField()
-
-    # TODO -- get this working
-    # coordinates = PointField()
-
-    def __str__(self) -> str:
-        return self.address
-
-
 class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField()
-    location = models.ForeignKey(Location, on_delete=models.CASCADE,
-                                 blank=True, null=True, related_name='shelters')
+
     shelter_type = models.ForeignKey(ShelterType, blank=True, null=True,
                                      on_delete=models.PROTECT)
     services = models.ManyToManyField(Service, blank=True)
@@ -84,6 +64,17 @@ class Shelter(TimeStampedModel):
     max_stay = models.PositiveSmallIntegerField(null=True, blank=True)
     average_bed_rate = models.DecimalField(max_digits=10, decimal_places=2,
                                            null=True, blank=True)
+
+    # Location Fields - flat for easier creation via admin console
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+
+    spa = models.PositiveSmallIntegerField(blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=True)
+    zip_code = models.PositiveIntegerField(blank=True, null=True)
+    confidential = models.BooleanField(blank=True, null=True)
 
     # Contact Information
     email = models.EmailField(max_length=254, null=True, blank=True)
