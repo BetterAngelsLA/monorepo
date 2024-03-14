@@ -42,12 +42,7 @@ class ServiceRequest(BaseModel):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.status == ServiceRequestStatusEnum.COMPLETED:
-            if self.pk:
-                original_instance = ServiceRequest.objects.get(pk=self.pk)
-                if original_instance.status != ServiceRequestStatusEnum.COMPLETED:
-                    self.completed_on = timezone.now()
-            else:
-                self.completed_on = timezone.now()
+            self.completed_on = self.completed_on or timezone.now()
 
         super().save(*args, **kwargs)
 

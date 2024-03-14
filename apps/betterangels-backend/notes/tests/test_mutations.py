@@ -296,7 +296,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
