@@ -10,7 +10,7 @@
    <a href="https://reactnative.dev/docs/getting-started" target="_blank"><img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" hspace="10" /></a>
    <a href="https://storybook.js.org/docs" target="_blank"><img src="https://img.shields.io/badge/storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white" hspace="10" /></a>
    <a href="https://playwright.dev/docs/intro" target="_blank"><img src="https://img.shields.io/badge/Playwright-45ba4b?style=for-the-badge&logo=Playwright&logoColor=white" hspace="10" /></a>
-   <a href="https://graphql.org/code/" target="_blank"><img src="https://img.shields.io/badge/GraphQl-E10098?style=for-the-badge&logo=graphql&logoColor=white" hspace="10" /></a>   
+   <a href="https://graphql.org/code/" target="_blank"><img src="https://img.shields.io/badge/GraphQl-E10098?style=for-the-badge&logo=graphql&logoColor=white" hspace="10" /></a>
    <br><br>
    <a href="https://docs.aws.amazon.com/" target="_blank"><img src="https://img.shields.io/badge/Amazon AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" hspace="10" /></a>
    <a href="https://docs.djangoproject.com/" target="_blank"><img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" hspace="10" /></a>
@@ -18,12 +18,12 @@
    <a href="https://docs.expo.dev/" target="_blank"><img src="https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=FFFFFF" hspace="10" /></a>
 </p>
 
-<details open>
-<summary>
+<br>
+<br>
 
 ## Frontend Development Guide (Mac)
 
-</summary>
+<hr>
 
 The betterangels_frontend is built in [React Native](https://reactnative.dev/). It uses [Expo](https://docs.expo.dev/) to build and run the application across devices.
 
@@ -37,24 +37,30 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Setup:**
 
-1. Install node version manager
+1. Install [NVM](https://github.com/nvm-sh/nvm) to be able to use different node versions.
 
    ```bash
    brew install nvm
    ```
 
-1. Install version 18.17.1
-
-   ```bash
-   nvm install 18.17.1
-   ```
-
-1. Follow the instructions in the terminal to add your shell profile. It should look similar to:
+1. Follow the instructions in the terminal to configure NVM in your shell profile. It should look similar to:
 
    e.g. ~/.profile or ~/.zshrc:
    export NVM_DIR="$HOME/.nvm"
    [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
    [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+
+   If these instructions don't appear, run the following:
+
+   ```bash
+   brew info nvm
+   ```
+
+1. Install node version 18.17.1
+
+   ```bash
+   nvm install 18.17.1
+   ```
 
 1. Go to the monorepo and run yarn install
 
@@ -63,14 +69,34 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
    yarn install
    ```
 
+1. Optional: Switch your node version back to the latest and make it your default for any new terminal windows:
+
+   ```bash
+   nvm install node && nvm alias default node
+   ```
+
 ### Running the Frontend: Nx Workspace with Expo Application
 
 #### Starting Expo
 
-1. Open a new integrated terminal (local) and run the following to start the local environment
+1. Open a new integrated terminal (local) and run the following to start Expo in your local environment
+
+   Start the Outreach app
 
    ```bash
    yarn nx start betterangels
+   ```
+
+   Start the Shelter app
+
+   ```bash
+   yarn nx start shelter
+   ```
+
+   If your current node version is incorrect, run the following and try again.
+
+   ```bash
+   nvm use 18.17.1
    ```
 
 1. Press "w" to open the web version of the application :tada:
@@ -115,11 +141,7 @@ to run `yarn storybook`
 to build `yarn storybook:build`
 
 <details>
-<summary>
-
-#### Advanced
-
-</summary>
+<summary>Advanced</summary>
 
 - **Build** the "betterangels" application:
 
@@ -171,14 +193,12 @@ This will update the TypeScript types in the gql-types folder. If there are any 
 
 Our CI pipeline checks if the generated GraphQL schema and types are up-to-date. If there's a discrepancy, the pipeline will fail, prompting you to regenerate and commit these files.
 
-</details>
-
-<details open>
-<summary>
+<br>
+<br>
 
 ## Backend Development Guide
 
-</summary>
+<hr>
 
 The betterangels_backend is built on Django, a Python web framework. It also utilizes Celery for distributed task processing, enabling the scheduling and execution of tasks.
 
@@ -381,5 +401,3 @@ class YourModelAdmin(SimpleHistoryAdmin):
 #### Step 4: Accessing History in Views/Templates
 
 Use the `history` attribute of your model instance to access historical records.
-
-</details>
