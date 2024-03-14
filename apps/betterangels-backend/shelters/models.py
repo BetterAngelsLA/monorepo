@@ -23,28 +23,28 @@ class TimeStampedModel(models.Model):
 
 # Models with enumerated types
 class Service(models.Model):
-    title = TextChoicesField(choices_enum=ServiceEnum)
+    title = models.CharField(max_length=64)
 
     def __str__(self) -> str:
         return str(self.title)
 
 
 class Population(models.Model):
-    title = TextChoicesField(choices_enum=PopulationEnum)
+    title = models.CharField(max_length=64)
 
     def __str__(self) -> str:
         return str(self.title)
 
 
 class Requirement(models.Model):
-    title = TextChoicesField(choices_enum=RequirementEnum)
+    title = models.CharField(max_length=64)
 
     def __str__(self) -> str:
         return str(self.title)
 
 
 class ShelterType(models.Model):
-    title = TextChoicesField(choices_enum=ShelterTypeEnum)
+    title = models.CharField(max_length=64)
 
     def __str__(self) -> str:
         return str(self.title)
