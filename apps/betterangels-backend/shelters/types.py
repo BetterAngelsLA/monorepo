@@ -61,21 +61,12 @@ class ShelterType:
     website: auto
 
     services: List[str]
-    populations: List[str]
+    population: List[str]
     requirements: List[str]
 
     description: DescriptionType
 
     beds: BedsType
-
-    def resolve_services(self, info: Info) -> List[str]:
-        return [service.title for service in self.services.all()]
-
-    def resolve_populations(self, info: Info) -> List[str]:
-        return [population.title for population in self.populations.all()]
-
-    def resolve_requirements(self, info: Info) -> List[str]:
-        return [requirement.title for requirement in self.requirements.all()]
 
     def resolve_description(self, info: Info) -> DescriptionType:
         return DescriptionType(
