@@ -9,6 +9,7 @@ from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
+from strawberry.file_uploads import Upload
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
@@ -16,8 +17,8 @@ from . import models
 
 @strawberry_django.filter(Attachment)
 class NoteAttachmentFilter:
-    namespace: NoteNamespaceEnum
     file_type: auto
+    namespace: NoteNamespaceEnum
 
 
 @strawberry_django.type(Attachment, filters=NoteAttachmentFilter)
@@ -28,7 +29,7 @@ class NoteAttachmentType:
 
 @strawberry_django.input(Attachment)
 class CreateNoteAttachmentInput:
-    file: auto
+    file: Upload
     namespace: NoteNamespaceEnum
 
 

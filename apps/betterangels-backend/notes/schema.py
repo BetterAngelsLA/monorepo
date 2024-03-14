@@ -7,17 +7,18 @@ from accounts.models import PermissionGroup, User
 from common.enums import FileType
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
-from strawberry.file_uploads import Upload
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.utils.query import filter_for_user
 
 from .types import (
     CreateNoteAttachmentInput,
@@ -57,15 +58,26 @@ class Mutation:
         # extensions=[HasPerm(AttachmentPermissions.ADD)]
     )
     def create_note_attachment(
-        self, data: CreateNoteAttachmentInput
+        self, info: Info, data: CreateNoteAttachmentInput
     ) -> NoteAttachmentType:
+        user = get_current_user(info)
+        note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
+            id=1
+        )
+
+        # check if note doesn't exist throw error if none
+
         # Detect type
         file_type = FileType.IMAGE  # Hack for now
 
+        # Create Attachment
+        content_type = ContentType.objects.get_for_model(Note)
         attachment = Attachment.objects.create(
             file=data.file,
             file_type=file_type,
-            namespace=str(data.namespace),
+            namespace=data.namespace,
+            content_type=content_type,
+            object_id=note,
         )
         return cast(NoteAttachmentType, attachment)
 
