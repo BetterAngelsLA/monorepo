@@ -48,6 +48,9 @@ class Attachment(BaseModel):
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
 
+    attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
+    attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
+
     class Meta:
         indexes = [
             models.Index(
