@@ -248,7 +248,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -265,7 +265,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         self._handle_user_login("case_manager_1")
 
     def test_create_service_request_mutation(self) -> None:
-        expected_query_count = 28
+        expected_query_count = 29
         with self.assertNumQueries(expected_query_count):
             response = self._create_service_request_fixture(
                 {
@@ -296,7 +296,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 15
+        expected_query_count = 16
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -321,7 +321,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 15
+        expected_query_count = 16
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -358,7 +358,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": self.service_request["id"]}
 
-        expected_query_count = 13
+        expected_query_count = 14
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

@@ -11,13 +11,7 @@ from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
-from .enums import (
-    MoodEnum,
-    ServiceEnum,
-    ServiceRequestStatusEnum,
-    ServiceTypeEnum,
-    TaskStatusEnum,
-)
+from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
 
 class ServiceRequest(BaseModel):
@@ -36,6 +30,9 @@ class ServiceRequest(BaseModel):
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
     )
+
+    log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
     servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
@@ -121,13 +118,6 @@ class Mood(BaseModel):
 
     log = HistoricalRecords(related_name="history")
     objects = models.Manager()
-
-
-class Service(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
-    custom_descriptor = models.CharField(max_length=100, blank=True)
-    service_type = TextChoicesField(choices_enum=ServiceTypeEnum)
-    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="services")
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
