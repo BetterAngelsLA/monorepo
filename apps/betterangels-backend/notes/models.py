@@ -11,17 +11,11 @@ from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
-from .enums import (
-    MoodEnum,
-    ServiceEnum,
-    ServiceRequestStatusEnum,
-    ServiceTypeEnum,
-    TaskStatusEnum,
-)
+from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
 
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=MoodEnum)
+    service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",
@@ -30,12 +24,14 @@ class ServiceRequest(BaseModel):
         blank=True,
         related_name="client_service_requests",
     )
-    status = TextChoicesField(choices_enum=TaskStatusEnum)
+    status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
     )
+
+    log = HistoricalRecords(related_name="history")
 
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
     servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
@@ -52,7 +48,7 @@ class ServiceRequest(BaseModel):
 
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
-    status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
+    status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
@@ -126,18 +122,11 @@ class Note(BaseModel):
 
 
 class Mood(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
+    descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
     log = HistoricalRecords(related_name="history")
     objects = models.Manager()
-
-
-class Service(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
-    custom_descriptor = models.CharField(max_length=100, blank=True)
-    service_type = TextChoicesField(choices_enum=ServiceTypeEnum)
-    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="services")
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
