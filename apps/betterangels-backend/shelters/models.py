@@ -14,6 +14,7 @@ class TimeStampedModel(models.Model):
     class Meta:  # Prevent a naming conflict
         abstract = True
 
+
 # Service model should include some reference to the icon
 class Service(models.Model):
     title = models.CharField(max_length=64)
@@ -41,6 +42,7 @@ class ShelterType(models.Model):
 
     def __str__(self) -> str:
         return str(self.title)
+
 
 # Set default to make gql returns consistent between charfield and textfield
 class Shelter(TimeStampedModel):
