@@ -17,18 +17,6 @@ class ServiceType:
     title: auto
 
 
-@dataclasses.dataclass
-@strawberry_django.type(models.Location)
-class LocationType:
-    address: auto
-    city: auto
-    state: auto
-    zip_code: auto
-    confidential: auto
-    latitude: auto
-    longitude: auto
-
-
 @strawberry.type
 class DescriptionType:
     description: str
@@ -44,12 +32,26 @@ class BedsType:
     average_bed_rate: float
 
 
+@strawberry.type
+class LocationType:
+    latitude: float
+    longitude: float
+    spa: int
+    address: str
+    city: str
+    state: str
+    zip_code: int
+    confidential: bool
+
+
 @dataclasses.dataclass
 @strawberry_django.type(models.Shelter, pagination=True)
 class ShelterType:
     id: auto
+
     title: auto
     image_url: auto
+
     location: LocationType
     how_to_enter: str
     max_stay: auto
@@ -88,4 +90,16 @@ class ShelterType:
             private_beds=self.private_beds,
             max_stay=self.max_stay,
             average_bed_rate=self.average_bed_rate
+        )
+
+    def resolve_location(self, info: Info) -> LocationType:
+        return LocationType(
+            latitude=self.latitude,
+            longitude=self.longitude,
+            spa=self.spa,
+            address=self.address,
+            city=self.city,
+            state=self.state,
+            zip_code=self.zip_code,
+            confidential=self.confidential
         )
