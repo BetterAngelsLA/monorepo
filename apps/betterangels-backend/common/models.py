@@ -99,6 +99,18 @@ class Location(BaseModel):
 
 
 # Permissions
+class AttachmentUserObjectPermission(UserObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(
+        Attachment,
+        on_delete=models.CASCADE,
+    )
+
+
+class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(
+        Attachment,
+        on_delete=models.CASCADE,
+    )
 
 
 class SimpleModelUserObjectPermission(UserObjectPermissionBase):
