@@ -14,7 +14,8 @@ import {
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   FlatList,
@@ -49,11 +50,14 @@ interface ILocationMapModalProps {
 export default function LocationMapModal(props: ILocationMapModalProps) {
   const { isModalVisible, toggleModal, setExpanded } = props;
   const { trigger, setValue, watch } = useFormContext();
+  const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
   const [suggestions, setSuggestions] = useState<any>([]);
+  const [userLocation, setUserLocation] =
+    useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -84,15 +88,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     closeModal();
   }
 
-  function onMapPress(e: any) {
-    if (pin) {
-      setAddress(undefined);
-      setCurrentLocation(undefined);
-      setValue('location', undefined);
-      setPin(false);
-    }
-  }
-
   async function placePin(e: any, isId: boolean) {
     if (!pin) {
       const latitude = e.nativeEvent.coordinate.latitude;
@@ -111,6 +106,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           latitude,
           name,
         });
+
+        mapRef.current?.animateToRegion(
+          {
+            latitude,
+            longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          500
+        );
 
         setInitialLocation({
           longitude,
@@ -133,6 +138,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } else {
       setAddress(undefined);
       setCurrentLocation(undefined);
+      setValue('location', undefined);
       setPin(false);
     }
   }
@@ -141,12 +147,23 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
+    // geocode for approx center of LA COUNTY
+    const center = { lat: 34.04499, lng: -118.251601 };
+    const defaultBounds = {
+      north: center.lat + 0.1,
+      south: center.lat - 0.1,
+      east: center.lng + 0.1,
+      west: center.lng - 0.1,
+    };
+
     try {
       const response = await axios.get(url, {
         params: {
+          bounds: defaultBounds,
           input: query,
           key: apiKey,
-          region: 'US-CA',
+          components: 'country:us',
+          strictBounds: true,
         },
       });
 
@@ -182,6 +199,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         name: place.description.split(', ')[0],
       });
 
+      mapRef.current?.animateToRegion(
+        {
+          latitude: location.lat,
+          longitude: location.lng,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+
       setInitialLocation({
         longitude: location.lng,
         latitude: location.lat,
@@ -205,6 +232,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setSearchQuery(query);
   };
 
+  const goToUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    }
+  };
+
   const onSearchDelete = () => {
     setAddress(undefined);
     setCurrentLocation(undefined);
@@ -224,6 +265,58 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+    const userCurrentLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const { latitude, longitude } = userCurrentLocation.coords;
+
+    setUserLocation(userCurrentLocation);
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+    try {
+      const { data } = await axios.get(url);
+      setValue('location', undefined);
+      setCurrentLocation({
+        longitude,
+        latitude,
+        name: undefined,
+      });
+
+      setInitialLocation({
+        longitude,
+        latitude,
+      });
+
+      const googleAddress = data.results[0].formatted_address;
+      const shortAddress = googleAddress.split(', ')[0];
+
+      setAddress({
+        short: shortAddress,
+        full: googleAddress,
+      });
+      setPin(true);
+
+      setValue('location', {
+        longitude: longitude,
+        latitude: latitude,
+        address: googleAddress,
+        name: undefined,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <Modal
@@ -333,32 +426,35 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               zIndex: 100,
             }}
           >
-            <View
-              style={{
-                alignSelf: 'flex-end',
-                paddingRight: Spacings.sm,
-                marginBottom: Spacings.md,
-                position: 'absolute',
-                bottom: '100%',
-                right: 0,
-                zIndex: 100,
-              }}
-            >
-              <IconButton
+            {userLocation && (
+              <View
                 style={{
-                  elevation: 5,
-                  shadowColor: Colors.NEUTRAL_DARK,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
+                  alignSelf: 'flex-end',
+                  paddingRight: Spacings.sm,
+                  marginBottom: Spacings.md,
+                  position: 'absolute',
+                  bottom: '100%',
+                  right: 0,
+                  zIndex: 100,
                 }}
-                accessibilityLabel="user location"
-                variant="secondary"
-                accessibilityHint="get user location"
               >
-                <LocationArrowIcon color={Colors.PRIMARY} />
-              </IconButton>
-            </View>
+                <IconButton
+                  onPress={goToUserLocation}
+                  style={{
+                    elevation: 5,
+                    shadowColor: Colors.NEUTRAL_DARK,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                  }}
+                  accessibilityLabel="user location"
+                  variant="secondary"
+                  accessibilityHint="get user location"
+                >
+                  <LocationArrowIcon color={Colors.PRIMARY} />
+                </IconButton>
+              </View>
+            )}
             {currentLocation && (
               <View
                 style={{
@@ -419,28 +515,27 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             />
           </View>
           <MapView
+            ref={mapRef}
+            showsUserLocation={userLocation ? true : false}
             mapType="standard"
             onPoiClick={(e) => placePin(e, true)}
             zoomEnabled
             scrollEnabled
-            onPress={onMapPress}
-            onLongPress={(e) => placePin(e, false)}
+            onPress={(e) => placePin(e, false)}
             provider={PROVIDER_GOOGLE}
-            region={{
-              longitudeDelta: 0.005,
-              latitudeDelta: 0.005,
-              latitude: currentLocation
-                ? currentLocation.latitude
-                : initialLocation.latitude,
-              longitude: currentLocation
-                ? currentLocation.longitude
-                : initialLocation.longitude,
-            }}
             initialRegion={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,
-              longitude: initialLocation.longitude,
-              latitude: initialLocation.latitude,
+              longitude: currentLocation
+                ? currentLocation.longitude
+                : userLocation
+                ? userLocation.coords.longitude
+                : initialLocation.longitude,
+              latitude: currentLocation
+                ? currentLocation.latitude
+                : userLocation
+                ? userLocation.coords.latitude
+                : initialLocation.latitude,
             }}
             style={{
               height: '100%',
