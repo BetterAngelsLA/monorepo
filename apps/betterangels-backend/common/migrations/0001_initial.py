@@ -1,5 +1,4 @@
 import django
-from common.permissions.enums import SimpleModelPermissions
 from django.conf import settings
 from django.db import migrations, models
 
@@ -12,10 +11,10 @@ def create_permissions_if_not_exist(apps, schema_editor):
     SimpleModelContentType = ContentType.objects.get_for_model(SimpleModel)
 
     permissions_to_add = [
-        SimpleModelPermissions.VIEW,
-        SimpleModelPermissions.CHANGE,
-        SimpleModelPermissions.DELETE,
-        SimpleModelPermissions.ADD,
+        "view_simplemodel",
+        "change_simplemodel",
+        "delete_simplemodel",
+        "add_simplemodel",
     ]
 
     for perm in permissions_to_add:

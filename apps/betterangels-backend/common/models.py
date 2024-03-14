@@ -1,6 +1,5 @@
 from typing import Any
 
-import black
 from common.enums import FileType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -19,14 +18,6 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-
-
-class SimpleModel(models.Model):
-    name = models.CharField(max_length=255)
-    objects = models.Manager()
-
-    simplemodeluserobjectpermission_set: models.QuerySet["SimpleModel"]
-    simplemodelgroupobjectpermission_set: models.QuerySet["SimpleModel"]
 
 
 class Attachment(BaseModel):
@@ -110,16 +101,4 @@ class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
     content_object: ForeignKey = models.ForeignKey(
         Attachment,
         on_delete=models.CASCADE,
-    )
-
-
-class SimpleModelUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        SimpleModel, on_delete=models.CASCADE
-    )
-
-
-class SimpleModelGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        SimpleModel, on_delete=models.CASCADE
     )
