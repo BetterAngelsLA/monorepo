@@ -1,31 +1,19 @@
-import {
-  LocationArrowIcon,
-  LocationPinIcon,
-  SearchIcon,
-  TargetIcon,
-} from '@monorepo/expo/shared/icons';
+import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   BodyText,
-  Button,
-  H3,
-  H4,
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import openMap from 'react-native-open-maps';
+import { FlatList, Modal, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Directions from './Directions';
+import Header from './Header';
+import Map from './Map';
+import Selected from './Selected';
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
 
@@ -48,12 +36,14 @@ interface ILocationMapModalProps {
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
   const { isModalVisible, toggleModal, setExpanded } = props;
-  const { trigger, setValue, watch } = useFormContext();
+  const { trigger, setValue } = useFormContext();
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
   const [suggestions, setSuggestions] = useState<any>([]);
+  const [chooseDirections, setChooseDirections] = useState(false);
+  const [selected, setSelected] = useState<boolean>(false);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -66,76 +56,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-  const location = watch('location');
 
   const closeModal = () => {
     trigger('location.address');
     toggleModal(false);
     setExpanded(undefined);
   };
-
-  function selectLocation() {
-    setValue('location', {
-      longitude: currentLocation?.longitude,
-      latitude: currentLocation?.latitude,
-      address: address?.full,
-      name: currentLocation?.name,
-    });
-    closeModal();
-  }
-
-  function onMapPress(e: any) {
-    if (pin) {
-      setAddress(undefined);
-      setCurrentLocation(undefined);
-      setValue('location', undefined);
-      setPin(false);
-    }
-  }
-
-  async function placePin(e: any, isId: boolean) {
-    if (!pin) {
-      const latitude = e.nativeEvent.coordinate.latitude;
-      const longitude = e.nativeEvent.coordinate.longitude;
-      const name =
-        e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
-      const placeId = e.nativeEvent.placeId || undefined;
-      const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address&key=${apiKey}`
-        : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-      try {
-        const { data } = await axios.get(url);
-        setValue('location', undefined);
-        setCurrentLocation({
-          longitude,
-          latitude,
-          name,
-        });
-
-        setInitialLocation({
-          longitude,
-          latitude,
-        });
-
-        const googleAddress = isId
-          ? data.result.formatted_address
-          : data.results[0].formatted_address;
-        const shortAddress = isId ? name : googleAddress.split(', ')[0];
-
-        setAddress({
-          short: shortAddress,
-          full: googleAddress,
-        });
-        setPin(true);
-      } catch (e) {
-        console.log(e);
-      }
-    } else {
-      setAddress(undefined);
-      setCurrentLocation(undefined);
-      setPin(false);
-    }
-  }
 
   const searchPlacesInCalifornia = async (query: string) => {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
@@ -161,6 +87,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const onSuggestionsSelect = async (place: any) => {
     try {
+      if (chooseDirections) {
+        setChooseDirections(false);
+      }
       setValue('location', undefined);
       const response = await axios.get(
         'https://maps.googleapis.com/maps/api/place/details/json',
@@ -192,6 +121,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         full: place.description,
       });
       setPin(true);
+      setSelected(true);
     } catch (e) {
       console.log(e);
     }
@@ -213,6 +143,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
+    setSelected(false);
+    if (chooseDirections) {
+      setChooseDirections(false);
+    }
   };
 
   useEffect(() => {
@@ -242,43 +176,21 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           flex: 1,
         }}
       >
-        <View
-          style={{
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            backgroundColor: Colors.WHITE,
-            paddingHorizontal: Spacings.sm,
-            paddingTop: Spacings.sm,
-            paddingBottom: Spacings.xs,
-            borderBottomWidth: 0.5,
-            borderBottomColor: Colors.NEUTRAL_LIGHT,
-          }}
-        >
-          <Pressable
-            style={{ marginRight: Spacings.xs, flex: 1 }}
-            accessibilityRole="button"
-            onPress={closeModal}
-            accessibilityHint="close map modal"
-          >
-            <BodyText size="sm">Back</BodyText>
-          </Pressable>
-          <H4
-            align="center"
-            style={{
-              flex: 2,
-            }}
-          >
-            Type or Pin Location
-          </H4>
-          <View style={{ flex: 1 }} />
-        </View>
+        <Header closeModal={closeModal} />
         <View
           style={{
             position: 'relative',
             flex: 1,
           }}
         >
+          {chooseDirections && (
+            <Directions
+              setChooseDirections={setChooseDirections}
+              setSelected={setSelected}
+              address={address}
+              currentLocation={currentLocation}
+            />
+          )}
           <View
             style={{
               position: 'absolute',
@@ -291,6 +203,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             }}
           >
             <BasicInput
+              onFocus={() => {
+                if (chooseDirections) {
+                  setChooseDirections(false);
+                  setSelected(true);
+                }
+              }}
               onDelete={onSearchDelete}
               mt="sm"
               placeholder="Type location"
@@ -359,57 +277,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                 <LocationArrowIcon color={Colors.PRIMARY} />
               </IconButton>
             </View>
-            {currentLocation && (
-              <View
-                style={{
-                  backgroundColor: Colors.WHITE,
-                  paddingHorizontal: Spacings.md,
-                  paddingBottom: Spacings.md,
-                  paddingTop: Spacings.sm,
-                  borderTopLeftRadius: 20,
-                  borderTopRightRadius: 20,
-                }}
-              >
-                <H3 mb="xs">
-                  {currentLocation?.name
-                    ? currentLocation?.name
-                    : address?.short}
-                </H3>
-                <Pressable
-                  onPress={() =>
-                    openMap({
-                      latitude: currentLocation.latitude,
-                      longitude: currentLocation.longitude,
-                      query: address?.full,
-                    })
-                  }
-                  accessibilityHint="opens map apps"
-                  accessibilityRole="button"
-                >
-                  <BodyText mb="md">{address?.full}</BodyText>
-                </Pressable>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: Spacings.sm,
-                    marginBottom: Spacings.sm,
-                  }}
-                >
-                  <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
-                  <H3 style={{ flex: 1 }}>
-                    {currentLocation.latitude.toFixed(7)}{' '}
-                    {currentLocation.longitude.toFixed(7)}
-                  </H3>
-                </View>
-                <Button
-                  onPress={selectLocation}
-                  size="full"
-                  title="Select this location"
-                  accessibilityHint="select pinned location"
-                  variant="primary"
-                />
-              </View>
+            {selected && currentLocation && (
+              <Selected
+                currentLocation={currentLocation}
+                address={address}
+                setChooseDirections={setChooseDirections}
+                setSelected={setSelected}
+                closeModal={closeModal}
+              />
             )}
             <View
               style={{
@@ -418,50 +293,18 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               }}
             />
           </View>
-          <MapView
-            mapType="standard"
-            onPoiClick={(e) => placePin(e, true)}
-            zoomEnabled
-            scrollEnabled
-            onPress={onMapPress}
-            onLongPress={(e) => placePin(e, false)}
-            provider={PROVIDER_GOOGLE}
-            region={{
-              longitudeDelta: 0.005,
-              latitudeDelta: 0.005,
-              latitude: currentLocation
-                ? currentLocation.latitude
-                : initialLocation.latitude,
-              longitude: currentLocation
-                ? currentLocation.longitude
-                : initialLocation.longitude,
-            }}
-            initialRegion={{
-              longitudeDelta: 0.005,
-              latitudeDelta: 0.005,
-              longitude: initialLocation.longitude,
-              latitude: initialLocation.latitude,
-            }}
-            style={{
-              height: '100%',
-              width: '100%',
-            }}
-          >
-            {(currentLocation || (location && location.address)) && (
-              <Marker
-                coordinate={{
-                  latitude: location
-                    ? location.latitude
-                    : currentLocation?.latitude,
-                  longitude: location
-                    ? location.longitude
-                    : currentLocation?.longitude,
-                }}
-              >
-                <LocationPinIcon size="2xl" />
-              </Marker>
-            )}
-          </MapView>
+          <Map
+            chooseDirections={chooseDirections}
+            setChooseDirections={setChooseDirections}
+            currentLocation={currentLocation}
+            setCurrentLocation={setCurrentLocation}
+            pin={pin}
+            setInitialLocation={setInitialLocation}
+            initialLocation={initialLocation}
+            setPin={setPin}
+            setSelected={setSelected}
+            setAddress={setAddress}
+          />
         </View>
       </View>
     </Modal>
