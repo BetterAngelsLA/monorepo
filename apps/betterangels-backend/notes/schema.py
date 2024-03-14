@@ -1,15 +1,18 @@
-from typing import List, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
+from common.enums import FileType
 from common.graphql.types import DeleteDjangoObjectInput
+from common.models import Attachment
 from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
+from strawberry.file_uploads import Upload
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -17,8 +20,10 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 
 from .types import (
+    CreateNoteAttachmentInput,
     CreateNoteInput,
     CreateTaskInput,
+    NoteAttachmentType,
     NoteType,
     RevertNoteInput,
     TaskType,
@@ -48,6 +53,29 @@ class Query:
 
 @strawberry.type
 class Mutation:
+    @strawberry_django.mutation(
+        # extensions=[HasPerm(AttachmentPermissions.ADD)]
+    )
+    def create_note_attachment(
+        self, data: CreateNoteAttachmentInput
+    ) -> NoteAttachmentType:
+        # Detect type
+        file_type = FileType.IMAGE  # Hack for now
+
+        attachment = Attachment.objects.create(
+            file=data.file,
+            file_type=file_type,
+            namespace=str(data.namespace),
+        )
+        return cast(NoteAttachmentType, attachment)
+
+    delete_note_attachment: NoteAttachmentType = mutations.delete(
+        DeleteDjangoObjectInput,
+        # extensions=[
+        #     HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+        # ],
+    )
+
     # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:

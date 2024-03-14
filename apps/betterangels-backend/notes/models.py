@@ -1,8 +1,9 @@
 from typing import Optional
 
 from accounts.models import User
-from common.models import BaseModel, Location
+from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -40,13 +41,15 @@ class Task(BaseModel):
 
 class Note(BaseModel):
     title = models.CharField(max_length=100)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    public_details = models.TextField(blank=True)
+    private_details = models.TextField(blank=True)
+
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    public_details = models.TextField(blank=True)
-    private_details = models.TextField(blank=True)
-    is_submitted = models.BooleanField(default=False)
+
+    timestamp = models.DateTimeField(auto_now_add=True)
+
     client = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -60,8 +63,12 @@ class Note(BaseModel):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    log = HistoricalRecords(related_name="history")
+    is_submitted = models.BooleanField(default=False)
+
+    attachments = GenericRelation(Attachment)
+
     objects = models.Manager()
+    log = HistoricalRecords(related_name="history")
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]

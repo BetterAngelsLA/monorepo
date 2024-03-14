@@ -3,6 +3,13 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+class SimpleModelPermissions(models.TextChoices):
+    VIEW = "simplemodels.view_simplemodel", "Can view simplemodel"
+    CHANGE = "simplemodels.change_simplemodel", "Can change simplemodel"
+    DELETE = "simplemodels.delete_simplemodel", "Can delete simplemodel"
+    ADD = "simplemodels.add_simplemodel", "Can add simplemodel"
+
+
 def create_permissions_if_not_exist(apps, schema_editor):
     SimpleModel = apps.get_model("common", "SimpleModel")
     ContentType = apps.get_model("contenttypes", "ContentType")
@@ -11,10 +18,10 @@ def create_permissions_if_not_exist(apps, schema_editor):
     SimpleModelContentType = ContentType.objects.get_for_model(SimpleModel)
 
     permissions_to_add = [
-        "view_simplemodel",
-        "change_simplemodel",
-        "delete_simplemodel",
-        "add_simplemodel",
+        SimpleModelPermissions.VIEW,
+        SimpleModelPermissions.CHANGE,
+        SimpleModelPermissions.DELETE,
+        SimpleModelPermissions.ADD,
     ]
 
     for perm in permissions_to_add:

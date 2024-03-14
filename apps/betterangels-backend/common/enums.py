@@ -7,4 +7,4 @@ class FileType(models.TextChoices):
     DOCUMENT = "document", _("Document")
     AUDIO = "audio", _("Audio")
     VIDEO = "video", _("Video")
-    UKNOWN = "unknown", _("Unknown")
+    UNKNOWN = "unknown", _("Unknown")

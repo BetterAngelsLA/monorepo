@@ -1,3 +1,6 @@
+from enum import Enum
+
+import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -23,6 +26,13 @@ class MoodEnum(models.TextChoices):
     PLEASANT = "pleasant", _("Pleasant")
     RESTLESS = "restless", _("Restless")
     SUICIDAL = "suicidal", _("Suicidal")
+
+
+@strawberry.enum
+class NoteNamespaceEnum(models.TextChoices):
+    MOOD_ASSESMENT = "mood_assesment", "Mood Assesment"
+    PROVIDED_SERVICES = "provided_services", "Provided Services"
+    REQUESTED_SERVICES = "requested_services", "Requested Services"
 
 
 class ServiceEnum(models.TextChoices):

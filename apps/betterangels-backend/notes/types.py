@@ -4,12 +4,32 @@ from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserInput, UserType
+from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
+from notes.enums import NoteNamespaceEnum
 from notes.permissions import PrivateNotePermissions
 from strawberry import auto
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
+
+
+@strawberry_django.filter(Attachment)
+class NoteAttachmentFilter:
+    namespace: NoteNamespaceEnum
+    file_type: auto
+
+
+@strawberry_django.type(Attachment, filters=NoteAttachmentFilter)
+class NoteAttachmentType:
+    file_type: auto
+    namespace: NoteNamespaceEnum
+
+
+@strawberry_django.input(Attachment)
+class CreateNoteAttachmentInput:
+    file: auto
+    namespace: NoteNamespaceEnum
 
 
 @strawberry_django.type(models.Task, pagination=True)
@@ -68,6 +88,7 @@ class CreateServiceInput:
 class NoteType:
     id: auto
     title: auto
+    attachments: List[NoteAttachmentType]
     public_details: auto
     client: Optional[UserType]
     moods: List[MoodType]

@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
     dependencies = [
         # Ensure this dependency points to the migration that added the permissions
         # Replace '0001_initial' with the correct file name or migration identifier.
-        ("common", "0001_initial"),
+        ("common", "0003_alter_location_point"),
     ]
 
     operations = [
