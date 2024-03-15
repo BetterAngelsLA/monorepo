@@ -176,11 +176,7 @@ class Mutation:
             associated_with=note.client,
         )
 
-        permissions = [
-            AttachmentPermissions.DELETE,
-        ]
-        for perm in permissions:
-            assign_perm(perm, permission_group.group, attachment)
+        assign_perm(AttachmentPermissions.DELETE, permission_group.group, attachment)
 
         return cast(NoteAttachmentType, attachment)
 
