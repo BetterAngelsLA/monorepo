@@ -261,7 +261,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             (
                 "org_1_case_manager_2",
                 True,
-            ),  # Other CM in owner's org should not succeed
+            ),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # CM in a different org should not succeed
             ("client_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
