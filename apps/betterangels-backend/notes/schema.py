@@ -54,58 +54,6 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_note_attachment(
-        self, info: Info, data: CreateNoteAttachmentInput
-    ) -> NoteAttachmentType:
-        user = cast(User, get_current_user(info))
-
-        note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
-            id=data.note
-        )
-
-        # WARNING: Temporary workaround for organization selection
-        # TODO: Update once organization selection is implemented. Currently selects
-        # the first organization with a default Caseworker role for the user.
-        permission_group = (
-            PermissionGroup.objects.select_related("organization", "group")
-            .filter(
-                organization__users=user,
-                name=GroupTemplateNames.CASEWORKER,
-            )
-            .first()
-        )
-
-        if not (permission_group and permission_group.group):
-            raise PermissionError("User lacks proper organization or permissions")
-
-        # Create Attachment
-        content_type = ContentType.objects.get_for_model(Note)
-        attachment = Attachment.objects.create(
-            file=data.file,
-            namespace=data.namespace,
-            content_type=content_type,
-            object_id=note.id,
-            uploaded_by=user,
-            associated_with=note.client,
-        )
-
-        permissions = [
-            AttachmentPermissions.DELETE,
-        ]
-        for perm in permissions:
-            assign_perm(perm, permission_group.group, note)
-
-        return cast(NoteAttachmentType, attachment)
-
-    delete_note_attachment: NoteAttachmentType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
-        ],
-    )
-
-    # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
@@ -190,6 +138,56 @@ class Mutation:
         DeleteDjangoObjectInput,
         extensions=[
             HasRetvalPerm(perms=NotePermissions.DELETE),
+        ],
+    )
+
+    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def create_note_attachment(
+        self, info: Info, data: CreateNoteAttachmentInput
+    ) -> NoteAttachmentType:
+        user = cast(User, get_current_user(info))
+
+        note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
+            id=data.note
+        )
+
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects
+        # the first organization with a default Caseworker role for the user.
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization__users=user,
+                name=GroupTemplateNames.CASEWORKER,
+            )
+            .first()
+        )
+
+        if not (permission_group and permission_group.group):
+            raise PermissionError("User lacks proper organization or permissions")
+
+        content_type = ContentType.objects.get_for_model(Note)
+        attachment = Attachment.objects.create(
+            file=data.file,
+            namespace=data.namespace,
+            content_type=content_type,
+            object_id=note.id,
+            uploaded_by=user,
+            associated_with=note.client,
+        )
+
+        permissions = [
+            AttachmentPermissions.DELETE,
+        ]
+        for perm in permissions:
+            assign_perm(perm, permission_group.group, note)
+
+        return cast(NoteAttachmentType, attachment)
+
+    delete_note_attachment: NoteAttachmentType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
         ],
     )
 
