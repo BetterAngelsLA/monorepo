@@ -243,14 +243,15 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             "test.txt",
         )
         if should_succeed:
-            self.assertIsNone(
-                response.get("errors"),
-                f"{user_label} should be allowed to create note attachments",
-            )
+            self.assertIsNotNone(response["data"]["createNoteAttachment"]["file"])
         else:
-            self.assertIsNotNone(
-                response.get("errors"),
-                f"{user_label} should not be allowed to create note attachments",
+            self.assertEqual(
+                response["data"]["createNoteAttachment"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createNoteAttachment",
+                    "message": "You don't have permission to access this app.",
+                },
             )
 
 

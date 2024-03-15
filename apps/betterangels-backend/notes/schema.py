@@ -9,7 +9,7 @@ from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
@@ -147,9 +147,9 @@ class Mutation:
     ) -> NoteAttachmentType:
         user = cast(User, get_current_user(info))
 
-        note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
-            id=data.note
-        )
+        note = get_objects_for_user(
+            user, [NotePermissions.CHANGE], Note.objects.all()
+        ).get(id=data.note)
 
         # WARNING: Temporary workaround for organization selection
         # TODO: Update once organization selection is implemented. Currently selects
@@ -180,7 +180,7 @@ class Mutation:
             AttachmentPermissions.DELETE,
         ]
         for perm in permissions:
-            assign_perm(perm, permission_group.group, note)
+            assign_perm(perm, permission_group.group, attachment)
 
         return cast(NoteAttachmentType, attachment)
 
