@@ -9,6 +9,40 @@ from strawberry import auto
 from . import models
 
 
+@strawberry_django.filter(models.Shelter)
+class ShelterFilter:
+    id: auto
+    title: auto
+    services: "ServicesFilter"
+    population: "PopulationFilter"
+    shelter_type: "ShelterTypeFilter"
+    requirements_filter: "RequirementFilter"
+
+
+@strawberry_django.filter(models.Service)
+class ServicesFilter:
+    id: auto
+    title: auto
+
+
+@strawberry_django.filter(models.ShelterType)
+class ShelterTypeFilter:
+    id: auto
+    title: auto
+
+
+@strawberry_django.filter(models.Population)
+class PopulationFilter:
+    id: auto
+    title: auto
+
+
+@strawberry_django.filter(models.Requirement)
+class RequirementFilter:
+    id: auto
+    title: auto
+
+
 @strawberry.type
 class DescriptionType:
     description: Optional[str]
@@ -37,7 +71,7 @@ class LocationType:
 
 
 @dataclasses.dataclass
-@strawberry_django.type(models.Shelter, pagination=True)
+@strawberry_django.type(models.Shelter, pagination=True, filters=ShelterFilter)
 class ShelterType:
     id: auto
     title: auto

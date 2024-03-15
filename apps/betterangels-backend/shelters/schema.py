@@ -6,5 +6,5 @@ from typing import List
 
 @strawberry.type
 class Query:
-    shelter: ShelterType
+    shelter: ShelterType = strawberry_django.field()
     shelters: List[ShelterType] = strawberry_django.field()
