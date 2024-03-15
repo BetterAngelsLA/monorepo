@@ -1,3 +1,4 @@
+from common.models import Attachment
 from django.test.utils import override_settings
 from notes.enums import NoteNamespaceEnum
 from notes.models import Note, Task
@@ -242,9 +243,8 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
         response = self._create_note_attachment_fixture(
-            self.client_1,
             str(self.note["id"]),
-            NoteNamespaceEnum.MOOD_ASSESMENT.name,
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
             b"This is a test file",
             "test.txt",
         )
@@ -253,6 +253,43 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(file)
         else:
             self.assertIsNone(file)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should not succeed
+            ("org_2_case_manager_1", False),  # CM in a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        # Setup a note and attachment
+        self._handle_user_login("org_1_case_manager_1")
+        note_attachment_response = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Test file content",
+        )
+        note_attachment_id = note_attachment_response["data"]["createNoteAttachment"][
+            "id"
+        ]
+
+        # Switch to the test user
+        self._handle_user_login(user_label)
+
+        # Attempt to delete the note attachment
+        self._delete_note_attachment_fixture(note_attachment_id)
+
+        self.assertTrue(
+            Attachment.objects.filter(id=note_attachment_id).exists() != should_succeed
+        )
 
 
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):

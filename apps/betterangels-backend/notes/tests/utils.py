@@ -115,21 +115,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
 
     def _create_note_attachment_fixture(
         self,
-        user: User,
         note_id: str,
         namespace: str,
         file_content: bytes,
         file_name: str = "test_file.txt",
     ) -> Dict[str, Any]:
-        """
-        Creates a note attachment via a GraphQL mutation, handling file upload.
-
-        :param user: User model instance for authentication.
-        :param note_id: ID of the note to attach the file to.
-        :param file_content: Byte content of the file.
-        :param file_name: Name of the file.
-        :return: GraphQL response as a dictionary.
-        """
         file = SimpleUploadedFile(name=file_name, content=file_content)
         response = self.execute_graphql(
             """
@@ -143,6 +133,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }
                     }
                     ... on NoteAttachmentType {
+                        id
                         file {
                             name
                         }
@@ -156,8 +147,28 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             },
             files={"file": file},
         )
+        return response
 
-        self.graphql_client.logout()
+    def _delete_note_attachment_fixture(self, attachment_id: str) -> Dict[str, Any]:
+        response = self.execute_graphql(
+            """
+            mutation DeleteNoteAttachment($attachmentId: ID!) {
+                deleteNoteAttachment(data: { id: $attachmentId }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteAttachmentType {
+                        id
+                    }
+                }
+            }
+            """,
+            variables={"attachmentId": attachment_id},
+        )
         return response
 
 
