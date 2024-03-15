@@ -15,6 +15,8 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
+# Permissions on Service, Population, and Requirement models
+# should be more restrictive than on Shelter
 # Service model should include some reference to the icon
 class Service(models.Model):
     title = models.CharField(max_length=64)
@@ -47,7 +49,7 @@ class ShelterType(models.Model):
 # Set default to make gql returns consistent between charfield and textfield
 class Shelter(TimeStampedModel):
     title = models.CharField(max_length=255)
-    image_url = models.URLField()
+    image_url = models.URLField(blank=True, null=True)
 
     shelter_type = models.ForeignKey(ShelterType, blank=True, null=True,
                                      on_delete=models.PROTECT)
@@ -70,7 +72,7 @@ class Shelter(TimeStampedModel):
 
     # Contact Information
     email = models.EmailField(max_length=254, null=True, blank=True)
-    phone = models.CharField(max_length=20, null=True, default='')
+    phone = models.CharField(max_length=20, blank=True, default='')
     website = models.URLField(null=True, blank=True)
 
     # Description
