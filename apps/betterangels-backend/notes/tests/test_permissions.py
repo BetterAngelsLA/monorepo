@@ -227,11 +227,14 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("org_1_case_manager_1", True),
-            ("org_1_case_manager_2", True),
-            ("org_2_case_manager_1", False),
-            ("client_1", False),
-            (None, False),
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            ("client_1", False),  # Client modifying note should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
     def test_create_note_attachment_permission(
