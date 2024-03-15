@@ -13,33 +13,18 @@ class GraphQLTestCaseMixin:
             super(TestCase, self).setUp()
         self.graphql_client = Client()
 
-    # def execute_graphql(
-    #     self, query: str, variables: Optional[Dict[str, Any]] = None
-    # ) -> Dict[str, Any]:
-    #     response = self.graphql_client.post(
-    #         self.graphql_url,
-    #         {
-    #             "query": query,
-    #             "variables": variables or {},
-    #         },
-    #         content_type="application/json",
-    #     )
-    #     json_data = response.json()
-    #     if not isinstance(json_data, dict):
-    #         raise ValueError("Response JSON is not a dictionary")
-    #     return json_data
     def execute_graphql(
         self,
         query: str,
         variables: Optional[Dict[str, Any]] = None,
         files: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
+        data = {
+            "query": query,
+            "variables": variables or {},
+        }
         # If there are files to upload, prepare multipart/form-data request
         if files:
-            data = {
-                "query": query,
-                "variables": variables or {},
-            }
             # The GraphQL query and variables are added to the form data as 'operations'
             operations = json.dumps({"query": query, "variables": variables or {}})
 
@@ -62,10 +47,6 @@ class GraphQLTestCaseMixin:
             )
         else:
             # For non-multipart requests, just send JSON encoded data as usual
-            data = {
-                "query": query,
-                "variables": variables or {},
-            }
             response = self.graphql_client.post(
                 self.graphql_url, data, content_type="application/json"
             )

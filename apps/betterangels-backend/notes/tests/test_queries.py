@@ -6,7 +6,7 @@ from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
@@ -88,7 +88,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_task_query(self) -> None:
         task_id = self.task["id"]

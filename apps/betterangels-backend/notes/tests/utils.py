@@ -6,7 +6,6 @@ from accounts.tests.baker_recipes import permission_group_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
-from notes.enums import NoteNamespaceEnum
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -19,9 +18,9 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
     def _setup_users(self) -> None:
         self.user_labels = [
-            "case_manager_1",
-            "case_manager_2",
-            "case_manager_3",
+            "org_1_case_manager_1",
+            "org_1_case_manager_2",
+            "org_2_case_manager_1",
             "client_1",
         ]
         self.user_map = {
@@ -29,9 +28,9 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             for user_label in self.user_labels
         }
 
-        self.case_manager_1 = self.user_map["case_manager_1"]
-        self.case_manager_2 = self.user_map["case_manager_2"]
-        self.case_manager_3 = self.user_map["case_manager_3"]
+        self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
+        self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
+        self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
         self.client_1 = self.user_map["client_1"]
 
     def _setup_groups_and_permissions(self) -> None:
@@ -41,12 +40,12 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         perm_group = permission_group_recipe.make(
             template=caseworker_permission_group_template
         )
-        perm_group.organization.add_user(self.case_manager_1)
-        perm_group.organization.add_user(self.case_manager_2)
+        perm_group.organization.add_user(self.org_1_case_manager_1)
+        perm_group.organization.add_user(self.org_1_case_manager_2)
 
         # Create Another Org
         perm_group_2 = permission_group_recipe.make()
-        perm_group_2.organization.add_user(self.case_manager_3)
+        perm_group_2.organization.add_user(self.org_2_case_manager_1)
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -56,11 +55,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note: Dict[str, Any] = self._create_note_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
-                "publicDetails": f"{self.case_manager_1.id}'s note",
+                "title": f"User: {self.org_1_case_manager_1.id}",
+                "publicDetails": f"{self.org_1_case_manager_1.id}'s note",
                 "client": {"id": self.client_1.id},
             },
         )["data"]["createNote"]
@@ -131,12 +130,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         :param file_name: Name of the file.
         :return: GraphQL response as a dictionary.
         """
-        self.graphql_client.force_login(user)
-
         file = SimpleUploadedFile(name=file_name, content=file_content)
         response = self.execute_graphql(
             """
-            mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {
+            mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {  # noqa: B950
                 createNoteAttachment(data: { note: $noteId, namespace: $namespace, file: $file }) {
                     ... on OperationInfo {
                         messages {
@@ -171,10 +168,10 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
+                "title": f"User: {self.org_1_case_manager_1.id}",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]

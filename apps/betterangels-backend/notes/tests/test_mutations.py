@@ -11,7 +11,7 @@ from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("case_manager_1")
+        self._handle_user_login("org_1_case_manager_1")
 
     def test_create_note_mutation(self) -> None:
         expected_query_count = 32
@@ -31,7 +31,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [],
             "publicDetails": "This is a new note.",
             "privateDetails": "",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
         }
 
@@ -58,7 +58,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "publicDetails": "Updated Body",
             "privateDetails": "Updated private details",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "client": {"id": str(self.client_1.pk)},
         }
         self.assertEqual(updated_note, expected_note)
@@ -226,7 +226,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("case_manager_1")
+        self._handle_user_login("org_1_case_manager_1")
 
     def test_create_task_mutation(self) -> None:
         expected_query_count = 28
@@ -245,7 +245,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "dueBy": None,
             "client": None,
             "createdAt": "2024-02-26T00:00:00+00:00",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
         self.assertEqual(created_task, expected_task)
 
@@ -268,7 +268,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
             "createdAt": "2024-02-26T00:00:00+00:00",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
         self.assertEqual(updated_task, expected_task)
 
