@@ -21,7 +21,7 @@ class NoteAttachmentFilter:
     namespace: NoteNamespaceEnum
 
 
-@strawberry_django.type(Attachment, filters=NoteAttachmentFilter)
+@strawberry_django.type(Attachment, filters=NoteAttachmentFilter, pagination=True)
 class NoteAttachmentType:
     file: auto
     file_type: auto
@@ -31,7 +31,6 @@ class NoteAttachmentType:
 @strawberry_django.input(Attachment)
 class CreateNoteAttachmentInput:
     note: ID
-    client: ID
     file: Upload
     namespace: NoteNamespaceEnum
 

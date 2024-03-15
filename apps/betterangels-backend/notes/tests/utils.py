@@ -3,8 +3,10 @@ from typing import Any, Dict, Optional
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
+from notes.enums import NoteNamespaceEnum
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -111,6 +113,55 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
+
+    def _create_note_attachment_fixture(
+        self,
+        user: User,
+        note_id: str,
+        namespace: str,
+        file_content: bytes,
+        file_name: str = "test_file.txt",
+    ) -> Dict[str, Any]:
+        """
+        Creates a note attachment via a GraphQL mutation, handling file upload.
+
+        :param user: User model instance for authentication.
+        :param note_id: ID of the note to attach the file to.
+        :param file_content: Byte content of the file.
+        :param file_name: Name of the file.
+        :return: GraphQL response as a dictionary.
+        """
+        self.graphql_client.force_login(user)
+
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        response = self.execute_graphql(
+            """
+            mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {
+                createNoteAttachment(data: { note: $noteId, namespace: $namespace, file: $file }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteAttachmentType {
+                        file {
+                            name
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "noteId": note_id,
+                "namespace": namespace,
+            },
+            files={"file": file},
+        )
+
+        self.graphql_client.logout()
+        return response
 
 
 class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):

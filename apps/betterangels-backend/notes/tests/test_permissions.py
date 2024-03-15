@@ -1,3 +1,5 @@
+from django.test.utils import override_settings
+from notes.enums import NoteNamespaceEnum
 from notes.models import Note, Task
 from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 from unittest_parametrize import parametrize
@@ -212,6 +214,44 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         )
 
         self.assertEqual(private_details_visible, expected_private_details_count)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("case_manager_1", True),
+            ("case_manager_2", False),
+            ("case_manager_3", False),
+            ("client_1", False),
+            (None, False),
+        ],
+    )
+    def test_create_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        response = self._create_note_attachment_fixture(
+            self.case_manager_1,
+            str(self.note["id"]),
+            NoteNamespaceEnum.MOOD_ASSESMENT.name,
+            b"This is a test file",
+            "test.txt",
+        )
+        if should_succeed:
+            self.assertIsNone(
+                response.get("errors"),
+                f"{user_label} should be allowed to create note attachments",
+            )
+        else:
+            self.assertIsNotNone(
+                response.get("errors"),
+                f"{user_label} should not be allowed to create note attachments",
+            )
 
 
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
