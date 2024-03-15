@@ -1,12 +1,12 @@
-from typing import List, Optional, cast
+from typing import List, cast
 
 import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroup, User
-from common.enums import FileType
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment
+from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
@@ -54,16 +54,30 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(
-        # extensions=[HasPerm(AttachmentPermissions.ADD)]
-    )
+    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_note_attachment(
         self, info: Info, data: CreateNoteAttachmentInput
     ) -> NoteAttachmentType:
-        user = get_current_user(info)
+        user = cast(User, get_current_user(info))
+
         note = filter_for_user(Note.objects.all(), user, [NotePermissions.CHANGE]).get(
             id=data.note
         )
+
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects
+        # the first organization with a default Caseworker role for the user.
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization__users=user,
+                name=GroupTemplateNames.CASEWORKER,
+            )
+            .first()
+        )
+
+        if not (permission_group and permission_group.group):
+            raise PermissionError("User lacks proper organization or permissions")
 
         # Create Attachment
         content_type = ContentType.objects.get_for_model(Note)
@@ -72,14 +86,23 @@ class Mutation:
             namespace=data.namespace,
             content_type=content_type,
             object_id=note.id,
+            uploaded_by=user,
+            associated_with=note.client,
         )
+
+        permissions = [
+            AttachmentPermissions.DELETE,
+        ]
+        for perm in permissions:
+            assign_perm(perm, permission_group.group, note)
+
         return cast(NoteAttachmentType, attachment)
 
     delete_note_attachment: NoteAttachmentType = mutations.delete(
         DeleteDjangoObjectInput,
-        # extensions=[
-        #     HasRetvalPerm(perms=AttachmentPermissions.DELETE),
-        # ],
+        extensions=[
+            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+        ],
     )
 
     # Notes
@@ -119,8 +142,6 @@ class Mutation:
                 },
             )
 
-            # Assign object-level permissions to the user who created the note.
-            # Each perm assignment is 2 SQL queries. Maybe move to 1 perm?
             permissions = [
                 NotePermissions.CHANGE,
                 NotePermissions.DELETE,

@@ -31,6 +31,7 @@ class NoteAttachmentType:
 @strawberry_django.input(Attachment)
 class CreateNoteAttachmentInput:
     note: ID
+    client: ID
     file: Upload
     namespace: NoteNamespaceEnum
 

@@ -1,6 +1,7 @@
 from typing import Any
 
 import magic
+from accounts.models import User
 from common.enums import FileType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -49,6 +50,15 @@ class Attachment(BaseModel):
     content_object = GenericForeignKey("content_type", "object_id")
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
+
+    uploaded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
+    )
+    associated_with = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="associated_attachments",
+    )
 
     attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
     attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
