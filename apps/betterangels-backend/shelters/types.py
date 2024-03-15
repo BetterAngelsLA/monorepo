@@ -53,6 +53,7 @@ class DescriptionType:
 class BedsType:
     total_beds: Optional[int]
     private_beds: Optional[int]
+    available_beds: Optional[int]
     max_stay: Optional[int]
     average_bed_rate: Optional[float]
     bed_layout_description: str
@@ -115,8 +116,8 @@ class ShelterType:
         return BedsType(
             total_beds=self.total_beds,
             private_beds=self.private_beds,
+            available_beds=self.available_beds,
             max_stay=self.max_stay,
             average_bed_rate=self.average_bed_rate,
             bed_layout_description=self.bed_layout_description,
-
         )

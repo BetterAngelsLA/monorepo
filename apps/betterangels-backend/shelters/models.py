@@ -81,13 +81,14 @@ class Shelter(TimeStampedModel):
 
     # Bed Information
     total_beds = models.PositiveIntegerField(blank=True, null=True)
+    available_beds = models.PositiveIntegerField(blank=True, null=True)
     private_beds = models.PositiveIntegerField(blank=True, null=True)
     max_stay = models.PositiveIntegerField(blank=True, null=True)
     average_bed_rate = models.DecimalField(blank=True, null=True,
                                            max_digits=10, decimal_places=2)
     bed_layout_description = models.TextField(blank=True, null=True)
 
-    # TODO -- handle notes
+    # TODO -- handle notes - can notes be shared between apps
 
     def __str__(self) -> str:
         return self.title
