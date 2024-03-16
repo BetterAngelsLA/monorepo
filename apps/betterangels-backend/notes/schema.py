@@ -64,29 +64,30 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        with transaction.atomic():
-            user = get_current_user(info)
-            # TODO: Handle creating Notes without existing Client.
-            # if not data.client:
-            #     User.create_client()
+        user = get_current_user(info)
+        # TODO: Handle creating Notes without existing Client.
+        # if not data.client:
+        #     User.create_client()
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects
+        # the first organization with a default Caseworker role for the user.
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization__users=user,
+                name=GroupTemplateNames.CASEWORKER,
             )
+            .first()
+        )
 
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+        if not (permission_group and permission_group.group):
+            raise PermissionError("User lacks proper organization or permissions")
 
-            client = User(id=data.client.id) if data.client else None
-            note_data = asdict(data)
+        client = User(id=data.client.id) if data.client else None
+        note_data = asdict(data)
+
+        with transaction.atomic():
             note = resolvers.create(
                 info,
                 Note,
@@ -125,9 +126,10 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        note_data = asdict(data)
+        note = Note.objects.get(id=data.id)
+
         with transaction.atomic():
-            note_data = asdict(data)
-            note = Note.objects.get(id=data.id)
             note = resolvers.update(
                 info,
                 note,
@@ -176,24 +178,25 @@ class Mutation:
         if not (permission_group and permission_group.group):
             raise PermissionError("User lacks proper organization or permissions")
 
-        content_type = ContentType.objects.get_for_model(Note)
-        attachment = Attachment.objects.create(
-            file=data.file,
-            namespace=data.namespace,
-            content_type=content_type,
-            object_id=note.id,
-            uploaded_by=user,
-            associated_with=note.client,
-        )
+        with transaction.atomic():
+            content_type = ContentType.objects.get_for_model(Note)
+            attachment = Attachment.objects.create(
+                file=data.file,
+                namespace=data.namespace,
+                content_type=content_type,
+                object_id=note.id,
+                uploaded_by=user,
+                associated_with=note.client,
+            )
 
-        permissions = [
-            AttachmentPermissions.VIEW,
-            AttachmentPermissions.DELETE,
-        ]
-        for perm in permissions:
-            assign_perm(perm, permission_group.group, attachment)
+            permissions = [
+                AttachmentPermissions.VIEW,
+                AttachmentPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, attachment)
 
-        return cast(NoteAttachmentType, attachment)
+            return cast(NoteAttachmentType, attachment)
 
     delete_note_attachment: NoteAttachmentType = mutations.delete(
         DeleteDjangoObjectInput,
@@ -204,26 +207,27 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
-        with transaction.atomic():
-            user = get_current_user(info)
+        user = get_current_user(info)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
+        # WARNING: Temporary workaround for organization selection
+        # TODO: Update once organization selection is implemented. Currently selects
+        # the first organization with a default Caseworker role for the user.
+        permission_group = (
+            PermissionGroup.objects.select_related("organization", "group")
+            .filter(
+                organization__users=user,
+                name=GroupTemplateNames.CASEWORKER,
             )
+            .first()
+        )
 
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+        if not (permission_group and permission_group.group):
+            raise PermissionError("User lacks proper organization or permissions")
 
-            client = User(id=data.client.id) if data.client else None
-            task_data = asdict(data)
+        client = User(id=data.client.id) if data.client else None
+        task_data = asdict(data)
+
+        with transaction.atomic():
             task = resolvers.create(
                 info,
                 Task,
@@ -248,10 +252,10 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])]
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
+        client = User(id=data.client.id) if data.client else None
+        task_data = asdict(data)
+        task = Task.objects.get(id=data.id)
         with transaction.atomic():
-            client = User(id=data.client.id) if data.client else None
-            task_data = asdict(data)
-            task = Task.objects.get(id=data.id)
             task = resolvers.update(
                 info,
                 task,
