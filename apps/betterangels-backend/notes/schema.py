@@ -43,6 +43,14 @@ class Query:
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
+    note_attachment: NoteAttachmentType = strawberry_django.field(
+        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+    )
+
+    note_attachments: List[NoteAttachmentType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+    )
+
     task: TaskType = strawberry_django.field(
         extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
     )
@@ -178,7 +186,12 @@ class Mutation:
             associated_with=note.client,
         )
 
-        assign_perm(AttachmentPermissions.DELETE, permission_group.group, attachment)
+        permissions = [
+            AttachmentPermissions.VIEW,
+            AttachmentPermissions.DELETE,
+        ]
+        for perm in permissions:
+            assign_perm(perm, permission_group.group, attachment)
 
         return cast(NoteAttachmentType, attachment)
 
