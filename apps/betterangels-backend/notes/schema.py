@@ -9,7 +9,7 @@ from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from guardian.shortcuts import assign_perm
 from notes.models import Note, Task
 from notes.permissions import NotePermissions, PrivateNotePermissions, TaskPermissions
 from strawberry import asdict
@@ -18,6 +18,7 @@ from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.utils.query import filter_for_user
 
 from .types import (
     CreateNoteAttachmentInput,
@@ -146,8 +147,10 @@ class Mutation:
     ) -> NoteAttachmentType:
         user = cast(User, get_current_user(info))
 
-        note = get_objects_for_user(
-            user, [NotePermissions.CHANGE], Note.objects.all()
+        note = filter_for_user(
+            Note.objects.all(),
+            user,
+            [NotePermissions.CHANGE],
         ).get(id=data.note)
 
         # WARNING: Temporary workaround for organization selection
