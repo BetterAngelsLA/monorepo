@@ -248,11 +248,13 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             b"This is a test file",
             "test.txt",
         )
-        file = response.get("data", {}).get("createNoteAttachment", {}).get("file")
+        attachment_id = (
+            response.get("data", {}).get("createNoteAttachment", {}).get("id")
+        )
         if should_succeed:
-            self.assertIsNotNone(file)
+            self.assertIsNotNone(attachment_id)
         else:
-            self.assertIsNone(file)
+            self.assertIsNone(attachment_id)
 
     @parametrize(
         "user_label, should_succeed",
@@ -272,14 +274,12 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         # Setup a note and attachment
         self._handle_user_login("org_1_case_manager_1")
-        note_attachment_response = self._create_note_attachment_fixture(
+        response = self._create_note_attachment_fixture(
             self.note["id"],
             NoteNamespaceEnum.MOOD_ASSESSMENT.name,
             b"Test file content",
         )
-        note_attachment_id = note_attachment_response["data"]["createNoteAttachment"][
-            "id"
-        ]
+        note_attachment_id = response["data"]["createNoteAttachment"]["id"]
 
         # Switch to the test user
         self._handle_user_login(user_label)
