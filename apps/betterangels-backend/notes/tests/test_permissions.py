@@ -224,6 +224,17 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.attachment_ids = []
+        self._handle_user_login("org_1_case_manager_1")
+        for _ in range(2):  # Create two attachments for testing
+            response = self._create_note_attachment_fixture(
+                self.note["id"],
+                NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+                b"Test file content for viewing multiple attachments",
+                f"multiple_view_permission_test_{_}.txt",
+            )
+            self.attachment_ids.append(response["data"]["createNoteAttachment"]["id"])
+        self.graphql_client.logout()
 
     @parametrize(
         "user_label, should_succeed",
@@ -243,7 +254,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
         response = self._create_note_attachment_fixture(
-            str(self.note["id"]),
+            self.note["id"],
             NoteNamespaceEnum.MOOD_ASSESSMENT.name,
             b"This is a test file",
             "test.txt",
@@ -272,7 +283,6 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
     def test_delete_note_attachment_permission(
         self, user_label: str, should_succeed: bool
     ) -> None:
-        # Setup a note and attachment
         self._handle_user_login("org_1_case_manager_1")
         response = self._create_note_attachment_fixture(
             self.note["id"],
@@ -281,15 +291,92 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         )
         note_attachment_id = response["data"]["createNoteAttachment"]["id"]
 
-        # Switch to the test user
         self._handle_user_login(user_label)
-
-        # Attempt to delete the note attachment
         self._delete_note_attachment_fixture(note_attachment_id)
 
         self.assertTrue(
             Attachment.objects.filter(id=note_attachment_id).exists() != should_succeed
         )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Creator should succeed
+            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM from a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewNoteAttachment($id: ID!) {
+                noteAttachment(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.attachment_ids[0]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertTrue(
+                "id" in response["data"]["noteAttachment"],
+                "Should return the attachment.",
+            )
+        else:
+            self.assertTrue(
+                "errors" in response
+                or response.get("data", {}).get("noteAttachment") is None,
+                "Should not have access to view the note attachment.",
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Creator should succeed
+            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM from a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_note_attachments_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewNoteAttachments {
+                noteAttachments {
+                    id
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if should_succeed:
+            attachments_data = response["data"]["noteAttachments"]
+            self.assertEqual(
+                len(attachments_data),
+                len(self.attachment_ids),
+                "Should return all attachments for the user.",
+            )
+        else:
+            self.assertTrue(
+                len(response["data"]["noteAttachments"]) == 0,
+                "Should return an empty list for note attachments.",
+            )
 
 
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):

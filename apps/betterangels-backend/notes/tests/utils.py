@@ -137,6 +137,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         file {
                             name
                         }
+                        originalFilename
                     }
                 }
             }

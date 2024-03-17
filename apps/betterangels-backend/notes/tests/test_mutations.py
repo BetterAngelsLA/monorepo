@@ -1,8 +1,10 @@
 from unittest.mock import ANY
 
+from common.models import Attachment
 from django.test import ignore_warnings
 from django.utils import timezone
 from freezegun import freeze_time
+from notes.enums import NoteNamespaceEnum
 from notes.models import Note, Task
 from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
@@ -219,6 +221,68 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["deleteNote"])
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
+
+
+class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
+    note_id: str
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        note_response = self._create_note_fixture(
+            {
+                "title": "New Note",
+                "publicDetails": "This is a new note.",
+                "client": {"id": self.client_1.pk},
+            }
+        )
+        self.note_id = note_response["data"]["createNote"]["id"]
+
+    def test_create_note_attachment(self) -> None:
+        file_content = b"Test attachment content"
+        file_name = "test_attachment.txt"
+
+        with self.assertNumQueries(22):
+            create_response = self._create_note_attachment_fixture(
+                self.note_id,
+                NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+                file_content,
+                file_name,
+            )
+
+        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
+        self.assertEqual(
+            create_response["data"]["createNoteAttachment"]["originalFilename"],
+            file_name,
+        )
+        self.assertIsNotNone(
+            create_response["data"]["createNoteAttachment"]["file"]["name"]
+        )
+        self.assertTrue(
+            Attachment.objects.filter(id=attachment_id).exists(),
+            "The attachment should have been created and exist in the database.",
+        )
+
+    def test_delete_note_attachment(self) -> None:
+        file_content = b"Content for deletion test"
+        file_name = "delete_test_attachment.txt"
+        create_response = self._create_note_attachment_fixture(
+            self.note_id,
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            file_content,
+            file_name,
+        )
+
+        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
+        self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
+
+        with self.assertNumQueries(13):
+            self._delete_note_attachment_fixture(attachment_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=attachment_id).exists(),
+            "The attachment should have been deleted from the database.",
+        )
 
 
 @freeze_time("2024-02-26")

@@ -26,6 +26,7 @@ class NoteAttachmentType:
     id: auto
     file: auto
     file_type: auto
+    original_filename: auto
     namespace: NoteNamespaceEnum
 
 
