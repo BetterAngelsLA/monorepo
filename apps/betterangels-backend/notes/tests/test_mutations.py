@@ -224,19 +224,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
 
 class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
-    note_id: str
-
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
-        note_response = self._create_note_fixture(
-            {
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
-                "client": {"id": self.client_1.pk},
-            }
-        )
-        self.note_id = note_response["data"]["createNote"]["id"]
 
     def test_create_note_attachment(self) -> None:
         file_content = b"Test attachment content"
@@ -244,7 +234,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
 
         with self.assertNumQueries(22):
             create_response = self._create_note_attachment_fixture(
-                self.note_id,
+                self.note["id"],
                 NoteNamespaceEnum.MOOD_ASSESSMENT.name,
                 file_content,
                 file_name,
@@ -267,7 +257,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         file_content = b"Content for deletion test"
         file_name = "delete_test_attachment.txt"
         create_response = self._create_note_attachment_fixture(
-            self.note_id,
+            self.note["id"],
             NoteNamespaceEnum.MOOD_ASSESSMENT.name,
             file_content,
             file_name,
