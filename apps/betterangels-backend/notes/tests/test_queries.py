@@ -1,4 +1,5 @@
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
+from notes.enums import NoteNamespaceEnum
 from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
 
 
@@ -82,6 +83,71 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(notes), 3)
         # TODO: Add more validations once sort is implemented
         self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        self.attachment_1 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 1",
+            "attachment_1.txt",
+        )
+        self.attachment_2 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 2",
+            "attachment_2.txt",
+        )
+
+    def test_view_note_attachment_permission(self) -> None:
+        query = """
+            query ViewNoteAttachment($id: ID!) {
+                noteAttachment(pk: $id) {
+                    id
+                    file {
+                        name
+                    }
+                    fileType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        variables = {"id": self.attachment_1["data"]["createNoteAttachment"]["id"]}
+        response = self.execute_graphql(query, variables)
+
+        self.assertEqual(
+            self.attachment_1["data"]["createNoteAttachment"],
+            response["data"]["noteAttachment"],
+        )
+
+    def test_view_note_attachments_permission(self) -> None:
+        query = """
+            query ViewNoteAttachments {
+                noteAttachments {
+                    id
+                    file {
+                        name
+                    }
+                    fileType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertEqual(
+            [
+                self.attachment_1["data"]["createNoteAttachment"],
+                self.attachment_2["data"]["createNoteAttachment"],
+            ],
+            response["data"]["noteAttachments"],
+        )
 
 
 @ignore_warnings(category=UserWarning)

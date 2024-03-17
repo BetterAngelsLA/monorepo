@@ -134,10 +134,12 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }
                     ... on NoteAttachmentType {
                         id
+                        fileType
                         file {
                             name
                         }
                         originalFilename
+                        namespace
                     }
                 }
             }

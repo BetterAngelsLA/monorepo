@@ -11,9 +11,10 @@ class DeleteDjangoObjectInput:
 
 @strawberry_django.type(Attachment, is_interface=True)
 class AttachmentInterface:
-    file = auto
-    file_type = auto
-    namespace: auto
+    id: auto
+    file: auto
+    file_type: auto
+    original_filename: auto
 
     # @strawberry.field
     # def thumbnail(

@@ -2,8 +2,10 @@ import dataclasses
 from datetime import datetime
 from typing import List, Optional
 
+import strawberry
 import strawberry_django
 from accounts.types import UserInput, UserType
+from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum
@@ -22,11 +24,7 @@ class NoteAttachmentFilter:
 
 
 @strawberry_django.type(Attachment, filters=NoteAttachmentFilter, pagination=True)
-class NoteAttachmentType:
-    id: auto
-    file: auto
-    file_type: auto
-    original_filename: auto
+class NoteAttachmentType(AttachmentInterface):
     namespace: NoteNamespaceEnum
 
 

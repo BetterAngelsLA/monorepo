@@ -1,7 +1,7 @@
 from unittest.mock import ANY
 
 from common.models import Attachment
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
 from notes.enums import NoteNamespaceEnum
@@ -214,7 +214,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -223,6 +223,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
