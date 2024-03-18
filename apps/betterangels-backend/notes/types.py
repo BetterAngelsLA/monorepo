@@ -86,7 +86,19 @@ class CreateServiceInput:
     custom_descriptor: Optional[str]
 
 
-@strawberry_django.type(models.Note, pagination=True)
+@strawberry_django.ordering.order(models.Note)
+class NoteOrder:
+    created_at: auto
+
+
+@strawberry_django.filters.filter(models.Note)
+class NoteFilter:
+    client: auto
+    created_by: auto
+    is_submitted: auto
+
+
+@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter)
 class NoteType:
     id: auto
     title: auto

@@ -25,6 +25,7 @@ from .types import (
     CreateNoteInput,
     CreateTaskInput,
     NoteAttachmentType,
+    NoteFilter,
     NoteType,
     RevertNoteInput,
     TaskType,
@@ -36,7 +37,7 @@ from .types import (
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter
     )
 
     notes: List[NoteType] = strawberry_django.field(

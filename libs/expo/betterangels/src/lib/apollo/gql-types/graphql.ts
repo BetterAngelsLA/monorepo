@@ -48,6 +48,10 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
 
+export type DjangoModelFilterInput = {
+  pk: Scalars['ID']['input'];
+};
+
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
 };
@@ -138,6 +142,15 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
+export type NoteFilter = {
+  AND?: InputMaybe<NoteFilter>;
+  NOT?: InputMaybe<NoteFilter>;
+  OR?: InputMaybe<NoteFilter>;
+  client?: InputMaybe<DjangoModelFilterInput>;
+  createdBy?: InputMaybe<DjangoModelFilterInput>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type NoteType = {
   __typename?: 'NoteType';
   client?: Maybe<UserType>;
@@ -207,6 +220,7 @@ export type QueryNoteArgs = {
 
 
 export type QueryNotesArgs = {
+  filters?: InputMaybe<NoteFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
