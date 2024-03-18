@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 from django.test import ignore_warnings
 from freezegun import freeze_time
+from notes.enums import ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -106,24 +107,24 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": self.provided_services[0].service,
+                    "service": ServiceEnum(self.provided_services[0].service).name,
                     "customService": self.provided_services[0].custom_service,
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": self.provided_services[1].service,
+                    "service": ServiceEnum(self.provided_services[1].service).name,
                     "customService": self.provided_services[1].custom_service,
                 },
             ],
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": self.requested_services[0].service,
+                    "service": ServiceEnum(self.requested_services[0].service).name,
                     "customService": self.requested_services[0].custom_service,
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": self.requested_services[1].service,
+                    "service": ServiceEnum(self.requested_services[1].service).name,
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
@@ -134,6 +135,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
+        from IPython import embed
+
+        # embed()
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:

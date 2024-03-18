@@ -4,6 +4,7 @@ from unittest.mock import ANY
 from django.test import ignore_warnings
 from django.utils import timezone
 from freezegun import freeze_time
+from notes.enums import ServiceEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -85,24 +86,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": self.provided_services[0].service,
+                    "service": ServiceEnum(self.provided_services[0].service).name,
                     "customService": self.provided_services[0].custom_service,
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": self.provided_services[1].service,
+                    "service": ServiceEnum(self.provided_services[1].service).name,
                     "customService": self.provided_services[1].custom_service,
                 },
             ],
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": self.requested_services[0].service,
+                    "service": ServiceEnum(self.requested_services[0].service).name,
                     "customService": self.requested_services[0].custom_service,
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": self.requested_services[1].service,
+                    "service": ServiceEnum(self.requested_services[1].service).name,
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
