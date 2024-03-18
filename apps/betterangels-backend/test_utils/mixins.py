@@ -19,34 +19,34 @@ class GraphQLTestCaseMixin:
         variables: Optional[Dict[str, Any]] = None,
         files: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        data = {
-            "query": query,
-            "variables": variables or {},
-        }
         # If there are files to upload, prepare multipart/form-data request
         if files:
             # The GraphQL query and variables are added to the form data as 'operations'
             operations = json.dumps({"query": query, "variables": variables or {}})
 
             # Prepare the data dictionary for multipart encoding
-            data = {"operations": operations}
+            multipart_data = {"operations": operations}
 
             # 'map' tells the server how the files in the request map to the variables
             file_map = {
                 str(i): [f"variables.{key}"]
                 for i, key in enumerate(files.keys(), start=1)
             }
-            data["map"] = json.dumps(file_map)
+            multipart_data["map"] = json.dumps(file_map)
 
             # Add files to the data dictionary
             for i, file in enumerate(files.values(), start=1):
-                data[f"{i}"] = file
+                multipart_data[f"{i}"] = file
 
             response = self.graphql_client.post(
-                self.graphql_url, data, format="multipart"
+                self.graphql_url, multipart_data, format="multipart"
             )
         else:
             # For non-multipart requests, just send JSON encoded data as usual
+            data = {
+                "query": query,
+                "variables": variables or {},
+            }
             response = self.graphql_client.post(
                 self.graphql_url, data, content_type="application/json"
             )
