@@ -289,6 +289,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           style={{
             position: 'relative',
             flex: 1,
+            zIndex: 1,
           }}
         >
           {chooseDirections && (
@@ -368,10 +369,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                   alignSelf: 'flex-end',
                   paddingRight: Spacings.sm,
                   marginBottom: Spacings.md,
-                  position: 'absolute',
-                  bottom: '100%',
-                  right: 0,
-                  zIndex: 100,
                 }}
               >
                 <IconButton

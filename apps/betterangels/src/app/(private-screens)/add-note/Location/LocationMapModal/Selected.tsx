@@ -103,11 +103,9 @@ export default function Selected(props: ISelectedProps) {
       <View
         style={{
           position: 'relative',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: Spacings.sm,
+
           marginBottom: Spacings.sm,
-          paddingHorizontal: Spacings.md,
+          width: '100%',
           backgroundColor:
             copy === 'geo' ? Colors.NEUTRAL_EXTRA_LIGHT : 'transparent',
         }}
@@ -118,18 +116,27 @@ export default function Selected(props: ISelectedProps) {
             textToCopy={`${currentLocation.longitude} ${currentLocation.latitude}`}
           />
         )}
-        <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        <Pressable
-          style={{ paddingVertical: Spacings.xs }}
-          accessibilityRole="button"
-          accessibilityHint="long press to copy coordinates"
-          onLongPress={() => setCopy('geo')}
+        <View
+          style={{
+            paddingHorizontal: Spacings.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacings.sm,
+          }}
         >
-          <H3 style={{ flex: 1 }}>
-            {currentLocation.latitude.toFixed(7)}{' '}
-            {currentLocation.longitude.toFixed(7)}
-          </H3>
-        </Pressable>
+          <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          <Pressable
+            style={{ paddingVertical: Spacings.xs }}
+            accessibilityRole="button"
+            accessibilityHint="long press to copy coordinates"
+            onLongPress={() => setCopy('geo')}
+          >
+            <H3 style={{ flex: 1 }}>
+              {currentLocation.latitude.toFixed(7)}{' '}
+              {currentLocation.longitude.toFixed(7)}
+            </H3>
+          </Pressable>
+        </View>
       </View>
       <View style={{ paddingHorizontal: Spacings.md }}>
         <Button
