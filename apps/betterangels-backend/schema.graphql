@@ -160,6 +160,7 @@ input NoteAttachmentFilter {
   AND: NoteAttachmentFilter
   OR: NoteAttachmentFilter
   NOT: NoteAttachmentFilter
+  DISTINCT: Boolean
 }
 
 type NoteAttachmentType implements AttachmentInterface {
@@ -177,6 +178,7 @@ input NoteFilter {
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
+  DISTINCT: Boolean
 }
 
 enum NoteNamespaceEnum {
