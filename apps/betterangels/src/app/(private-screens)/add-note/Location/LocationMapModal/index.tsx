@@ -6,9 +6,11 @@ import {
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FlatList, Modal, TouchableOpacity, View } from 'react-native';
+import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
 import Header from './Header';
@@ -37,6 +39,7 @@ interface ILocationMapModalProps {
 export default function LocationMapModal(props: ILocationMapModalProps) {
   const { isModalVisible, toggleModal, setExpanded } = props;
   const { trigger, setValue } = useFormContext();
+  const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
@@ -44,6 +47,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [suggestions, setSuggestions] = useState<any>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
+  const [userLocation, setUserLocation] =
+    useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
     { short: string; full: string } | undefined
   >({
@@ -67,12 +72,23 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
+    // geocode for approx center of LA COUNTY
+    const center = { lat: 34.04499, lng: -118.251601 };
+    const defaultBounds = {
+      north: center.lat + 0.1,
+      south: center.lat - 0.1,
+      east: center.lng + 0.1,
+      west: center.lng - 0.1,
+    };
+
     try {
       const response = await axios.get(url, {
         params: {
+          bounds: defaultBounds,
           input: query,
           key: apiKey,
-          region: 'US-CA',
+          components: 'country:us',
+          strictBounds: true,
         },
       });
 
@@ -111,6 +127,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         name: place.description.split(', ')[0],
       });
 
+      mapRef.current?.animateToRegion(
+        {
+          latitude: location.lat,
+          longitude: location.lng,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+
       setInitialLocation({
         longitude: location.lng,
         latitude: location.lat,
@@ -133,6 +159,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       short: query,
     });
     setSearchQuery(query);
+  };
+
+  const goToUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    }
   };
 
   const onSearchDelete = () => {
@@ -158,6 +198,58 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const getLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return;
+    }
+    const userCurrentLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const { latitude, longitude } = userCurrentLocation.coords;
+
+    setUserLocation(userCurrentLocation);
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+    try {
+      const { data } = await axios.get(url);
+      setValue('location', undefined);
+      setCurrentLocation({
+        longitude,
+        latitude,
+        name: undefined,
+      });
+
+      setInitialLocation({
+        longitude,
+        latitude,
+      });
+
+      const googleAddress = data.results[0].formatted_address;
+      const shortAddress = googleAddress.split(', ')[0];
+
+      setAddress({
+        short: shortAddress,
+        full: googleAddress,
+      });
+      setPin(true);
+
+      setValue('location', {
+        longitude: longitude,
+        latitude: latitude,
+        address: googleAddress,
+        name: undefined,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <Modal
@@ -251,32 +343,35 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               zIndex: 100,
             }}
           >
-            <View
-              style={{
-                alignSelf: 'flex-end',
-                paddingRight: Spacings.sm,
-                marginBottom: Spacings.md,
-                position: 'absolute',
-                bottom: '100%',
-                right: 0,
-                zIndex: 100,
-              }}
-            >
-              <IconButton
+            {userLocation && (
+              <View
                 style={{
-                  elevation: 5,
-                  shadowColor: Colors.NEUTRAL_DARK,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
+                  alignSelf: 'flex-end',
+                  paddingRight: Spacings.sm,
+                  marginBottom: Spacings.md,
+                  position: 'absolute',
+                  bottom: '100%',
+                  right: 0,
+                  zIndex: 100,
                 }}
-                accessibilityLabel="user location"
-                variant="secondary"
-                accessibilityHint="get user location"
               >
-                <LocationArrowIcon color={Colors.PRIMARY} />
-              </IconButton>
-            </View>
+                <IconButton
+                  onPress={goToUserLocation}
+                  style={{
+                    elevation: 5,
+                    shadowColor: Colors.NEUTRAL_DARK,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                  }}
+                  accessibilityLabel="user location"
+                  variant="secondary"
+                  accessibilityHint="get user location"
+                >
+                  <LocationArrowIcon color={Colors.PRIMARY} />
+                </IconButton>
+              </View>
+            )}
             {selected && currentLocation && (
               <Selected
                 currentLocation={currentLocation}
@@ -286,6 +381,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                 closeModal={closeModal}
               />
             )}
+
             <View
               style={{
                 height: bottomOffset,
@@ -294,6 +390,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             />
           </View>
           <Map
+            userLocation={userLocation}
+            ref={mapRef}
             chooseDirections={chooseDirections}
             setChooseDirections={setChooseDirections}
             currentLocation={currentLocation}

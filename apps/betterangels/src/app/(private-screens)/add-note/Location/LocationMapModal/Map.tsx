@@ -1,5 +1,7 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
+import * as Location from 'expo-location';
+import { forwardRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
@@ -20,11 +22,12 @@ interface IMapProps {
   setAddress: (e: { full: string; short: string } | undefined) => void;
   setChooseDirections: (e: boolean) => void;
   chooseDirections: boolean;
+  userLocation: Location.LocationObject | null;
 }
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
 
-export default function Map(props: IMapProps) {
+const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
   const {
     currentLocation,
     setCurrentLocation,
@@ -36,6 +39,7 @@ export default function Map(props: IMapProps) {
     setSelected,
     setChooseDirections,
     chooseDirections,
+    userLocation,
   } = props;
   const { watch, setValue } = useFormContext();
 
@@ -88,47 +92,33 @@ export default function Map(props: IMapProps) {
       setCurrentLocation(undefined);
       setPin(false);
       setSelected(false);
-    }
-  }
-
-  function onMapPress(e: any) {
-    if (pin) {
-      if (chooseDirections) {
-        setChooseDirections(false);
-        setSelected(true);
-        return;
-      }
-      setAddress(undefined);
-      setCurrentLocation(undefined);
       setValue('location', undefined);
-      setPin(false);
     }
   }
 
   return (
     <MapView
+      ref={ref}
+      showsUserLocation={userLocation ? true : false}
       mapType="standard"
       onPoiClick={(e) => placePin(e, true)}
       zoomEnabled
       scrollEnabled
-      onPress={onMapPress}
-      onLongPress={(e) => placePin(e, false)}
+      onPress={(e) => placePin(e, false)}
       provider={PROVIDER_GOOGLE}
-      region={{
-        longitudeDelta: 0.005,
-        latitudeDelta: 0.005,
-        latitude: currentLocation
-          ? currentLocation.latitude
-          : initialLocation.latitude,
-        longitude: currentLocation
-          ? currentLocation.longitude
-          : initialLocation.longitude,
-      }}
       initialRegion={{
         longitudeDelta: 0.005,
         latitudeDelta: 0.005,
-        longitude: initialLocation.longitude,
-        latitude: initialLocation.latitude,
+        longitude: currentLocation
+          ? currentLocation.longitude
+          : userLocation
+          ? userLocation.coords.longitude
+          : initialLocation.longitude,
+        latitude: currentLocation
+          ? currentLocation.latitude
+          : userLocation
+          ? userLocation.coords.latitude
+          : initialLocation.latitude,
       }}
       style={{
         height: '100%',
@@ -149,4 +139,6 @@ export default function Map(props: IMapProps) {
       )}
     </MapView>
   );
-}
+});
+
+export default Map;

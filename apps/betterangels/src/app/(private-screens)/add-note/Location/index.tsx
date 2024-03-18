@@ -12,14 +12,13 @@ interface ILocationProps {
   setExpanded: (e: string | undefined | null) => void;
 }
 
-export default function Location(props: ILocationProps) {
+export default function LocationComponent(props: ILocationProps) {
   const { expanded, setExpanded } = props;
   const {
     control,
     watch,
     formState: { errors },
   } = useFormContext();
-
   const [isModalVisible, toggleModal] = useState(false);
 
   const location = watch('location');
@@ -32,8 +31,14 @@ export default function Location(props: ILocationProps) {
       mb="xs"
       error={errors.location ? 'Please enter a location' : undefined}
       setExpanded={() => {
-        !isLocation && toggleModal(true);
-        setExpanded(isLocation ? undefined : 'Location');
+        if (isLocation) {
+          setExpanded(undefined);
+        } else {
+          setExpanded(isLocation ? undefined : 'Location');
+
+          toggleModal(true);
+          setExpanded('Location');
+        }
       }}
       title="Location "
       actionName={
