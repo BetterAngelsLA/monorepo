@@ -32,7 +32,7 @@ class UserHistoryTest(TestCase):
         self.assertEqual(self.user.history.count(), 1)
 
         # Delete the user
-        user_id = self.user.id
+        user_id = self.user.pk
         self.user.delete()
 
         # Fetch the history for the deleted user

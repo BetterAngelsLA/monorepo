@@ -1,5 +1,8 @@
+import { useMutation, useQuery } from '@apollo/client';
 import {
+  GET_NOTE,
   MainScrollContainer,
+  UPDATE_NOTE,
   generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -9,7 +12,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -24,6 +27,8 @@ import RequestedServices from './RequestedServices';
 import Title from './Title';
 
 interface INote {
+  id: string;
+  title: string;
   purposes: { value: string }[];
   nextStepActions: {
     action: string;
@@ -31,31 +36,46 @@ interface INote {
     location?: string;
     time?: Date | undefined;
   }[];
-  hmisNote: string;
+  publicDetails: string;
   noteDate: string;
   noteTime: string;
   moods: string[];
   providedServices: string[];
   requestedServices: string[];
+  privateDetails: string;
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
-  // const [createNote] = useMutation(CREATE_NOTE);
+  const router = useRouter();
+  const [note, setNote] = useState<INote | undefined>();
+  const { noteId } = useLocalSearchParams<{ noteId: string }>();
+  const { data, loading: isLoading } = useQuery(GET_NOTE, {
+    variables: { id: noteId },
+    fetchPolicy: 'cache-and-network',
+  });
+  const [updateNote] = useMutation(UPDATE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
     defaultValues: {
+      title: '',
       purposes: [{ value: '' }],
       nextStepActions: [{ action: '' }],
-      hmisNote: 'G -\nI -\nR -\nP - ',
+      publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
       noteTime: format(new Date(), 'HH:mm'),
       moods: [],
       providedServices: [],
       requestedServices: [],
+      privateDetails: '',
     },
   });
+
+  useEffect(() => {
+    if (data && !isLoading) {
+      setNote(data.note);
+    }
+  }, [data, isLoading]);
 
   const watchedValues = methods.watch([
     'purposes',
@@ -63,30 +83,34 @@ export default function AddNote() {
     'providedServices',
     'nextStepActions',
     'requestedServices',
-    'hmisNote',
+    'publicDetails',
   ]);
-  const publicNote = methods.watch('hmisNote');
+  const publicNote = methods.watch('publicDetails');
 
   const props = {
     expanded,
     setExpanded,
   };
 
-  async function onSubmit(data: any) {
-    console.log(data);
-    // try {
-    //   const { data } = await createNote({
-    //     variables: {
-    //       input: {
-    //         title: 'note title',
-    //         body: 'note body',
-    //       },
-    //     },
-    //   });
-    //   console.log('Note created:', data.createNote);
-    // } catch (e) {
-    //   console.log(e);
-    // }
+  async function updateNoteFunction(values: INote, isSubmitted: boolean) {
+    try {
+      await updateNote({
+        variables: {
+          data: {
+            id: noteId,
+            title: values.title,
+            publicDetails: values.publicDetails,
+            privateDetails: values.privateDetails,
+            isSubmitted: isSubmitted,
+          },
+        },
+      });
+      if (isSubmitted === true) {
+        router.back();
+      }
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   useEffect(() => {
@@ -111,7 +135,7 @@ export default function AddNote() {
 
     const newPublicNote = generatedPublicNote(generateOjbect);
     if (newPublicNote !== publicNote) {
-      methods.setValue('hmisNote', newPublicNote);
+      methods.setValue('publicDetails', newPublicNote);
     }
   }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
 
@@ -119,7 +143,7 @@ export default function AddNote() {
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title firstName="Test" {...props} />
+          <Title noteTitle={note?.title} {...props} />
           <Location {...props} />
           <Purpose {...props} />
           <Mood {...props} />
@@ -133,36 +157,6 @@ export default function AddNote() {
           />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        {/* TODO: remove in future, only for testing */}
-        <View>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, hmisId: '12345678', mood: 'suicidal' },
-            }}
-          >
-            suicidal
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'anxious', hmisId: '12345678' },
-            }}
-          >
-            anxious
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'depressed', hmisId: '12345678' },
-            }}
-          >
-            depressed
-          </Link>
-        </View>
         <BottomActions
           cancel={
             <CancelModal
@@ -174,12 +168,15 @@ export default function AddNote() {
             <TextButton
               mr="sm"
               fontSize="sm"
+              // NOTE: Not sure how to access form values here, without handleSubmit & useFormContext
               onPress={() => console.log('save for later')}
               accessibilityHint="saves the note for later"
               title="Save for later"
             />
           }
-          onSubmit={methods.handleSubmit(onSubmit)}
+          onSubmit={methods.handleSubmit((values) =>
+            updateNoteFunction(values, true)
+          )}
         />
       </View>
     </FormProvider>

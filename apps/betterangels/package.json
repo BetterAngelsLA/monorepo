@@ -50,7 +50,9 @@
     "react-dom": "*",
     "react-native-svg-transformer": "*",
     "tslib": "*",
-    "react-native-maps": "*"
+    "react-native-maps": "*",
+    "react-native-open-maps": "*",
+    "expo-location": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
@@ -97,7 +99,6 @@
     "eslint-plugin-react": "*",
     "eslint-plugin-react-hooks": "*",
     "eslint-plugin-react-native-a11y": "*",
-    "expo-dev-client": "*",
     "jest": "*",
     "jest-circus": "*",
     "jest-environment-jsdom": "*",
@@ -109,6 +110,7 @@
     "ts-jest": "*",
     "ts-node": "*",
     "typescript": "*",
-    "metro": "*"
+    "metro": "*",
+    "expo-dev-client": "*"
   }
 }

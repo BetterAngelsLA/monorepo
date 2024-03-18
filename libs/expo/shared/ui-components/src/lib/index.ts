@@ -1,5 +1,6 @@
 export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
+export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
 export { default as BodyText } from './BodyText';
 export { default as BottomActions } from './BottomActions';
@@ -19,6 +20,7 @@ export { default as H5 } from './H5';
 export { default as IconButton } from './IconButton';
 export { default as ImagePicker } from './ImagePicker';
 export { default as Input } from './Input';
+export { default as NoteCard } from './NoteCard';
 export { default as Radio } from './Radio';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
