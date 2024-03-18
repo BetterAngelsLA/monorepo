@@ -269,7 +269,12 @@ export type NoteType = {
 };
 
 
-<<<<<<< HEAD
+export type NoteTypeAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type NoteTypeNextStepsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -286,10 +291,6 @@ export type NoteTypePurposesArgs = {
 
 
 export type NoteTypeRequestedServicesArgs = {
-=======
-export type NoteTypeAttachmentsArgs = {
-  filters?: InputMaybe<NoteAttachmentFilter>;
->>>>>>> main
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
