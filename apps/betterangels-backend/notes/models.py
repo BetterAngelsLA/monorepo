@@ -1,8 +1,9 @@
 from typing import Any, Optional, cast
 
 from accounts.models import User
-from common.models import BaseModel, Location
+from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils import timezone
 from django_choices_field import TextChoicesField
@@ -75,6 +76,7 @@ class Task(BaseModel):
 
 
 class Note(BaseModel):
+    attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
