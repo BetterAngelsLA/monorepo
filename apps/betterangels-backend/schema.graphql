@@ -191,13 +191,17 @@ type NoteType {
   id: ID!
   title: String!
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
-  publicDetails: String!
   moods: [MoodType!]!
+  purposes(pagination: OffsetPaginationInput): [TaskType!]!
+  nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  publicDetails: String!
   isSubmitted: Boolean!
-  timestamp: DateTime!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
+  timestamp: DateTime!
   privateDetails: String
 }
 
@@ -310,9 +314,13 @@ type TaskType {
 input UpdateNoteInput {
   id: ID
   title: String
+  moods: [CreateMoodInput!]
+  purposes: [ID!]
+  nextSteps: [ID!]
+  providedServices: [ID!]
+  requestedServices: [ID!]
   publicDetails: String
   privateDetails: String
-  moods: [CreateMoodInput!]
   isSubmitted: Boolean
   timestamp: DateTime
 }
