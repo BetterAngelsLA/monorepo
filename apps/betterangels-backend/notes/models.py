@@ -1,17 +1,51 @@
-from typing import Optional
+from typing import Any, Optional, cast
 
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from notes.permissions import PrivateNotePermissions
+from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 from simple_history.models import HistoricalRecords, HistoricForeignKey
 
-from .enums import MoodEnum, ServiceEnum, ServiceTypeEnum, TaskStatusEnum
+from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
+
+
+class ServiceRequest(BaseModel):
+    service = TextChoicesField(choices_enum=ServiceEnum)
+    custom_service = models.CharField(max_length=100, null=True, blank=True)
+    client = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="client_service_requests",
+    )
+    status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
+    due_by = models.DateTimeField(blank=True, null=True)
+    completed_on = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
+    )
+
+    log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
+
+    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
+    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.status == ServiceRequestStatusEnum.COMPLETED:
+            self.completed_on = self.completed_on or timezone.now()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> ServiceEnum:
+        return cast(ServiceEnum, self.service)
 
 
 class Task(BaseModel):
@@ -42,6 +76,8 @@ class Task(BaseModel):
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
+    # This is the date & time displayed on the note. We don't want to use created_at
+    # on the FE because the Note may not be created during the client interaction.
     timestamp = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
@@ -75,7 +111,9 @@ class Note(BaseModel):
         return self.title
 
     class Meta:
-        permissions = permission_enum_to_django_meta_permissions(PrivateNotePermissions)
+        permissions = permission_enum_to_django_meta_permissions(
+            PrivateDetailsPermissions
+        )
 
 
 class Mood(BaseModel):
@@ -84,13 +122,6 @@ class Mood(BaseModel):
 
     log = HistoricalRecords(related_name="history")
     objects = models.Manager()
-
-
-class Service(BaseModel):
-    descriptor = TextChoicesField(choices_enum=ServiceEnum)
-    custom_descriptor = models.CharField(max_length=100, blank=True)
-    service_type = TextChoicesField(choices_enum=ServiceTypeEnum)
-    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="services")
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
@@ -107,3 +138,11 @@ class TaskUserObjectPermission(UserObjectPermissionBase):
 
 class TaskGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+
+class ServiceRequestUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
+
+
+class ServiceRequestGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)

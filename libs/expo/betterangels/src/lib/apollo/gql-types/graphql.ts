@@ -39,7 +39,7 @@ export type CreateNoteAttachmentInput = {
 export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type CreateNoteInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
@@ -47,8 +47,17 @@ export type CreateNoteInput = {
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
+export type CreateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
+
+export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type CreateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
@@ -63,6 +72,8 @@ export type DeleteDjangoObjectInput = {
 export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
+
+export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
 
@@ -127,14 +138,17 @@ export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
+  createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
+  deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
   revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
+  updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
 };
 
@@ -149,6 +163,11 @@ export type MutationCreateNoteAttachmentArgs = {
 };
 
 
+export type MutationCreateServiceRequestArgs = {
+  data: CreateServiceRequestInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
@@ -160,6 +179,11 @@ export type MutationDeleteNoteArgs = {
 
 
 export type MutationDeleteNoteAttachmentArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -181,6 +205,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
+};
+
+
+export type MutationUpdateServiceRequestArgs = {
+  data: UpdateServiceRequestInput;
 };
 
 
@@ -287,6 +316,8 @@ export type Query = {
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
+  serviceRequest: ServiceRequestType;
+  serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -314,6 +345,16 @@ export type QueryNotesArgs = {
 };
 
 
+export type QueryServiceRequestArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceRequestsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -329,6 +370,45 @@ export type RevertNoteInput = {
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;
+
+export enum ServiceEnum {
+  Blanket = 'BLANKET',
+  Book = 'BOOK',
+  Clothes = 'CLOTHES',
+  Dental = 'DENTAL',
+  Food = 'FOOD',
+  HarmReduction = 'HARM_REDUCTION',
+  HygieneKit = 'HYGIENE_KIT',
+  Medical = 'MEDICAL',
+  Other = 'OTHER',
+  PetCare = 'PET_CARE',
+  PetFood = 'PET_FOOD',
+  Shelter = 'SHELTER',
+  Shoes = 'SHOES',
+  Shower = 'SHOWER',
+  Stabilize = 'STABILIZE',
+  Storage = 'STORAGE',
+  Transport = 'TRANSPORT',
+  Water = 'WATER'
+}
+
+export enum ServiceRequestStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type ServiceRequestType = {
+  __typename?: 'ServiceRequestType';
+  client?: Maybe<UserType>;
+  completedOn?: Maybe<Scalars['DateTime']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  customService?: Maybe<Scalars['String']['output']>;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
@@ -352,13 +432,24 @@ export type UpdateNoteInput = {
   moods?: InputMaybe<Array<CreateMoodInput>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title: Scalars['String']['input'];
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
 
+export type UpdateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<ServiceRequestStatusEnum>;
+};
+
+export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type UpdateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -366,10 +457,6 @@ export type UpdateTaskInput = {
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
-
-export type UserInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
 
 export type UserType = {
   __typename?: 'UserType';

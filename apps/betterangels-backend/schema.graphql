@@ -45,16 +45,25 @@ input CreateNoteInput {
   title: String!
   publicDetails: String
   privateDetails: String
-  client: UserInput
+  client: ID
 }
 
 union CreateNotePayload = NoteType | OperationInfo
+
+input CreateServiceRequestInput {
+  service: ServiceEnum!
+  status: ServiceRequestStatusEnum!
+  customService: String
+  client: ID
+}
+
+union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: UserInput
+  client: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -69,6 +78,8 @@ input DeleteDjangoObjectInput {
 union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
+
+union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union DeleteTaskPayload = TaskType | OperationInfo
 
@@ -131,11 +142,14 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
+  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
 }
@@ -176,10 +190,10 @@ type NoteType {
   title: String!
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   publicDetails: String!
-  client: UserType
   moods: [MoodType!]!
   isSubmitted: Boolean!
   timestamp: DateTime!
+  client: UserType
   createdAt: DateTime!
   createdBy: UserType!
   privateDetails: String
@@ -225,6 +239,8 @@ type Query {
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
+  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
@@ -235,6 +251,44 @@ input RevertNoteInput {
 }
 
 union RevertNotePayload = NoteType | OperationInfo
+
+enum ServiceEnum {
+  BLANKET
+  BOOK
+  CLOTHES
+  DENTAL
+  FOOD
+  HARM_REDUCTION
+  HYGIENE_KIT
+  MEDICAL
+  PET_CARE
+  PET_FOOD
+  SHELTER
+  SHOES
+  SHOWER
+  STABILIZE
+  STORAGE
+  TRANSPORT
+  WATER
+  OTHER
+}
+
+enum ServiceRequestStatusEnum {
+  COMPLETED
+  TO_DO
+}
+
+type ServiceRequestType {
+  id: ID!
+  service: ServiceEnum!
+  customService: String
+  status: ServiceRequestStatusEnum!
+  dueBy: DateTime
+  completedOn: DateTime
+  client: UserType
+  createdBy: UserType!
+  createdAt: DateTime!
+}
 
 enum TaskStatusEnum {
   COMPLETED
@@ -253,30 +307,37 @@ type TaskType {
 
 input UpdateNoteInput {
   id: ID
-  title: String!
+  title: String
   publicDetails: String
   privateDetails: String
   moods: [CreateMoodInput!]
   isSubmitted: Boolean
+  timestamp: DateTime
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
+
+input UpdateServiceRequestInput {
+  id: ID
+  customService: String
+  status: ServiceRequestStatusEnum
+  dueBy: DateTime
+  client: ID
+}
+
+union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input UpdateTaskInput {
   id: ID
   title: String
   status: TaskStatusEnum
   dueBy: DateTime
-  client: UserInput
+  client: ID
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
 
 scalar Upload
-
-input UserInput {
-  id: ID
-}
 
 type UserType {
   id: ID!
