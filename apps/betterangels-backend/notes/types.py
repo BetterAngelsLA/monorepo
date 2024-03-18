@@ -118,13 +118,17 @@ class NoteType:
     id: auto
     title: auto
     attachments: List[NoteAttachmentType]
-    public_details: auto
     moods: List[MoodType]
+    purposes: List[TaskType]
+    next_steps: List[TaskType]
+    provided_services: List[ServiceRequestType]
+    requested_services: List[ServiceRequestType]
+    public_details: auto
     is_submitted: auto
-    timestamp: auto
     client: Optional[UserType]
     created_at: auto
     created_by: UserType
+    timestamp: auto
 
     @strawberry_django.field(
         annotate={
@@ -159,9 +163,13 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
+    moods: Optional[List[CreateMoodInput]]
+    purposes: Optional[List[ID]]
+    next_steps: Optional[List[ID]]
+    provided_services: Optional[List[ID]]
+    requested_services: Optional[List[ID]]
     public_details: auto
     private_details: auto
-    moods: Optional[List[CreateMoodInput]]
     is_submitted: auto
     timestamp: auto
 
