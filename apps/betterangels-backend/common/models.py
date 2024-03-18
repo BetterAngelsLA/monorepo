@@ -2,7 +2,7 @@ from typing import Any
 
 import magic
 from accounts.models import User
-from common.enums import FileType
+from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -30,7 +30,7 @@ class Attachment(BaseModel):
 
     Attributes:
         file: Stores the file with a unique path.
-        file_type: Enumerated type categorizing the file (e.g., IMAGE, AUDIO).
+        attachment_type: Enumerated type categorizing the file (e.g., IMAGE, AUDIO).
         original_filename: The original name of the file as uploaded.
         content_type: Links to the ContentType for polymorphic relations.
         object_id: The ID of the associated model instance.
@@ -41,7 +41,7 @@ class Attachment(BaseModel):
     """
 
     file = models.FileField(upload_to=get_unique_file_path)
-    file_type = TextChoicesField(choices_enum=FileType)
+    attachment_type = TextChoicesField(choices_enum=AttachmentType)
     original_filename = models.CharField(max_length=255, blank=True, null=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -69,7 +69,7 @@ class Attachment(BaseModel):
                     "object_id",
                     "content_type_id",
                     "namespace",
-                    "file_type",
+                    "attachment_type",
                 ],
                 name="attachment_comp_idx",
             )
@@ -87,15 +87,15 @@ class Attachment(BaseModel):
 
             # Determine the MIME type of the file
             mime_type = magic.from_buffer(self.file.read(1024), mime=True)
-            # Map MIME type to FileType enum
+            # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
-                self.file_type = FileType.IMAGE
+                self.attachment_type = AttachmentType.IMAGE
             elif mime_type.startswith("audio"):
-                self.file_type = FileType.AUDIO
+                self.attachment_type = AttachmentType.AUDIO
             elif mime_type.startswith("video"):
-                self.file_type = FileType.VIDEO
+                self.attachment_type = AttachmentType.VIDEO
             else:
-                self.file_type = FileType.DOCUMENT
+                self.attachment_type = AttachmentType.DOCUMENT
             self.file.seek(0)
         super().save(*args, **kwargs)
 

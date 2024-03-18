@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("file", models.FileField(upload_to=common.utils.get_unique_file_path)),
                 (
-                    "file_type",
+                    "attachment_type",
                     django_choices_field.fields.TextChoicesField(
                         choices=[
                             ("image", "Image"),
@@ -120,7 +120,7 @@ class Migration(migrations.Migration):
                             ("video", "Video"),
                             ("unknown", "Unknown"),
                         ],
-                        choices_enum=common.enums.FileType,
+                        choices_enum=common.enums.AttachmentType,
                         max_length=8,
                     ),
                 ),
@@ -278,7 +278,7 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="attachment",
             index=models.Index(
-                fields=["object_id", "content_type_id", "namespace", "file_type"],
+                fields=["object_id", "content_type_id", "namespace", "attachment_type"],
                 name="attachment_comp_idx",
             ),
         ),

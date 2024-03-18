@@ -208,7 +208,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                     file {
                         name
                     }
-                    fileType
+                    attachmentType
                     originalFilename
                     namespace
                 }
@@ -230,7 +230,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                     file {
                         name
                     }
-                    fileType
+                    attachmentType
                     originalFilename
                     namespace
                 }

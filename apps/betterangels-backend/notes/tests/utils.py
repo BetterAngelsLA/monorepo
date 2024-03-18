@@ -138,7 +138,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }
                     ... on NoteAttachmentType {
                         id
-                        fileType
+                        attachmentType
                         file {
                             name
                         }

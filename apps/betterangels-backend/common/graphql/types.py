@@ -13,7 +13,7 @@ class DeleteDjangoObjectInput:
 class AttachmentInterface:
     id: auto
     file: auto
-    file_type: auto
+    attachment_type: auto
     original_filename: auto
 
     # @strawberry.field

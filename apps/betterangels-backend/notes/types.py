@@ -17,7 +17,7 @@ from . import models
 
 @strawberry_django.filter(Attachment)
 class NoteAttachmentFilter:
-    file_type: auto
+    attachment_type: auto
     namespace: NoteNamespaceEnum
 
 
