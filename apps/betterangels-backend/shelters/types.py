@@ -11,12 +11,12 @@ from . import models
 
 @strawberry_django.filter(models.Shelter)
 class ShelterFilter:
-    id: auto
-    title: auto
-    services: "ServicesFilter"
-    population: "PopulationFilter"
-    shelter_type: "ShelterTypeFilter"
-    requirements_filter: "RequirementFilter"
+    id: Optional[int]
+    title: Optional[str]
+    services: Optional["ServicesFilter"]
+    population: Optional["PopulationFilter"]
+    shelter_type: Optional["ShelterTypeFilter"]
+    requirements_filter: Optional["RequirementFilter"]
 
 
 @strawberry_django.filter(models.Service)
