@@ -20,11 +20,19 @@ export type Scalars = {
 };
 
 export type AttachmentInterface = {
+  attachmentType: AttachmentType;
   file: DjangoFileType;
-  fileType: FileType;
   id: Scalars['ID']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
 };
+
+export enum AttachmentType {
+  Audio = 'AUDIO',
+  Document = 'DOCUMENT',
+  Image = 'IMAGE',
+  Unknown = 'UNKNOWN',
+  Video = 'VIDEO'
+}
 
 export type CreateMoodInput = {
   descriptor: MoodEnum;
@@ -88,14 +96,6 @@ export type DjangoFileType = {
 export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
 };
-
-export enum FileType {
-  Audio = 'AUDIO',
-  Document = 'DOCUMENT',
-  Image = 'IMAGE',
-  Unknown = 'UNKNOWN',
-  Video = 'VIDEO'
-}
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -221,14 +221,14 @@ export type NoteAttachmentFilter = {
   AND?: InputMaybe<NoteAttachmentFilter>;
   NOT?: InputMaybe<NoteAttachmentFilter>;
   OR?: InputMaybe<NoteAttachmentFilter>;
-  fileType?: InputMaybe<FileType>;
+  attachmentType?: InputMaybe<AttachmentType>;
   namespace: NoteNamespaceEnum;
 };
 
 export type NoteAttachmentType = AttachmentInterface & {
   __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
   file: DjangoFileType;
-  fileType: FileType;
   id: Scalars['ID']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;

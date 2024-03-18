@@ -25,8 +25,16 @@ directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeat
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
-  fileType: FileType!
+  attachmentType: AttachmentType!
   originalFilename: String
+}
+
+enum AttachmentType {
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  UNKNOWN
 }
 
 input CreateMoodInput {
@@ -94,14 +102,6 @@ input DjangoModelFilterInput {
   pk: ID!
 }
 
-enum FileType {
-  IMAGE
-  DOCUMENT
-  AUDIO
-  VIDEO
-  UNKNOWN
-}
-
 input MagicLinkInput {
   email: String!
 }
@@ -155,7 +155,7 @@ type Mutation {
 }
 
 input NoteAttachmentFilter {
-  fileType: FileType
+  attachmentType: AttachmentType
   namespace: NoteNamespaceEnum!
   AND: NoteAttachmentFilter
   OR: NoteAttachmentFilter
@@ -165,7 +165,7 @@ input NoteAttachmentFilter {
 type NoteAttachmentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
-  fileType: FileType!
+  attachmentType: AttachmentType!
   originalFilename: String
   namespace: NoteNamespaceEnum!
 }
