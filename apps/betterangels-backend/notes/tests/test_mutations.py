@@ -3,8 +3,12 @@ from unittest.mock import ANY
 from django.test import ignore_warnings
 from django.utils import timezone
 from freezegun import freeze_time
-from notes.models import Note, Task
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
+from notes.models import Note, ServiceRequest, Task
+from notes.tests.utils import (
+    NoteGraphQLBaseTestCase,
+    ServiceRequestGraphQLBaseTestCase,
+    TaskGraphQLBaseTestCase,
+)
 
 
 @ignore_warnings(category=UserWarning)
@@ -13,14 +17,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("case_manager_1")
 
+    @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 32
+        expected_query_count = 33
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
                     "title": "New Note",
-                    "publicDetails": "This is a new note.",
-                    "client": {"id": str(self.client_1.pk)},
+                    "publicDetails": "New public details",
+                    "client": self.client_1.pk,
                 }
             )
 
@@ -29,22 +34,25 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "title": "New Note",
             "moods": [],
-            "publicDetails": "This is a new note.",
+            "publicDetails": "New public details",
             "privateDetails": "",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
+        self.assertEqual(expected_note, created_note)
 
-        self.assertEqual(created_note, expected_note)
-
+    @freeze_time("03-12-2024 10:11:12")
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Updated Body",
+            "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
         expected_query_count = 32
@@ -56,12 +64,40 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Updated Body",
+            "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T10:11:12+00:00",
         }
-        self.assertEqual(updated_note, expected_note)
+        self.assertEqual(expected_note, updated_note)
+
+    @freeze_time("03-12-2024 10:11:12")
+    def test_partial_update_note_mutation(self) -> None:
+        variables = {
+            "id": self.note["id"],
+            "isSubmitted": True,
+            "timestamp": "2024-03-12T10:11:12+00:00",
+        }
+
+        expected_query_count = 18
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_note_fixture(variables)
+
+        updated_note = response["data"]["updateNote"]
+        expected_note = {
+            "id": self.note["id"],
+            "title": f"New note for: {self.case_manager_1.id}",
+            "moods": [],
+            "publicDetails": f"{self.case_manager_1.id}'s public details.",
+            "privateDetails": "",
+            "isSubmitted": True,
+            "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "timestamp": "2024-03-12T10:11:12+00:00",
+        }
+        self.assertEqual(expected_note, updated_note)
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
@@ -212,7 +248,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -221,7 +257,118 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-@freeze_time("2024-02-26")
+@freeze_time("2024-03-11 10:11:12")
+@ignore_warnings(category=UserWarning)
+class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("case_manager_1")
+
+    def test_create_service_request_mutation(self) -> None:
+        expected_query_count = 29
+        with self.assertNumQueries(expected_query_count):
+            response = self._create_service_request_fixture(
+                {
+                    "service": "BLANKET",
+                    "status": "TO_DO",
+                }
+            )
+        created_service_request = response["data"]["createServiceRequest"]
+        expected_service_request = {
+            "id": ANY,
+            "service": "BLANKET",
+            "customService": None,
+            "dueBy": None,
+            "completedOn": None,
+            "status": "TO_DO",
+            "client": None,
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+        }
+        self.assertEqual(expected_service_request, created_service_request)
+
+    @freeze_time("2024-03-11 12:34:56")
+    def test_update_service_request_mutation(self) -> None:
+        variables = {
+            "id": self.service_request["id"],
+            "dueBy": "2024-03-11T11:12:13+00:00",
+            "status": "COMPLETED",
+            "client": self.client_1.pk,
+        }
+
+        expected_query_count = 16
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_service_request_fixture(variables)
+
+        updated_service_request = response["data"]["updateServiceRequest"]
+        expected_service_request = {
+            "id": self.service_request["id"],
+            "service": "BLANKET",
+            "customService": None,
+            "status": "COMPLETED",
+            "dueBy": "2024-03-11T11:12:13+00:00",
+            "completedOn": "2024-03-11T12:34:56+00:00",
+            "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+        }
+        self.assertEqual(expected_service_request, updated_service_request)
+
+    @freeze_time("2024-03-11 12:34:56")
+    def test_partial_update_service_request_mutation(self) -> None:
+        variables = {
+            "id": self.service_request["id"],
+            "client": self.client_1.pk,
+        }
+
+        expected_query_count = 16
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_service_request_fixture(variables)
+
+        updated_service_request = response["data"]["updateServiceRequest"]
+        expected_service_request = {
+            "id": self.service_request["id"],
+            "service": "BLANKET",
+            "customService": None,
+            "status": "TO_DO",
+            "dueBy": None,
+            "completedOn": None,
+            "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+        }
+        self.assertEqual(expected_service_request, updated_service_request)
+
+    def test_delete_service_request_mutation(self) -> None:
+        mutation = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+
+        expected_query_count = 14
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNotNone(response["data"]["deleteServiceRequest"])
+
+        with self.assertRaises(ServiceRequest.DoesNotExist):
+            ServiceRequest.objects.get(id=self.service_request["id"])
+
+
+@freeze_time("2024-02-26 10:11:12")
 @ignore_warnings(category=UserWarning)
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -244,17 +391,17 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdAt": "2024-02-26T00:00:00+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(created_task, expected_task)
+        self.assertEqual(expected_task, created_task)
 
     def test_update_task_mutation(self) -> None:
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "client": {"id": str(self.client_1.pk)},
             "status": "COMPLETED",
+            "client": self.client_1.pk,
         }
 
         expected_query_count = 15
@@ -267,10 +414,31 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-02-26T00:00:00+00:00",
             "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(updated_task, expected_task)
+        self.assertEqual(expected_task, updated_task)
+
+    def test_partial_update_task_mutation(self) -> None:
+        variables = {
+            "id": self.task["id"],
+            "title": "Updated task title",
+        }
+
+        expected_query_count = 13
+        with self.assertNumQueries(expected_query_count):
+            response = self._update_task_fixture(variables)
+        updated_task = response["data"]["updateTask"]
+        expected_task = {
+            "id": self.task["id"],
+            "title": "Updated task title",
+            "status": "TO_DO",
+            "dueBy": None,
+            "client": None,
+            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
+        }
+        self.assertEqual(expected_task, updated_task)
 
     def test_delete_task_mutation(self) -> None:
         mutation = """
