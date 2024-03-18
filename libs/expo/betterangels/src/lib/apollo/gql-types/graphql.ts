@@ -219,6 +219,7 @@ export type MutationUpdateTaskArgs = {
 
 export type NoteAttachmentFilter = {
   AND?: InputMaybe<NoteAttachmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteAttachmentFilter>;
   OR?: InputMaybe<NoteAttachmentFilter>;
   attachmentType?: InputMaybe<AttachmentType>;
@@ -236,6 +237,7 @@ export type NoteAttachmentType = AttachmentInterface & {
 
 export type NoteFilter = {
   AND?: InputMaybe<NoteFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
   client?: InputMaybe<DjangoModelFilterInput>;
