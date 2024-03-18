@@ -90,13 +90,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "title": f"New note for: {self.org_1_case_manager_1.id}",
+            "title": f"New note for: {self.org_1_case_manager_1.pk}",
             "moods": [],
-            "publicDetails": f"{self.org_1_case_manager_1.id}'s public details.",
+            "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details.",
             "privateDetails": "",
             "isSubmitted": True,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
@@ -338,7 +338,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "completedOn": None,
             "status": "TO_DO",
             "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, created_service_request)
@@ -365,7 +365,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, updated_service_request)
@@ -390,7 +390,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, updated_service_request)

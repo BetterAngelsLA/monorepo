@@ -72,7 +72,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "privateDetails": "Updated private details.",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
         self.assertEqual(expected_note, note)
@@ -142,11 +142,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
         self.note_2 = self._create_note_fixture(
-            {"title": "Client 1's Note", "client": self.client_1.id}
+            {"title": "Client 1's Note", "client": self.client_1.pk}
         )["data"]["createNote"]
 
         self.note_3 = self._create_note_fixture(
-            {"title": "Client 2's Note", "client": self.client_2.id}
+            {"title": "Client 2's Note", "client": self.client_2.pk}
         )["data"]["createNote"]
 
         query = """
@@ -160,10 +160,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         filters: dict[str, Any] = {}
 
         if case_manager_label:
-            filters["createdBy"] = {"pk": getattr(self, case_manager_label).id}
+            filters["createdBy"] = {"pk": getattr(self, case_manager_label).pk}
 
         if client_label:
-            filters["client"] = {"pk": getattr(self, client_label).id}
+            filters["client"] = {"pk": getattr(self, client_label).pk}
 
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
@@ -260,7 +260,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_1.id,
+                "client": self.client_1.pk,
             }
         )
 
@@ -298,7 +298,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
@@ -348,7 +348,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.id)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 

@@ -66,9 +66,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note = self._create_note_fixture(
             {
-                "title": f"New note for: {self.org_1_case_manager_1.id}",
-                "publicDetails": f"{self.org_1_case_manager_1.id}'s public details.",
-                "client": self.client_1.id,
+                "title": f"New note for: {self.org_1_case_manager_1.pk}",
+                "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details.",
+                "client": self.client_1.pk,
             },
         )["data"]["createNote"]
         # Logout after setting up the note
@@ -252,7 +252,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.org_1_case_manager_1.id}",
+                "title": f"User: {self.org_1_case_manager_1.pk}",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]

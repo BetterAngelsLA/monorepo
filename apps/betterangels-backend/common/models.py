@@ -82,7 +82,7 @@ class Attachment(BaseModel):
         MIME type analysis. This method enhances file handling by preserving
         the original file name and categorizing the file for easier management.
         """
-        if not self.id:
+        if not self.pk:
             self.original_filename = self.file.name
 
             # Determine the MIME type of the file
