@@ -22,6 +22,15 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+type BedsType {
+  totalBeds: Int
+  privateBeds: Int
+  availableBeds: Int
+  maxStay: Int
+  averageBedRate: Float
+  bedLayoutDescription: String!
+}
+
 input CreateNoteInput {
   title: String!
   body: String!
@@ -35,19 +44,19 @@ input DeleteDjangoObjectInput {
 }
 
 type DescriptionType {
-  description: String!
-  bedLayoutDescription: String!
-  typicalStayDescription: String!
+  description: String
+  typicalStayDescription: String
 }
 
 type LocationType {
+  latitude: Float
+  longitude: Float
+  spa: Int
   address: String!
   city: String!
   state: String!
-  zipCode: Int!
-  confidential: Boolean!
-  latitude: Float
-  longitude: Float
+  zipCode: Int
+  confidential: Boolean
 }
 
 input MagicLinkInput {
@@ -79,30 +88,72 @@ input OffsetPaginationInput {
   limit: Int! = -1
 }
 
+input PopulationFilter {
+  id: ID
+  title: String
+  AND: PopulationFilter
+  OR: PopulationFilter
+  NOT: PopulationFilter
+}
+
 type Query {
   currentUser: UserType!
   note(pk: ID!): NoteType! @isAuthenticated @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput): [NoteType!]! @isAuthenticated
-  shelter: ShelterType!
-  shelters(pagination: OffsetPaginationInput): [ShelterType!]!
+  shelter(pk: ID!): ShelterType!
+  shelters(filters: ShelterFilter, pagination: OffsetPaginationInput): [ShelterType!]!
+}
+
+input RequirementFilter {
+  id: ID
+  title: String
+  AND: RequirementFilter
+  OR: RequirementFilter
+  NOT: RequirementFilter
+}
+
+input ServicesFilter {
+  id: ID
+  title: String
+  AND: ServicesFilter
+  OR: ServicesFilter
+  NOT: ServicesFilter
+}
+
+input ShelterFilter {
+  id: Int
+  title: String
+  services: ServicesFilter
+  population: PopulationFilter
+  shelterType: ShelterTypeFilter
+  requirementsFilter: RequirementFilter
+  AND: ShelterFilter
+  OR: ShelterFilter
+  NOT: ShelterFilter
 }
 
 type ShelterType {
   id: ID!
   title: String!
-  imageUrl: String!
-  location: LocationType!
+  imageUrl: String
   howToEnter: String!
-  maxStay: Int
   email: String
-  phone: String
+  phone: String!
   website: String
   services: [String!]!
-  populations: [String!]!
+  population: [String!]!
   requirements: [String!]!
-  bedLayoutDescription: String
-  typicalStayDescription: String
+  location: LocationType!
   description: DescriptionType!
+  beds: BedsType!
+}
+
+input ShelterTypeFilter {
+  id: ID
+  title: String
+  AND: ShelterTypeFilter
+  OR: ShelterTypeFilter
+  NOT: ShelterTypeFilter
 }
 
 input UpdateNoteInput {

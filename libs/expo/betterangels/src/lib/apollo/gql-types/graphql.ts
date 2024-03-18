@@ -18,6 +18,16 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
 };
 
+export type BedsType = {
+  __typename?: 'BedsType';
+  availableBeds?: Maybe<Scalars['Int']['output']>;
+  averageBedRate?: Maybe<Scalars['Float']['output']>;
+  bedLayoutDescription: Scalars['String']['output'];
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  privateBeds?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+};
+
 export type CreateNoteInput = {
   body: Scalars['String']['input'];
   title: Scalars['String']['input'];
@@ -29,20 +39,20 @@ export type DeleteDjangoObjectInput = {
 
 export type DescriptionType = {
   __typename?: 'DescriptionType';
-  bedLayoutDescription: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  typicalStayDescription: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  typicalStayDescription?: Maybe<Scalars['String']['output']>;
 };
 
 export type LocationType = {
   __typename?: 'LocationType';
   address: Scalars['String']['output'];
   city: Scalars['String']['output'];
-  confidential: Scalars['Boolean']['output'];
+  confidential?: Maybe<Scalars['Boolean']['output']>;
   latitude?: Maybe<Scalars['Float']['output']>;
   longitude?: Maybe<Scalars['Float']['output']>;
+  spa?: Maybe<Scalars['Int']['output']>;
   state: Scalars['String']['output'];
-  zipCode: Scalars['Int']['output'];
+  zipCode?: Maybe<Scalars['Int']['output']>;
 };
 
 export type MagicLinkInput = {
@@ -105,6 +115,14 @@ export type PermDefinition = {
   permission?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PopulationFilter = {
+  AND?: InputMaybe<PopulationFilter>;
+  NOT?: InputMaybe<PopulationFilter>;
+  OR?: InputMaybe<PopulationFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   currentUser: UserType;
@@ -125,27 +143,67 @@ export type QueryNotesArgs = {
 };
 
 
+export type QueryShelterArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
 export type QuerySheltersArgs = {
+  filters?: InputMaybe<ShelterFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type RequirementFilter = {
+  AND?: InputMaybe<RequirementFilter>;
+  NOT?: InputMaybe<RequirementFilter>;
+  OR?: InputMaybe<RequirementFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ServicesFilter = {
+  AND?: InputMaybe<ServicesFilter>;
+  NOT?: InputMaybe<ServicesFilter>;
+  OR?: InputMaybe<ServicesFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ShelterFilter = {
+  AND?: InputMaybe<ShelterFilter>;
+  NOT?: InputMaybe<ShelterFilter>;
+  OR?: InputMaybe<ShelterFilter>;
+  id?: InputMaybe<Scalars['Int']['input']>;
+  population?: InputMaybe<PopulationFilter>;
+  requirementsFilter?: InputMaybe<RequirementFilter>;
+  services?: InputMaybe<ServicesFilter>;
+  shelterType?: InputMaybe<ShelterTypeFilter>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ShelterType = {
   __typename?: 'ShelterType';
-  bedLayoutDescription?: Maybe<Scalars['String']['output']>;
+  beds: BedsType;
   description: DescriptionType;
   email?: Maybe<Scalars['String']['output']>;
   howToEnter: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  imageUrl: Scalars['String']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
   location: LocationType;
-  maxStay?: Maybe<Scalars['Int']['output']>;
-  phone?: Maybe<Scalars['String']['output']>;
-  populations: Array<Scalars['String']['output']>;
+  phone: Scalars['String']['output'];
+  population: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;
   services: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
-  typicalStayDescription?: Maybe<Scalars['String']['output']>;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+export type ShelterTypeFilter = {
+  AND?: InputMaybe<ShelterTypeFilter>;
+  NOT?: InputMaybe<ShelterTypeFilter>;
+  OR?: InputMaybe<ShelterTypeFilter>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNoteInput = {
