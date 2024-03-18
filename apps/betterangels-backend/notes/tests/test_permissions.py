@@ -342,8 +342,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             )
         else:
             self.assertTrue(
-                "errors" in response
-                or response.get("data", {}).get("noteAttachment") is None,
+                "errors" in response,
                 "Should not have access to view the note attachment.",
             )
 
@@ -378,11 +377,14 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query)
 
         if should_succeed:
-            attachments_data = response["data"]["noteAttachments"]
-            self.assertEqual(
-                len(attachments_data),
-                len(self.attachment_ids),
-                "Should return all attachments for the user.",
+            returned_ids = {
+                attachment["id"] for attachment in response["data"]["noteAttachments"]
+            }
+            expected_ids = set(self.attachment_ids)
+            self.assertSetEqual(
+                returned_ids,
+                expected_ids,
+                "Should return exactly the expected attachments for the user.",
             )
         else:
             self.assertTrue(
