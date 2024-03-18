@@ -46,11 +46,11 @@ class ServiceEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
-class ServiceTypeEnum(models.TextChoices):
-    PROVIDED = "provided", _("Provided")
-    REQUESTED = "requested", _("Requested")
-
-
 class TaskStatusEnum(models.TextChoices):
+    COMPLETED = "completed", _("Completed")
+    TO_DO = "to_do", _("To Do")
+
+
+class ServiceRequestStatusEnum(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     TO_DO = "to_do", _("To Do")
