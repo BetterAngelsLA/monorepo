@@ -36,9 +36,8 @@ const styles = StyleSheet.create({
     bottom: '100%',
     left: '50%',
     transform: [{ translateX: -25 }],
-
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.BLACK,
     shadowOffset: {
       width: 0,
       height: 2,

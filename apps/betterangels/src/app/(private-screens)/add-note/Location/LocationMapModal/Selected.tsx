@@ -66,7 +66,6 @@ export default function Selected(props: ISelectedProps) {
       <View
         style={{
           position: 'relative',
-          paddingVertical: Spacings.xs,
           backgroundColor:
             copy === 'address' ? Colors.NEUTRAL_EXTRA_LIGHT : 'transparent',
         }}
@@ -75,6 +74,7 @@ export default function Selected(props: ISelectedProps) {
           <Copy closeCopy={() => setCopy(null)} textToCopy={address.full} />
         )}
         <Pressable
+          style={{ paddingVertical: Spacings.xs }}
           accessibilityRole="button"
           accessibilityHint="long press to copy address"
           onLongPress={() => setCopy('address')}
@@ -105,7 +105,6 @@ export default function Selected(props: ISelectedProps) {
           position: 'relative',
           flexDirection: 'row',
           alignItems: 'center',
-          paddingVertical: Spacings.xs,
           gap: Spacings.sm,
           marginBottom: Spacings.sm,
           paddingHorizontal: Spacings.md,
@@ -121,6 +120,7 @@ export default function Selected(props: ISelectedProps) {
         )}
         <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
         <Pressable
+          style={{ paddingVertical: Spacings.xs }}
           accessibilityRole="button"
           accessibilityHint="long press to copy coordinates"
           onLongPress={() => setCopy('geo')}

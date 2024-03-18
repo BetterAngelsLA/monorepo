@@ -246,8 +246,24 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         address: googleAddress,
         name: undefined,
       });
+      setSelected(true);
     } catch (e) {
       console.log(e);
+    }
+  };
+
+  const onDelete = () => {
+    if (!selected) return;
+    setAddress(undefined);
+    setCurrentLocation(undefined);
+    setValue('location', undefined);
+    setPin(false);
+    setSearchQuery('');
+    setIsSearch(false);
+    setSuggestions([]);
+    setSelected(false);
+    if (chooseDirections) {
+      setChooseDirections(false);
     }
   };
 
@@ -295,6 +311,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             }}
           >
             <BasicInput
+              onKeyPress={({ nativeEvent }) => {
+                nativeEvent.key === 'Backspace' && onDelete();
+              }}
               onFocus={() => {
                 if (chooseDirections) {
                   setChooseDirections(false);

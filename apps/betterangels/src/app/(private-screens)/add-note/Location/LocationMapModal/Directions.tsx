@@ -35,6 +35,14 @@ export default function Directions(props: IDirectionsProps) {
           backgroundColor: Colors.WHITE,
           marginBottom: Spacings.xs,
           borderRadius: 10,
+          shadowColor: Colors.BLACK,
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
         }}
       >
         <Pressable
@@ -83,6 +91,14 @@ export default function Directions(props: IDirectionsProps) {
           borderRadius: 20,
           padding: Spacings.sm,
           alignItems: 'center',
+          shadowColor: Colors.BLACK,
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
         }}
         accessibilityRole="button"
         accessibilityHint="close map selection"
