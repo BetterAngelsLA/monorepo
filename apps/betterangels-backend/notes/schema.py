@@ -62,6 +62,7 @@ class Query:
 
 @strawberry.type
 class Mutation:
+    # Notes
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
@@ -87,7 +88,6 @@ class Mutation:
 
             client = User(id=data.client.id) if data.client else None
             note_data = asdict(data)
-
             note = resolvers.create(
                 info,
                 Note,
@@ -126,10 +126,9 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        note_data = asdict(data)
-        note = Note.objects.get(id=data.id)
-
         with transaction.atomic():
+            note_data = asdict(data)
+            note = Note.objects.get(id=data.id)
             note = resolvers.update(
                 info,
                 note,
@@ -157,7 +156,6 @@ class Mutation:
     ) -> NoteAttachmentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
-
             note = filter_for_user(
                 Note.objects.all(),
                 user,
