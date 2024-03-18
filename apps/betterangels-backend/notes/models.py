@@ -32,6 +32,7 @@ class ServiceRequest(BaseModel):
     )
 
     log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
     servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
@@ -75,6 +76,9 @@ class Task(BaseModel):
 
 class Note(BaseModel):
     title = models.CharField(max_length=100)
+    # This is the date & time displayed on the note. We don't want to use created_at
+    # on the FE because the Note may not be created during the client interaction.
+    timestamp = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )

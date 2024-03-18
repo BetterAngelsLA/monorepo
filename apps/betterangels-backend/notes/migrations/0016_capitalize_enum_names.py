@@ -7,7 +7,7 @@ import notes.enums
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("notes", "0015_note_provided_services_note_requested_services_and_more"),
+        ("notes", "0015_note_provided_services_note_requested_services"),
     ]
 
     operations = [
