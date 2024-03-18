@@ -240,7 +240,10 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -275,7 +278,10 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 "org_1_case_manager_2",
                 True,
             ),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # CM in a different org should not succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM in a different org should not succeed
             ("client_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -302,7 +308,10 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
-            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in the same org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -342,7 +351,10 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
-            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in the same org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -411,7 +423,10 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -445,7 +460,10 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -482,7 +500,10 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
             (
                 "org_2_case_manager_1",
                 False,
@@ -514,7 +535,10 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
             (
                 "org_2_case_manager_1",
                 False,
