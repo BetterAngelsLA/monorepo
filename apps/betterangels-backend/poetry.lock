@@ -60,17 +60,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.64"
+version = "1.34.65"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.34.64-py3-none-any.whl", hash = "sha256:8c6fbd3d45399a4e4685010117fb2dc52fc6afdab5a9460957d463ae0c2cc55d"},
-    {file = "boto3-1.34.64.tar.gz", hash = "sha256:e5d681f443645e6953ed0727bf756bf16d85efefcb69cf051d04a070ce65e545"},
+    {file = "boto3-1.34.65-py3-none-any.whl", hash = "sha256:b611de58ab28940a36c77d7ef9823427ebf25d5ee8277b802f9979b14e780534"},
+    {file = "boto3-1.34.65.tar.gz", hash = "sha256:db97f9c29f1806cf9020679be0dd5ffa2aff2670e28e0e2046f98b979be498a4"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.64,<1.35.0"
+botocore = ">=1.34.65,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -79,13 +79,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.64"
+version = "1.34.65"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.34.64-py3-none-any.whl", hash = "sha256:0ab760908749fe82325698591c49755a5bb20307d85a419aca9cc74e783b9407"},
-    {file = "botocore-1.34.64.tar.gz", hash = "sha256:084f8c45216d62dc1add2350e236a2d5283526aacd0681e9818b37a6a5e5438b"},
+    {file = "botocore-1.34.65-py3-none-any.whl", hash = "sha256:3b0012d7293880c0a4883883047e93f2888d7317b5e9e8a982a991b90d951f3e"},
+    {file = "botocore-1.34.65.tar.gz", hash = "sha256:399a1b1937f7957f0ee2e0df351462b86d44986b795ced980c11eb768b0e61c5"},
 ]
 
 [package.dependencies]
@@ -630,18 +630,24 @@ django = ">=2.2"
 
 [[package]]
 name = "django-organizations"
-version = "2.3.1"
+version = "2.4.1"
 description = "Group accounts for Django"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "django-organizations-2.3.1.tar.gz", hash = "sha256:e692177ddf1a9fb55a66e97ed8a51778569d28af013cde4952b8101ce25004b9"},
-    {file = "django_organizations-2.3.1-py2.py3-none-any.whl", hash = "sha256:14c44905bdec5b928f80c1686306fe6909cced84eae22ea4a16130f9236af49d"},
+    {file = "django_organizations-2.4.1-py3-none-any.whl", hash = "sha256:bdf48e6e43ac0aa0cd687dbc3ec087d47aa852784dce5121d401affaec20f773"},
+    {file = "django_organizations-2.4.1.tar.gz", hash = "sha256:9bef08ebf9ace6bbe594edc24359698cabb1f972c15535bd27f93323713b8912"},
 ]
 
 [package.dependencies]
-Django = ">=3.2.0"
+django = ">=3.2"
 django-extensions = ">=2.0.8"
+
+[package.extras]
+dev = ["django-organizations[linting,tests]", "pre-commit", "tox"]
+docs = ["furo (==2023.9.10)", "sphinx (==7.2.6)"]
+linting = ["isort", "ruff"]
+tests = ["coverage", "django-autoslug (>=1.9.8)", "django-extensions (>=2.0.8)", "mock-django (==0.6.9)", "pytest (>=6.0)", "pytest-cov (>=2.4.0)", "pytest-django (>=3.0.0)"]
 
 [[package]]
 name = "django-post-office"
@@ -1366,13 +1372,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.34.0"
+version = "0.35.0"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.34.0-py3-none-any.whl", hash = "sha256:da1877ec36db7c11afe9edeabc5384dfb710e39561ad36770028ba676fe82905"},
-    {file = "strawberry_graphql_django-0.34.0.tar.gz", hash = "sha256:33984281aa70f81f4a4d815863b78697c6bf7b11fc7c691964f7540ed826b6f5"},
+    {file = "strawberry_graphql_django-0.35.0-py3-none-any.whl", hash = "sha256:84c679ecb10385a92591818fa5f288dfac67cbcef80e581d208a9932f2fd7a18"},
+    {file = "strawberry_graphql_django-0.35.0.tar.gz", hash = "sha256:8528e190ca71e6202ec05e42e6e10d09a308f435d5dc3952eec78e58b5b1a1cb"},
 ]
 
 [package.dependencies]
@@ -1575,4 +1581,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "e8e45e99be2fea366b450d2d7df29d007435d54bf08629d193da1c78eedec2fb"
+content-hash = "859f74facc104e5ff2f64babb71eb14d06e3b695ce8c8f2a3fc7a66318934388"
