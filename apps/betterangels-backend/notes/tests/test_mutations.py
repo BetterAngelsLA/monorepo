@@ -1,8 +1,10 @@
 from unittest.mock import ANY
 
-from django.test import ignore_warnings
+from common.models import Attachment
+from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+from notes.enums import NoteNamespaceEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -15,7 +17,7 @@ from notes.tests.utils import (
 class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("case_manager_1")
+        self._handle_user_login("org_1_case_manager_1")
 
     @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
@@ -38,7 +40,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "privateDetails": "",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, created_note)
@@ -68,7 +70,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
@@ -88,13 +90,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "title": f"New note for: {self.case_manager_1.id}",
+            "title": f"New note for: {self.org_1_case_manager_1.pk}",
             "moods": [],
-            "publicDetails": f"{self.case_manager_1.id}'s public details.",
+            "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details.",
             "privateDetails": "",
             "isSubmitted": True,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
@@ -248,7 +250,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 15
+        expected_query_count = 16
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -257,12 +259,66 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_note_attachment(self) -> None:
+        file_content = b"Test attachment content"
+        file_name = "test_attachment.txt"
+
+        with self.assertNumQueries(22):
+            create_response = self._create_note_attachment_fixture(
+                self.note["id"],
+                NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+                file_content,
+                file_name,
+            )
+
+        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
+        self.assertEqual(
+            create_response["data"]["createNoteAttachment"]["originalFilename"],
+            file_name,
+        )
+        self.assertIsNotNone(
+            create_response["data"]["createNoteAttachment"]["file"]["name"]
+        )
+        self.assertTrue(
+            Attachment.objects.filter(id=attachment_id).exists(),
+            "The attachment should have been created and exist in the database.",
+        )
+
+    def test_delete_note_attachment(self) -> None:
+        file_content = b"Content for deletion test"
+        file_name = "delete_test_attachment.txt"
+        create_response = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            file_content,
+            file_name,
+        )
+
+        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
+        self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
+
+        with self.assertNumQueries(13):
+            self._delete_note_attachment_fixture(attachment_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=attachment_id).exists(),
+            "The attachment should have been deleted from the database.",
+        )
+
+
+@freeze_time("2024-02-26")
 @freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
 class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("case_manager_1")
+        self._handle_user_login("org_1_case_manager_1")
 
     def test_create_service_request_mutation(self) -> None:
         expected_query_count = 29
@@ -282,7 +338,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "completedOn": None,
             "status": "TO_DO",
             "client": None,
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, created_service_request)
@@ -309,7 +365,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, updated_service_request)
@@ -334,7 +390,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
         self.assertEqual(expected_service_request, updated_service_request)
@@ -373,7 +429,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("case_manager_1")
+        self._handle_user_login("org_1_case_manager_1")
 
     def test_create_task_mutation(self) -> None:
         expected_query_count = 28
@@ -391,7 +447,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(expected_task, created_task)
@@ -414,7 +470,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(expected_task, updated_task)
@@ -435,7 +491,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(expected_task, updated_task)

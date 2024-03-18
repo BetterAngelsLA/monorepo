@@ -16,11 +16,35 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  Upload: { input: any; output: any; }
 };
+
+export type AttachmentInterface = {
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
+export enum AttachmentType {
+  Audio = 'AUDIO',
+  Document = 'DOCUMENT',
+  Image = 'IMAGE',
+  Unknown = 'UNKNOWN',
+  Video = 'VIDEO'
+}
 
 export type CreateMoodInput = {
   descriptor: MoodEnum;
 };
+
+export type CreateNoteAttachmentInput = {
+  file: Scalars['Upload']['input'];
+  namespace: NoteNamespaceEnum;
+  note: Scalars['ID']['input'];
+};
+
+export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type CreateNoteInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
@@ -53,11 +77,21 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
+
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
+
+export type DjangoFileType = {
+  __typename?: 'DjangoFileType';
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+};
 
 export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
@@ -103,9 +137,11 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createNoteAttachment: CreateNoteAttachmentPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
+  deleteNoteAttachment: DeleteNoteAttachmentPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
@@ -122,6 +158,11 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateNoteAttachmentArgs = {
+  data: CreateNoteAttachmentInput;
+};
+
+
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
@@ -133,6 +174,11 @@ export type MutationCreateTaskArgs = {
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteNoteAttachmentArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -171,6 +217,23 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
+export type NoteAttachmentFilter = {
+  AND?: InputMaybe<NoteAttachmentFilter>;
+  NOT?: InputMaybe<NoteAttachmentFilter>;
+  OR?: InputMaybe<NoteAttachmentFilter>;
+  attachmentType?: InputMaybe<AttachmentType>;
+  namespace: NoteNamespaceEnum;
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  namespace: NoteNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
 export type NoteFilter = {
   AND?: InputMaybe<NoteFilter>;
   NOT?: InputMaybe<NoteFilter>;
@@ -180,8 +243,15 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export enum NoteNamespaceEnum {
+  MoodAssessment = 'MOOD_ASSESSMENT',
+  ProvidedServices = 'PROVIDED_SERVICES',
+  RequestedServices = 'REQUESTED_SERVICES'
+}
+
 export type NoteType = {
   __typename?: 'NoteType';
+  attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -192,6 +262,12 @@ export type NoteType = {
   publicDetails: Scalars['String']['output'];
   timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
+};
+
+
+export type NoteTypeAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OffsetPaginationInput = {
@@ -237,6 +313,8 @@ export type Query = {
   __typename?: 'Query';
   currentUser: UserType;
   note: NoteType;
+  noteAttachment: NoteAttachmentType;
+  noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
@@ -247,6 +325,17 @@ export type Query = {
 
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 

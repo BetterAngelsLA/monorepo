@@ -1,8 +1,6 @@
-from typing import Tuple, Type, TypeVar
+from typing import Tuple, Type
 
-from django.db.models import Model, TextChoices
-
-T = TypeVar("T", bound=Model)
+from django.db.models import TextChoices
 
 
 def permission_enum_to_django_meta_permissions(

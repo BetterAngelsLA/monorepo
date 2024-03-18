@@ -1,7 +1,13 @@
 import django
-from common.permissions.enums import SimpleModelPermissions
 from django.conf import settings
 from django.db import migrations, models
+
+
+class SimpleModelPermissions(models.TextChoices):
+    VIEW = "simplemodels.view_simplemodel", "Can view simplemodel"
+    CHANGE = "simplemodels.change_simplemodel", "Can change simplemodel"
+    DELETE = "simplemodels.delete_simplemodel", "Can delete simplemodel"
+    ADD = "simplemodels.add_simplemodel", "Can add simplemodel"
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
