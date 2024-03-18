@@ -40,16 +40,15 @@ class Task(BaseModel):
 
 
 class Note(BaseModel):
+    attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
-    public_details = models.TextField(blank=True)
-    private_details = models.TextField(blank=True)
-
+    timestamp = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-
-    timestamp = models.DateTimeField(auto_now_add=True)
-
+    public_details = models.TextField(blank=True)
+    private_details = models.TextField(blank=True)
+    is_submitted = models.BooleanField(default=False)
     client = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -62,10 +61,6 @@ class Note(BaseModel):
     )
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-
-    is_submitted = models.BooleanField(default=False)
-
-    attachments = GenericRelation(Attachment)
 
     objects = models.Manager()
     log = HistoricalRecords(related_name="history")
