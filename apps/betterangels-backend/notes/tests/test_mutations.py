@@ -447,8 +447,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(expected_task, created_task)
 
@@ -470,8 +470,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
-            "createdAt": "2024-02-26T10:11:12+00:00",
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(expected_task, updated_task)
 
