@@ -22,9 +22,32 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+interface AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+}
+
+enum AttachmentType {
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  UNKNOWN
+}
+
 input CreateMoodInput {
   descriptor: MoodEnum!
 }
+
+input CreateNoteAttachmentInput {
+  note: ID!
+  file: Upload!
+  namespace: NoteNamespaceEnum!
+}
+
+union CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 input CreateNoteInput {
   title: String!
@@ -60,11 +83,20 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
+
 union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union DeleteTaskPayload = TaskType | OperationInfo
+
+type DjangoFileType {
+  name: String!
+  path: String!
+  size: Int!
+  url: String!
+}
 
 input DjangoModelFilterInput {
   pk: ID!
@@ -109,15 +141,33 @@ type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
+  deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
+}
+
+input NoteAttachmentFilter {
+  attachmentType: AttachmentType
+  namespace: NoteNamespaceEnum!
+  AND: NoteAttachmentFilter
+  OR: NoteAttachmentFilter
+  NOT: NoteAttachmentFilter
+}
+
+type NoteAttachmentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+  namespace: NoteNamespaceEnum!
 }
 
 input NoteFilter {
@@ -129,9 +179,16 @@ input NoteFilter {
   NOT: NoteFilter
 }
 
+enum NoteNamespaceEnum {
+  MOOD_ASSESSMENT
+  PROVIDED_SERVICES
+  REQUESTED_SERVICES
+}
+
 type NoteType {
   id: ID!
   title: String!
+  attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   publicDetails: String!
   moods: [MoodType!]!
   isSubmitted: Boolean!
@@ -180,6 +237,8 @@ type Query {
   currentUser: UserType!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
@@ -277,6 +336,8 @@ input UpdateTaskInput {
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo
+
+scalar Upload
 
 type UserType {
   id: ID!

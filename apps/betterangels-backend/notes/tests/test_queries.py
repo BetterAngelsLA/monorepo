@@ -1,7 +1,8 @@
 from typing import Any, Optional
 
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
 from freezegun import freeze_time
+from notes.enums import NoteNamespaceEnum
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -14,7 +15,7 @@ from unittest_parametrize import parametrize
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
@@ -71,7 +72,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "privateDetails": "Updated private details.",
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
         self.assertEqual(expected_note, note)
@@ -116,15 +117,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         [
             # Filter by:
             # case manager, client, and/or is_submitted
-            ("case_manager_1", None, None, 1, "note", None),
-            ("case_manager_2", None, None, 2, "note_2", "note_3"),
-            ("case_manager_1", "client_1", None, 1, "note", None),
-            ("case_manager_1", "client_2", None, 0, None, None),
-            ("case_manager_2", "client_1", None, 1, "note_2", None),
-            ("case_manager_2", "client_2", None, 1, "note_3", None),
-            ("case_manager_2", "client_1", True, 0, None, None),
-            ("case_manager_2", "client_1", False, 1, "note_2", None),
-            ("case_manager_2", None, False, 2, "note_2", "note_3"),
+            ("org_1_case_manager_1", None, None, 1, "note", None),
+            ("org_1_case_manager_2", None, None, 2, "note_2", "note_3"),
+            ("org_1_case_manager_1", "client_1", None, 1, "note", None),
+            ("org_1_case_manager_1", "client_2", None, 0, None, None),
+            ("org_1_case_manager_2", "client_1", None, 1, "note_2", None),
+            ("org_1_case_manager_2", "client_2", None, 1, "note_3", None),
+            ("org_1_case_manager_2", "client_1", True, 0, None, None),
+            ("org_1_case_manager_2", "client_1", False, 1, "note_2", None),
+            ("org_1_case_manager_2", None, False, 2, "note_2", "note_3"),
             (None, None, True, 0, None, None),
             (None, None, None, 3, None, None),
         ],
@@ -138,14 +139,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_label_1: Optional[str],
         returned_note_label_2: Optional[str],
     ) -> None:
-        self.graphql_client.force_login(self.case_manager_2)
+        self.graphql_client.force_login(self.org_1_case_manager_2)
 
         self.note_2 = self._create_note_fixture(
-            {"title": "Client 1's Note", "client": self.client_1.id}
+            {"title": "Client 1's Note", "client": self.client_1.pk}
         )["data"]["createNote"]
 
         self.note_3 = self._create_note_fixture(
-            {"title": "Client 2's Note", "client": self.client_2.id}
+            {"title": "Client 2's Note", "client": self.client_2.pk}
         )["data"]["createNote"]
 
         query = """
@@ -159,10 +160,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         filters: dict[str, Any] = {}
 
         if case_manager_label:
-            filters["createdBy"] = {"pk": getattr(self, case_manager_label).id}
+            filters["createdBy"] = {"pk": getattr(self, case_manager_label).pk}
 
         if client_label:
-            filters["client"] = {"pk": getattr(self, client_label).id}
+            filters["client"] = {"pk": getattr(self, client_label).pk}
 
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
@@ -181,12 +182,77 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
 
 
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        self.attachment_1 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 1",
+            "attachment_1.txt",
+        )
+        self.attachment_2 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 2",
+            "attachment_2.txt",
+        )
+
+    def test_view_note_attachment_permission(self) -> None:
+        query = """
+            query ViewNoteAttachment($id: ID!) {
+                noteAttachment(pk: $id) {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        variables = {"id": self.attachment_1["data"]["createNoteAttachment"]["id"]}
+        response = self.execute_graphql(query, variables)
+
+        self.assertEqual(
+            self.attachment_1["data"]["createNoteAttachment"],
+            response["data"]["noteAttachment"],
+        )
+
+    def test_view_note_attachments_permission(self) -> None:
+        query = """
+            query ViewNoteAttachments {
+                noteAttachments {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertEqual(
+            [
+                self.attachment_1["data"]["createNoteAttachment"],
+                self.attachment_2["data"]["createNoteAttachment"],
+            ],
+            response["data"]["noteAttachments"],
+        )
+
+
 @freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
 class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_service_request_query(self) -> None:
         service_request_id = self.service_request["id"]
@@ -194,7 +260,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_1.id,
+                "client": self.client_1.pk,
             }
         )
 
@@ -232,7 +298,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": {"id": str(self.client_1.pk)},
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
@@ -272,7 +338,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_task_query(self) -> None:
         task_id = self.task["id"]
@@ -282,7 +348,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
-            "createdBy": {"id": str(self.case_manager_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
