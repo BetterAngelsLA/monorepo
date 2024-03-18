@@ -62,8 +62,8 @@ class Note(BaseModel):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    objects = models.Manager()
     log = HistoricalRecords(related_name="history")
+    objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
     notegroupobjectpermission_set: models.QuerySet["Note"]
