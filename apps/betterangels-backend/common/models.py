@@ -24,18 +24,20 @@ class BaseModel(models.Model):
 class Attachment(BaseModel):
     """
     Represents an attachment linked to any model instance within the app.
-    It includes a mechanism for categorizing attachments within specific
-    namespaces for finer-grained organization.
+    Attachments are organized by namespaces to allow for application-specific
+    categorization and by file types for easier management and filtering.
+
 
     Attributes:
-        file (models.FileField): The associated file, stored with a unique path.
-        file_type (TextChoicesField): Categorizes the attachment by file type.
-        content_type (ForeignKey): Refers to ContentType for polymorphic association.
-        object_id (PositiveIntegerField): ID of the model instance linked to.
-        content_object (GenericForeignKey): Creates a generic relation to a model.
-        namespace (CharField): Categorizes attachments within broader contexts or
-            application-specific domains, useful for differentiating attachments
-            within the same model type.
+        file: Stores the file with a unique path.
+        file_type: Enumerated type categorizing the file (e.g., IMAGE, AUDIO).
+        original_filename: The original name of the file as uploaded.
+        content_type: Links to the ContentType for polymorphic relations.
+        object_id: The ID of the associated model instance.
+        content_object: Generic relation to the associated model instance.
+        namespace: Optional field for further categorization within specific contexts.
+        uploaded_by: Reference to the User who uploaded the file.
+        associated_with: The User with whom the attachment is associated, if any.
     """
 
     file = models.FileField(upload_to=get_unique_file_path)
@@ -75,18 +77,10 @@ class Attachment(BaseModel):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
-        When a new Attachment instance is being saved for the first time (i.e., it does
-        not have an ID yet), this method captures and stores the original name of the
-        file in the `original_filename` field. This is essential for maintaining a
-        reference to the original file name as uploaded by the user, which can be useful
-        for display purposes or when you need to reference the original file format.
-
-        Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            None
+        Saves the Attachment instance. If it's a new instance (without an ID),
+        it stores the original file name and determines the file type based on
+        MIME type analysis. This method enhances file handling by preserving
+        the original file name and categorizing the file for easier management.
         """
         if not self.id:
             self.original_filename = self.file.name
