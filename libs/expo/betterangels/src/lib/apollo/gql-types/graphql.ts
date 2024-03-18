@@ -16,11 +16,27 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  Upload: { input: any; output: any; }
+};
+
+export type AttachmentInterface = {
+  file: DjangoFileType;
+  fileType: FileType;
+  id: Scalars['ID']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
 };
 
 export type CreateMoodInput = {
   descriptor: MoodEnum;
 };
+
+export type CreateNoteAttachmentInput = {
+  file: Scalars['Upload']['input'];
+  namespace: NoteNamespaceEnum;
+  note: Scalars['ID']['input'];
+};
+
+export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type CreateNoteInput = {
   client?: InputMaybe<UserInput>;
@@ -44,13 +60,31 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
+
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
 
+export type DjangoFileType = {
+  __typename?: 'DjangoFileType';
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+};
+
 export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
 };
+
+export enum FileType {
+  Audio = 'AUDIO',
+  Document = 'DOCUMENT',
+  Image = 'IMAGE',
+  Unknown = 'UNKNOWN',
+  Video = 'VIDEO'
+}
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -92,8 +126,10 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createNoteAttachment: CreateNoteAttachmentPayload;
   createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
+  deleteNoteAttachment: DeleteNoteAttachmentPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
@@ -108,12 +144,22 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateNoteAttachmentArgs = {
+  data: CreateNoteAttachmentInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteNoteAttachmentArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -142,6 +188,23 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
+export type NoteAttachmentFilter = {
+  AND?: InputMaybe<NoteAttachmentFilter>;
+  NOT?: InputMaybe<NoteAttachmentFilter>;
+  OR?: InputMaybe<NoteAttachmentFilter>;
+  fileType?: InputMaybe<FileType>;
+  namespace: NoteNamespaceEnum;
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  file: DjangoFileType;
+  fileType: FileType;
+  id: Scalars['ID']['output'];
+  namespace: NoteNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
 export type NoteFilter = {
   AND?: InputMaybe<NoteFilter>;
   NOT?: InputMaybe<NoteFilter>;
@@ -151,8 +214,15 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export enum NoteNamespaceEnum {
+  MoodAssessment = 'MOOD_ASSESSMENT',
+  ProvidedServices = 'PROVIDED_SERVICES',
+  RequestedServices = 'REQUESTED_SERVICES'
+}
+
 export type NoteType = {
   __typename?: 'NoteType';
+  attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -163,6 +233,12 @@ export type NoteType = {
   publicDetails: Scalars['String']['output'];
   timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
+};
+
+
+export type NoteTypeAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OffsetPaginationInput = {
@@ -208,6 +284,8 @@ export type Query = {
   __typename?: 'Query';
   currentUser: UserType;
   note: NoteType;
+  noteAttachment: NoteAttachmentType;
+  noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
   task: TaskType;
   tasks: Array<TaskType>;
@@ -216,6 +294,17 @@ export type Query = {
 
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
