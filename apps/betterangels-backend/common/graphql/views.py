@@ -17,8 +17,7 @@ class ProtectedGraphQLView(GraphQLView):
     this class effectively reinstates the default CSRF protection provided by Django.
     """
 
-    pass
-    # def dispatch(
-    #     self, request: HttpRequest, *args: Any, **kwargs: Any
-    # ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
-    #     return super().dispatch(request, *args, **kwargs)
+    def dispatch(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
+        return super().dispatch(request, *args, **kwargs)

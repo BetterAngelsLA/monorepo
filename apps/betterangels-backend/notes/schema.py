@@ -64,30 +64,30 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
-        user = get_current_user(info)
-        # TODO: Handle creating Notes without existing Client.
-        # if not data.client:
-        #     User.create_client()
-
-        # WARNING: Temporary workaround for organization selection
-        # TODO: Update once organization selection is implemented. Currently selects
-        # the first organization with a default Caseworker role for the user.
-        permission_group = (
-            PermissionGroup.objects.select_related("organization", "group")
-            .filter(
-                organization__users=user,
-                name=GroupTemplateNames.CASEWORKER,
-            )
-            .first()
-        )
-
-        if not (permission_group and permission_group.group):
-            raise PermissionError("User lacks proper organization or permissions")
-
-        client = User(id=data.client.id) if data.client else None
-        note_data = asdict(data)
-
         with transaction.atomic():
+            user = get_current_user(info)
+            # TODO: Handle creating Notes without existing Client.
+            # if not data.client:
+            #     User.create_client()
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            client = User(id=data.client.id) if data.client else None
+            note_data = asdict(data)
+
             note = resolvers.create(
                 info,
                 Note,
@@ -155,30 +155,30 @@ class Mutation:
     def create_note_attachment(
         self, info: Info, data: CreateNoteAttachmentInput
     ) -> NoteAttachmentType:
-        user = cast(User, get_current_user(info))
-
-        note = filter_for_user(
-            Note.objects.all(),
-            user,
-            [NotePermissions.CHANGE],
-        ).get(id=data.note)
-
-        # WARNING: Temporary workaround for organization selection
-        # TODO: Update once organization selection is implemented. Currently selects
-        # the first organization with a default Caseworker role for the user.
-        permission_group = (
-            PermissionGroup.objects.select_related("organization", "group")
-            .filter(
-                organization__users=user,
-                name=GroupTemplateNames.CASEWORKER,
-            )
-            .first()
-        )
-
-        if not (permission_group and permission_group.group):
-            raise PermissionError("User lacks proper organization or permissions")
-
         with transaction.atomic():
+            user = cast(User, get_current_user(info))
+
+            note = filter_for_user(
+                Note.objects.all(),
+                user,
+                [NotePermissions.CHANGE],
+            ).get(id=data.note)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
             content_type = ContentType.objects.get_for_model(Note)
             attachment = Attachment.objects.create(
                 file=data.file,
@@ -207,27 +207,26 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
-        user = get_current_user(info)
-
-        # WARNING: Temporary workaround for organization selection
-        # TODO: Update once organization selection is implemented. Currently selects
-        # the first organization with a default Caseworker role for the user.
-        permission_group = (
-            PermissionGroup.objects.select_related("organization", "group")
-            .filter(
-                organization__users=user,
-                name=GroupTemplateNames.CASEWORKER,
-            )
-            .first()
-        )
-
-        if not (permission_group and permission_group.group):
-            raise PermissionError("User lacks proper organization or permissions")
-
-        client = User(id=data.client.id) if data.client else None
-        task_data = asdict(data)
-
         with transaction.atomic():
+            user = get_current_user(info)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
             task = resolvers.create(
                 info,
                 Task,
@@ -252,10 +251,10 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])]
     )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
-        client = User(id=data.client.id) if data.client else None
-        task_data = asdict(data)
-        task = Task.objects.get(id=data.id)
         with transaction.atomic():
+            client = User(id=data.client.id) if data.client else None
+            task_data = asdict(data)
+            task = Task.objects.get(id=data.id)
             task = resolvers.update(
                 info,
                 task,

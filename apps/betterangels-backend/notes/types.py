@@ -2,7 +2,6 @@ import dataclasses
 from datetime import datetime
 from typing import List, Optional
 
-import strawberry
 import strawberry_django
 from accounts.types import UserInput, UserType
 from common.graphql.types import AttachmentInterface

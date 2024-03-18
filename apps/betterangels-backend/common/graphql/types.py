@@ -18,16 +18,7 @@ class AttachmentInterface:
 
     # @strawberry.field
     # def thumbnail(
-    #     self, width: Optional[int] = None, height: Optional[int] = None
+    #     self, params: ThumbNailTransformEnum
     # ) -> Optional[ThumbnailType]:
-    #     # This is a simplified example. You'd likely have logic to
-    #     # actually generate or retrieve a thumbnail URL based on the
-    #     # requested dimensions.
-    #     if (
-    #         self.file_type == FileTypeGraphQL.IMAGE
-    #         and width is not None
-    #         and height is not None
-    #     ):
-    #         thumbnail_url = f"{self.file_url}?width={width}&height={height}"
-    #         return ThumbnailType(url=thumbnail_url, width=width, height=height)
-    #     return None
+    #     # Example for future dynamic thumbnail transformation
+    #     pass

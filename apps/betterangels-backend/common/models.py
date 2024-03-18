@@ -14,7 +14,6 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 
 class BaseModel(models.Model):
-    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -25,10 +24,8 @@ class BaseModel(models.Model):
 class Attachment(BaseModel):
     """
     Represents an attachment linked to any model instance within the app.
-
-    This model is flexible, allowing linkage to various content types and their
-    specific object instances. It includes a mechanism for categorizing
-    attachments within specific namespaces for finer-grained organization.
+    It includes a mechanism for categorizing attachments within specific
+    namespaces for finer-grained organization.
 
     Attributes:
         file (models.FileField): The associated file, stored with a unique path.
