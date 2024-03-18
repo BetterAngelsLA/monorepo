@@ -34,7 +34,7 @@ export default function Directions(props: IDirectionsProps) {
         style={{
           backgroundColor: Colors.WHITE,
           marginBottom: Spacings.xs,
-          borderRadius: 10,
+          borderRadius: 8,
           shadowColor: Colors.BLACK,
           shadowOffset: {
             width: 0,
@@ -88,7 +88,7 @@ export default function Directions(props: IDirectionsProps) {
       <Pressable
         style={{
           backgroundColor: Colors.WHITE,
-          borderRadius: 20,
+          borderRadius: 8,
           padding: Spacings.sm,
           alignItems: 'center',
           shadowColor: Colors.BLACK,
