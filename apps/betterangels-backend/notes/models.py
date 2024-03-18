@@ -105,7 +105,6 @@ class Note(BaseModel):
     created_by = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    timestamp = models.DateTimeField(auto_now_add=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
