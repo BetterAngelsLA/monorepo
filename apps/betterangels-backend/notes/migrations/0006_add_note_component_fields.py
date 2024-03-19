@@ -8,6 +8,12 @@ import django.utils.timezone
 import django_choices_field.fields
 import notes.enums
 import simple_history.models
+from django.utils.translation import gettext_lazy as _
+
+
+class ServiceTypeEnum(models.TextChoices):
+    PROVIDED = "provided", _("Provided")
+    REQUESTED = "requested", _("Requested")
 
 
 class Migration(migrations.Migration):
@@ -137,7 +143,7 @@ class Migration(migrations.Migration):
                     "service_type",
                     django_choices_field.fields.TextChoicesField(
                         choices=[("provided", "Provided"), ("requested", "Requested")],
-                        choices_enum=notes.enums.ServiceTypeEnum,
+                        choices_enum=ServiceTypeEnum,
                         max_length=9,
                     ),
                 ),

@@ -1,5 +1,12 @@
-from notes.models import Note, Task
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
+from common.models import Attachment
+from django.test.utils import override_settings
+from notes.enums import NoteNamespaceEnum
+from notes.models import Note, ServiceRequest, Task
+from notes.tests.utils import (
+    NoteGraphQLBaseTestCase,
+    ServiceRequestGraphQLBaseTestCase,
+    TaskGraphQLBaseTestCase,
+)
 from unittest_parametrize import parametrize
 
 
@@ -10,7 +17,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Logged-in user should succeed
+            ("org_1_case_manager_1", True),  # Logged-in user should succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -37,8 +44,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_3", False),  # Other org CM should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_2_case_manager_1", False),  # Other org CM should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -67,8 +74,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_3", False),  # Other user should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_2_case_manager_1", False),  # Other user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -100,8 +107,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other case manager should succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other case manager should succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -128,8 +135,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_3", True),  # Other case manager should succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_2_case_manager_1", True),  # Other case manager should succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -153,9 +160,9 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Note owner should succeed
+            ("org_1_case_manager_1", True),  # Note owner should succeed
             (
-                "case_manager_3",
+                "org_2_case_manager_1",
                 False,
             ),  # Other org case manager should not succeed
         ],
@@ -184,9 +191,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, expected_private_details_count",
         [
-            ("case_manager_1", 1),  # Owner should see private details of their own note
             (
-                "case_manager_3",
+                "org_1_case_manager_1",
+                1,
+            ),  # Owner should see private details of their own note
+            (
+                "org_2_case_manager_1",
                 0,
             ),  # Other org case manager should not succeed
         ],
@@ -214,11 +224,348 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(private_details_visible, expected_private_details_count)
 
 
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.attachment_ids = []
+        self._handle_user_login("org_1_case_manager_1")
+        for _ in range(2):  # Create two attachments for testing
+            response = self._create_note_attachment_fixture(
+                self.note["id"],
+                NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+                b"Test file content for viewing multiple attachments",
+                f"multiple_view_permission_test_{_}.txt",
+            )
+            self.attachment_ids.append(response["data"]["createNoteAttachment"]["id"])
+        self.graphql_client.logout()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            ("client_1", False),  # Client modifying note should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        response = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"This is a test file",
+            "test.txt",
+        )
+        attachment_id = (
+            response.get("data", {}).get("createNoteAttachment", {}).get("id")
+        )
+        if should_succeed:
+            self.assertIsNotNone(attachment_id)
+        else:
+            self.assertIsNone(attachment_id)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM in a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login("org_1_case_manager_1")
+        response = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Test file content",
+        )
+        note_attachment_id = response["data"]["createNoteAttachment"]["id"]
+
+        self._handle_user_login(user_label)
+        self._delete_note_attachment_fixture(note_attachment_id)
+
+        self.assertTrue(
+            Attachment.objects.filter(id=note_attachment_id).exists() != should_succeed
+        )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Creator should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in the same org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM from a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_note_attachment_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query ViewNoteAttachment($id: ID!) {
+                noteAttachment(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.attachment_ids[0]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertTrue(
+                "id" in response["data"]["noteAttachment"],
+                "Should return the attachment.",
+            )
+        else:
+            self.assertTrue(
+                "errors" in response,
+                "Should not have access to view the note attachment.",
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Creator should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in the same org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # CM from a different org should not succeed
+            ("client_1", False),  # Client should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_note_attachments_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewNoteAttachments {
+                noteAttachments {
+                    id
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if should_succeed:
+            returned_ids = {
+                attachment["id"] for attachment in response["data"]["noteAttachments"]
+            }
+            expected_ids = set(self.attachment_ids)
+            self.assertSetEqual(
+                returned_ids,
+                expected_ids,
+                "Should return exactly the expected attachments for the user.",
+            )
+        else:
+            self.assertTrue(
+                len(response["data"]["noteAttachments"]) == 0,
+                "Should return an empty list for note attachments.",
+            )
+
+
+class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Logged-in user should succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"service": "BLANKET", "status": "TO_DO"}
+        response = self._create_service_request_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createServiceRequest"])
+        else:
+            self.assertEqual(
+                response["data"]["createServiceRequest"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createServiceRequest",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on ServiceRequestType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        self.execute_graphql(mutation, variables)
+
+        self.assertTrue(
+            ServiceRequest.objects.filter(id=self.service_request["id"]).exists()
+            != should_succeed
+        )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.service_request["id"],
+            "status": "COMPLETED",
+        }
+
+        response = self._update_service_request_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateServiceRequest"])
+        else:
+            self.assertEqual(
+                response["data"]["updateServiceRequest"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "updateServiceRequest",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ViewServiceRequest($id: ID!) {
+                serviceRequest(pk: $id) {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            ("client_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_service_requests_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewServiceRequests {
+                serviceRequests {
+                    id
+                    status
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        self.assertTrue(len(response["data"]["serviceRequests"]) == should_succeed)
+
+
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Logged-in user should succeed
+            ("org_1_case_manager_1", True),  # Logged-in user should succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -245,9 +592,15 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other CM in owner's org should succeed
-            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -276,9 +629,15 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other CM in owner's org should succeed
-            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -310,9 +669,15 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other CM in owner's org should succeed
-            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -339,9 +704,15 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("case_manager_1", True),  # Owner should succeed
-            ("case_manager_2", True),  # Other CM in owner's org should succeed
-            ("case_manager_3", False),  # Other CM in different org should not succeed
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],

@@ -1,75 +1,189 @@
 from typing import Any, Optional
 
-from django.test import ignore_warnings
-from notes.tests.utils import NoteGraphQLBaseTestCase, TaskGraphQLBaseTestCase
+from django.test import ignore_warnings, override_settings
+from freezegun import freeze_time
+from notes.enums import NoteNamespaceEnum, ServiceEnum
+from notes.models import Note
+from notes.tests.utils import (
+    NoteGraphQLBaseTestCase,
+    ServiceRequestGraphQLBaseTestCase,
+    TaskGraphQLBaseTestCase,
+)
 from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
+@freeze_time("03-12-2024 10:11:12")
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
         self._update_note_fixture(
             {
                 "id": note_id,
-                "title": "New Note",
-                "publicDetails": "This is a new note.",
+                "title": "Updated Note",
                 "moods": [
                     {"descriptor": "ANXIOUS"},
                     {"descriptor": "EUTHYMIC"},
                 ],
+                "purposes": [t.id for t in self.purposes],
+                "nextSteps": [t.id for t in self.next_steps],
+                "providedServices": [t.id for t in self.provided_services],
+                "requestedServices": [t.id for t in self.requested_services],
+                "publicDetails": "Updated public details",
+                "privateDetails": "Updated private details",
                 "isSubmitted": False,
+                "timestamp": "2024-03-12T11:12:13+00:00",
             }
         )
+
         query = """
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
                     title
-                    publicDetails
-                    timestamp
                     moods {
                         descriptor
                     }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
+                    }
+                    providedServices {
+                        id
+                        service
+                        customService
+                    }
+                    requestedServices {
+                        id
+                        service
+                        customService
+                    }
                     publicDetails
                     privateDetails
+                    isSubmitted
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    timestamp
                 }
             }
         """
 
         variables = {"id": note_id}
-        expected_query_count = 3
+        expected_query_count = 7
+
+        note = Note.objects.get(id=note_id)
+        note.purposes.add(*self.purposes)
+        note.next_steps.add(*self.next_steps)
+
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         note = response["data"]["note"]
-
-        self.assertEqual(note["publicDetails"], "This is a new note.")
-        self.assertEqual(
-            note["moods"], [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}]
-        )
+        expected_note = {
+            "id": note_id,
+            "title": "Updated Note",
+            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
+            "purposes": [
+                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
+            ],
+            "nextSteps": [
+                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
+                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
+            ],
+            "providedServices": [
+                {
+                    "id": str(self.provided_services[0].id),
+                    "service": ServiceEnum(self.provided_services[0].service).name,
+                    "customService": self.provided_services[0].custom_service,
+                },
+                {
+                    "id": str(self.provided_services[1].id),
+                    "service": ServiceEnum(self.provided_services[1].service).name,
+                    "customService": self.provided_services[1].custom_service,
+                },
+            ],
+            "requestedServices": [
+                {
+                    "id": str(self.requested_services[0].id),
+                    "service": ServiceEnum(self.requested_services[0].service).name,
+                    "customService": self.requested_services[0].custom_service,
+                },
+                {
+                    "id": str(self.requested_services[1].id),
+                    "service": ServiceEnum(self.requested_services[1].service).name,
+                    "customService": self.requested_services[1].custom_service,
+                },
+            ],
+            "publicDetails": "Updated public details",
+            "privateDetails": "Updated private details",
+            "isSubmitted": False,
+            "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "timestamp": "2024-03-12T11:12:13+00:00",
+        }
+        self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:
         query = """
             {
                 notes {
                     id
+                    title
+                    moods {
+                        descriptor
+                    }
+                    purposes {
+                        id
+                        title
+                    }
+                    nextSteps {
+                        id
+                        title
+                    }
+                    providedServices {
+                        id
+                        service
+                        customService
+                    }
+                    requestedServices {
+                        id
+                        service
+                        customService
+                    }
                     publicDetails
                     privateDetails
+                    isSubmitted
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    timestamp
                 }
             }
         """
-        expected_query_count = 2
+        expected_query_count = 7
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
-        self.assertEqual(notes[0]["publicDetails"], self.note["publicDetails"])
+        # TODO: Add more validations once sort is implemented
+        self.assertEqual(self.note, notes[0])
 
     @parametrize(
         (
@@ -80,15 +194,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         [
             # Filter by:
             # case manager, client, and/or is_submitted
-            ("case_manager_1", None, None, 1, "note", None),
-            ("case_manager_2", None, None, 2, "note_2", "note_3"),
-            ("case_manager_1", "client_1", None, 1, "note", None),
-            ("case_manager_1", "client_2", None, 0, None, None),
-            ("case_manager_2", "client_1", None, 1, "note_2", None),
-            ("case_manager_2", "client_2", None, 1, "note_3", None),
-            ("case_manager_2", "client_1", True, 0, None, None),
-            ("case_manager_2", "client_1", False, 1, "note_2", None),
-            ("case_manager_2", None, False, 2, "note_2", "note_3"),
+            ("org_1_case_manager_1", None, None, 1, "note", None),
+            ("org_1_case_manager_2", None, None, 2, "note_2", "note_3"),
+            ("org_1_case_manager_1", "client_1", None, 1, "note", None),
+            ("org_1_case_manager_1", "client_2", None, 0, None, None),
+            ("org_1_case_manager_2", "client_1", None, 1, "note_2", None),
+            ("org_1_case_manager_2", "client_2", None, 1, "note_3", None),
+            ("org_1_case_manager_2", "client_1", True, 0, None, None),
+            ("org_1_case_manager_2", "client_1", False, 1, "note_2", None),
+            ("org_1_case_manager_2", None, False, 2, "note_2", "note_3"),
             (None, None, True, 0, None, None),
             (None, None, None, 3, None, None),
         ],
@@ -102,20 +216,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_label_1: Optional[str],
         returned_note_label_2: Optional[str],
     ) -> None:
-        self.graphql_client.force_login(self.case_manager_2)
+        self.graphql_client.force_login(self.org_1_case_manager_2)
 
         self.note_2 = self._create_note_fixture(
-            {
-                "title": "Client 1's Note",
-                "client": {"id": self.client_1.id},
-            }
+            {"title": "Client 1's Note", "client": self.client_1.pk}
         )["data"]["createNote"]
 
         self.note_3 = self._create_note_fixture(
-            {
-                "title": "Client 2's Note",
-                "client": {"id": self.client_2.id},
-            }
+            {"title": "Client 2's Note", "client": self.client_2.pk}
         )["data"]["createNote"]
 
         query = """
@@ -129,10 +237,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         filters: dict[str, Any] = {}
 
         if case_manager_label:
-            filters["createdBy"] = {"pk": getattr(self, case_manager_label).id}
+            filters["createdBy"] = {"pk": getattr(self, case_manager_label).pk}
 
         if client_label:
-            filters["client"] = {"pk": getattr(self, client_label).id}
+            filters["client"] = {"pk": getattr(self, client_label).pk}
 
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
@@ -151,11 +259,163 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
 
 
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        self.attachment_1 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 1",
+            "attachment_1.txt",
+        )
+        self.attachment_2 = self._create_note_attachment_fixture(
+            self.note["id"],
+            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
+            b"Attachment 2",
+            "attachment_2.txt",
+        )
+
+    def test_view_note_attachment_permission(self) -> None:
+        query = """
+            query ViewNoteAttachment($id: ID!) {
+                noteAttachment(pk: $id) {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        variables = {"id": self.attachment_1["data"]["createNoteAttachment"]["id"]}
+        response = self.execute_graphql(query, variables)
+
+        self.assertEqual(
+            self.attachment_1["data"]["createNoteAttachment"],
+            response["data"]["noteAttachment"],
+        )
+
+    def test_view_note_attachments_permission(self) -> None:
+        query = """
+            query ViewNoteAttachments {
+                noteAttachments {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertEqual(
+            [
+                self.attachment_1["data"]["createNoteAttachment"],
+                self.attachment_2["data"]["createNoteAttachment"],
+            ],
+            response["data"]["noteAttachments"],
+        )
+
+
+@freeze_time("2024-03-11 10:11:12")
+@ignore_warnings(category=UserWarning)
+class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_service_request_query(self) -> None:
+        service_request_id = self.service_request["id"]
+        self._update_service_request_fixture(
+            {
+                "id": service_request_id,
+                "status": "COMPLETED",
+                "client": self.client_1.pk,
+            }
+        )
+
+        query = """
+            query ViewServiceRequest($id: ID!) {
+                serviceRequest(pk: $id) {
+                    id
+                    service
+                    customService
+                    status
+                    dueBy
+                    completedOn
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
+                }
+            }
+        """
+        variables = {"id": service_request_id}
+
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        service_request = response["data"]["serviceRequest"]
+        expected_service_request = {
+            "id": service_request_id,
+            "service": self.service_request["service"],
+            "customService": None,
+            "status": "COMPLETED",
+            "dueBy": None,
+            "completedOn": "2024-03-11T10:11:12+00:00",
+            "client": {"id": str(self.client_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+        }
+
+        self.assertEqual(expected_service_request, service_request)
+
+    def test_service_requests_query(self) -> None:
+        query = """
+            {
+                serviceRequests {
+                    id
+                    service
+                    customService
+                    status
+                    dueBy
+                    completedOn
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
+                }
+            }
+        """
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query)
+
+        service_requests = response["data"]["serviceRequests"]
+        self.assertEqual(len(service_requests), 1)
+        self.assertEqual(self.service_request, service_requests[0])
+
+
+@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.graphql_client.force_login(self.case_manager_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_task_query(self) -> None:
         task_id = self.task["id"]
@@ -163,6 +423,10 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "id": task_id,
             "title": self.task["title"],
             "status": "TO_DO",
+            "dueBy": None,
+            "client": None,
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
         query = """
@@ -171,6 +435,14 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     id
                     title
                     status
+                    dueBy
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
                 }
             }
         """
@@ -181,8 +453,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables)
 
         task = response["data"]["task"]
-
-        self.assertEqual(task, expected_task)
+        self.assertEqual(expected_task, task)
 
     def test_tasks_query(self) -> None:
         query = """
@@ -191,12 +462,21 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     id
                     title
                     status
+                    dueBy
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
+                    createdAt
                 }
             }
         """
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
+
         tasks = response["data"]["tasks"]
         self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0]["title"], self.task["title"])
+        self.assertEqual(self.task, tasks[0])

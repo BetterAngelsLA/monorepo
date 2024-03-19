@@ -1,3 +1,4 @@
+import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -25,6 +26,13 @@ class MoodEnum(models.TextChoices):
     SUICIDAL = "suicidal", _("Suicidal")
 
 
+@strawberry.enum
+class NoteNamespaceEnum(models.TextChoices):
+    MOOD_ASSESSMENT = "mood_assessment", "Mood Assessment"
+    PROVIDED_SERVICES = "provided_services", "Provided Services"
+    REQUESTED_SERVICES = "requested_services", "Requested Services"
+
+
 class ServiceEnum(models.TextChoices):
     BLANKET = "blanket", _("Blanket")
     BOOK = "book", _("Book")
@@ -46,11 +54,11 @@ class ServiceEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
-class ServiceTypeEnum(models.TextChoices):
-    PROVIDED = "provided", _("Provided")
-    REQUESTED = "requested", _("Requested")
-
-
 class TaskStatusEnum(models.TextChoices):
+    COMPLETED = "completed", _("Completed")
+    TO_DO = "to_do", _("To Do")
+
+
+class ServiceRequestStatusEnum(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     TO_DO = "to_do", _("To Do")

@@ -16,14 +16,38 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  Upload: { input: any; output: any; }
 };
+
+export type AttachmentInterface = {
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
+export enum AttachmentType {
+  Audio = 'AUDIO',
+  Document = 'DOCUMENT',
+  Image = 'IMAGE',
+  Unknown = 'UNKNOWN',
+  Video = 'VIDEO'
+}
 
 export type CreateMoodInput = {
   descriptor: MoodEnum;
 };
 
+export type CreateNoteAttachmentInput = {
+  file: Scalars['Upload']['input'];
+  namespace: NoteNamespaceEnum;
+  note: Scalars['ID']['input'];
+};
+
+export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
+
 export type CreateNoteInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
@@ -31,8 +55,17 @@ export type CreateNoteInput = {
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
+export type CreateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
+
+export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type CreateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
@@ -44,9 +77,21 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
+
 export type DeleteNotePayload = NoteType | OperationInfo;
 
+export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type DeleteTaskPayload = OperationInfo | TaskType;
+
+export type DjangoFileType = {
+  __typename?: 'DjangoFileType';
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+};
 
 export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
@@ -92,13 +137,18 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   createNote: CreateNotePayload;
+  createNoteAttachment: CreateNoteAttachmentPayload;
+  createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteNote: DeleteNotePayload;
+  deleteNoteAttachment: DeleteNoteAttachmentPayload;
+  deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
   revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
+  updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
 };
 
@@ -108,12 +158,32 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateNoteAttachmentArgs = {
+  data: CreateNoteAttachmentInput;
+};
+
+
+export type MutationCreateServiceRequestArgs = {
+  data: CreateServiceRequestInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
 
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteNoteAttachmentArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -138,12 +208,36 @@ export type MutationUpdateNoteArgs = {
 };
 
 
+export type MutationUpdateServiceRequestArgs = {
+  data: UpdateServiceRequestInput;
+};
+
+
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
+export type NoteAttachmentFilter = {
+  AND?: InputMaybe<NoteAttachmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<NoteAttachmentFilter>;
+  OR?: InputMaybe<NoteAttachmentFilter>;
+  attachmentType?: InputMaybe<AttachmentType>;
+  namespace: NoteNamespaceEnum;
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  namespace: NoteNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
 export type NoteFilter = {
   AND?: InputMaybe<NoteFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
   client?: InputMaybe<DjangoModelFilterInput>;
@@ -151,18 +245,55 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export enum NoteNamespaceEnum {
+  MoodAssessment = 'MOOD_ASSESSMENT',
+  ProvidedServices = 'PROVIDED_SERVICES',
+  RequestedServices = 'REQUESTED_SERVICES'
+}
+
 export type NoteType = {
   __typename?: 'NoteType';
+  attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
+  nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
+  providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
+  purposes: Array<TaskType>;
+  requestedServices: Array<ServiceRequestType>;
   timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
+};
+
+
+export type NoteTypeAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeNextStepsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeProvidedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypePurposesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeRequestedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OffsetPaginationInput = {
@@ -208,7 +339,11 @@ export type Query = {
   __typename?: 'Query';
   currentUser: UserType;
   note: NoteType;
+  noteAttachment: NoteAttachmentType;
+  noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
+  serviceRequest: ServiceRequestType;
+  serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -219,8 +354,29 @@ export type QueryNoteArgs = {
 };
 
 
+export type QueryNoteAttachmentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServiceRequestArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceRequestsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -240,6 +396,45 @@ export type RevertNoteInput = {
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;
+
+export enum ServiceEnum {
+  Blanket = 'BLANKET',
+  Book = 'BOOK',
+  Clothes = 'CLOTHES',
+  Dental = 'DENTAL',
+  Food = 'FOOD',
+  HarmReduction = 'HARM_REDUCTION',
+  HygieneKit = 'HYGIENE_KIT',
+  Medical = 'MEDICAL',
+  Other = 'OTHER',
+  PetCare = 'PET_CARE',
+  PetFood = 'PET_FOOD',
+  Shelter = 'SHELTER',
+  Shoes = 'SHOES',
+  Shower = 'SHOWER',
+  Stabilize = 'STABILIZE',
+  Storage = 'STORAGE',
+  Transport = 'TRANSPORT',
+  Water = 'WATER'
+}
+
+export enum ServiceRequestStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type ServiceRequestType = {
+  __typename?: 'ServiceRequestType';
+  client?: Maybe<UserType>;
+  completedOn?: Maybe<Scalars['DateTime']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  customService?: Maybe<Scalars['String']['output']>;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
@@ -261,15 +456,30 @@ export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   moods?: InputMaybe<Array<CreateMoodInput>>;
+  nextSteps?: InputMaybe<Array<Scalars['ID']['input']>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
+  providedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title: Scalars['String']['input'];
+  purposes?: InputMaybe<Array<Scalars['ID']['input']>>;
+  requestedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
 
+export type UpdateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<ServiceRequestStatusEnum>;
+};
+
+export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type UpdateTaskInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -277,10 +487,6 @@ export type UpdateTaskInput = {
 };
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
-
-export type UserInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
 
 export type UserType = {
   __typename?: 'UserType';
