@@ -205,6 +205,7 @@ export default function FormScreen() {
             <CancelModal
               body={`All data associated with ${formType} form will be deleted`}
               title={`Delete ${formType} form?`}
+              onDelete={() => console.log('delete')}
             />
           }
           onSubmit={methods.handleSubmit(onSubmit)}

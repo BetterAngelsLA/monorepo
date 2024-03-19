@@ -58,3 +58,12 @@ export const UPDATE_NOTE = gql`
     }
   }
 `;
+export const DELETE_NOTE = gql`
+  mutation DeleteNote($data: DeleteDjangoObjectInput!) {
+    deleteNote(data: $data) {
+      ... on NoteType {
+        id
+      }
+    }
+  }
+`;
