@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from './Themed';
@@ -25,8 +26,8 @@ const Chip = ({ iconName, value, onToggle }: ChipProps) => {
     >
       <FontAwesome
         name={iconName as any}
-        size={24}
-        color={isActive ? 'white' : 'black'}
+        size={FontSizes.md.fontSize}
+        color={Colors.PRIMARY_EXTRA_DARK}
       />
       <Text style={isActive ? styles.activeChipText : styles.chipText}>
         {value}
@@ -42,9 +43,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     margin: 3,
     borderRadius: 20,
-    backgroundColor: 'white',
+    backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: Colors.NEUTRAL,
     width: 110,
     height: 110,
   },
@@ -54,21 +55,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     margin: 3,
     borderRadius: 20,
-    backgroundColor: 'blue',
+    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
     borderWidth: 1,
-    borderColor: 'blue',
+    borderColor: Colors.PRIMARY_EXTRA_LIGHT,
     width: 110,
     height: 110,
   },
   chipText: {
-    color: 'black',
+    color: Colors.PRIMARY_EXTRA_DARK,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: Spacings.xs,
   },
   activeChipText: {
-    color: 'white',
+    color: Colors.PRIMARY_EXTRA_DARK,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: Spacings.xs,
   },
 });
 

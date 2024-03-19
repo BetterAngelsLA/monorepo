@@ -2,13 +2,15 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
-import BottomOptions from '../../components/BottomOptions';
-import Button from '../../components/Button';
 import ChipRow from '../../components/ChipRow';
 import RequirementRow from '../../components/RequirementRow';
 import Separator from '../../components/Separator';
-import { Text, View } from '../../components/Themed';
+import { View } from '../../components/Themed';
 import ToggleRow from '../../components/ToggleRow';
+
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
+import BottomOptions from '../../components/BottomOptions';
 
 import { router } from 'expo-router';
 import { FiltersState, useData } from '../../providers/DataProvider';
@@ -150,13 +152,15 @@ export default function FiltetrScreen() {
       <View style={styles.screenContainer}>
         <ScrollView>
           <View style={styles.filterContainer}>
-            <Text style={styles.title}>SPA</Text>
+            <H1 mb="md">Shelter Filters</H1>
+            <H4 mb="sm">SPA</H4>
             <ToggleRow
               togglesData={toggleSPAValues}
               onSelectionChange={(values) => handleToggleChange(values, 'sPA')}
             />
 
-            <Text style={styles.title}>Population</Text>
+            <Separator />
+            <H4 mb="sm">Population</H4>
             <ToggleRow
               togglesData={togglePopulationValues}
               onSelectionChange={(values) =>
@@ -165,7 +169,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <Text style={styles.title}>Program</Text>
+            <H4 mb="sm">Program</H4>
             <ToggleRow
               togglesData={toggleProgramValues}
               onSelectionChange={(values) =>
@@ -174,7 +178,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <Text style={styles.title}>Services</Text>
+            <H4 mb="sm">Services</H4>
             <ChipRow
               chipsData={servicesChipData}
               onSelectionChange={(values) =>
@@ -183,7 +187,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <Text style={styles.title}>Requirements</Text>
+            <H4 mb="sm">Requirements</H4>
             <RequirementRow
               requirementsData={requirementData}
               onSelectionChange={(value, isSelected) =>
@@ -193,8 +197,16 @@ export default function FiltetrScreen() {
           </View>
         </ScrollView>
         <BottomOptions justifyContent="space-around">
-          {/* <Button title="Reset" onPress={findMatch} variant={'secondary'}/> */}
-          <Button title="Find Match" onPress={findMatch} variant={'primary'} />
+          <Button
+            accessibilityLabel="Apply filters and find match"
+            accessibilityHint="goes to list view"
+            onPress={findMatch}
+            mb="sm"
+            mt="sm"
+            size="full"
+            title="Find Match"
+            variant="primary"
+          />
         </BottomOptions>
       </View>
     </SafeAreaView>
@@ -210,12 +222,9 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flex: 1,
-    alignItems: 'center',
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 20,
-    marginBottom: 8,
-    fontWeight: 'bold',
+    justifyContent: 'center',
+    paddingHorizontal: Spacings.sm,
+    paddingTop: Spacings.md,
+    backgroundColor: Colors.WHITE,
   },
 });

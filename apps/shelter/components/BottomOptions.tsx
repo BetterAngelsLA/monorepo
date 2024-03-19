@@ -1,5 +1,6 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import React, { ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 interface BottomOptionsProps {
   children: ReactNode;
@@ -8,7 +9,7 @@ interface BottomOptionsProps {
 
 const BottomOptions: React.FC<BottomOptionsProps> = ({
   children,
-  justifyContent = 'flex-end'
+  justifyContent = 'flex-end',
 }) => {
   const containerStyle = {
     ...styles.container,
@@ -17,23 +18,20 @@ const BottomOptions: React.FC<BottomOptionsProps> = ({
 
   return (
     <View style={styles.bottom}>
-        <View style={containerStyle}>
-            {children}
-        </View>
+      <View style={containerStyle}>{children}</View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   bottom: {
-    // backgroundColor: 'rgba(5, 5, 5, 0.2)',
-    flexDirection:'column',
+    paddingHorizontal: Spacings.sm,
+    flexDirection: 'column',
     justifyContent: 'flex-end',
   },
   container: {
     flexDirection: 'row',
   },
-
 });
 
 export default BottomOptions;

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface ToggleProps {
   value: string;
@@ -17,16 +18,22 @@ const Toggle = ({ value, iconName, onToggle }: ToggleProps) => {
   };
 
   return (
-    <TouchableOpacity onPress={toggleSwitch} style={isActive ? styles.activeToggle : styles.toggle}>
+    <TouchableOpacity
+      accessibilityRole="button"
+      onPress={toggleSwitch}
+      style={isActive ? styles.activeToggle : styles.toggle}
+    >
       {iconName && (
-        <FontAwesome 
-          name={iconName as any} 
-          size={24} 
-          color={isActive ? 'white' : 'black'} 
+        <FontAwesome
+          name={iconName as any}
+          size={24}
+          color={Colors.PRIMARY_EXTRA_DARK}
           style={styles.icon}
         />
       )}
-      <Text style={isActive ? styles.activeToggleText : styles.toggleText}>{value}</Text>
+      <Text style={isActive ? styles.activeToggleText : styles.toggleText}>
+        {value}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -35,29 +42,33 @@ const styles = StyleSheet.create({
   toggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    margin: 5,
-    borderRadius: 20,
-    backgroundColor: '#ccc',
+    borderRadius: Spacings.xs,
+    borderWidth: 1,
+    margin: 4,
+    padding: Spacings.xs,
+    backgroundColor: Colors.WHITE,
+    borderColor: Colors.NEUTRAL,
   },
   activeToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    margin: 5,
-    borderRadius: 20,
-    backgroundColor: 'blue',
+    margin: 4,
+    borderRadius: Spacings.xs,
+    borderWidth: 1,
+    padding: Spacings.xs,
+    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+    borderColor: Colors.NEUTRAL,
   },
   toggleText: {
-    color: 'black',
+    color: Colors.PRIMARY_EXTRA_DARK,
+    letterSpacing: 0.4,
   },
   activeToggleText: {
-    color: 'white',
+    letterSpacing: 0.4,
   },
   icon: {
-    marginRight: 5,
+    fontSize: FontSizes.sm.fontSize,
+    marginRight: Spacings.xs,
   },
 });
 

@@ -82,6 +82,7 @@ function RootLayoutNav() {
             name="filter"
             options={{
               title: 'Filters',
+              headerShown: false,
               animation: 'slide_from_bottom',
               presentation: 'modal',
             }}
