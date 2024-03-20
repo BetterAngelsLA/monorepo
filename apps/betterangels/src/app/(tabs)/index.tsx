@@ -185,9 +185,7 @@ export default function TabOneScreen() {
           data: {
             // TODO: This should be client name once we're fetching and mapping clients
             title: `Session with ${user?.firstName}`,
-            client: {
-              id: user?.id,
-            },
+            client: user?.id,
           },
         },
       });
