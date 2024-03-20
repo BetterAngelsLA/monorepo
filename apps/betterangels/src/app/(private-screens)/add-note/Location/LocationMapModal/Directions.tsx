@@ -48,7 +48,7 @@ export default function Directions(props: IDirectionsProps) {
         <Pressable
           onPress={() =>
             openMap({
-              end: address?.full,
+              end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
               query: address?.full,
               provider: 'apple',
               travelType: 'drive',
@@ -68,7 +68,7 @@ export default function Directions(props: IDirectionsProps) {
         <Pressable
           onPress={() => {
             openMap({
-              end: address?.full,
+              end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
               query: address?.full,
               provider: 'google',
               travelType: 'drive',
