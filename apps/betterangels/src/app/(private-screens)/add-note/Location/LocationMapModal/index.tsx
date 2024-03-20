@@ -9,7 +9,13 @@ import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { FlatList, Modal, TouchableOpacity, View } from 'react-native';
+import {
+  FlatList,
+  Modal,
+  Platform,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
@@ -279,7 +285,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         style={{
           borderTopEndRadius: 10,
           borderTopLeftRadius: 10,
-          marginTop: '15%',
+          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
           overflow: 'hidden',
           flex: 1,
         }}

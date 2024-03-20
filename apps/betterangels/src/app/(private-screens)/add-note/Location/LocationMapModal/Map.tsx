@@ -100,6 +100,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
     <MapView
       ref={ref}
       showsUserLocation={userLocation ? true : false}
+      showsMyLocationButton={false}
       mapType="standard"
       onPoiClick={(e) => placePin(e, true)}
       zoomEnabled
