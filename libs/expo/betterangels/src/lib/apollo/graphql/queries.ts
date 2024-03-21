@@ -15,7 +15,7 @@ export const GET_NOTES = gql`
     notes {
       id
       title
-      body
+      publicDetails
       createdAt
     }
   }

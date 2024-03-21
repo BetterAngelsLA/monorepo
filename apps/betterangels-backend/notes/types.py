@@ -1,16 +1,38 @@
 import dataclasses
-from typing import Any, Dict, cast
+from typing import List, Optional
 
 import strawberry_django
 from accounts.types import UserType
-from django.db.models import QuerySet
-from guardian.shortcuts import get_objects_for_user
-from notes.permissions import NotePermissions
+from notes.permissions import PrivateNotePermissions
 from strawberry import auto
-from strawberry.types import Info
-from strawberry_django.auth.utils import get_current_user
+from strawberry_django.permissions import HasSourcePerm
 
 from . import models
+
+
+@strawberry_django.type(models.Mood)
+class MoodType:
+    descriptor: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Mood)
+class CreateMoodInput:
+    descriptor: auto
+
+
+@dataclasses.dataclass
+@strawberry_django.type(models.Service)
+class ServiceType:
+    descriptor: auto
+    custom_descriptor: Optional[str]
+
+
+@dataclasses.dataclass
+@strawberry_django.input(models.Service)
+class CreateServiceInput:
+    descriptor: auto
+    custom_descriptor: Optional[str]
 
 
 @dataclasses.dataclass
@@ -18,28 +40,32 @@ from . import models
 class NoteType:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
+    client: Optional[UserType]
+    moods: List[MoodType]
+
+    is_submitted: auto
+
     created_at: auto
     created_by: UserType
+    private_details: Optional[str] = strawberry_django.field(
+        extensions=[HasSourcePerm(PrivateNotePermissions.VIEW)],
+    )
 
-    @classmethod
-    def get_queryset(
-        cls, queryset: QuerySet[models.Note], info: Info, **kwargs: Dict[str, Any]
-    ) -> QuerySet[models.Note]:
-        # As of 1-24-2024 we are unable to apply HasRetvalPerm to a paginated list.
-        # Instead we use get_objects_for_user to enforce permissions.
-        user = get_current_user(info)
-        return cast(
-            QuerySet[models.Note],
-            get_objects_for_user(user, NotePermissions.VIEW.value, klass=queryset),
-        )
+
+@dataclasses.dataclass
+@strawberry_django.input(models.User)
+class UserInput:
+    id: auto
 
 
 @dataclasses.dataclass
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     title: auto
-    body: auto
+    public_details: auto
+    private_details: auto
+    client: Optional[UserInput]
 
 
 @dataclasses.dataclass
@@ -47,4 +73,7 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    body: auto
+    public_details: auto
+    private_details: auto
+    moods: Optional[List[CreateMoodInput]]
+    is_submitted: auto

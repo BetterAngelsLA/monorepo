@@ -12,14 +12,16 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
 export const CREATE_NOTE = gql`
   mutation CreateNote($data: CreateNoteInput!) {
     createNote(data: $data) {
-      id
-      title
-      body
-      createdAt
-      createdBy {
+      ... on NoteType {
         id
-        username
-        email
+        title
+        publicDetails
+        createdAt
+        createdBy {
+          id
+          username
+          email
+        }
       }
     }
   }
@@ -28,14 +30,16 @@ export const CREATE_NOTE = gql`
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {
-      id
-      title
-      body
-      createdAt
-      createdBy {
+      ... on NoteType {
         id
-        username
-        email
+        title
+        publicDetails
+        createdAt
+        createdBy {
+          id
+          username
+          email
+        }
       }
     }
   }

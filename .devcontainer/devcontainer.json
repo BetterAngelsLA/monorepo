@@ -47,7 +47,8 @@
         "ms-python.flake8",
         "batisteo.vscode-django",
         "monosans.djlint",
-        "matangover.mypy"
+        "matangover.mypy",
+        "eamodio.gitlens"
       ]
     }
   },

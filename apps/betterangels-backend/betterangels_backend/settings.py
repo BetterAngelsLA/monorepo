@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-
 import os
 from pathlib import Path
 from typing import List
@@ -103,6 +102,7 @@ INSTALLED_APPS = [
     "strawberry_django",
     # Our Apps
     "accounts",
+    "common",
     "dwelling",
     "notes",
     "shelters",
@@ -189,6 +189,10 @@ REST_FRAMEWORK = {
     # We want to use session auth by default for now.
     "TOKEN_CREATOR": None,
     "TOKEN_MODEL": None,
+}
+
+STRAWBERRY_DJANGO = {
+    "MUTATIONS_DEFAULT_HANDLE_ERRORS": True,
 }
 
 WSGI_APPLICATION = "betterangels_backend.wsgi.application"
