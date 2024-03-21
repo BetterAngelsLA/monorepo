@@ -158,7 +158,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         const { data } = await createServiceRequest({
           variables: {
             data: {
-              service: isCustom ? 'OTHER' : service.toUpperCase(),
+              service: isCustom
+                ? 'OTHER'
+                : service.replace(/ /g, '_').toUpperCase(),
               status: 'COMPLETED',
               customService: isCustom ? service : '',
             },

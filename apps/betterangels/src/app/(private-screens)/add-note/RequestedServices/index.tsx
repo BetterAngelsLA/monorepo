@@ -159,7 +159,9 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         const { data } = await createServiceRequest({
           variables: {
             data: {
-              service: isCustom ? 'OTHER' : service.toUpperCase(),
+              service: isCustom
+                ? 'OTHER'
+                : service.replace(/ /g, '_').toUpperCase(),
               status: 'TO_DO',
               customService: isCustom ? service : '',
             },
