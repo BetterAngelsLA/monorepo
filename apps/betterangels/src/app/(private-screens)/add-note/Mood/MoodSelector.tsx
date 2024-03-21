@@ -1,3 +1,5 @@
+import { useMutation } from '@apollo/client';
+import { UPDATE_NOTE } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
@@ -12,17 +14,42 @@ interface Mood {
 
 interface MoodSelectorProps {
   moodsData: Mood[];
+  noteId: string | undefined;
 }
 
-const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
+const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData, noteId }) => {
   const { setValue, watch } = useFormContext();
   const selectedMoods = watch('moods') || [];
+  const [updateNote] = useMutation(UPDATE_NOTE);
 
-  const toggleMood = (mood: string) => {
-    const newMoods = selectedMoods.includes(mood)
-      ? selectedMoods.filter((m: string) => m !== mood)
-      : [...selectedMoods, mood];
-    setValue('moods', newMoods);
+  const toggleMood = async (mood: string) => {
+    try {
+      const newMoods = selectedMoods.includes(mood)
+        ? selectedMoods.filter((m: string) => m !== mood)
+        : [...selectedMoods, mood];
+
+      const moodsForDB = selectedMoods.includes(mood)
+        ? selectedMoods
+            .filter((m: string) => m !== mood)
+            .map((m: string) => ({
+              descriptor: m.replace(/ |\/+/g, '_').toUpperCase(),
+            }))
+        : [...selectedMoods, mood].map((m: string) => ({
+            descriptor: m.replace(/ |\/+/g, '_').toUpperCase(),
+          }));
+
+      await updateNote({
+        variables: {
+          data: {
+            id: noteId,
+            moods: moodsForDB,
+          },
+        },
+      });
+      setValue('moods', newMoods);
+    } catch (e) {
+      console.log('Error updating note mood', e);
+    }
   };
 
   return (
