@@ -2,14 +2,9 @@ import { useMutation } from '@apollo/client';
 import {
   Attachments,
   CREATE_SERVICE,
-  CreateServiceRequestMutationVariables,
   DELETE_SERVICE,
-  DeleteServiceRequestMutationVariables,
   OtherCategory,
-  ServiceEnum,
-  ServiceRequestStatusEnum,
   UPDATE_NOTE,
-  UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
@@ -125,18 +120,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       customService: string;
     }>
   >([]);
-  const [createServiceRequest] = useMutation<
-    {
-      createServiceRequest: {
-        id: string;
-        service: string;
-      };
-    },
-    CreateServiceRequestMutationVariables
-  >(CREATE_SERVICE);
-  const [updateNote] = useMutation<UpdateNoteMutationVariables>(UPDATE_NOTE);
-  const [deleteServiceRequest] =
-    useMutation<DeleteServiceRequestMutationVariables>(DELETE_SERVICE);
+  const [createServiceRequest] = useMutation(CREATE_SERVICE);
+  const [updateNote] = useMutation(UPDATE_NOTE);
+  const [deleteServiceRequest] = useMutation(DELETE_SERVICE);
   const providedServicesImages = watch('providedServicesImages', []);
   const providedServices = watch('providedServices') || [];
   const isProvidedServices = expanded === 'Provided Services';
@@ -172,10 +158,8 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         const { data } = await createServiceRequest({
           variables: {
             data: {
-              service: isCustom
-                ? ServiceEnum.Other
-                : (service.toUpperCase() as ServiceEnum),
-              status: ServiceRequestStatusEnum.Completed,
+              service: isCustom ? 'OTHER' : service.toUpperCase(),
+              status: 'COMPLETED',
               customService: isCustom ? service : '',
             },
           },
