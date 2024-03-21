@@ -1,55 +1,23 @@
 from django.db import models
+from django_choices_field import TextChoicesField
+
 from common.models import BaseModel
 
 # from django.contrib.gis.db.models import PointField
 from .enums import (
-    HowToEnterEnum,
+    HowToEnterEnum, ServiceEnum, PopulationEnum, RequirementEnum, ShelterTypeEnum
 )
 
 
 # Permissions on Service, Population, and Requirement models
 # should be more restrictive than on Shelter
 # Service model should include some reference to the icon
-class Service(models.Model):
-    title = models.CharField(max_length=64)
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class Population(models.Model):
-    title = models.CharField(max_length=64)
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class Requirement(models.Model):
-    title = models.CharField(max_length=64)
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class ShelterType(models.Model):
-    title = models.CharField(max_length=64)
-
-    def __str__(self) -> str:
-        return str(self.title)
 
 
 # Set default to make gql returns consistent between charfield and textfield
 class Shelter(BaseModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField(blank=True, null=True)
-
-    shelter_type = models.ForeignKey(ShelterType, blank=True, null=True,
-                                     on_delete=models.PROTECT)
-    services = models.ManyToManyField(Service, blank=True)
-    population = models.ManyToManyField(Population, blank=True)
-    requirements = models.ManyToManyField(Requirement, blank=True)
-    how_to_enter = models.CharField(choices=[(x, x.value) for x in HowToEnterEnum],
-                                    blank=True, default='')
 
     # Location Fields - flat for easier creation via admin console
     latitude = models.FloatField(blank=True, null=True)
@@ -84,3 +52,46 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class Population(models.Model):
+    title = TextChoicesField(choices_enum=PopulationEnum, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
+                                related_name='populations')
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
+class Requirement(models.Model):
+    title = TextChoicesField(choices_enum=RequirementEnum, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
+                                related_name='requirements')
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
+class ShelterType(models.Model):
+    title = TextChoicesField(choices_enum=ShelterTypeEnum, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
+                                related_name='shelter_type')
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
+class Service(models.Model):
+    title = TextChoicesField(choices_enum=ServiceEnum, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
+                                related_name='services')
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
+class HowToEnter(models.Model):
+    title = TextChoicesField(choices_enum=HowToEnterEnum, blank=True)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
+                                related_name='how_to_enter')
+
