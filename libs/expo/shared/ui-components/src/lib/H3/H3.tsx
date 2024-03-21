@@ -14,6 +14,7 @@ export function H3({
   my,
   mx,
   style,
+  color = Colors.PRIMARY_EXTRA_DARK,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
@@ -24,6 +25,7 @@ export function H3({
   ml?: TSpacing;
   mr?: TSpacing;
   style?: TextStyle;
+  color?: string;
 }) {
   return (
     <Text
@@ -32,6 +34,7 @@ export function H3({
         style,
         {
           textTransform,
+          color,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -49,7 +52,6 @@ export function H3({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Poppins-SemiBold',
-    color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.md.fontSize,
     lineHeight: FontSizes.md.lineHeight,
   },

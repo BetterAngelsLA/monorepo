@@ -3740,6 +3740,7 @@ __metadata:
     expo: ~50.0.14
     expo-auth-session: ~5.4.0
     expo-camera: ~14.1.1
+    expo-clipboard: ^5.0.1
     expo-constants: ~15.4.5
     expo-dev-client: ~3.3.11
     expo-image-picker: ~14.7.1
@@ -13006,6 +13007,15 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 56d9e6e3f3817025010449a901961fbfa2cd6a4c5dc693453e2b77f9627bbaec8d80eb2390d0b7c2b3b3351cfa25f09304b8b77107823621e80589a85ded8cbf
+  languageName: node
+  linkType: hard
+
+"expo-clipboard@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "expo-clipboard@npm:5.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: c4b5c08e025304711aa2d6ce6b5979ba303164fb2c79d62077c4c677a8fbcc5b66817d58cbebf5cc6adcf16d1e03df46f999280b65d562b2bda3e2847f05e070
   languageName: node
   linkType: hard
 
