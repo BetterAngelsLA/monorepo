@@ -2,9 +2,14 @@ import { useMutation } from '@apollo/client';
 import {
   Attachments,
   CREATE_SERVICE,
+  CreateServiceRequestMutationVariables,
   DELETE_SERVICE,
+  DeleteServiceRequestMutationVariables,
   OtherCategory,
+  ServiceEnum,
+  ServiceRequestStatusEnum,
   UPDATE_NOTE,
+  UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
@@ -120,9 +125,18 @@ export default function RequestedServices(props: IRequestedServicesProps) {
       customService: string;
     }>
   >([]);
-  const [createServiceRequest] = useMutation(CREATE_SERVICE);
-  const [updateNote] = useMutation(UPDATE_NOTE);
-  const [deleteServiceRequest] = useMutation(DELETE_SERVICE);
+  const [createServiceRequest] = useMutation<
+    {
+      createServiceRequest: {
+        id: string;
+        service: string;
+      };
+    },
+    CreateServiceRequestMutationVariables
+  >(CREATE_SERVICE);
+  const [updateNote] = useMutation<UpdateNoteMutationVariables>(UPDATE_NOTE);
+  const [deleteServiceRequest] =
+    useMutation<DeleteServiceRequestMutationVariables>(DELETE_SERVICE);
   const requestedServicesImages = watch('requestedServicesImages', []);
   const requestedServices = watch('requestedServices') || [];
   const isRequestedServices = expanded === 'Requested Services';
@@ -159,8 +173,10 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         const { data } = await createServiceRequest({
           variables: {
             data: {
-              service: isCustom ? 'OTHER' : service.toUpperCase(),
-              status: 'TO_DO',
+              service: isCustom
+                ? ServiceEnum.Other
+                : (service.toUpperCase() as ServiceEnum),
+              status: ServiceRequestStatusEnum.ToDo,
               customService: isCustom ? service : '',
             },
           },
@@ -171,7 +187,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
               id: noteId,
               requestedServices: [
                 ...requestedServices,
-                data.createServiceRequest.id,
+                data?.createServiceRequest.id,
               ],
             },
           },
@@ -179,7 +195,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         const newServices = [
           ...services,
           {
-            id: data.createServiceRequest.id,
+            id: data?.createServiceRequest.id,
             service: isCustom ? 'OTHER' : service,
             status: 'TO_DO',
             customService: isCustom ? service : '',
