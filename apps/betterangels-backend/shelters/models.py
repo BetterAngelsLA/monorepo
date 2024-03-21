@@ -1,18 +1,10 @@
 from django.db import models
+from common.models import BaseModel
 
 # from django.contrib.gis.db.models import PointField
 from .enums import (
     HowToEnterEnum,
 )
-
-
-# Base Classes
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:  # Prevent a naming conflict
-        abstract = True
 
 
 # Permissions on Service, Population, and Requirement models
@@ -47,7 +39,7 @@ class ShelterType(models.Model):
 
 
 # Set default to make gql returns consistent between charfield and textfield
-class Shelter(TimeStampedModel):
+class Shelter(BaseModel):
     title = models.CharField(max_length=255)
     image_url = models.URLField(blank=True, null=True)
 
