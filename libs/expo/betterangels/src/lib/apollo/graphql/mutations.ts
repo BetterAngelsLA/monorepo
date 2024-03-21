@@ -67,3 +67,24 @@ export const DELETE_NOTE = gql`
     }
   }
 `;
+
+export const CREATE_SERVICE = gql`
+  mutation CreateServiceRequest($data: CreateServiceRequestInput!) {
+    createServiceRequest(data: $data) {
+      ... on ServiceRequestType {
+        id
+        service
+      }
+    }
+  }
+`;
+
+export const DELETE_SERVICE = gql`
+  mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {
+    deleteServiceRequest(data: $data) {
+      ... on ServiceRequestType {
+        id
+      }
+    }
+  }
+`;

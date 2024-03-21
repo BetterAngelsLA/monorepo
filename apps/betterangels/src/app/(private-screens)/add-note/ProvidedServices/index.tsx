@@ -1,4 +1,11 @@
-import { Attachments, OtherCategory } from '@monorepo/expo/betterangels';
+import { useMutation } from '@apollo/client';
+import {
+  Attachments,
+  CREATE_SERVICE,
+  DELETE_SERVICE,
+  OtherCategory,
+  UPDATE_NOTE,
+} from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -28,13 +35,14 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 interface IProvidedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -102,36 +110,89 @@ const SERVICES = [
 ];
 
 export default function ProvidedServices(props: IProvidedServicesProps) {
-  const { expanded, setExpanded } = props;
-  const { setValue, watch, control } = useFormContext();
-  const [providedOtherCategory, setProvidedOtherCategory] = useState<string[]>(
-    []
-  );
-
+  const { expanded, setExpanded, noteId } = props;
+  const { setValue, watch } = useFormContext();
+  const [services, setServices] = useState<
+    Array<{
+      id: string | undefined;
+      service: string | undefined;
+      status: string;
+      customService: string;
+    }>
+  >([]);
+  const [createServiceRequest] = useMutation(CREATE_SERVICE);
+  const [updateNote] = useMutation(UPDATE_NOTE);
+  const [deleteServiceRequest] = useMutation(DELETE_SERVICE);
   const providedServicesImages = watch('providedServicesImages', []);
   const providedServices = watch('providedServices') || [];
   const isProvidedServices = expanded === 'Provided Services';
-  const isLessThanOneProvidedService = providedServices.length < 1;
+  const isLessThanOneProvidedService = services.length < 1;
   const isLessThanOneProvidedServiceImages = providedServicesImages.length < 1;
-  const isGreaterThanZeroProvidedService = providedServices.length > 0;
+  const isGreaterThanZeroProvidedService = services.length > 0;
   const isGreaterThanZeroProvidedServiceImages =
     providedServicesImages?.length > 0;
 
-  const toggleServices = (service: string) => {
-    const newServices = providedServices.includes(service)
-      ? providedServices.filter((m: string) => m !== service)
-      : [...providedServices, service];
-    setValue('providedServices', newServices);
-  };
+  const toggleServices = async (service: string, isCustom: boolean) => {
+    try {
+      if (
+        isCustom
+          ? services.map((s) => s.customService).includes(service)
+          : services.map((s) => s.service).includes(service)
+      ) {
+        const id = isCustom
+          ? services.find((s) => s.customService === service)?.id
+          : services.find((s) => s.service === service)?.id;
+        await deleteServiceRequest({
+          variables: {
+            data: {
+              id,
+            },
+          },
+        });
 
-  useEffect(() => {
-    if (!isProvidedServices) {
-      const includedValues = providedOtherCategory.filter((element) =>
-        providedServices.includes(element)
-      );
-      setProvidedOtherCategory(includedValues);
+        const newServices = services.filter((s) => s.id !== id);
+        setServices(newServices);
+        const ids = newServices.map((s) => s.id);
+        setValue('providedServices', ids);
+      } else {
+        const { data } = await createServiceRequest({
+          variables: {
+            data: {
+              service: isCustom ? 'OTHER' : service.toUpperCase(),
+              status: 'COMPLETED',
+              customService: isCustom ? service : '',
+            },
+          },
+        });
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              providedServices: [
+                ...providedServices,
+                data?.createServiceRequest.id,
+              ],
+            },
+          },
+        });
+        const newServices = [
+          ...services,
+          {
+            id: data?.createServiceRequest.id,
+            service: isCustom ? 'OTHER' : service,
+            status: 'COMPLETED',
+            customService: isCustom ? service : '',
+          },
+        ];
+
+        setServices(newServices);
+        const ids = newServices.map((s) => s.id);
+        setValue('providedServices', ids);
+      }
+    } catch (e) {
+      console.log('TOOGLE CHECKBOX ERROR: ', e);
     }
-  }, [expanded]);
+  };
 
   return (
     <FieldCard
@@ -143,17 +204,29 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         ) : isGreaterThanZeroProvidedService ||
           isGreaterThanZeroProvidedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {providedServices.map((service: string) => {
-              const IconComponent = ICONS[service] || PlusIcon;
-              return (
-                <IconComponent
-                  mr="xs"
-                  key={service}
-                  size="md"
-                  color={Colors.PRIMARY_EXTRA_DARK}
-                />
-              );
+            {services.map((item, index) => {
+              if (!item.customService && item.service && ICONS[item.service]) {
+                const IconComponent = ICONS[item.service];
+                return (
+                  <IconComponent
+                    mr="xs"
+                    key={index}
+                    size="md"
+                    color={Colors.PRIMARY_EXTRA_DARK}
+                  />
+                );
+              }
+              return null;
             })}
+
+            {services.some((item) => !item.service || item.customService) && (
+              <PlusIcon
+                mr="xs"
+                size="md"
+                color={Colors.PRIMARY_EXTRA_DARK}
+                key="plusIcon"
+              />
+            )}
             {isGreaterThanZeroProvidedServiceImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
             )}
@@ -179,11 +252,13 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
               <H3 mb="xs">{service.title}</H3>
               {service.items.map((item, idx) => (
                 <Checkbox
-                  isChecked={providedServices.includes(item.title)}
+                  isChecked={services
+                    .map((s) => s.service)
+                    .includes(item.title)}
                   mt={idx !== 0 ? 'xs' : undefined}
                   key={item.title}
                   hasBorder
-                  onCheck={() => toggleServices(item.title)}
+                  onCheck={() => toggleServices(item.title, false)}
                   accessibilityHint={item.title}
                   label={
                     <View style={styles.labelContainer}>
@@ -195,15 +270,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
               ))}
             </View>
           ))}
-          <OtherCategory
-            main="providedServices"
-            other="providedOtherCategory"
-            otherCategories={providedOtherCategory}
-            setOtherCategories={setProvidedOtherCategory}
-            control={control}
-            setValue={setValue}
-            services={providedServices}
-          />
+          <OtherCategory toggleServices={toggleServices} services={services} />
           <Attachments
             images={providedServicesImages}
             setImages={(array) => setValue('providedServicesImages', array)}
