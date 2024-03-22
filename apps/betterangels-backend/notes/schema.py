@@ -18,6 +18,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
+from notes.utils import get_user_permission_group
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -27,12 +28,14 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
+    CreateMoodInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
     CreateNoteServiceRequestInput,
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
+    MoodType,
     NoteAttachmentType,
     NoteFilter,
     NoteType,
@@ -91,20 +94,7 @@ class Mutation:
             # if not data.client:
             #     User.create_client()
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             note_data = asdict(data)
             note = resolvers.create(
@@ -180,20 +170,7 @@ class Mutation:
                 [NotePermissions.CHANGE],
             ).get(id=data.note)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             content_type = ContentType.objects.get_for_model(Note)
             attachment = Attachment.objects.create(
@@ -228,20 +205,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             service_request_data = asdict(data)
             service_request = resolvers.create(
@@ -270,20 +234,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
@@ -346,20 +297,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             task_data = asdict(data)
             task = resolvers.create(
@@ -386,20 +324,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
 
-            # WARNING: Temporary workaround for organization selection
-            # TODO: Update once organization selection is implemented. Currently selects
-            # the first organization with a default Caseworker role for the user.
-            permission_group = (
-                PermissionGroup.objects.select_related("organization", "group")
-                .filter(
-                    organization__users=user,
-                    name=GroupTemplateNames.CASEWORKER,
-                )
-                .first()
-            )
-
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
+            permission_group = get_user_permission_group(user)
 
             task_data = asdict(data)
             task_type = str(task_data.pop("task_type"))
