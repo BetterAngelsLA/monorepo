@@ -118,12 +118,14 @@ class UpdateTaskInput:
 
 @strawberry_django.type(models.Mood)
 class MoodType:
+    id: auto
     descriptor: auto
 
 
 @strawberry_django.input(models.Mood)
 class CreateMoodInput:
     descriptor: auto
+    note_id: ID
 
 
 @strawberry_django.ordering.order(models.Note)
@@ -188,7 +190,6 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    moods: Optional[List[CreateMoodInput]]
     purposes: Optional[List[ID]]
     next_steps: Optional[List[ID]]
     provided_services: Optional[List[ID]]

@@ -2,8 +2,7 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
-from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroup, User
+from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
@@ -11,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestTypeEnum, TaskTypeEnum
-from notes.models import Note, ServiceRequest, Task
+from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
     PrivateDetailsPermissions,
@@ -197,6 +196,20 @@ class Mutation:
             HasRetvalPerm(perms=AttachmentPermissions.DELETE),
         ],
     )
+
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    def create_mood(self, info: Info, data: CreateMoodInput) -> MoodType:
+        with transaction.atomic():
+            mood_data = asdict(data)
+            note_id = str(mood_data.pop("note_id"))
+            note = Note.objects.get(id=note_id)
+            mood = resolvers.create(
+                info,
+                Mood,
+                {**mood_data, "note": note},
+            )
+
+            return cast(MoodType, mood)
 
     @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
     def create_service_request(

@@ -25,10 +25,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "moods": [
-                    {"descriptor": "ANXIOUS"},
-                    {"descriptor": "EUTHYMIC"},
-                ],
                 "purposes": [t.id for t in self.purposes],
                 "nextSteps": [t.id for t in self.next_steps],
                 "providedServices": [t.id for t in self.provided_services],
@@ -38,6 +34,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "isSubmitted": False,
                 "timestamp": "2024-03-12T11:12:13+00:00",
             }
+        )
+        self._create_mood_fixture(
+            {"descriptor": "ANXIOUS", "noteId": note_id},
+        )
+        self._create_mood_fixture(
+            {"descriptor": "EUTHYMIC", "noteId": note_id},
         )
 
         query = """
@@ -134,6 +136,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
+        self.maxDiff = None
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:

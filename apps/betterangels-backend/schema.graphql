@@ -39,7 +39,10 @@ enum AttachmentType {
 
 input CreateMoodInput {
   descriptor: MoodEnum!
+  noteId: ID!
 }
+
+union CreateMoodPayload = MoodType | OperationInfo
 
 input CreateNoteAttachmentInput {
   note: ID!
@@ -153,6 +156,7 @@ enum MoodEnum {
 }
 
 type MoodType {
+  id: ID!
   descriptor: MoodEnum!
 }
 
@@ -167,6 +171,7 @@ type Mutation {
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createMood(data: CreateMoodInput!): CreateMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
@@ -345,7 +350,6 @@ enum TaskTypeEnum {
 input UpdateNoteInput {
   id: ID
   title: String
-  moods: [CreateMoodInput!]
   purposes: [ID!]
   nextSteps: [ID!]
   providedServices: [ID!]
