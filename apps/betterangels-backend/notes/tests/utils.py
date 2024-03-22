@@ -168,6 +168,37 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
+                createNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                        service
+                        customService
+                        status
+                        dueBy
+                        completedOn
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _create_note_attachment_fixture(
         self,
         note_id: str,

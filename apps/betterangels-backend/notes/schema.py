@@ -10,7 +10,7 @@ from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.enums import TaskTypeEnum
+from notes.enums import ServiceRequestTypeEnum, TaskTypeEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
@@ -286,18 +286,18 @@ class Mutation:
                 raise PermissionError("User lacks proper organization or permissions")
 
             service_request_data = asdict(data)
-            note_id = str(service_request_data.pop("note_id"))
             service_request_type = str(service_request_data.pop("service_request_type"))
+            note_id = str(service_request_data.pop("note_id"))
+            note = Note.objects.get(id=note_id)
             service_request = resolvers.create(
                 info,
                 ServiceRequest,
                 {
                     **service_request_data,
+                    "client": note.client,
                     "created_by": user,
                 },
             )
-
-            note = Note.objects.get(id=note_id)
 
             permissions = [
                 ServiceRequestPermissions.VIEW,
@@ -307,10 +307,10 @@ class Mutation:
             for perm in permissions:
                 assign_perm(perm, permission_group.group, service_request)
 
-            if service_request_type == "PROVIDED":
+            if service_request_type == ServiceRequestTypeEnum.PROVIDED:
                 note.provided_services.add(service_request)
 
-            if service_request_type == "REQUESTED":
+            if service_request_type == ServiceRequestTypeEnum.REQUESTED:
                 note.requested_services.add(service_request)
 
             return cast(ServiceRequestType, service_request)

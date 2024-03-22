@@ -1,4 +1,3 @@
-from typing import Optional
 from unittest import skip
 from unittest.mock import ANY
 
@@ -6,7 +5,6 @@ from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
-from model_bakery import baker
 from notes.enums import NoteNamespaceEnum, ServiceEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -14,6 +12,7 @@ from notes.tests.utils import (
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
 )
+from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
@@ -148,16 +147,23 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
-    def test_create_note_task(self) -> None:
+    @parametrize(
+        "task_type, tasks_to_check",
+        [
+            ("PURPOSE", "purposes"),
+            ("NEXT_STEP", "next_steps"),
+        ],
+    )
+    def test_create_note_task(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "title": "New Note Task",
             "noteId": self.note["id"],
             "status": "TO_DO",
-            "taskType": "PURPOSE",
+            "taskType": task_type,
         }
 
-        note: Note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, note.purposes.count())
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(0, getattr(note, tasks_to_check).count())
 
         if True:
             response = self._create_note_task_fixture(variables)
@@ -172,12 +178,55 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdAt": ANY,
         }
         task = response["data"]["createNoteTask"]
-        purpose: Optional[Task] = note.purposes.get()
+        # purpose = note.purposes.get()
 
         self.assertEqual(expected_task, task)
-        self.assertEqual(1, note.purposes.count())
-        self.assertIsNotNone(note.purposes)
-        self.assertEqual(task["id"], str(purpose.id))
+        self.assertEqual(1, getattr(note, tasks_to_check).count())
+        self.assertEqual(task["id"], str(getattr(note, tasks_to_check).get().id))
+
+    @parametrize(
+        "service_request_type, service_requests_to_check",
+        [
+            ("REQUESTED", "requested_services"),
+            ("PROVIDED", "provided_services"),
+        ],
+    )
+    def test_create_note_service_request(
+        self, service_request_type: str, service_requests_to_check: str
+    ) -> None:
+        variables = {
+            "service": "BLANKET",
+            "customService": None,
+            "noteId": self.note["id"],
+            "status": "COMPLETED",
+            "serviceRequestType": service_request_type,
+        }
+
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(0, getattr(note, service_requests_to_check).count())
+
+        if True:
+            response = self._create_note_service_request_fixture(variables)
+
+        expected_service_request = {
+            "id": ANY,
+            "service": "BLANKET",
+            "status": "COMPLETED",
+            "customService": None,
+            "dueBy": None,
+            "completedOn": ANY,
+            "client": self.note["client"],
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": ANY,
+        }
+        service_request = response["data"]["createNoteServiceRequest"]
+
+        self.assertEqual(expected_service_request, service_request)
+        self.assertEqual(1, getattr(note, service_requests_to_check).count())
+        self.assertEqual(
+            service_request["id"],
+            str(getattr(note, service_requests_to_check).get().id),
+        )
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
