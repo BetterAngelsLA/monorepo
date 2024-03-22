@@ -58,6 +58,25 @@ input CreateNoteInput {
 
 union CreateNotePayload = NoteType | OperationInfo
 
+input CreateNoteServiceRequestInput {
+  service: ServiceEnum!
+  customService: String
+  status: ServiceRequestStatusEnum!
+  noteId: ID!
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input CreateNoteTaskInput {
+  title: String!
+  status: TaskStatusEnum!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union CreateNoteTaskPayload = TaskType | OperationInfo
+
 input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
@@ -149,8 +168,10 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
+  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
 }
 
@@ -296,6 +317,11 @@ type ServiceRequestType {
   createdAt: DateTime!
 }
 
+enum ServiceRequestTypeEnum {
+  PROVIDED
+  REQUESTED
+}
+
 enum TaskStatusEnum {
   COMPLETED
   TO_DO
@@ -309,6 +335,11 @@ type TaskType {
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
+}
+
+enum TaskTypeEnum {
+  PURPOSE
+  NEXT_STEP
 }
 
 input UpdateNoteInput {

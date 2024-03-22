@@ -139,6 +139,35 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _create_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteTask($data: CreateNoteTaskInput!) {
+                createNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        title
+                        status
+                        dueBy
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _create_note_attachment_fixture(
         self,
         note_id: str,

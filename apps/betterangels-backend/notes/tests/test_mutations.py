@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest import skip
 from unittest.mock import ANY
 
@@ -5,6 +6,7 @@ from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from freezegun import freeze_time
+from model_bakery import baker
 from notes.enums import NoteNamespaceEnum, ServiceEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -145,6 +147,37 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
+
+    def test_create_note_task(self) -> None:
+        variables = {
+            "title": "New Note Task",
+            "noteId": self.note["id"],
+            "status": "TO_DO",
+            "taskType": "PURPOSE",
+        }
+
+        note: Note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(0, note.purposes.count())
+
+        if True:
+            response = self._create_note_task_fixture(variables)
+
+        expected_task = {
+            "id": ANY,
+            "title": "New Note Task",
+            "status": "TO_DO",
+            "dueBy": None,
+            "client": self.note["client"],
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": ANY,
+        }
+        task = response["data"]["createNoteTask"]
+        purpose: Optional[Task] = note.purposes.get()
+
+        self.assertEqual(expected_task, task)
+        self.assertEqual(1, note.purposes.count())
+        self.assertIsNotNone(note.purposes)
+        self.assertEqual(task["id"], str(purpose.id))
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """

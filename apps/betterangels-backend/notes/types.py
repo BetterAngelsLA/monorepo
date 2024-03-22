@@ -6,7 +6,7 @@ from accounts.types import UserType
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
-from notes.enums import NoteNamespaceEnum
+from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, auto
 from strawberry.file_uploads import Upload
@@ -54,6 +54,15 @@ class CreateServiceRequestInput:
     client: Optional[ID]
 
 
+@strawberry_django.input(models.ServiceRequest)
+class CreateNoteServiceRequestInput:
+    service: auto
+    custom_service: auto
+    status: auto
+    note_id: ID
+    service_request_type: ServiceRequestTypeEnum
+
+
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: auto
@@ -80,6 +89,22 @@ class CreateTaskInput:
     status: auto
     due_by: auto
     client: Optional[ID]
+
+
+@strawberry_django.input(models.Task)
+class CreateNoteTaskInput:
+    title: auto
+    status: auto
+    note_id: ID
+    task_type: TaskTypeEnum
+
+    # @strawberry_django.field()
+    # def note_id(self, root: models.Task) -> str:
+    #     return root.note_id
+
+    # @strawberry_django.field()
+    # def task_type(self, root: models.Task) -> str:
+    #     return root.task_type
 
 
 @strawberry_django.input(models.Task, partial=True)

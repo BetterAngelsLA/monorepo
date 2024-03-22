@@ -10,6 +10,7 @@ from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
+from notes.enums import TaskTypeEnum
 from notes.models import Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
@@ -28,6 +29,8 @@ from strawberry_django.utils.query import filter_for_user
 from .types import (
     CreateNoteAttachmentInput,
     CreateNoteInput,
+    CreateNoteServiceRequestInput,
+    CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
     NoteAttachmentType,
@@ -260,6 +263,58 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
+    @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
+    def create_note_service_request(
+        self, info: Info, data: CreateNoteServiceRequestInput
+    ) -> ServiceRequestType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            service_request_data = asdict(data)
+            note_id = str(service_request_data.pop("note_id"))
+            service_request_type = str(service_request_data.pop("service_request_type"))
+            service_request = resolvers.create(
+                info,
+                ServiceRequest,
+                {
+                    **service_request_data,
+                    "created_by": user,
+                },
+            )
+
+            note = Note.objects.get(id=note_id)
+
+            permissions = [
+                ServiceRequestPermissions.VIEW,
+                ServiceRequestPermissions.CHANGE,
+                ServiceRequestPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, service_request)
+
+            if service_request_type == "PROVIDED":
+                note.provided_services.add(service_request)
+
+            if service_request_type == "REQUESTED":
+                note.requested_services.add(service_request)
+
+            return cast(ServiceRequestType, service_request)
+
     @strawberry_django.mutation(
         extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])]
     )
@@ -323,6 +378,56 @@ class Mutation:
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, task)
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
+    def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            # WARNING: Temporary workaround for organization selection
+            # TODO: Update once organization selection is implemented. Currently selects
+            # the first organization with a default Caseworker role for the user.
+            permission_group = (
+                PermissionGroup.objects.select_related("organization", "group")
+                .filter(
+                    organization__users=user,
+                    name=GroupTemplateNames.CASEWORKER,
+                )
+                .first()
+            )
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
+            task_data = asdict(data)
+            task_type = str(task_data.pop("task_type"))
+            note_id = str(task_data.pop("note_id"))
+            note = Note.objects.get(id=note_id)
+            task = resolvers.create(
+                info,
+                Task,
+                {
+                    **task_data,
+                    "client": note.client,
+                    "created_by": user,
+                },
+            )
+
+            permissions = [
+                TaskPermissions.VIEW,
+                TaskPermissions.CHANGE,
+                TaskPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, task)
+
+            if task_type == TaskTypeEnum.PURPOSE:
+                note.purposes.add(task)
+
+            if task_type == TaskTypeEnum.NEXT_STEP:
+                note.next_steps.add(task)
 
             return cast(TaskType, task)
 
