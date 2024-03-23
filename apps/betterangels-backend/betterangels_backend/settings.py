@@ -26,6 +26,11 @@ env = environ.Env(
     AWS_REGION=(str, "us-west-2"),
     AWS_SES_REGION_NAME=(str, ""),
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
+    AWS_STORAGE_BUCKET_NAME=(str, ""),
+    AWS_S3_CUSTOM_DOMAIN=(str, ""),
+    AWS_CLOUDFRONT_KEY=(str, ""),
+    AWS_CLOUDFRONT_KEY_ID=(str, ""),
+    AWS_LOCATION=(str, "media"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
@@ -34,6 +39,7 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
+    DEFAULT_FILE_STORAGE=(str, "django.core.files.storage.FileSystemStorage"),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
     IS_LOCAL_DEV=(bool, False),
@@ -260,6 +266,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Storage Settings
+AWS_CLOUDFRONT_KEY = env("AWS_CLOUDFRONT_KEY").encode("ascii")
+AWS_CLOUDFRONT_KEY_ID = env("AWS_CLOUDFRONT_KEY_ID")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_LOCATION = env("AWS_LOCATION")
+AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN")
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
