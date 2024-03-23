@@ -1,5 +1,8 @@
+import uuid
+from datetime import datetime
 from typing import List, cast
 
+import pghistory
 import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
@@ -7,8 +10,10 @@ from accounts.models import PermissionGroup, User
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from notes.models import Note, ServiceRequest, Task
 from notes.permissions import (
@@ -17,6 +22,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
+from pghistory.models import Context, Events
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -128,35 +134,70 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
-    def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        revert_to_note = Note.objects.get(id=data.id).log.as_of(data.saved_at)
-        # saving a historical note as of a specific moment reverts the note and
-        # its associated models to their states at that moment in history
-        revert_to_note.save()
-
-        return cast(NoteType, revert_to_note)
-
     @strawberry_django.mutation(
         extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
+        now = timezone.now()
         with transaction.atomic():
-            note_data = asdict(data)
-            note = Note.objects.get(id=data.id)
-            note = resolvers.update(
-                info,
-                note,
-                {
-                    **note_data,
-                },
+            with pghistory.context(timestamp=now, label=info.field_name):
+                note_data = asdict(data)
+                note = Note.objects.get(id=data.id)
+                note = resolvers.update(
+                    info,
+                    note,
+                    {
+                        **note_data,
+                    },
+                )
+
+                # Annotated Fields for Permission Checks. This is a workaround since
+                # annotations are not applied during mutations.
+                note._private_details = note.private_details
+
+                return cast(NoteType, note)
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
+        revert_to_context_id: uuid.UUID | None = None
+        contexts_to_delete: list[uuid.UUID] = []
+
+        for context in Context.objects.filter(metadata__label="updateNote").order_by(
+            "-metadata__timestamp"
+        ):
+            timestamp = datetime.fromisoformat(
+                context.metadata["timestamp"].replace("Z", "+00:00")
             )
 
-            # Annotated Fields for Permission Checks. This is a workaround since
-            # annotations are not applied during mutations.
-            note._private_details = note.private_details
+            if timestamp > data.saved_at:
+                contexts_to_delete.append(context.id)
+            else:
+                revert_to_context_id = context.id
+                break
 
-            return cast(NoteType, note)
+        if revert_to_context_id is None:
+            raise Exception("Nothing to revert")
+
+        # First, delete any models that were associated with the Note instance
+        # in contexts that were created AFTER the selected saved_at time
+        for event in Events.objects.filter(
+            pgh_context_id__in=contexts_to_delete
+        ).exclude(pgh_model="notes.NoteEvent"):
+            if ".add" in event.pgh_label:
+                apps.get_model(event.pgh_model).objects.get(
+                    id=event.pgh_obj_id
+                ).pgh_obj.delete()
+
+        # Next, revert all the tracked models to the states they were in at context
+        # just BEFORE the selected saved_at time
+        for event in Events.objects.filter(pgh_context_id=revert_to_context_id):
+            apps.get_model(event.pgh_model).objects.get(
+                pgh_context_id=revert_to_context_id, id=event.pgh_obj_id
+            ).revert()
+
+        reverted_note = Note.objects.get(id=data.id)
+
+        return cast(NoteType, reverted_note)
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,

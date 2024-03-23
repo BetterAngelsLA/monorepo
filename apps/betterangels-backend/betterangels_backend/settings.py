@@ -100,6 +100,8 @@ INSTALLED_APPS = [
     "organizations",
     "simple_history",
     "strawberry_django",
+    "pghistory",
+    "pgtrigger",
     # Our Apps
     "accounts",
     "common",

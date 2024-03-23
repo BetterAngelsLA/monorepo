@@ -39,6 +39,7 @@ strawberry-graphql-django = "^0.35.0"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.2.2"
 python-magic = "^0.4.27"
+django-pghistory = "^3.1.0"
 
 [build-system]
 requires = ["poetry-core"]

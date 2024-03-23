@@ -1,4 +1,3 @@
-from unittest import skip
 from unittest.mock import ANY
 
 from common.models import Attachment
@@ -22,7 +21,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @freeze_time("03-12-2024 10:11:12")
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 39
+        expected_query_count = 36
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -66,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 90
+        expected_query_count = 77
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -124,7 +123,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 24
+        expected_query_count = 21
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -146,7 +145,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
-    @skip("https://betterangels.atlassian.net/browse/DEV-160")
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
@@ -202,7 +200,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 10
+        expected_query_count = 25
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -211,7 +209,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
-    @skip("https://betterangels.atlassian.net/browse/DEV-160")
     def test_revert_note_mutation_returns_removed_moods(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
@@ -268,7 +265,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 10
+        expected_query_count = 30
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -277,18 +274,20 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
-    @skip("https://betterangels.atlassian.net/browse/DEV-160")
-    def test_revert_note_mutation_removes_added_purposes(self) -> None:
+    def test_revert_note_mutation_removes_added_tasks_and_service_requests(
+        self,
+    ) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
         related models are reverted to their state at the specified moment.
 
         Test actions:
-        1. Update note title and add 1 purpose
+        1. Update note title and add 1 purpose, 1 next step, 1 requested
+           service and 1 provided service
         2. Save now as saved_at
-        3. Add another purpose
+        3. Add another purpose, next_step, requested service and provided service
         4. Revert to saved_at from Step 2
-        5. Assert note has only 1 purpose
+        5. Assert note has only the associations from Step 1
         """
         note_id = self.note["id"]
 
@@ -297,12 +296,18 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": note_id,
             "title": "Updated Title",
             "purposes": [self.purposes[0].pk],
+            "nextSteps": [self.next_steps[0].pk],
+            "providedServices": [self.provided_services[0].pk],
+            "requestedServices": [self.requested_services[0].pk],
             "publicDetails": "Updated Body",
             "isSubmitted": False,
         }
         response = self._update_note_fixture(persisted_update_variables)
         returned_note = response["data"]["updateNote"]
         self.assertEqual(len(returned_note["purposes"]), 1)
+        self.assertEqual(len(returned_note["nextSteps"]), 1)
+        self.assertEqual(len(returned_note["providedServices"]), 1)
+        self.assertEqual(len(returned_note["requestedServices"]), 1)
 
         # Select a moment to revert to
         saved_at = timezone.now()
@@ -312,11 +317,24 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": note_id,
             "title": "Discarded Title",
             "purposes": [self.purposes[0].pk, self.purposes[1].pk],
+            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
+            "providedServices": [
+                self.provided_services[0].pk,
+                self.provided_services[1].pk,
+            ],
+            "requestedServices": [
+                self.requested_services[0].pk,
+                self.requested_services[1].pk,
+            ],
             "publicDetails": "Discarded Body",
             "isSubmitted": False,
         }
         response = self._update_note_fixture(discarded_update_variables)
-        self.assertEqual(len(response["data"]["updateNote"]["purposes"]), 2)
+        returned_note = response["data"]["updateNote"]
+        self.assertEqual(len(returned_note["purposes"]), 2)
+        self.assertEqual(len(returned_note["nextSteps"]), 2)
+        self.assertEqual(len(returned_note["providedServices"]), 2)
+        self.assertEqual(len(returned_note["requestedServices"]), 2)
 
         mutation = """
             mutation RevertNote($data: RevertNoteInput!) {
@@ -326,7 +344,16 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                         title
                         publicDetails
                         purposes {
-                            title
+                            id
+                        }
+                        nextSteps {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                        requestedServices {
+                            id
                         }
                     }
                 }
@@ -334,12 +361,115 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 8
+        expected_query_count = 59
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
         reverted_note = response["data"]["revertNote"]
         self.assertEqual(len(reverted_note["purposes"]), 1)
+        self.assertEqual(len(reverted_note["nextSteps"]), 1)
+        self.assertEqual(len(reverted_note["providedServices"]), 1)
+        self.assertEqual(len(reverted_note["requestedServices"]), 1)
+
+        self.assertEqual(reverted_note["title"], "Updated Title")
+        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
+
+    def test_revert_note_mutation_returns_removed_tasks_and_service_requests(
+        self,
+    ) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        related models are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Update note title and add 2 purposes, 2 next steps, 2 requested
+           services and 2 provided service
+        2. Save now as saved_at
+        3. Delete 1 purpose, 1 next step, 1 requested service, 1 provided service
+        4. Revert to savedAt from Step 2
+        5. Assert note has all associations from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        persisted_update_variables = {
+            "id": note_id,
+            "title": "Updated Title",
+            "purposes": [self.purposes[0].pk, self.purposes[1].pk],
+            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
+            "providedServices": [
+                self.provided_services[0].pk,
+                self.provided_services[1].pk,
+            ],
+            "requestedServices": [
+                self.requested_services[0].pk,
+                self.requested_services[1].pk,
+            ],
+            "publicDetails": "Updated Body",
+            "isSubmitted": False,
+        }
+        response = self._update_note_fixture(persisted_update_variables)
+        returned_note = response["data"]["updateNote"]
+        self.assertEqual(len(returned_note["purposes"]), 2)
+        self.assertEqual(len(returned_note["nextSteps"]), 2)
+        self.assertEqual(len(returned_note["providedServices"]), 2)
+        self.assertEqual(len(returned_note["requestedServices"]), 2)
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be discarded
+        discarded_update_variables = {
+            "id": note_id,
+            "title": "Discarded Title",
+            "purposes": [self.purposes[0].pk],
+            "nextSteps": [self.next_steps[0].pk],
+            "providedServices": [self.provided_services[0].pk],
+            "requestedServices": [self.requested_services[0].pk],
+            "publicDetails": "Discarded Body",
+            "isSubmitted": False,
+        }
+        response = self._update_note_fixture(discarded_update_variables)
+        returned_note = response["data"]["updateNote"]
+        self.assertEqual(len(returned_note["purposes"]), 1)
+        self.assertEqual(len(returned_note["nextSteps"]), 1)
+        self.assertEqual(len(returned_note["providedServices"]), 1)
+        self.assertEqual(len(returned_note["requestedServices"]), 1)
+
+        mutation = """
+            mutation RevertNote($data: RevertNoteInput!) {
+                revertNote(data: $data) {
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        purposes {
+                            id
+                        }
+                        nextSteps {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                        requestedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 83
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, {"data": variables})
+
+        reverted_note = response["data"]["revertNote"]
+        self.assertEqual(len(reverted_note["purposes"]), 2)
+        self.assertEqual(len(reverted_note["nextSteps"]), 2)
+        self.assertEqual(len(reverted_note["providedServices"]), 2)
+        self.assertEqual(len(reverted_note["requestedServices"]), 2)
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
@@ -362,7 +492,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 22
+        expected_query_count = 19
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -433,7 +563,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
 
     def test_create_service_request_mutation(self) -> None:
-        expected_query_count = 29
+        expected_query_count = 28
         with self.assertNumQueries(expected_query_count):
             response = self._create_service_request_fixture(
                 {
@@ -464,7 +594,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -489,7 +619,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -526,7 +656,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": self.service_request["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -544,7 +674,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
 
     def test_create_task_mutation(self) -> None:
-        expected_query_count = 29
+        expected_query_count = 28
         with self.assertNumQueries(expected_query_count):
             response = self._create_task_fixture(
                 {
@@ -572,7 +702,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -593,7 +723,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "title": "Updated task title",
         }
 
-        expected_query_count = 14
+        expected_query_count = 13
         with self.assertNumQueries(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -627,7 +757,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 15
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

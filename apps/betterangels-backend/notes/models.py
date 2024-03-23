@@ -1,5 +1,6 @@
 from typing import Any, Optional, cast
 
+import pghistory
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
@@ -14,6 +15,7 @@ from organizations.models import Organization
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
 
+@pghistory.track()
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
@@ -46,6 +48,7 @@ class ServiceRequest(BaseModel):
         return cast(ServiceEnum, self.service)
 
 
+@pghistory.track()
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     status = TextChoicesField(choices_enum=TaskStatusEnum)
@@ -71,6 +74,7 @@ class Task(BaseModel):
         return self.title
 
 
+@pghistory.track()
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
@@ -80,13 +84,17 @@ class Note(BaseModel):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    purposes = models.ManyToManyField(Task, related_name="purpose_notes")
-    next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
-    requested_services = models.ManyToManyField(
-        ServiceRequest, related_name="requested_notes"
+    purposes: Any = models.ManyToManyField(
+        Task, through="NotePurpose", related_name="purpose_notes"
     )
-    provided_services = models.ManyToManyField(
-        ServiceRequest, related_name="provided_notes"
+    next_steps: Any = models.ManyToManyField(
+        Task, through="NoteNextStep", related_name="next_step_notes"
+    )
+    requested_services: Any = models.ManyToManyField(
+        ServiceRequest, through="NoteRequestedService", related_name="requested_notes"
+    )
+    provided_services: Any = models.ManyToManyField(
+        ServiceRequest, through="NoteProvidedService", related_name="provided_notes"
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
@@ -121,6 +129,62 @@ class Note(BaseModel):
         )
 
 
+@pghistory.track(
+    pghistory.InsertEvent("note_purpose.add"),
+    pghistory.DeleteEvent("note_purpose.remove"),
+)
+class NotePurpose(BaseModel):
+    note = models.ForeignKey(
+        Note, on_delete=models.CASCADE, related_name="note_purposes"
+    )
+    task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, related_name="note_purposes"
+    )
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_next_step.add"),
+    pghistory.DeleteEvent("note_next_step.remove"),
+)
+class NoteNextStep(BaseModel):
+    note = models.ForeignKey(
+        Note, on_delete=models.CASCADE, related_name="note_next_steps"
+    )
+    task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, related_name="note_next_steps"
+    )
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_requested_service.add"),
+    pghistory.DeleteEvent("note_requested_service.remove"),
+)
+class NoteRequestedService(BaseModel):
+    note = models.ForeignKey(
+        Note, on_delete=models.CASCADE, related_name="note_requested_services"
+    )
+    service_request = models.ForeignKey(
+        ServiceRequest, on_delete=models.CASCADE, related_name="note_requested_services"
+    )
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_provided_service.add"),
+    pghistory.DeleteEvent("note_provided_service.remove"),
+)
+class NoteProvidedService(BaseModel):
+    note = models.ForeignKey(
+        Note, on_delete=models.CASCADE, related_name="note_provided_services"
+    )
+    service_request = models.ForeignKey(
+        ServiceRequest, on_delete=models.CASCADE, related_name="note_provided_services"
+    )
+
+
+@pghistory.track(
+    pghistory.InsertEvent("mood.add"),
+    pghistory.DeleteEvent("mood.remove"),
+)
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
