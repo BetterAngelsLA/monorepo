@@ -28,6 +28,7 @@ env = environ.Env(
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
     AWS_STORAGE_BUCKET_NAME=(str, ""),
     AWS_S3_CUSTOM_DOMAIN=(str, ""),
+    AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
     AWS_CLOUDFRONT_KEY=(str, ""),
     AWS_CLOUDFRONT_KEY_ID=(str, ""),
     AWS_LOCATION=(str, "media"),
@@ -39,7 +40,6 @@ env = environ.Env(
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
     DEBUG=(bool, False),
-    DEFAULT_FILE_STORAGE=(str, "django.core.files.storage.FileSystemStorage"),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
     IS_LOCAL_DEV=(bool, False),
@@ -267,13 +267,19 @@ USE_I18N = True
 USE_TZ = True
 
 # Storage Settings
-AWS_CLOUDFRONT_KEY = env("AWS_CLOUDFRONT_KEY").encode("ascii")
-AWS_CLOUDFRONT_KEY_ID = env("AWS_CLOUDFRONT_KEY_ID")
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
-AWS_LOCATION = env("AWS_LOCATION")
-AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN")
-AWS_S3_SIGNATURE_VERSION = "s3v4"
-DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
+STORAGES = {}
+if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
+            "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
+            "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
+            "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
+            "location": env("AWS_LOCATION"),
+            "signature_version": "s3v4",
+        },
+    }
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
