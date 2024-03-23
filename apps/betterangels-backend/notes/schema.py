@@ -9,7 +9,7 @@ from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
@@ -272,6 +272,11 @@ class Mutation:
                 ServiceRequest,
                 {
                     **service_request_data,
+                    "status": (
+                        ServiceRequestStatusEnum.TO_DO
+                        if service_request_type == ServiceRequestTypeEnum.REQUESTED
+                        else ServiceRequestStatusEnum.COMPLETED
+                    ),
                     "client": note.client,
                     "created_by": user,
                 },

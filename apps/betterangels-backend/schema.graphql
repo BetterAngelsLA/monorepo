@@ -64,7 +64,6 @@ union CreateNotePayload = NoteType | OperationInfo
 input CreateNoteServiceRequestInput {
   service: ServiceEnum!
   customService: String
-  status: ServiceRequestStatusEnum!
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
 }
@@ -355,8 +354,6 @@ input UpdateNoteInput {
   title: String
   purposes: [ID!]
   nextSteps: [ID!]
-  providedServices: [ID!]
-  requestedServices: [ID!]
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean

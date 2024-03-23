@@ -4,7 +4,7 @@ from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from freezegun import freeze_time
 from model_bakery import baker
-from notes.enums import NoteNamespaceEnum, ServiceEnum
+from notes.enums import NoteNamespaceEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -57,15 +57,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Title",
             "purposes": [t.id for t in self.purposes],
             "nextSteps": [t.id for t in self.next_steps],
-            "providedServices": [t.id for t in self.provided_services],
-            "requestedServices": [t.id for t in self.requested_services],
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 77
+        expected_query_count = 51
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -82,30 +80,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
                 {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
             ],
-            "providedServices": [
-                {
-                    "id": str(self.provided_services[0].id),
-                    "service": ServiceEnum(self.provided_services[0].service).name,
-                    "customService": self.provided_services[0].custom_service,
-                },
-                {
-                    "id": str(self.provided_services[1].id),
-                    "service": ServiceEnum(self.provided_services[1].service).name,
-                    "customService": self.provided_services[1].custom_service,
-                },
-            ],
-            "requestedServices": [
-                {
-                    "id": str(self.requested_services[0].id),
-                    "service": ServiceEnum(self.requested_services[0].service).name,
-                    "customService": self.requested_services[0].custom_service,
-                },
-                {
-                    "id": str(self.requested_services[1].id),
-                    "service": ServiceEnum(self.requested_services[1].service).name,
-                    "customService": self.requested_services[1].custom_service,
-                },
-            ],
+            "providedServices": [],
+            "requestedServices": [],
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
@@ -183,20 +159,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(task["id"], str(getattr(note, tasks_to_check).get().id))
 
     @parametrize(
-        "service_request_type, service_requests_to_check",
+        "service_request_type, service_requests_to_check, expected_status",
         [
-            ("REQUESTED", "requested_services"),
-            ("PROVIDED", "provided_services"),
+            ("REQUESTED", "requested_services", "TO_DO"),
+            ("PROVIDED", "provided_services", "COMPLETED"),
         ],
     )
     def test_create_note_service_request(
-        self, service_request_type: str, service_requests_to_check: str
+        self,
+        service_request_type: str,
+        service_requests_to_check: str,
+        expected_status: str,
     ) -> None:
         variables = {
             "service": "BLANKET",
             "customService": None,
             "noteId": self.note["id"],
-            "status": "COMPLETED",
             "serviceRequestType": service_request_type,
         }
 
@@ -209,7 +187,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_service_request = {
             "id": ANY,
             "service": "BLANKET",
-            "status": "COMPLETED",
+            "status": expected_status,
             "customService": None,
             "dueBy": None,
             "completedOn": ANY,
