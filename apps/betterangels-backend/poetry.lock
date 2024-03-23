@@ -707,20 +707,6 @@ django = ">=3.2"
 ua = ["ua-parser (>=0.15)"]
 
 [[package]]
-name = "django-simple-history"
-version = "3.5.0"
-description = "Store model history and view/revert changes from admin site."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "django-simple-history-3.5.0.tar.gz", hash = "sha256:eef2943d7c846270f11c8136f38a3ba00de2bebd7b1b89037de5d9b148ed677a"},
-    {file = "django_simple_history-3.5.0-py3-none-any.whl", hash = "sha256:0030b3bb5ed219d6453320213e75cfa00dab7a381946124df9411729101c8874"},
-]
-
-[package.dependencies]
-asgiref = ">=3.6"
-
-[[package]]
 name = "djangorestframework"
 version = "3.15.0"
 description = "Web APIs for Django, made easy."
@@ -1581,4 +1567,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "859f74facc104e5ff2f64babb71eb14d06e3b695ce8c8f2a3fc7a66318934388"
+content-hash = "bd3f6adfa144fa873dee252d6ae1033b33ce649fc7c3879359e64358fc73a7e9"

@@ -10,7 +10,6 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
-from simple_history.models import HistoricalRecords, HistoricForeignKey
 
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
@@ -32,7 +31,6 @@ class ServiceRequest(BaseModel):
         "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
     )
 
-    log = HistoricalRecords(related_name="history")
     objects = models.Manager()
 
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
@@ -68,8 +66,6 @@ class Task(BaseModel):
 
     taskuserobjectpermission_set: models.QuerySet["Task"]
     taskgroupobjectpermission_set: models.QuerySet["Task"]
-
-    log = HistoricalRecords(related_name="history")
 
     def __str__(self) -> str:
         return self.title
@@ -108,7 +104,6 @@ class Note(BaseModel):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    log = HistoricalRecords(related_name="history", m2m_fields=[purposes, next_steps])
     objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
@@ -128,9 +123,8 @@ class Note(BaseModel):
 
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
-    note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
-    log = HistoricalRecords(related_name="history")
     objects = models.Manager()
 
 

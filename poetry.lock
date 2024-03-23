@@ -89,7 +89,6 @@ django-organizations = "^2.2.0"
 django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
-django-simple-history = "^3.4.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -1286,20 +1285,6 @@ django = ">=3.2"
 
 [package.extras]
 ua = ["ua-parser (>=0.15)"]
-
-[[package]]
-name = "django-simple-history"
-version = "3.5.0"
-description = "Store model history and view/revert changes from admin site."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "django-simple-history-3.5.0.tar.gz", hash = "sha256:eef2943d7c846270f11c8136f38a3ba00de2bebd7b1b89037de5d9b148ed677a"},
-    {file = "django_simple_history-3.5.0-py3-none-any.whl", hash = "sha256:0030b3bb5ed219d6453320213e75cfa00dab7a381946124df9411729101c8874"},
-]
-
-[package.dependencies]
-asgiref = ">=3.6"
 
 [[package]]
 name = "django-stubs"

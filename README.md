@@ -10,7 +10,7 @@
    <a href="https://reactnative.dev/docs/getting-started" target="_blank"><img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" hspace="10" /></a>
    <a href="https://storybook.js.org/docs" target="_blank"><img src="https://img.shields.io/badge/storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white" hspace="10" /></a>
    <a href="https://playwright.dev/docs/intro" target="_blank"><img src="https://img.shields.io/badge/Playwright-45ba4b?style=for-the-badge&logo=Playwright&logoColor=white" hspace="10" /></a>
-   <a href="https://graphql.org/code/" target="_blank"><img src="https://img.shields.io/badge/GraphQl-E10098?style=for-the-badge&logo=graphql&logoColor=white" hspace="10" /></a>   
+   <a href="https://graphql.org/code/" target="_blank"><img src="https://img.shields.io/badge/GraphQl-E10098?style=for-the-badge&logo=graphql&logoColor=white" hspace="10" /></a>
    <br><br>
    <a href="https://docs.aws.amazon.com/" target="_blank"><img src="https://img.shields.io/badge/Amazon AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" hspace="10" /></a>
    <a href="https://docs.djangoproject.com/" target="_blank"><img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" hspace="10" /></a>
@@ -342,44 +342,5 @@ POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 ```
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
-
-### Integrating Django Simple History
-
-[Django Simple History](https://django-simple-history.readthedocs.io/en/3.4.0/quick_start.html) is used in this project to track changes to model instances over time. The `django-simple-history` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:
-
-#### Step 1: Modify Your Model
-
-Within the container, update your model to include historical records. Edit the model file to include:
-
-```python
-from simple_history.models import HistoricalRecords
-
-class YourModel(models.Model):
-    # your fields here
-    history = HistoricalRecords()
-```
-
-#### Step 2 (Optional): Update Admin Interface
-
-If Django admin integration is desired, modify your model's admin class:
-
-```python
-from simple_history.admin import SimpleHistoryAdmin
-
-@admin.register(YourModel)
-class YourModelAdmin(SimpleHistoryAdmin):
-    pass
-
-```
-
-#### Step 3 (Optional): Generate and apply migrations to update your database schema
-
-```bash
-   yarn nx run betterangels-backend:migrate
-```
-
-#### Step 4: Accessing History in Views/Templates
-
-Use the `history` attribute of your model instance to access historical records.
 
 </details>

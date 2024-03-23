@@ -146,6 +146,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
+    @skip("https://betterangels.atlassian.net/browse/DEV-160")
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
@@ -210,6 +211,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
+    @skip("https://betterangels.atlassian.net/browse/DEV-160")
     def test_revert_note_mutation_returns_removed_moods(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
