@@ -39,7 +39,7 @@ strawberry-graphql-django = "^0.35.0"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.2.2"
 python-magic = "^0.4.27"
-django-storages = "^1.14.2"
+django-storages = {extras = ["s3"], version = "^1.14.2"}
 
 [build-system]
 requires = ["poetry-core"]
