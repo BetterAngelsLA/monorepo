@@ -16,13 +16,13 @@ vine = ">=5.0.0,<6.0.0"
 
 [[package]]
 name = "asgiref"
-version = "3.7.2"
+version = "3.8.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
-    {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
 ]
 
 [package.extras]
@@ -90,6 +90,7 @@ django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
+django-storages = "^1.14.2"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -177,17 +178,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.65"
+version = "1.34.69"
 description = "The AWS SDK for Python"
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.65-py3-none-any.whl", hash = "sha256:b611de58ab28940a36c77d7ef9823427ebf25d5ee8277b802f9979b14e780534"},
-    {file = "boto3-1.34.65.tar.gz", hash = "sha256:db97f9c29f1806cf9020679be0dd5ffa2aff2670e28e0e2046f98b979be498a4"},
+    {file = "boto3-1.34.69-py3-none-any.whl", hash = "sha256:2e25ef6bd325217c2da329829478be063155897d8d3b29f31f7f23ab548519b1"},
+    {file = "boto3-1.34.69.tar.gz", hash = "sha256:898a5fed26b1351352703421d1a8b886ef2a74be6c97d5ecc92432ae01fda203"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.65,<1.35.0"
+botocore = ">=1.34.69,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -196,13 +197,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.65"
-description = "Type annotations for boto3 1.34.65 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.69"
+description = "Type annotations for boto3 1.34.69 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.65.tar.gz", hash = "sha256:105da4a04dcb5e4ddc90f21ab8b24a3423ecfacb4775b8ccd3879574e5dce358"},
-    {file = "boto3_stubs-1.34.65-py3-none-any.whl", hash = "sha256:2afd696c8bb4daf8890ecd75a720e1733cd8b8556eaecc92c36f9b56fc6013bd"},
+    {file = "boto3-stubs-1.34.69.tar.gz", hash = "sha256:93fb4f8640cd01a70e9d3c94395c67fb6197f5e6623d2f39f18357b5b9adbdfc"},
+    {file = "boto3_stubs-1.34.69-py3-none-any.whl", hash = "sha256:804984bfdc3651762894b961892db9d455b1da6d92c904b14d9dd0f3bf8d06be"},
 ]
 
 [package.dependencies]
@@ -260,7 +261,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.65)", "botocore (==1.34.65)"]
+boto3 = ["boto3 (==1.34.69)", "botocore (==1.34.69)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -603,13 +604,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.65"
+version = "1.34.69"
 description = "Low-level, data-driven core of boto 3."
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.65-py3-none-any.whl", hash = "sha256:3b0012d7293880c0a4883883047e93f2888d7317b5e9e8a982a991b90d951f3e"},
-    {file = "botocore-1.34.65.tar.gz", hash = "sha256:399a1b1937f7957f0ee2e0df351462b86d44986b795ced980c11eb768b0e61c5"},
+    {file = "botocore-1.34.69-py3-none-any.whl", hash = "sha256:d3802d076d4d507bf506f9845a6970ce43adc3d819dd57c2791f5c19ed6e5950"},
+    {file = "botocore-1.34.69.tar.gz", hash = "sha256:d1ab2bff3c2fd51719c2021d9fa2f30fbb9ed0a308f69e9a774ac92c8091380a"},
 ]
 
 [package.dependencies]
@@ -622,13 +623,13 @@ crt = ["awscrt (==0.19.19)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.65"
+version = "1.34.69"
 description = "Type annotations and code completion for botocore"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "botocore_stubs-1.34.65-py3-none-any.whl", hash = "sha256:2f0bae0f8d934cb3446ecec9813aa365407bd7b98586280feb8cfc75a40b4513"},
-    {file = "botocore_stubs-1.34.65.tar.gz", hash = "sha256:7c510adb2c6ffee2e2a5f198c1030bb8edff2136ee56e46729c02ea37b2424a5"},
+    {file = "botocore_stubs-1.34.69-py3-none-any.whl", hash = "sha256:0c3835c775db1387246c1ba8063b197604462fba8603d9b36b5dc60297197b2f"},
+    {file = "botocore_stubs-1.34.69.tar.gz", hash = "sha256:463248fd1d6e7b68a0c57bdd758d04c6bd0c5c2c3bfa81afdf9d64f0930b59bc"},
 ]
 
 [package.dependencies]
@@ -1302,6 +1303,29 @@ files = [
 asgiref = ">=3.6"
 
 [[package]]
+name = "django-storages"
+version = "1.14.2"
+description = "Support for many storage backends in Django"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
+    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
+]
+
+[package.dependencies]
+Django = ">=3.2"
+
+[package.extras]
+azure = ["azure-core (>=1.13)", "azure-storage-blob (>=12)"]
+boto3 = ["boto3 (>=1.4.4)"]
+dropbox = ["dropbox (>=7.2.1)"]
+google = ["google-cloud-storage (>=1.27)"]
+libcloud = ["apache-libcloud"]
+s3 = ["boto3 (>=1.4.4)"]
+sftp = ["paramiko (>=1.15)"]
+
+[[package]]
 name = "django-stubs"
 version = "4.2.7"
 description = "Mypy stubs for Django"
@@ -1340,13 +1364,13 @@ typing-extensions = "*"
 
 [[package]]
 name = "djangorestframework"
-version = "3.15.0"
+version = "3.15.1"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "djangorestframework-3.15.0-py3-none-any.whl", hash = "sha256:5fa616048a7ec287fdaab3148aa5151efb73f7f8be1e23a9d18484e61e672695"},
-    {file = "djangorestframework-3.15.0.tar.gz", hash = "sha256:3f4a263012e1b263bf49a4907eb4cfe14de840a09b1ba64596d01a9c54835919"},
+    {file = "djangorestframework-3.15.1-py3-none-any.whl", hash = "sha256:3ccc0475bce968608cf30d07fb17d8e52d1d7fc8bfe779c905463200750cbca6"},
+    {file = "djangorestframework-3.15.1.tar.gz", hash = "sha256:f88fad74183dfc7144b2756d0d2ac716ea5b4c7c9840995ac3bfd8ec034333c1"},
 ]
 
 [package.dependencies]
@@ -2129,13 +2153,13 @@ reports = ["lxml"]
 
 [[package]]
 name = "mypy-boto3-cloudformation"
-version = "1.34.65"
-description = "Type annotations for boto3.CloudFormation 1.34.65 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.66"
+description = "Type annotations for boto3.CloudFormation 1.34.66 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-cloudformation-1.34.65.tar.gz", hash = "sha256:0902493f25f23e708d631294b779bbbb3e9468542dd7e247de6e8ac8e2477a54"},
-    {file = "mypy_boto3_cloudformation-1.34.65-py3-none-any.whl", hash = "sha256:60dd327a37e444ee90bc0a7152ab561b5cf27b8872fb7b7a6197fe0bb0046838"},
+    {file = "mypy-boto3-cloudformation-1.34.66.tar.gz", hash = "sha256:295ddb878f3f4b61489b83bd4bad949382deb8a478ff5ae66c22ca3ffbabbe95"},
+    {file = "mypy_boto3_cloudformation-1.34.66-py3-none-any.whl", hash = "sha256:e0080e4ba0cd464479f3ee285faddd863e40147e8f331b78445aef210afc91ed"},
 ]
 
 [package.dependencies]
@@ -2143,13 +2167,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-dynamodb"
-version = "1.34.57"
-description = "Type annotations for boto3.DynamoDB 1.34.57 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.67"
+description = "Type annotations for boto3.DynamoDB 1.34.67 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-dynamodb-1.34.57.tar.gz", hash = "sha256:8ad0eaa33811eb7eb0f8e2bcc2dbcefa86c91d7a21b13af500c3a8bacbe99db0"},
-    {file = "mypy_boto3_dynamodb-1.34.57-py3-none-any.whl", hash = "sha256:3f957d604d7289834e549c236d77c229ab8fab107b8a2c9f8a07066348fbd3a3"},
+    {file = "mypy-boto3-dynamodb-1.34.67.tar.gz", hash = "sha256:09447ef3ea6bdfe0be4e32ca23283820573341d340bea3065ded2153cc593d22"},
+    {file = "mypy_boto3_dynamodb-1.34.67-py3-none-any.whl", hash = "sha256:081ee9e184c0c2d93f648b25cec798e75533af26e631fbe80259f48fddb89758"},
 ]
 
 [package.dependencies]
@@ -2157,13 +2181,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-ec2"
-version = "1.34.64"
-description = "Type annotations for boto3.EC2 1.34.64 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.66"
+description = "Type annotations for boto3.EC2 1.34.66 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-ec2-1.34.64.tar.gz", hash = "sha256:7c3b2711b4e8e540203c60a852a19bbe4ebcfbd44d37ca99a52716eedfc1abe4"},
-    {file = "mypy_boto3_ec2-1.34.64-py3-none-any.whl", hash = "sha256:6ba81abd5496e894899ec7faa98646971a1d3c60ad349c96943d257e7516f5d6"},
+    {file = "mypy-boto3-ec2-1.34.66.tar.gz", hash = "sha256:228d04c57a9d6abfb90381faeabc9a02958842711cb29432b1f06c3a2b785b26"},
+    {file = "mypy_boto3_ec2-1.34.66-py3-none-any.whl", hash = "sha256:2491bf33b06bc6237cae8dd289053c14134b59f8fe3ab7aa89c68d25e7ba9724"},
 ]
 
 [package.dependencies]
@@ -2755,13 +2779,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-oauthlib"
-version = "1.4.0"
+version = "2.0.0"
 description = "OAuthlib authentication support for Requests."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.4"
 files = [
-    {file = "requests-oauthlib-1.4.0.tar.gz", hash = "sha256:acee623221e4a39abcbb919312c8ff04bd44e7e417087fb4bd5e2a2f53d5e79a"},
-    {file = "requests_oauthlib-1.4.0-py2.py3-none-any.whl", hash = "sha256:7a3130d94a17520169e38db6c8d75f2c974643788465ecc2e4b36d288bf13033"},
+    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
+    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
 ]
 
 [package.dependencies]
@@ -2852,13 +2876,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.220.0"
+version = "0.221.1"
 description = "A library for creating GraphQL APIs"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "strawberry_graphql-0.220.0-py3-none-any.whl", hash = "sha256:303b698bd3652f852af000085cc2ad7790a9726cdfd7e2f3f5398cbe6d3ef261"},
-    {file = "strawberry_graphql-0.220.0.tar.gz", hash = "sha256:916a019e0133c7817aae384161e9ab0e5267013bc2f491b3338b3ae10e8f08bb"},
+    {file = "strawberry_graphql-0.221.1-py3-none-any.whl", hash = "sha256:b9f72ed4265fb3b708e9ef1781a95a93899112221a036e76fee8497a654ee8a5"},
+    {file = "strawberry_graphql-0.221.1.tar.gz", hash = "sha256:ed36c7e80da844bb4df0097e1d49e55fb3d50fb0b0b80bd7d08730e0d5c720f0"},
 ]
 
 [package.dependencies]
@@ -2887,13 +2911,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.35.0"
+version = "0.35.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.35.0-py3-none-any.whl", hash = "sha256:84c679ecb10385a92591818fa5f288dfac67cbcef80e581d208a9932f2fd7a18"},
-    {file = "strawberry_graphql_django-0.35.0.tar.gz", hash = "sha256:8528e190ca71e6202ec05e42e6e10d09a308f435d5dc3952eec78e58b5b1a1cb"},
+    {file = "strawberry_graphql_django-0.35.1-py3-none-any.whl", hash = "sha256:09da5d62c33eacb0e25cd7f5ab179904fd44fb792cb80815a6c99344ffc39bb9"},
+    {file = "strawberry_graphql_django-0.35.1.tar.gz", hash = "sha256:f4c28b8a9b89a74b1a78f88898f3140d758ac2b6ef93d7e2e97e5f4480eea7ef"},
 ]
 
 [package.dependencies]
