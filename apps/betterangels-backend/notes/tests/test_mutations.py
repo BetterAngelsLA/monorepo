@@ -3,8 +3,9 @@ from unittest.mock import ANY
 from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from freezegun import freeze_time
+from model_bakery import baker
 from notes.enums import NoteNamespaceEnum, ServiceEnum
-from notes.models import Note, ServiceRequest, Task
+from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -225,17 +226,18 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             str(getattr(note, service_requests_to_check).get().id),
         )
 
-    def test_create_mood(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+    def test_create_mood_mutation(self) -> None:
+        baker.make(Mood, note_id=self.note["id"])
         variables = {
             "descriptor": "ANXIOUS",
             "noteId": self.note["id"],
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, note.moods.count())
+        self.assertEqual(1, note.moods.count())
 
-        if True:
+        expected_query_count = 11
+        with self.assertNumQueries(expected_query_count):
             response = self._create_mood_fixture(variables)
 
         expected_mood = {
@@ -244,8 +246,40 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         mood = response["data"]["createMood"]
         self.assertEqual(expected_mood, mood)
+        self.assertEqual(2, note.moods.count())
+        self.assertIn(mood["id"], str(note.moods.only("id")))
+
+    def test_delete_mood_mutation(self) -> None:
+        note = Note.objects.get(id=self.note["id"])
+        moods = baker.make(Mood, note_id=note.id, _quantity=2)
+        self.assertEqual(2, note.moods.count())
+
+        mutation = """
+            mutation DeleteMood($id: ID!) {
+                deleteMood(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on MoodType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": moods[0].pk}
+
+        expected_query_count = 9
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNotNone(response["data"]["deleteMood"])
         self.assertEqual(1, note.moods.count())
-        self.assertEqual(mood["id"], str(note.moods.get().id))
+        with self.assertRaises(Mood.DoesNotExist):
+            Mood.objects.get(id=moods[0].pk)
 
     def test_delete_note_mutation(self) -> None:
         mutation = """
@@ -269,8 +303,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_query_count = 22
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
-
         self.assertIsNotNone(response["data"]["deleteNote"])
+
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
 

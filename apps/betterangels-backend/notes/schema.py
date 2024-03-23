@@ -211,6 +211,20 @@ class Mutation:
 
             return cast(MoodType, mood)
 
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    def delete_mood(self, info: Info, data: DeleteDjangoObjectInput) -> MoodType:
+        user = get_current_user(info)
+        mood = Mood.objects.get(id=data.id)
+
+        if not isinstance(user, User) or not user.has_perm(
+            "notes.change_note", mood.note
+        ):
+            raise PermissionError("User lacks proper organization or permissions")
+
+        mood.delete()
+
+        return MoodType(id=data.id, descriptor=mood.descriptor)
+
     @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
     def create_service_request(
         self, info: Info, data: CreateServiceRequestInput

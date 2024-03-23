@@ -105,6 +105,8 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteMoodPayload = MoodType | OperationInfo
+
 union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
@@ -172,6 +174,7 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createMood(data: CreateMoodInput!): CreateMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
