@@ -185,13 +185,11 @@ export default function TabOneScreen() {
           data: {
             // TODO: This should be client name once we're fetching and mapping clients
             title: `Session with ${user?.firstName}`,
-            client: {
-              id: user?.id,
-            },
+            client: user?.id,
           },
         },
       });
-      router.navigate(`/add-note/${data?.createNote?.id}`);
+      router.navigate(`/add-note/${data?.createNote.id}`);
     } catch (e) {
       console.log(e);
     }

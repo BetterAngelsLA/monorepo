@@ -40,7 +40,7 @@ export function H4({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  color?: '#052B73' | '#FFF82E' | '#9CDCED';
+  color?: '#052B73' | '#FFF82E' | '#9CDCED' | '#216AF8';
   align?: 'auto' | 'center' | 'left' | 'right' | 'justify';
   spacing?: number;
   style?: TextStyle;
