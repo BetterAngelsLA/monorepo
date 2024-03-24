@@ -36,7 +36,10 @@ export enum AttachmentType {
 
 export type CreateMoodInput = {
   descriptor: MoodEnum;
+  noteId: Scalars['ID']['input'];
 };
+
+export type CreateMoodPayload = MoodType | OperationInfo;
 
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
@@ -54,6 +57,24 @@ export type CreateNoteInput = {
 };
 
 export type CreateNotePayload = NoteType | OperationInfo;
+
+export type CreateNoteServiceRequestInput = {
+  customService?: InputMaybe<Scalars['String']['input']>;
+  noteId: Scalars['ID']['input'];
+  service: ServiceEnum;
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type CreateNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  status: TaskStatusEnum;
+  taskType: TaskTypeEnum;
+  title: Scalars['String']['input'];
+};
+
+export type CreateNoteTaskPayload = OperationInfo | TaskType;
 
 export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
@@ -76,6 +97,8 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
+
+export type DeleteMoodPayload = MoodType | OperationInfo;
 
 export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
@@ -132,14 +155,19 @@ export enum MoodEnum {
 export type MoodType = {
   __typename?: 'MoodType';
   descriptor: MoodEnum;
+  id: Scalars['ID']['output'];
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
+  createMood: CreateMoodPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
+  createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
@@ -153,6 +181,11 @@ export type Mutation = {
 };
 
 
+export type MutationCreateMoodArgs = {
+  data: CreateMoodInput;
+};
+
+
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
@@ -163,6 +196,16 @@ export type MutationCreateNoteAttachmentArgs = {
 };
 
 
+export type MutationCreateNoteServiceRequestArgs = {
+  data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateNoteTaskArgs = {
+  data: CreateNoteTaskInput;
+};
+
+
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
@@ -170,6 +213,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteMoodArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 
@@ -436,6 +484,11 @@ export type ServiceRequestType = {
   status: ServiceRequestStatusEnum;
 };
 
+export enum ServiceRequestTypeEnum {
+  Provided = 'PROVIDED',
+  Requested = 'REQUESTED'
+}
+
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -452,16 +505,18 @@ export type TaskType = {
   title: Scalars['String']['output'];
 };
 
+export enum TaskTypeEnum {
+  NextStep = 'NEXT_STEP',
+  Purpose = 'PURPOSE'
+}
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  moods?: InputMaybe<Array<CreateMoodInput>>;
   nextSteps?: InputMaybe<Array<Scalars['ID']['input']>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
-  providedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purposes?: InputMaybe<Array<Scalars['ID']['input']>>;
-  requestedServices?: InputMaybe<Array<Scalars['ID']['input']>>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
