@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
+    "simple_history",
     "strawberry_django",
     # Our Apps
     "accounts",
