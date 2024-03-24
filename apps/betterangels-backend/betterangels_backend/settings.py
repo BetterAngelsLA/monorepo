@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 import django_stubs_ext
 import environ
@@ -267,7 +267,11 @@ USE_I18N = True
 USE_TZ = True
 
 # Storage Settings
-STORAGES = {}
+STORAGES: Dict[str, Any] = {
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3.S3Storage",
