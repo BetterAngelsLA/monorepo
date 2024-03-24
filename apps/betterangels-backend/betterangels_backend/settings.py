@@ -31,7 +31,7 @@ env = environ.Env(
     AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
     AWS_CLOUDFRONT_KEY=(str, ""),
     AWS_CLOUDFRONT_KEY_ID=(str, ""),
-    AWS_LOCATION=(str, "media"),
+    AWS_CLOUDFRONT_MEDIA_LOCATION=(str, "media"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
@@ -280,7 +280,7 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
             "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
             "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
             "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
-            "location": env("AWS_LOCATION"),
+            "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
             "signature_version": "s3v4",
         },
     }
