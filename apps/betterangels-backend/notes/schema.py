@@ -12,6 +12,7 @@ from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
@@ -183,17 +184,30 @@ class Mutation:
         for event in Events.objects.filter(
             pgh_context_id__in=contexts_to_delete
         ).exclude(pgh_model="notes.NoteEvent"):
-            if ".add" in event.pgh_label:
-                apps.get_model(event.pgh_model).objects.get(
-                    id=event.pgh_obj_id
-                ).pgh_obj.delete()
+            action = event.pgh_label.split(".")[1]
+            if apps.get_model(event.pgh_model).pgh_tracked_model._meta.proxy:
+                apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
+                    action=action, **event.pgh_data
+                )
+
+            else:
+                try:
+                    apps.get_model(event.pgh_model).objects.get(
+                        id=event.pgh_obj_id, pgh_context_id__in=contexts_to_delete
+                    ).pgh_obj.revert_action(action=action)
+
+                except ObjectDoesNotExist:
+                    pass
+                    # if object has alreay been deleted, it will be
+                    # restored in the next section
 
         # Next, revert all the tracked models to the states they were in at context
         # just BEFORE the selected saved_at time
         for event in Events.objects.filter(pgh_context_id=revert_to_context_id):
-            apps.get_model(event.pgh_model).objects.get(
-                pgh_context_id=revert_to_context_id, id=event.pgh_obj_id
-            ).revert()
+            if event.pgh_obj_id:
+                apps.get_model(event.pgh_model).objects.get(
+                    pgh_context_id=revert_to_context_id, id=event.pgh_obj_id
+                ).revert()
 
         reverted_note = Note.objects.get(id=data.id)
 

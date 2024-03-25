@@ -84,17 +84,13 @@ class Note(BaseModel):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    purposes: Any = models.ManyToManyField(
-        Task, through="NotePurpose", related_name="purpose_notes"
+    purposes = models.ManyToManyField(Task, related_name="purpose_notes")
+    next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
+    requested_services = models.ManyToManyField(
+        ServiceRequest, related_name="requested_notes"
     )
-    next_steps: Any = models.ManyToManyField(
-        Task, through="NoteNextStep", related_name="next_step_notes"
-    )
-    requested_services: Any = models.ManyToManyField(
-        ServiceRequest, through="NoteRequestedService", related_name="requested_notes"
-    )
-    provided_services: Any = models.ManyToManyField(
-        ServiceRequest, through="NoteProvidedService", related_name="provided_notes"
+    provided_services = models.ManyToManyField(
+        ServiceRequest, related_name="provided_notes"
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
@@ -130,55 +126,95 @@ class Note(BaseModel):
 
 
 @pghistory.track(
-    pghistory.InsertEvent("note_purpose.add"),
-    pghistory.DeleteEvent("note_purpose.remove"),
+    pghistory.InsertEvent("note_purposes.add"),
+    pghistory.DeleteEvent("note_purposes.remove"),
+    obj_field=None,
 )
-class NotePurpose(BaseModel):
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="note_purposes"
-    )
-    task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, related_name="note_purposes"
-    )
+class NotePurposes(Note.purposes.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        task = Task.objects.get(id=task_id)
+
+        if action == "add":
+            note.purposes.remove(task)
+
+        elif action == "remove":
+            note.purposes.add(task)
 
 
 @pghistory.track(
-    pghistory.InsertEvent("note_next_step.add"),
-    pghistory.DeleteEvent("note_next_step.remove"),
+    pghistory.InsertEvent("note_next_steps.add"),
+    pghistory.DeleteEvent("note_next_steps.remove"),
+    obj_field=None,
 )
-class NoteNextStep(BaseModel):
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="note_next_steps"
-    )
-    task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, related_name="note_next_steps"
-    )
+class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        task = Task.objects.get(id=task_id)
+
+        if action == "add":
+            note.next_steps.remove(task)
+
+        elif action == "remove":
+            note.next_steps.add(task)
 
 
 @pghistory.track(
-    pghistory.InsertEvent("note_requested_service.add"),
-    pghistory.DeleteEvent("note_requested_service.remove"),
+    pghistory.InsertEvent("note_provided_services.add"),
+    pghistory.DeleteEvent("note_provided_services.remove"),
+    obj_field=None,
 )
-class NoteRequestedService(BaseModel):
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="note_requested_services"
-    )
-    service_request = models.ForeignKey(
-        ServiceRequest, on_delete=models.CASCADE, related_name="note_requested_services"
-    )
+class NoteProvidedServices(Note.provided_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        service_request = ServiceRequest.objects.get(id=servicerequest_id)
+
+        if action == "add":
+            note.provided_services.remove(service_request)
+
+        elif action == "remove":
+            note.provided_services.add(service_request)
 
 
 @pghistory.track(
-    pghistory.InsertEvent("note_provided_service.add"),
-    pghistory.DeleteEvent("note_provided_service.remove"),
+    pghistory.InsertEvent("note_requested_services.add"),
+    pghistory.DeleteEvent("note_requested_services.remove"),
+    obj_field=None,
 )
-class NoteProvidedService(BaseModel):
-    note = models.ForeignKey(
-        Note, on_delete=models.CASCADE, related_name="note_provided_services"
-    )
-    service_request = models.ForeignKey(
-        ServiceRequest, on_delete=models.CASCADE, related_name="note_provided_services"
-    )
+class NoteRequestedServices(Note.requested_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        service_request = ServiceRequest.objects.get(id=servicerequest_id)
+
+        if action == "add":
+            note.requested_services.remove(service_request)
+
+        elif action == "remove":
+            note.requested_services.add(service_request)
 
 
 @pghistory.track(
@@ -190,6 +226,10 @@ class Mood(BaseModel):
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
     objects = models.Manager()
+
+    def revert_action(self, action: str) -> None:
+        if action == "add":
+            self.delete()
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):

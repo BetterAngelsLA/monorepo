@@ -65,7 +65,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 77
+        expected_query_count = 85
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -265,7 +265,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 30
+        expected_query_count = 32
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -361,7 +361,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 59
+        expected_query_count = 31
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -461,7 +461,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 83
+        expected_query_count = 31
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
