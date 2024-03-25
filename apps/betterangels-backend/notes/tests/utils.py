@@ -139,10 +139,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _create_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
+    def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
-            mutation CreateMood($data: CreateMoodInput!) {
-                createMood(data: $data) {
+            mutation CreateNoteMood($data: CreateNoteMoodInput!) {
+                createNoteMood(data: $data) {
                     ... on OperationInfo {
                         messages {
                             kind

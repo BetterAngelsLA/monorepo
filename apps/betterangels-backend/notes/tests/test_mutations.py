@@ -321,13 +321,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
 
     @parametrize(
-        "task_type, tasks_to_check",
+        "task_type, tasks_to_check, expected_query_count",
         [
-            ("PURPOSE", "purposes"),
-            ("NEXT_STEP", "next_steps"),
+            ("PURPOSE", "purposes", 41),
+            ("NEXT_STEP", "next_steps", 40),
         ],
     )
-    def test_create_note_task(self, task_type: str, tasks_to_check: str) -> None:
+    def test_create_note_task(
+        self, task_type: str, tasks_to_check: str, expected_query_count: int
+    ) -> None:
         variables = {
             "title": "New Note Task",
             "noteId": self.note["id"],
@@ -338,7 +340,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        if True:
+        with self.assertNumQueries(expected_query_count):
             response = self._create_note_task_fixture(variables)
 
         expected_task = {
@@ -351,17 +353,16 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdAt": ANY,
         }
         task = response["data"]["createNoteTask"]
-        # purpose = note.purposes.get()
 
         self.assertEqual(expected_task, task)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
         self.assertEqual(task["id"], str(getattr(note, tasks_to_check).get().id))
 
     @parametrize(
-        "service_request_type, service_requests_to_check, expected_status",
+        "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO"),
-            ("PROVIDED", "provided_services", "COMPLETED"),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 33),
         ],
     )
     def test_create_note_service_request(
@@ -369,6 +370,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request_type: str,
         service_requests_to_check: str,
         expected_status: str,
+        expected_query_count: int,
     ) -> None:
         variables = {
             "service": "BLANKET",
@@ -380,7 +382,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, service_requests_to_check).count())
 
-        if True:
+        with self.assertNumQueries(expected_query_count):
             response = self._create_note_service_request_fixture(variables)
 
         expected_service_request = {
@@ -403,7 +405,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             str(getattr(note, service_requests_to_check).get().id),
         )
 
-    def test_create_mood_mutation(self) -> None:
+    def test_create_note_mood_mutation(self) -> None:
         baker.make(Mood, note_id=self.note["id"])
         variables = {
             "descriptor": "ANXIOUS",
@@ -413,15 +415,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(1, note.moods.count())
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueries(expected_query_count):
-            response = self._create_mood_fixture(variables)
+            response = self._create_note_mood_fixture(variables)
 
         expected_mood = {
             "id": ANY,
             "descriptor": "ANXIOUS",
         }
-        mood = response["data"]["createMood"]
+        mood = response["data"]["createNoteMood"]
         self.assertEqual(expected_mood, mood)
         self.assertEqual(2, note.moods.count())
         self.assertIn(mood["id"], str(note.moods.only("id")))
@@ -441,7 +443,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on MoodType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
@@ -449,7 +451,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": moods[0].pk}
 
-        expected_query_count = 9
+        expected_query_count = 6
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 

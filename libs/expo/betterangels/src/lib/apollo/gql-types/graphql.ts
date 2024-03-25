@@ -34,13 +34,6 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
-export type CreateMoodInput = {
-  descriptor: MoodEnum;
-  noteId: Scalars['ID']['input'];
-};
-
-export type CreateMoodPayload = MoodType | OperationInfo;
-
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
   namespace: NoteNamespaceEnum;
@@ -55,6 +48,13 @@ export type CreateNoteInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
+
+export type CreateNoteMoodInput = {
+  descriptor: MoodEnum;
+  noteId: Scalars['ID']['input'];
+};
+
+export type CreateNoteMoodPayload = MoodType | OperationInfo;
 
 export type CreateNotePayload = NoteType | OperationInfo;
 
@@ -98,7 +98,7 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
-export type DeleteMoodPayload = MoodType | OperationInfo;
+export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
@@ -107,6 +107,11 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type DeleteTaskPayload = OperationInfo | TaskType;
+
+export type DeletedObjectType = {
+  __typename?: 'DeletedObjectType';
+  id: Scalars['Int']['output'];
+};
 
 export type DjangoFileType = {
   __typename?: 'DjangoFileType';
@@ -160,9 +165,9 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createMood: CreateMoodPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
+  createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
@@ -181,11 +186,6 @@ export type Mutation = {
 };
 
 
-export type MutationCreateMoodArgs = {
-  data: CreateMoodInput;
-};
-
-
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
@@ -193,6 +193,11 @@ export type MutationCreateNoteArgs = {
 
 export type MutationCreateNoteAttachmentArgs = {
   data: CreateNoteAttachmentInput;
+};
+
+
+export type MutationCreateNoteMoodArgs = {
+  data: CreateNoteMoodInput;
 };
 
 

@@ -37,13 +37,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-input CreateMoodInput {
-  descriptor: MoodEnum!
-  noteId: ID!
-}
-
-union CreateMoodPayload = MoodType | OperationInfo
-
 input CreateNoteAttachmentInput {
   note: ID!
   file: Upload!
@@ -58,6 +51,13 @@ input CreateNoteInput {
   privateDetails: String
   client: ID
 }
+
+input CreateNoteMoodInput {
+  descriptor: MoodEnum!
+  noteId: ID!
+}
+
+union CreateNoteMoodPayload = MoodType | OperationInfo
 
 union CreateNotePayload = NoteType | OperationInfo
 
@@ -104,7 +104,7 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
-union DeleteMoodPayload = MoodType | OperationInfo
+union DeleteMoodPayload = DeletedObjectType | OperationInfo
 
 union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
@@ -113,6 +113,10 @@ union DeleteNotePayload = NoteType | OperationInfo
 union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union DeleteTaskPayload = TaskType | OperationInfo
+
+type DeletedObjectType {
+  id: Int!
+}
 
 type DjangoFileType {
   name: String!
@@ -172,7 +176,7 @@ type Mutation {
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createMood(data: CreateMoodInput!): CreateMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)

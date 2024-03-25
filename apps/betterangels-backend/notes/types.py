@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
+import strawberry
 import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import AttachmentInterface
@@ -97,14 +98,6 @@ class CreateNoteTaskInput:
     note_id: ID
     task_type: TaskTypeEnum
 
-    # @strawberry_django.field()
-    # def note_id(self, root: models.Task) -> str:
-    #     return root.note_id
-
-    # @strawberry_django.field()
-    # def task_type(self, root: models.Task) -> str:
-    #     return root.task_type
-
 
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
@@ -122,7 +115,7 @@ class MoodType:
 
 
 @strawberry_django.input(models.Mood)
-class CreateMoodInput:
+class CreateNoteMoodInput:
     descriptor: auto
     note_id: ID
 
@@ -201,3 +194,8 @@ class UpdateNoteInput:
 class RevertNoteInput:
     id: auto
     saved_at: datetime
+
+
+@strawberry.type
+class DeletedObjectType:
+    id: int

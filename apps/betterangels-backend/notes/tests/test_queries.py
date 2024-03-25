@@ -35,10 +35,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         )
         # Add moods
-        self._create_mood_fixture(
+        self._create_note_mood_fixture(
             {"descriptor": "ANXIOUS", "noteId": note_id},
         )
-        self._create_mood_fixture(
+        self._create_note_mood_fixture(
             {"descriptor": "EUTHYMIC", "noteId": note_id},
         )
         # Add provided and requested services
@@ -162,7 +162,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "timestamp": "2024-03-12T11:12:13+00:00",
         }
-        self.maxDiff = None
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:

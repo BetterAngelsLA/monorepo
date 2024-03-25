@@ -8,6 +8,7 @@ from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models.expressions import Subquery
 from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.models import Mood, Note, ServiceRequest, Task
@@ -27,13 +28,14 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
-    CreateMoodInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
+    CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
+    DeletedObjectType,
     MoodType,
     NoteAttachmentType,
     NoteFilter,
@@ -94,6 +96,8 @@ class Mutation:
             #     User.create_client()
 
             permission_group = get_user_permission_group(user)
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
 
             note_data = asdict(data)
             note = resolvers.create(
@@ -170,6 +174,8 @@ class Mutation:
             ).get(id=data.note)
 
             permission_group = get_user_permission_group(user)
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
 
             content_type = ContentType.objects.get_for_model(Note)
             attachment = Attachment.objects.create(
@@ -198,11 +204,23 @@ class Mutation:
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
-    def create_mood(self, info: Info, data: CreateMoodInput) -> MoodType:
+    def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
         with transaction.atomic():
+            user = get_current_user(info)
+
             mood_data = asdict(data)
             note_id = str(mood_data.pop("note_id"))
-            note = Note.objects.get(id=note_id)
+
+            note = filter_for_user(
+                Note.objects.all(),
+                user,
+                [NotePermissions.CHANGE],
+            ).get(id=note_id)
+            permission_group = get_user_permission_group(user)
+
+            if not note or not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
             mood = resolvers.create(
                 info,
                 Mood,
@@ -212,18 +230,22 @@ class Mutation:
             return cast(MoodType, mood)
 
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
-    def delete_mood(self, info: Info, data: DeleteDjangoObjectInput) -> MoodType:
+    def delete_mood(
+        self, info: Info, data: DeleteDjangoObjectInput
+    ) -> DeletedObjectType:
         user = get_current_user(info)
-        mood = Mood.objects.get(id=data.id)
+        mood_id, _ = Mood.objects.filter(
+            id=data.id,
+            note_id__in=Subquery(
+                filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).values("id")
+            ),
+        ).delete()
 
-        if not isinstance(user, User) or not user.has_perm(
-            "notes.change_note", mood.note
-        ):
-            raise PermissionError("User lacks proper organization or permissions")
-
-        mood.delete()
-
-        return MoodType(id=data.id, descriptor=mood.descriptor)
+        return DeletedObjectType(id=mood_id)
 
     @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
     def create_service_request(
@@ -231,8 +253,10 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
-
             permission_group = get_user_permission_group(user)
+
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
 
             service_request_data = asdict(data)
             service_request = resolvers.create(
@@ -260,13 +284,19 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
-
-            permission_group = get_user_permission_group(user)
-
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
             note_id = str(service_request_data.pop("note_id"))
-            note = Note.objects.get(id=note_id)
+            note = filter_for_user(
+                Note.objects.all(),
+                user,
+                [NotePermissions.CHANGE],
+            ).get(id=note_id)
+            permission_group = get_user_permission_group(user)
+
+            if not note or not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
             service_request = resolvers.create(
                 info,
                 ServiceRequest,
@@ -292,9 +322,10 @@ class Mutation:
 
             if service_request_type == ServiceRequestTypeEnum.PROVIDED:
                 note.provided_services.add(service_request)
-
-            if service_request_type == ServiceRequestTypeEnum.REQUESTED:
+            elif service_request_type == ServiceRequestTypeEnum.REQUESTED:
                 note.requested_services.add(service_request)
+            else:
+                raise NotImplementedError
 
             return cast(ServiceRequestType, service_request)
 
@@ -328,8 +359,9 @@ class Mutation:
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         with transaction.atomic():
             user = get_current_user(info)
-
             permission_group = get_user_permission_group(user)
+            if not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
 
             task_data = asdict(data)
             task = resolvers.create(
@@ -355,13 +387,19 @@ class Mutation:
     def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
         with transaction.atomic():
             user = get_current_user(info)
-
-            permission_group = get_user_permission_group(user)
-
             task_data = asdict(data)
             task_type = str(task_data.pop("task_type"))
             note_id = str(task_data.pop("note_id"))
-            note = Note.objects.get(id=note_id)
+            note = filter_for_user(
+                Note.objects.all(),
+                user,
+                [NotePermissions.CHANGE],
+            ).get(id=note_id)
+            permission_group = get_user_permission_group(user)
+
+            if not note or not (permission_group and permission_group.group):
+                raise PermissionError("User lacks proper organization or permissions")
+
             task = resolvers.create(
                 info,
                 Task,
@@ -382,9 +420,10 @@ class Mutation:
 
             if task_type == TaskTypeEnum.PURPOSE:
                 note.purposes.add(task)
-
-            if task_type == TaskTypeEnum.NEXT_STEP:
+            elif task_type == TaskTypeEnum.NEXT_STEP:
                 note.next_steps.add(task)
+            else:
+                raise NotImplementedError
 
             return cast(TaskType, task)
 
