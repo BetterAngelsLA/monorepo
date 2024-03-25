@@ -267,23 +267,24 @@ USE_I18N = True
 USE_TZ = True
 
 # Storage Settings
-STORAGES: Dict[str, Any] = {
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
 if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
-    STORAGES["default"] = {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": {
-            "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
-            "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
-            "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
-            "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
-            "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
-            "signature_version": "s3v4",
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
+                "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
+                "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
+                "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
+                "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
+                "signature_version": "s3v4",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
