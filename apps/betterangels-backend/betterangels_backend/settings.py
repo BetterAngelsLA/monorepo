@@ -26,7 +26,7 @@ env = environ.Env(
     AWS_REGION=(str, "us-west-2"),
     AWS_SES_REGION_NAME=(str, ""),
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
-    AWS_STORAGE_BUCKET_NAME=(str, ""),
+    AWS_S3_STORAGE_BUCKET_NAME=(str, ""),
     AWS_S3_CUSTOM_DOMAIN=(str, ""),
     AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
     AWS_CLOUDFRONT_KEY=(str, ""),
@@ -272,7 +272,7 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
             "OPTIONS": {
-                "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
+                "bucket_name": env("AWS_S3_STORAGE_BUCKET_NAME"),
                 "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
                 "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
                 "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
