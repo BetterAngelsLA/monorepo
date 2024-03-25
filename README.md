@@ -343,46 +343,41 @@ POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
 
-### [DEPRECATED] Integrating Django Simple History
+### Integrating Django PG History
 
-> NOTE: Django Simple History has been deprecated in favor of [Django PG History](https://django-pghistory.readthedocs.io/en/3.0.0/).
-> The `accounts` app still uses Django Simple History, but Django PG History is better at tracking complicated one-to- and many-to-many relationships, so the `notes` app version management is implemented using Django PG History.
+[Django PG History](https://django-pghistory.readthedocs.io/en/3.0.0/) is used in this project to track changes to model instances over time. The `django-pghistory` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:
 
-[Django Simple History](https://django-simple-history.readthedocs.io/en/3.4.0/quick_start.html) is used in this project to track changes to model instances over time. The `django-simple-history` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:
-
-#### Step 1: Modify Your Model
+#### Modify Your Model
 
 Within the container, update your model to include historical records. Edit the model file to include:
 
 ```python
-from simple_history.models import HistoricalRecords
+import pghistory
 
+@pghistory.track()
 class YourModel(models.Model):
-    # your fields here
-    history = HistoricalRecords()
+   # your fields here
 ```
 
-#### Step 2 (Optional): Update Admin Interface
-
-If Django admin integration is desired, modify your model's admin class:
+Optionally, include specific events to track:
 
 ```python
-from simple_history.admin import SimpleHistoryAdmin
+import pghistory
 
-@admin.register(YourModel)
-class YourModelAdmin(SimpleHistoryAdmin):
-    pass
-
+@pghistory.track(
+   pghistory.InsertEvent("your_model.add"),
+   pghistory.UpdateEvent('your_model.update'),
+   pghistory.DeleteEvent("your_model.remove"),
+)
+class YourModel(models.Model):
+   # your fields here
 ```
 
-#### Step 3 (Optional): Generate and apply migrations to update your database schema
+#### Generate and apply migrations to update your database schema
 
 ```bash
+   yarn nx run betterangels-backend:makemigrations
    yarn nx run betterangels-backend:migrate
 ```
-
-#### Step 4: Accessing History in Views/Templates
-
-Use the `history` attribute of your model instance to access historical records.
 
 </details>

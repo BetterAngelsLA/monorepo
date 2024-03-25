@@ -511,7 +511,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         file_content = b"Test attachment content"
         file_name = "test_attachment.txt"
 
-        with self.assertNumQueries(22):
+        expected_query_count = 22
+        with self.assertNumQueries(expected_query_count):
             create_response = self._create_note_attachment_fixture(
                 self.note["id"],
                 NoteNamespaceEnum.MOOD_ASSESSMENT.name,
@@ -545,7 +546,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        with self.assertNumQueries(13):
+        expected_query_count = 13
+        with self.assertNumQueries(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 
         self.assertFalse(
