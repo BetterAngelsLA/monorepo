@@ -37,6 +37,7 @@ def update_caseworker_permission_template(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
+        ("post_office", "0011_models_help_text"),
         ("common", "0004_attachment_attachmentgroupobjectpermission_and_more"),
     ]
 
