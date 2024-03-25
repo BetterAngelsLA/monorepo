@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
 import django_stubs_ext
 import environ
