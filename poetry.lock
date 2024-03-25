@@ -91,6 +91,7 @@ django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
 django-simple-history = "^3.4.0"
+django-storages = {version = "^1.14.2", extras = ["s3"]}
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -914,13 +915,13 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "click-didyoumean"
-version = "0.3.0"
+version = "0.3.1"
 description = "Enables git-like *did-you-mean* feature in click"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.6.2"
 files = [
-    {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
-    {file = "click_didyoumean-0.3.0-py3-none-any.whl", hash = "sha256:a0713dc7a1de3f06bc0df5a9567ad19ead2d3d5689b434768a6145bff77c0667"},
+    {file = "click_didyoumean-0.3.1-py3-none-any.whl", hash = "sha256:5c4bb6007cfea5f2fd6583a2fb6701a22a41eb98957e63d0fac41c10e7c3117c"},
+    {file = "click_didyoumean-0.3.1.tar.gz", hash = "sha256:4f82fdff0dbe64ef8ab2279bd6aa3f6a99c3b28c05aa09cbfc07c9d7fbb5a463"},
 ]
 
 [package.dependencies]
@@ -1198,13 +1199,13 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-jazzmin"
-version = "2.6.0"
+version = "2.6.1"
 description = "Drop-in theme for django admin, that utilises AdminLTE 3 & Bootstrap 4 to make yo' admin look jazzy"
 optional = false
 python-versions = ">=3.6.2"
 files = [
-    {file = "django_jazzmin-2.6.0-py3-none-any.whl", hash = "sha256:fb554c2d564649c65243b13385121fdbdda58521f49544f9d7cb9c414a4908d4"},
-    {file = "django_jazzmin-2.6.0.tar.gz", hash = "sha256:5bb07055cf19183030724f976904fd8b6337559727959340a43832fab0531812"},
+    {file = "django_jazzmin-2.6.1-py3-none-any.whl", hash = "sha256:666cfdbafa59723becef35541698b28e4c97a5c1eba67ef139d4f1c9c615830a"},
+    {file = "django_jazzmin-2.6.1.tar.gz", hash = "sha256:d2c05307302cbf4335002a1b709e2ab2c2129322db43c14bdbfd8c28bdde5a81"},
 ]
 
 [package.dependencies]
@@ -1330,6 +1331,30 @@ files = [
 
 [package.dependencies]
 asgiref = ">=3.6"
+
+[[package]]
+name = "django-storages"
+version = "1.14.2"
+description = "Support for many storage backends in Django"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
+    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
+]
+
+[package.dependencies]
+boto3 = {version = ">=1.4.4", optional = true, markers = "extra == \"s3\""}
+Django = ">=3.2"
+
+[package.extras]
+azure = ["azure-core (>=1.13)", "azure-storage-blob (>=12)"]
+boto3 = ["boto3 (>=1.4.4)"]
+dropbox = ["dropbox (>=7.2.1)"]
+google = ["google-cloud-storage (>=1.27)"]
+libcloud = ["apache-libcloud"]
+s3 = ["boto3 (>=1.4.4)"]
+sftp = ["paramiko (>=1.15)"]
 
 [[package]]
 name = "django-stubs"

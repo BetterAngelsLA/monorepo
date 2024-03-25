@@ -16,13 +16,13 @@ vine = ">=5.0.0,<6.0.0"
 
 [[package]]
 name = "asgiref"
-version = "3.7.2"
+version = "3.8.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
-    {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
 ]
 
 [package.extras]
@@ -60,17 +60,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.65"
+version = "1.34.69"
 description = "The AWS SDK for Python"
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.65-py3-none-any.whl", hash = "sha256:b611de58ab28940a36c77d7ef9823427ebf25d5ee8277b802f9979b14e780534"},
-    {file = "boto3-1.34.65.tar.gz", hash = "sha256:db97f9c29f1806cf9020679be0dd5ffa2aff2670e28e0e2046f98b979be498a4"},
+    {file = "boto3-1.34.69-py3-none-any.whl", hash = "sha256:2e25ef6bd325217c2da329829478be063155897d8d3b29f31f7f23ab548519b1"},
+    {file = "boto3-1.34.69.tar.gz", hash = "sha256:898a5fed26b1351352703421d1a8b886ef2a74be6c97d5ecc92432ae01fda203"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.65,<1.35.0"
+botocore = ">=1.34.69,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -79,13 +79,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.65"
+version = "1.34.69"
 description = "Low-level, data-driven core of boto 3."
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.65-py3-none-any.whl", hash = "sha256:3b0012d7293880c0a4883883047e93f2888d7317b5e9e8a982a991b90d951f3e"},
-    {file = "botocore-1.34.65.tar.gz", hash = "sha256:399a1b1937f7957f0ee2e0df351462b86d44986b795ced980c11eb768b0e61c5"},
+    {file = "botocore-1.34.69-py3-none-any.whl", hash = "sha256:d3802d076d4d507bf506f9845a6970ce43adc3d819dd57c2791f5c19ed6e5950"},
+    {file = "botocore-1.34.69.tar.gz", hash = "sha256:d1ab2bff3c2fd51719c2021d9fa2f30fbb9ed0a308f69e9a774ac92c8091380a"},
 ]
 
 [package.dependencies]
@@ -358,13 +358,13 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "click-didyoumean"
-version = "0.3.0"
+version = "0.3.1"
 description = "Enables git-like *did-you-mean* feature in click"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.6.2"
 files = [
-    {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
-    {file = "click_didyoumean-0.3.0-py3-none-any.whl", hash = "sha256:a0713dc7a1de3f06bc0df5a9567ad19ead2d3d5689b434768a6145bff77c0667"},
+    {file = "click_didyoumean-0.3.1-py3-none-any.whl", hash = "sha256:5c4bb6007cfea5f2fd6583a2fb6701a22a41eb98957e63d0fac41c10e7c3117c"},
+    {file = "click_didyoumean-0.3.1.tar.gz", hash = "sha256:4f82fdff0dbe64ef8ab2279bd6aa3f6a99c3b28c05aa09cbfc07c9d7fbb5a463"},
 ]
 
 [package.dependencies]
@@ -616,13 +616,13 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-jazzmin"
-version = "2.6.0"
+version = "2.6.1"
 description = "Drop-in theme for django admin, that utilises AdminLTE 3 & Bootstrap 4 to make yo' admin look jazzy"
 optional = false
 python-versions = ">=3.6.2"
 files = [
-    {file = "django_jazzmin-2.6.0-py3-none-any.whl", hash = "sha256:fb554c2d564649c65243b13385121fdbdda58521f49544f9d7cb9c414a4908d4"},
-    {file = "django_jazzmin-2.6.0.tar.gz", hash = "sha256:5bb07055cf19183030724f976904fd8b6337559727959340a43832fab0531812"},
+    {file = "django_jazzmin-2.6.1-py3-none-any.whl", hash = "sha256:666cfdbafa59723becef35541698b28e4c97a5c1eba67ef139d4f1c9c615830a"},
+    {file = "django_jazzmin-2.6.1.tar.gz", hash = "sha256:d2c05307302cbf4335002a1b709e2ab2c2129322db43c14bdbfd8c28bdde5a81"},
 ]
 
 [package.dependencies]
@@ -750,14 +750,38 @@ files = [
 asgiref = ">=3.6"
 
 [[package]]
+name = "django-storages"
+version = "1.14.2"
+description = "Support for many storage backends in Django"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
+    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
+]
+
+[package.dependencies]
+boto3 = {version = ">=1.4.4", optional = true, markers = "extra == \"s3\""}
+Django = ">=3.2"
+
+[package.extras]
+azure = ["azure-core (>=1.13)", "azure-storage-blob (>=12)"]
+boto3 = ["boto3 (>=1.4.4)"]
+dropbox = ["dropbox (>=7.2.1)"]
+google = ["google-cloud-storage (>=1.27)"]
+libcloud = ["apache-libcloud"]
+s3 = ["boto3 (>=1.4.4)"]
+sftp = ["paramiko (>=1.15)"]
+
+[[package]]
 name = "djangorestframework"
-version = "3.15.0"
+version = "3.15.1"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "djangorestframework-3.15.0-py3-none-any.whl", hash = "sha256:5fa616048a7ec287fdaab3148aa5151efb73f7f8be1e23a9d18484e61e672695"},
-    {file = "djangorestframework-3.15.0.tar.gz", hash = "sha256:3f4a263012e1b263bf49a4907eb4cfe14de840a09b1ba64596d01a9c54835919"},
+    {file = "djangorestframework-3.15.1-py3-none-any.whl", hash = "sha256:3ccc0475bce968608cf30d07fb17d8e52d1d7fc8bfe779c905463200750cbca6"},
+    {file = "djangorestframework-3.15.1.tar.gz", hash = "sha256:f88fad74183dfc7144b2756d0d2ac716ea5b4c7c9840995ac3bfd8ec034333c1"},
 ]
 
 [package.dependencies]
@@ -1288,13 +1312,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-oauthlib"
-version = "1.4.0"
+version = "2.0.0"
 description = "OAuthlib authentication support for Requests."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.4"
 files = [
-    {file = "requests-oauthlib-1.4.0.tar.gz", hash = "sha256:acee623221e4a39abcbb919312c8ff04bd44e7e417087fb4bd5e2a2f53d5e79a"},
-    {file = "requests_oauthlib-1.4.0-py2.py3-none-any.whl", hash = "sha256:7a3130d94a17520169e38db6c8d75f2c974643788465ecc2e4b36d288bf13033"},
+    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
+    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
 ]
 
 [package.dependencies]
@@ -1366,13 +1390,13 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.220.0"
+version = "0.221.1"
 description = "A library for creating GraphQL APIs"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "strawberry_graphql-0.220.0-py3-none-any.whl", hash = "sha256:303b698bd3652f852af000085cc2ad7790a9726cdfd7e2f3f5398cbe6d3ef261"},
-    {file = "strawberry_graphql-0.220.0.tar.gz", hash = "sha256:916a019e0133c7817aae384161e9ab0e5267013bc2f491b3338b3ae10e8f08bb"},
+    {file = "strawberry_graphql-0.221.1-py3-none-any.whl", hash = "sha256:b9f72ed4265fb3b708e9ef1781a95a93899112221a036e76fee8497a654ee8a5"},
+    {file = "strawberry_graphql-0.221.1.tar.gz", hash = "sha256:ed36c7e80da844bb4df0097e1d49e55fb3d50fb0b0b80bd7d08730e0d5c720f0"},
 ]
 
 [package.dependencies]
@@ -1401,13 +1425,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.35.0"
+version = "0.35.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.35.0-py3-none-any.whl", hash = "sha256:84c679ecb10385a92591818fa5f288dfac67cbcef80e581d208a9932f2fd7a18"},
-    {file = "strawberry_graphql_django-0.35.0.tar.gz", hash = "sha256:8528e190ca71e6202ec05e42e6e10d09a308f435d5dc3952eec78e58b5b1a1cb"},
+    {file = "strawberry_graphql_django-0.35.1-py3-none-any.whl", hash = "sha256:09da5d62c33eacb0e25cd7f5ab179904fd44fb792cb80815a6c99344ffc39bb9"},
+    {file = "strawberry_graphql_django-0.35.1.tar.gz", hash = "sha256:f4c28b8a9b89a74b1a78f88898f3140d758ac2b6ef93d7e2e97e5f4480eea7ef"},
 ]
 
 [package.dependencies]
@@ -1610,4 +1634,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "859f74facc104e5ff2f64babb71eb14d06e3b695ce8c8f2a3fc7a66318934388"
+content-hash = "37e8cbf47e2a20bb2a482bcfee30190e4315419f522af428a5c919b0117cfb89"
