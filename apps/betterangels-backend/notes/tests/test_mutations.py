@@ -415,7 +415,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(1, note.moods.count())
 
-        expected_query_count = 12
+        expected_query_count = 11
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_mood_fixture(variables)
 

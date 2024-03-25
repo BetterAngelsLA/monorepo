@@ -96,8 +96,6 @@ class Mutation:
             #     User.create_client()
 
             permission_group = get_user_permission_group(user)
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
 
             note_data = asdict(data)
             note = resolvers.create(
@@ -174,8 +172,6 @@ class Mutation:
             ).get(id=data.note)
 
             permission_group = get_user_permission_group(user)
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
 
             content_type = ContentType.objects.get_for_model(Note)
             attachment = Attachment.objects.create(
@@ -211,14 +207,13 @@ class Mutation:
             mood_data = asdict(data)
             note_id = str(mood_data.pop("note_id"))
 
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=note_id)
-            permission_group = get_user_permission_group(user)
-
-            if not note or not (permission_group and permission_group.group):
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=note_id)
+            except Note.DoesNotExist:
                 raise PermissionError("User lacks proper organization or permissions")
 
             mood = resolvers.create(
@@ -255,9 +250,6 @@ class Mutation:
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
 
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
-
             service_request_data = asdict(data)
             service_request = resolvers.create(
                 info,
@@ -287,15 +279,16 @@ class Mutation:
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
             note_id = str(service_request_data.pop("note_id"))
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=note_id)
-            permission_group = get_user_permission_group(user)
-
-            if not note or not (permission_group and permission_group.group):
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=note_id)
+            except Note.DoesNotExist:
                 raise PermissionError("User lacks proper organization or permissions")
+
+            permission_group = get_user_permission_group(user)
 
             service_request = resolvers.create(
                 info,
@@ -360,8 +353,6 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
-            if not (permission_group and permission_group.group):
-                raise PermissionError("User lacks proper organization or permissions")
 
             task_data = asdict(data)
             task = resolvers.create(
@@ -390,15 +381,16 @@ class Mutation:
             task_data = asdict(data)
             task_type = str(task_data.pop("task_type"))
             note_id = str(task_data.pop("note_id"))
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=note_id)
-            permission_group = get_user_permission_group(user)
-
-            if not note or not (permission_group and permission_group.group):
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=note_id)
+            except Note.DoesNotExist:
                 raise PermissionError("User lacks proper organization or permissions")
+
+            permission_group = get_user_permission_group(user)
 
             task = resolvers.create(
                 info,

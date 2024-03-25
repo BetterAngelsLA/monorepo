@@ -1,7 +1,8 @@
 from common.models import Attachment
 from django.test.utils import override_settings
+from model_bakery import baker
 from notes.enums import NoteNamespaceEnum
-from notes.models import Note, ServiceRequest, Task
+from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -394,6 +395,184 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 len(response["data"]["noteAttachments"]) == 0,
                 "Should return an empty list for note attachments.",
             )
+
+
+class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_note_mood_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "descriptor": "AGREEABLE",
+            "noteId": self.note["id"],
+        }
+
+        response = self._create_note_mood_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createNoteMood"])
+        else:
+            if user_label == "org_2_case_manager_1":
+                self.assertEqual(
+                    response["errors"][0]["message"],
+                    "User lacks proper organization or permissions",
+                )
+            else:
+                self.assertEqual(
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createNoteMood",
+                        "message": "You don't have permission to access this app.",
+                    },
+                    response["data"]["createNoteMood"]["messages"][0],
+                )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_mood_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+        mood = baker.make(Mood, note_id=self.note["id"])
+        mutation = """
+            mutation DeleteMood($id: ID!) {
+                deleteMood(data: { id: $id }) {
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": mood.pk}
+        self.execute_graphql(mutation, variables)
+
+        self.assertTrue(Mood.objects.filter(id=mood.pk).exists() != should_succeed)
+
+
+class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_note_service_request_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "service": "WATER",
+            "noteId": self.note["id"],
+            "serviceRequestType": "REQUESTED",
+        }
+
+        response = self._create_note_service_request_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createNoteServiceRequest"])
+        else:
+            if user_label == "org_2_case_manager_1":
+                self.assertEqual(
+                    response["errors"][0]["message"],
+                    "User lacks proper organization or permissions",
+                )
+            else:
+                self.assertEqual(
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createNoteServiceRequest",
+                        "message": "You don't have permission to access this app.",
+                    },
+                    response["data"]["createNoteServiceRequest"]["messages"][0],
+                )
+
+
+class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            (
+                "org_1_case_manager_2",
+                True,
+            ),  # Other CM in owner's org should succeed
+            (
+                "org_2_case_manager_1",
+                False,
+            ),  # Other CM in different org should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_note_task_permission(
+        self, user_label: str, should_succeed: bool
+    ) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "title": "New Note Task",
+            "noteId": self.note["id"],
+            "status": "TO_DO",
+            "taskType": "PURPOSE",
+        }
+
+        response = self._create_note_task_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createNoteTask"])
+        else:
+            if user_label == "org_2_case_manager_1":
+                self.assertEqual(
+                    response["errors"][0]["message"],
+                    "User lacks proper organization or permissions",
+                )
+            else:
+                self.assertEqual(
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createNoteTask",
+                        "message": "You don't have permission to access this app.",
+                    },
+                    response["data"]["createNoteTask"]["messages"][0],
+                )
 
 
 class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
