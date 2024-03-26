@@ -135,7 +135,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You do not have permission to modify this item",
+                    "You do not have permission to modify this note.",
                 )
             else:
                 self.assertEqual(
@@ -178,7 +178,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You do not have permission to modify this item",
+                    "You do not have permission to modify this note.",
                 )
             else:
                 self.assertEqual(
@@ -516,7 +516,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You do not have permission to modify this item",
+                    "You do not have permission to modify this note.",
                 )
             else:
                 self.assertEqual(
@@ -602,7 +602,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You do not have permission to modify this item",
+                    "You do not have permission to modify this note.",
                 )
             else:
                 self.assertEqual(
@@ -653,7 +653,7 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You do not have permission to modify this item",
+                    "You do not have permission to modify this note.",
                 )
             else:
                 self.assertEqual(

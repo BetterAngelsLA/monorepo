@@ -276,7 +276,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=data.note_id)
             except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this item")
+                raise PermissionError("You do not have permission to modify this note.")
 
             task = Task.objects.get(id=data.task_id)
 
@@ -300,7 +300,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=data.note_id)
             except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this item")
+                raise PermissionError("You do not have permission to modify this note.")
             task = Task.objects.get(id=data.task_id)
 
             if data.task_type == TaskTypeEnum.PURPOSE:
@@ -327,7 +327,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this item")
+                raise PermissionError("You do not have permission to modify this note.")
 
             mood = resolvers.create(
                 info,
@@ -405,7 +405,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this item")
+                raise PermissionError("You do not have permission to modify this note.")
 
             permission_group = get_user_permission_group(user)
 
@@ -507,7 +507,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this item")
+                raise PermissionError("You do not have permission to modify this note.")
 
             permission_group = get_user_permission_group(user)
 
