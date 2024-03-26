@@ -184,10 +184,10 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
+  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
+  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
+  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
