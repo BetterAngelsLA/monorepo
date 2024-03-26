@@ -68,9 +68,9 @@ export const DELETE_NOTE = gql`
   }
 `;
 
-export const CREATE_SERVICE = gql`
-  mutation CreateServiceRequest($data: CreateServiceRequestInput!) {
-    createServiceRequest(data: $data) {
+export const CREATE_NOTE_SERVICE_REQUEST = gql`
+  mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
+    createNoteServiceRequest(data: $data) {
       ... on ServiceRequestType {
         id
         service
@@ -79,7 +79,7 @@ export const CREATE_SERVICE = gql`
   }
 `;
 
-export const DELETE_SERVICE = gql`
+export const DELETE_SERVICE_REQUEST = gql`
   mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {
     deleteServiceRequest(data: $data) {
       ... on ServiceRequestType {

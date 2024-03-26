@@ -9,7 +9,6 @@ interface IOtherCategoryProps {
   services: {
     id: string | undefined;
     service: string | undefined;
-    status: string;
     customService: string;
   }[];
   toggleServices: (service: string, isCustom: boolean) => void;
