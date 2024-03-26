@@ -313,7 +313,7 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
         with transaction.atomic():
             user = get_current_user(info)
@@ -341,7 +341,7 @@ class Mutation:
 
             return cast(MoodType, mood)
 
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_mood(
         self, info: Info, data: DeleteDjangoObjectInput
     ) -> DeletedObjectType:

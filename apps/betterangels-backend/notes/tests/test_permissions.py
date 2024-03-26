@@ -522,12 +522,8 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
                 )
             else:
                 self.assertEqual(
-                    {
-                        "kind": "PERMISSION",
-                        "field": "createNoteMood",
-                        "message": "You don't have permission to access this app.",
-                    },
-                    response["data"]["createNoteMood"]["messages"][0],
+                    response["errors"][0]["message"],
+                    "You must be logged in to perform this action.",
                 )
         self.assertTrue(
             Mood.objects.filter(note_id=self.note["id"]).exists() == should_succeed
