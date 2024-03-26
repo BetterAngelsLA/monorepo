@@ -7,8 +7,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
-from simple_history.admin import SimpleHistoryAdmin
-from simple_history.models import HistoricalRecords
 
 from .admin_request_mixin import AdminRequestMixin
 from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
@@ -30,7 +28,7 @@ class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitat
     list_filter = ("organization",)
 
 
-class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
+class UserAdmin(BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
     fieldsets = (
@@ -55,8 +53,6 @@ class UserAdmin(SimpleHistoryAdmin, BaseUserAdmin):
     list_display = [
         "email",
     ]
-
-    history = HistoricalRecords()
 
 
 @admin.register(PermissionGroup)

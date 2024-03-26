@@ -104,8 +104,9 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
-    "simple_history",
     "strawberry_django",
+    "pghistory",
+    "pgtrigger",
     # Our Apps
     "accounts",
     "common",
@@ -123,7 +124,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "simple_history.middleware.HistoryRequestMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
 
