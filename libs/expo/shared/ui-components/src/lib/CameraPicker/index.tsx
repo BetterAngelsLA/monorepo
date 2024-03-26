@@ -1,3 +1,4 @@
+import { gql, useMutation } from '@apollo/client';
 import {
   ArrowRotateReverseIcon,
   BoltIcon,
@@ -16,32 +17,57 @@ import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import H5 from '../H5';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
-
-type TImages = string[];
-
 interface ICameraPickerProps {
-  setImages: React.Dispatch<React.SetStateAction<TImages>>;
-  images: TImages;
+  images: { id: string; uri: string }[];
+  setImages: React.Dispatch<
+    React.SetStateAction<{ id: string; uri: string }[]>
+  >;
+  namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images } = props;
+  const { setImages, images, namespace } = props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [createNoteAttachment] = useMutation(gql`
+    mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
+      createNoteAttachment(data: $data) {
+        ... on NoteAttachmentType {
+          id
+        }
+      }
+    }
+  `);
 
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
     if (cameraRef.current) {
-      const quality = 0.8;
-      const photo = await cameraRef.current.takePictureAsync({ quality });
+      try {
+        const quality = 0.8;
+        const photo = await cameraRef.current.takePictureAsync({ quality });
+        const { data } = await createNoteAttachment({
+          variables: {
+            data: {
+              namespace,
+              file: photo?.uri,
+              attachmentType: 'IMAGE',
+            },
+          },
+        });
 
-      if (photo) {
-        setImages([...images, photo.uri]);
+        if (photo) {
+          setImages([
+            ...images,
+            { uri: photo.uri, id: data?.createNoteAttachment.id },
+          ]);
+        }
+        setIsCameraOpen(false);
+      } catch (e) {
+        console.log(e);
       }
-      setIsCameraOpen(false);
     }
   };
 

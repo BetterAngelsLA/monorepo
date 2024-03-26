@@ -67,3 +67,23 @@ export const DELETE_NOTE = gql`
     }
   }
 `;
+
+export const CREATE_NOTE_ATTACHMENT = gql`
+  mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
+    createNoteAttachment(data: $data) {
+      ... on NoteAttachmentType {
+        id
+      }
+    }
+  }
+`;
+
+export const DELETE_NOTE_ATTACHMENT = gql`
+  mutation DeleteNoteAttachment($data: DeleteDjangoObjectInput!) {
+    deleteNoteAttachment(data: $data) {
+      ... on NoteAttachmentType {
+        id
+      }
+    }
+  }
+`;

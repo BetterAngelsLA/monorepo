@@ -8,14 +8,22 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { NoteNamespaceEnum } from '../apollo/gql-types/graphql';
 
 interface IAttachmentsProps {
-  images: string[];
-  setImages: React.Dispatch<React.SetStateAction<string[]>>;
+  images: { id: string; uri: string }[];
+  setImages: React.Dispatch<
+    React.SetStateAction<{ id: string; uri: string }[]>
+  >;
+  namespace:
+    | NoteNamespaceEnum.MoodAssessment
+    | NoteNamespaceEnum.ProvidedServices
+    | NoteNamespaceEnum.RequestedServices;
+  noteId: string | undefined;
 }
 
 export default function Attachments(props: IAttachmentsProps) {
-  const { images, setImages } = props;
+  const { images, setImages, namespace, noteId } = props;
 
   const [width, setWidth] = useState(0);
 
@@ -29,8 +37,18 @@ export default function Attachments(props: IAttachmentsProps) {
       <View style={styles.attach}>
         <BodyText>Attachments</BodyText>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <ImagePicker mr="xs" setImages={setImages} images={images} />
-          <CameraPicker setImages={setImages} images={images} />
+          <ImagePicker
+            noteId={noteId}
+            namespace={namespace}
+            mr="xs"
+            setImages={setImages}
+            images={images}
+          />
+          <CameraPicker
+            namespace={namespace}
+            setImages={setImages}
+            images={images}
+          />
         </View>
       </View>
       <View
@@ -49,7 +67,7 @@ export default function Attachments(props: IAttachmentsProps) {
           >
             <Image
               style={{ height: '100%', width: '100%' }}
-              source={{ uri: image }}
+              source={{ uri: image.uri }}
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
@@ -64,7 +82,7 @@ export default function Attachments(props: IAttachmentsProps) {
             >
               <IconButton
                 onPress={() =>
-                  setImages(images.filter((i: string) => i !== image))
+                  setImages(images.filter((i) => i.uri !== image.uri))
                 }
                 variant="transparent"
                 height="xs"

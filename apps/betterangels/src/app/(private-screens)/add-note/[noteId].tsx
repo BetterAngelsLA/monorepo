@@ -105,6 +105,7 @@ export default function AddNote() {
   const props = {
     expanded,
     setExpanded,
+    noteId,
   };
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {

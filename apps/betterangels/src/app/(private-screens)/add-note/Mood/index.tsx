@@ -1,4 +1,4 @@
-import { Attachments } from '@monorepo/expo/betterangels';
+import { Attachments, NoteNamespaceEnum } from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
   FaceCloudsIcon,
@@ -37,6 +37,7 @@ interface Mood {
 interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 const MOOD_DATA: { [key: string]: Mood[] } = {
@@ -94,7 +95,7 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded } = props;
+  const { expanded, setExpanded, noteId } = props;
   const [tab, setTab] = useState<string>('pleasant');
   const { watch, setValue } = useFormContext();
 
@@ -198,6 +199,8 @@ export default function Mood(props: IMoodProps) {
           </View>
           <MoodSelector moodsData={moodsData} />
           <Attachments
+            noteId={noteId}
+            namespace={NoteNamespaceEnum.MoodAssessment}
             images={moodsImages}
             setImages={(array) => setValue('moodsImages', array)}
           />
