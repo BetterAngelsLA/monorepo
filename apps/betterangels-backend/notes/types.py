@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import List, Optional
 
+import strawberry
 import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
-from notes.enums import NoteNamespaceEnum
+from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, auto
 from strawberry.file_uploads import Upload
@@ -54,6 +55,14 @@ class CreateServiceRequestInput:
     client: Optional[ID]
 
 
+@strawberry_django.input(models.ServiceRequest)
+class CreateNoteServiceRequestInput:
+    service: auto
+    custom_service: Optional[str]
+    note_id: ID
+    service_request_type: ServiceRequestTypeEnum
+
+
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: auto
@@ -82,6 +91,14 @@ class CreateTaskInput:
     client: Optional[ID]
 
 
+@strawberry_django.input(models.Task)
+class CreateNoteTaskInput:
+    title: auto
+    status: auto
+    note_id: ID
+    task_type: TaskTypeEnum
+
+
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
     id: auto
@@ -93,12 +110,28 @@ class UpdateTaskInput:
 
 @strawberry_django.type(models.Mood)
 class MoodType:
+    id: auto
     descriptor: auto
+
+
+@strawberry.input
+class AddNoteTaskInput:
+    task_id: ID
+    note_id: ID
+    task_type: TaskTypeEnum
+
+
+@strawberry.input
+class RemoveNoteTaskInput:
+    task_id: ID
+    note_id: ID
+    task_type: TaskTypeEnum
 
 
 @strawberry_django.input(models.Mood)
-class CreateMoodInput:
+class CreateNoteMoodInput:
     descriptor: auto
+    note_id: ID
 
 
 @strawberry_django.ordering.order(models.Note)
@@ -163,11 +196,6 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    moods: Optional[List[CreateMoodInput]]
-    purposes: Optional[List[ID]]
-    next_steps: Optional[List[ID]]
-    provided_services: Optional[List[ID]]
-    requested_services: Optional[List[ID]]
     public_details: auto
     private_details: auto
     is_submitted: auto
@@ -178,3 +206,8 @@ class UpdateNoteInput:
 class RevertNoteInput:
     id: auto
     saved_at: datetime
+
+
+@strawberry.type
+class DeletedObjectType:
+    id: int

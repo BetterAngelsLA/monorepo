@@ -22,6 +22,14 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+input AddNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union AddNoteTaskPayload = NoteType | OperationInfo
+
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -35,10 +43,6 @@ enum AttachmentType {
   AUDIO
   VIDEO
   UNKNOWN
-}
-
-input CreateMoodInput {
-  descriptor: MoodEnum!
 }
 
 input CreateNoteAttachmentInput {
@@ -56,7 +60,32 @@ input CreateNoteInput {
   client: ID
 }
 
+input CreateNoteMoodInput {
+  descriptor: MoodEnum!
+  noteId: ID!
+}
+
+union CreateNoteMoodPayload = MoodType | OperationInfo
+
 union CreateNotePayload = NoteType | OperationInfo
+
+input CreateNoteServiceRequestInput {
+  service: ServiceEnum!
+  customService: String
+  noteId: ID!
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input CreateNoteTaskInput {
+  title: String!
+  status: TaskStatusEnum!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union CreateNoteTaskPayload = TaskType | OperationInfo
 
 input CreateServiceRequestInput {
   service: ServiceEnum!
@@ -83,6 +112,8 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteMoodPayload = DeletedObjectType | OperationInfo
+
 union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
@@ -90,6 +121,10 @@ union DeleteNotePayload = NoteType | OperationInfo
 union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union DeleteTaskPayload = TaskType | OperationInfo
+
+type DeletedObjectType {
+  id: Int!
+}
 
 type DjangoFileType {
   name: String!
@@ -134,6 +169,7 @@ enum MoodEnum {
 }
 
 type MoodType {
+  id: ID!
   descriptor: MoodEnum!
 }
 
@@ -148,9 +184,15 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
+  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
+  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
+  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
+  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
 }
 
@@ -251,6 +293,14 @@ type Query {
   tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
 
+input RemoveNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union RemoveNoteTaskPayload = NoteType | OperationInfo
+
 input RevertNoteInput {
   id: ID
   savedAt: DateTime!
@@ -296,6 +346,11 @@ type ServiceRequestType {
   createdAt: DateTime!
 }
 
+enum ServiceRequestTypeEnum {
+  PROVIDED
+  REQUESTED
+}
+
 enum TaskStatusEnum {
   COMPLETED
   TO_DO
@@ -311,14 +366,14 @@ type TaskType {
   createdBy: UserType!
 }
 
+enum TaskTypeEnum {
+  PURPOSE
+  NEXT_STEP
+}
+
 input UpdateNoteInput {
   id: ID
   title: String
-  moods: [CreateMoodInput!]
-  purposes: [ID!]
-  nextSteps: [ID!]
-  providedServices: [ID!]
-  requestedServices: [ID!]
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
