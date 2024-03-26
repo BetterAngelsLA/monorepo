@@ -1,5 +1,6 @@
 from typing import Any, Dict, Iterable, Tuple
 
+import pghistory
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -12,11 +13,15 @@ from django.db import models
 from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
-from simple_history.models import HistoricalRecords
 
 
 # TODO: Figure out why User/Group Perms are failing type checks
 # https://github.com/typeddjango/django-stubs/issues/1354
+@pghistory.track(
+    pghistory.InsertEvent("user.add"),
+    pghistory.UpdateEvent("user.update"),
+    pghistory.DeleteEvent("user.remove"),
+)
 class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
@@ -53,8 +58,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
     REQUIRED_FIELDS = []
 
     objects = UserManager()
-
-    history = HistoricalRecords()
 
     organizations_organizationuser: models.QuerySet[OrganizationUser]
 

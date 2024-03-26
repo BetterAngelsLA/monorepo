@@ -86,10 +86,10 @@ django-extensions = "^3.2.3"
 django-guardian = "^2.4.0"
 django-jazzmin = "^2.6.0"
 django-organizations = "^2.2.0"
+django-pghistory = "^3.1.0"
 django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
-django-simple-history = "^3.4.0"
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
@@ -1232,6 +1232,35 @@ linting = ["isort", "ruff"]
 tests = ["coverage", "django-autoslug (>=1.9.8)", "django-extensions (>=2.0.8)", "mock-django (==0.6.9)", "pytest (>=6.0)", "pytest-cov (>=2.4.0)", "pytest-django (>=3.0.0)"]
 
 [[package]]
+name = "django-pghistory"
+version = "3.1.0"
+description = "History tracking for Django and Postgres"
+optional = false
+python-versions = ">=3.8.0,<4"
+files = [
+    {file = "django_pghistory-3.1.0-py3-none-any.whl", hash = "sha256:f9b28258d4b60d8b725045b1c801c3689fe43f4e53d61409c9f753020e17028e"},
+    {file = "django_pghistory-3.1.0.tar.gz", hash = "sha256:c8fe89cb4e4416b70a61eeb865993405c0cd960d6cf60df3b745fffd6cd748b2"},
+]
+
+[package.dependencies]
+django = ">=3"
+django-pgtrigger = ">=4.9.0"
+
+[[package]]
+name = "django-pgtrigger"
+version = "4.11.0"
+description = "Postgres trigger support integrated with Django models."
+optional = false
+python-versions = ">=3.8.0,<4"
+files = [
+    {file = "django_pgtrigger-4.11.0-py3-none-any.whl", hash = "sha256:44bb04b240f2b09add0f62aad9d02fc0e3698e88a1b7fe9840eb7fd4786ae9e7"},
+    {file = "django_pgtrigger-4.11.0.tar.gz", hash = "sha256:35843058d6fb6e0077d26e111f121852130b2e1d77e739077efbb2dae3d67f80"},
+]
+
+[package.dependencies]
+django = ">=3"
+
+[[package]]
 name = "django-post-office"
 version = "3.8.0"
 description = "A Django app to monitor and send mail asynchronously, complete with template support."
@@ -1287,20 +1316,6 @@ django = ">=3.2"
 
 [package.extras]
 ua = ["ua-parser (>=0.15)"]
-
-[[package]]
-name = "django-simple-history"
-version = "3.5.0"
-description = "Store model history and view/revert changes from admin site."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "django-simple-history-3.5.0.tar.gz", hash = "sha256:eef2943d7c846270f11c8136f38a3ba00de2bebd7b1b89037de5d9b148ed677a"},
-    {file = "django_simple_history-3.5.0-py3-none-any.whl", hash = "sha256:0030b3bb5ed219d6453320213e75cfa00dab7a381946124df9411729101c8874"},
-]
-
-[package.dependencies]
-asgiref = ">=3.6"
 
 [[package]]
 name = "django-storages"

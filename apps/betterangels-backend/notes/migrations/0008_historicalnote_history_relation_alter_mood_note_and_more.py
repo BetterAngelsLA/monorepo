@@ -5,7 +5,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 import django_choices_field.fields
 import notes.enums
-import simple_history.models
 
 
 class Migration(migrations.Migration):
@@ -30,7 +29,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="mood",
             name="note",
-            field=simple_history.models.HistoricForeignKey(
+            # NOTE: simple_history dep has been deprecated
+            # field=simple_history.models.HistoricForeignKey(
+            field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="moods",
                 to="notes.note",
@@ -106,7 +107,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "note",
-                    simple_history.models.HistoricForeignKey(
+                    # NOTE: simple_history dep has been deprecated
+                    # simple_history.models.HistoricForeignKey(
+                    models.ForeignKey(
                         blank=True,
                         db_constraint=False,
                         null=True,
@@ -122,6 +125,8 @@ class Migration(migrations.Migration):
                 "ordering": ("-history_date", "-history_id"),
                 "get_latest_by": ("history_date", "history_id"),
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
     ]
