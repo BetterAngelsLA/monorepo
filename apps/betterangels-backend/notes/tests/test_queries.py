@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
+import time_machine
 from django.test import ignore_warnings, override_settings
-from freezegun import freeze_time
 from notes.enums import NoteNamespaceEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
@@ -13,7 +13,7 @@ from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
-@freeze_time("03-12-2024 10:11:12")
+@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -324,8 +324,8 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
         )
 
 
-@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -410,8 +410,8 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertEqual(self.service_request, service_requests[0])
 
 
-@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
