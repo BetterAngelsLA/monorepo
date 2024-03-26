@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from typing import List, cast
 
 import pghistory
@@ -160,58 +159,68 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        revert_to_context_id: uuid.UUID | None = None
-        contexts_to_delete: list[uuid.UUID] = []
+        try:
+            with transaction.atomic():
+                saved_at = data.saved_at.isoformat()
+                context_qs = Context.objects.filter(metadata__label="updateNote")
 
-        for context in Context.objects.filter(metadata__label="updateNote").order_by(
-            "-metadata__timestamp"
-        ):
-            timestamp = datetime.fromisoformat(
-                context.metadata["timestamp"].replace("Z", "+00:00")
-            )
-
-            if timestamp > data.saved_at:
-                contexts_to_delete.append(context.id)
-            else:
-                revert_to_context_id = context.id
-                break
-
-        if revert_to_context_id is None:
-            raise Exception("Nothing to revert")
-
-        # First, delete any models that were associated with the Note instance
-        # in contexts that were created AFTER the selected saved_at time
-        for event in Events.objects.filter(
-            pgh_context_id__in=contexts_to_delete
-        ).exclude(pgh_model="notes.NoteEvent"):
-            action = event.pgh_label.split(".")[1]
-            if apps.get_model(event.pgh_model).pgh_tracked_model._meta.proxy:
-                apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
-                    action=action, **event.pgh_data
+                # Find context for most recent Note update before saved_at time
+                revert_to_context = (
+                    context_qs.filter(metadata__timestamp__lte=saved_at)
+                    .order_by("-metadata__timestamp")
+                    .first()
                 )
 
-            else:
-                try:
+                if revert_to_context is None:
+                    raise Exception("Nothing to revert")
+
+                # Find contexts for updates that occurred AFTER saved_at time
+                contexts_to_delete: list[uuid.UUID] = list(
+                    context_qs.filter(metadata__timestamp__gt=saved_at).values_list(
+                        "id", flat=True
+                    )
+                )
+
+                # Revert any models that were associated with the Note instance
+                # in contexts created AFTER the saved_at time
+                for event in Events.objects.filter(
+                    pgh_context_id__in=contexts_to_delete
+                ).exclude(pgh_model="notes.NoteEvent"):
+                    action = event.pgh_label.split(".")[1]
+                    if apps.get_model(event.pgh_model).pgh_tracked_model._meta.proxy:
+                        apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
+                            action=action, **event.pgh_data
+                        )
+
+                    else:
+                        try:
+                            apps.get_model(event.pgh_model).objects.get(
+                                id=event.pgh_obj_id,
+                                pgh_context_id__in=contexts_to_delete,
+                            ).pgh_obj.revert_action(action=action)
+
+                        except ObjectDoesNotExist:
+                            # if object has alreay been deleted, it will be
+                            # restored in the next section
+                            pass
+
+                # Revert all the tracked models to the states they were in
+                # at context just BEFORE the selected saved_at time
+                for event in Events.objects.filter(
+                    pgh_context_id=revert_to_context.id
+                ).exclude(pgh_obj_id=None):
                     apps.get_model(event.pgh_model).objects.get(
-                        id=event.pgh_obj_id, pgh_context_id__in=contexts_to_delete
-                    ).pgh_obj.revert_action(action=action)
+                        pgh_context_id=revert_to_context.id, id=event.pgh_obj_id
+                    ).revert()
 
-                except ObjectDoesNotExist:
-                    pass
-                    # if object has alreay been deleted, it will be
-                    # restored in the next section
+                reverted_note = Note.objects.get(id=data.id)
 
-        # Next, revert all the tracked models to the states they were in at context
-        # just BEFORE the selected saved_at time
-        for event in Events.objects.filter(pgh_context_id=revert_to_context_id):
-            if event.pgh_obj_id:
-                apps.get_model(event.pgh_model).objects.get(
-                    pgh_context_id=revert_to_context_id, id=event.pgh_obj_id
-                ).revert()
+                return cast(NoteType, reverted_note)
 
-        reverted_note = Note.objects.get(id=data.id)
+        except Exception:
+            note = Note.objects.get(id=data.id)
 
-        return cast(NoteType, reverted_note)
+            return cast(NoteType, note)
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,

@@ -1,4 +1,4 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 from common.models import Attachment
 from django.test import ignore_warnings, override_settings
@@ -200,7 +200,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 25
+        expected_query_count = 28
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -265,7 +265,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 32
+        expected_query_count = 35
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -361,7 +361,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 31
+        expected_query_count = 34
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -461,7 +461,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 31
+        expected_query_count = 34
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, {"data": variables})
 
@@ -472,6 +472,80 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(reverted_note["requestedServices"]), 2)
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
+
+    def test_revert_note_mutation_fails_in_atomic_transaction(
+        self,
+    ) -> None:
+        """
+        Asserts that when revertNote mutation fails, the Note and is not
+        partially updated.
+        """
+        note_id = self.note["id"]
+
+        update_variables = {"id": note_id, "title": "Updated Title"}
+        response = self._update_note_fixture(update_variables)
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be discarded
+        discarded_update_variables = {
+            "id": note_id,
+            "title": "Discarded Title",
+            "moods": [{"descriptor": "ANXIOUS"}],
+            "purposes": [self.purposes[0].pk],
+            "nextSteps": [self.next_steps[0].pk],
+            "providedServices": [self.provided_services[0].pk],
+            "requestedServices": [self.requested_services[0].pk],
+            "publicDetails": "Discarded Body",
+            "isSubmitted": False,
+        }
+        response = self._update_note_fixture(discarded_update_variables)
+        returned_note = response["data"]["updateNote"]
+        self.assertEqual(len(returned_note["moods"]), 1)
+        self.assertEqual(len(returned_note["purposes"]), 1)
+        self.assertEqual(len(returned_note["nextSteps"]), 1)
+        self.assertEqual(len(returned_note["providedServices"]), 1)
+        self.assertEqual(len(returned_note["requestedServices"]), 1)
+
+        mutation = """
+            mutation RevertNote($data: RevertNoteInput!) {
+                revertNote(data: $data) {
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                        purposes {
+                            id
+                        }
+                        nextSteps {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                        requestedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
+            response = self.execute_graphql(mutation, {"data": variables})
+
+        reverted_note = response["data"]["revertNote"]
+        self.assertEqual(len(reverted_note["purposes"]), 1)
+        self.assertEqual(len(reverted_note["nextSteps"]), 1)
+        self.assertEqual(len(reverted_note["providedServices"]), 1)
+        self.assertEqual(len(reverted_note["requestedServices"]), 1)
+        self.assertEqual(reverted_note["title"], "Discarded Title")
+        self.assertEqual(reverted_note["publicDetails"], "Discarded Body")
 
     def test_delete_note_mutation(self) -> None:
         mutation = """
