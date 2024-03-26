@@ -22,6 +22,14 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+input AddNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union AddNoteTaskPayload = NoteType | OperationInfo
+
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -176,6 +184,8 @@ type Mutation {
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
@@ -282,6 +292,14 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
+
+input RemoveNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
   id: ID

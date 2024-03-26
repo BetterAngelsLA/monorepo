@@ -28,6 +28,7 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
+    AddNoteTaskInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
     CreateNoteMoodInput,
@@ -40,6 +41,7 @@ from .types import (
     NoteAttachmentType,
     NoteFilter,
     NoteType,
+    RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
     TaskType,
@@ -198,6 +200,36 @@ class Mutation:
             HasRetvalPerm(perms=AttachmentPermissions.DELETE),
         ],
     )
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
+        with transaction.atomic():
+            note = Note.objects.get(id=data.note_id)
+            task = Task.objects.get(id=data.task_id)
+
+            if data.task_type == TaskTypeEnum.PURPOSE:
+                note.purposes.add(task)
+            elif data.task_type == TaskTypeEnum.NEXT_STEP:
+                note.next_steps.add(task)
+            else:
+                raise NotImplementedError
+
+            return cast(NoteType, note)
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
+        with transaction.atomic():
+            note = Note.objects.get(id=data.note_id)
+            task = Task.objects.get(id=data.task_id)
+
+            if data.task_type == TaskTypeEnum.PURPOSE:
+                note.purposes.remove(task)
+            elif data.task_type == TaskTypeEnum.NEXT_STEP:
+                note.next_steps.remove(task)
+            else:
+                raise NotImplementedError
+
+            return cast(NoteType, note)
 
     @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:

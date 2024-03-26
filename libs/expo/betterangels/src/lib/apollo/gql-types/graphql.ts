@@ -19,6 +19,14 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export type AddNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  taskId: Scalars['ID']['input'];
+  taskType: TaskTypeEnum;
+};
+
+export type AddNoteTaskPayload = NoteType | OperationInfo;
+
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
   file: DjangoFileType;
@@ -165,6 +173,7 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addNoteTask: AddNoteTaskPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -179,10 +188,16 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
+  removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
   updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
+};
+
+
+export type MutationAddNoteTaskArgs = {
+  data: AddNoteTaskInput;
 };
 
 
@@ -248,6 +263,11 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
+};
+
+
+export type MutationRemoveNoteTaskArgs = {
+  data: RemoveNoteTaskInput;
 };
 
 
@@ -442,6 +462,14 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type RemoveNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  taskId: Scalars['ID']['input'];
+  taskType: TaskTypeEnum;
+};
+
+export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;

@@ -327,7 +327,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps", 40),
         ],
     )
-    def test_create_note_task(
+    def test_create_note_task_mutation(
         self, task_type: str, tasks_to_check: str, expected_query_count: int
     ) -> None:
         variables = {
@@ -365,7 +365,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("PROVIDED", "provided_services", "COMPLETED", 33),
         ],
     )
-    def test_create_note_service_request(
+    def test_create_note_service_request_mutation(
         self,
         service_request_type: str,
         service_requests_to_check: str,
@@ -404,6 +404,99 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             service_request["id"],
             str(getattr(note, service_requests_to_check).get().id),
         )
+
+    @parametrize(
+        "task_type, tasks_to_check",
+        [
+            ("PURPOSE", "purposes"),
+            ("NEXT_STEP", "next_steps"),
+        ],
+    )
+    def test_add_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
+        variables = {
+            "noteId": self.note["id"],
+            "taskId": self.purposes[0].pk,
+            "taskType": task_type,
+        }
+
+        note = Note.objects.get(id=self.note["id"])
+        self.assertEqual(0, getattr(note, tasks_to_check).count())
+
+        expected_query_count = 19
+        with self.assertNumQueries(expected_query_count):
+            response = self._add_note_task_fixture(variables)
+
+        expected_note = {
+            "id": self.note["id"],
+            "purposes": (
+                [
+                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                ]
+                if tasks_to_check == "purposes"
+                else []
+            ),
+            "nextSteps": (
+                [
+                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                ]
+                if tasks_to_check == "next_steps"
+                else []
+            ),
+        }
+        returned_note = response["data"]["addNoteTask"]
+        self.assertEqual(expected_note, returned_note)
+        self.assertEqual(1, getattr(note, tasks_to_check).count())
+        self.assertEqual(self.purposes[0].pk, getattr(note, tasks_to_check).get().id)
+
+    @parametrize(
+        "task_type, tasks_to_check",
+        [
+            ("PURPOSE", "purposes"),
+            ("NEXT_STEP", "next_steps"),
+        ],
+    )
+    def test_remove_note_task_mutation(
+        self, task_type: str, tasks_to_check: str
+    ) -> None:
+        variables = {
+            "noteId": self.note["id"],
+            "taskId": getattr(self, tasks_to_check)[0].pk,
+            "taskType": task_type,
+        }
+
+        note = Note.objects.get(id=self.note["id"])
+        note.purposes.add(self.purposes[0])
+        note.next_steps.add(self.next_steps[0])
+        self.assertEqual(1, note.purposes.count())
+        self.assertEqual(1, note.next_steps.count())
+
+        expected_query_count = 18
+        with self.assertNumQueries(expected_query_count):
+            response = self._remove_note_task_fixture(variables)
+
+        expected_note = {
+            "id": self.note["id"],
+            "purposes": (
+                []
+                if tasks_to_check == "purposes"
+                else [
+                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                ]
+            ),
+            "nextSteps": (
+                []
+                if tasks_to_check == "next_steps"
+                else [
+                    {
+                        "id": str(self.next_steps[0].id),
+                        "title": self.next_steps[0].title,
+                    },
+                ]
+            ),
+        }
+        returned_note = response["data"]["removeNoteTask"]
+        self.assertEqual(expected_note, returned_note)
+        self.assertEqual(0, getattr(note, tasks_to_check).count())
 
     def test_create_note_mood_mutation(self) -> None:
         baker.make(Mood, note_id=self.note["id"])

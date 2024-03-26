@@ -139,6 +139,60 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _add_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation AddNoteTask($data: AddNoteTaskInput!) {
+                addNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteTask($data: RemoveNoteTaskInput!) {
+                removeNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteMood($data: CreateNoteMoodInput!) {

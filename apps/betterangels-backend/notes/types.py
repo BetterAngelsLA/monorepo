@@ -114,6 +114,20 @@ class MoodType:
     descriptor: auto
 
 
+@strawberry.input
+class AddNoteTaskInput:
+    task_id: ID
+    note_id: ID
+    task_type: TaskTypeEnum
+
+
+@strawberry.input
+class RemoveNoteTaskInput:
+    task_id: ID
+    note_id: ID
+    task_type: TaskTypeEnum
+
+
 @strawberry_django.input(models.Mood)
 class CreateNoteMoodInput:
     descriptor: auto
