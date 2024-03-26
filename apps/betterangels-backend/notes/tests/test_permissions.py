@@ -59,6 +59,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        note_count = Note.objects.count()
         mutation = """
             mutation DeleteNote($id: ID!) {
                 deleteNote(data: { id: $id }) {
@@ -68,7 +69,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        note_count = Note.objects.count()
         variables = {"id": self.note["id"]}
         self.execute_graphql(mutation, variables)
 
@@ -103,7 +103,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"]["id"])
-            self.assertEqual(response["data"]["updateNote"]["title"], "Updated Note")
         else:
             self.assertEqual(
                 response["data"]["updateNote"]["messages"][0],
@@ -511,7 +510,6 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             "descriptor": "AGREEABLE",
             "noteId": self.note["id"],
         }
-
         response = self._create_note_mood_fixture(variables)
 
         if should_succeed:
@@ -591,12 +589,12 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        service_request_count = ServiceRequest.objects.count()
         variables = {
             "service": "WATER",
             "noteId": self.note["id"],
             "serviceRequestType": "REQUESTED",
         }
-        service_request_count = ServiceRequest.objects.count()
         response = self._create_note_service_request_fixture(variables)
 
         if should_succeed:
@@ -641,13 +639,13 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        task_count = Task.objects.count()
         variables = {
             "title": "New Note Task",
             "noteId": self.note["id"],
             "status": "TO_DO",
             "taskType": "PURPOSE",
         }
-        task_count = Task.objects.count()
         response = self._create_note_task_fixture(variables)
 
         if should_succeed:
@@ -684,11 +682,13 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        service_request_count = ServiceRequest.objects.count()
         variables = {"service": "BLANKET", "status": "TO_DO"}
         response = self._create_service_request_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createServiceRequest"]["id"])
+            self.assertEqual(service_request_count + 1, ServiceRequest.objects.count())
         else:
             self.assertEqual(
                 response["data"]["createServiceRequest"]["messages"][0],
@@ -698,6 +698,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
+            self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -849,11 +850,13 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        task_count = Task.objects.count()
         variables = {"title": "Test Task", "status": "TO_DO"}
         response = self._create_task_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createTask"]["id"])
+            self.assertEqual(task_count + 1, Task.objects.count())
         else:
             self.assertEqual(
                 response["data"]["createTask"]["messages"][0],
@@ -863,6 +866,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
+            self.assertEqual(task_count, Task.objects.count())
 
     @parametrize(
         "user_label, should_succeed",

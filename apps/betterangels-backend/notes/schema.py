@@ -8,6 +8,7 @@ from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
+from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -18,7 +19,6 @@ from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
-    IsAuthenticated,
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
