@@ -21,24 +21,30 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
+        # Update fields available on the note input
         self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "moods": [
-                    {"descriptor": "ANXIOUS"},
-                    {"descriptor": "EUTHYMIC"},
-                ],
-                "purposes": [t.id for t in self.purposes],
-                "nextSteps": [t.id for t in self.next_steps],
-                "providedServices": [t.id for t in self.provided_services],
-                "requestedServices": [t.id for t in self.requested_services],
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
                 "timestamp": "2024-03-12T11:12:13+00:00",
             }
         )
+        # Add moods
+        self._create_note_mood_fixture(
+            {"descriptor": "ANXIOUS", "noteId": note_id},
+        )
+        self._create_note_mood_fixture(
+            {"descriptor": "EUTHYMIC", "noteId": note_id},
+        )
+        # Add purposes and next steps
+        note = Note.objects.get(pk=note_id)
+        note.purposes.set(self.purposes)
+        note.next_steps.set(self.next_steps)
+        note.provided_services.set(self.provided_services)
+        note.requested_services.set(self.requested_services)
 
         query = """
             query ViewNote($id: ID!) {
@@ -82,10 +88,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id}
         expected_query_count = 7
-
-        note = Note.objects.get(id=note_id)
-        note.purposes.add(*self.purposes)
-        note.next_steps.add(*self.next_steps)
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
