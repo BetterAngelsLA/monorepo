@@ -62,3 +62,15 @@ class TaskStatusEnum(models.TextChoices):
 class ServiceRequestStatusEnum(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     TO_DO = "to_do", _("To Do")
+
+
+@strawberry.enum
+class TaskTypeEnum(models.TextChoices):
+    PURPOSE = "purpose", "Purpose"
+    NEXT_STEP = "next_step", "Next Step"
+
+
+@strawberry.enum
+class ServiceRequestTypeEnum(models.TextChoices):
+    PROVIDED = "provided", "Provided"
+    REQUESTED = "requested", "Requested"

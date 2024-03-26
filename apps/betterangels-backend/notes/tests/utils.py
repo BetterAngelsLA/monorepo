@@ -139,6 +139,140 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _add_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation AddNoteTask($data: AddNoteTaskInput!) {
+                addNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteTask($data: RemoveNoteTaskInput!) {
+                removeNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteMood($data: CreateNoteMoodInput!) {
+                createNoteMood(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on MoodType {
+                        id
+                        descriptor
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteTask($data: CreateNoteTaskInput!) {
+                createNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        title
+                        status
+                        dueBy
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
+                createNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                        service
+                        customService
+                        status
+                        dueBy
+                        completedOn
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _create_note_attachment_fixture(
         self,
         note_id: str,
