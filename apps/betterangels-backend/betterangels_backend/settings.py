@@ -26,6 +26,12 @@ env = environ.Env(
     AWS_REGION=(str, "us-west-2"),
     AWS_SES_REGION_NAME=(str, ""),
     AWS_SES_REGION_ENDPOINT=(str, "email.us-west-2.amazonaws.com"),
+    AWS_S3_STORAGE_BUCKET_NAME=(str, ""),
+    AWS_S3_CUSTOM_DOMAIN=(str, ""),
+    AWS_S3_MEDIA_STORAGE_ENABLED=(bool, False),
+    AWS_CLOUDFRONT_KEY=(str, ""),
+    AWS_CLOUDFRONT_KEY_ID=(str, ""),
+    AWS_CLOUDFRONT_MEDIA_LOCATION=(str, "media"),
     CELERY_BROKER_URL=(str, ""),
     CELERY_REDBEAT_REDIS_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
@@ -98,8 +104,9 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
-    "simple_history",
     "strawberry_django",
+    "pghistory",
+    "pgtrigger",
     # Our Apps
     "accounts",
     "common",
@@ -117,7 +124,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "simple_history.middleware.HistoryRequestMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
 
@@ -259,6 +265,25 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+
+# Storage Settings
+if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": env("AWS_S3_STORAGE_BUCKET_NAME"),
+                "cloudfront_key": env("AWS_CLOUDFRONT_KEY").encode("ascii"),
+                "cloudfront_key_id": env("AWS_CLOUDFRONT_KEY_ID"),
+                "custom_domain": env("AWS_S3_CUSTOM_DOMAIN"),
+                "location": env("AWS_CLOUDFRONT_MEDIA_LOCATION"),
+                "signature_version": "s3v4",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 
 # Static files (CSS, JavaScript, Images)

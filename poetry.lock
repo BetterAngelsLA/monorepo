@@ -16,13 +16,13 @@ vine = ">=5.0.0,<6.0.0"
 
 [[package]]
 name = "asgiref"
-version = "3.7.2"
+version = "3.8.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "asgiref-3.7.2-py3-none-any.whl", hash = "sha256:89b2ef2247e3b562a16eef663bc0e2e703ec6468e2fa8a5cd61cd449786d4f6e"},
-    {file = "asgiref-3.7.2.tar.gz", hash = "sha256:9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed"},
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
 ]
 
 [package.extras]
@@ -86,10 +86,11 @@ django-extensions = "^3.2.3"
 django-guardian = "^2.4.0"
 django-jazzmin = "^2.6.0"
 django-organizations = "^2.2.0"
+django-pghistory = "^3.1.0"
 django-post-office = "^3.7.1"
 django-ses = "^3.5.0"
 django-sesame = "^3.2.1"
-django-simple-history = "^3.4.0"
+django-storages = {version = "^1.14.2", extras = ["s3"]}
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.2.3"
 psycopg = "3.1.10"
@@ -177,17 +178,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.65"
+version = "1.34.69"
 description = "The AWS SDK for Python"
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.65-py3-none-any.whl", hash = "sha256:b611de58ab28940a36c77d7ef9823427ebf25d5ee8277b802f9979b14e780534"},
-    {file = "boto3-1.34.65.tar.gz", hash = "sha256:db97f9c29f1806cf9020679be0dd5ffa2aff2670e28e0e2046f98b979be498a4"},
+    {file = "boto3-1.34.69-py3-none-any.whl", hash = "sha256:2e25ef6bd325217c2da329829478be063155897d8d3b29f31f7f23ab548519b1"},
+    {file = "boto3-1.34.69.tar.gz", hash = "sha256:898a5fed26b1351352703421d1a8b886ef2a74be6c97d5ecc92432ae01fda203"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.65,<1.35.0"
+botocore = ">=1.34.69,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -196,13 +197,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.65"
-description = "Type annotations for boto3 1.34.65 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.69"
+description = "Type annotations for boto3 1.34.69 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.65.tar.gz", hash = "sha256:105da4a04dcb5e4ddc90f21ab8b24a3423ecfacb4775b8ccd3879574e5dce358"},
-    {file = "boto3_stubs-1.34.65-py3-none-any.whl", hash = "sha256:2afd696c8bb4daf8890ecd75a720e1733cd8b8556eaecc92c36f9b56fc6013bd"},
+    {file = "boto3-stubs-1.34.69.tar.gz", hash = "sha256:93fb4f8640cd01a70e9d3c94395c67fb6197f5e6623d2f39f18357b5b9adbdfc"},
+    {file = "boto3_stubs-1.34.69-py3-none-any.whl", hash = "sha256:804984bfdc3651762894b961892db9d455b1da6d92c904b14d9dd0f3bf8d06be"},
 ]
 
 [package.dependencies]
@@ -260,7 +261,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.65)", "botocore (==1.34.65)"]
+boto3 = ["boto3 (==1.34.69)", "botocore (==1.34.69)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -603,13 +604,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.65"
+version = "1.34.69"
 description = "Low-level, data-driven core of boto 3."
 optional = false
-python-versions = ">= 3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.65-py3-none-any.whl", hash = "sha256:3b0012d7293880c0a4883883047e93f2888d7317b5e9e8a982a991b90d951f3e"},
-    {file = "botocore-1.34.65.tar.gz", hash = "sha256:399a1b1937f7957f0ee2e0df351462b86d44986b795ced980c11eb768b0e61c5"},
+    {file = "botocore-1.34.69-py3-none-any.whl", hash = "sha256:d3802d076d4d507bf506f9845a6970ce43adc3d819dd57c2791f5c19ed6e5950"},
+    {file = "botocore-1.34.69.tar.gz", hash = "sha256:d1ab2bff3c2fd51719c2021d9fa2f30fbb9ed0a308f69e9a774ac92c8091380a"},
 ]
 
 [package.dependencies]
@@ -622,13 +623,13 @@ crt = ["awscrt (==0.19.19)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.65"
+version = "1.34.69"
 description = "Type annotations and code completion for botocore"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "botocore_stubs-1.34.65-py3-none-any.whl", hash = "sha256:2f0bae0f8d934cb3446ecec9813aa365407bd7b98586280feb8cfc75a40b4513"},
-    {file = "botocore_stubs-1.34.65.tar.gz", hash = "sha256:7c510adb2c6ffee2e2a5f198c1030bb8edff2136ee56e46729c02ea37b2424a5"},
+    {file = "botocore_stubs-1.34.69-py3-none-any.whl", hash = "sha256:0c3835c775db1387246c1ba8063b197604462fba8603d9b36b5dc60297197b2f"},
+    {file = "botocore_stubs-1.34.69.tar.gz", hash = "sha256:463248fd1d6e7b68a0c57bdd758d04c6bd0c5c2c3bfa81afdf9d64f0930b59bc"},
 ]
 
 [package.dependencies]
@@ -913,13 +914,13 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "click-didyoumean"
-version = "0.3.0"
+version = "0.3.1"
 description = "Enables git-like *did-you-mean* feature in click"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.6.2"
 files = [
-    {file = "click-didyoumean-0.3.0.tar.gz", hash = "sha256:f184f0d851d96b6d29297354ed981b7dd71df7ff500d82fa6d11f0856bee8035"},
-    {file = "click_didyoumean-0.3.0-py3-none-any.whl", hash = "sha256:a0713dc7a1de3f06bc0df5a9567ad19ead2d3d5689b434768a6145bff77c0667"},
+    {file = "click_didyoumean-0.3.1-py3-none-any.whl", hash = "sha256:5c4bb6007cfea5f2fd6583a2fb6701a22a41eb98957e63d0fac41c10e7c3117c"},
+    {file = "click_didyoumean-0.3.1.tar.gz", hash = "sha256:4f82fdff0dbe64ef8ab2279bd6aa3f6a99c3b28c05aa09cbfc07c9d7fbb5a463"},
 ]
 
 [package.dependencies]
@@ -1197,13 +1198,13 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-jazzmin"
-version = "2.6.0"
+version = "2.6.1"
 description = "Drop-in theme for django admin, that utilises AdminLTE 3 & Bootstrap 4 to make yo' admin look jazzy"
 optional = false
 python-versions = ">=3.6.2"
 files = [
-    {file = "django_jazzmin-2.6.0-py3-none-any.whl", hash = "sha256:fb554c2d564649c65243b13385121fdbdda58521f49544f9d7cb9c414a4908d4"},
-    {file = "django_jazzmin-2.6.0.tar.gz", hash = "sha256:5bb07055cf19183030724f976904fd8b6337559727959340a43832fab0531812"},
+    {file = "django_jazzmin-2.6.1-py3-none-any.whl", hash = "sha256:666cfdbafa59723becef35541698b28e4c97a5c1eba67ef139d4f1c9c615830a"},
+    {file = "django_jazzmin-2.6.1.tar.gz", hash = "sha256:d2c05307302cbf4335002a1b709e2ab2c2129322db43c14bdbfd8c28bdde5a81"},
 ]
 
 [package.dependencies]
@@ -1229,6 +1230,35 @@ dev = ["django-organizations[linting,tests]", "pre-commit", "tox"]
 docs = ["furo (==2023.9.10)", "sphinx (==7.2.6)"]
 linting = ["isort", "ruff"]
 tests = ["coverage", "django-autoslug (>=1.9.8)", "django-extensions (>=2.0.8)", "mock-django (==0.6.9)", "pytest (>=6.0)", "pytest-cov (>=2.4.0)", "pytest-django (>=3.0.0)"]
+
+[[package]]
+name = "django-pghistory"
+version = "3.1.0"
+description = "History tracking for Django and Postgres"
+optional = false
+python-versions = ">=3.8.0,<4"
+files = [
+    {file = "django_pghistory-3.1.0-py3-none-any.whl", hash = "sha256:f9b28258d4b60d8b725045b1c801c3689fe43f4e53d61409c9f753020e17028e"},
+    {file = "django_pghistory-3.1.0.tar.gz", hash = "sha256:c8fe89cb4e4416b70a61eeb865993405c0cd960d6cf60df3b745fffd6cd748b2"},
+]
+
+[package.dependencies]
+django = ">=3"
+django-pgtrigger = ">=4.9.0"
+
+[[package]]
+name = "django-pgtrigger"
+version = "4.11.0"
+description = "Postgres trigger support integrated with Django models."
+optional = false
+python-versions = ">=3.8.0,<4"
+files = [
+    {file = "django_pgtrigger-4.11.0-py3-none-any.whl", hash = "sha256:44bb04b240f2b09add0f62aad9d02fc0e3698e88a1b7fe9840eb7fd4786ae9e7"},
+    {file = "django_pgtrigger-4.11.0.tar.gz", hash = "sha256:35843058d6fb6e0077d26e111f121852130b2e1d77e739077efbb2dae3d67f80"},
+]
+
+[package.dependencies]
+django = ">=3"
 
 [[package]]
 name = "django-post-office"
@@ -1288,18 +1318,28 @@ django = ">=3.2"
 ua = ["ua-parser (>=0.15)"]
 
 [[package]]
-name = "django-simple-history"
-version = "3.5.0"
-description = "Store model history and view/revert changes from admin site."
+name = "django-storages"
+version = "1.14.2"
+description = "Support for many storage backends in Django"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "django-simple-history-3.5.0.tar.gz", hash = "sha256:eef2943d7c846270f11c8136f38a3ba00de2bebd7b1b89037de5d9b148ed677a"},
-    {file = "django_simple_history-3.5.0-py3-none-any.whl", hash = "sha256:0030b3bb5ed219d6453320213e75cfa00dab7a381946124df9411729101c8874"},
+    {file = "django-storages-1.14.2.tar.gz", hash = "sha256:51b36af28cc5813b98d5f3dfe7459af638d84428c8df4a03990c7d74d1bea4e5"},
+    {file = "django_storages-1.14.2-py3-none-any.whl", hash = "sha256:1db759346b52ada6c2efd9f23d8241ecf518813eb31db9e2589207174f58f6ad"},
 ]
 
 [package.dependencies]
-asgiref = ">=3.6"
+boto3 = {version = ">=1.4.4", optional = true, markers = "extra == \"s3\""}
+Django = ">=3.2"
+
+[package.extras]
+azure = ["azure-core (>=1.13)", "azure-storage-blob (>=12)"]
+boto3 = ["boto3 (>=1.4.4)"]
+dropbox = ["dropbox (>=7.2.1)"]
+google = ["google-cloud-storage (>=1.27)"]
+libcloud = ["apache-libcloud"]
+s3 = ["boto3 (>=1.4.4)"]
+sftp = ["paramiko (>=1.15)"]
 
 [[package]]
 name = "django-stubs"
@@ -1340,13 +1380,13 @@ typing-extensions = "*"
 
 [[package]]
 name = "djangorestframework"
-version = "3.15.0"
+version = "3.15.1"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "djangorestframework-3.15.0-py3-none-any.whl", hash = "sha256:5fa616048a7ec287fdaab3148aa5151efb73f7f8be1e23a9d18484e61e672695"},
-    {file = "djangorestframework-3.15.0.tar.gz", hash = "sha256:3f4a263012e1b263bf49a4907eb4cfe14de840a09b1ba64596d01a9c54835919"},
+    {file = "djangorestframework-3.15.1-py3-none-any.whl", hash = "sha256:3ccc0475bce968608cf30d07fb17d8e52d1d7fc8bfe779c905463200750cbca6"},
+    {file = "djangorestframework-3.15.1.tar.gz", hash = "sha256:f88fad74183dfc7144b2756d0d2ac716ea5b4c7c9840995ac3bfd8ec034333c1"},
 ]
 
 [package.dependencies]
@@ -1460,20 +1500,6 @@ flake8 = ">=6.0.0"
 
 [package.extras]
 dev = ["coverage", "hypothesis", "hypothesmith (>=0.2)", "pre-commit", "pytest", "tox"]
-
-[[package]]
-name = "freezegun"
-version = "1.4.0"
-description = "Let your Python tests travel through time"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "freezegun-1.4.0-py3-none-any.whl", hash = "sha256:55e0fc3c84ebf0a96a5aa23ff8b53d70246479e9a68863f1fcac5a3e52f19dd6"},
-    {file = "freezegun-1.4.0.tar.gz", hash = "sha256:10939b0ba0ff5adaecf3b06a5c2f73071d9678e507c5eaedb23c761d56ac774b"},
-]
-
-[package.dependencies]
-python-dateutil = ">=2.7"
 
 [[package]]
 name = "gevent"
@@ -2129,13 +2155,13 @@ reports = ["lxml"]
 
 [[package]]
 name = "mypy-boto3-cloudformation"
-version = "1.34.65"
-description = "Type annotations for boto3.CloudFormation 1.34.65 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.66"
+description = "Type annotations for boto3.CloudFormation 1.34.66 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-cloudformation-1.34.65.tar.gz", hash = "sha256:0902493f25f23e708d631294b779bbbb3e9468542dd7e247de6e8ac8e2477a54"},
-    {file = "mypy_boto3_cloudformation-1.34.65-py3-none-any.whl", hash = "sha256:60dd327a37e444ee90bc0a7152ab561b5cf27b8872fb7b7a6197fe0bb0046838"},
+    {file = "mypy-boto3-cloudformation-1.34.66.tar.gz", hash = "sha256:295ddb878f3f4b61489b83bd4bad949382deb8a478ff5ae66c22ca3ffbabbe95"},
+    {file = "mypy_boto3_cloudformation-1.34.66-py3-none-any.whl", hash = "sha256:e0080e4ba0cd464479f3ee285faddd863e40147e8f331b78445aef210afc91ed"},
 ]
 
 [package.dependencies]
@@ -2143,13 +2169,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-dynamodb"
-version = "1.34.57"
-description = "Type annotations for boto3.DynamoDB 1.34.57 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.67"
+description = "Type annotations for boto3.DynamoDB 1.34.67 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-dynamodb-1.34.57.tar.gz", hash = "sha256:8ad0eaa33811eb7eb0f8e2bcc2dbcefa86c91d7a21b13af500c3a8bacbe99db0"},
-    {file = "mypy_boto3_dynamodb-1.34.57-py3-none-any.whl", hash = "sha256:3f957d604d7289834e549c236d77c229ab8fab107b8a2c9f8a07066348fbd3a3"},
+    {file = "mypy-boto3-dynamodb-1.34.67.tar.gz", hash = "sha256:09447ef3ea6bdfe0be4e32ca23283820573341d340bea3065ded2153cc593d22"},
+    {file = "mypy_boto3_dynamodb-1.34.67-py3-none-any.whl", hash = "sha256:081ee9e184c0c2d93f648b25cec798e75533af26e631fbe80259f48fddb89758"},
 ]
 
 [package.dependencies]
@@ -2157,13 +2183,13 @@ typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.12\""}
 
 [[package]]
 name = "mypy-boto3-ec2"
-version = "1.34.64"
-description = "Type annotations for boto3.EC2 1.34.64 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.66"
+description = "Type annotations for boto3.EC2 1.34.66 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-ec2-1.34.64.tar.gz", hash = "sha256:7c3b2711b4e8e540203c60a852a19bbe4ebcfbd44d37ca99a52716eedfc1abe4"},
-    {file = "mypy_boto3_ec2-1.34.64-py3-none-any.whl", hash = "sha256:6ba81abd5496e894899ec7faa98646971a1d3c60ad349c96943d257e7516f5d6"},
+    {file = "mypy-boto3-ec2-1.34.66.tar.gz", hash = "sha256:228d04c57a9d6abfb90381faeabc9a02958842711cb29432b1f06c3a2b785b26"},
+    {file = "mypy_boto3_ec2-1.34.66-py3-none-any.whl", hash = "sha256:2491bf33b06bc6237cae8dd289053c14134b59f8fe3ab7aa89c68d25e7ba9724"},
 ]
 
 [package.dependencies]
@@ -2755,13 +2781,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-oauthlib"
-version = "1.4.0"
+version = "2.0.0"
 description = "OAuthlib authentication support for Requests."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.4"
 files = [
-    {file = "requests-oauthlib-1.4.0.tar.gz", hash = "sha256:acee623221e4a39abcbb919312c8ff04bd44e7e417087fb4bd5e2a2f53d5e79a"},
-    {file = "requests_oauthlib-1.4.0-py2.py3-none-any.whl", hash = "sha256:7a3130d94a17520169e38db6c8d75f2c974643788465ecc2e4b36d288bf13033"},
+    {file = "requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9"},
+    {file = "requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"},
 ]
 
 [package.dependencies]
@@ -2852,13 +2878,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.220.0"
+version = "0.221.1"
 description = "A library for creating GraphQL APIs"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "strawberry_graphql-0.220.0-py3-none-any.whl", hash = "sha256:303b698bd3652f852af000085cc2ad7790a9726cdfd7e2f3f5398cbe6d3ef261"},
-    {file = "strawberry_graphql-0.220.0.tar.gz", hash = "sha256:916a019e0133c7817aae384161e9ab0e5267013bc2f491b3338b3ae10e8f08bb"},
+    {file = "strawberry_graphql-0.221.1-py3-none-any.whl", hash = "sha256:b9f72ed4265fb3b708e9ef1781a95a93899112221a036e76fee8497a654ee8a5"},
+    {file = "strawberry_graphql-0.221.1.tar.gz", hash = "sha256:ed36c7e80da844bb4df0097e1d49e55fb3d50fb0b0b80bd7d08730e0d5c720f0"},
 ]
 
 [package.dependencies]
@@ -2887,13 +2913,13 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.35.0"
+version = "0.35.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_graphql_django-0.35.0-py3-none-any.whl", hash = "sha256:84c679ecb10385a92591818fa5f288dfac67cbcef80e581d208a9932f2fd7a18"},
-    {file = "strawberry_graphql_django-0.35.0.tar.gz", hash = "sha256:8528e190ca71e6202ec05e42e6e10d09a308f435d5dc3952eec78e58b5b1a1cb"},
+    {file = "strawberry_graphql_django-0.35.1-py3-none-any.whl", hash = "sha256:09da5d62c33eacb0e25cd7f5ab179904fd44fb792cb80815a6c99344ffc39bb9"},
+    {file = "strawberry_graphql_django-0.35.1.tar.gz", hash = "sha256:f4c28b8a9b89a74b1a78f88898f3140d758ac2b6ef93d7e2e97e5f4480eea7ef"},
 ]
 
 [package.dependencies]
@@ -2917,6 +2943,74 @@ files = [
 
 [package.extras]
 doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
+name = "time-machine"
+version = "2.14.1"
+description = "Travel through time in your tests."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "time-machine-2.14.1.tar.gz", hash = "sha256:57dc7efc1dde4331902d1bdefd34e8ee890a5c28533157e3b14a429c86b39533"},
+    {file = "time_machine-2.14.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:528d588d1e8ba83e45319a74acab4be0569eb141113fdf50368045d0a7d79cee"},
+    {file = "time_machine-2.14.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:06e913d570d7ee3e199e3316f10f10c8046287049141b0a101197712b4eac106"},
+    {file = "time_machine-2.14.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ddbbba954e9a409e7d66d60df2b6b8daeb897f8338f909a92d9d20e431ec70d1"},
+    {file = "time_machine-2.14.1-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:72a153b085b4aee652d6b3bf9019ca897f1597ba9869b640b06f28736b267182"},
+    {file = "time_machine-2.14.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3b94274abe24b6a90d8a5c042167a9a7af2d3438b42ac8eb5ede50fbc73c08db"},
+    {file = "time_machine-2.14.1-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:364353858708628655bf9fa4c2825febd679c729d9e1dd424ff86845828bac05"},
+    {file = "time_machine-2.14.1-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:b951b6f4b8a752ab8c441df422e21954a721a0a5276aa3814ce8cf7205aeb6da"},
+    {file = "time_machine-2.14.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:be215eb63d74a3d580f7924bb4209c783fabcfb3253073f4dcb3424d57d0f518"},
+    {file = "time_machine-2.14.1-cp310-cp310-win32.whl", hash = "sha256:0e120f95c17bf8e0c097fd8863a8eb24054f9b17d9b17c465694be50f8348a3a"},
+    {file = "time_machine-2.14.1-cp310-cp310-win_amd64.whl", hash = "sha256:fb467d6c9e9ab615c8cf22d751d34296dacf801be323a57adeb4ff345cf72473"},
+    {file = "time_machine-2.14.1-cp310-cp310-win_arm64.whl", hash = "sha256:19db257117739b2dda1d57e149bb715a593313899b3902a7e6d752c5f1d22542"},
+    {file = "time_machine-2.14.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:442d42f1b0ef006f03a5a34905829a1d3ac569a5bcda64d29706e6dc60832f94"},
+    {file = "time_machine-2.14.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0312b47f220e46f1bbfaded7fc1469882d9c2a27c6daf44e119aea7006b595cc"},
+    {file = "time_machine-2.14.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0a39dba3033d9c28347d2db16bcb16041bbf4e9032e2b70023686b6f95deac9d"},
+    {file = "time_machine-2.14.1-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e030d2051bb515251d7f6edd9bbcf79b2b47811e2c402aba9c126af713843d26"},
+    {file = "time_machine-2.14.1-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:993ab140eb5678d1ee7f1197f08e4499dc8ea883ad6b8858737de70d509ec5b5"},
+    {file = "time_machine-2.14.1-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:90725f936ad8b123149bc82a46394dd7057e63157ee11ba878164053fa5bd8ad"},
+    {file = "time_machine-2.14.1-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:59a02c3d3b3b29e2dc3a708e775c5d6b951b0024c4013fed883f0d2205305c9e"},
+    {file = "time_machine-2.14.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:4f00f67d532da82538c4dfbbddc587e70c82664f168c11e1c2915d0c85ec2fc8"},
+    {file = "time_machine-2.14.1-cp311-cp311-win32.whl", hash = "sha256:27f735cba4c6352ad7bc53ce2d86b715379261a634e690b79fac329081e26fb6"},
+    {file = "time_machine-2.14.1-cp311-cp311-win_amd64.whl", hash = "sha256:ee68597bd3fa5ab94633c8a9d3ebd4032091559610e078381818a732910002bc"},
+    {file = "time_machine-2.14.1-cp311-cp311-win_arm64.whl", hash = "sha256:6ced9de5eff1fb37efb12984ab7b63f31f0aeadeedec4be6d0404ec4fa91f2e7"},
+    {file = "time_machine-2.14.1-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:30a4a18357fa6cf089eeefcb37e9549b42523aebb5933894770a8919e6c398e1"},
+    {file = "time_machine-2.14.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:d45bd60bea85869615b117667f10a821e3b0d3603c47bfd105b45d1f67156fc8"},
+    {file = "time_machine-2.14.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:39de6d37a14ff8882d4f1cbd50c53268b54e1cf4ef9be2bfe590d10a51ccd314"},
+    {file = "time_machine-2.14.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7fd7d188b4f9d358c6bd477daf93b460d9b244a4c296ddd065945f2b6193c2bd"},
+    {file = "time_machine-2.14.1-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:99e6f013e67c4f74a9d8f57e34173b2047f2ad48f764e44c38f3ee5344a38c01"},
+    {file = "time_machine-2.14.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a927d87501da8b053a27e80f5d0e1e58fbde4b50d70df2d3853ed67e89a731cf"},
+    {file = "time_machine-2.14.1-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:c77a616561dd4c7c442e9eee8cbb915750496e9a5a7fca6bcb11a9860226d2d0"},
+    {file = "time_machine-2.14.1-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:e7fa70a6bdca40cc4a8386fd85bc1bae0a23ab11e49604ef853ab3ce92be127f"},
+    {file = "time_machine-2.14.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:d63ef00d389fa6d2c76c863af580b3e4a8f0ccc6a9aea8e64590588e37f13c00"},
+    {file = "time_machine-2.14.1-cp312-cp312-win32.whl", hash = "sha256:6706eb06487354a5e219cacea709fb3ec44dec3842c6218237d5069fa5f1ad64"},
+    {file = "time_machine-2.14.1-cp312-cp312-win_amd64.whl", hash = "sha256:36aa4f17adcd73a6064bf4991a29126cac93521f0690805edb91db837c4e1453"},
+    {file = "time_machine-2.14.1-cp312-cp312-win_arm64.whl", hash = "sha256:edea570f3835a036e8860bb8d6eb8d08473c59313db86e36e3b207f796fd7b14"},
+    {file = "time_machine-2.14.1-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:87e80408e6b6670e9ce33f94b1cc6b72b1a9b646f5e19f586908129871f74b40"},
+    {file = "time_machine-2.14.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c69c0cb498c86ef843cd15964714e76465cc25d64464da57d5d1318f499de099"},
+    {file = "time_machine-2.14.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dc48d3934109b0bdbbdc5e9ce577213f7148a92fed378420ee13453503fe4db9"},
+    {file = "time_machine-2.14.1-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7161cea2ff3244cc6075e365fab89000df70ead63a3da9d473983d580558d2de"},
+    {file = "time_machine-2.14.1-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39fceeb131e6c07b386de042ce1016be771576e9516124b78e75cbab94ae5041"},
+    {file = "time_machine-2.14.1-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:fe508a6c43fb72fa4f66b50b14684cf58d3db95fed617177ec197a7a90427bae"},
+    {file = "time_machine-2.14.1-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:5f3d5c21884aee10e13b00ef45fab893a43db9d59ec27271573528bd359b0ef5"},
+    {file = "time_machine-2.14.1-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:a75e24e59f58059bbbc50e7f97aa6d126bbc2f603a8a5cd1e884beffcf130d8f"},
+    {file = "time_machine-2.14.1-cp38-cp38-win32.whl", hash = "sha256:b0f8ba70fbb71d7fbc6d6adb90bed72a83db15b3318c7af0060467539b2f1b63"},
+    {file = "time_machine-2.14.1-cp38-cp38-win_amd64.whl", hash = "sha256:15cf3623a4ba2bb4fce4529295570acd5f6c6b44bcbfd1b8d0756ce56c38fe82"},
+    {file = "time_machine-2.14.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:bb3a2518c52aa944989b541e5297b833388eb3fe72d91eb875b21fe771597b04"},
+    {file = "time_machine-2.14.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:416d94eab7723c7d8a37fe6b3b1882046fdbf3c31b9abec3cac87cf35dbb8230"},
+    {file = "time_machine-2.14.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:adfbfa796dd96383400b44681eacc5ab06d3cbfad39c30878e5ead0bfdca808a"},
+    {file = "time_machine-2.14.1-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:31e6e9bff89b7c6e4cbc169ba1d00d6c107b3abc43173b2799352b6995cf7cb2"},
+    {file = "time_machine-2.14.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:107caed387438d689180b692e8d84aa1ebe8918790df83dc5e2146e60e5e0859"},
+    {file = "time_machine-2.14.1-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:cab4abf4d1490a7da35db5a321ff8a4d4a2195f4832a792c75b626ffc4a5584c"},
+    {file = "time_machine-2.14.1-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:fd8645b820f7895fdafbc4412d1ce376956e36ad4fd05a43269aa06c3132afc3"},
+    {file = "time_machine-2.14.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:dd26039a9ffea2d5ee1309f2ec9b656d4925371c65563822d52e4037a4186eca"},
+    {file = "time_machine-2.14.1-cp39-cp39-win32.whl", hash = "sha256:5e19b19d20bfbff8c97949e06e150998cf9d0a676e1641fb90597e59a9d7d5e2"},
+    {file = "time_machine-2.14.1-cp39-cp39-win_amd64.whl", hash = "sha256:f5d371a5218318121a6b44c21438258b6408b8bfe7ccccb754cf8eb880505576"},
+    {file = "time_machine-2.14.1-cp39-cp39-win_arm64.whl", hash = "sha256:2c774f4b603a36ca2611327c57aa8ce0d5042298da008238ee5234b31ce7b22c"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
 
 [[package]]
 name = "tinycss2"
@@ -2980,17 +3074,6 @@ python-versions = ">=3.7,<4.0"
 files = [
     {file = "types_awscrt-0.20.5-py3-none-any.whl", hash = "sha256:79d5bfb01f64701b6cf442e89a37d9c4dc6dbb79a46f2f611739b2418d30ecfd"},
     {file = "types_awscrt-0.20.5.tar.gz", hash = "sha256:61811bbf4de95248939f9276a434be93d2b95f6ccfe8aa94e56999e9778cfcc2"},
-]
-
-[[package]]
-name = "types-freezegun"
-version = "1.1.10"
-description = "Typing stubs for freezegun"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-freezegun-1.1.10.tar.gz", hash = "sha256:cb3a2d2eee950eacbaac0673ab50499823365ceb8c655babb1544a41446409ec"},
-    {file = "types_freezegun-1.1.10-py3-none-any.whl", hash = "sha256:fadebe72213e0674036153366205038e1f95c8ca96deb4ef9b71ddc15413543e"},
 ]
 
 [[package]]
@@ -3409,4 +3492,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.5"
-content-hash = "fa99fa167496992c6a9cbcf923d32aa1e0585c9647d297dcaeb6a4d998e61175"
+content-hash = "bd1c2ba4cf322495ec90b25e10b39ee0c4bb16b6f5ac98d25081e83791232818"
