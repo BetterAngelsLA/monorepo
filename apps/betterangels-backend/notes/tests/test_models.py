@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
+import time_machine
 from accounts.models import User
 from django.test import TestCase
-from freezegun import freeze_time
 from model_bakery import baker
 from notes.enums import ServiceEnum, ServiceRequestStatusEnum
 from notes.models import ServiceRequest
@@ -12,7 +12,7 @@ class ServiceRequestModelTest(TestCase):
     def setUp(self) -> None:
         self.user = baker.make(User, email="test@example.com", username="testuser")
 
-    @freeze_time("03-11-2024 10:11:12")
+    @time_machine.travel("03-11-2024 10:11:12", tick=False)
     def test_save(self) -> None:
         """Verify that completed_on is populated correctly."""
         # Confirm that completed_on is set when a ServiceRequest is created as COMPLETED
