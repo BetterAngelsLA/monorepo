@@ -184,8 +184,7 @@ export default function AddNote() {
             <TextButton
               mr="sm"
               fontSize="sm"
-              // NOTE: Not sure how to access form values here, without handleSubmit & useFormContext
-              onPress={() => console.log('save for later')}
+              onPress={router.back}
               accessibilityHint="saves the note for later"
               title="Save for later"
             />
