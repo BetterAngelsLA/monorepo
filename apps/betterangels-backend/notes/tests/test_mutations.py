@@ -57,15 +57,13 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "title": "Updated Title",
-            "purposes": [t.id for t in self.purposes],
-            "nextSteps": [t.id for t in self.next_steps],
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 51
+        expected_query_count = 24
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -74,14 +72,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "title": "Updated Title",
             "moods": [],
-            "purposes": [
-                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
-                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
-            ],
-            "nextSteps": [
-                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
-                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
-            ],
+            "purposes": [],
+            "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",

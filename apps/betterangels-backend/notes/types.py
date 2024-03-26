@@ -196,8 +196,6 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    purposes: Optional[List[ID]]
-    next_steps: Optional[List[ID]]
     public_details: auto
     private_details: auto
     is_submitted: auto

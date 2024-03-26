@@ -26,8 +26,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "purposes": [t.id for t in self.purposes],
-                "nextSteps": [t.id for t in self.next_steps],
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
@@ -40,6 +38,35 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
         self._create_note_mood_fixture(
             {"descriptor": "EUTHYMIC", "noteId": note_id},
+        )
+        # Add purposes and next steps
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purposes[0].id,
+                "taskType": "PURPOSE",
+            },
+        )
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purposes[1].id,
+                "taskType": "PURPOSE",
+            },
+        )
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_steps[0].id,
+                "taskType": "NEXT_STEP",
+            },
+        )
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_steps[1].id,
+                "taskType": "NEXT_STEP",
+            },
         )
         # Add provided and requested services
         self._create_note_service_request_fixture(

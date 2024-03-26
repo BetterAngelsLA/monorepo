@@ -374,8 +374,6 @@ enum TaskTypeEnum {
 input UpdateNoteInput {
   id: ID
   title: String
-  purposes: [ID!]
-  nextSteps: [ID!]
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean

@@ -546,10 +546,8 @@ export enum TaskTypeEnum {
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  nextSteps?: InputMaybe<Array<Scalars['ID']['input']>>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  purposes?: InputMaybe<Array<Scalars['ID']['input']>>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
