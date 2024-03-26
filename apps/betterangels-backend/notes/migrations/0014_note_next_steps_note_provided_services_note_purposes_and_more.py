@@ -5,7 +5,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 import django_choices_field.fields
 import notes.enums
-import simple_history.models
 
 
 class Migration(migrations.Migration):
@@ -131,7 +130,9 @@ class Migration(migrations.Migration):
                 "ordering": ("-history_date", "-history_id"),
                 "get_latest_by": ("history_date", "history_id"),
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name="HistoricalNote_purposes",
@@ -179,7 +180,9 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name": "HistoricalNote_purposes",
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name="HistoricalNote_next_steps",
@@ -227,6 +230,8 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name": "HistoricalNote_next_steps",
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
     ]

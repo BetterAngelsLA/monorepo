@@ -1,5 +1,6 @@
 from typing import Any, Optional, cast
 
+import pghistory
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
@@ -10,11 +11,11 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
-from simple_history.models import HistoricalRecords, HistoricForeignKey
 
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
 
+@pghistory.track()
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
@@ -32,7 +33,6 @@ class ServiceRequest(BaseModel):
         "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
     )
 
-    log = HistoricalRecords(related_name="history")
     objects = models.Manager()
 
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
@@ -48,6 +48,7 @@ class ServiceRequest(BaseModel):
         return cast(ServiceEnum, self.service)
 
 
+@pghistory.track()
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     status = TextChoicesField(choices_enum=TaskStatusEnum)
@@ -69,12 +70,11 @@ class Task(BaseModel):
     taskuserobjectpermission_set: models.QuerySet["Task"]
     taskgroupobjectpermission_set: models.QuerySet["Task"]
 
-    log = HistoricalRecords(related_name="history")
-
     def __str__(self) -> str:
         return self.title
 
 
+@pghistory.track()
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
@@ -108,7 +108,6 @@ class Note(BaseModel):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
-    log = HistoricalRecords(related_name="history", m2m_fields=[purposes, next_steps])
     objects = models.Manager()
 
     noteuserobjectpermission_set: models.QuerySet["Note"]
@@ -126,12 +125,111 @@ class Note(BaseModel):
         )
 
 
+@pghistory.track(
+    pghistory.InsertEvent("note_purposes.add"),
+    pghistory.DeleteEvent("note_purposes.remove"),
+    obj_field=None,
+)
+class NotePurposes(Note.purposes.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        task = Task.objects.get(id=task_id)
+
+        if action == "add":
+            note.purposes.remove(task)
+
+        elif action == "remove":
+            note.purposes.add(task)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_next_steps.add"),
+    pghistory.DeleteEvent("note_next_steps.remove"),
+    obj_field=None,
+)
+class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        task = Task.objects.get(id=task_id)
+
+        if action == "add":
+            note.next_steps.remove(task)
+
+        elif action == "remove":
+            note.next_steps.add(task)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_provided_services.add"),
+    pghistory.DeleteEvent("note_provided_services.remove"),
+    obj_field=None,
+)
+class NoteProvidedServices(Note.provided_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        service_request = ServiceRequest.objects.get(id=servicerequest_id)
+
+        if action == "add":
+            note.provided_services.remove(service_request)
+
+        elif action == "remove":
+            note.provided_services.add(service_request)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("note_requested_services.add"),
+    pghistory.DeleteEvent("note_requested_services.remove"),
+    obj_field=None,
+)
+class NoteRequestedServices(Note.requested_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+    @staticmethod
+    def revert_action(
+        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
+    ) -> None:
+        note = Note.objects.get(id=note_id)
+        service_request = ServiceRequest.objects.get(id=servicerequest_id)
+
+        if action == "add":
+            note.requested_services.remove(service_request)
+
+        elif action == "remove":
+            note.requested_services.add(service_request)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("mood.add"),
+    pghistory.DeleteEvent("mood.remove"),
+)
 class Mood(BaseModel):
     descriptor = TextChoicesField(choices_enum=MoodEnum)
-    note = HistoricForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="moods")
 
-    log = HistoricalRecords(related_name="history")
     objects = models.Manager()
+
+    def revert_action(self, action: str) -> None:
+        if action == "add":
+            self.delete()
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
