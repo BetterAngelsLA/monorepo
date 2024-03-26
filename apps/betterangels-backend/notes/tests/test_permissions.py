@@ -931,8 +931,6 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateTask"]["id"])
-        else:
-            self.assertEqual(
                 response["data"]["updateTask"]["messages"][0],
                 {
                     "kind": "PERMISSION",

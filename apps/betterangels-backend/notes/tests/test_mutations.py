@@ -1,10 +1,10 @@
 from unittest import skip
 from unittest.mock import ANY, patch
 
+import time_machine
 from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from freezegun import freeze_time
 from model_bakery import baker
 from notes.enums import NoteNamespaceEnum
 from notes.models import Mood, Note, ServiceRequest, Task
@@ -22,7 +22,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
         expected_query_count = 36
         with self.assertNumQueries(expected_query_count):
@@ -52,7 +52,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, created_note)
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
@@ -85,7 +85,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_partial_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
@@ -836,9 +836,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
 
-@freeze_time("2024-02-26")
-@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-03-11 10:11:12", tick=False)
 class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -867,7 +866,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         }
         self.assertEqual(expected_service_request, created_service_request)
 
-    @freeze_time("2024-03-11 12:34:56")
+    @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
@@ -894,7 +893,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         }
         self.assertEqual(expected_service_request, updated_service_request)
 
-    @freeze_time("2024-03-11 12:34:56")
+    @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_partial_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
@@ -948,8 +947,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             ServiceRequest.objects.get(id=self.service_request["id"])
 
 
-@freeze_time("2024-02-26 10:11:12")
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-02-26T10:11:12+00:00", tick=False)
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
