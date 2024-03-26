@@ -251,7 +251,10 @@ class Mutation:
             mood = resolvers.create(
                 info,
                 Mood,
-                {**mood_data, "note": note},
+                {
+                    **mood_data,
+                    "note": note,
+                },
             )
 
             return cast(MoodType, mood)
@@ -261,16 +264,19 @@ class Mutation:
         self, info: Info, data: DeleteDjangoObjectInput
     ) -> DeletedObjectType:
         user = get_current_user(info)
-        mood_id, _ = Mood.objects.filter(
-            id=data.id,
-            note_id__in=Subquery(
-                filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).values("id")
-            ),
-        ).delete()
+        try:
+            mood_id, _ = Mood.objects.filter(
+                id=data.id,
+                note_id__in=Subquery(
+                    filter_for_user(
+                        Note.objects.all(),
+                        user,
+                        [NotePermissions.CHANGE],
+                    ).values("id")
+                ),
+            ).delete()
+        except Note.DoesNotExist:
+            raise PermissionError("User lacks proper organization or permissions")
 
         return DeletedObjectType(id=mood_id)
 
