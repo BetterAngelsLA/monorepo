@@ -27,11 +27,13 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
 
+        note_count = Note.objects.count()
         variables = {"title": "Test Note", "publicDetails": "This is a test note."}
         response = self._create_note_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNote"]["id"])
+            self.assertEqual(note_count + 1, Note.objects.count())
         else:
             self.assertEqual(
                 response["data"]["createNote"]["messages"][0],
@@ -41,6 +43,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
+            self.assertEqual(note_count, Note.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -65,12 +68,17 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
+        note_count = Note.objects.count()
         variables = {"id": self.note["id"]}
         self.execute_graphql(mutation, variables)
 
         self.assertTrue(
             Note.objects.filter(id=self.note["id"]).exists() != should_succeed
         )
+        if should_succeed:
+            self.assertEqual(note_count - 1, Note.objects.count())
+        else:
+            self.assertEqual(note_count, Note.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -95,6 +103,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"]["id"])
+            self.assertEqual(response["data"]["updateNote"]["title"], "Updated Note")
         else:
             self.assertEqual(
                 response["data"]["updateNote"]["messages"][0],
@@ -128,9 +137,9 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(0, note.purposes.count())
 
         response = self._add_note_task_fixture(variables)
-
         if should_succeed:
             self.assertIsNotNone(response["data"]["addNoteTask"]["id"])
+            self.assertEqual(1, note.purposes.count())
         else:
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
@@ -139,13 +148,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 )
             else:
                 self.assertEqual(
-                    response["data"]["addNoteTask"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": "addNoteTask",
-                        "message": "You don't have permission to access this app.",
-                    },
+                    response["errors"][0]["message"],
+                    "You must be logged in to perform this action.",
                 )
+            self.assertEqual(0, note.purposes.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -174,6 +180,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["removeNoteTask"]["id"])
+            self.assertEqual(0, note.purposes.count())
         else:
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
@@ -182,13 +189,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 )
             else:
                 self.assertEqual(
-                    response["data"]["removeNoteTask"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": "removeNoteTask",
-                        "message": "You don't have permission to access this app.",
-                    },
+                    response["errors"][0]["message"],
+                    "You must be logged in to perform this action.",
                 )
+            self.assertEqual(1, note.purposes.count())
 
     @parametrize(
         "user_label, should_succeed",

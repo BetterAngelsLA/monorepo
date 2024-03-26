@@ -18,6 +18,7 @@ from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
+    IsAuthenticated,
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
@@ -265,7 +266,7 @@ class Mutation:
         ],
     )
 
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
@@ -289,7 +290,7 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
