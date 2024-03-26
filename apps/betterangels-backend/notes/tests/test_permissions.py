@@ -132,14 +132,20 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["addNoteTask"]["id"])
         else:
-            self.assertEqual(
-                response["data"]["addNoteTask"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "addNoteTask",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            if user_label == "org_2_case_manager_1":
+                self.assertEqual(
+                    response["errors"][0]["message"],
+                    "You do not have permission to modify this item",
+                )
+            else:
+                self.assertEqual(
+                    response["data"]["addNoteTask"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "addNoteTask",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -165,17 +171,24 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(1, note.purposes.count())
 
         response = self._remove_note_task_fixture(variables)
+
         if should_succeed:
             self.assertIsNotNone(response["data"]["removeNoteTask"]["id"])
         else:
-            self.assertEqual(
-                response["data"]["removeNoteTask"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "removeNoteTask",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            if user_label == "org_2_case_manager_1":
+                self.assertEqual(
+                    response["errors"][0]["message"],
+                    "You do not have permission to modify this item",
+                )
+            else:
+                self.assertEqual(
+                    response["data"]["removeNoteTask"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "removeNoteTask",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -503,7 +516,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "User lacks proper organization or permissions",
+                    "You do not have permission to modify this item",
                 )
             else:
                 self.assertEqual(
@@ -514,6 +527,9 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
                     },
                     response["data"]["createNoteMood"]["messages"][0],
                 )
+        self.assertTrue(
+            Mood.objects.filter(note_id=self.note["id"]).exists() == should_succeed
+        )
 
     @parametrize(
         "user_label, should_succeed",
@@ -576,16 +592,17 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             "noteId": self.note["id"],
             "serviceRequestType": "REQUESTED",
         }
-
+        service_request_count = ServiceRequest.objects.count()
         response = self._create_note_service_request_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNoteServiceRequest"]["id"])
+            self.assertEqual(service_request_count + 1, ServiceRequest.objects.count())
         else:
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "User lacks proper organization or permissions",
+                    "You do not have permission to modify this item",
                 )
             else:
                 self.assertEqual(
@@ -596,6 +613,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                     },
                     response["data"]["createNoteServiceRequest"]["messages"][0],
                 )
+            self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
 
 class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
@@ -625,16 +643,17 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
             "status": "TO_DO",
             "taskType": "PURPOSE",
         }
-
+        task_count = Task.objects.count()
         response = self._create_note_task_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createNoteTask"]["id"])
+            self.assertEqual(task_count + 1, Task.objects.count())
         else:
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "User lacks proper organization or permissions",
+                    "You do not have permission to modify this item",
                 )
             else:
                 self.assertEqual(
@@ -645,6 +664,7 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
                     },
                     response["data"]["createNoteTask"]["messages"][0],
                 )
+            self.assertEqual(task_count, Task.objects.count())
 
 
 class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):

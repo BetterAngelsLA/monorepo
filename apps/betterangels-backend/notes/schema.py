@@ -265,10 +265,19 @@ class Mutation:
         ],
     )
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
         with transaction.atomic():
-            note = Note.objects.get(id=data.note_id)
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.note_id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this item")
+
             task = Task.objects.get(id=data.task_id)
 
             if data.task_type == TaskTypeEnum.PURPOSE:
@@ -280,10 +289,18 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
     def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
         with transaction.atomic():
-            note = Note.objects.get(id=data.note_id)
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.note_id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this item")
             task = Task.objects.get(id=data.task_id)
 
             if data.task_type == TaskTypeEnum.PURPOSE:
@@ -310,7 +327,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("User lacks proper organization or permissions")
+                raise PermissionError("You do not have permission to modify this item")
 
             mood = resolvers.create(
                 info,
@@ -388,7 +405,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("User lacks proper organization or permissions")
+                raise PermissionError("You do not have permission to modify this item")
 
             permission_group = get_user_permission_group(user)
 
@@ -490,7 +507,7 @@ class Mutation:
                     [NotePermissions.CHANGE],
                 ).get(id=note_id)
             except Note.DoesNotExist:
-                raise PermissionError("User lacks proper organization or permissions")
+                raise PermissionError("You do not have permission to modify this item")
 
             permission_group = get_user_permission_group(user)
 

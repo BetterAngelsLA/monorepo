@@ -622,7 +622,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        expected_query_count = 12
+        expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
             response = self._add_note_task_fixture(variables)
 
@@ -670,7 +670,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
-        expected_query_count = 12
+        expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
             response = self._remove_note_task_fixture(variables)
 
