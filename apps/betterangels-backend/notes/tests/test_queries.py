@@ -1,9 +1,9 @@
 from typing import Any, Optional
-from unittest.mock import ANY
 
 from django.test import ignore_warnings, override_settings
 from freezegun import freeze_time
-from notes.enums import NoteNamespaceEnum, ServiceEnum
+from notes.enums import NoteNamespaceEnum
+from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -40,64 +40,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {"descriptor": "EUTHYMIC", "noteId": note_id},
         )
         # Add purposes and next steps
-        self._add_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.purposes[0].id,
-                "taskType": "PURPOSE",
-            },
-        )
-        self._add_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.purposes[1].id,
-                "taskType": "PURPOSE",
-            },
-        )
-        self._add_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.next_steps[0].id,
-                "taskType": "NEXT_STEP",
-            },
-        )
-        self._add_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.next_steps[1].id,
-                "taskType": "NEXT_STEP",
-            },
-        )
-        # Add provided and requested services
-        self._create_note_service_request_fixture(
-            {
-                "service": "WATER",
-                "noteId": note_id,
-                "serviceRequestType": "PROVIDED",
-            },
-        )
-        self._create_note_service_request_fixture(
-            {
-                "service": "BLANKET",
-                "noteId": note_id,
-                "serviceRequestType": "PROVIDED",
-            },
-        )
-        self._create_note_service_request_fixture(
-            {
-                "service": "OTHER",
-                "customService": "Other custom service request",
-                "noteId": note_id,
-                "serviceRequestType": "REQUESTED",
-            },
-        )
-        self._create_note_service_request_fixture(
-            {
-                "service": "MEDICAL",
-                "noteId": note_id,
-                "serviceRequestType": "REQUESTED",
-            },
-        )
+        note = Note.objects.get(pk=note_id)
+        note.purposes.set(self.purposes)
+        note.next_steps.set(self.next_steps)
+        note.provided_services.set(self.provided_services)
+        note.requested_services.set(self.requested_services)
 
         query = """
             query ViewNote($id: ID!) {
@@ -160,26 +107,26 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ],
             "providedServices": [
                 {
-                    "id": ANY,
-                    "service": ServiceEnum.WATER.name,
-                    "customService": None,
+                    "id": str(self.provided_services[0].id),
+                    "service": self.provided_services[0].service.upper(),
+                    "customService": self.provided_services[0].custom_service,
                 },
                 {
-                    "id": ANY,
-                    "service": ServiceEnum.BLANKET.name,
-                    "customService": None,
+                    "id": str(self.provided_services[1].id),
+                    "service": self.provided_services[1].service.upper(),
+                    "customService": self.provided_services[1].custom_service,
                 },
             ],
             "requestedServices": [
                 {
-                    "id": ANY,
-                    "service": ServiceEnum.OTHER.name,
-                    "customService": "Other custom service request",
+                    "id": str(self.requested_services[0].id),
+                    "service": self.requested_services[0].service.upper(),
+                    "customService": self.requested_services[0].custom_service,
                 },
                 {
-                    "id": ANY,
-                    "customService": None,
-                    "service": ServiceEnum.MEDICAL.name,
+                    "id": str(self.requested_services[1].id),
+                    "service": self.requested_services[1].service.upper(),
+                    "customService": self.requested_services[1].custom_service,
                 },
             ],
             "publicDetails": "Updated public details",
