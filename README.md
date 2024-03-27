@@ -382,8 +382,16 @@ class YourModel(models.Model):
 
 #### Step 3. Add pghistory context manager when updating models you want to track
 
-Due to unexpected behavior around pgh_created_at, in order to keep track of the of an event,
-a custom context manager needs to be added whenever the tracked model is being modified:
+<details>
+<summary>
+
+The pghistory library has some unexpected behavior around `pgh_created_at` timestamp.
+
+</summary>
+<img width="597" alt="image" src="https://github.com/BetterAngelsLA/monorepo/assets/4707640/81b9bed2-17eb-403c-83ee-1a3ade72709a">
+</details>
+
+In order to keep track of the of an event, a custom context manager (`pghistory.context`) needs to be added whenever the tracked model is being modified:
 
 ```python
 class Mutation:
@@ -397,8 +405,7 @@ class Mutation:
 
 #### Step 4. Track events that occurred
 
-If you want to track the historical events for a certain model based on their id and timestamp, query the
-Context table using the custom `tracked_model_id` and `timestamp` metadata fields added in Step 3.
+To track the historical events for a certain model based on their id and timestamp, query the `Context` table using the custom `tracked_model_id` and `timestamp` metadata fields added in Step 3.
 
 ```python
 Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by('metadata__timestamp')
