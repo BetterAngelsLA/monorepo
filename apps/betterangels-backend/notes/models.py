@@ -1,4 +1,4 @@
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 import pghistory
 from accounts.models import User
@@ -44,8 +44,8 @@ class ServiceRequest(BaseModel):
 
         super().save(*args, **kwargs)
 
-    def __str__(self) -> ServiceEnum:
-        return cast(ServiceEnum, self.service)
+    def __str__(self) -> str:
+        return str(self.service if not self.custom_service else self.custom_service)
 
 
 @pghistory.track()
@@ -230,6 +230,9 @@ class Mood(BaseModel):
     def revert_action(self, action: str) -> None:
         if action == "add":
             self.delete()
+
+    def __str__(self) -> str:
+        return f"{self.descriptor} - {self.note.pk}"
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
