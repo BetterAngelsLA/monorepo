@@ -48,6 +48,7 @@ from .types import (
     NoteAttachmentType,
     NoteFilter,
     NoteType,
+    RemoveNoteServiceRequestInput,
     RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
@@ -160,6 +161,7 @@ class Mutation:
         NOTE_ADDITIONS = {
             "createNoteMood",
             "addNoteTask",
+            "createNoteTask",
             "createNoteServiceRequest",
         }
         NOTE_DELETIONS = {
@@ -199,10 +201,15 @@ class Mutation:
                         metadata__timestamp__gt=saved_at,
                     ).values_list("id", flat=True)
                 )
+                # from IPython import embed
 
-                Context.objects.filter(
-                    metadata__timestamp__gt=saved_at,
-                )
+                # embed()
+
+                # Context.objects.filter(
+                #     # metadata__note_id=data.id,
+                #     # metadata__label__in=NOTE_ADDITIONS,
+                #     metadata__timestamp__gt=saved_at,
+                # ).values_list("id", flat=True)
                 # Revert any models that were associated with the Note instance
                 # in contexts created AFTER the saved_at time
                 for event in Events.objects.filter(
@@ -254,6 +261,7 @@ class Mutation:
                 return cast(NoteType, reverted_note)
 
         except Exception:
+            raise
             note = Note.objects.get(id=data.id)
 
             return cast(NoteType, note)
@@ -504,12 +512,25 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    delete_service_request: ServiceRequestType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=ServiceRequestPermissions.DELETE),
-        ],
-    )
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    def remove_note_service_request(
+        self, info: Info, data: RemoveNoteServiceRequestInput
+    ) -> NoteType:
+        now = timezone.now()
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=now, label=info.field_name
+        ):
+            note = Note.objects.get(id=data.note_id)
+            service_request = ServiceRequest.objects.get(id=data.service_request_id)
+
+            if data.service_request_type == ServiceRequestTypeEnum.REQUESTED:
+                note.requested_services.remove(service_request)
+            elif data.service_request_type == ServiceRequestTypeEnum.PROVIDED:
+                note.provided_services.remove(service_request)
+            else:
+                raise NotImplementedError
+
+            return cast(NoteType, note)
 
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
@@ -541,7 +562,7 @@ class Mutation:
     def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
         now = timezone.now()
         with transaction.atomic(), pghistory.context(
-            timestamp=now, label=info.field_name
+            note_id=data.note_id, timestamp=now, label=info.field_name
         ):
             user = get_current_user(info)
             task_data = asdict(data)

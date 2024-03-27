@@ -273,6 +273,31 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _remove_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteServiceRequest($data: RemoveNoteServiceRequestInput!) {
+                removeNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        requestedServices {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _create_note_attachment_fixture(
         self,
         note_id: str,
