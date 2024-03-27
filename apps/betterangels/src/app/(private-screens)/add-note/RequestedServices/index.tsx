@@ -1,10 +1,10 @@
 import { useMutation } from '@apollo/client';
 import {
   Attachments,
-  CREATE_SERVICE,
-  DELETE_SERVICE,
+  CREATE_NOTE_SERVICE_REQUEST,
+  DELETE_SERVICE_REQUEST,
   OtherCategory,
-  UPDATE_NOTE,
+  ServiceRequestTypeEnum,
 } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
@@ -116,15 +116,12 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     Array<{
       id: string | undefined;
       service: string | undefined;
-      status: string;
       customService: string;
     }>
   >([]);
-  const [createServiceRequest] = useMutation(CREATE_SERVICE);
-  const [updateNote] = useMutation(UPDATE_NOTE);
-  const [deleteServiceRequest] = useMutation(DELETE_SERVICE);
+  const [createNoteServiceRequest] = useMutation(CREATE_NOTE_SERVICE_REQUEST);
+  const [deleteServiceRequest] = useMutation(DELETE_SERVICE_REQUEST);
   const requestedServicesImages = watch('requestedServicesImages', []);
-  const requestedServices = watch('requestedServices') || [];
   const isRequestedServices = expanded === 'Requested Services';
   const isLessThanOneRequestedService = services.length < 1;
   const isLessThanOneRequestedServiceImages =
@@ -156,32 +153,23 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         const ids = newServices.map((s) => s.id);
         setValue('requestedServices', ids);
       } else {
-        const { data } = await createServiceRequest({
+        const { data } = await createNoteServiceRequest({
           variables: {
             data: {
-              service: isCustom ? 'OTHER' : service.toUpperCase(),
-              status: 'TO_DO',
+              service: isCustom
+                ? 'OTHER'
+                : service.replace(/ /g, '_').toUpperCase(),
               customService: isCustom ? service : '',
-            },
-          },
-        });
-        await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              requestedServices: [
-                ...requestedServices,
-                data?.createServiceRequest.id,
-              ],
+              noteId,
+              serviceRequestType: ServiceRequestTypeEnum.Requested,
             },
           },
         });
         const newServices = [
           ...services,
           {
-            id: data?.createServiceRequest.id,
+            id: data?.createNoteServiceRequest.id,
             service: isCustom ? 'OTHER' : service,
-            status: 'TO_DO',
             customService: isCustom ? service : '',
           },
         ];
