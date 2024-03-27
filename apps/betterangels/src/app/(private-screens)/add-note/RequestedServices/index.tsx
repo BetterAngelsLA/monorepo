@@ -1,4 +1,16 @@
-import { Attachments, OtherCategory } from '@monorepo/expo/betterangels';
+import { useMutation } from '@apollo/client';
+import {
+  Attachments,
+  CREATE_NOTE_SERVICE_REQUEST,
+  CreateNoteServiceRequestMutation,
+  CreateNoteServiceRequestMutationVariables,
+  DELETE_SERVICE_REQUEST,
+  DeleteServiceRequestMutation,
+  DeleteServiceRequestMutationVariables,
+  OtherCategory,
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+} from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -28,13 +40,14 @@ import {
   H3,
   H5,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -102,14 +115,24 @@ const SERVICES = [
 ];
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { expanded, setExpanded } = props;
-  const { setValue, watch, control } = useFormContext();
-  const [requestedOtherCategory, setRequestedOtherCategory] = useState<
-    string[]
+  const { expanded, setExpanded, noteId } = props;
+  const { setValue, watch } = useFormContext();
+  const [services, setServices] = useState<
+    Array<{
+      id: string | undefined;
+      service: string | undefined;
+      customService: string;
+    }>
   >([]);
-
+  const [createNoteServiceRequest] = useMutation<
+    CreateNoteServiceRequestMutation,
+    CreateNoteServiceRequestMutationVariables
+  >(CREATE_NOTE_SERVICE_REQUEST);
+  const [deleteServiceRequest] = useMutation<
+    DeleteServiceRequestMutation,
+    DeleteServiceRequestMutationVariables
+  >(DELETE_SERVICE_REQUEST);
   const requestedServicesImages = watch('requestedServicesImages', []);
-  const services = watch('requestedServices') || [];
   const isRequestedServices = expanded === 'Requested Services';
   const isLessThanOneRequestedService = services.length < 1;
   const isLessThanOneRequestedServiceImages =
@@ -118,21 +141,69 @@ export default function RequestedServices(props: IRequestedServicesProps) {
   const isGreaterThanZeroRequestedServiceImages =
     requestedServicesImages?.length > 0;
 
-  const toggleServices = (service: string) => {
-    const newServices = services.includes(service)
-      ? services.filter((m: string) => m !== service)
-      : [...services, service];
-    setValue('requestedServices', newServices);
-  };
+  const toggleServices = async (service: string, isCustom: boolean) => {
+    if (!noteId) return;
+    try {
+      if (
+        isCustom
+          ? services.map((s) => s.customService).includes(service)
+          : services.map((s) => s.service).includes(service)
+      ) {
+        const id = isCustom
+          ? services.find((s) => s.customService === service)?.id
+          : services.find((s) => s.service === service)?.id;
 
-  useEffect(() => {
-    if (!isRequestedServices) {
-      const includedValues = requestedOtherCategory.filter((element) =>
-        services.includes(element)
-      );
-      setRequestedOtherCategory(includedValues);
+        if (!id) throw new Error('Unexpected Error!');
+        await deleteServiceRequest({
+          variables: {
+            data: {
+              id,
+            },
+          },
+        });
+
+        const newServices = services.filter((s) => s.id !== id);
+        setServices(newServices);
+        const ids = newServices.map((s) => s.id);
+        setValue('requestedServices', ids);
+      } else {
+        const { data } = await createNoteServiceRequest({
+          variables: {
+            data: {
+              service: isCustom
+                ? ServiceEnum.Other
+                : (service.replace(/ /g, '_').toUpperCase() as ServiceEnum),
+              customService: isCustom ? service : '',
+              noteId,
+              serviceRequestType: ServiceRequestTypeEnum.Requested,
+            },
+          },
+        });
+        if (
+          data?.createNoteServiceRequest.__typename === 'ServiceRequestType'
+        ) {
+          const newServices = [
+            ...services,
+            {
+              id: data?.createNoteServiceRequest.id,
+              service: isCustom ? 'OTHER' : service,
+              customService: isCustom ? service : '',
+            },
+          ];
+
+          setServices(newServices);
+          const ids = newServices.map((s) => s.id);
+          setValue('requestedServices', ids);
+        } else if (
+          data?.createNoteServiceRequest.__typename === 'OperationInfo'
+        ) {
+          console.log(data.createNoteServiceRequest.messages);
+        }
+      }
+    } catch (e) {
+      console.log('TOOGLE CHECKBOX ERROR: ', e);
     }
-  }, [expanded]);
+  };
 
   return (
     <FieldCard
@@ -144,17 +215,29 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         ) : isGreaterThanZeroRequestedService ||
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {services.map((service: string) => {
-              const IconComponent = ICONS[service] || PlusIcon;
-              return (
-                <IconComponent
-                  mr="xs"
-                  key={service}
-                  size="md"
-                  color={Colors.PRIMARY_EXTRA_DARK}
-                />
-              );
+            {services.map((item, index) => {
+              if (!item.customService && item.service && ICONS[item.service]) {
+                const IconComponent = ICONS[item.service];
+                return (
+                  <IconComponent
+                    mr="xs"
+                    key={index}
+                    size="md"
+                    color={Colors.PRIMARY_EXTRA_DARK}
+                  />
+                );
+              }
+              return null;
             })}
+
+            {services.some((item) => !item.service || item.customService) && (
+              <PlusIcon
+                mr="xs"
+                size="md"
+                color={Colors.PRIMARY_EXTRA_DARK}
+                key="plusIcon"
+              />
+            )}
             {isGreaterThanZeroRequestedServiceImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
             )}
@@ -180,11 +263,13 @@ export default function RequestedServices(props: IRequestedServicesProps) {
               <H3 mb="xs">{service.title}</H3>
               {service.items.map((item, idx) => (
                 <Checkbox
-                  isChecked={services.includes(item.title)}
+                  isChecked={services
+                    .map((s) => s.service)
+                    .includes(item.title)}
                   mt={idx !== 0 ? 'xs' : undefined}
                   key={item.title}
                   hasBorder
-                  onCheck={() => toggleServices(item.title)}
+                  onCheck={() => toggleServices(item.title, false)}
                   accessibilityHint={item.title}
                   label={
                     <View style={styles.labelContainer}>
@@ -196,15 +281,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
               ))}
             </View>
           ))}
-          <OtherCategory
-            main="requestedServices"
-            other="requestedOtherCategory"
-            services={services}
-            setValue={setValue}
-            control={control}
-            otherCategories={requestedOtherCategory}
-            setOtherCategories={setRequestedOtherCategory}
-          />
+          <OtherCategory services={services} toggleServices={toggleServices} />
 
           <Attachments
             images={requestedServicesImages}

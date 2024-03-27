@@ -1,4 +1,4 @@
-import { Attachments } from '@monorepo/expo/betterangels';
+import { Attachments, MoodEnum } from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
   FaceCloudsIcon,
@@ -32,39 +32,66 @@ import MoodSelector from './MoodSelector';
 interface Mood {
   Icon: ComponentType<IIconProps>;
   title: string;
+  enum: MoodEnum;
+  id?: string;
 }
 
 interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 const MOOD_DATA: { [key: string]: Mood[] } = {
   pleasant: [
-    { Icon: FaceSmilingHandsIcon, title: 'Agreeable' },
-    { Icon: FaceSmileIcon, title: 'Euthymic' },
-    { Icon: FaceLaughBeamIcon, title: 'Happy' },
-    { Icon: FaceLaughIcon, title: 'Motivated' },
-    { Icon: FaceRelievedIcon, title: 'Optimistic' },
-    { Icon: FaceSunglassesIcon, title: 'Personable' },
-    { Icon: FaceSmileRelaxedIcon, title: 'Pleasant' },
+    {
+      Icon: FaceSmilingHandsIcon,
+      title: 'Agreeable',
+      enum: MoodEnum.Agreeable,
+    },
+    { Icon: FaceSmileIcon, title: 'Euthymic', enum: MoodEnum.Euthymic },
+    { Icon: FaceLaughBeamIcon, title: 'Happy', enum: MoodEnum.Happy },
+    { Icon: FaceLaughIcon, title: 'Motivated', enum: MoodEnum.Motivated },
+    { Icon: FaceRelievedIcon, title: 'Optimistic', enum: MoodEnum.Optimistic },
+    {
+      Icon: FaceSunglassesIcon,
+      title: 'Personable',
+      enum: MoodEnum.Personable,
+    },
+    { Icon: FaceSmileRelaxedIcon, title: 'Pleasant', enum: MoodEnum.Pleasant },
   ],
   neutral: [
-    { Icon: FacePoutingIcon, title: 'Agitated' },
-    { Icon: FaceSpiralEyesIcon, title: 'Disorganized Thought' },
-    { Icon: FaceMehBlankIcon, title: 'Flat/blunted' },
-    { Icon: FaceHandYawnIcon, title: 'Indifferent' },
-    { Icon: FaceFrownIcon, title: 'Restless' },
+    { Icon: FacePoutingIcon, title: 'Agitated', enum: MoodEnum.Agitated },
+    {
+      Icon: FaceSpiralEyesIcon,
+      title: 'Disorganized Thought',
+      enum: MoodEnum.DisorganizedThought,
+    },
+    {
+      Icon: FaceMehBlankIcon,
+      title: 'Flat/blunted',
+      enum: MoodEnum.FlatBlunted,
+    },
+    {
+      Icon: FaceHandYawnIcon,
+      title: 'Indifferent',
+      enum: MoodEnum.Indifferent,
+    },
+    { Icon: FaceFrownIcon, title: 'Restless', enum: MoodEnum.Restless },
   ],
   unpleasant: [
-    { Icon: FaceAnxiousSweatIcon, title: 'Anxious' },
-    { Icon: FaceDisappointedIcon, title: 'Depressed' },
-    { Icon: FaceMehIcon, title: 'Detached' },
-    { Icon: FaceMeltingIcon, title: 'Disoriented' },
-    { Icon: FaceSpiralEyesIcon, title: 'Escalated' },
-    { Icon: FaceWearyIcon, title: 'Hopeless' },
-    { Icon: FaceSwearIcon, title: 'Manic' },
-    { Icon: FaceCloudsIcon, title: 'Suicidal' },
+    { Icon: FaceAnxiousSweatIcon, title: 'Anxious', enum: MoodEnum.Anxious },
+    {
+      Icon: FaceDisappointedIcon,
+      title: 'Depressed',
+      enum: MoodEnum.Depressed,
+    },
+    { Icon: FaceMehIcon, title: 'Detached', enum: MoodEnum.Detached },
+    { Icon: FaceMeltingIcon, title: 'Disoriented', enum: MoodEnum.Disoriented },
+    { Icon: FaceSpiralEyesIcon, title: 'Escalated', enum: MoodEnum.Escalated },
+    { Icon: FaceWearyIcon, title: 'Hopeless', enum: MoodEnum.Hopeless },
+    { Icon: FaceSwearIcon, title: 'Manic', enum: MoodEnum.Manic },
+    { Icon: FaceCloudsIcon, title: 'Suicidal', enum: MoodEnum.Suicidal },
   ],
 };
 
@@ -94,7 +121,7 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded } = props;
+  const { expanded, setExpanded, noteId } = props;
   const [tab, setTab] = useState<string>('pleasant');
   const { watch, setValue } = useFormContext();
 
@@ -150,17 +177,19 @@ export default function Mood(props: IMoodProps) {
               flexWrap: 'wrap',
             }}
           >
-            {moods.map((mood: string) => {
-              const IconComponent = ICONS[mood];
-              return (
-                <IconComponent
-                  mr="xs"
-                  key={mood}
-                  size="md"
-                  color={Colors.PRIMARY_EXTRA_DARK}
-                />
-              );
-            })}
+            {moods.map(
+              (mood: { title: string; id: string; enum: MoodEnum }) => {
+                const IconComponent = ICONS[mood.title];
+                return (
+                  <IconComponent
+                    mr="xs"
+                    key={mood.title}
+                    size="md"
+                    color={Colors.PRIMARY_EXTRA_DARK}
+                  />
+                );
+              }
+            )}
             {isGreaterThanZeroMoodImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
             )}
@@ -196,7 +225,7 @@ export default function Mood(props: IMoodProps) {
               </Pressable>
             ))}
           </View>
-          <MoodSelector moodsData={moodsData} />
+          <MoodSelector noteId={noteId} moodsData={moodsData} />
           <Attachments
             images={moodsImages}
             setImages={(array) => setValue('moodsImages', array)}
