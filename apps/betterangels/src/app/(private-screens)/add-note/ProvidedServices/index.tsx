@@ -9,8 +9,6 @@ import {
   DeleteServiceRequestMutationVariables,
   OtherCategory,
   ServiceEnum,
-  DELETE_SERVICE_REQUEST,
-  OtherCategory,
   ServiceRequestTypeEnum,
 } from '@monorepo/expo/betterangels';
 import {
