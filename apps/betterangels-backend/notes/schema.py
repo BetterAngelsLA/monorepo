@@ -201,9 +201,6 @@ class Mutation:
                         metadata__timestamp__gt=saved_at,
                     ).values_list("id", flat=True)
                 )
-                from IPython import embed
-
-                embed()
 
                 # Revert any models that were associated with the Note instance
                 # in contexts created AFTER the saved_at time
@@ -228,7 +225,7 @@ class Mutation:
                             ).pgh_obj.revert_action(action=action)
 
                         except ObjectDoesNotExist:
-                            # if object has alreay been deleted, it will be
+                            # if object has already been deleted, it will be
                             # restored in the next section
                             pass
 
@@ -256,7 +253,8 @@ class Mutation:
                 return cast(NoteType, reverted_note)
 
         except Exception:
-            raise
+            # TODO: add error handling/logging
+
             note = Note.objects.get(id=data.id)
 
             return cast(NoteType, note)
