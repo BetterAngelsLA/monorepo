@@ -167,7 +167,7 @@ class Mutation:
         NOTE_DELETIONS = {
             "deleteMood",
             "removeNoteTask",
-            "deleteServiceRequest",
+            "removeNoteServiceRequest",
         }
         try:
             with transaction.atomic():
@@ -201,15 +201,10 @@ class Mutation:
                         metadata__timestamp__gt=saved_at,
                     ).values_list("id", flat=True)
                 )
-                # from IPython import embed
+                from IPython import embed
 
-                # embed()
+                embed()
 
-                # Context.objects.filter(
-                #     # metadata__note_id=data.id,
-                #     # metadata__label__in=NOTE_ADDITIONS,
-                #     metadata__timestamp__gt=saved_at,
-                # ).values_list("id", flat=True)
                 # Revert any models that were associated with the Note instance
                 # in contexts created AFTER the saved_at time
                 for event in Events.objects.filter(
