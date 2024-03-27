@@ -1,8 +1,12 @@
 import { useMutation } from '@apollo/client';
-import { UPDATE_NOTE } from '@monorepo/expo/betterangels';
+import { CREATE_NOTE_MOOD } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
+import {
+  CreateNoteMoodInput,
+  CreateNoteMoodMutationVariables,
+} from 'libs/expo/betterangels/src/lib/apollo/gql-types/graphql';
 import React, { ComponentType } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
@@ -20,10 +24,22 @@ interface MoodSelectorProps {
 const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData, noteId }) => {
   const { setValue, watch } = useFormContext();
   const selectedMoods = watch('moods') || [];
-  const [updateNote] = useMutation(UPDATE_NOTE);
+  const [createNoteMood] = useMutation<
+    CreateNoteMoodInput,
+    CreateNoteMoodMutationVariables
+  >(CREATE_NOTE_MOOD);
 
   const toggleMood = async (mood: string) => {
+    if (!noteId) return;
     try {
+      createNoteMood({
+        variables: {
+          data: {
+            noteId,
+            descriptor: mood.replace(/ |\/+/g, '_').toUpperCase(),
+          },
+        },
+      });
       const newMoods = selectedMoods.includes(mood)
         ? selectedMoods.filter((m: string) => m !== mood)
         : [...selectedMoods, mood];
@@ -37,15 +53,6 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData, noteId }) => {
         : [...selectedMoods, mood].map((m: string) => ({
             descriptor: m.replace(/ |\/+/g, '_').toUpperCase(),
           }));
-
-      await updateNote({
-        variables: {
-          data: {
-            id: noteId,
-            moods: moodsForDB,
-          },
-        },
-      });
       setValue('moods', newMoods);
     } catch (e) {
       console.log('Error updating note mood', e);

@@ -19,6 +19,8 @@ const documents = {
     "\n  mutation DeleteNote($data: DeleteDjangoObjectInput!) {\n    deleteNote(data: $data) {\n      ... on NoteType {\n        id\n      }\n    }\n  }\n": types.DeleteNoteDocument,
     "\n  mutation CreateServiceRequest($data: CreateServiceRequestInput!) {\n    createServiceRequest(data: $data) {\n      ... on ServiceRequestType {\n        id\n        service\n      }\n    }\n  }\n": types.CreateServiceRequestDocument,
     "\n  mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {\n    deleteServiceRequest(data: $data) {\n      ... on ServiceRequestType {\n        id\n      }\n    }\n  }\n": types.DeleteServiceRequestDocument,
+    "\n  mutation CreateNoteMood($data: CreateNoteMoodInput!) {\n    createNoteMood(data: $data) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on MoodType {\n        id\n        descriptor\n      }\n    }\n  }\n": types.CreateNoteMoodDocument,
+    "\n  mutation DeleteMood($id: ID!) {\n    deleteMood(data: { id: $id }) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on DeletedObjectType {\n        id\n      }\n    }\n  }\n": types.DeleteMoodDocument,
     "\n  query currentUser {\n    currentUser {\n      id\n      username\n      email\n    }\n  }\n": types.CurrentUserDocument,
     "\n  query notes {\n    notes {\n      id\n      title\n      publicDetails\n      createdAt\n    }\n  }\n": types.NotesDocument,
     "\n  query ViewNote($id: ID!) {\n    note(pk: $id) {\n      id\n      title\n      publicDetails\n      client {\n        id\n      }\n    }\n  }\n": types.ViewNoteDocument,
@@ -62,6 +64,14 @@ export function graphql(source: "\n  mutation CreateServiceRequest($data: Create
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {\n    deleteServiceRequest(data: $data) {\n      ... on ServiceRequestType {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {\n    deleteServiceRequest(data: $data) {\n      ... on ServiceRequestType {\n        id\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateNoteMood($data: CreateNoteMoodInput!) {\n    createNoteMood(data: $data) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on MoodType {\n        id\n        descriptor\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateNoteMood($data: CreateNoteMoodInput!) {\n    createNoteMood(data: $data) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on MoodType {\n        id\n        descriptor\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteMood($id: ID!) {\n    deleteMood(data: { id: $id }) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on DeletedObjectType {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteMood($id: ID!) {\n    deleteMood(data: { id: $id }) {\n      ... on OperationInfo {\n        messages {\n          kind\n          field\n          message\n        }\n      }\n      ... on DeletedObjectType {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

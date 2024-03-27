@@ -88,3 +88,38 @@ export const DELETE_SERVICE = gql`
     }
   }
 `;
+
+export const CREATE_NOTE_MOOD = gql`
+  mutation CreateNoteMood($data: CreateNoteMoodInput!) {
+    createNoteMood(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on MoodType {
+        id
+        descriptor
+      }
+    }
+  }
+`;
+
+export const DELETE_MOOD = gql`
+  mutation DeleteMood($id: ID!) {
+    deleteMood(data: { id: $id }) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on DeletedObjectType {
+        id
+      }
+    }
+  }
+`;
