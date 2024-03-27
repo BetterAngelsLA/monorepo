@@ -483,20 +483,16 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # )
 
         # Remove service requests - should be discarded
-        delete_service_request_mutation = """
-            mutation removeNoteServiceRequest($id: ID!) {
-                removeNoteServiceRequest(data: { id: $id }) {
-                    ... on ServiceRequestType {
-                        id
-                    }
-                }
-            }
-        """
+
         print("deleting")
         print("=" * 100)
         print(timezone.now())
-        self.execute_graphql(
-            delete_service_request_mutation, {"id": reverted_provided_service["id"]}
+        self._remove_note_service_request_fixture(
+            {
+                "serviceRequestId": reverted_provided_service["id"],
+                "noteId": self.note["id"],
+                "serviceRequestType": "PROVIDED",
+            }
         )
 
         # self.execute_graphql(
@@ -697,7 +693,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # Remove note service request
         expected_query_count = expected_query_count
         with self.assertNumQueries(expected_query_count):
-            # if True:
             updated_note = self._remove_note_service_request_fixture(variables)["data"][
                 "removeNoteServiceRequest"
             ]
