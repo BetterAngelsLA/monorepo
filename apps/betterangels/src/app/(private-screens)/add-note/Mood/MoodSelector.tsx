@@ -48,11 +48,14 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData, noteId }) => {
           .map((selected: Mood) => selected.title)
           .includes(mood.title)
       ) {
-        if (!mood.id) throw new Error('Unexpected Error!');
+        const moodToDelete = selectedMoods.find(
+          (item: Mood) => item.title === mood.title
+        );
+        if (!moodToDelete.id) throw new Error('Unexpected Error!');
         deleteMood({
           variables: {
             data: {
-              id: mood.id,
+              id: moodToDelete.id,
             },
           },
         });
