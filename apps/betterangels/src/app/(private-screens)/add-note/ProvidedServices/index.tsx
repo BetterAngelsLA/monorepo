@@ -2,8 +2,13 @@ import { useMutation } from '@apollo/client';
 import {
   Attachments,
   CREATE_NOTE_SERVICE_REQUEST,
+  CreateNoteServiceRequestMutation,
+  CreateNoteServiceRequestMutationVariables,
   DELETE_SERVICE_REQUEST,
+  DeleteServiceRequestMutation,
+  DeleteServiceRequestMutationVariables,
   OtherCategory,
+  ServiceEnum,
   ServiceRequestTypeEnum,
 } from '@monorepo/expo/betterangels';
 import {
@@ -119,8 +124,14 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
       customService: string;
     }>
   >([]);
-  const [createNoteServiceRequest] = useMutation(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest] = useMutation(DELETE_SERVICE_REQUEST);
+  const [createNoteServiceRequest] = useMutation<
+    CreateNoteServiceRequestMutation,
+    CreateNoteServiceRequestMutationVariables
+  >(CREATE_NOTE_SERVICE_REQUEST);
+  const [deleteServiceRequest] = useMutation<
+    DeleteServiceRequestMutation,
+    DeleteServiceRequestMutationVariables
+  >(DELETE_SERVICE_REQUEST);
   const providedServicesImages = watch('providedServicesImages', []);
   const isProvidedServices = expanded === 'Provided Services';
   const isLessThanOneProvidedService = services.length < 1;
@@ -130,6 +141,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     providedServicesImages?.length > 0;
 
   const toggleServices = async (service: string, isCustom: boolean) => {
+    if (!noteId) return;
     try {
       if (
         isCustom
@@ -139,6 +151,8 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         const id = isCustom
           ? services.find((s) => s.customService === service)?.id
           : services.find((s) => s.service === service)?.id;
+
+        if (!id) throw new Error('Service ID not found');
         await deleteServiceRequest({
           variables: {
             data: {
@@ -156,26 +170,35 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
           variables: {
             data: {
               service: isCustom
-                ? 'OTHER'
-                : service.replace(/ /g, '_').toUpperCase(),
+                ? ServiceEnum.Other
+                : (service.replace(/ /g, '_').toUpperCase() as ServiceEnum),
               customService: isCustom ? service : '',
               noteId,
               serviceRequestType: ServiceRequestTypeEnum.Provided,
             },
           },
         });
-        const newServices = [
-          ...services,
-          {
-            id: data?.createNoteServiceRequest.id,
-            service: isCustom ? 'OTHER' : service,
-            customService: isCustom ? service : '',
-          },
-        ];
 
-        setServices(newServices);
-        const ids = newServices.map((s) => s.id);
-        setValue('providedServices', ids);
+        if (
+          data?.createNoteServiceRequest.__typename === 'ServiceRequestType'
+        ) {
+          const newServices = [
+            ...services,
+            {
+              id: data?.createNoteServiceRequest.id,
+              service: isCustom ? 'OTHER' : service,
+              customService: isCustom ? service : '',
+            },
+          ];
+
+          setServices(newServices);
+          const ids = newServices.map((s) => s.id);
+          setValue('providedServices', ids);
+        } else if (
+          data?.createNoteServiceRequest.__typename === 'OperationInfo'
+        ) {
+          console.log(data.createNoteServiceRequest.messages);
+        }
       }
     } catch (e) {
       console.log('TOOGLE CHECKBOX ERROR: ', e);
