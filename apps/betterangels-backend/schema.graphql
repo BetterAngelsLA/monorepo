@@ -118,6 +118,8 @@ union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
+union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
+
 union DeleteTaskPayload = TaskType | OperationInfo
 
 type DeletedObjectType {
@@ -176,6 +178,7 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)

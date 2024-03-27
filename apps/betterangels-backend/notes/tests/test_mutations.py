@@ -1,10 +1,9 @@
-import time
 from unittest.mock import ANY, patch
 
+import time_machine
 from common.models import Attachment
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from freezegun import freeze_time
 from model_bakery import baker
 from notes.enums import NoteNamespaceEnum
 from notes.models import Mood, Note, ServiceRequest, Task
@@ -22,7 +21,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
         expected_query_count = 36
         with self.assertNumQueries(expected_query_count):
@@ -52,7 +51,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, created_note)
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
@@ -85,7 +84,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
-    @freeze_time("03-12-2024 10:11:12")
+    @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_partial_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
@@ -160,7 +159,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 23
+        expected_query_count = 27
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -207,7 +206,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 21
+        expected_query_count = 25
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -265,7 +264,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 20
+        expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -328,7 +327,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -407,7 +406,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 20
+        expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -487,7 +486,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 20
+        expected_query_count = 21
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -663,7 +662,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        expected_query_count = 12
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self._add_note_task_fixture(variables)
 
@@ -711,7 +710,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
-        expected_query_count = 12
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self._remove_note_task_fixture(variables)
 
@@ -749,7 +748,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(1, note.moods.count())
 
-        expected_query_count = 10
+        expected_query_count = 8
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_mood_fixture(variables)
 
@@ -785,7 +784,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": moods[0].pk}
 
-        expected_query_count = 5
+        expected_query_count = 3
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -877,9 +876,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
 
-@freeze_time("2024-02-26")
-@freeze_time("2024-03-11 10:11:12")
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-03-11 10:11:12", tick=False)
 class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -908,7 +906,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         }
         self.assertEqual(expected_service_request, created_service_request)
 
-    @freeze_time("2024-03-11 12:34:56")
+    @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
@@ -935,7 +933,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         }
         self.assertEqual(expected_service_request, updated_service_request)
 
-    @freeze_time("2024-03-11 12:34:56")
+    @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_partial_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
@@ -960,9 +958,37 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         }
         self.assertEqual(expected_service_request, updated_service_request)
 
+    def test_delete_service_request_mutation(self) -> None:
+        mutation = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.service_request["id"]}
 
-@freeze_time("2024-02-26 10:11:12")
+        expected_query_count = 15
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNotNone(response["data"]["deleteServiceRequest"])
+
+        with self.assertRaises(ServiceRequest.DoesNotExist):
+            ServiceRequest.objects.get(id=self.service_request["id"])
+
+
 @ignore_warnings(category=UserWarning)
+@time_machine.travel("2024-02-26T10:11:12+00:00", tick=False)
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
