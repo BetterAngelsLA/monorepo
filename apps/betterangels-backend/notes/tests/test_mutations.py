@@ -202,8 +202,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type,  expected_query_count",  # noqa E501
         [
-            ("REQUESTED", 12),
-            ("PROVIDED", 12),
+            ("REQUESTED", 8),
+            ("PROVIDED", 8),
         ],
     )
     def test_remove_note_service_request_mutation(
@@ -817,8 +817,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        # TODO: fix the query counts!
-        expected_query_count = 22
+        expected_query_count = 24
         with self.assertNumQueries(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 

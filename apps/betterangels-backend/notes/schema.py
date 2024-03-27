@@ -195,6 +195,7 @@ class Mutation:
                     ).values_list("id", flat=True)
                 )
 
+                # Revert changes made to PROXY model instances (no pgh_obj_id)
                 for event in Events.objects.filter(
                     pgh_context_id__in=contexts_to_revert, pgh_obj_id=None
                 ):
@@ -204,6 +205,7 @@ class Mutation:
                         action=action, **event.pgh_data
                     )
 
+                # Revert changes made to REAL model instances (have pgh_obj_id)
                 for event in Events.objects.references(note).filter(
                     pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False
                 ):
@@ -501,14 +503,23 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def remove_note_service_request(
         self, info: Info, data: RemoveNoteServiceRequestInput
     ) -> NoteType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
         ):
-            note = Note.objects.get(id=data.note_id)
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.note_id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
             service_request = ServiceRequest.objects.get(id=data.service_request_id)
 
             if data.service_request_type == ServiceRequestTypeEnum.REQUESTED:
