@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 import time_machine
 from django.test import ignore_warnings, override_settings
-from notes.enums import NoteNamespaceEnum, ServiceEnum
+from notes.enums import NoteNamespaceEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -108,24 +108,24 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": ServiceEnum(self.provided_services[0].service).name,
+                    "service": self.provided_services[0].service.upper(),
                     "customService": self.provided_services[0].custom_service,
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": ServiceEnum(self.provided_services[1].service).name,
+                    "service": self.provided_services[1].service.upper(),
                     "customService": self.provided_services[1].custom_service,
                 },
             ],
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": ServiceEnum(self.requested_services[0].service).name,
+                    "service": self.requested_services[0].service.upper(),
                     "customService": self.requested_services[0].custom_service,
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": ServiceEnum(self.requested_services[1].service).name,
+                    "service": self.requested_services[1].service.upper(),
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
