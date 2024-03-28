@@ -82,6 +82,7 @@ class TaskAdmin(admin.ModelAdmin):
 class ServiceRequestAdmin(admin.ModelAdmin):
     list_display = (
         "service_name",
+        "status",
         "due_by",
         "completed_on",
         "client",
