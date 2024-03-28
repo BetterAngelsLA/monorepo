@@ -58,17 +58,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         else:
             self.graphql_client.logout()
 
-
-class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._setup_note()
-        self._setup_note_tasks()
-        self.provided_services = baker.make(ServiceRequest, _quantity=2)
-        self.requested_services = baker.make(ServiceRequest, _quantity=2)
-        self._clear_query_caches()
-
-    def _clear_query_caches(self) -> None:
+    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
         """
         Resets all caches that may prevent query execution.
         Needed to ensure deterministic behavior of ``assertNumQueries`` (or
@@ -78,6 +68,16 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
+
+
+class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_note()
+        self._setup_note_tasks()
+        self.provided_services = baker.make(ServiceRequest, _quantity=2)
+        self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
