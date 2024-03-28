@@ -139,6 +139,35 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _revert_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        mutation = """
+            mutation RevertNote($data: RevertNoteInput!) {
+                revertNote(data: $data) {
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                        purposes {
+                            id
+                        }
+                        nextSteps {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                        requestedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _add_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation AddNoteTask($data: AddNoteTaskInput!) {
@@ -267,6 +296,31 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             id
                         }
                         createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteServiceRequest($data: RemoveNoteServiceRequestInput!) {
+                removeNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        requestedServices {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
                     }
                 }
             }

@@ -48,6 +48,7 @@ from .types import (
     NoteAttachmentType,
     NoteFilter,
     NoteType,
+    RemoveNoteServiceRequestInput,
     RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
@@ -135,87 +136,109 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
     )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        now = timezone.now()
-        with transaction.atomic():
-            with pghistory.context(timestamp=now, label=info.field_name):
-                note_data = asdict(data)
-                note = Note.objects.get(id=data.id)
-                note = resolvers.update(
-                    info,
-                    note,
-                    {
-                        **note_data,
-                    },
-                )
+        with transaction.atomic(), pghistory.context(
+            note_id=data.id, timestamp=timezone.now(), label=info.field_name
+        ):
+            note_data = asdict(data)
+            note = Note.objects.get(id=data.id)
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    **note_data,
+                },
+            )
 
-                # Annotated Fields for Permission Checks. This is a workaround since
-                # annotations are not applied during mutations.
-                note._private_details = note.private_details
+            # Annotated Fields for Permission Checks. This is a workaround since
+            # annotations are not applied during mutations.
+            note._private_details = note.private_details
 
-                return cast(NoteType, note)
+            return cast(NoteType, note)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
+        NOTE_UPDATES = {
+            "createNoteMood",
+            "addNoteTask",
+            "createNoteTask",
+            "createNoteServiceRequest",
+            "deleteMood",
+            "removeNoteTask",
+            "removeNoteServiceRequest",
+            # TODO: add note update mutations
+        }
+        note = Note.objects.get(id=data.id)
+
         try:
             with transaction.atomic():
                 saved_at = data.saved_at.isoformat()
-                context_qs = Context.objects.filter(metadata__label="updateNote")
 
                 # Find context for most recent Note update before saved_at time
-                revert_to_context = (
-                    context_qs.filter(metadata__timestamp__lte=saved_at)
+                revert_to_note_context_id: uuid.UUID | None = None
+                if revert_to_note_context := (
+                    Context.objects.filter(
+                        metadata__note_id=data.id,
+                        metadata__label="updateNote",
+                        metadata__timestamp__lte=saved_at,
+                    )
                     .order_by("-metadata__timestamp")
                     .first()
+                ):
+                    revert_to_note_context_id = revert_to_note_context.id
+
+                # Find contexts that occurred AFTER saved_at time
+                contexts_to_revert: list[uuid.UUID] = list(
+                    Context.objects.filter(
+                        metadata__note_id=data.id,
+                        metadata__label__in=NOTE_UPDATES,
+                        metadata__timestamp__gt=saved_at,
+                    ).values_list("id", flat=True)
                 )
 
-                if revert_to_context is None:
-                    raise Exception("Nothing to revert")
-
-                # Find contexts for updates that occurred AFTER saved_at time
-                contexts_to_delete: list[uuid.UUID] = list(
-                    context_qs.filter(metadata__timestamp__gt=saved_at).values_list(
-                        "id", flat=True
-                    )
-                )
-
-                # Revert any models that were associated with the Note instance
-                # in contexts created AFTER the saved_at time
+                # Revert changes made to PROXY model instances (no pgh_obj_id)
                 for event in Events.objects.filter(
-                    pgh_context_id__in=contexts_to_delete
-                ).exclude(pgh_model="notes.NoteEvent"):
+                    pgh_context_id__in=contexts_to_revert, pgh_obj_id=None
+                ):
                     action = event.pgh_label.split(".")[1]
-                    if apps.get_model(event.pgh_model).pgh_tracked_model._meta.proxy:
-                        apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
-                            action=action, **event.pgh_data
-                        )
 
-                    else:
-                        try:
-                            apps.get_model(event.pgh_model).objects.get(
-                                id=event.pgh_obj_id,
-                                pgh_context_id__in=contexts_to_delete,
-                            ).pgh_obj.revert_action(action=action)
+                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
+                        action=action, **event.pgh_data
+                    )
 
-                        except ObjectDoesNotExist:
-                            # if object has alreay been deleted, it will be
-                            # restored in the next section
-                            pass
+                # Revert changes made to REAL model instances (have pgh_obj_id)
+                for event in Events.objects.references(note).filter(
+                    pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False
+                ):
+                    action = event.pgh_label.split(".")[1]
 
-                # Revert all the tracked models to the states they were in
-                # at context just BEFORE the selected saved_at time
-                for event in Events.objects.filter(
-                    pgh_context_id=revert_to_context.id
-                ).exclude(pgh_obj_id=None):
+                    try:
+                        apps.get_model(event.pgh_model).objects.get(
+                            id=event.pgh_obj_id,
+                            pgh_context_id__in=contexts_to_revert,
+                        ).pgh_obj.revert_action(action=action)
+
+                    except ObjectDoesNotExist:
+                        # If object has already been deleted, restore it
+                        apps.get_model(event.pgh_model).objects.get(
+                            pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
+                        ).revert()
+
+                # Revert just the Note instance
+                if revert_to_note_context_id:
+                    event = Events.objects.get(
+                        pgh_context_id=revert_to_note_context_id,
+                        pgh_obj_model="notes.Note",
+                    )
                     apps.get_model(event.pgh_model).objects.get(
-                        pgh_context_id=revert_to_context.id, id=event.pgh_obj_id
+                        pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                     ).revert()
 
-                reverted_note = Note.objects.get(id=data.id)
+                note.refresh_from_db()
 
-                return cast(NoteType, reverted_note)
+                return cast(NoteType, note)
 
         except Exception:
-            note = Note.objects.get(id=data.id)
+            # TODO: add error handling/logging
 
             return cast(NoteType, note)
 
@@ -268,7 +291,9 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
-        with transaction.atomic():
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
             user = get_current_user(info)
             try:
                 note = filter_for_user(
@@ -292,7 +317,9 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
-        with transaction.atomic():
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
             user = get_current_user(info)
             try:
                 note = filter_for_user(
@@ -302,6 +329,7 @@ class Mutation:
                 ).get(id=data.note_id)
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
+
             task = Task.objects.get(id=data.task_id)
 
             if data.task_type == TaskTypeEnum.PURPOSE:
@@ -315,7 +343,9 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
-        with transaction.atomic():
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
             user = get_current_user(info)
 
             mood_data = asdict(data)
@@ -347,7 +377,7 @@ class Mutation:
     ) -> DeletedObjectType:
         user = get_current_user(info)
         try:
-            mood_id, _ = Mood.objects.filter(
+            mood = Mood.objects.get(
                 id=data.id,
                 note_id__in=Subquery(
                     filter_for_user(
@@ -356,7 +386,17 @@ class Mutation:
                         [NotePermissions.CHANGE],
                     ).values("id")
                 ),
-            ).delete()
+            )
+
+            mood_id = mood.id
+
+            with pghistory.context(
+                note_id=str(mood.note_id),
+                timestamp=timezone.now(),
+                label=info.field_name,
+            ):
+                mood.delete()
+
         except Note.DoesNotExist:
             raise PermissionError("User lacks proper organization or permissions")
 
@@ -394,7 +434,9 @@ class Mutation:
     def create_note_service_request(
         self, info: Info, data: CreateNoteServiceRequestInput
     ) -> ServiceRequestType:
-        with transaction.atomic():
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
             user = get_current_user(info)
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
@@ -461,6 +503,34 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def remove_note_service_request(
+        self, info: Info, data: RemoveNoteServiceRequestInput
+    ) -> NoteType:
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.note_id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
+            service_request = ServiceRequest.objects.get(id=data.service_request_id)
+
+            if data.service_request_type == ServiceRequestTypeEnum.REQUESTED:
+                note.requested_services.remove(service_request)
+            elif data.service_request_type == ServiceRequestTypeEnum.PROVIDED:
+                note.provided_services.remove(service_request)
+            else:
+                raise NotImplementedError
+
+            return cast(NoteType, note)
+
     delete_service_request: ServiceRequestType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[
@@ -496,7 +566,9 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
     def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
-        with transaction.atomic():
+        with transaction.atomic(), pghistory.context(
+            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
+        ):
             user = get_current_user(info)
             task_data = asdict(data)
             task_type = str(task_data.pop("task_type"))

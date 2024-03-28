@@ -128,6 +128,13 @@ class RemoveNoteTaskInput:
     task_type: TaskTypeEnum
 
 
+@strawberry.input
+class RemoveNoteServiceRequestInput:
+    service_request_id: ID
+    note_id: ID
+    service_request_type: ServiceRequestTypeEnum
+
+
 @strawberry_django.input(models.Mood)
 class CreateNoteMoodInput:
     descriptor: auto
