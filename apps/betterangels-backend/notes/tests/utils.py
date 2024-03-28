@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
@@ -71,10 +73,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         Resets all caches that may prevent query execution.
         Needed to ensure deterministic behavior of ``assertNumQueries`` (or
         after external changes to some Django database records).
-        """
-        from django.contrib.contenttypes.models import ContentType
-        from django.contrib.sites.models import Site
 
+        https://stackoverflow.com/a/55287613
+        """
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
 
