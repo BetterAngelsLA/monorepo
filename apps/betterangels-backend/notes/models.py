@@ -241,9 +241,6 @@ class Mood(BaseModel):
         if action == "add":
             self.delete()
 
-    def __str__(self) -> str:
-        return f"{self.descriptor} - {self.note.pk}"
-
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
