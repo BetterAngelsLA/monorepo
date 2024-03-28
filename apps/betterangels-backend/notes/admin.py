@@ -29,6 +29,11 @@ class MoodAdmin(admin.ModelAdmin):
         return obj.note.created_by.email if obj.note.created_by else ""
 
 
+class MoodInline(admin.TabularInline):
+    model = Mood
+    extra = 1
+
+
 class NoteAdmin(admin.ModelAdmin):
     list_display = (
         "note_title",
@@ -51,6 +56,7 @@ class NoteAdmin(admin.ModelAdmin):
         "client__email",
         "organization__name",
     )
+    inlines = [MoodInline]
 
     def note_title(self, obj: Note) -> str:
         return f"{obj.title} ({obj.pk})"
