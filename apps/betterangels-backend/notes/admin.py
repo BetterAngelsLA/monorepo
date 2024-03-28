@@ -32,16 +32,16 @@ class MoodAdmin(admin.ModelAdmin):
 class NoteAdmin(admin.ModelAdmin):
     list_display = (
         "note_title",
-        "created_at",
-        "updated_at",
         "client",
         "created_by",
         "organization",
-    )
-    list_filter = (
         "created_at",
         "updated_at",
+    )
+    list_filter = (
         "is_submitted",
+        "created_at",
+        "updated_at",
     )
     search_fields = (
         "title",
@@ -59,11 +59,16 @@ class NoteAdmin(admin.ModelAdmin):
 class TaskAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "client",
+        "due_by",
+        "status",
+        "created_by",
         "created_at",
         "updated_at",
-        "created_by",
     )
     list_filter = (
+        "due_by",
+        "status",
         "created_at",
         "updated_at",
     )
@@ -85,6 +90,9 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "service",
+        "status",
+        "due_by",
+        "completed_on",
         "created_at",
         "updated_at",
     )
