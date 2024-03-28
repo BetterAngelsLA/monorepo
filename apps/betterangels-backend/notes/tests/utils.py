@@ -62,9 +62,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self._setup_note()
         self._setup_note_tasks()
-        self._clear_query_caches()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
+        self._clear_query_caches()
 
     def _clear_query_caches(self) -> None:
         """
