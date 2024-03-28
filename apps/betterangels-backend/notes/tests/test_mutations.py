@@ -117,7 +117,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
         [
-            ("PURPOSE", "purposes", 33),
+            ("PURPOSE", "purposes", 32),
             ("NEXT_STEP", "next_steps", 32),
         ],
     )
@@ -249,7 +249,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def test_add_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": self.purposes[0].pk,
+            "taskId": self.purpose_1["id"],
             "taskType": task_type,
         }
 
@@ -264,14 +264,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purposes": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "purposes"
                 else []
             ),
             "nextSteps": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "next_steps"
                 else []
@@ -280,7 +280,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["addNoteTask"]
         self.assertEqual(expected_note, returned_note)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
-        self.assertEqual(self.purposes[0].pk, getattr(note, tasks_to_check).get().id)
+        self.assertEqual(
+            int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id
+        )
 
     @parametrize(
         "task_type, tasks_to_check",
@@ -294,13 +296,17 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": getattr(self, tasks_to_check)[0].pk,
+            "taskId": (
+                self.purpose_1["id"]
+                if tasks_to_check == "purposes"
+                else self.next_step_1["id"]
+            ),
             "taskType": task_type,
         }
 
         note = Note.objects.get(id=self.note["id"])
-        note.purposes.add(self.purposes[0])
-        note.next_steps.add(self.next_steps[0])
+        note.purposes.add(self.purpose_1["id"])
+        note.next_steps.add(self.next_step_1["id"])
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
@@ -314,7 +320,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 []
                 if tasks_to_check == "purposes"
                 else [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": str(self.purpose_1["id"]), "title": self.purpose_1["title"]},
                 ]
             ),
             "nextSteps": (
@@ -322,8 +328,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 if tasks_to_check == "next_steps"
                 else [
                     {
-                        "id": str(self.next_steps[0].id),
-                        "title": self.next_steps[0].title,
+                        "id": self.next_step_1["id"],
+                        "title": self.next_step_1["title"],
                     },
                 ]
             ),
@@ -563,14 +569,14 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.purposes[0].pk,
+                "taskId": self.purpose_1["id"],
                 "taskType": "PURPOSE",
             }
         )
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.next_steps[0].pk,
+                "taskId": self.next_step_1["id"],
                 "taskType": "NEXT_STEP",
             }
         )
@@ -582,14 +588,14 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.purposes[1].pk,
+                "taskId": self.purpose_2["id"],
                 "taskType": "PURPOSE",
             }
         )
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.next_steps[1].pk,
+                "taskId": self.next_step_2["id"],
                 "taskType": "NEXT_STEP",
             }
         )
@@ -685,7 +691,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.purposes[0].pk,
+                "taskId": self.purpose_1["id"],
                 "taskType": "PURPOSE",
             }
         )
@@ -693,7 +699,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.next_steps[0].pk,
+                "taskId": self.next_step_1["id"],
                 "taskType": "NEXT_STEP",
             }
         )
@@ -702,7 +708,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.purposes[1].pk,
+                "taskId": self.purpose_2["id"],
                 "taskType": "PURPOSE",
             }
         )
@@ -710,7 +716,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._add_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.next_steps[1].pk,
+                "taskId": self.next_step_2["id"],
                 "taskType": "NEXT_STEP",
             }
         )
@@ -722,7 +728,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._remove_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.purposes[1].pk,
+                "taskId": self.purpose_2["id"],
                 "taskType": "PURPOSE",
             }
         )
@@ -730,7 +736,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._remove_note_task_fixture(
             {
                 "noteId": note_id,
-                "taskId": self.next_steps[1].pk,
+                "taskId": self.next_step_2["id"],
                 "taskType": "NEXT_STEP",
             }
         )
