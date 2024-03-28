@@ -114,25 +114,46 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             )
 
     @parametrize(
-        "user_label, should_succeed",
+        "owns_note, owns_task, should_succeed",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_2_case_manager_1", False),  # Other user should not succeed
-            (None, False),  # Anonymous user should not succeed
+            (True, True, True),  # Owns both Note and Task; should succeed
+            (True, False, False),  # Owns Note but not Task; should not succeed
+            (False, True, False),  # Owns Task but not Note; should not succeed
         ],
     )
     def test_add_note_task_permission(
-        self, user_label: str, should_succeed: bool
+        self, owns_note: bool, owns_task: bool, should_succeed: bool
     ) -> None:
-        self._handle_user_login(user_label)
+        note_id = self.note["id"]
+        task_id = self.purpose_1["id"]
 
+        if not owns_note:
+            self._handle_user_login("org_2_case_manager_1")
+            note_id = self._create_note_fixture(
+                {
+                    "title": "New Note",
+                    "publicDetails": "New public details",
+                    "client": self.client_1.pk,
+                }
+            )["data"]["createNote"]["id"]
+
+        if not owns_task:
+            self._handle_user_login("org_2_case_manager_1")
+            task_id = self._create_task_for_note_fixture(
+                {
+                    "title": "New Task",
+                    "status": "TO_DO",
+                }
+            )["data"]["createTask"]["id"]
+
+        self._handle_user_login("org_1_case_manager_1")
         variables = {
-            "noteId": self.note["id"],
-            "taskId": self.purposes[0].pk,
+            "noteId": note_id,
+            "taskId": task_id,
             "taskType": "PURPOSE",
         }
 
-        note = Note.objects.get(id=self.note["id"])
+        note = Note.objects.get(id=note_id)
         self.assertEqual(0, note.purposes.count())
 
         response = self._add_note_task_fixture(variables)
@@ -140,56 +161,77 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["addNoteTask"]["id"])
             self.assertEqual(1, note.purposes.count())
         else:
-            if user_label == "org_2_case_manager_1":
+            if not owns_note:
                 self.assertEqual(
                     response["errors"][0]["message"],
                     "You do not have permission to modify this note.",
                 )
-            else:
+            if not owns_task:
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You must be logged in to perform this action.",
+                    "You do not have permission to access that task.",
                 )
             self.assertEqual(0, note.purposes.count())
 
     @parametrize(
-        "user_label, should_succeed",
+        "owns_note, owns_task, should_succeed",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_2_case_manager_1", False),  # Other user should not succeed
-            (None, False),  # Anonymous user should not succeed
+            (True, True, True),  # Owns both Note and Task; should succeed
+            (True, False, False),  # Owns Note but not Task; should not succeed
+            (False, True, False),  # Owns Task but not Note; should not succeed
         ],
     )
     def test_remove_note_task_permission(
-        self, user_label: str, should_succeed: bool
+        self, owns_note: bool, owns_task: bool, should_succeed: bool
     ) -> None:
-        self._handle_user_login(user_label)
+        note_id = self.note["id"]
+        task_id = self.purpose_1["id"]
 
+        if not owns_note:
+            self._handle_user_login("org_2_case_manager_1")
+            note_id = self._create_note_fixture(
+                {
+                    "title": "New Note",
+                    "publicDetails": "New public details",
+                    "client": self.client_1.pk,
+                }
+            )["data"]["createNote"]["id"]
+
+        if not owns_task:
+            self._handle_user_login("org_2_case_manager_1")
+            task_id = self._create_task_for_note_fixture(
+                {
+                    "title": "New Task",
+                    "status": "TO_DO",
+                }
+            )["data"]["createTask"]["id"]
+
+        self._handle_user_login("org_1_case_manager_1")
         variables = {
-            "noteId": self.note["id"],
-            "taskId": self.purposes[0].pk,
+            "noteId": note_id,
+            "taskId": task_id,
             "taskType": "PURPOSE",
         }
 
-        note = Note.objects.get(id=self.note["id"])
-        note.purposes.add(self.purposes[0])
+        note = Note.objects.get(id=note_id)
+        task = Task.objects.get(id=task_id)
+        note.purposes.add(task)
         self.assertEqual(1, note.purposes.count())
 
         response = self._remove_note_task_fixture(variables)
-
         if should_succeed:
             self.assertIsNotNone(response["data"]["removeNoteTask"]["id"])
             self.assertEqual(0, note.purposes.count())
         else:
-            if user_label == "org_2_case_manager_1":
+            if not owns_note:
                 self.assertEqual(
                     response["errors"][0]["message"],
                     "You do not have permission to modify this note.",
                 )
-            else:
+            if not owns_task:
                 self.assertEqual(
                     response["errors"][0]["message"],
-                    "You must be logged in to perform this action.",
+                    "You do not have permission to access that task.",
                 )
             self.assertEqual(1, note.purposes.count())
 

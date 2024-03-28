@@ -278,8 +278,14 @@ class Mutation:
                 ).get(id=data.note_id)
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
-
-            task = Task.objects.get(id=data.task_id)
+            try:
+                task = filter_for_user(
+                    Task.objects.all(),
+                    user,
+                    [TaskPermissions.CHANGE],
+                ).get(id=data.task_id)
+            except Task.DoesNotExist:
+                raise PermissionError("You do not have permission to access that task.")
 
             if data.task_type == TaskTypeEnum.PURPOSE:
                 note.purposes.add(task)
@@ -302,7 +308,14 @@ class Mutation:
                 ).get(id=data.note_id)
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
-            task = Task.objects.get(id=data.task_id)
+            try:
+                task = filter_for_user(
+                    Task.objects.all(),
+                    user,
+                    [TaskPermissions.CHANGE],
+                ).get(id=data.task_id)
+            except Task.DoesNotExist:
+                raise PermissionError("You do not have permission to access that task.")
 
             if data.task_type == TaskTypeEnum.PURPOSE:
                 note.purposes.remove(task)

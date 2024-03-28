@@ -41,8 +41,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
         # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
-        note.purposes.set(self.purposes)
-        note.next_steps.set(self.next_steps)
+        note.purposes.set([self.purpose_1["id"], self.purpose_2["id"]])
+        note.next_steps.set([self.next_step_1["id"], self.next_step_2["id"]])
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -98,12 +98,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Note",
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [
-                {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
-                {"id": str(self.purposes[1].id), "title": self.purposes[1].title},
+                {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
+                {"id": self.purpose_2["id"], "title": self.purpose_2["title"]},
             ],
             "nextSteps": [
-                {"id": str(self.next_steps[0].id), "title": self.next_steps[0].title},
-                {"id": str(self.next_steps[1].id), "title": self.next_steps[1].title},
+                {"id": self.next_step_1["id"], "title": self.next_step_1["title"]},
+                {"id": self.next_step_2["id"], "title": self.next_step_2["title"]},
             ],
             "providedServices": [
                 {

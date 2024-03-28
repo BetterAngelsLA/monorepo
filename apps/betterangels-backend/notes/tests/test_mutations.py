@@ -266,8 +266,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         persisted_update_variables = {
             "id": note_id,
             "title": "Updated Title",
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
+            "purposes": [self.purpose_1["id"]],
+            "nextSteps": [self.next_step_1["id"]],
             "providedServices": [self.provided_services[0].pk],
             "requestedServices": [self.requested_services[0].pk],
             "publicDetails": "Updated Body",
@@ -287,8 +287,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         discarded_update_variables = {
             "id": note_id,
             "title": "Discarded Title",
-            "purposes": [self.purposes[0].pk, self.purposes[1].pk],
-            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
+            "purposes": [self.purpose_1["id"], self.purpose_2["id"]],
+            "nextSteps": [self.next_step_1["id"], self.next_step_2["id"]],
             "providedServices": [
                 self.provided_services[0].pk,
                 self.provided_services[1].pk,
@@ -367,8 +367,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         persisted_update_variables = {
             "id": note_id,
             "title": "Updated Title",
-            "purposes": [self.purposes[0].pk, self.purposes[1].pk],
-            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
+            "purposes": [self.purpose_1["id"], self.purpose_2["id"]],
+            "nextSteps": [self.next_step_1["id"], self.next_step_2["id"]],
             "providedServices": [
                 self.provided_services[0].pk,
                 self.provided_services[1].pk,
@@ -394,8 +394,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         discarded_update_variables = {
             "id": note_id,
             "title": "Discarded Title",
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
+            "purposes": [self.purpose_1["id"]],
+            "nextSteps": [self.next_step_1["id"]],
             "providedServices": [self.provided_services[0].pk],
             "requestedServices": [self.requested_services[0].pk],
             "publicDetails": "Discarded Body",
@@ -466,8 +466,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": note_id,
             "title": "Discarded Title",
             "moods": [{"descriptor": "ANXIOUS"}],
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
+            "purposes": [self.purpose_1["id"]],
+            "nextSteps": [self.next_step_1["id"]],
             "providedServices": [self.provided_services[0].pk],
             "requestedServices": [self.requested_services[0].pk],
             "publicDetails": "Discarded Body",
@@ -523,7 +523,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
         [
-            ("PURPOSE", "purposes", 33),
+            ("PURPOSE", "purposes", 32),
             ("NEXT_STEP", "next_steps", 32),
         ],
     )
@@ -615,7 +615,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def test_add_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": self.purposes[0].pk,
+            "taskId": self.purpose_1["id"],
             "taskType": task_type,
         }
 
@@ -630,14 +630,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purposes": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "purposes"
                 else []
             ),
             "nextSteps": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "next_steps"
                 else []
@@ -646,7 +646,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["addNoteTask"]
         self.assertEqual(expected_note, returned_note)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
-        self.assertEqual(self.purposes[0].pk, getattr(note, tasks_to_check).get().id)
+        self.assertEqual(
+            int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id
+        )
 
     @parametrize(
         "task_type, tasks_to_check",
@@ -660,13 +662,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": getattr(self, tasks_to_check)[0].pk,
+            "taskId": (
+                self.purpose_1["id"]
+                if tasks_to_check == "purposes"
+                else self.next_step_1["id"]
+            ),
             "taskType": task_type,
         }
 
         note = Note.objects.get(id=self.note["id"])
-        note.purposes.add(self.purposes[0])
-        note.next_steps.add(self.next_steps[0])
+        purpose_task_id = self.purpose_1["id"]
+        next_step_task_id = self.next_step_1["id"]
+
+        purpose = Task.objects.get(id=purpose_task_id)
+        next_step = Task.objects.get(id=next_step_task_id)
+        note.purposes.add(purpose)
+        note.next_steps.add(next_step)
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
@@ -680,7 +691,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 []
                 if tasks_to_check == "purposes"
                 else [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": str(self.purpose_1["id"]), "title": self.purpose_1["title"]},
                 ]
             ),
             "nextSteps": (
@@ -688,8 +699,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 if tasks_to_check == "next_steps"
                 else [
                     {
-                        "id": str(self.next_steps[0].id),
-                        "title": self.next_steps[0].title,
+                        "id": self.next_step_1["id"],
+                        "title": self.next_step_1["title"],
                     },
                 ]
             ),
