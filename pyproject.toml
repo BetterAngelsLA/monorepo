@@ -8,6 +8,7 @@ description = ""
 authors = []
 license = "Proprietary"
 readme = "README.md"
+package-mode = false
 
 [tool.isort]
 profile = "black"
