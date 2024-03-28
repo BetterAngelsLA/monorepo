@@ -15,7 +15,10 @@ from organizations.models import Organization
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
 
-@pghistory.track()
+@pghistory.track(
+    pghistory.InsertEvent("service_request.add"),
+    pghistory.DeleteEvent("service_request.remove"),
+)
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
@@ -48,7 +51,10 @@ class ServiceRequest(BaseModel):
         return cast(ServiceEnum, self.service)
 
 
-@pghistory.track()
+@pghistory.track(
+    pghistory.InsertEvent("task.add"),
+    pghistory.DeleteEvent("task.remove"),
+)
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     status = TextChoicesField(choices_enum=TaskStatusEnum)
@@ -74,7 +80,11 @@ class Task(BaseModel):
         return self.title
 
 
-@pghistory.track()
+@pghistory.track(
+    pghistory.InsertEvent("note.add"),
+    pghistory.UpdateEvent("note.update"),
+    pghistory.DeleteEvent("note.remove"),
+)
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     title = models.CharField(max_length=100)
