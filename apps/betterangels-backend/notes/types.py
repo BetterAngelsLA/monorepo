@@ -4,8 +4,8 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from accounts.types import UserType
-from common.graphql.types import AttachmentInterface
-from common.models import Attachment
+from common.graphql.types import AddressType, AttachmentInterface
+from common.models import Address, Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
@@ -157,6 +157,8 @@ class NoteFilter:
 class NoteType:
     id: auto
     title: auto
+    point: auto
+    address: Optional[AddressType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
     purposes: List[TaskType]
@@ -203,6 +205,8 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
+    point: auto
+    address: Optional[ID]
     public_details: auto
     private_details: auto
     is_submitted: auto

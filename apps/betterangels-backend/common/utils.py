@@ -1,5 +1,7 @@
+import json
 import os
 import uuid
+from typing import Union
 
 from django.db.models import Model
 
@@ -27,3 +29,27 @@ def get_unique_file_path(instance: Model, filename: str) -> str:
     ext = filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{ext}"
     return os.path.join("attachments/", unique_filename)
+
+
+def convert_to_structured_address(
+    address_components: Union[str, bytes, bytearray]
+) -> dict:
+    structured_address = {}
+    address_fields = {
+        "street_number": "long_name",
+        "route": "long_name",
+        "locality": "long_name",
+        "administrative_area_level_1": "short_name",
+        "country": "long_name",
+        "postal_code": "long_name",
+    }
+    components = json.loads(address_components)
+
+    for field in address_fields:
+        for component in components:
+            for field, name_type in address_fields.items():
+                structured_address[field] = component.get(name_type)
+
+                break
+
+    return structured_address

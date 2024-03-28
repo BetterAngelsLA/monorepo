@@ -27,7 +27,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
-                    "title": "New Note",
+                    "title": "New note title",
                     "publicDetails": "New public details",
                     "client": self.client_1.pk,
                 }
@@ -36,7 +36,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         created_note = response["data"]["createNote"]
         expected_note = {
             "id": ANY,
-            "title": "New Note",
+            "title": "New note title",
+            "point": None,
+            "address": None,
             "moods": [],
             "purposes": [],
             "nextSteps": [],
@@ -55,21 +57,30 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
-            "title": "Updated Title",
+            "title": "Updated note title",
+            "point": self.point,
+            "address": self.address.pk,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 24
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "title": "Updated Title",
+            "title": "Updated note title",
+            "point": self.point,
+            "address": {
+                "street": "106 W 1st St",
+                "city": "Los Angeles",
+                "state": "CA",
+                "zipCode": "90012",
+            },
             "moods": [],
             "purposes": [],
             "nextSteps": [],
@@ -100,6 +111,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "title": f"New note for: {self.org_1_case_manager_1.pk}",
+            "point": None,
+            "address": None,
             "moods": [],
             "purposes": [],
             "nextSteps": [],

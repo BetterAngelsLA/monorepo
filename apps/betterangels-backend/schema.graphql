@@ -30,6 +30,19 @@ input AddNoteTaskInput {
 
 union AddNoteTaskPayload = NoteType | OperationInfo
 
+input AddressInput {
+  addressComponents: JSON
+  formattedAddress: String
+}
+
+type AddressType {
+  id: ID!
+  street: String
+  city: String
+  state: String
+  zipCode: String
+}
+
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -137,6 +150,13 @@ input DjangoModelFilterInput {
   pk: ID!
 }
 
+union GetOrCreateAddressPayload = AddressType | OperationInfo
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
 input MagicLinkInput {
   email: String!
 }
@@ -176,6 +196,7 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
+  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
@@ -233,6 +254,8 @@ enum NoteNamespaceEnum {
 type NoteType {
   id: ID!
   title: String!
+  point: Point
+  address: AddressType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
   purposes(pagination: OffsetPaginationInput): [TaskType!]!
@@ -282,8 +305,13 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+"""Represents a point as `(x, y, z)` or `(x, y)`."""
+scalar Point
+
 type Query {
   currentUser: UserType!
+  address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -383,6 +411,7 @@ enum TaskTypeEnum {
 input UpdateNoteInput {
   id: ID
   title: String
+  point: Point
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean

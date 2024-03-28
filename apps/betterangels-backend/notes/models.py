@@ -2,9 +2,10 @@ from typing import Any, Optional
 
 import pghistory
 from accounts.models import User
-from common.models import Attachment, BaseModel, Location
+from common.models import Address, Attachment, BaseModel
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.utils import timezone
 from django_choices_field import TextChoicesField
@@ -59,8 +60,8 @@ class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
-    location = models.ForeignKey(
-        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
+    address = models.ForeignKey(
+        Address, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
     )
     client = models.ForeignKey(
         User,
@@ -91,8 +92,9 @@ class Note(BaseModel):
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
     timestamp = models.DateTimeField(auto_now_add=True)
-    location = models.ForeignKey(
-        Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
+    point = PointField(geography=True, null=True, blank=True)
+    address = models.ForeignKey(
+        Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
     purposes = models.ManyToManyField(Task, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
