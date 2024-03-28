@@ -671,13 +671,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        purpose_task_id = self.purpose_1["id"]
-        next_step_task_id = self.next_step_1["id"]
-
-        purpose = Task.objects.get(id=purpose_task_id)
-        next_step = Task.objects.get(id=next_step_task_id)
-        note.purposes.add(purpose)
-        note.next_steps.add(next_step)
+        note.purposes.add(self.purpose_1["id"])
+        note.next_steps.add(self.next_step_1["id"])
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 

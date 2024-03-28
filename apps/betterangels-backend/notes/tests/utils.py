@@ -6,7 +6,7 @@ from accounts.tests.baker_recipes import permission_group_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
-from notes.models import ServiceRequest, Task
+from notes.models import ServiceRequest
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -62,8 +62,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self._setup_note()
         self._setup_note_tasks()
-        # self.purposes = baker.make(Task, _quantity=2)
-        # self.next_steps = baker.make(Task, _quantity=2)
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
@@ -81,7 +79,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.logout()
 
     def _setup_note_tasks(self) -> None:
-        # Force login the case manager to create a note
+        # Force login the case manager to create tasks
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.purpose_1 = self._create_task_for_note_fixture(
             {
