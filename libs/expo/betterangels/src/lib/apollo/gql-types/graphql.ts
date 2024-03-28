@@ -188,6 +188,7 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   logout: Scalars['Boolean']['output'];
+  removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
@@ -263,6 +264,11 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
+};
+
+
+export type MutationRemoveNoteServiceRequestArgs = {
+  data: RemoveNoteServiceRequestInput;
 };
 
 
@@ -462,6 +468,14 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type RemoveNoteServiceRequestInput = {
+  noteId: Scalars['ID']['input'];
+  serviceRequestId: Scalars['ID']['input'];
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
 
 export type RemoveNoteTaskInput = {
   noteId: Scalars['ID']['input'];
