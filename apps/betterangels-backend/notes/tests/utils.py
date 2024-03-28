@@ -6,7 +6,7 @@ from accounts.tests.baker_recipes import permission_group_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
-from notes.models import ServiceRequest, Task
+from notes.models import ServiceRequest
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -61,8 +61,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_note()
-        self.purposes = baker.make(Task, _quantity=2)
-        self.next_steps = baker.make(Task, _quantity=2)
+        self._setup_note_tasks()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
@@ -77,6 +76,36 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             },
         )["data"]["createNote"]
         # Logout after setting up the note
+        self.graphql_client.logout()
+
+    def _setup_note_tasks(self) -> None:
+        # Force login the case manager to create tasks
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.purpose_1 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 1 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.purpose_2 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 2 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.next_step_1 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 1 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.next_step_2 = self._create_task_for_note_fixture(
+            {
+                "title": f"Next Step 2 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        # Logout after setting up the tasks
         self.graphql_client.logout()
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
@@ -136,6 +165,28 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                 }}
             }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_task_for_note_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateTask($data: CreateTaskInput!) {
+                createTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        title
+                    }
+                }
+            }
         """
         return self.execute_graphql(mutation, {"data": variables})
 
