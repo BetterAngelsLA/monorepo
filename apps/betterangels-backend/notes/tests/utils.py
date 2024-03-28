@@ -62,8 +62,21 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self._setup_note()
         self._setup_note_tasks()
+        self._clear_query_caches()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
+
+    def _clear_query_caches(self) -> None:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+        """
+        from django.contrib.contenttypes.models import ContentType
+        from django.contrib.sites.models import Site
+
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note

@@ -23,7 +23,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 36
+        expected_query_count = 37
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -62,7 +62,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 21
+        expected_query_count = 22
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -92,7 +92,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 21
+        expected_query_count = 22
         with self.assertNumQueries(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -117,8 +117,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
         [
-            ("PURPOSE", "purposes", 32),
-            ("NEXT_STEP", "next_steps", 32),
+            ("PURPOSE", "purposes", 34),
+            ("NEXT_STEP", "next_steps", 34),
         ],
     )
     def test_create_note_task_mutation(
@@ -155,8 +155,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 33),
-            ("PROVIDED", "provided_services", "COMPLETED", 32),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_service_request_mutation(
@@ -256,7 +256,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        expected_query_count = 8
+        expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
             response = self._add_note_task_fixture(variables)
 
@@ -310,7 +310,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
-        expected_query_count = 8
+        expected_query_count = 10
         with self.assertNumQueries(expected_query_count):
             response = self._remove_note_task_fixture(variables)
 
@@ -348,7 +348,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(1, note.moods.count())
 
-        expected_query_count = 8
+        expected_query_count = 9
         with self.assertNumQueries(expected_query_count):
             response = self._create_note_mood_fixture(variables)
 
@@ -384,7 +384,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": moods[0].pk}
 
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -412,7 +412,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 19
+        expected_query_count = 20
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -866,7 +866,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         file_content = b"Test attachment content"
         file_name = "test_attachment.txt"
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueries(expected_query_count):
             create_response = self._create_note_attachment_fixture(
                 self.note["id"],
