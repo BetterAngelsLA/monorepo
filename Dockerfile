@@ -1,4 +1,4 @@
-FROM python:3.11.5-bullseye AS base
+FROM python:3.12.2-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -91,13 +91,13 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && npm --version
 
 ENV YARN_VERSION 3.6.3
-RUN corepack enable && \ 
+RUN corepack enable && \
     yarn set version $YARN_VERSION && \
     # smoke tests
     yarn --version
 
 # Python
-RUN pip install poetry==1.6.1
+RUN pip install poetry==1.8.2
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \

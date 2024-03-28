@@ -17,7 +17,7 @@ license = "Proprietary"
 include = "betterangels_backend"
 
 [tool.poetry.dependencies]
-python = "3.11.5"
+python = "3.12.2"
 psycopg = "3.1.10"
 django = "^4.2.4"
 django-environ = "^0.10.0"
