@@ -85,7 +85,7 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
             }
           })
           .catch((error) => {
-            console.error('Error creating mood', error);
+            console.error('Error creating service', error);
           });
       } else {
         if (id) {
@@ -101,7 +101,7 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
               setIsLoading(false);
             })
             .catch((error) => {
-              console.error('Error deleting mood', error);
+              console.error('Error deleting service', error);
             });
         }
       }
