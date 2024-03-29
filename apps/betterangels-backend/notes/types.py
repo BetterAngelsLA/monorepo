@@ -5,7 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import AddressType, AttachmentInterface
-from common.models import Address, Attachment
+from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions

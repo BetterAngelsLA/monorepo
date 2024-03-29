@@ -412,6 +412,7 @@ input UpdateNoteInput {
   id: ID
   title: String
   point: Point
+  address: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean

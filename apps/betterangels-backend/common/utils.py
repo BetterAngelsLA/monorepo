@@ -45,9 +45,9 @@ def convert_to_structured_address(
     }
     components = json.loads(address_components)
 
-    for field in address_fields:
-        for component in components:
-            for field, name_type in address_fields.items():
+    for component in components:
+        for field, name_type in address_fields.items():
+            if field in component["types"]:
                 structured_address[field] = component.get(name_type)
 
                 break

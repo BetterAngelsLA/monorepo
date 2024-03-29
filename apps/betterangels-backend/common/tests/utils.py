@@ -4,6 +4,8 @@ from typing import Any, Dict, Optional
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -13,7 +15,6 @@ from unittest_parametrize import ParametrizedTestCase
 class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.maxDiff = None
         self._setup_users()
         self._setup_groups_and_permissions()
 
@@ -55,6 +56,18 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             self.graphql_client.force_login(self.user_map[user_label])
         else:
             self.graphql_client.logout()
+
+    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
 
 
 class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):

@@ -27,16 +27,19 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
     def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
         with transaction.atomic():
-            address_components = data.address_components
-            structured_address = convert_to_structured_address(address_components)
+            structured_address = convert_to_structured_address(data.address_components)
+
+            street_number = structured_address.get("street_number")
+            route = structured_address.get("route")
+            street = (
+                f"{street_number} {route}".strip() if street_number and route else route
+            )
+
             address, _ = Address.objects.get_or_create(
-                street=(
-                    f"{structured_address['street_number']} "
-                    f"{structured_address['route']}"
-                ),
-                city=structured_address["locality"],
-                state=structured_address["administrative_area_level_1"],
-                zip_code=structured_address["postal_code"],
+                street=street,
+                city=structured_address.get("locality"),
+                state=structured_address.get("administrative_area_level_1"),
+                zip_code=structured_address.get("postal_code"),
                 address_components=data.address_components,
                 formatted_address=data.formatted_address,
             )

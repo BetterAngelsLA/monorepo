@@ -29,7 +29,7 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
         variables = {"id": self.address["id"]}
 
         expected_query_count = 4
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         address = response["data"]["address"]
@@ -48,7 +48,7 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
             }
         """
         expected_query_count = 4
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
         addresses = response["data"]["addresses"]

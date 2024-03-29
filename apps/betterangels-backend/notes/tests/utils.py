@@ -15,9 +15,7 @@ from unittest_parametrize import ParametrizedTestCase
 
 
 class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
-
     def setUp(self) -> None:
-        self.maxDiff = None
         super().setUp()
         self._setup_users()
         self._setup_groups_and_permissions()
