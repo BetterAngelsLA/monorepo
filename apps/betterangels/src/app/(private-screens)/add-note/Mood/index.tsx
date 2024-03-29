@@ -197,13 +197,18 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 
 export default function Mood(props: IMoodProps) {
   const { expanded, setExpanded, noteId } = props;
+  const [moods, setMoods] = useState<
+    {
+      enum: MoodEnum;
+      title: string;
+    }[]
+  >([]);
   const [tab, setTab] = useState<'pleasant' | 'neutral' | 'unpleasant'>(
     'pleasant'
   );
   const { watch, setValue } = useFormContext();
 
   const moodsImages = watch('moodsImages', []);
-  const moods = watch('moods') || [];
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods.length < 1;
@@ -253,19 +258,17 @@ export default function Mood(props: IMoodProps) {
               flexWrap: 'wrap',
             }}
           >
-            {moods.map(
-              (mood: { title: string; id: string; enum: MoodEnum }) => {
-                const IconComponent = ICONS[mood.title];
-                return (
-                  <IconComponent
-                    mr="xs"
-                    key={mood.title}
-                    size="md"
-                    color={Colors.PRIMARY_EXTRA_DARK}
-                  />
-                );
-              }
-            )}
+            {moods.map((mood: { title: string; enum: MoodEnum }) => {
+              const IconComponent = ICONS[mood.title];
+              return (
+                <IconComponent
+                  mr="xs"
+                  key={mood.title}
+                  size="md"
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                />
+              );
+            })}
             {isGreaterThanZeroMoodImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
             )}
@@ -278,7 +281,6 @@ export default function Mood(props: IMoodProps) {
       expanded={expanded}
       setExpanded={() => setExpanded(isMood ? null : 'Mood')}
     >
-      {/* {isMood && ( */}
       <View
         style={{
           paddingBottom: Spacings.md,
@@ -305,13 +307,18 @@ export default function Mood(props: IMoodProps) {
             </Pressable>
           ))}
         </View>
-        <MoodSelector tab={tab} noteId={noteId} moodsData={MOOD_DATA} />
+        <MoodSelector
+          moods={moods}
+          setMoods={setMoods}
+          tab={tab}
+          noteId={noteId}
+          moodsData={MOOD_DATA}
+        />
         <Attachments
           images={moodsImages}
           setImages={(array) => setValue('moodsImages', array)}
         />
       </View>
-      {/* )} */}
     </FieldCard>
   );
 }

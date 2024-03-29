@@ -17,17 +17,31 @@ interface MoodSelectorProps {
   moodsData: Mood[];
   noteId: string | undefined;
   tab: 'pleasant' | 'neutral' | 'unpleasant';
+  setMoods: (
+    e: {
+      enum: MoodEnum;
+      title: string;
+    }[]
+  ) => void;
+  moods: {
+    enum: MoodEnum;
+    title: string;
+  }[];
 }
 
 const MoodSelector: React.FC<MoodSelectorProps> = ({
   moodsData,
   noteId,
   tab,
+  moods,
+  setMoods,
 }) => {
   return (
     <View>
       {moodsData.map((mood, idx) => (
         <MoodCheckbox
+          moods={moods}
+          setMoods={setMoods}
           tab={tab}
           noteId={noteId}
           idx={idx}

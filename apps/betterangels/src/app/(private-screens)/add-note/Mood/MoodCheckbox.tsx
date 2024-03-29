@@ -7,29 +7,13 @@ import {
   DeleteMoodMutation,
   DeleteMoodMutationVariables,
   MoodEnum,
+  debounce,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
 import { ComponentType, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-
-function debounce<F extends (...args: any[]) => void>(
-  func: F,
-  wait: number
-): (...args: Parameters<F>) => void {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-
-  return function (...args: Parameters<F>) {
-    const later = () => {
-      clearTimeout(timeout!);
-      func(...args);
-    };
-
-    clearTimeout(timeout!);
-    timeout = setTimeout(later, wait);
-  };
-}
 
 type Mood = {
   Icon: ComponentType<IIconProps>;
@@ -44,13 +28,23 @@ interface MoodCheckboxProps {
   idx: number;
   noteId: string | undefined;
   tab: 'pleasant' | 'neutral' | 'unpleasant';
+  setMoods: (
+    e: {
+      enum: MoodEnum;
+      title: string;
+    }[]
+  ) => void;
+  moods: {
+    enum: MoodEnum;
+    title: string;
+  }[];
 }
 
 export default function MoodCheckbox(props: MoodCheckboxProps) {
-  const { mood, idx, noteId, tab } = props;
+  const { mood, idx, noteId, tab, moods, setMoods } = props;
   const [isChecked, setIsChecked] = useState(false);
   const [moodId, setMoodId] = useState<string | undefined>(undefined);
-  const [hasId, setHasId] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [createNoteMood] = useMutation<
     CreateNoteMoodMutation,
@@ -62,7 +56,6 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   >(DELETE_MOOD);
 
   const toggleMood = useCallback(() => {
-    // This is the function you want to debounce
     const executeMutation = async () => {
       if (!noteId) return;
       if (isChecked) {
@@ -79,7 +72,7 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
               const createdMoodId = response.data?.createNoteMood.id;
               if (createdMoodId) {
                 setMoodId(createdMoodId);
-                setHasId(false);
+                setIsLoading(false);
               }
             } else if (
               response.data?.createNoteMood.__typename === 'OperationInfo'
@@ -101,7 +94,7 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
           })
             .then(() => {
               setMoodId(undefined);
-              setHasId(false);
+              setIsLoading(false);
             })
             .catch((error) => {
               console.error('Error deleting mood', error);
@@ -109,8 +102,6 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
         }
       }
     };
-
-    // Apply debounce directly here
     debounce(executeMutation, 500)();
   }, [isChecked, noteId, mood.enum, createNoteMood, deleteMood]);
 
@@ -120,9 +111,13 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   }, [toggleMood]);
 
   const handleCheck = () => {
-    if (hasId) return;
-    setHasId(true);
+    if (isLoading) return;
+    setIsLoading(true);
     setIsChecked((prev) => !prev);
+    const newMoods = moodId
+      ? moods.filter((m) => m.enum !== mood.enum)
+      : [...moods, { Icon: mood.Icon, title: mood.title, enum: mood.enum }];
+    setMoods(newMoods);
   };
 
   if (tab !== mood.tab) return null;

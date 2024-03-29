@@ -65,9 +65,6 @@ export default function AddNote() {
       publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
       noteTime: format(new Date(), 'HH:mm'),
-      moods: [],
-      providedServices: [],
-      requestedServices: [],
       privateDetails: '',
     },
   });
