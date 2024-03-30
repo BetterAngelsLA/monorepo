@@ -18,4 +18,4 @@ class SendInvitationTest(TestCase):
         self.invitation_backend.invite_by_email(
             self.email, domain={"domain": "localhost:8000"}
         )
-        self.assertEquals(Email.objects.filter(to=self.email).count(), 1)
+        self.assertEqual(Email.objects.filter(to=self.email).count(), 1)

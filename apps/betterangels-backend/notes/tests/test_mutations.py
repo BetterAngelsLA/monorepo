@@ -1,4 +1,3 @@
-from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -24,8 +23,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 36
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 37
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
                     "title": "New Note",
@@ -63,8 +62,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 21
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 22
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
@@ -93,8 +92,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "timestamp": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 21
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 22
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
@@ -115,416 +114,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(expected_note, updated_note)
 
-    @skip("skipped per @lena")
-    def test_revert_note_mutation_removes_added_moods(self) -> None:
-        """
-        Asserts that when revertNote mutation is called, the Note and its
-        related models are reverted to their state at the specified moment.
-        Test actions:
-        1. Update note title and add 1 mood
-        2. Save now as saved_at
-        3. Add another mood
-        4. Revert to saved_at from Step 2
-        5. Assert note has only 1 mood
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_update_variables = {
-            "id": note_id,
-            "title": "Updated Title",
-            "moods": [{"descriptor": "ANXIOUS"}],
-            "publicDetails": "Updated Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(persisted_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["moods"]), 1)
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        # Update - should be discarded
-        discarded_update_variables = {
-            "id": note_id,
-            "title": "Discarded Title",
-            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Discarded Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(discarded_update_variables)
-        self.assertEqual(len(response["data"]["updateNote"]["moods"]), 2)
-
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        moods {
-                            descriptor
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 28
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(mutation, {"data": variables})
-
-        reverted_note = response["data"]["revertNote"]
-        self.assertEqual(len(reverted_note["moods"]), 1)
-        self.assertEqual(reverted_note["title"], "Updated Title")
-        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-
-    @skip("skipped per @lena")
-    def test_revert_note_mutation_returns_removed_moods(self) -> None:
-        """
-        Asserts that when revertNote mutation is called, the Note and its
-        related models are reverted to their state at the specified moment.
-        Test actions:
-        1. Update note title and add 2 moods
-        2. Save now as saved_at
-        3. Delete 1 mood
-        4. Revert to savedAt from Step 2
-        5. Assert note has 2 moods again
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_update_variables = {
-            "id": note_id,
-            "title": "Updated Title",
-            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "publicDetails": "Updated Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(persisted_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["moods"]), 2)
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        # Update - should be discarded
-        discarded_update_variables = {
-            "id": note_id,
-            "title": "Discarded Title",
-            "moods": [{"descriptor": "ANXIOUS"}],
-            "publicDetails": "Discarded Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(discarded_update_variables)
-        self.assertEqual(len(response["data"]["updateNote"]["moods"]), 1)
-
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        moods {
-                            descriptor
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 35
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(mutation, {"data": variables})
-
-        reverted_note = response["data"]["revertNote"]
-        self.assertEqual(len(reverted_note["moods"]), 2)
-        self.assertEqual(reverted_note["title"], "Updated Title")
-        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-
-    @skip("skipped per @lena")
-    def test_revert_note_mutation_removes_added_tasks_and_service_requests(
-        self,
-    ) -> None:
-        """
-        Asserts that when revertNote mutation is called, the Note and its
-        related models are reverted to their state at the specified moment.
-
-        Test actions:
-        1. Update note title and add 1 purpose, 1 next step, 1 requested
-           service and 1 provided service
-        2. Save now as saved_at
-        3. Add another purpose, next_step, requested service and provided service
-        4. Revert to saved_at from Step 2
-        5. Assert note has only the associations from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_update_variables = {
-            "id": note_id,
-            "title": "Updated Title",
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
-            "providedServices": [self.provided_services[0].pk],
-            "requestedServices": [self.requested_services[0].pk],
-            "publicDetails": "Updated Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(persisted_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["purposes"]), 1)
-        self.assertEqual(len(returned_note["nextSteps"]), 1)
-        self.assertEqual(len(returned_note["providedServices"]), 1)
-        self.assertEqual(len(returned_note["requestedServices"]), 1)
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        # Update - should be discarded
-        discarded_update_variables = {
-            "id": note_id,
-            "title": "Discarded Title",
-            "purposes": [self.purposes[0].pk, self.purposes[1].pk],
-            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
-            "providedServices": [
-                self.provided_services[0].pk,
-                self.provided_services[1].pk,
-            ],
-            "requestedServices": [
-                self.requested_services[0].pk,
-                self.requested_services[1].pk,
-            ],
-            "publicDetails": "Discarded Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(discarded_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["purposes"]), 2)
-        self.assertEqual(len(returned_note["nextSteps"]), 2)
-        self.assertEqual(len(returned_note["providedServices"]), 2)
-        self.assertEqual(len(returned_note["requestedServices"]), 2)
-
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        purposes {
-                            id
-                        }
-                        nextSteps {
-                            id
-                        }
-                        providedServices {
-                            id
-                        }
-                        requestedServices {
-                            id
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 34
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(mutation, {"data": variables})
-
-        reverted_note = response["data"]["revertNote"]
-        self.assertEqual(len(reverted_note["purposes"]), 1)
-        self.assertEqual(len(reverted_note["nextSteps"]), 1)
-        self.assertEqual(len(reverted_note["providedServices"]), 1)
-        self.assertEqual(len(reverted_note["requestedServices"]), 1)
-
-        self.assertEqual(reverted_note["title"], "Updated Title")
-        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-
-    @skip("skipped per @lena")
-    def test_revert_note_mutation_returns_removed_tasks_and_service_requests(
-        self,
-    ) -> None:
-        """
-        Asserts that when revertNote mutation is called, the Note and its
-        related models are reverted to their state at the specified moment.
-
-        Test actions:
-        1. Update note title and add 2 purposes, 2 next steps, 2 requested
-           services and 2 provided service
-        2. Save now as saved_at
-        3. Delete 1 purpose, 1 next step, 1 requested service, 1 provided service
-        4. Revert to savedAt from Step 2
-        5. Assert note has all associations from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_update_variables = {
-            "id": note_id,
-            "title": "Updated Title",
-            "purposes": [self.purposes[0].pk, self.purposes[1].pk],
-            "nextSteps": [self.next_steps[0].pk, self.next_steps[1].pk],
-            "providedServices": [
-                self.provided_services[0].pk,
-                self.provided_services[1].pk,
-            ],
-            "requestedServices": [
-                self.requested_services[0].pk,
-                self.requested_services[1].pk,
-            ],
-            "publicDetails": "Updated Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(persisted_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["purposes"]), 2)
-        self.assertEqual(len(returned_note["nextSteps"]), 2)
-        self.assertEqual(len(returned_note["providedServices"]), 2)
-        self.assertEqual(len(returned_note["requestedServices"]), 2)
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        # Update - should be discarded
-        discarded_update_variables = {
-            "id": note_id,
-            "title": "Discarded Title",
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
-            "providedServices": [self.provided_services[0].pk],
-            "requestedServices": [self.requested_services[0].pk],
-            "publicDetails": "Discarded Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(discarded_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["purposes"]), 1)
-        self.assertEqual(len(returned_note["nextSteps"]), 1)
-        self.assertEqual(len(returned_note["providedServices"]), 1)
-        self.assertEqual(len(returned_note["requestedServices"]), 1)
-
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        purposes {
-                            id
-                        }
-                        nextSteps {
-                            id
-                        }
-                        providedServices {
-                            id
-                        }
-                        requestedServices {
-                            id
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 34
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(mutation, {"data": variables})
-
-        reverted_note = response["data"]["revertNote"]
-        self.assertEqual(len(reverted_note["purposes"]), 2)
-        self.assertEqual(len(reverted_note["nextSteps"]), 2)
-        self.assertEqual(len(reverted_note["providedServices"]), 2)
-        self.assertEqual(len(reverted_note["requestedServices"]), 2)
-        self.assertEqual(reverted_note["title"], "Updated Title")
-        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-
-    @skip("skipped per @lena")
-    def test_revert_note_mutation_fails_in_atomic_transaction(
-        self,
-    ) -> None:
-        """
-        Asserts that when revertNote mutation fails, the Note and is not
-        partially updated.
-        """
-        note_id = self.note["id"]
-
-        update_variables = {"id": note_id, "title": "Updated Title"}
-        response = self._update_note_fixture(update_variables)
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        # Update - should be discarded
-        discarded_update_variables = {
-            "id": note_id,
-            "title": "Discarded Title",
-            "moods": [{"descriptor": "ANXIOUS"}],
-            "purposes": [self.purposes[0].pk],
-            "nextSteps": [self.next_steps[0].pk],
-            "providedServices": [self.provided_services[0].pk],
-            "requestedServices": [self.requested_services[0].pk],
-            "publicDetails": "Discarded Body",
-            "isSubmitted": False,
-        }
-        response = self._update_note_fixture(discarded_update_variables)
-        returned_note = response["data"]["updateNote"]
-        self.assertEqual(len(returned_note["moods"]), 1)
-        self.assertEqual(len(returned_note["purposes"]), 1)
-        self.assertEqual(len(returned_note["nextSteps"]), 1)
-        self.assertEqual(len(returned_note["providedServices"]), 1)
-        self.assertEqual(len(returned_note["requestedServices"]), 1)
-
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        title
-                        publicDetails
-                        moods {
-                            descriptor
-                        }
-                        purposes {
-                            id
-                        }
-                        nextSteps {
-                            id
-                        }
-                        providedServices {
-                            id
-                        }
-                        requestedServices {
-                            id
-                        }
-                    }
-                }
-            }
-        """
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
-            response = self.execute_graphql(mutation, {"data": variables})
-
-        reverted_note = response["data"]["revertNote"]
-        self.assertEqual(len(reverted_note["purposes"]), 1)
-        self.assertEqual(len(reverted_note["nextSteps"]), 1)
-        self.assertEqual(len(reverted_note["providedServices"]), 1)
-        self.assertEqual(len(reverted_note["requestedServices"]), 1)
-        self.assertEqual(reverted_note["title"], "Discarded Title")
-        self.assertEqual(reverted_note["publicDetails"], "Discarded Body")
-
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
         [
-            ("PURPOSE", "purposes", 33),
-            ("NEXT_STEP", "next_steps", 32),
+            ("PURPOSE", "purposes", 34),
+            ("NEXT_STEP", "next_steps", 34),
         ],
     )
     def test_create_note_task_mutation(
@@ -540,7 +134,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_task_fixture(variables)
 
         expected_task = {
@@ -561,8 +155,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 33),
-            ("PROVIDED", "provided_services", "COMPLETED", 32),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_service_request_mutation(
@@ -582,7 +176,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, service_requests_to_check).count())
 
-        with self.assertNumQueries(expected_query_count):
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_service_request_fixture(variables)
 
         expected_service_request = {
@@ -606,6 +200,46 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
     @parametrize(
+        "service_request_type,  expected_query_count",  # noqa E501
+        [
+            ("REQUESTED", 9),
+            ("PROVIDED", 9),
+        ],
+    )
+    def test_remove_note_service_request_mutation(
+        self,
+        service_request_type: str,
+        expected_query_count: int,
+    ) -> None:
+        # First create note service request
+        variables = {
+            "service": "BLANKET",
+            "customService": None,
+            "noteId": self.note["id"],
+            "serviceRequestType": service_request_type,
+        }
+
+        created_service_request = self._create_note_service_request_fixture(variables)[
+            "data"
+        ]["createNoteServiceRequest"]
+
+        variables = {
+            "serviceRequestId": created_service_request["id"],
+            "noteId": self.note["id"],
+            "serviceRequestType": service_request_type,
+        }
+
+        # Remove note service request
+        expected_query_count = expected_query_count
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            updated_note = self._remove_note_service_request_fixture(variables)["data"][
+                "removeNoteServiceRequest"
+            ]
+
+        self.assertEqual(len(updated_note["requestedServices"]), 0)
+        self.assertEqual(len(updated_note["providedServices"]), 0)
+
+    @parametrize(
         "task_type, tasks_to_check",
         [
             ("PURPOSE", "purposes"),
@@ -615,29 +249,29 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def test_add_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": self.purposes[0].pk,
+            "taskId": self.purpose_1["id"],
             "taskType": task_type,
         }
 
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(0, getattr(note, tasks_to_check).count())
 
-        expected_query_count = 8
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 10
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._add_note_task_fixture(variables)
 
         expected_note = {
             "id": self.note["id"],
             "purposes": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "purposes"
                 else []
             ),
             "nextSteps": (
                 [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 ]
                 if tasks_to_check == "next_steps"
                 else []
@@ -646,7 +280,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["addNoteTask"]
         self.assertEqual(expected_note, returned_note)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
-        self.assertEqual(self.purposes[0].pk, getattr(note, tasks_to_check).get().id)
+        self.assertEqual(
+            int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id
+        )
 
     @parametrize(
         "task_type, tasks_to_check",
@@ -660,18 +296,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": getattr(self, tasks_to_check)[0].pk,
+            "taskId": (
+                self.purpose_1["id"]
+                if tasks_to_check == "purposes"
+                else self.next_step_1["id"]
+            ),
             "taskType": task_type,
         }
 
         note = Note.objects.get(id=self.note["id"])
-        note.purposes.add(self.purposes[0])
-        note.next_steps.add(self.next_steps[0])
+        note.purposes.add(self.purpose_1["id"])
+        note.next_steps.add(self.next_step_1["id"])
         self.assertEqual(1, note.purposes.count())
         self.assertEqual(1, note.next_steps.count())
 
-        expected_query_count = 8
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 10
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._remove_note_task_fixture(variables)
 
         expected_note = {
@@ -680,7 +320,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 []
                 if tasks_to_check == "purposes"
                 else [
-                    {"id": str(self.purposes[0].id), "title": self.purposes[0].title},
+                    {"id": str(self.purpose_1["id"]), "title": self.purpose_1["title"]},
                 ]
             ),
             "nextSteps": (
@@ -688,8 +328,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 if tasks_to_check == "next_steps"
                 else [
                     {
-                        "id": str(self.next_steps[0].id),
-                        "title": self.next_steps[0].title,
+                        "id": self.next_step_1["id"],
+                        "title": self.next_step_1["title"],
                     },
                 ]
             ),
@@ -708,8 +348,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertEqual(1, note.moods.count())
 
-        expected_query_count = 8
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_mood_fixture(variables)
 
         expected_mood = {
@@ -744,8 +384,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": moods[0].pk}
 
-        expected_query_count = 2
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteMood"])
@@ -772,13 +412,448 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 19
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 20
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
 
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
+
+
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
+    """
+    TODO: Write additional tests for note attachments, locations,
+    and any other models that get associated to Note.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_revert_note_mutation_restores_note_details(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note
+        is reverted to their state at the specified moment.
+
+        Test actions:
+        1. Update note title and public details
+        2. Save now as saved_at
+        3. Update note title and public details
+        4. Revert to saved_at from Step 2
+        5. Assert note has details from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        self._update_note_fixture(
+            {
+                "id": note_id,
+                "title": "Updated Title",
+                "publicDetails": "Updated Body",
+            }
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be discarded
+        self._update_note_fixture(
+            {
+                "id": note_id,
+                "title": "Discarded Title",
+                "publicDetails": "Discarded Body",
+            }
+        )
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 24
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(reverted_note["title"], "Updated Title")
+        self.assertEqual(reverted_note["publicDetails"], "Updated Body")
+
+    def test_revert_note_mutation_removes_added_moods(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Moods are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 1 mood
+        2. Save now as saved_at
+        3. Add another mood
+        4. Revert to saved_at from Step 2
+        5. Assert note has only mood from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be discarded
+        self._create_note_mood_fixture({"descriptor": "EUTHYMIC", "noteId": note_id})
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 22
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["moods"]), 1)
+
+    def test_revert_note_mutation_returns_removed_moods(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Moods are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 2 moods
+        2. Save now as saved_at
+        3. Delete 1 mood
+        4. Revert to savedAt from Step 3
+        5. Assert note has 2 moods from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
+        self._create_note_mood_fixture(persisted_mood_variables_1)
+
+        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
+        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)[
+            "data"
+        ]["createNoteMood"]["id"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        delete_mood_mutation = """
+            mutation DeleteMood($id: ID!) {
+                deleteMood(data: { id: $id }) {
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        self.execute_graphql(delete_mood_mutation, {"id": mood_to_delete_id})
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 29
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["moods"]), 2)
+
+    def test_revert_note_mutation_removes_added_tasks(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Tasks are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 1 purpose and 1 next step
+        2. Save now as saved_at
+        3. Add another purpose and next step
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purpose_1["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_step_1["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Add associations that will be discarded
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purpose_2["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_step_2["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["purposes"]), 1)
+        self.assertEqual(len(reverted_note["nextSteps"]), 1)
+
+    def test_revert_note_mutation_removes_added_service_requests(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        ServiceRequests are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 1 requested service and 1 provided service
+        2. Save now as saved_at
+        3. Add another requested service and provided service
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        self._create_note_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "REQUESTED",
+            }
+        )
+        self._create_note_service_request_fixture(
+            {
+                "service": "WATER",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "PROVIDED",
+            }
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Add associations that will be discarded
+        self._create_note_service_request_fixture(
+            {
+                "service": "CLOTHES",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "REQUESTED",
+            }
+        )
+        self._create_note_service_request_fixture(
+            {
+                "service": "FOOD",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "PROVIDED",
+            }
+        )
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["providedServices"]), 1)
+        self.assertEqual(len(reverted_note["requestedServices"]), 1)
+
+    def test_revert_note_mutation_returns_removed_tasks(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Tasks are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 2 purposes and 2 next steps
+        2. Save now as saved_at
+        3. Remove 1 purpose and 1 next step
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purpose_1["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_step_1["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Add associations that will be removed and then reverted
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purpose_2["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._add_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_step_2["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Remove task - should be discarded
+        self._remove_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.purpose_2["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._remove_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": self.next_step_2["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["purposes"]), 2)
+        self.assertEqual(len(reverted_note["nextSteps"]), 2)
+
+    def test_revert_note_mutation_returns_removed_service_requests(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        ServiceRequests are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 2 requested service and 2 provided service
+        2. Save now as saved_at
+        3. Remove 1 requested service and 1 provided service
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        self._create_note_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "REQUESTED",
+            }
+        )
+        self._create_note_service_request_fixture(
+            {
+                "service": "WATER",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "PROVIDED",
+            }
+        )
+
+        # Add associations that will be removed and then reverted
+        reverted_requested_service = self._create_note_service_request_fixture(
+            {
+                "service": "CLOTHES",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "REQUESTED",
+            }
+        )["data"]["createNoteServiceRequest"]
+
+        reverted_provided_service = self._create_note_service_request_fixture(
+            {
+                "service": "FOOD",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "PROVIDED",
+            }
+        )["data"]["createNoteServiceRequest"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Remove service requests - should be discarded
+        self._remove_note_service_request_fixture(
+            {
+                "serviceRequestId": reverted_provided_service["id"],
+                "noteId": self.note["id"],
+                "serviceRequestType": "PROVIDED",
+            }
+        )
+
+        self._remove_note_service_request_fixture(
+            {
+                "serviceRequestId": reverted_requested_service["id"],
+                "noteId": self.note["id"],
+                "serviceRequestType": "REQUESTED",
+            }
+        )
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["providedServices"]), 2)
+        self.assertEqual(len(reverted_note["requestedServices"]), 2)
+
+    def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
+        """
+        Asserts that when revertNote mutation fails, the Note and is not
+        partially updated.
+        """
+        note_id = self.note["id"]
+        self._update_note_fixture({"id": note_id, "title": "Updated Title"})
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be persisted because revert fails
+        self._update_note_fixture({"id": note_id, "title": "Discarded Title"})
+        self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
+            not_reverted_note = self._revert_note_fixture(variables)["data"][
+                "revertNote"
+            ]
+
+        self.assertEqual(len(not_reverted_note["moods"]), 1)
+        self.assertEqual(not_reverted_note["title"], "Discarded Title")
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
@@ -791,8 +866,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         file_content = b"Test attachment content"
         file_name = "test_attachment.txt"
 
-        expected_query_count = 22
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 23
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             create_response = self._create_note_attachment_fixture(
                 self.note["id"],
                 NoteNamespaceEnum.MOOD_ASSESSMENT.name,
@@ -826,8 +901,8 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        expected_query_count = 13
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 14
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 
         self.assertFalse(
@@ -844,8 +919,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
 
     def test_create_service_request_mutation(self) -> None:
-        expected_query_count = 28
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 29
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_service_request_fixture(
                 {
                     "service": "BLANKET",
@@ -875,8 +950,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 15
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
         updated_service_request = response["data"]["updateServiceRequest"]
@@ -900,8 +975,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 15
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
         updated_service_request = response["data"]["updateServiceRequest"]
@@ -937,8 +1012,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": self.service_request["id"]}
 
-        expected_query_count = 15
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteServiceRequest"])
@@ -955,8 +1030,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
 
     def test_create_task_mutation(self) -> None:
-        expected_query_count = 28
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 29
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_task_fixture(
                 {
                     "title": "New Task",
@@ -983,8 +1058,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 15
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
         expected_task = {
@@ -1004,8 +1079,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "title": "Updated task title",
         }
 
-        expected_query_count = 13
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 14
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
         expected_task = {
@@ -1038,8 +1113,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 15
-        with self.assertNumQueries(expected_query_count):
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteTask"])
