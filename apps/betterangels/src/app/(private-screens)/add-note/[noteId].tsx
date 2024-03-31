@@ -60,7 +60,6 @@ export default function AddNote() {
   const methods = useForm<INote>({
     defaultValues: {
       title: '',
-      purposes: [{ value: '' }],
       nextStepActions: [{ action: '' }],
       publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
