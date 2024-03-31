@@ -4,7 +4,6 @@ import {
   GET_NOTE,
   MainScrollContainer,
   UPDATE_NOTE,
-  generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -66,9 +65,6 @@ export default function AddNote() {
       publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
       noteTime: format(new Date(), 'HH:mm'),
-      moods: [],
-      providedServices: [],
-      requestedServices: [],
       privateDetails: '',
     },
   });
@@ -92,15 +88,15 @@ export default function AddNote() {
     }
   }, [data, isLoading]);
 
-  const watchedValues = methods.watch([
-    'purposes',
-    'moods',
-    'providedServices',
-    'nextStepActions',
-    'requestedServices',
-    'publicDetails',
-  ]);
-  const publicNote = methods.watch('publicDetails');
+  // const watchedValues = methods.watch([
+  //   'purposes',
+  //   'moods',
+  //   'providedServices',
+  //   'nextStepActions',
+  //   'requestedServices',
+  //   'publicDetails',
+  // ]);
+  // const publicNote = methods.watch('publicDetails');
 
   const props = {
     expanded,
@@ -129,31 +125,31 @@ export default function AddNote() {
     }
   }
 
-  useEffect(() => {
-    if (isPublicNoteEdited) {
-      return;
-    }
-    const [
-      purposes,
-      moods,
-      providedServices,
-      nextStepActions,
-      requestedServices,
-    ] = watchedValues;
+  // useEffect(() => {
+  //   if (isPublicNoteEdited) {
+  //     return;
+  //   }
+  //   const [
+  //     purposes,
+  //     moods,
+  //     providedServices,
+  //     nextStepActions,
+  //     requestedServices,
+  //   ] = watchedValues;
 
-    const generateOjbect = {
-      purposes,
-      moods,
-      providedServices,
-      nextStepActions,
-      requestedServices,
-    };
+  //   const generateOjbect = {
+  //     purposes,
+  //     moods,
+  //     providedServices,
+  //     nextStepActions,
+  //     requestedServices,
+  //   };
 
-    const newPublicNote = generatedPublicNote(generateOjbect);
-    if (newPublicNote !== publicNote) {
-      methods.setValue('publicDetails', newPublicNote);
-    }
-  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
+  //   const newPublicNote = generatedPublicNote(generateOjbect);
+  //   if (newPublicNote !== publicNote) {
+  //     methods.setValue('publicDetails', newPublicNote);
+  //   }
+  // }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
 
   return (
     <FormProvider {...methods}>
