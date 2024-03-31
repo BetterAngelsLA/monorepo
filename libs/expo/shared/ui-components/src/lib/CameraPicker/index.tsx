@@ -1,11 +1,4 @@
-import { useMutation } from '@apollo/client';
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import {
-  CREATE_NOTE_ATTACHMENT,
-  CreateNoteAttachmentMutation,
-  CreateNoteAttachmentMutationVariables,
-  NoteNamespaceEnum,
-} from '@monorepo/expo/betterangels';
+import { gql, useMutation } from '@apollo/client';
 import {
   ArrowRotateReverseIcon,
   BoltIcon,
@@ -27,7 +20,7 @@ import TextButton from '../TextButton';
 interface ICameraPickerProps {
   images: { id: string | undefined; uri: string }[];
   setImages: (e: { id: string | undefined; uri: string }[]) => void;
-  namespace: NoteNamespaceEnum;
+  namespace: string;
   noteId: string | undefined;
 }
 
@@ -43,50 +36,57 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [createNoteAttachment] = useMutation<
-    CreateNoteAttachmentMutation,
-    CreateNoteAttachmentMutationVariables
-  >(CREATE_NOTE_ATTACHMENT);
+  const [createNoteAttachment] = useMutation(gql`
+    mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
+      createNoteAttachment(data: $data) {
+        ... on OperationInfo {
+          messages {
+            kind
+            field
+            message
+          }
+        }
+        ... on NoteAttachmentType {
+          id
+        }
+      }
+    }
+  `);
 
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
-    if (!noteId) return;
-    if (cameraRef.current) {
-      try {
-        const quality = 0.8;
-        console.log('here');
-        const photo = await cameraRef.current.takePictureAsync({ quality });
-        console.log(photo);
+    if (!noteId || !cameraRef.current) return;
+    try {
+      const quality = 0.8;
+      const photo = await cameraRef.current.takePictureAsync({ quality });
+      if (photo) {
+        const file = await fetchResourceFromURI(photo.uri);
 
-        if (photo) {
-          const file = fetchResourceFromURI(photo.uri);
-          console.log(file);
-          const { data } = await createNoteAttachment({
-            variables: {
-              noteId,
+        const { data } = await createNoteAttachment({
+          variables: {
+            data: {
               namespace,
               file,
+              note: noteId,
             },
-          });
-          if (data?.createNoteAttachment.__typename === 'NoteAttachmentType') {
-            const createNoteAttachmentId = data?.createNoteAttachment.id;
-            if (createNoteAttachmentId) {
-              setImages([
-                ...images,
-                { uri: photo.uri, id: data?.createNoteAttachment.id },
-              ]);
-            }
-          } else if (
-            data?.createNoteAttachment.__typename === 'OperationInfo'
-          ) {
-            console.log(data.createNoteAttachment.messages);
+          },
+        });
+        if (data?.createNoteAttachment.__typename === 'NoteAttachmentType') {
+          const createNoteAttachmentId = data?.createNoteAttachment.id;
+          if (createNoteAttachmentId) {
+            setImages([
+              ...images,
+              { uri: photo.uri, id: data?.createNoteAttachment.id },
+            ]);
           }
+        } else if (data?.createNoteAttachment.__typename === 'OperationInfo') {
+          console.log(data.createNoteAttachment.messages);
         }
-        setIsCameraOpen(false);
-      } catch (e) {
-        console.log(e);
       }
+      setIsCameraOpen(false);
+    } catch (e) {
+      console.log(e);
     }
   };
 

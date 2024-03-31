@@ -1,6 +1,5 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   BodyText,
   CameraPicker,

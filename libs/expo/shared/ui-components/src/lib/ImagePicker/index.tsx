@@ -4,6 +4,12 @@ import { Colors } from '@monorepo/expo/shared/static';
 import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
 
+const fetchResourceFromURI = async (uri: string) => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return blob;
+};
+
 interface IImagePickerProps {
   images: { id: string | undefined; uri: string }[];
   setImages: (e: { id: string | undefined; uri: string }[]) => void;
@@ -17,6 +23,13 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
   const [createNoteAttachment] = useMutation(gql`
     mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
       createNoteAttachment(data: $data) {
+        ... on OperationInfo {
+          messages {
+            kind
+            field
+            message
+          }
+        }
         ... on NoteAttachmentType {
           id
         }
@@ -34,11 +47,12 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
+          const file = await fetchResourceFromURI(asset.uri);
           const response = await createNoteAttachment({
             variables: {
               data: {
                 namespace,
-                file: asset.uri,
+                file,
                 note: noteId,
               },
             },

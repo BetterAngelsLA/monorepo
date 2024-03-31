@@ -1,7 +1,6 @@
 import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { BodyText, Checkbox, Input } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
