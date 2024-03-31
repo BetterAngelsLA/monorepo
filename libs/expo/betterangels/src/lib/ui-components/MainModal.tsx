@@ -1,5 +1,6 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';

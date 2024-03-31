@@ -1,5 +1,6 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   BodyText,
   CameraPicker,
@@ -11,10 +12,8 @@ import { Image, StyleSheet, View } from 'react-native';
 import { NoteNamespaceEnum } from '../apollo/gql-types/graphql';
 
 interface IAttachmentsProps {
-  images: { id: string; uri: string }[];
-  setImages: React.Dispatch<
-    React.SetStateAction<{ id: string; uri: string }[]>
-  >;
+  images: { id: string | undefined; uri: string }[];
+  setImages: (e: { id: string | undefined; uri: string }[]) => void;
   namespace:
     | NoteNamespaceEnum.MoodAssessment
     | NoteNamespaceEnum.ProvidedServices
@@ -45,6 +44,7 @@ export default function Attachments(props: IAttachmentsProps) {
             images={images}
           />
           <CameraPicker
+            noteId={noteId}
             namespace={namespace}
             setImages={setImages}
             images={images}

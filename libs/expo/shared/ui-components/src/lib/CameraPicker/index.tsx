@@ -1,4 +1,11 @@
-import { gql, useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import {
+  CREATE_NOTE_ATTACHMENT,
+  CreateNoteAttachmentMutation,
+  CreateNoteAttachmentMutationVariables,
+  NoteNamespaceEnum,
+} from '@monorepo/expo/betterangels';
 import {
   ArrowRotateReverseIcon,
   BoltIcon,
@@ -18,51 +25,63 @@ import H5 from '../H5';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 interface ICameraPickerProps {
-  images: { id: string; uri: string }[];
-  setImages: React.Dispatch<
-    React.SetStateAction<{ id: string; uri: string }[]>
-  >;
-  namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
+  images: { id: string | undefined; uri: string }[];
+  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  namespace: NoteNamespaceEnum;
+  noteId: string | undefined;
 }
 
+const fetchResourceFromURI = async (uri: string) => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return blob;
+};
+
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images, namespace } = props;
+  const { setImages, images, namespace, noteId } = props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [createNoteAttachment] = useMutation(gql`
-    mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
-      createNoteAttachment(data: $data) {
-        ... on NoteAttachmentType {
-          id
-        }
-      }
-    }
-  `);
+  const [createNoteAttachment] = useMutation<
+    CreateNoteAttachmentMutation,
+    CreateNoteAttachmentMutationVariables
+  >(CREATE_NOTE_ATTACHMENT);
 
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
+    if (!noteId) return;
     if (cameraRef.current) {
       try {
         const quality = 0.8;
+        console.log('here');
         const photo = await cameraRef.current.takePictureAsync({ quality });
-        const { data } = await createNoteAttachment({
-          variables: {
-            data: {
-              namespace,
-              file: photo?.uri,
-              attachmentType: 'IMAGE',
-            },
-          },
-        });
+        console.log(photo);
 
         if (photo) {
-          setImages([
-            ...images,
-            { uri: photo.uri, id: data?.createNoteAttachment.id },
-          ]);
+          const file = fetchResourceFromURI(photo.uri);
+          console.log(file);
+          const { data } = await createNoteAttachment({
+            variables: {
+              noteId,
+              namespace,
+              file,
+            },
+          });
+          if (data?.createNoteAttachment.__typename === 'NoteAttachmentType') {
+            const createNoteAttachmentId = data?.createNoteAttachment.id;
+            if (createNoteAttachmentId) {
+              setImages([
+                ...images,
+                { uri: photo.uri, id: data?.createNoteAttachment.id },
+              ]);
+            }
+          } else if (
+            data?.createNoteAttachment.__typename === 'OperationInfo'
+          ) {
+            console.log(data.createNoteAttachment.messages);
+          }
         }
         setIsCameraOpen(false);
       } catch (e) {
@@ -94,7 +113,6 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const toggleCameraType = () => {
-    console.log('TYPE');
     setType((current) => (current === 'back' ? 'front' : 'back'));
   };
 

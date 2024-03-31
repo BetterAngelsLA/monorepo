@@ -5,10 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
 
 interface IImagePickerProps {
-  images: { id: string; uri: string }[];
-  setImages: React.Dispatch<
-    React.SetStateAction<{ id: string; uri: string }[]>
-  >;
+  images: { id: string | undefined; uri: string }[];
+  setImages: (e: { id: string | undefined; uri: string }[]) => void;
   namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;
