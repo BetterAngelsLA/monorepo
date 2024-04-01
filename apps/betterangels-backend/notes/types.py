@@ -76,6 +76,8 @@ class UpdateServiceRequestInput:
 class TaskType:
     id: auto
     title: auto
+    point: auto
+    address: Optional[AddressType]
     status: auto
     due_by: auto
     client: Optional[UserType]
@@ -103,6 +105,8 @@ class CreateNoteTaskInput:
 class UpdateTaskInput:
     id: auto
     title: auto
+    point: auto
+    address: Optional[ID]
     status: auto
     due_by: auto
     client: Optional[ID]

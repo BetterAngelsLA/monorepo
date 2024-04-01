@@ -52,8 +52,8 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other case manager should succeed
+            ("org_1_case_manager_1", True),  # Case Manager user should succeed
+            ("org_2_case_manager_1", True),  # Case Manager user should succeed
             # TODO: We'll probably give Clients access to this at some point.
             ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed

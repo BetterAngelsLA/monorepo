@@ -1055,6 +1055,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": ANY,
             "title": "New Task",
+            "point": None,
+            "address": None,
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
@@ -1067,17 +1069,26 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
+            "point": self.point,
+            "address": self.address.pk,
             "status": "COMPLETED",
             "client": self.client_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
         expected_task = {
             "id": self.task["id"],
             "title": "Updated task title",
+            "point": self.point,
+            "address": {
+                "street": "106 W 1st St",
+                "city": "Los Angeles",
+                "state": "CA",
+                "zipCode": "90012",
+            },
             "status": "COMPLETED",
             "dueBy": None,
             "client": {"id": str(self.client_1.pk)},
@@ -1099,6 +1110,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": self.task["id"],
             "title": "Updated task title",
+            "point": None,
+            "address": None,
             "status": "TO_DO",
             "dueBy": None,
             "client": None,

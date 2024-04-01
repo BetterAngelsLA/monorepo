@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 import time_machine
 from django.test import ignore_warnings, override_settings
+from django.utils import timezone
 from notes.enums import NoteNamespaceEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
@@ -444,21 +445,31 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
 
     def test_task_query(self) -> None:
         task_id = self.task["id"]
-        expected_task = {
-            "id": task_id,
-            "title": self.task["title"],
-            "status": "TO_DO",
-            "dueBy": None,
-            "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
+        # Update fields available on the task input
+        self._update_task_fixture(
+            {
+                "id": task_id,
+                "title": "Updated task title",
+                "point": self.point,
+                "address": self.address.pk,
+                "status": "COMPLETED",
+                "dueBy": timezone.now(),
+                "client": self.client_1.pk,
+            }
+        )
 
         query = """
             query ViewTask($id: ID!) {
                 task(pk: $id) {
                     id
                     title
+                    point
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
                     status
                     dueBy
                     client {
@@ -478,6 +489,25 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables)
 
         task = response["data"]["task"]
+        expected_task = {
+            "id": task_id,
+            "title": "Updated task title",
+            "point": self.point,
+            "address": {
+                "street": "106 W 1st St",
+                "city": "Los Angeles",
+                "state": "CA",
+                "zipCode": "90012",
+            },
+            "status": "COMPLETED",
+            "dueBy": "2024-03-11T10:11:12+00:00",
+            "client": {
+                "id": str(self.client_1.pk),
+            },
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "createdAt": "2024-03-11T10:11:12+00:00",
+        }
+
         self.assertEqual(expected_task, task)
 
     def test_tasks_query(self) -> None:
@@ -486,6 +516,13 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 tasks {
                     id
                     title
+                    point
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
                     status
                     dueBy
                     client {

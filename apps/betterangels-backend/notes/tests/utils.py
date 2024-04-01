@@ -537,6 +537,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_task()
+        self.point = [-118.2437, 34.0522]
         self.address = baker.make(
             Address,
             street="106 W 1st St",
@@ -550,7 +551,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.org_1_case_manager_1.pk}",
+                "title": f"New task for: {self.org_1_case_manager_1.pk}",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]
@@ -581,6 +582,13 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on TaskType {{
                         id
                         title
+                        point
+                        address {{
+                            street
+                            city
+                            state
+                            zipCode
+                        }}
                         status
                         dueBy
                         client {{

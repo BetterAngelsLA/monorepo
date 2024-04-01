@@ -396,6 +396,8 @@ enum TaskStatusEnum {
 type TaskType {
   id: ID!
   title: String!
+  point: Point
+  address: AddressType
   status: TaskStatusEnum!
   dueBy: DateTime
   client: UserType
@@ -434,6 +436,8 @@ union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 input UpdateTaskInput {
   id: ID
   title: String
+  point: Point
+  address: ID
   status: TaskStatusEnum
   dueBy: DateTime
   client: ID
