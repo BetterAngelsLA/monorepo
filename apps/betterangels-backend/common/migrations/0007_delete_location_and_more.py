@@ -62,7 +62,15 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="address",
             index=models.Index(
-                fields=["street", "city", "state", "zip_code"], name="address_index"
+                fields=[
+                    "street",
+                    "city",
+                    "state",
+                    "zip_code",
+                    "address_components",
+                    "formatted_address",
+                ],
+                name="address_index",
             ),
         ),
         migrations.AlterUniqueTogether(
