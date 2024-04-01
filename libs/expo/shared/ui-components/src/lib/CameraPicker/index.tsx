@@ -22,6 +22,7 @@ interface ICameraPickerProps {
   setImages: (e: { id: string | undefined; uri: string }[]) => void;
   namespace: string;
   noteId: string | undefined;
+  setIsLoading: (e: boolean) => void;
 }
 
 const fetchResourceFromURI = async (uri: string) => {
@@ -31,7 +32,7 @@ const fetchResourceFromURI = async (uri: string) => {
 };
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images, namespace, noteId } = props;
+  const { setImages, images, namespace, noteId, setIsLoading } = props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -57,6 +58,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   const captureImage = async () => {
     if (!noteId || !cameraRef.current) return;
+    setIsLoading(true);
     try {
       const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
@@ -85,7 +87,9 @@ export default function CameraPicker(props: ICameraPickerProps) {
         }
       }
       setIsCameraOpen(false);
+      setIsLoading(false);
     } catch (e) {
+      setIsLoading(false);
       console.log(e);
     }
   };

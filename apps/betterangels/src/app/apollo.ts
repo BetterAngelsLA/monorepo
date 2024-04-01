@@ -27,19 +27,8 @@ const restLink = new RestLink({
   headers: getHeaders(),
 });
 
-// const httpLink = createHttpLink({
-//   uri: `${apiUrl}/graphql`,
-//   credentials: 'include',
-//   headers: getHeaders(),
-// });
-
 const client = new ApolloClient({
-  link: from([
-    csrfLink(`${apiUrl}/accounts/login`),
-    restLink,
-    // httpLink,
-    uploadLink,
-  ]),
+  link: from([csrfLink(`${apiUrl}/accounts/login`), restLink, uploadLink]),
   cache: new InMemoryCache(),
 });
 

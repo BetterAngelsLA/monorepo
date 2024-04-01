@@ -167,3 +167,20 @@ export const CREATE_NOTE_ATTACHMENT = gql`
     }
   }
 `;
+
+export const DELETE_NOTE_ATTACHMENT = gql`
+  mutation DeleteNoteAttachment($attachmentId: ID!) {
+    deleteNoteAttachment(data: { id: $attachmentId }) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteAttachmentType {
+        id
+      }
+    }
+  }
+`;

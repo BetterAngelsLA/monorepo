@@ -1,14 +1,13 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
   CameraPicker,
-  IconButton,
   ImagePicker,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { NoteNamespaceEnum } from '../apollo/gql-types/graphql';
+import { StyleSheet, View } from 'react-native';
+import { NoteNamespaceEnum } from '../../apollo/gql-types/graphql';
+import ImageComponent from './ImageComponent';
 
 interface IAttachmentsProps {
   images: { id: string | undefined; uri: string }[];
@@ -22,7 +21,7 @@ interface IAttachmentsProps {
 
 export default function Attachments(props: IAttachmentsProps) {
   const { images, setImages, namespace, noteId } = props;
-
+  const [isLoading, setIsLoading] = useState(false);
   const [width, setWidth] = useState(0);
 
   const onLayout = (event: { nativeEvent: { layout: { width: number } } }) => {
@@ -36,6 +35,7 @@ export default function Attachments(props: IAttachmentsProps) {
         <BodyText>Attachments</BodyText>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ImagePicker
+            setIsLoading={setIsLoading}
             noteId={noteId}
             namespace={namespace}
             mr="xs"
@@ -43,6 +43,7 @@ export default function Attachments(props: IAttachmentsProps) {
             images={images}
           />
           <CameraPicker
+            setIsLoading={setIsLoading}
             noteId={noteId}
             namespace={namespace}
             setImages={setImages}
@@ -55,44 +56,14 @@ export default function Attachments(props: IAttachmentsProps) {
         style={{ flexDirection: 'row', flexWrap: 'wrap' }}
       >
         {images?.map((image, idx) => (
-          <View
+          <ImageComponent
+            isLoading={isLoading}
+            images={images}
+            setImages={setImages}
+            width={width}
             key={idx}
-            style={{
-              height: (width / 3) * 1.3 - Spacings.xs * 2,
-              width: width / 3 - Spacings.xs * 2,
-              margin: Spacings.xs,
-              overflow: 'hidden',
-            }}
-          >
-            <Image
-              style={{ height: '100%', width: '100%' }}
-              source={{ uri: image.uri }}
-              resizeMode="cover"
-              accessibilityIgnoresInvertColors
-            />
-            <View
-              style={{
-                backgroundColor: Colors.WHITE,
-                borderRadius: 100,
-                position: 'absolute',
-                top: 5,
-                right: 5,
-              }}
-            >
-              <IconButton
-                onPress={() =>
-                  setImages(images.filter((i) => i.uri !== image.uri))
-                }
-                variant="transparent"
-                height="xs"
-                width="xs"
-                accessibilityLabel="delete"
-                accessibilityHint="deletes the image"
-              >
-                <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-              </IconButton>
-            </View>
-          </View>
+            image={image}
+          />
         ))}
       </View>
     </View>

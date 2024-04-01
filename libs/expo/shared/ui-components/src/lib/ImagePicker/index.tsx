@@ -16,10 +16,11 @@ interface IImagePickerProps {
   namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;
+  setIsLoading: (e: boolean) => void;
 }
 
 export default function ImagePickerComponent(props: IImagePickerProps) {
-  const { setImages, images, mr, namespace, noteId } = props;
+  const { setImages, images, mr, namespace, noteId, setIsLoading } = props;
   const [createNoteAttachment] = useMutation(gql`
     mutation CreateNoteAttachment(
       $noteId: ID!
@@ -51,6 +52,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
   `);
 
   const pickImage = async () => {
+    setIsLoading(true);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -61,7 +63,6 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
           const file = await fetchResourceFromURI(asset.uri);
-          console.log(asset.mimeType);
           const response = await createNoteAttachment({
             variables: {
               namespace,
@@ -81,8 +82,10 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         const uploadedImages = await Promise.all(uploadPromises);
 
         setImages([...images, ...uploadedImages]);
+        setIsLoading(false);
       }
     } catch (e) {
+      setIsLoading(false);
       console.log(e);
     }
   };
