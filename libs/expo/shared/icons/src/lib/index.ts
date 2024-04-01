@@ -1,10 +1,4 @@
-export { default as ArrowDownIcon } from './components/ArrowDownIcon';
-export { default as ArrowDownToLineIcon } from './components/ArrowDownToLineIcon';
 export { default as ArrowLeftIcon } from './components/ArrowLeftIcon';
-export { default as ArrowLeftToArcIcon } from './components/ArrowLeftToArcIcon';
-export { default as ArrowProgressIcon } from './components/ArrowProgressIcon';
-export { default as ArrowRightArrowLeftIcon } from './components/ArrowRightArrowLeftIcon';
-export { default as ArrowRightFromArcIcon } from './components/ArrowRightFromArcIcon';
 export { default as ArrowRightIcon } from './components/ArrowRightIcon';
 export { default as ArrowRotateReverseIcon } from './components/ArrowRotateReverseIcon';
 export { default as ArrowTrendUpIcon } from './components/ArrowTrendUpIcon';
