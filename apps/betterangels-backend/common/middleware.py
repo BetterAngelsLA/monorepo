@@ -29,12 +29,11 @@ class TimezoneMiddleware:
     """
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
-        self.get_response: Callable[[HttpRequest], HttpResponse] = get_response
+        self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         try:
-            # get django_timezone from cookie
-            tzname: str | None = request.COOKIES.get("django_timezone")
+            tzname = request.COOKIES.get("django_timezone")
             if tzname:
                 timezone.activate(zoneinfo.ZoneInfo(tzname))
             else:
