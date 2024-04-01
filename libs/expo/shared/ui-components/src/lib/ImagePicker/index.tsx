@@ -21,8 +21,15 @@ interface IImagePickerProps {
 export default function ImagePickerComponent(props: IImagePickerProps) {
   const { setImages, images, mr, namespace, noteId } = props;
   const [createNoteAttachment] = useMutation(gql`
-    mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
-      createNoteAttachment(data: $data) {
+    mutation CreateNoteAttachment(
+      $noteId: ID!
+      $namespace: NoteNamespaceEnum!
+      $file: Upload!
+    ) {
+      # noqa: B950
+      createNoteAttachment(
+        data: { note: $noteId, namespace: $namespace, file: $file }
+      ) {
         ... on OperationInfo {
           messages {
             kind
@@ -32,6 +39,12 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         }
         ... on NoteAttachmentType {
           id
+          attachmentType
+          file {
+            name
+          }
+          originalFilename
+          namespace
         }
       }
     }
@@ -47,14 +60,17 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
-          const file = await fetchResourceFromURI(asset.uri);
+          // const file = await fetchResourceFromURI(asset.uri);
+          const file = {
+            uri: asset.uri,
+            name: asset.fileName,
+            type: asset.mimeType,
+          };
           const response = await createNoteAttachment({
             variables: {
-              data: {
-                namespace,
-                file,
-                note: noteId,
-              },
+              namespace,
+              file,
+              noteId,
             },
           });
 

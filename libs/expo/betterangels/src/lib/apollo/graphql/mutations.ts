@@ -139,8 +139,15 @@ export const DELETE_MOOD = gql`
 `;
 
 export const CREATE_NOTE_ATTACHMENT = gql`
-  mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
-    createNoteAttachment(data: $data) {
+  mutation CreateNoteAttachment(
+    $noteId: ID!
+    $namespace: NoteNamespaceEnum!
+    $file: Upload!
+  ) {
+    # noqa: B950
+    createNoteAttachment(
+      data: { note: $noteId, namespace: $namespace, file: $file }
+    ) {
       ... on OperationInfo {
         messages {
           kind
@@ -150,6 +157,12 @@ export const CREATE_NOTE_ATTACHMENT = gql`
       }
       ... on NoteAttachmentType {
         id
+        attachmentType
+        file {
+          name
+        }
+        originalFilename
+        namespace
       }
     }
   }
