@@ -113,6 +113,7 @@
     "ts-node": "*",
     "typescript": "*",
     "metro": "*",
-    "expo-dev-client": "*"
+    "expo-dev-client": "*",
+    "@types/apollo-upload-client": "*"
   }
 }

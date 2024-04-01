@@ -1,12 +1,7 @@
-import {
-  ApolloClient,
-  InMemoryCache,
-  createHttpLink,
-  from,
-} from '@apollo/client';
+import { ApolloClient, InMemoryCache, from } from '@apollo/client';
 import { csrfLink } from '@monorepo/expo/betterangels';
 import { RestLink } from 'apollo-link-rest';
-import { createUploadLink } from 'apollo-upload-client';
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
 import { apiUrl } from '../../config';
 
@@ -32,17 +27,17 @@ const restLink = new RestLink({
   headers: getHeaders(),
 });
 
-const httpLink = createHttpLink({
-  uri: `${apiUrl}/graphql`,
-  credentials: 'include',
-  headers: getHeaders(),
-});
+// const httpLink = createHttpLink({
+//   uri: `${apiUrl}/graphql`,
+//   credentials: 'include',
+//   headers: getHeaders(),
+// });
 
 const client = new ApolloClient({
   link: from([
     csrfLink(`${apiUrl}/accounts/login`),
     restLink,
-    httpLink,
+    // httpLink,
     uploadLink,
   ]),
   cache: new InMemoryCache(),

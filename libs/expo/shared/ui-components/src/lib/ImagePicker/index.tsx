@@ -60,16 +60,14 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
-          // const file = await fetchResourceFromURI(asset.uri);
-          const file = {
-            uri: asset.uri,
-            name: asset.fileName,
-            type: asset.mimeType,
-          };
+          const file = await fetchResourceFromURI(asset.uri);
+          console.log(asset.mimeType);
           const response = await createNoteAttachment({
             variables: {
               namespace,
-              file,
+              file: new File([file], asset.fileName || Date.now().toString(), {
+                type: asset.mimeType,
+              }),
               noteId,
             },
           });

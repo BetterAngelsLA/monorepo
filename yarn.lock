@@ -79,7 +79,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.8.8":
+"@apollo/client@npm:^3.8.0, @apollo/client@npm:^3.8.8":
   version: 3.9.10
   resolution: "@apollo/client@npm:3.9.10"
   dependencies:
@@ -3701,6 +3701,7 @@ __metadata:
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/jest-native": 5.4.3
     "@testing-library/react-native": 12.4.3
+    "@types/apollo-upload-client": ^18.0.0
     "@types/jest": ^29.4.0
     "@types/node": 18.19.14
     "@types/react": 18.2.54
@@ -7355,6 +7356,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/apollo-upload-client@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "@types/apollo-upload-client@npm:18.0.0"
+  dependencies:
+    "@apollo/client": ^3.8.0
+    "@types/extract-files": "*"
+    graphql: 14 - 16
+  checksum: b26ba3ce2a391550fe4b6789647dcd6ed3ea4d3fb91313eb248e59dad549594b832fe963c6bdc7ad934a00778d145a63bdcea08cba746a38206503dbd6a8cc3f
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.0.0, @types/babel__core@npm:^7.1.14, @types/babel__core@npm:^7.18.0":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
@@ -7550,6 +7562,13 @@ __metadata:
     "@types/qs": "*"
     "@types/serve-static": "*"
   checksum: fb238298630370a7392c7abdc80f495ae6c716723e114705d7e3fb67e3850b3859bbfd29391463a3fb8c0b32051847935933d99e719c0478710f8098ee7091c5
+  languageName: node
+  linkType: hard
+
+"@types/extract-files@npm:*":
+  version: 13.0.1
+  resolution: "@types/extract-files@npm:13.0.1"
+  checksum: 5725eb8d4c576f7b8f7e9d1aee094b57270887455548a047cb2af2e1b209278ee1004726c5644a33be21dc6e7e9c421bfc2832366d8650577b4ea59cebf6da44
   languageName: node
   linkType: hard
 
@@ -14474,17 +14493,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"graphql@npm:14 - 16, graphql@npm:^16.8.1":
+  version: 16.8.1
+  resolution: "graphql@npm:16.8.1"
+  checksum: 8d304b7b6f708c8c5cc164b06e92467dfe36aff6d4f2cf31dd19c4c2905a0e7b89edac4b7e225871131fd24e21460836b369de0c06532644d15b461d55b1ccc0
+  languageName: node
+  linkType: hard
+
 "graphql@npm:15.8.0":
   version: 15.8.0
   resolution: "graphql@npm:15.8.0"
   checksum: 423325271db8858428641b9aca01699283d1fe5b40ef6d4ac622569ecca927019fce8196208b91dd1d8eb8114f00263fe661d241d0eb40c10e5bfd650f86ec5e
-  languageName: node
-  linkType: hard
-
-"graphql@npm:^16.8.1":
-  version: 16.8.1
-  resolution: "graphql@npm:16.8.1"
-  checksum: 8d304b7b6f708c8c5cc164b06e92467dfe36aff6d4f2cf31dd19c4c2905a0e7b89edac4b7e225871131fd24e21460836b369de0c06532644d15b461d55b1ccc0
   languageName: node
   linkType: hard
 

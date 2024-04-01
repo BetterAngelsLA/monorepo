@@ -73,6 +73,7 @@
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/jest-native": "5.4.3",
     "@testing-library/react-native": "12.4.3",
+    "@types/apollo-upload-client": "^18.0.0",
     "@types/jest": "^29.4.0",
     "@types/node": "18.19.14",
     "@types/react": "18.2.54",
