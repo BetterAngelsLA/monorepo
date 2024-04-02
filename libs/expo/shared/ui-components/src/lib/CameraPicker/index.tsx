@@ -38,8 +38,15 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [createNoteAttachment] = useMutation(gql`
-    mutation CreateNoteAttachment($data: CreateNoteAttachmentInput!) {
-      createNoteAttachment(data: $data) {
+    mutation CreateNoteAttachment(
+      $noteId: ID!
+      $namespace: NoteNamespaceEnum!
+      $file: Upload!
+    ) {
+      # noqa: B950
+      createNoteAttachment(
+        data: { note: $noteId, namespace: $namespace, file: $file }
+      ) {
         ... on OperationInfo {
           messages {
             kind
@@ -49,6 +56,12 @@ export default function CameraPicker(props: ICameraPickerProps) {
         }
         ... on NoteAttachmentType {
           id
+          attachmentType
+          file {
+            name
+          }
+          originalFilename
+          namespace
         }
       }
     }
@@ -67,11 +80,11 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
         const { data } = await createNoteAttachment({
           variables: {
-            data: {
-              namespace,
-              file,
-              note: noteId,
-            },
+            namespace,
+            file: new File([file], `${Date.now().toString()}.jpg`, {
+              type: 'image/jpeg',
+            }),
+            noteId,
           },
         });
         if (data?.createNoteAttachment.__typename === 'NoteAttachmentType') {
