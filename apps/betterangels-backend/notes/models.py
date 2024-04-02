@@ -97,13 +97,15 @@ class Note(BaseModel):
     address = models.ForeignKey(
         Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
     )
-    purposes = models.ManyToManyField(Task, related_name="purpose_notes")
-    next_steps = models.ManyToManyField(Task, related_name="next_step_notes")
+    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
+    next_steps = models.ManyToManyField(
+        Task, blank=True, related_name="next_step_notes"
+    )
     requested_services = models.ManyToManyField(
-        ServiceRequest, related_name="requested_notes"
+        ServiceRequest, blank=True, related_name="requested_notes"
     )
     provided_services = models.ManyToManyField(
-        ServiceRequest, related_name="provided_notes"
+        ServiceRequest, blank=True, related_name="provided_notes"
     )
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
