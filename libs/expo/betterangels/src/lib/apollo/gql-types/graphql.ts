@@ -16,6 +16,10 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  JSON: { input: any; output: any; }
+  /** Represents a point as `(x, y, z)` or `(x, y)`. */
+  Point: { input: any; output: any; }
   Upload: { input: any; output: any; }
 };
 
@@ -26,6 +30,20 @@ export type AddNoteTaskInput = {
 };
 
 export type AddNoteTaskPayload = NoteType | OperationInfo;
+
+export type AddressInput = {
+  addressComponents?: InputMaybe<Scalars['JSON']['input']>;
+  formattedAddress?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AddressType = {
+  __typename?: 'AddressType';
+  city?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  state?: Maybe<Scalars['String']['output']>;
+  street?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
 
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
@@ -133,6 +151,8 @@ export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
 };
 
+export type GetOrCreateAddressPayload = AddressType | OperationInfo;
+
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
 };
@@ -187,6 +207,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
+  getOrCreateAddress: GetOrCreateAddressPayload;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
@@ -267,6 +288,11 @@ export type MutationGenerateMagicLinkArgs = {
 };
 
 
+export type MutationGetOrCreateAddressArgs = {
+  data: AddressInput;
+};
+
+
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
@@ -332,6 +358,7 @@ export enum NoteNamespaceEnum {
 
 export type NoteType = {
   __typename?: 'NoteType';
+  address?: Maybe<AddressType>;
   attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
@@ -340,6 +367,7 @@ export type NoteType = {
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
+  point?: Maybe<Scalars['Point']['output']>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
@@ -416,6 +444,8 @@ export type PermDefinition = {
 
 export type Query = {
   __typename?: 'Query';
+  address: AddressType;
+  addresses: Array<AddressType>;
   currentUser: UserType;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
@@ -425,6 +455,11 @@ export type Query = {
   serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
+};
+
+
+export type QueryAddressArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
@@ -543,11 +578,13 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
+  address?: Maybe<AddressType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  point?: Maybe<Scalars['Point']['output']>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
 };
@@ -558,8 +595,10 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateNoteInput = {
+  address?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  point?: InputMaybe<Scalars['Point']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
@@ -579,9 +618,11 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
+  address?: InputMaybe<Scalars['ID']['input']>;
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  point?: InputMaybe<Scalars['Point']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
