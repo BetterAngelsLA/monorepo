@@ -25,12 +25,6 @@ interface ICameraPickerProps {
   setIsLoading: (e: boolean) => void;
 }
 
-const fetchResourceFromURI = async (uri: string) => {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  return blob;
-};
-
 export default function CameraPicker(props: ICameraPickerProps) {
   const { setImages, images, namespace, noteId, setIsLoading } = props;
   const [permission, requestPermission] = useCameraPermissions();
@@ -75,14 +69,10 @@ export default function CameraPicker(props: ICameraPickerProps) {
       const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
       if (photo) {
-        const file = await fetchResourceFromURI(photo.uri);
-
         const { data } = await createNoteAttachment({
           variables: {
             namespace,
-            file: new File([file], `${Date.now().toString()}.jpg`, {
-              type: 'image/jpeg',
-            }),
+            file: file,
             noteId,
           },
         });
