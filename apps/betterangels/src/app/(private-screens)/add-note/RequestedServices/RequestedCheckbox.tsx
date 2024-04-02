@@ -8,11 +8,11 @@ import {
   DeleteServiceRequestMutationVariables,
   ServiceEnum,
   ServiceRequestTypeEnum,
-  debounce,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
+import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

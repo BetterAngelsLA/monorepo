@@ -20,7 +20,7 @@ export class ReactNativeFile {
   }
 }
 
-export function customIsExtractableFile(
+export function isReactNativeFileInstance(
   value: unknown
 ): value is ReactNativeFile {
   return value instanceof ReactNativeFile;
