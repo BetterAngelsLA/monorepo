@@ -27,7 +27,6 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       $namespace: NoteNamespaceEnum!
       $file: Upload!
     ) {
-      # noqa: B950
       createNoteAttachment(
         data: { note: $noteId, namespace: $namespace, file: $file }
       ) {

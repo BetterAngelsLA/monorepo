@@ -43,7 +43,6 @@ export default function CameraPicker(props: ICameraPickerProps) {
       $namespace: NoteNamespaceEnum!
       $file: Upload!
     ) {
-      # noqa: B950
       createNoteAttachment(
         data: { note: $noteId, namespace: $namespace, file: $file }
       ) {

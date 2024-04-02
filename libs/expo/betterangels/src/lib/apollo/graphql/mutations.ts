@@ -144,7 +144,6 @@ export const CREATE_NOTE_ATTACHMENT = gql`
     $namespace: NoteNamespaceEnum!
     $file: Upload!
   ) {
-    # noqa: B950
     createNoteAttachment(
       data: { note: $noteId, namespace: $namespace, file: $file }
     ) {
