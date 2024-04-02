@@ -85,8 +85,9 @@ class Attachment(BaseModel):
             self.original_filename = self.file.name
 
             # Determine the MIME type of the file
-            mime_type = self.file.file.content_type or magic.from_buffer(
-                self.file.read(2048), mime=True
+            mime_type = (
+                magic.from_buffer(self.file.read(2048), mime=True)
+                or self.file.file.content_type
             )
             # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
