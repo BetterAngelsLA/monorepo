@@ -1,4 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
+import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import {
   ArrowRotateReverseIcon,
   BoltIcon,
@@ -6,7 +7,6 @@ import {
   CameraIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNativeFile } from '@monorepo/expo/shared/utils';
 import {
   CameraType,
   CameraView,

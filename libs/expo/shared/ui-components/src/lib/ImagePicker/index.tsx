@@ -1,7 +1,7 @@
 import { gql, useMutation } from '@apollo/client';
+import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { ReactNativeFile } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
 
