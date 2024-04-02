@@ -1,5 +1,6 @@
 import { ApolloClient, InMemoryCache, from } from '@apollo/client';
 import { csrfLink } from '@monorepo/expo/betterangels';
+import { customIsExtractableFile } from '@monorepo/expo/shared/utils';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
@@ -19,6 +20,7 @@ const uploadLink = createUploadLink({
   uri: `${apiUrl}/graphql`,
   credentials: 'include',
   headers: getHeaders(),
+  isExtractableFile: customIsExtractableFile,
 });
 
 const restLink = new RestLink({

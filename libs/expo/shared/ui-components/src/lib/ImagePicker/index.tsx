@@ -1,6 +1,7 @@
 import { gql, useMutation } from '@apollo/client';
 import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
+import { ReactNativeFile } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
 
@@ -61,17 +62,19 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
-          const file = await fetchResourceFromURI(asset.uri);
+          // const file = await fetchResourceFromURI(asset.uri);
+          const file = new ReactNativeFile({
+            uri: asset.uri,
+            name: asset?.fileName || Date.now().toString(),
+            type: asset.mimeType || 'blap',
+          });
           const response = await createNoteAttachment({
             variables: {
               namespace,
-              file: new File([file], asset.fileName || Date.now().toString(), {
-                type: asset.mimeType,
-              }),
+              file,
               noteId,
             },
           });
-
           return {
             id: response.data.createNoteAttachment.id,
             uri: asset.uri,
