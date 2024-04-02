@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Chip from './Chip'; // Import Chip component
 
 interface ChipData {
@@ -7,31 +7,31 @@ interface ChipData {
   value: string;
 }
 
-interface ChipRowProps {
+interface ChipGroupProps {
   chipsData: ChipData[];
   onSelectionChange: (selectedValues: string[]) => void;
 }
 
-const ChipRow = ({ chipsData, onSelectionChange }: ChipRowProps) => {
+const ChipGroup = ({ chipsData, onSelectionChange }: ChipGroupProps) => {
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
   const handleToggle = (value: string) => {
     const newSelectedValues = selectedValues.includes(value)
-      ? selectedValues.filter(v => v !== value)
+      ? selectedValues.filter((v) => v !== value)
       : [...selectedValues, value];
-    
+
     setSelectedValues(newSelectedValues);
     onSelectionChange(newSelectedValues);
   };
 
   return (
     <View style={styles.container}>
-      {chipsData.map(chip => (
-        <Chip 
-          key={chip.value} 
-          iconName={chip.iconName} 
-          value={chip.value} 
-          onToggle={handleToggle} 
+      {chipsData.map((chip) => (
+        <Chip
+          key={chip.value}
+          iconName={chip.iconName}
+          value={chip.value}
+          onToggle={handleToggle}
         />
       ))}
     </View>
@@ -47,4 +47,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChipRow;
+export default ChipGroup;

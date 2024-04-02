@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
-import ChipRow from '../../components/ChipRow';
+import ChipGroup from '../../components/ChipGroup';
 import RequirementRow from '../../components/RequirementRow';
 import Separator from '../../components/Separator';
 import { View } from '../../components/Themed';
@@ -179,7 +179,7 @@ export default function FiltetrScreen() {
 
             <Separator />
             <H4 mb="sm">Services</H4>
-            <ChipRow
+            <ChipGroup
               chipsData={servicesChipData}
               onSelectionChange={(values) =>
                 handleToggleChange(values, 'services')
