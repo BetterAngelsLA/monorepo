@@ -6,6 +6,7 @@ import {
   CameraIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { ReactNativeFile } from '@monorepo/expo/shared/utils';
 import {
   CameraType,
   CameraView,
@@ -69,6 +70,11 @@ export default function CameraPicker(props: ICameraPickerProps) {
       const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
       if (photo) {
+        const file = new ReactNativeFile({
+          uri: photo.uri,
+          name: `${Date.now().toString()}.jpg`,
+          type: 'image/jpeg',
+        });
         const { data } = await createNoteAttachment({
           variables: {
             namespace,
