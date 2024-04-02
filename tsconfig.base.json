@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
+      "@monorepo/expo/shared/apollo": ["libs/expo/shared/apollo/src/index.ts"],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
       "@monorepo/expo/shared/static": ["libs/expo/shared/static/src/index.ts"],
       "@monorepo/expo/shared/ui-components": [
