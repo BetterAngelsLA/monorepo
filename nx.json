@@ -75,13 +75,5 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": [
-    "@nxlv/python",
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    }
-  ]
+  "plugins": ["@nxlv/python"]
 }
