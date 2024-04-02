@@ -16,26 +16,142 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  JSON: { input: any; output: any; }
+  /** Represents a point as `(x, y, z)` or `(x, y)`. */
+  Point: { input: any; output: any; }
+  Upload: { input: any; output: any; }
 };
 
-export type CreateMoodInput = {
-  descriptor: MoodEnum;
+export type AddNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  taskId: Scalars['ID']['input'];
+  taskType: TaskTypeEnum;
 };
+
+export type AddNoteTaskPayload = NoteType | OperationInfo;
+
+export type AddressInput = {
+  addressComponents?: InputMaybe<Scalars['JSON']['input']>;
+  formattedAddress?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AddressType = {
+  __typename?: 'AddressType';
+  city?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  state?: Maybe<Scalars['String']['output']>;
+  street?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
+
+export type AttachmentInterface = {
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
+export enum AttachmentType {
+  Audio = 'AUDIO',
+  Document = 'DOCUMENT',
+  Image = 'IMAGE',
+  Unknown = 'UNKNOWN',
+  Video = 'VIDEO'
+}
+
+export type CreateNoteAttachmentInput = {
+  file: Scalars['Upload']['input'];
+  namespace: NoteNamespaceEnum;
+  note: Scalars['ID']['input'];
+};
+
+export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type CreateNoteInput = {
-  client?: InputMaybe<UserInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
 };
 
+export type CreateNoteMoodInput = {
+  descriptor: MoodEnum;
+  noteId: Scalars['ID']['input'];
+};
+
+export type CreateNoteMoodPayload = MoodType | OperationInfo;
+
 export type CreateNotePayload = NoteType | OperationInfo;
+
+export type CreateNoteServiceRequestInput = {
+  customService?: InputMaybe<Scalars['String']['input']>;
+  noteId: Scalars['ID']['input'];
+  service: ServiceEnum;
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type CreateNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  status: TaskStatusEnum;
+  taskType: TaskTypeEnum;
+  title: Scalars['String']['input'];
+};
+
+export type CreateNoteTaskPayload = OperationInfo | TaskType;
+
+export type CreateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
+
+export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type CreateTaskInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
+  status: TaskStatusEnum;
+  title: Scalars['String']['input'];
+};
+
+export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
+
 export type DeleteNotePayload = NoteType | OperationInfo;
+
+export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type DeleteTaskPayload = OperationInfo | TaskType;
+
+export type DeletedObjectType = {
+  __typename?: 'DeletedObjectType';
+  id: Scalars['Int']['output'];
+};
+
+export type DjangoFileType = {
+  __typename?: 'DjangoFileType';
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type DjangoModelFilterInput = {
+  pk: Scalars['ID']['input'];
+};
+
+export type GetOrCreateAddressPayload = AddressType | OperationInfo;
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -72,15 +188,38 @@ export enum MoodEnum {
 export type MoodType = {
   __typename?: 'MoodType';
   descriptor: MoodEnum;
+  id: Scalars['ID']['output'];
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addNoteTask: AddNoteTaskPayload;
   createNote: CreateNotePayload;
+  createNoteAttachment: CreateNoteAttachmentPayload;
+  createNoteMood: CreateNoteMoodPayload;
+  createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createNoteTask: CreateNoteTaskPayload;
+  createServiceRequest: CreateServiceRequestPayload;
+  createTask: CreateTaskPayload;
+  deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
+  deleteNoteAttachment: DeleteNoteAttachmentPayload;
+  deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
+  getOrCreateAddress: GetOrCreateAddressPayload;
   logout: Scalars['Boolean']['output'];
+  removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
+  removeNoteTask: RemoveNoteTaskPayload;
+  revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
+  updateServiceRequest: UpdateServiceRequestPayload;
+  updateTask: UpdateTaskPayload;
+};
+
+
+export type MutationAddNoteTaskArgs = {
+  data: AddNoteTaskInput;
 };
 
 
@@ -89,7 +228,57 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateNoteAttachmentArgs = {
+  data: CreateNoteAttachmentInput;
+};
+
+
+export type MutationCreateNoteMoodArgs = {
+  data: CreateNoteMoodInput;
+};
+
+
+export type MutationCreateNoteServiceRequestArgs = {
+  data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateNoteTaskArgs = {
+  data: CreateNoteTaskInput;
+};
+
+
+export type MutationCreateServiceRequestArgs = {
+  data: CreateServiceRequestInput;
+};
+
+
+export type MutationCreateTaskArgs = {
+  data: CreateTaskInput;
+};
+
+
+export type MutationDeleteMoodArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
 export type MutationDeleteNoteArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteNoteAttachmentArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteServiceRequestArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -99,21 +288,119 @@ export type MutationGenerateMagicLinkArgs = {
 };
 
 
+export type MutationGetOrCreateAddressArgs = {
+  data: AddressInput;
+};
+
+
+export type MutationRemoveNoteServiceRequestArgs = {
+  data: RemoveNoteServiceRequestInput;
+};
+
+
+export type MutationRemoveNoteTaskArgs = {
+  data: RemoveNoteTaskInput;
+};
+
+
+export type MutationRevertNoteArgs = {
+  data: RevertNoteInput;
+};
+
+
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
 
+
+export type MutationUpdateServiceRequestArgs = {
+  data: UpdateServiceRequestInput;
+};
+
+
+export type MutationUpdateTaskArgs = {
+  data: UpdateTaskInput;
+};
+
+export type NoteAttachmentFilter = {
+  AND?: InputMaybe<NoteAttachmentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<NoteAttachmentFilter>;
+  OR?: InputMaybe<NoteAttachmentFilter>;
+  attachmentType?: InputMaybe<AttachmentType>;
+  namespace: NoteNamespaceEnum;
+};
+
+export type NoteAttachmentType = AttachmentInterface & {
+  __typename?: 'NoteAttachmentType';
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  namespace: NoteNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
+export type NoteFilter = {
+  AND?: InputMaybe<NoteFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<NoteFilter>;
+  OR?: InputMaybe<NoteFilter>;
+  client?: InputMaybe<DjangoModelFilterInput>;
+  createdBy?: InputMaybe<DjangoModelFilterInput>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export enum NoteNamespaceEnum {
+  MoodAssessment = 'MOOD_ASSESSMENT',
+  ProvidedServices = 'PROVIDED_SERVICES',
+  RequestedServices = 'REQUESTED_SERVICES'
+}
+
 export type NoteType = {
   __typename?: 'NoteType';
+  address?: Maybe<AddressType>;
+  attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
   isSubmitted: Scalars['Boolean']['output'];
   moods: Array<MoodType>;
+  nextSteps: Array<TaskType>;
+  point?: Maybe<Scalars['Point']['output']>;
   privateDetails?: Maybe<Scalars['String']['output']>;
+  providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
+  purposes: Array<TaskType>;
+  requestedServices: Array<ServiceRequestType>;
+  timestamp: Scalars['DateTime']['output'];
   title: Scalars['String']['output'];
+};
+
+
+export type NoteTypeAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeNextStepsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeProvidedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypePurposesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeRequestedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type OffsetPaginationInput = {
@@ -157,9 +444,22 @@ export type PermDefinition = {
 
 export type Query = {
   __typename?: 'Query';
+  address: AddressType;
+  addresses: Array<AddressType>;
   currentUser: UserType;
   note: NoteType;
+  noteAttachment: NoteAttachmentType;
+  noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
+  serviceRequest: ServiceRequestType;
+  serviceRequests: Array<ServiceRequestType>;
+  task: TaskType;
+  tasks: Array<TaskType>;
+};
+
+
+export type QueryAddressArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
@@ -168,24 +468,166 @@ export type QueryNoteArgs = {
 };
 
 
-export type QueryNotesArgs = {
+export type QueryNoteAttachmentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryNoteAttachmentsArgs = {
+  filters?: InputMaybe<NoteAttachmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+
+export type QueryNotesArgs = {
+  filters?: InputMaybe<NoteFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServiceRequestArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryServiceRequestsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTaskArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type RemoveNoteServiceRequestInput = {
+  noteId: Scalars['ID']['input'];
+  serviceRequestId: Scalars['ID']['input'];
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
+
+export type RemoveNoteTaskInput = {
+  noteId: Scalars['ID']['input'];
+  taskId: Scalars['ID']['input'];
+  taskType: TaskTypeEnum;
+};
+
+export type RemoveNoteTaskPayload = NoteType | OperationInfo;
+
+export type RevertNoteInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  savedAt: Scalars['DateTime']['input'];
+};
+
+export type RevertNotePayload = NoteType | OperationInfo;
+
+export enum ServiceEnum {
+  Blanket = 'BLANKET',
+  Book = 'BOOK',
+  Clothes = 'CLOTHES',
+  Dental = 'DENTAL',
+  Food = 'FOOD',
+  HarmReduction = 'HARM_REDUCTION',
+  HygieneKit = 'HYGIENE_KIT',
+  Medical = 'MEDICAL',
+  Other = 'OTHER',
+  PetCare = 'PET_CARE',
+  PetFood = 'PET_FOOD',
+  Shelter = 'SHELTER',
+  Shoes = 'SHOES',
+  Shower = 'SHOWER',
+  Stabilize = 'STABILIZE',
+  Storage = 'STORAGE',
+  Transport = 'TRANSPORT',
+  Water = 'WATER'
+}
+
+export enum ServiceRequestStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type ServiceRequestType = {
+  __typename?: 'ServiceRequestType';
+  client?: Maybe<UserType>;
+  completedOn?: Maybe<Scalars['DateTime']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  customService?: Maybe<Scalars['String']['output']>;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  service: ServiceEnum;
+  status: ServiceRequestStatusEnum;
+};
+
+export enum ServiceRequestTypeEnum {
+  Provided = 'PROVIDED',
+  Requested = 'REQUESTED'
+}
+
+export enum TaskStatusEnum {
+  Completed = 'COMPLETED',
+  ToDo = 'TO_DO'
+}
+
+export type TaskType = {
+  __typename?: 'TaskType';
+  address?: Maybe<AddressType>;
+  client?: Maybe<UserType>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  dueBy?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['ID']['output'];
+  point?: Maybe<Scalars['Point']['output']>;
+  status: TaskStatusEnum;
+  title: Scalars['String']['output'];
+};
+
+export enum TaskTypeEnum {
+  NextStep = 'NEXT_STEP',
+  Purpose = 'PURPOSE'
+}
+
 export type UpdateNoteInput = {
+  address?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  moods?: InputMaybe<Array<CreateMoodInput>>;
+  point?: InputMaybe<Scalars['Point']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title: Scalars['String']['input'];
+  timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNotePayload = NoteType | OperationInfo;
 
-export type UserInput = {
+export type UpdateServiceRequestInput = {
+  client?: InputMaybe<Scalars['ID']['input']>;
+  customService?: InputMaybe<Scalars['String']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<ServiceRequestStatusEnum>;
 };
+
+export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type UpdateTaskInput = {
+  address?: InputMaybe<Scalars['ID']['input']>;
+  client?: InputMaybe<Scalars['ID']['input']>;
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UserType = {
   __typename?: 'UserType';
@@ -215,6 +657,13 @@ export type UpdateNoteMutationVariables = Exact<{
 
 export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName: string, lastName: string, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
+export type DeleteNoteMutationVariables = Exact<{
+  data: DeleteDjangoObjectInput;
+}>;
+
+
+export type DeleteNoteMutation = { __typename?: 'Mutation', deleteNote: { __typename?: 'NoteType', id: string } | { __typename?: 'OperationInfo' } };
+
 export type CurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -236,6 +685,7 @@ export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteTy
 export const GenerateMagicLinkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateMagicLink"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateMagicLink"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"email"},"value":{"kind":"StringValue","value":"paul+test@betterangels.la","block":false}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
 export const CreateNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateNoteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"client"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateNoteMutation, CreateNoteMutationVariables>;
 export const UpdateNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateNoteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"client"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateNoteMutation, UpdateNoteMutationVariables>;
+export const DeleteNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DeleteDjangoObjectInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteNoteMutation, DeleteNoteMutationVariables>;
 export const CurrentUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"currentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]} as unknown as DocumentNode<CurrentUserQuery, CurrentUserQueryVariables>;
 export const NotesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"notes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<NotesQuery, NotesQueryVariables>;
 export const ViewNoteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewNote"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"note"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"client"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<ViewNoteQuery, ViewNoteQueryVariables>;

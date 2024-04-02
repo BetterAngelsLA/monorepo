@@ -1,5 +1,6 @@
 export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
+export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
 export { default as BodyText } from './BodyText';
 export { default as BottomActions } from './BottomActions';
@@ -8,6 +9,7 @@ export { default as CameraPicker } from './CameraPicker';
 export { default as CancelModal } from './CancelModal';
 export { default as Checkbox } from './Checkbox';
 export { default as ClientCard } from './ClientCard';
+export { default as Copy } from './Copy';
 export { default as DatePicker } from './DatePicker';
 export { default as EventCard } from './EventCard';
 export { default as FieldCard } from './FieldCard';

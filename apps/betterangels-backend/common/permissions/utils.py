@@ -1,12 +1,8 @@
-from functools import reduce
-from operator import and_, or_
-from typing import List, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Tuple, Type
 
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
-from django.db.models import Exists, Model, OuterRef, Q, QuerySet, TextChoices
-from guardian.utils import get_group_obj_perms_model, get_user_obj_perms_model
-
-T = TypeVar("T", bound=Model)
+import strawberry
+from django.db.models import TextChoices
+from strawberry_django.auth.utils import get_current_user
 
 
 def permission_enum_to_django_meta_permissions(
@@ -27,71 +23,12 @@ def permission_enum_to_django_meta_permissions(
     return tuple((perm.value.split(".")[-1], perm.label) for perm in permission_enum)
 
 
-def get_objects_for_user(
-    user: Union[AbstractBaseUser, AnonymousUser],
-    perms: List[str],
-    klass: QuerySet[T],
-    any_perm: bool = False,
-) -> QuerySet[T]:
-    """
-    Fetches a queryset of objects for which the user has specified permissions.
-    Acts as a replacement for Django Guardian's `get_objects_for_user`, aiming
-    for flexible and efficient permission checks using Django's ORM.
+class IsAuthenticated(strawberry.BasePermission):
+    message = "You must be logged in to perform this action."
 
-    Args:
-        user: User for whom to retrieve objects.
-        perms: Permission strings to check.
-        klass: Initial queryset of model objects.
-        any_perm: If True, returns objects for any permissions. Else, all.
+    def has_permission(self, source: Any, info: strawberry.Info, **kwargs: Any) -> bool:
+        user = get_current_user(info)
+        if user is None or not user.is_authenticated or not user.is_active:
+            return False
 
-    Returns:
-        A queryset of objects with the specified permissions for the user.
-
-    Note:
-        - Dynamically builds queries for user/group permissions.
-        - Requires `klass` as a correct model type queryset and `perms` to be
-          model-appropriate permission codenames.
-        - Custom `UserObjectPermission` and `GroupObjectPermission` models
-          associate permissions with model instances, enabling granular access
-          control.
-    """
-    if not user.is_authenticated or not perms:
-        return klass.none()
-
-    user_permissions_field = get_user_obj_perms_model(
-        klass.model
-    ).permission.field.related_query_name()
-    group_permissions_field = get_group_obj_perms_model(
-        klass.model
-    ).permission.field.related_query_name()
-
-    qs = klass
-    permission_filters = []
-
-    for perm in perms:
-        perm_codename = perm.split(".")[-1]
-        user_perm_query = Q(
-            **{
-                f"{user_permissions_field}__permission__codename": perm_codename,
-                f"{user_permissions_field}__user": user,
-            }
-        )
-        group_perm_query = Q(
-            **{
-                f"{group_permissions_field}__permission__codename": perm_codename,
-                f"{group_permissions_field}__group__user": user,
-            }
-        )
-        permission_filters.append(
-            Exists(klass.filter(user_perm_query | group_perm_query, pk=OuterRef("pk")))
-        )
-
-    if any_perm:
-        combined_condition = reduce(or_, permission_filters)
-    else:
-        combined_condition = reduce(and_, permission_filters)
-
-    return cast(
-        QuerySet[T],
-        qs.annotate(has_permission=combined_condition).filter(has_permission=True),
-    )
+        return True

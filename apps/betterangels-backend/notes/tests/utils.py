@@ -1,72 +1,134 @@
 import uuid
 from typing import Any, Dict, Optional
 
-from accounts.models import User
+from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
-from django.contrib.auth.models import Group
+from common.models import Address
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from guardian.shortcuts import assign_perm
 from model_bakery import baker
-from notes.permissions import NotePermissions
+from notes.models import ServiceRequest
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
 
-class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
         self._setup_groups_and_permissions()
-        self._setup_note()
 
     def _setup_users(self) -> None:
         self.user_labels = [
-            "case_manager_1",
-            "case_manager_2",
-            "note_client_1",
-            "note_client_2",
+            "org_1_case_manager_1",
+            "org_1_case_manager_2",
+            "org_2_case_manager_1",
+            "client_1",
+            "client_2",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
             for user_label in self.user_labels
         }
 
-        self.case_manager_1 = self.user_map["case_manager_1"]
-        self.case_manager_2 = self.user_map["case_manager_2"]
-        self.note_client_1 = self.user_map["note_client_1"]
-        self.note_client_2 = self.user_map["note_client_2"]
+        self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
+        self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
+        self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
+        self.client_1 = self.user_map["client_1"]
+        self.client_2 = self.user_map["client_2"]
 
     def _setup_groups_and_permissions(self) -> None:
-        # Create a group and assign note permissions
-        caseworker_group: Group = baker.make(Group)
-        assign_perm(NotePermissions.VIEW.value, caseworker_group)
-        assign_perm(NotePermissions.ADD.value, caseworker_group)
-
-        # Create a permission group and add the case manager to it
-        perm_group = permission_group_recipe.make()
-        perm_group.organization.add_user(self.case_manager_1)
-        self.case_manager_1.groups.add(perm_group.group)
-
-        # Add the caseworker group to the case manager as well
-        self.case_manager_1.groups.add(caseworker_group)
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
+            name="Caseworker"
+        )
+        perm_group = permission_group_recipe.make(
+            template=caseworker_permission_group_template
+        )
+        perm_group.organization.add_user(self.org_1_case_manager_1)
+        perm_group.organization.add_user(self.org_1_case_manager_2)
 
         # Create Another Org
         perm_group_2 = permission_group_recipe.make()
-        perm_group_2.organization.add_user(self.case_manager_2)
-        self.case_manager_2.groups.add(perm_group_2.group)
-        self.case_manager_2.groups.add(caseworker_group)
+        perm_group_2.organization.add_user(self.org_2_case_manager_1)
+
+    def _handle_user_login(self, user_label: Optional[str]) -> None:
+        if user_label:
+            self.graphql_client.force_login(self.user_map[user_label])
+        else:
+            self.graphql_client.logout()
+
+    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
+
+
+class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_note()
+        self._setup_note_tasks()
+        self.provided_services = baker.make(ServiceRequest, _quantity=2)
+        self.requested_services = baker.make(ServiceRequest, _quantity=2)
+        self.point = [-118.2437, 34.0522]
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
-        self.graphql_client.force_login(self.case_manager_1)
-        self.note: Dict[str, Any] = self._create_note_fixture(
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.note = self._create_note_fixture(
             {
-                "title": f"User: {self.case_manager_1.id}",
-                "publicDetails": f"{self.case_manager_1.id}'s note",
-                "client": {"id": self.note_client_1.id},
+                "title": f"New note for: {self.org_1_case_manager_1.pk}",
+                "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details",
+                "client": self.client_1.pk,
             },
         )["data"]["createNote"]
         # Logout after setting up the note
+        self.graphql_client.logout()
+
+    def _setup_note_tasks(self) -> None:
+        # Force login the case manager to create tasks
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.purpose_1 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 1 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.purpose_2 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 2 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.next_step_1 = self._create_task_for_note_fixture(
+            {
+                "title": f"Purpose 1 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        self.next_step_2 = self._create_task_for_note_fixture(
+            {
+                "title": f"Next Step 2 for {self.note['id']}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        # Logout after setting up the tasks
         self.graphql_client.logout()
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
@@ -79,7 +141,6 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self, operation: str, variables: Dict[str, Any]
     ) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
-
         mutation: str = f"""
             mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{ # noqa: B950
                 {operation}Note(data: $data) {{
@@ -93,24 +154,452 @@ class NoteGraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                     ... on NoteType {{
                         id
                         title
-                        publicDetails
+                        point
+                        address {{
+                            street
+                            city
+                            state
+                            zipCode
+                        }}
                         moods {{
                             descriptor
                         }}
+                        purposes {{
+                            id
+                            title
+                        }}
+                        nextSteps {{
+                            id
+                            title
+                        }}
+                        providedServices {{
+                            id
+                            service
+                            customService
+                        }}
+                        requestedServices {{
+                            id
+                            service
+                            customService
+                        }}
+                        publicDetails
+                        privateDetails
+                        isSubmitted
                         client {{
                             id
                         }}
                         createdBy {{
                             id
                         }}
+                        timestamp
                     }}
                 }}
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _handle_user_login(self, user_label: Optional[str]) -> None:
-        if user_label:
-            self.graphql_client.force_login(self.user_map[user_label])
-        else:
-            self.graphql_client.logout()
+    def _create_task_for_note_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateTask($data: CreateTaskInput!) {
+                createTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        title
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _revert_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        mutation = """
+            mutation RevertNote($data: RevertNoteInput!) {
+                revertNote(data: $data) {
+                    ... on NoteType {
+                        id
+                        title
+                        publicDetails
+                        moods {
+                            descriptor
+                        }
+                        purposes {
+                            id
+                        }
+                        nextSteps {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                        requestedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _add_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation AddNoteTask($data: AddNoteTaskInput!) {
+                addNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteTask($data: RemoveNoteTaskInput!) {
+                removeNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        purposes {
+                            id
+                            title
+                        }
+                        nextSteps {
+                            id
+                            title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteMood($data: CreateNoteMoodInput!) {
+                createNoteMood(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on MoodType {
+                        id
+                        descriptor
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteTask($data: CreateNoteTaskInput!) {
+                createNoteTask(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        title
+                        status
+                        dueBy
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
+                createNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                        service
+                        customService
+                        status
+                        dueBy
+                        completedOn
+                        client {
+                            id
+                        }
+                        createdBy {
+                            id
+                        }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveNoteServiceRequest($data: RemoveNoteServiceRequestInput!) {
+                removeNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        requestedServices {
+                            id
+                        }
+                        providedServices {
+                            id
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_note_attachment_fixture(
+        self,
+        note_id: str,
+        namespace: str,
+        file_content: bytes,
+        file_name: str = "test_file.txt",
+    ) -> Dict[str, Any]:
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        response = self.execute_graphql(
+            """
+            mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {  # noqa: B950
+                createNoteAttachment(data: { note: $noteId, namespace: $namespace, file: $file }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteAttachmentType {
+                        id
+                        attachmentType
+                        file {
+                            name
+                        }
+                        originalFilename
+                        namespace
+                    }
+                }
+            }
+            """,
+            variables={
+                "noteId": note_id,
+                "namespace": namespace,
+            },
+            files={"file": file},
+        )
+        return response
+
+    def _delete_note_attachment_fixture(self, attachment_id: str) -> Dict[str, Any]:
+        response = self.execute_graphql(
+            """
+            mutation DeleteNoteAttachment($attachmentId: ID!) {
+                deleteNoteAttachment(data: { id: $attachmentId }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteAttachmentType {
+                        id
+                    }
+                }
+            }
+            """,
+            variables={"attachmentId": attachment_id},
+        )
+        return response
+
+
+class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_service_request()
+
+    def _setup_service_request(self) -> None:
+        # Force login the case manager to create a service_request
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "status": "TO_DO",
+            },
+        )["data"]["createServiceRequest"]
+        # Logout after setting up the service request
+        self.graphql_client.logout()
+
+    def _create_service_request_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self._create_or_update_service_request_fixture("create", variables)
+
+    def _update_service_request_fixture(
+        self, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self._create_or_update_service_request_fixture("update", variables)
+
+    def _create_or_update_service_request_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+
+        mutation: str = f"""
+            mutation {operation.capitalize()}ServiceRequest($data: {operation.capitalize()}ServiceRequestInput!) {{ # noqa: B950
+                {operation}ServiceRequest(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ServiceRequestType {{
+                        id
+                        service
+                        customService
+                        status
+                        dueBy
+                        completedOn
+                        client {{
+                            id
+                        }}
+                        createdBy {{
+                            id
+                        }}
+                        createdAt
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
+class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_task()
+        self.point = [-118.2437, 34.0522]
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
+
+    def _setup_task(self) -> None:
+        # Force login the case manager to create a task
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.task: Dict[str, Any] = self._create_task_fixture(
+            {
+                "title": f"New task for: {self.org_1_case_manager_1.pk}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        # Logout after setting up the task
+        self.graphql_client.logout()
+
+    def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_task_fixture("create", variables)
+
+    def _update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_task_fixture("update", variables)
+
+    def _create_or_update_task_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+
+        mutation: str = f"""
+            mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950
+                {operation}Task(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on TaskType {{
+                        id
+                        title
+                        point
+                        address {{
+                            street
+                            city
+                            state
+                            zipCode
+                        }}
+                        status
+                        dueBy
+                        client {{
+                            id
+                        }}
+                        createdBy {{
+                            id
+                        }}
+                        createdAt
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})

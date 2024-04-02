@@ -1,6 +1,6 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -13,6 +13,8 @@ export function H3({
   ml,
   my,
   mx,
+  style,
+  color = Colors.PRIMARY_EXTRA_DARK,
 }: {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
@@ -22,13 +24,17 @@ export function H3({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  style?: TextStyle;
+  color?: string;
 }) {
   return (
     <Text
       style={[
         styles.text,
+        style,
         {
           textTransform,
+          color,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -46,7 +52,6 @@ export function H3({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Poppins-SemiBold',
-    color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.md.fontSize,
     lineHeight: FontSizes.md.lineHeight,
   },

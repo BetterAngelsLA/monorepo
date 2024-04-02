@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+{% block extrahead %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        document.cookie = "django_timezone=" + timezone + "; path=/; max-age=31536000";
+    });
+    </script>
+{% endblock extrahead %}
