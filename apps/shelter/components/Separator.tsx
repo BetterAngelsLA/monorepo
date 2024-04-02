@@ -2,9 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet } from 'react-native';
 import { View } from './Themed';
 
-interface SeparatorProps {}
-
-const Separator = ({}: SeparatorProps) => (
+const Separator = () => (
   <View
     style={styles.separator}
     lightColor={Colors.NEUTRAL_LIGHT}

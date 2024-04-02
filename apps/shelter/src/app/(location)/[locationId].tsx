@@ -183,9 +183,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   description: {
-    // marginTop: 8,
     marginBottom: 8,
-    // fontSize: 14,
   },
   link: {
     textDecorationLine: 'underline',

@@ -1,4 +1,4 @@
-import { Linking, StyleSheet } from 'react-native';
+import { Linking } from 'react-native';
 import AnimatedButton from './AnimatedButton';
 
 interface ContactButtonsRowProps {
@@ -7,10 +7,14 @@ interface ContactButtonsRowProps {
   website?: string;
 }
 
-const ContactButtonsRow = ({ phoneNumber, email, website }: ContactButtonsRowProps) => {
+const ContactButtonsRow = ({
+  phoneNumber,
+  email,
+  website,
+}: ContactButtonsRowProps) => {
   const handlePressWebsite = () => {
     if (website) Linking.openURL(website);
-  };    
+  };
   const handlePressEmail = () => {
     if (email) Linking.openURL(`mailto:${email}`);
   };
@@ -21,33 +25,16 @@ const ContactButtonsRow = ({ phoneNumber, email, website }: ContactButtonsRowPro
   return (
     <>
       {phoneNumber && (
-        <AnimatedButton 
-          iconName="external-link" 
-          onPress={handlePressWebsite} 
-        />
+        <AnimatedButton iconName="external-link" onPress={handlePressWebsite} />
       )}
       {email && (
-        <AnimatedButton 
-          iconName="envelope" 
-          onPress={handlePressEmail} 
-        />
-      )}            
+        <AnimatedButton iconName="envelope" onPress={handlePressEmail} />
+      )}
       {phoneNumber && (
-        <AnimatedButton 
-          iconName="phone" 
-          onPress={handlePressPhone} 
-        />
+        <AnimatedButton iconName="phone" onPress={handlePressPhone} />
       )}
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    padding: 10,
-  },
-});
 
 export default ContactButtonsRow;
