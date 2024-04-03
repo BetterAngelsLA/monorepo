@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from common.models import Address
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -78,6 +79,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note_tasks()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
+        self.point = [-118.2437, 34.0522]
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -145,6 +154,13 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on NoteType {{
                         id
                         title
+                        point
+                        address {{
+                            street
+                            city
+                            state
+                            zipCode
+                        }}
                         moods {{
                             descriptor
                         }}
@@ -521,13 +537,21 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_task()
+        self.point = [-118.2437, 34.0522]
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.task: Dict[str, Any] = self._create_task_fixture(
             {
-                "title": f"User: {self.org_1_case_manager_1.pk}",
+                "title": f"New task for: {self.org_1_case_manager_1.pk}",
                 "status": "TO_DO",
             },
         )["data"]["createTask"]
@@ -558,6 +582,13 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on TaskType {{
                         id
                         title
+                        point
+                        address {{
+                            street
+                            city
+                            state
+                            zipCode
+                        }}
                         status
                         dueBy
                         client {{

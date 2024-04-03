@@ -1,12 +1,10 @@
 from typing import Any
 
-import magic
 from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
@@ -62,6 +60,12 @@ class Attachment(BaseModel):
     attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
     attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
 
+    def __str__(self) -> str:
+        return (
+            f"{self.content_object} {self.object_id} - "
+            f"{self.attachment_type} - {self.original_filename}"
+        )
+
     class Meta:
         indexes = [
             models.Index(
@@ -86,7 +90,7 @@ class Attachment(BaseModel):
             self.original_filename = self.file.name
 
             # Determine the MIME type of the file
-            mime_type = magic.from_buffer(self.file.read(1024), mime=True)
+            mime_type = self.file.file.content_type
             # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
                 self.attachment_type = AttachmentType.IMAGE
@@ -100,12 +104,37 @@ class Attachment(BaseModel):
         super().save(*args, **kwargs)
 
 
-class Location(BaseModel):
-    point = PointField(geography=True)
-    address = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
-    zip_code = models.CharField(max_length=50, blank=True)
+class Address(BaseModel):
+    street = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=10, blank=True, null=True)
+
+    address_components = models.JSONField(blank=True, null=True)
+    formatted_address = models.CharField(max_length=255, blank=True, null=True)
+
+    addressuserobjectpermission_set: models.QuerySet["Address"]
+    addressgroupobjectpermission_set: models.QuerySet["Address"]
+
+    objects = models.Manager()
+
+    class Meta(BaseModel.Meta):
+        indexes = [
+            models.Index(
+                fields=[
+                    "street",
+                    "city",
+                    "state",
+                    "zip_code",
+                    "address_components",
+                    "formatted_address",
+                ],
+                name="address_index",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
 
 
 # Permissions
@@ -121,3 +150,11 @@ class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
         Attachment,
         on_delete=models.CASCADE,
     )
+
+
+class AddressUserObjectPermission(UserObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+
+class AddressGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
