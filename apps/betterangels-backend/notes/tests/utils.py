@@ -228,6 +228,13 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         title
                         publicDetails
+                        point
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
                         moods {
                             descriptor
                         }
@@ -322,6 +329,25 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _delete_mood_fixture(self, mood_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteMood($id: ID!) {
+                deleteMood(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"id": mood_id})
 
     def _create_note_task_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
@@ -447,7 +473,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         )
         return response
 
-    def _delete_note_attachment_fixture(self, attachment_id: str) -> Dict[str, Any]:
+    def _delete_note_attachment_fixture(self, attachment_id: int) -> Dict[str, Any]:
         response = self.execute_graphql(
             """
             mutation DeleteNoteAttachment($attachmentId: ID!) {

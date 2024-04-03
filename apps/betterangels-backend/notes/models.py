@@ -51,6 +51,10 @@ class ServiceRequest(BaseModel):
     def __str__(self) -> str:
         return str(self.service if not self.custom_service else self.custom_service)
 
+    def revert_action(self, action: str) -> None:
+        if action == "add":
+            self.delete()
+
 
 @pghistory.track(
     pghistory.InsertEvent("task.add"),

@@ -191,7 +191,6 @@ export const UPDATE_TASK = gql`
     }
   }
 `;
-
 export const DELETE_TASK = gql`
   mutation DeleteTask($id: ID!) {
     deleteTask(data: { id: $id }) {
@@ -203,6 +202,52 @@ export const DELETE_TASK = gql`
         }
       }
       ... on TaskType {
+        id
+      }
+    }
+  }
+`;
+
+export const CREATE_NOTE_ATTACHMENT = gql`
+  mutation CreateNoteAttachment(
+    $noteId: ID!
+    $namespace: NoteNamespaceEnum!
+    $file: Upload!
+  ) {
+    createNoteAttachment(
+      data: { note: $noteId, namespace: $namespace, file: $file }
+    ) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteAttachmentType {
+        id
+        attachmentType
+        file {
+          name
+        }
+        originalFilename
+        namespace
+      }
+    }
+  }
+`;
+
+export const DELETE_NOTE_ATTACHMENT = gql`
+  mutation DeleteNoteAttachment($attachmentId: ID!) {
+    deleteNoteAttachment(data: { id: $attachmentId }) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteAttachmentType {
         id
       }
     }
