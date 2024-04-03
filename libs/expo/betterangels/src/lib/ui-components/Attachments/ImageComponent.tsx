@@ -19,7 +19,7 @@ interface IImageComponentProps {
 
 export default function ImageComponent(props: IImageComponentProps) {
   const { width, image, setImages, images, isLoading } = props;
-  const [deleteNoteAttachment] = useMutation<
+  const [deleteNoteAttachment, { error }] = useMutation<
     DeleteNoteAttachmentMutation,
     DeleteNoteAttachmentMutationVariables
   >(DELETE_NOTE_ATTACHMENT);
@@ -27,9 +27,13 @@ export default function ImageComponent(props: IImageComponentProps) {
   const onDelete = async () => {
     if (!image.id) return;
     try {
-      await deleteNoteAttachment({
+      const { data } = await deleteNoteAttachment({
         variables: { attachmentId: image.id },
       });
+      if (!data) {
+        console.log('Error deleting attachment', error);
+        return;
+      }
       setImages(images.filter((i) => i.uri !== image.uri));
     } catch (e) {
       console.error(e);

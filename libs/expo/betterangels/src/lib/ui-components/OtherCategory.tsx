@@ -26,11 +26,11 @@ interface IOtherCategoryProps {
 
 export default function OtherCategory(props: IOtherCategoryProps) {
   const { services, serviceType, setServices, noteId } = props;
-  const [createNoteServiceRequest] = useMutation<
+  const [createNoteServiceRequest, { error }] = useMutation<
     CreateNoteServiceRequestMutation,
     CreateNoteServiceRequestMutationVariables
   >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest] = useMutation<
+  const [deleteServiceRequest, { error: deleteError }] = useMutation<
     DeleteServiceRequestMutation,
     DeleteServiceRequestMutationVariables
   >(DELETE_SERVICE_REQUEST);
@@ -43,13 +43,17 @@ export default function OtherCategory(props: IOtherCategoryProps) {
         const id = services.find((s) => s.title === service)?.id;
 
         if (!id) throw new Error('Something went wrong');
-        await deleteServiceRequest({
+        const { data } = await deleteServiceRequest({
           variables: {
             data: {
               id,
             },
           },
         });
+        if (!data) {
+          console.error('Error deleting service', deleteError);
+          return;
+        }
 
         const newServices = services.filter((s) => s.id !== id);
         setServices(newServices);
@@ -64,23 +68,21 @@ export default function OtherCategory(props: IOtherCategoryProps) {
             },
           },
         });
+        if (!data) {
+          console.error('Error creating service', error);
+          return;
+        }
 
-        if (
-          data?.createNoteServiceRequest.__typename === 'ServiceRequestType'
-        ) {
+        if ('id' in data.createNoteServiceRequest) {
           const newServices = [
             ...services,
             {
-              id: data?.createNoteServiceRequest.id,
+              id: data.createNoteServiceRequest.id,
               title: service,
             },
           ];
 
           setServices(newServices);
-        } else if (
-          data?.createNoteServiceRequest.__typename === 'OperationInfo'
-        ) {
-          console.log(data.createNoteServiceRequest.messages);
         }
       }
     } catch (e) {

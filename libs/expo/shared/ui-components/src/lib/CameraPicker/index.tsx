@@ -32,7 +32,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [createNoteAttachment] = useMutation(gql`
+  const [createNoteAttachment, { error }] = useMutation(gql`
     mutation CreateNoteAttachment(
       $noteId: ID!
       $namespace: NoteNamespaceEnum!
@@ -82,16 +82,15 @@ export default function CameraPicker(props: ICameraPickerProps) {
             noteId,
           },
         });
-        if (data?.createNoteAttachment.__typename === 'NoteAttachmentType') {
-          const createNoteAttachmentId = data?.createNoteAttachment.id;
-          if (createNoteAttachmentId) {
-            setImages([
-              ...images,
-              { uri: photo.uri, id: data?.createNoteAttachment.id },
-            ]);
-          }
-        } else if (data?.createNoteAttachment.__typename === 'OperationInfo') {
-          console.log(data.createNoteAttachment.messages);
+        if (!data) {
+          console.error('Error creating attachment', error);
+          return;
+        }
+        if ('id' in data.createNoteAttachment) {
+          setImages([
+            ...images,
+            { uri: photo.uri, id: data.createNoteAttachment.id },
+          ]);
         }
       }
       setIsCameraOpen(false);

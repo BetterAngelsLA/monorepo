@@ -16,7 +16,7 @@ interface IImagePickerProps {
 
 export default function ImagePickerComponent(props: IImagePickerProps) {
   const { setImages, images, mr, namespace, noteId, setIsLoading } = props;
-  const [createNoteAttachment] = useMutation(gql`
+  const [createNoteAttachment, { error }] = useMutation(gql`
     mutation CreateNoteAttachment(
       $noteId: ID!
       $namespace: NoteNamespaceEnum!
@@ -61,15 +61,17 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
             name: asset?.fileName || Date.now().toString(),
             type: asset.mimeType || 'changeme',
           });
-          const response = await createNoteAttachment({
+          const { data } = await createNoteAttachment({
             variables: {
               namespace,
               file,
               noteId,
             },
           });
+          if (!data) throw new Error(`Error uploading image: ${error}`);
+
           return {
-            id: response.data.createNoteAttachment.id,
+            id: data.createNoteAttachment.id,
             uri: asset.uri,
           };
         });
@@ -77,8 +79,8 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         const uploadedImages = await Promise.all(uploadPromises);
 
         setImages([...images, ...uploadedImages]);
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
       console.log(e);
