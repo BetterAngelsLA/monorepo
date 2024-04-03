@@ -1,5 +1,6 @@
 import {
   Attachments,
+  NoteNamespaceEnum,
   OtherCategory,
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -28,7 +29,6 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, H3, H5 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import ProvidedCheckbox from './ProvidedCheckbox';
 
@@ -122,7 +122,9 @@ const SERVICES = [
 
 export default function ProvidedServices(props: IProvidedServicesProps) {
   const { expanded, setExpanded, noteId } = props;
-  const { setValue, watch } = useFormContext();
+  const [images, setImages] = useState<
+    Array<{ id: string | undefined; uri: string }>
+  >([]);
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -134,15 +136,13 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     { title: string; id: string | undefined }[]
   >([]);
 
-  const providedServicesImages = watch('providedServicesImages', []);
   const isProvidedServices = expanded === 'Provided Services';
   const isLessThanOneProvidedService =
     services.length < 1 && customServices.length < 1;
-  const isLessThanOneProvidedServiceImages = providedServicesImages.length < 1;
+  const isLessThanOneProvidedServiceImages = images.length < 1;
   const isGreaterThanZeroProvidedService =
     services.length > 0 || customServices.length > 0;
-  const isGreaterThanZeroProvidedServiceImages =
-    providedServicesImages?.length > 0;
+  const isGreaterThanZeroProvidedServiceImages = images?.length > 0;
 
   return (
     <FieldCard
@@ -216,8 +216,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
           services={customServices}
         />
         <Attachments
-          images={providedServicesImages}
-          setImages={(array) => setValue('providedServicesImages', array)}
+          noteId={noteId}
+          namespace={NoteNamespaceEnum.ProvidedServices}
+          images={images}
+          setImages={setImages}
         />
       </View>
     </FieldCard>

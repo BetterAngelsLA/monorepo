@@ -7,12 +7,12 @@ import {
   DeleteMoodMutation,
   DeleteMoodMutationVariables,
   MoodEnum,
-  debounce,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
-import { ComponentType, useCallback, useEffect, useState } from 'react';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { ComponentType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 type Mood = {
@@ -46,69 +46,62 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   const [moodId, setMoodId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [createNoteMood] = useMutation<
+  const [createNoteMood, { error }] = useMutation<
     CreateNoteMoodMutation,
     CreateNoteMoodMutationVariables
   >(CREATE_NOTE_MOOD);
-  const [deleteMood] = useMutation<
+  const [deleteMood, { error: deleteError }] = useMutation<
     DeleteMoodMutation,
     DeleteMoodMutationVariables
   >(DELETE_MOOD);
 
-  const toggleMood = useCallback(() => {
-    const executeMutation = async () => {
-      if (!noteId) return;
-      if (isChecked) {
-        createNoteMood({
-          variables: {
-            data: {
-              noteId,
-              descriptor: mood.enum,
-            },
-          },
-        })
-          .then((response) => {
-            if (response.data?.createNoteMood.__typename === 'MoodType') {
-              const createdMoodId = response.data?.createNoteMood.id;
-              if (createdMoodId) {
-                setMoodId(createdMoodId);
-                setIsLoading(false);
-              }
-            } else if (
-              response.data?.createNoteMood.__typename === 'OperationInfo'
-            ) {
-              console.log(response.data.createNoteMood.messages);
-            }
-          })
-          .catch((error) => {
-            console.error('Error creating mood', error);
-          });
-      } else {
-        if (moodId) {
-          deleteMood({
-            variables: {
-              data: {
-                id: moodId,
-              },
-            },
-          })
-            .then(() => {
-              setMoodId(undefined);
-              setIsLoading(false);
-            })
-            .catch((error) => {
-              console.error('Error deleting mood', error);
-            });
-        }
-      }
-    };
-    debounce(executeMutation, 500)();
-  }, [isChecked, noteId, mood.enum, createNoteMood, deleteMood]);
+  const executeMutation = useCallback(async () => {
+    if (!noteId) return;
 
-  useEffect(() => {
-    const debouncedToggle = debounce(toggleMood, 300);
-    debouncedToggle();
-  }, [toggleMood]);
+    if (isChecked && moodId) {
+      const { data } = await deleteMood({
+        variables: {
+          data: { id: moodId },
+        },
+      });
+      if (!data) {
+        console.log('Error deleting mood', deleteError);
+        return;
+      }
+      setMoodId(undefined);
+    } else if (!isChecked && noteId) {
+      const { data } = await createNoteMood({
+        variables: {
+          data: {
+            noteId,
+            descriptor: mood.enum,
+          },
+        },
+      });
+      if (!data) {
+        console.log('Error creating mood', error);
+        return;
+      }
+      if ('id' in data.createNoteMood) {
+        setMoodId(data.createNoteMood.id);
+      }
+    }
+    setIsLoading(false);
+  }, [
+    noteId,
+    isChecked,
+    moodId,
+    deleteMood,
+    deleteError,
+    createNoteMood,
+    mood.enum,
+    error,
+  ]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedExecuteMutation = useCallback(debounce(executeMutation, 300), [
+    executeMutation,
+  ]);
 
   const handleCheck = () => {
     if (isLoading) return;
@@ -116,8 +109,9 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
     setIsChecked((prev) => !prev);
     const newMoods = moodId
       ? moods.filter((m) => m.enum !== mood.enum)
-      : [...moods, { Icon: mood.Icon, title: mood.title, enum: mood.enum }];
+      : [...moods, { title: mood.title, enum: mood.enum }];
     setMoods(newMoods);
+    debouncedExecuteMutation();
   };
 
   if (tab !== mood.tab) return null;

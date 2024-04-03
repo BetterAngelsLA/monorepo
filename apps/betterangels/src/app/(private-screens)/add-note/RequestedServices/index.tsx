@@ -1,5 +1,6 @@
 import {
   Attachments,
+  NoteNamespaceEnum,
   OtherCategory,
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -28,7 +29,6 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, H3, H5 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import RequestedCheckbox from './RequestedCheckbox';
 
@@ -122,7 +122,9 @@ const SERVICES = [
 
 export default function RequestedServices(props: IRequestedServicesProps) {
   const { expanded, setExpanded, noteId } = props;
-  const { setValue, watch } = useFormContext();
+  const [images, setImages] = useState<
+    Array<{ id: string | undefined; uri: string }>
+  >([]);
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -134,16 +136,13 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     { title: string; id: string | undefined }[]
   >([]);
 
-  const requestedServicesImages = watch('requestedServicesImages', []);
   const isRequestedServices = expanded === 'Requested Services';
   const isLessThanOneRequestedService =
     services.length < 1 && customServices.length < 1;
-  const isLessThanOneRequestedServiceImages =
-    requestedServicesImages.length < 1;
+  const isLessThanOneRequestedServiceImages = images.length < 1;
   const isGreaterThanZeroRequestedService =
     services.length > 0 || customServices.length > 0;
-  const isGreaterThanZeroRequestedServiceImages =
-    requestedServicesImages?.length > 0;
+  const isGreaterThanZeroRequestedServiceImages = images?.length > 0;
 
   return (
     <FieldCard
@@ -218,8 +217,10 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         />
 
         <Attachments
-          images={requestedServicesImages}
-          setImages={(array) => setValue('requestedServicesImages', array)}
+          noteId={noteId}
+          namespace={NoteNamespaceEnum.RequestedServices}
+          images={images}
+          setImages={setImages}
         />
       </View>
     </FieldCard>
