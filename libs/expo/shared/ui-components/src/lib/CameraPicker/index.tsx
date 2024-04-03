@@ -1,3 +1,5 @@
+import { gql, useMutation } from '@apollo/client';
+import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import {
   ArrowRotateReverseIcon,
   BoltIcon,
@@ -16,32 +18,86 @@ import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import H5 from '../H5';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
-
-type TImages = string[];
-
 interface ICameraPickerProps {
-  setImages: React.Dispatch<React.SetStateAction<TImages>>;
-  images: TImages;
+  images: { id: string | undefined; uri: string }[];
+  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  namespace: string;
+  noteId: string | undefined;
+  setIsLoading: (e: boolean) => void;
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images } = props;
+  const { setImages, images, namespace, noteId, setIsLoading } = props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [createNoteAttachment, { error }] = useMutation(gql`
+    mutation CreateNoteAttachment(
+      $noteId: ID!
+      $namespace: NoteNamespaceEnum!
+      $file: Upload!
+    ) {
+      createNoteAttachment(
+        data: { note: $noteId, namespace: $namespace, file: $file }
+      ) {
+        ... on OperationInfo {
+          messages {
+            kind
+            field
+            message
+          }
+        }
+        ... on NoteAttachmentType {
+          id
+          attachmentType
+          file {
+            name
+          }
+          originalFilename
+          namespace
+        }
+      }
+    }
+  `);
 
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
-    if (cameraRef.current) {
+    if (!noteId || !cameraRef.current) return;
+    setIsLoading(true);
+    try {
       const quality = 0.8;
       const photo = await cameraRef.current.takePictureAsync({ quality });
-
       if (photo) {
-        setImages([...images, photo.uri]);
+        const file = new ReactNativeFile({
+          uri: photo.uri,
+          name: `${Date.now().toString()}.jpg`,
+          type: 'image/jpeg',
+        });
+        const { data } = await createNoteAttachment({
+          variables: {
+            namespace,
+            file: file,
+            noteId,
+          },
+        });
+        if (!data) {
+          console.error('Error creating attachment', error);
+          return;
+        }
+        if ('id' in data.createNoteAttachment) {
+          setImages([
+            ...images,
+            { uri: photo.uri, id: data.createNoteAttachment.id },
+          ]);
+        }
       }
       setIsCameraOpen(false);
+      setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+      console.log(e);
     }
   };
 
@@ -68,7 +124,6 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const toggleCameraType = () => {
-    console.log('TYPE');
     setType((current) => (current === 'back' ? 'front' : 'back'));
   };
 
