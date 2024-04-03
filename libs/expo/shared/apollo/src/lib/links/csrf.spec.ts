@@ -13,7 +13,7 @@ import {
 } from '@monorepo/expo/shared/utils';
 import { csrfLink } from './csrf';
 
-jest.mock('../../storage', () => ({
+jest.mock('@monorepo/expo/shared/utils', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
 }));

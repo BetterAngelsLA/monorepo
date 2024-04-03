@@ -13,7 +13,7 @@ import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface IProvidedCheckboxProps {
@@ -44,20 +44,33 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
   const [id, setId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [createNoteServiceRequest] = useMutation<
+  const [createNoteServiceRequest, { error }] = useMutation<
     CreateNoteServiceRequestMutation,
     CreateNoteServiceRequestMutationVariables
   >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest] = useMutation<
+  const [deleteServiceRequest, { error: deleteError }] = useMutation<
     DeleteServiceRequestMutation,
     DeleteServiceRequestMutationVariables
   >(DELETE_SERVICE_REQUEST);
 
-  const toggleService = useCallback(() => {
-    const executeMutation = async () => {
-      if (!noteId) return;
-      if (isChecked) {
-        createNoteServiceRequest({
+  const executeMutation = useCallback(async () => {
+    if (!noteId) return;
+    try {
+      if (isChecked && id) {
+        const { data } = await deleteServiceRequest({
+          variables: {
+            data: {
+              id,
+            },
+          },
+        });
+        if (!data) {
+          console.error('Error deleting service', deleteError);
+        }
+
+        setId(undefined);
+      } else {
+        const { data } = await createNoteServiceRequest({
           variables: {
             data: {
               service: service.enum,
@@ -65,55 +78,36 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
               serviceRequestType: ServiceRequestTypeEnum.Provided,
             },
           },
-        })
-          .then((response) => {
-            if (
-              response.data?.createNoteServiceRequest.__typename ===
-              'ServiceRequestType'
-            ) {
-              const createdServiceId =
-                response.data?.createNoteServiceRequest.id;
-              if (createdServiceId) {
-                setId(createdServiceId);
-                setIsLoading(false);
-              }
-            } else if (
-              response.data?.createNoteServiceRequest.__typename ===
-              'OperationInfo'
-            ) {
-              console.log(response.data.createNoteServiceRequest.messages);
-            }
-          })
-          .catch((error) => {
-            console.error('Error creating service', error);
-          });
-      } else {
-        if (id) {
-          deleteServiceRequest({
-            variables: {
-              data: {
-                id,
-              },
-            },
-          })
-            .then(() => {
-              setId(undefined);
-              setIsLoading(false);
-            })
-            .catch((error) => {
-              console.error('Error deleting service', error);
-            });
+        });
+        if (!data) {
+          console.log('Error creating service', error);
+          return;
+        }
+
+        if ('id' in data.createNoteServiceRequest) {
+          const createdServiceId = data.createNoteServiceRequest.id;
+
+          setId(createdServiceId);
         }
       }
-    };
-
-    debounce(executeMutation, 500)();
+      setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+      console.log('Error creating service', e);
+    }
   }, [
-    isChecked,
     noteId,
-    service.enum,
-    createNoteServiceRequest,
+    isChecked,
+    id,
     deleteServiceRequest,
+    deleteError,
+    createNoteServiceRequest,
+    service.enum,
+    error,
+  ]);
+
+  const debouncedExecuteMutation = useCallback(debounce(executeMutation, 500), [
+    executeMutation,
   ]);
 
   const handleCheck = () => {
@@ -132,12 +126,8 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
           },
         ];
     setServices(newServices);
+    debouncedExecuteMutation();
   };
-
-  useEffect(() => {
-    const debouncedToggle = debounce(toggleService, 300);
-    debouncedToggle();
-  }, [toggleService]);
 
   return (
     <Checkbox

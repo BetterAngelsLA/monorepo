@@ -114,6 +114,10 @@
     "typescript": "*",
     "metro": "*",
     "expo-dev-client": "*",
-    "@types/apollo-upload-client": "*"
+    "@types/apollo-upload-client": "*",
+    "@swc-node/register": "*",
+    "@swc/core": "*",
+    "@swc/helpers": "*",
+    "jest-environment-node": "*"
   }
 }
