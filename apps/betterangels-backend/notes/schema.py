@@ -159,12 +159,10 @@ class Mutation:
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         NOTE_UPDATES = {
             "createNoteMood",
-            "createNoteAttachment",
             "addNoteTask",
             "createNoteTask",
             "createNoteServiceRequest",
             "deleteMood",
-            "deleteNoteAttachment",
             "removeNoteTask",
             "removeNoteServiceRequest",
             # TODO: add note update mutations
@@ -209,8 +207,7 @@ class Mutation:
 
                 # Revert changes made to REAL model instances (have pgh_obj_id)
                 for event in Events.objects.filter(
-                    pgh_context_id__in=contexts_to_revert,
-                    pgh_obj_id__isnull=False,
+                    pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False
                 ):
                     action = event.pgh_label.split(".")[1]
 
@@ -256,9 +253,7 @@ class Mutation:
     def create_note_attachment(
         self, info: Info, data: CreateNoteAttachmentInput
     ) -> NoteAttachmentType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note, timestamp=timezone.now(), label=info.field_name
-        ):
+        with transaction.atomic():
             user = cast(User, get_current_user(info))
             note = filter_for_user(
                 Note.objects.all(),
@@ -287,39 +282,12 @@ class Mutation:
 
             return cast(NoteAttachmentType, attachment)
 
-    @strawberry_django.mutation(
-        extensions=[HasRetvalPerm(perms=[AttachmentPermissions.DELETE])]
+    delete_note_attachment: NoteAttachmentType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+        ],
     )
-    def delete_note_attachment(
-        self, info: Info, data: DeleteDjangoObjectInput
-    ) -> DeletedObjectType:
-        user = get_current_user(info)
-
-        try:
-            attachment = Attachment.objects.get(
-                id=data.id,
-                object_id__in=Subquery(
-                    filter_for_user(
-                        Note.objects.all(),
-                        user,
-                        [NotePermissions.CHANGE],
-                    ).values("id")
-                ),
-            )
-
-            attachment_id = attachment.id
-
-            with pghistory.context(
-                note_id=str(attachment.object_id),
-                timestamp=timezone.now(),
-                label=info.field_name,
-            ):
-                attachment.delete()
-
-        except Note.DoesNotExist:
-            raise PermissionError("User lacks proper organization or permissions")
-
-        return cast(DeletedObjectType, dict(id=attachment_id))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:

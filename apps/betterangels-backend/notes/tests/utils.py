@@ -250,9 +250,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         requestedServices {
                             id
                         }
-                        attachments {
-                            id
-                        }
                     }
                 }
             }
@@ -488,7 +485,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on DeletedObjectType {
+                    ... on NoteAttachmentType {
                         id
                     }
                 }
