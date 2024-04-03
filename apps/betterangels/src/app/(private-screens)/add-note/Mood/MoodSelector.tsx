@@ -1,57 +1,56 @@
+import { MoodEnum } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
+
 import React, { ComponentType } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+import MoodCheckbox from './MoodCheckbox';
 
 interface Mood {
   Icon: ComponentType<IIconProps>;
   title: string;
+  enum: MoodEnum;
+  id?: string;
+  tab: 'pleasant' | 'neutral' | 'unpleasant';
 }
 
 interface MoodSelectorProps {
   moodsData: Mood[];
+  noteId: string | undefined;
+  tab: 'pleasant' | 'neutral' | 'unpleasant';
+  setMoods: (
+    e: {
+      enum: MoodEnum;
+      title: string;
+    }[]
+  ) => void;
+  moods: {
+    enum: MoodEnum;
+    title: string;
+  }[];
 }
 
-const MoodSelector: React.FC<MoodSelectorProps> = ({ moodsData }) => {
-  const { setValue, watch } = useFormContext();
-  const selectedMoods = watch('moods') || [];
-
-  const toggleMood = (mood: string) => {
-    const newMoods = selectedMoods.includes(mood)
-      ? selectedMoods.filter((m: string) => m !== mood)
-      : [...selectedMoods, mood];
-    setValue('moods', newMoods);
-  };
-
+const MoodSelector: React.FC<MoodSelectorProps> = ({
+  moodsData,
+  noteId,
+  tab,
+  moods,
+  setMoods,
+}) => {
   return (
     <View>
       {moodsData.map((mood, idx) => (
-        <Checkbox
-          isChecked={selectedMoods.includes(mood.title)}
-          mt={idx !== 0 ? 'xs' : undefined}
-          key={mood.title}
-          hasBorder
-          onCheck={() => toggleMood(mood.title)}
-          accessibilityHint={mood.title}
-          label={
-            <View style={styles.labelContainer}>
-              <mood.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-              <BodyText ml="xs">{mood.title}</BodyText>
-            </View>
-          }
+        <MoodCheckbox
+          moods={moods}
+          setMoods={setMoods}
+          tab={tab}
+          noteId={noteId}
+          idx={idx}
+          key={mood.enum}
+          mood={mood}
         />
       ))}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
 
 export default MoodSelector;

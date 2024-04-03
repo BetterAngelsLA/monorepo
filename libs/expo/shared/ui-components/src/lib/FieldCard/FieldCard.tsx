@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import BodyText from '../BodyText';
 import H2 from '../H2';
 
@@ -21,6 +21,7 @@ interface IFieldCardProps {
   expanded: string | undefined | null;
   setExpanded: () => void;
   info?: ReactNode;
+  childHeight?: DimensionValue | undefined;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -39,6 +40,7 @@ export function FieldCard(props: IFieldCardProps) {
     expanded,
     setExpanded,
     info,
+    childHeight,
   } = props;
 
   return (
@@ -82,6 +84,8 @@ export function FieldCard(props: IFieldCardProps) {
         )}
         <View
           style={{
+            height: childHeight,
+            overflow: 'hidden',
             marginTop: expanded === title ? Spacings.sm : Spacings.md,
           }}
         >

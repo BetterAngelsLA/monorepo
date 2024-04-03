@@ -67,3 +67,73 @@ export const DELETE_NOTE = gql`
     }
   }
 `;
+
+export const CREATE_NOTE_SERVICE_REQUEST = gql`
+  mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
+    createNoteServiceRequest(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on ServiceRequestType {
+        id
+        service
+      }
+    }
+  }
+`;
+
+export const DELETE_SERVICE_REQUEST = gql`
+  mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {
+    deleteServiceRequest(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on ServiceRequestType {
+        id
+      }
+    }
+  }
+`;
+
+export const CREATE_NOTE_MOOD = gql`
+  mutation CreateNoteMood($data: CreateNoteMoodInput!) {
+    createNoteMood(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on MoodType {
+        id
+        descriptor
+      }
+    }
+  }
+`;
+
+export const DELETE_MOOD = gql`
+  mutation DeleteMood($data: DeleteDjangoObjectInput!) {
+    deleteMood(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on DeletedObjectType {
+        id
+      }
+    }
+  }
+`;
