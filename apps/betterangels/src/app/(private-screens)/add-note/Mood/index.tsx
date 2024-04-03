@@ -1,4 +1,8 @@
-import { Attachments, MoodEnum } from '@monorepo/expo/betterangels';
+import {
+  Attachments,
+  MoodEnum,
+  NoteNamespaceEnum,
+} from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
   FaceCloudsIcon,
@@ -25,7 +29,6 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
 import { ComponentType, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
@@ -197,6 +200,9 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 
 export default function Mood(props: IMoodProps) {
   const { expanded, setExpanded, noteId } = props;
+  const [images, setImages] = useState<
+    Array<{ id: string | undefined; uri: string }>
+  >([]);
   const [moods, setMoods] = useState<
     {
       enum: MoodEnum;
@@ -206,14 +212,11 @@ export default function Mood(props: IMoodProps) {
   const [tab, setTab] = useState<'pleasant' | 'neutral' | 'unpleasant'>(
     'pleasant'
   );
-  const { watch, setValue } = useFormContext();
-
-  const moodsImages = watch('moodsImages', []);
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods.length < 1;
-  const isLessThanOneMoodImages = moodsImages.length < 1;
-  const isGreaterThanZeroMoodImages = moodsImages?.length > 0;
+  const isLessThanOneMoodImages = images.length < 1;
+  const isGreaterThanZeroMoodImages = images?.length > 0;
   const isGreaterThanOneMood = moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
@@ -315,8 +318,10 @@ export default function Mood(props: IMoodProps) {
           moodsData={MOOD_DATA}
         />
         <Attachments
-          images={moodsImages}
-          setImages={(array) => setValue('moodsImages', array)}
+          noteId={noteId}
+          namespace={NoteNamespaceEnum.MoodAssessment}
+          images={images}
+          setImages={setImages}
         />
       </View>
     </FieldCard>

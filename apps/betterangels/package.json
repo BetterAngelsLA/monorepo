@@ -53,7 +53,8 @@
     "react-native-maps": "*",
     "react-native-open-maps": "*",
     "expo-location": "*",
-    "expo-clipboard": "*"
+    "expo-clipboard": "*",
+    "apollo-upload-client": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
@@ -112,6 +113,11 @@
     "ts-node": "*",
     "typescript": "*",
     "metro": "*",
-    "expo-dev-client": "*"
+    "expo-dev-client": "*",
+    "@types/apollo-upload-client": "*",
+    "@swc-node/register": "*",
+    "@swc/core": "*",
+    "@swc/helpers": "*",
+    "jest-environment-node": "*"
   }
 }
