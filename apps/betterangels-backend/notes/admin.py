@@ -22,7 +22,6 @@ class MoodAdmin(admin.ModelAdmin):
         "note__client__email",
     )
     readonly_fields = (
-        "created_by",
         "created_at",
     )
 
@@ -63,7 +62,6 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     ]
     readonly_fields = (
         "attachments",
-        "created_by",
         "created_at",
         "updated_at",
     )
@@ -92,7 +90,6 @@ class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     )
     readonly_fields = (
         "attachments",
-        "created_by",
         "created_at",
         "updated_at",
     )
