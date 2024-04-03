@@ -98,6 +98,7 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
     error,
   ]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedExecuteMutation = useCallback(debounce(executeMutation, 300), [
     executeMutation,
   ]);

@@ -53,11 +53,8 @@ export default function OtherCategory(props: IOtherCategoryProps) {
         if (!data) {
           console.error('Error deleting service', deleteError);
           return;
-        }
 
         const newServices = services.filter((s) => s.id !== id);
-        setServices(newServices);
-      } else {
         const { data } = await createNoteServiceRequest({
           variables: {
             data: {
