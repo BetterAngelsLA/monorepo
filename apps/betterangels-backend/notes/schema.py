@@ -206,7 +206,7 @@ class Mutation:
                     )
 
                 # Revert changes made to REAL model instances (have pgh_obj_id)
-                for event in Events.objects.references(note).filter(
+                for event in Events.objects.filter(
                     pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False
                 ):
                     action = event.pgh_label.split(".")[1]
