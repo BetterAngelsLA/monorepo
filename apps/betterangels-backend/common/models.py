@@ -60,6 +60,12 @@ class Attachment(BaseModel):
     attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
     attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
 
+    def __str__(self) -> str:
+        return (
+            f"{self.content_object} {self.object_id} - "
+            f"{self.attachment_type} - {self.original_filename}"
+        )
+
     class Meta:
         indexes = [
             models.Index(
