@@ -613,17 +613,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self._handle_user_login(user_label)
         mood = baker.make(Mood, note_id=self.note["id"])
-        mutation = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": mood.pk}
-        self.execute_graphql(mutation, variables)
+        self._delete_mood_fixture(mood_id=mood.pk)
 
         self.assertTrue(Mood.objects.filter(id=mood.pk).exists() != should_succeed)
 

@@ -1,5 +1,6 @@
 from typing import Any
 
+import pghistory
 from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
@@ -19,6 +20,10 @@ class BaseModel(models.Model):
         abstract = True
 
 
+@pghistory.track(
+    pghistory.InsertEvent("attachment.add"),
+    pghistory.DeleteEvent("attachment.remove"),
+)
 class Attachment(BaseModel):
     """
     Represents an attachment linked to any model instance within the app.
@@ -102,6 +107,10 @@ class Attachment(BaseModel):
                 self.attachment_type = AttachmentType.DOCUMENT
             self.file.seek(0)
         super().save(*args, **kwargs)
+
+    def revert_action(self, action: str) -> None:
+        if action == "add":
+            self.delete()
 
 
 class Address(BaseModel):

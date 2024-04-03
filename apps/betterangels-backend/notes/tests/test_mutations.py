@@ -1,7 +1,7 @@
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.models import Attachment
+from common.models import Address, Attachment
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from model_bakery import baker
@@ -379,27 +379,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         moods = baker.make(Mood, note_id=note.id, _quantity=2)
         self.assertEqual(2, note.moods.count())
 
-        mutation = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": moods[0].pk}
-
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
+            response = self._delete_mood_fixture(mood_id=moods[0].pk)
 
         self.assertIsNotNone(response["data"]["deleteMood"])
         self.assertEqual(1, note.moods.count())
@@ -436,8 +418,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
 class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
     """
-    TODO: Write additional tests for note attachments, locations,
-    and any other models that get associated to Note.
+    TODO: Write tests for any other models that get associated to Note.
     """
 
     def setUp(self) -> None:
@@ -450,9 +431,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         is reverted to their state at the specified moment.
 
         Test actions:
-        1. Update note title and public details
+        1. Update note title, public details, point, and address
         2. Save now as saved_at
-        3. Update note title and public details
+        3. Update note title, public details, point, and address
         4. Revert to saved_at from Step 2
         5. Assert note has details from Step 1
         """
@@ -464,29 +445,36 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
                 "id": note_id,
                 "title": "Updated Title",
                 "publicDetails": "Updated Body",
+                "point": self.point,
+                "address": self.address.pk,
             }
         )
 
         # Select a moment to revert to
         saved_at = timezone.now()
 
+        other_address = baker.make(Address, street="Discarded St")
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
+                "point": [-118.0, 34.0],
+                "address": other_address.pk,
             }
         )
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 24
+        expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
+        self.assertEqual(reverted_note["point"], self.point)
+        self.assertEqual(reverted_note["address"]["street"], "106 W 1st St")
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
@@ -513,7 +501,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -545,20 +533,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Select a moment to revert to
         saved_at = timezone.now()
 
-        delete_mood_mutation = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        self.execute_graphql(delete_mood_mutation, {"id": mood_to_delete_id})
+        self._delete_mood_fixture(mood_id=mood_to_delete_id)
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 29
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -616,7 +595,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -679,7 +658,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 25
+        expected_query_count = 40
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -756,7 +735,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -836,7 +815,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -867,6 +846,83 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["title"], "Discarded Title")
+
+    def test_revert_note_mutation_removes_added_attachments(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Attachments are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 1 attachment
+        2. Save now as saved_at
+        3. Add another attachment
+        4. Revert to saved_at from Step 2
+        5. Assert note has only attachment from Step 1
+        """
+        note_id = self.note["id"]
+
+        file_content = b"Test attachment content"
+        file_name = "test_attachment.txt"
+
+        # Update - should be persisted
+        self._create_note_attachment_fixture(
+            note_id, NoteNamespaceEnum.MOOD_ASSESSMENT.name, file_content, file_name
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Update - should be discarded
+        self._create_note_attachment_fixture(
+            note_id, NoteNamespaceEnum.MOOD_ASSESSMENT.name, file_content, file_name
+        )
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["attachments"]), 1)
+
+    def test_revert_note_mutation_returns_removed_attachments(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Attachments are reverted to their state at the specified moment.
+
+        Test actions:
+        1. Add 2 attachments
+        2. Save now as saved_at
+        3. Delete 1 attachment
+        4. Revert to savedAt from Step 3
+        5. Assert note has 2 attachments from Step 1
+        """
+        note_id = self.note["id"]
+
+        file_content = b"Test attachment content"
+        file_name = "test_attachment.txt"
+
+        # Update - should be persisted
+        self._create_note_attachment_fixture(
+            note_id, NoteNamespaceEnum.MOOD_ASSESSMENT.name, file_content, file_name
+        )
+
+        attachment_to_delete_id = self._create_note_attachment_fixture(
+            note_id, NoteNamespaceEnum.MOOD_ASSESSMENT.name, file_content, file_name
+        )["data"]["createNoteAttachment"]["id"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        self._delete_note_attachment_fixture(attachment_to_delete_id)
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 32
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["attachments"]), 2)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
@@ -914,7 +970,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 
