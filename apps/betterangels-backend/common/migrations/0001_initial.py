@@ -124,9 +124,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
                 ),
                 (
                     "permission",

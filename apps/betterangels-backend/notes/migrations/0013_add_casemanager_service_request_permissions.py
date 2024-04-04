@@ -10,9 +10,7 @@ PERMISSIONS_TO_ADD = [
 
 # Generate readable names based on the enum
 PERM_MAP = {
-    perm.split(".")[1]: "Can "
-    + perm.name.lower().replace("_", " ")
-    + " service request"
+    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " service request"
     for perm in ServiceRequestPermissions
 }
 
@@ -70,7 +68,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.RunPython(
-            update_caseworker_permission_template, revert_caseworker_permission_template
-        ),
+        migrations.RunPython(update_caseworker_permission_template, revert_caseworker_permission_template),
     ]

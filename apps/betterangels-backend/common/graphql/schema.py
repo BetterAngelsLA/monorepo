@@ -87,9 +87,7 @@ class Mutation:
 
             street_number = structured_address.get("street_number")
             route = structured_address.get("route")
-            street = (
-                f"{street_number} {route}".strip() if street_number and route else route
-            )
+            street = f"{street_number} {route}".strip() if street_number and route else route
 
             address, _ = Address.objects.get_or_create(
                 street=street,

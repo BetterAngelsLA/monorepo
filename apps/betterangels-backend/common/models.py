@@ -48,9 +48,7 @@ class Attachment(BaseModel):
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
 
-    uploaded_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
-    )
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
     associated_with = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -61,10 +59,7 @@ class Attachment(BaseModel):
     attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
 
     def __str__(self) -> str:
-        return (
-            f"{self.content_object} {self.object_id} - "
-            f"{self.attachment_type} - {self.original_filename}"
-        )
+        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
 
     class Meta:
         indexes = [

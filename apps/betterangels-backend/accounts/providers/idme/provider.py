@@ -24,9 +24,7 @@ class IdmeProvider(OAuth2Provider):
             "",
         )
 
-    def extract_common_fields(
-        self, data: Dict[str, List[Dict[str, str]]]
-    ) -> dict[str, str]:
+    def extract_common_fields(self, data: Dict[str, List[Dict[str, str]]]) -> dict[str, str]:
         attributes = {attr["handle"]: attr["value"] for attr in data["attributes"]}
         return dict(
             email=attributes["email"],
@@ -35,16 +33,12 @@ class IdmeProvider(OAuth2Provider):
             name=attributes["fname"] + " " + attributes["lname"],
         )
 
-    def extract_email_addresses(
-        self, data: Dict[str, List[Dict[str, str]]]
-    ) -> List[EmailAddress]:
+    def extract_email_addresses(self, data: Dict[str, List[Dict[str, str]]]) -> List[EmailAddress]:
         email = [attr for attr in data["attributes"] if attr["handle"] == "email"]
 
         ret = []
         if email:
-            ret.append(
-                EmailAddress(email=email[0]["value"], verified=True, primary=True)
-            )
+            ret.append(EmailAddress(email=email[0]["value"], verified=True, primary=True))
         return ret
 
 

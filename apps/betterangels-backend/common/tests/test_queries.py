@@ -103,9 +103,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         self.user_without_access = baker.make(User)
 
         self.feature_flag_name = "new_feature"
-        self.feature_flag = Flag.objects.create(
-            name=self.feature_flag_name, everyone=None
-        )
+        self.feature_flag = Flag.objects.create(name=self.feature_flag_name, everyone=None)
         self.feature_flag.users.add(self.user_with_access)  # type: ignore
         self.feature_flag.save()
 
@@ -123,9 +121,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         """
         result = self.execute_graphql(query)
         flags = result["data"]["featureControls"]["flags"]
-        new_feature_flag: dict = next(
-            (flag for flag in flags if flag["name"] == self.feature_flag_name), {}
-        )
+        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag_name), {})
         self.assertIsNotNone(new_feature_flag, "Feature flag not found in response.")
         self.assertTrue(
             new_feature_flag["isActive"],
@@ -146,9 +142,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         """
         result = self.execute_graphql(query)
         flags = result["data"]["featureControls"]["flags"]
-        new_feature_flag: dict = next(
-            (flag for flag in flags if flag["name"] == self.feature_flag_name), {}
-        )
+        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag_name), {})
         self.assertIsNotNone(new_feature_flag, "Feature flag not found in response.")
         self.assertFalse(
             new_feature_flag["isActive"],

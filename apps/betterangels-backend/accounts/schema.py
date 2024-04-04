@@ -17,9 +17,7 @@ class Mutation:
     logout = auth.logout()
 
     @strawberry.mutation
-    def generate_magic_link(
-        self, info: Info, data: MagicLinkInput
-    ) -> MagicLinkResponse:
+    def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
         request = get_request(info)
         base_url = request.build_absolute_uri()
         send_magic_link(data.email, base_url)

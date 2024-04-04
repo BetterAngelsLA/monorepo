@@ -33,9 +33,7 @@ class ServiceRequest(BaseModel):
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(
-        "accounts.User", on_delete=models.CASCADE, related_name="service_requests"
-    )
+    created_by = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="service_requests")
 
     objects = models.Manager()
 
@@ -63,9 +61,7 @@ class ServiceRequest(BaseModel):
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
     point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(
-        Address, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks"
-    )
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     client = models.ForeignKey(
@@ -75,9 +71,7 @@ class Task(BaseModel):
         blank=True,
         related_name="client_tasks",
     )
-    created_by = models.ForeignKey(
-        User, on_delete=models.CASCADE, null=False, related_name="tasks"
-    )
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
     taskuserobjectpermission_set: models.QuerySet["Task"]
     taskgroupobjectpermission_set: models.QuerySet["Task"]
@@ -98,32 +92,16 @@ class Note(BaseModel):
     # on the FE because the Note may not be created during the client interaction.
     timestamp = models.DateTimeField(auto_now_add=True)
     point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(
-        Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
-    )
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
-    next_steps = models.ManyToManyField(
-        Task, blank=True, related_name="next_step_notes"
-    )
-    requested_services = models.ManyToManyField(
-        ServiceRequest, blank=True, related_name="requested_notes"
-    )
-    provided_services = models.ManyToManyField(
-        ServiceRequest, blank=True, related_name="provided_notes"
-    )
+    next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
+    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
     private_details = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
-    client = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="client_notes",
-    )
-    created_by = models.ForeignKey(
-        User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes"
-    )
+    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
@@ -139,9 +117,7 @@ class Note(BaseModel):
         return self.title
 
     class Meta:
-        permissions = permission_enum_to_django_meta_permissions(
-            PrivateDetailsPermissions
-        )
+        permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)
 
 
 @pghistory.track(
@@ -154,9 +130,7 @@ class NotePurposes(Note.purposes.through):  # type: ignore[name-defined]
         proxy = True
 
     @staticmethod
-    def revert_action(
-        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
-    ) -> None:
+    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
         note = Note.objects.get(id=note_id)
         task = Task.objects.get(id=task_id)
 
@@ -177,9 +151,7 @@ class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
         proxy = True
 
     @staticmethod
-    def revert_action(
-        action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any
-    ) -> None:
+    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
         note = Note.objects.get(id=note_id)
         task = Task.objects.get(id=task_id)
 
@@ -200,9 +172,7 @@ class NoteProvidedServices(Note.provided_services.through):  # type: ignore[name
         proxy = True
 
     @staticmethod
-    def revert_action(
-        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
-    ) -> None:
+    def revert_action(action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any) -> None:
         note = Note.objects.get(id=note_id)
         service_request = ServiceRequest.objects.get(id=servicerequest_id)
 
@@ -223,9 +193,7 @@ class NoteRequestedServices(Note.requested_services.through):  # type: ignore[na
         proxy = True
 
     @staticmethod
-    def revert_action(
-        action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any
-    ) -> None:
+    def revert_action(action: str, note_id: int, servicerequest_id: int, *args: Any, **kwargs: Any) -> None:
         note = Note.objects.get(id=note_id)
         service_request = ServiceRequest.objects.get(id=servicerequest_id)
 
