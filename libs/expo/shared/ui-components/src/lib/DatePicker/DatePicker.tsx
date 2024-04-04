@@ -81,6 +81,7 @@ export function DatePicker(props: IDatePickerProps) {
     if (date) {
       const formattedDate = dateFnsFormat(date, format);
       onChange(formattedDate);
+      setValue(formattedDate);
     }
   }
 
@@ -130,9 +131,6 @@ export function DatePicker(props: IDatePickerProps) {
             }),
           }}
           value={value}
-          onChangeText={(e) => {
-            setValue(e);
-          }}
           editable={!disabled}
           {...rest}
         />

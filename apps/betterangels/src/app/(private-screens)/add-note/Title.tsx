@@ -15,12 +15,13 @@ interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
   noteTitle?: string;
+  noteId: string | undefined;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { noteTitle, expanded, setExpanded } = props;
+  const { noteTitle, expanded, setExpanded, noteId } = props;
   const {
     setValue,
     control,

@@ -65,76 +65,77 @@ export default function NextStepInput(props: INextStepProps) {
     DeleteTaskMutationVariables
   >(DELETE_TASK);
 
-  const createTask = useCallback(
-    async (
-      obj: { action: string; date?: string; time?: string },
-      id: string | undefined
-    ) => {
-      if (!noteId) return;
-      // TODO: discuss what are we doing with date and time
-      //   let combinedDateTime;
-      //   let isoDateTime = '';
+  const createTask = async (
+    obj: { action: string; date?: string; time?: string },
+    id: string | undefined
+  ) => {
+    if (!noteId) return;
+    // TODO: for future design
+    //   let combinedDateTime;
+    //   let isoDateTime = '';
 
-      //   if (obj.date) {
-      //     const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
-      //     combinedDateTime = parsedDate;
+    //   if (obj.date) {
+    //     const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
+    //     combinedDateTime = parsedDate;
 
-      //     if (obj.time) {
-      //       const [hours, minutes] = obj.time.split(':').map(Number);
-      //       combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
-      //     }
+    //     if (obj.time) {
+    //       const [hours, minutes] = obj.time.split(':').map(Number);
+    //       combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
+    //     }
 
-      //     isoDateTime = combinedDateTime.toISOString();
-      //   }
-      try {
-        if (id && obj.action.trim()) {
-          const { data } = await updateTask({
-            variables: {
-              data: {
-                id,
-                title: obj.action,
-              },
+    //     isoDateTime = combinedDateTime.toISOString();
+    //   }
+    try {
+      if (id && obj.action.trim()) {
+        const { data } = await updateTask({
+          variables: {
+            data: {
+              id,
+              title: obj.action,
             },
-          });
-          if (!data) {
-            console.log('Error updating task', updateError);
-          }
-        } else if (id && !obj.action.trim()) {
-          const { data } = await deleteTask({
-            variables: { id },
-          });
-          if (!data) {
-            console.log('Error deleting task', deleteError);
-          }
-        } else {
-          const { data } = await createNoteTask({
-            variables: {
-              data: {
-                title: obj.action,
-                noteId,
-                status: TaskStatusEnum.ToDo,
-                taskType: TaskTypeEnum.NextStep,
-              },
-            },
-          });
-          if (!data) {
-            console.log('Error creating task', error);
-            return;
-          }
-          if ('id' in data.createNoteTask) {
-            setLocalId(data.createNoteTask.id);
-          }
+          },
+        });
+        if (!data) {
+          console.log('Error updating task', updateError);
         }
-      } catch (error) {
-        console.error('Error creating task:', error);
+      } else if (id && !obj.action.trim()) {
+        const { data } = await deleteTask({
+          variables: { id },
+        });
+        setLocalId(undefined);
+        if (!data) {
+          console.log('Error deleting task', deleteError);
+        }
+      } else {
+        const { data } = await createNoteTask({
+          variables: {
+            data: {
+              title: obj.action,
+              noteId,
+              status: TaskStatusEnum.ToDo,
+              taskType: TaskTypeEnum.NextStep,
+            },
+          },
+        });
+        if (!data) {
+          console.log('Error creating task', error);
+          return;
+        }
+        if ('id' in data.createNoteTask) {
+          setLocalId(data.createNoteTask.id);
+        }
       }
-    },
-    [createNoteTask, noteId, nextSteps, index]
-  );
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedCreateTask = useCallback(debounce(createTask, 500), [
-    createTask,
+    noteId,
+    updateTask,
+    deleteTask,
+    createNoteTask,
   ]);
 
   const onChange = (e: string, key: 'action' | 'date' | 'time') => {
@@ -171,6 +172,7 @@ export default function NextStepInput(props: INextStepProps) {
         await deleteTask({
           variables: { id: localId },
         });
+        setLocalId(undefined);
       }
     } catch (error) {
       console.error('Error deleting task:', error);
