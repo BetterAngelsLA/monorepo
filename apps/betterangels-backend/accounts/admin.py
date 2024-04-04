@@ -90,6 +90,4 @@ admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
 
-admin.site.login = staff_member_required(  # type: ignore
-    admin.site.login, login_url=settings.LOGIN_URL
-)
+admin.site.login = staff_member_required(admin.site.login, login_url=settings.LOGIN_URL)  # type: ignore

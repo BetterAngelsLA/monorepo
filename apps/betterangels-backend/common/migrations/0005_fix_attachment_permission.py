@@ -10,12 +10,8 @@ def update_caseworker_permission_template(apps, schema_editor):
 
     # Remove mistaken permission
     PostOfficeAttachment = apps.get_model("post_office", "Attachment")
-    PostOfficeAttachmentContentType = ContentType.objects.get_for_model(
-        PostOfficeAttachment
-    )
-    perms_to_remove = caseworker_template.permissions.filter(
-        content_type=PostOfficeAttachmentContentType
-    )
+    PostOfficeAttachmentContentType = ContentType.objects.get_for_model(PostOfficeAttachment)
+    perms_to_remove = caseworker_template.permissions.filter(content_type=PostOfficeAttachmentContentType)
     caseworker_template.permissions.remove(*perms_to_remove)
 
     # Add actual Permission
@@ -29,9 +25,7 @@ def update_caseworker_permission_template(apps, schema_editor):
         ]
     ]
 
-    permissions = Permission.objects.filter(
-        content_type=AttachmentContentType, codename__in=perm_map
-    )
+    permissions = Permission.objects.filter(content_type=AttachmentContentType, codename__in=perm_map)
     caseworker_template.permissions.add(*permissions)
 
 

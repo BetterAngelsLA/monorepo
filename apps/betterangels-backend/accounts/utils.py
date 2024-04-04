@@ -21,8 +21,6 @@ def add_default_org_permissions_to_user(user: User, organization: Organization) 
     user.groups.add(org_permission_group.group)
 
 
-def remove_org_group_permissions_from_user(
-    user: User, organization: Organization
-) -> None:
+def remove_org_group_permissions_from_user(user: User, organization: Organization) -> None:
     groups = Group.objects.filter(permissiongroup__organization=organization)
     user.groups.remove(*groups)

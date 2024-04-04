@@ -80,9 +80,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="timestamp",
-            field=models.DateTimeField(
-                auto_now_add=True, default=django.utils.timezone.now
-            ),
+            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AlterField(
@@ -220,9 +218,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("created_at", models.DateTimeField(blank=True, editable=False)),
                 ("updated_at", models.DateTimeField(blank=True, editable=False)),

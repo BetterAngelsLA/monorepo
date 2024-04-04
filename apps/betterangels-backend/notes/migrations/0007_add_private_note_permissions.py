@@ -43,9 +43,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.RunPython(
-            remove_change_and_delete_from_caseworker_permission_template
-        ),
+        migrations.RunPython(remove_change_and_delete_from_caseworker_permission_template),
         migrations.AlterField(
             model_name="historicalnote",
             name="public_details",
@@ -71,10 +69,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name="note",
-            options={
-                "permissions": (
-                    ("view_note_private_details", "Can view note private details"),
-                )
-            },
+            options={"permissions": (("view_note_private_details", "Can view note private details"),)},
         ),
     ]

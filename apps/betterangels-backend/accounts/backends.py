@@ -24,11 +24,7 @@ class CustomInvitations(InvitationBackend):
     user_model = User
 
     def invite_by_email(
-        self,
-        email: str,
-        sender: Optional[str] = None,
-        request: Optional[Request] = None,
-        **kwargs: Any
+        self, email: str, sender: Optional[str] = None, request: Optional[Request] = None, **kwargs: Any
     ) -> AbstractBaseUser:
         try:
             user = self.user_model.objects.get(email=email)
@@ -48,13 +44,11 @@ class CustomInvitations(InvitationBackend):
         """
         Creates an organization invite for given invitation user
         """
-        invitation: OrganizationInvitation = (
-            ExtendedOrganizationInvitation.objects.create(
-                invited_by=invited_by_user,
-                invitee=invitee_user,
-                organization=organization,
-                invitee_identifier=invitee_user.email,
-            )
+        invitation: OrganizationInvitation = ExtendedOrganizationInvitation.objects.create(
+            invited_by=invited_by_user,
+            invitee=invitee_user,
+            organization=organization,
+            invitee_identifier=invitee_user.email,
         )
 
         return invitation
@@ -71,9 +65,7 @@ class CustomInvitations(InvitationBackend):
 
         if not PasswordResetTokenGenerator().check_token(user, token):
             raise Http404(_("Your URL may have expired."))
-        form = self.get_form(
-            data=request.POST or None, files=request.FILES or None, instance=user
-        )
+        form = self.get_form(data=request.POST or None, files=request.FILES or None, instance=user)
         if form.is_valid():
             form.instance.is_active = True
             user = form.save()
@@ -128,9 +120,7 @@ class CustomInvitations(InvitationBackend):
 
         subject_template = loader.get_template(subject_template)
         body_template = loader.get_template(body_template)
-        subject = subject_template.render(
-            kwargs
-        ).strip()  # Remove stray newline characters
+        subject = subject_template.render(kwargs).strip()  # Remove stray newline characters
         body = body_template.render(kwargs)
         return message_class(
             subject,

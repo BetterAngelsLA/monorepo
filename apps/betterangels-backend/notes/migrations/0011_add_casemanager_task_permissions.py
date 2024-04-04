@@ -13,10 +13,7 @@ PERMISSIONS_TO_ADD = [
 ]
 
 # Generate readable names based on the enum
-PERM_MAP = {
-    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " task"
-    for perm in TaskPermissions
-}
+PERM_MAP = {perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " task" for perm in TaskPermissions}
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
@@ -74,7 +71,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.RunPython(
-            update_caseworker_permission_template, revert_caseworker_permission_template
-        ),
+        migrations.RunPython(update_caseworker_permission_template, revert_caseworker_permission_template),
     ]
