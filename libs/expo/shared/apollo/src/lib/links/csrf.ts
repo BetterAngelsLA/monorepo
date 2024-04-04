@@ -1,10 +1,6 @@
 import { ApolloLink, FetchResult, Observable } from '@apollo/client';
-import {
-  CSRF_COOKIE_NAME,
-  CSRF_HEADER_NAME,
-  getItem,
-  setItem,
-} from '@monorepo/expo/shared/utils';
+import { getItem, setItem } from '@monorepo/expo/shared/utils';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
 
 const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 
