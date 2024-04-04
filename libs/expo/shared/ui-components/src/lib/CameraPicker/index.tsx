@@ -7,6 +7,7 @@ import {
   CameraIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { resizeImage } from '@monorepo/expo/shared/utils';
 import {
   CameraType,
   CameraView,
@@ -67,11 +68,11 @@ export default function CameraPicker(props: ICameraPickerProps) {
     if (!noteId || !cameraRef.current) return;
     setIsLoading(true);
     try {
-      const quality = 0.8;
-      const photo = await cameraRef.current.takePictureAsync({ quality });
+      const photo = await cameraRef.current.takePictureAsync();
       if (photo) {
+        const resizedPhoto = await resizeImage(photo.uri);
         const file = new ReactNativeFile({
-          uri: photo.uri,
+          uri: resizedPhoto.uri,
           name: `${Date.now().toString()}.jpg`,
           type: 'image/jpeg',
         });

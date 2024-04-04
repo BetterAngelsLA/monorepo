@@ -23,6 +23,7 @@ async function getImageDimensions(
  */
 export async function resizeImage(
   uri: string,
+  compress = 0.8,
   targetResolution = 1080
 ): Promise<ImageManipulator.ImageResult> {
   try {
@@ -38,7 +39,7 @@ export async function resizeImage(
     }
 
     return await ImageManipulator.manipulateAsync(uri, actions, {
-      compress: 0.8,
+      compress: compress,
       format: ImageManipulator.SaveFormat.JPEG,
     });
   } catch (error) {

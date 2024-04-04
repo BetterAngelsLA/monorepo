@@ -56,9 +56,9 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
-          const newFile = await resizeImage(asset.uri);
+          const resizedPhoto = await resizeImage(asset.uri);
           const file = new ReactNativeFile({
-            uri: newFile.uri,
+            uri: resizedPhoto.uri,
             name: asset?.fileName || Date.now().toString(),
             type: asset.mimeType || 'changeme',
           });
