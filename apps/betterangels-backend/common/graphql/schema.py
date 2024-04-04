@@ -16,6 +16,7 @@ from common.permissions.enums import AddressPermissions
 from common.utils import convert_to_structured_address
 from django.db import transaction
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 from strawberry_django.permissions import HasPerm
 from waffle import (
     get_waffle_flag_model,
