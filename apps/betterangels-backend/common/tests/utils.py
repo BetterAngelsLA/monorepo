@@ -27,8 +27,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             "client_2",
         ]
         self.user_map = {
-            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
-            for user_label in self.user_labels
+            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in self.user_labels
         }
 
         self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
@@ -38,12 +37,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.client_2 = self.user_map["client_2"]
 
     def _setup_groups_and_permissions(self) -> None:
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
-            name="Caseworker"
-        )
-        perm_group = permission_group_recipe.make(
-            template=caseworker_permission_group_template
-        )
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
         perm_group.organization.add_user(self.org_1_case_manager_1)
         perm_group.organization.add_user(self.org_1_case_manager_2)
 
@@ -107,9 +102,7 @@ class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
             },
             {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
         ]
-        self.formatted_address = (
-            "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
-        )
+        self.formatted_address = "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
         self._setup_address()
 
     def _setup_address(self) -> None:
@@ -125,9 +118,7 @@ class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
 
         self.graphql_client.logout()
 
-    def _get_or_create_address_fixture(
-        self, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _get_or_create_address_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         mutation: str = """
             mutation GetOrCreateAddress($data: AddressInput!) { # noqa: B950
                 getOrCreateAddress(data: $data) {

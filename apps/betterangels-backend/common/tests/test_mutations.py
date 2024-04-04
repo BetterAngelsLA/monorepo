@@ -77,9 +77,7 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
             (1,),  # Remove route
         ],
     )
-    def test_get_or_create_address_mutation_partial_street(
-        self, missing_component_index: int
-    ) -> None:
+    def test_get_or_create_address_mutation_partial_street(self, missing_component_index: int) -> None:
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()

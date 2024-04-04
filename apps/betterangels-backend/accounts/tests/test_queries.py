@@ -51,9 +51,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             response["data"],
             "'currentUser' data should be present in the response",
         )
-        self.assertIsNotNone(
-            response["data"]["currentUser"], "'currentUser' data should not be None"
-        )
+        self.assertIsNotNone(response["data"]["currentUser"], "'currentUser' data should not be None")
         self.assertEqual(
             response["data"]["currentUser"]["email"],
             user.email,

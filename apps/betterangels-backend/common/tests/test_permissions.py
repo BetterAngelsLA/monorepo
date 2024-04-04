@@ -19,9 +19,7 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_address_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_address_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         address_count = Address.objects.count()
@@ -59,9 +57,7 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_address_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_address_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """

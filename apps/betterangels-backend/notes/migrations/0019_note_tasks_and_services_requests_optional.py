@@ -12,29 +12,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="note",
             name="next_steps",
-            field=models.ManyToManyField(
-                blank=True, related_name="next_step_notes", to="notes.task"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="next_step_notes", to="notes.task"),
         ),
         migrations.AlterField(
             model_name="note",
             name="provided_services",
-            field=models.ManyToManyField(
-                blank=True, related_name="provided_notes", to="notes.servicerequest"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="provided_notes", to="notes.servicerequest"),
         ),
         migrations.AlterField(
             model_name="note",
             name="purposes",
-            field=models.ManyToManyField(
-                blank=True, related_name="purpose_notes", to="notes.task"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="purpose_notes", to="notes.task"),
         ),
         migrations.AlterField(
             model_name="note",
             name="requested_services",
-            field=models.ManyToManyField(
-                blank=True, related_name="requested_notes", to="notes.servicerequest"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="requested_notes", to="notes.servicerequest"),
         ),
     ]

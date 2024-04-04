@@ -8,9 +8,7 @@ if TYPE_CHECKING:
 
 
 class UserManager(BaseUserManager["User"]):
-    def create_user(
-        self, email: str, password: str = "", **extra_fields: Any
-    ) -> "User":
+    def create_user(self, email: str, password: str = "", **extra_fields: Any) -> "User":
         if not email:
             raise ValueError("The Email field must be set")
         extra_fields.setdefault("is_staff", False)
@@ -21,9 +19,7 @@ class UserManager(BaseUserManager["User"]):
         user.save(using=self._db)
         return user
 
-    def create_superuser(
-        self, email: str, password: str = "", **extra_fields: Any
-    ) -> "User":
+    def create_superuser(self, email: str, password: str = "", **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
