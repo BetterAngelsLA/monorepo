@@ -6,9 +6,10 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
-from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
+from common.models import Address, Attachment
+from common.permissions.enums import AddressPermissions, AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
+from common.utils import convert_to_structured_address
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -54,6 +55,7 @@ from .types import (
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
+    UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
 )
@@ -152,6 +154,59 @@ class Mutation:
             # Annotated Fields for Permission Checks. This is a workaround since
             # annotations are not applied during mutations.
             note._private_details = note.private_details
+
+            return cast(NoteType, note)
+
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_note_location(
+        self, info: Info, data: UpdateNoteLocationInput
+    ) -> NoteType:
+        with transaction.atomic(), pghistory.context(
+            id=data.id, timestamp=timezone.now(), label=info.field_name
+        ):
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
+            address = data.address_input
+            structured_address = convert_to_structured_address(
+                address.address_components
+            )
+
+            street_number = structured_address.get("street_number")
+            route = structured_address.get("route")
+            street = (
+                f"{street_number} {route}".strip() if street_number and route else route
+            )
+
+            address, _ = Address.objects.get_or_create(
+                street=street,
+                city=structured_address.get("locality"),
+                state=structured_address.get("administrative_area_level_1"),
+                zip_code=structured_address.get("postal_code"),
+                address_components=address.address_components,
+                formatted_address=address.formatted_address,
+            )
+
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    "point": data.point,
+                    "address": address,
+                },
+            )
 
             return cast(NoteType, note)
 

@@ -20,6 +20,44 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self._setup_users()
         self._setup_groups_and_permissions()
 
+        self.address_input = {
+            "addressComponents": [
+                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
+                {
+                    "long_name": "Geary Street",
+                    "short_name": "Geary St",
+                    "types": ["route"],
+                },
+                {
+                    "long_name": "Union Square",
+                    "short_name": "Union Square",
+                    "types": ["neighborhood", "political"],
+                },
+                {
+                    "long_name": "San Francisco",
+                    "short_name": "SF",
+                    "types": ["locality", "political"],
+                },
+                {
+                    "long_name": "San Francisco County",
+                    "short_name": "San Francisco County",
+                    "types": ["administrative_area_level_2", "political"],
+                },
+                {
+                    "long_name": "California",
+                    "short_name": "CA",
+                    "types": ["administrative_area_level_1", "political"],
+                },
+                {
+                    "long_name": "United States",
+                    "short_name": "US",
+                    "types": ["country", "political"],
+                },
+                {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
+            ],
+            "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+        }
+
     def _setup_users(self) -> None:
         self.user_labels = [
             "org_1_case_manager_1",
@@ -87,6 +125,43 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             state="CA",
             zip_code="90012",
         )
+        self.address_input = {
+            "addressComponents": [
+                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
+                {
+                    "long_name": "Geary Street",
+                    "short_name": "Geary St",
+                    "types": ["route"],
+                },
+                {
+                    "long_name": "Union Square",
+                    "short_name": "Union Square",
+                    "types": ["neighborhood", "political"],
+                },
+                {
+                    "long_name": "San Francisco",
+                    "short_name": "SF",
+                    "types": ["locality", "political"],
+                },
+                {
+                    "long_name": "San Francisco County",
+                    "short_name": "San Francisco County",
+                    "types": ["administrative_area_level_2", "political"],
+                },
+                {
+                    "long_name": "California",
+                    "short_name": "CA",
+                    "types": ["administrative_area_level_1", "political"],
+                },
+                {
+                    "long_name": "United States",
+                    "short_name": "US",
+                    "types": ["country", "political"],
+                },
+                {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
+            ],
+            "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+        }
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -303,6 +378,32 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         nextSteps {
                             id
                             title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _update_note_location_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
+                updateNoteLocation(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        point
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
                         }
                     }
                 }
