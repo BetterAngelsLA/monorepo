@@ -15,14 +15,12 @@ from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionA
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 
-# TODO: Figure out why User/Group Perms are failing type checks
-# https://github.com/typeddjango/django-stubs/issues/1354
 @pghistory.track(
     pghistory.InsertEvent("user.add"),
     pghistory.UpdateEvent("user.update"),
     pghistory.DeleteEvent("user.remove"),
 )
-class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
+class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
