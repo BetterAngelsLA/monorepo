@@ -52,7 +52,7 @@ export default function NextStepInput(props: INextStepProps) {
     date: nextStep.date,
   });
   const [localId, setLocalId] = useState<string | undefined>(undefined);
-  const [createNoteTask, { error }] = useMutation<
+  const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
   >(CREATE_NOTE_TASK);
@@ -86,7 +86,7 @@ export default function NextStepInput(props: INextStepProps) {
     //     isoDateTime = combinedDateTime.toISOString();
     //   }
     try {
-      if (id && obj.action.trim()) {
+      if (id && obj.action) {
         const { data } = await updateTask({
           variables: {
             data: {
@@ -98,7 +98,7 @@ export default function NextStepInput(props: INextStepProps) {
         if (!data) {
           console.log('Error updating task', updateError);
         }
-      } else if (id && !obj.action.trim()) {
+      } else if (id && !obj.action) {
         const { data } = await deleteTask({
           variables: { id },
         });
@@ -139,6 +139,7 @@ export default function NextStepInput(props: INextStepProps) {
   ]);
 
   const onChange = (e: string, key: 'action' | 'date' | 'time') => {
+    if (loading) return;
     setTask({ ...task, [key]: e });
     setNextSteps(
       nextSteps.map((item, idx) =>

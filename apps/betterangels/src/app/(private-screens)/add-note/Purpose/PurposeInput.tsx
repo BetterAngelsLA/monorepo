@@ -29,7 +29,7 @@ export default function PurposeInput(props: IPurposeProps) {
   const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
   const [value, setValue] = useState(purpose.value);
   const [localId, setLocalId] = useState<string | undefined>(undefined);
-  const [createNoteTask, { error }] = useMutation<
+  const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
   >(CREATE_NOTE_TASK);
@@ -45,7 +45,7 @@ export default function PurposeInput(props: IPurposeProps) {
   const createTask = async (e: string, id: string | undefined) => {
     if (!noteId) return;
     try {
-      if (id && e.trim()) {
+      if (id && e) {
         const { data } = await updateTask({
           variables: {
             data: {
@@ -57,7 +57,7 @@ export default function PurposeInput(props: IPurposeProps) {
         if (!data) {
           console.log('Error updating task', updateError);
         }
-      } else if (id && !e.trim()) {
+      } else if (id && !e) {
         const { data } = await deleteTask({
           variables: { id },
         });
@@ -98,6 +98,7 @@ export default function PurposeInput(props: IPurposeProps) {
   ]);
 
   const onChange = (e: string) => {
+    if (loading) return;
     setValue(e);
     setPurposes(
       purposes.map((item, idx) =>
