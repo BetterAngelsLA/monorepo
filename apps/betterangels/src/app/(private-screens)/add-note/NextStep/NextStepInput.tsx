@@ -131,7 +131,7 @@ export default function NextStepInput(props: INextStepProps) {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCreateTask = useCallback(debounce(createTask, 300), [
+  const debouncedCreateTask = useCallback(debounce(createTask, 500), [
     noteId,
     updateTask,
     deleteTask,
