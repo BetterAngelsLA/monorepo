@@ -45,22 +45,18 @@ export default function Purpose(props: IPurposeProps) {
   useEffect(() => {
     if (!isPurpose) {
       deletePurposesWithoutValue();
-      if (!purposes[0].value && hasError.check) {
+      if (hasError.check && !purposes[0].value) {
         setHasError({ error: true, check: true });
-      } else {
-        setHasError({ error: false, check: true });
       }
+    } else {
+      setHasError({ error: false, check: true });
     }
   }, [expanded]);
 
   return (
     <FieldCard
-      childHeight={isPurpose ? 'auto' : 0}
       expanded={expanded}
-      setExpanded={() => {
-        setExpanded(isPurpose ? null : 'Purpose');
-        !hasError.error && setHasError({ error: false, check: true });
-      }}
+      setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       error={
         hasError.check && hasError.error && !isPurpose
           ? `Please enter the purpose(s) of today's interaction`
@@ -76,6 +72,8 @@ export default function Purpose(props: IPurposeProps) {
       <View
         style={{
           paddingBottom: isPurpose ? Spacings.md : 0,
+          height: isPurpose ? 'auto' : 0,
+          overflow: 'hidden',
         }}
       >
         {purposes.map((purpose, index) => (

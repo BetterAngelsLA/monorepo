@@ -28,15 +28,16 @@ interface IPurposeProps {
 export default function PurposeInput(props: IPurposeProps) {
   const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
   const [value, setValue] = useState(purpose.value);
-  const [createNoteTask] = useMutation<
+  const [localId, setLocalId] = useState<string | undefined>(undefined);
+  const [createNoteTask, { error }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
   >(CREATE_NOTE_TASK);
-  const [updateTask] = useMutation<
+  const [updateTask, { error: updateError }] = useMutation<
     UpdateTaskMutation,
     UpdateTaskMutationVariables
   >(UPDATE_TASK);
-  const [deleteTask] = useMutation<
+  const [deleteTask, { error: deleteError }] = useMutation<
     DeleteTaskMutation,
     DeleteTaskMutationVariables
   >(DELETE_TASK);
@@ -45,7 +46,7 @@ export default function PurposeInput(props: IPurposeProps) {
     async (e: string, id: string | undefined) => {
       if (!noteId) return;
       try {
-        if (id && e) {
+        if (id && e.trim()) {
           const { data } = await updateTask({
             variables: {
               data: {
@@ -54,30 +55,15 @@ export default function PurposeInput(props: IPurposeProps) {
               },
             },
           });
-          if (data?.updateTask.__typename === 'TaskType') {
-            const updatedPurposes = purposes.map((item) =>
-              item.id === id ? { value: e, id } : item
-            );
-            setPurposes(updatedPurposes);
-          } else if (data?.updateTask.__typename === 'OperationInfo') {
-            console.log(data.updateTask.messages);
+          if (!data) {
+            console.log('Error updating task', updateError);
           }
-        } else if (id && !e) {
+        } else if (id && !e.trim()) {
           const { data } = await deleteTask({
             variables: { id },
           });
-          const newPurposes = purposes.map((item, idx) => {
-            if (idx === index) {
-              return {
-                id: undefined,
-                value: '',
-              };
-            }
-            return item;
-          });
-          setPurposes(newPurposes);
-          if (data?.deleteTask.__typename === 'OperationInfo') {
-            console.log(data.deleteTask.messages);
+          if (!data) {
+            console.log('Error deleting task', deleteError);
           }
         } else {
           const { data } = await createNoteTask({
@@ -90,16 +76,12 @@ export default function PurposeInput(props: IPurposeProps) {
               },
             },
           });
-          if (data?.createNoteTask.__typename === 'TaskType') {
-            const createNoteTaskId = data?.createNoteTask.id;
-            if (createNoteTaskId) {
-              const newPurposes = purposes.filter((item, idx) => idx !== index);
-              console.log(purposes);
-              console.log(newPurposes);
-              setPurposes([...newPurposes, { value: e, id: createNoteTaskId }]);
-            }
-          } else if (data?.createNoteTask.__typename === 'OperationInfo') {
-            console.log(data.createNoteTask.messages);
+          if (!data) {
+            console.log('Error creating task', error);
+            return;
+          }
+          if ('id' in data.createNoteTask) {
+            setLocalId(data.createNoteTask.id);
           }
         }
       } catch (error) {
@@ -116,7 +98,12 @@ export default function PurposeInput(props: IPurposeProps) {
 
   const onChange = (e: string) => {
     setValue(e);
-    debouncedCreateTask(e, purpose.id);
+    setPurposes(
+      purposes.map((item, idx) =>
+        idx === index ? { ...item, value: e } : item
+      )
+    );
+    debouncedCreateTask(e, localId);
   };
 
   const onDelete = async () => {
@@ -142,7 +129,6 @@ export default function PurposeInput(props: IPurposeProps) {
     }
   };
 
-  console.log(hasError);
   return (
     <BasicInput
       onDelete={onDelete}

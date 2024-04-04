@@ -57,10 +57,11 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address&key=${apiKey}`
+        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_component&key=${apiKey}`
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
+        console.log(data);
         setValue('location', undefined);
         setCurrentLocation({
           longitude,

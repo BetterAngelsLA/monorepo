@@ -118,7 +118,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         {
           params: {
             place_id: place.place_id,
-            fields: 'geometry',
+            fields: 'geometry,address_component',
             key: apiKey,
           },
         }
@@ -225,6 +225,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     try {
       const { data } = await axios.get(url);
+
       setValue('location', undefined);
       setCurrentLocation({
         longitude,
