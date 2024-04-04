@@ -22,9 +22,7 @@ class TestMagicLink(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
         self.client = Client()
-        self.user = get_user_model().objects.create_user(
-            email="testuser@test.com", password="testpassword"
-        )
+        self.user = get_user_model().objects.create_user(email="testuser@test.com", password="testpassword")
 
     def test_magic_link_authentication(self) -> None:
         # Generate a magic login URL for the test user
@@ -32,9 +30,7 @@ class TestMagicLink(TestCase):
         magic_login_url = base_login_url + get_query_string(self.user)
 
         # Use the test client to simulate following the magic link
-        response = self.client.get(
-            magic_login_url, HTTP_CONTENT_TYPE="application/json"
-        )
+        response = self.client.get(magic_login_url, HTTP_CONTENT_TYPE="application/json")
 
         # Assert the user was properly authenticated
         self.assertEqual(response.status_code, 302)
@@ -93,8 +89,6 @@ class MagicLinkGraphQLTests(GraphQLTestCaseMixin, TestCase):
         response = self.execute_graphql(query, variables=variables)
 
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(
-            response["data"]["generateMagicLink"]["message"], "Email link sent."
-        )
+        self.assertEqual(response["data"]["generateMagicLink"]["message"], "Email link sent.")
         emails = Email.objects.all()
         self.assertEqual(len(emails), 1)

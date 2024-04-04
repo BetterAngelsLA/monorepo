@@ -89,9 +89,7 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
             try:
                 token = client.get_access_token(code, pkce_code_verifier=code_verifier)
             except OAuth2Error as ex:
-                raise serializers.ValidationError(
-                    _("Failed to exchange code for access token")
-                ) from ex
+                raise serializers.ValidationError(_("Failed to exchange code for access token")) from ex
             access_token = token["access_token"]
             tokens_to_parse = {"access_token": access_token}
 
@@ -109,9 +107,7 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
 
         try:
             if adapter.provider_id == "google" and not code:
-                login = self.get_social_login(
-                    adapter, app, social_token, response={"id_token": id_token}
-                )
+                login = self.get_social_login(adapter, app, social_token, response={"id_token": id_token})
             else:
                 login = self.get_social_login(adapter, app, social_token, token)
             ret = complete_social_login(request, login)

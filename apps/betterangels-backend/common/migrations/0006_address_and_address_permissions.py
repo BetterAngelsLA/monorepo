@@ -10,8 +10,7 @@ PERMISSIONS_TO_ADD = [
 
 # Generate readable names based on the enum
 PERM_MAP = {
-    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " address"
-    for perm in AddressPermissions
+    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " address" for perm in AddressPermissions
 }
 
 
@@ -132,7 +131,5 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.RunPython(
-            update_caseworker_permission_template, revert_caseworker_permission_template
-        ),
+        migrations.RunPython(update_caseworker_permission_template, revert_caseworker_permission_template),
     ]
