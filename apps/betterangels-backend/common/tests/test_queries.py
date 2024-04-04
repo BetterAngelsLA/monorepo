@@ -1,5 +1,3 @@
-from typing import Any
-
 from accounts.models import User
 from common.tests.utils import AddressGraphQLBaseTestCase, GraphQLBaseTestCase
 from model_bakery import baker
