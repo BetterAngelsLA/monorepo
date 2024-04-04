@@ -150,6 +150,18 @@ input DjangoModelFilterInput {
   pk: ID!
 }
 
+type FeatureControlData {
+  flags: [FlagType!]!
+  switches: [SwitchType!]!
+  samples: [SampleType!]!
+}
+
+type FlagType {
+  name: String!
+  isActive: Boolean
+  lastModified: DateTime
+}
+
 union GetOrCreateAddressPayload = AddressType | OperationInfo
 
 """
@@ -312,6 +324,7 @@ type Query {
   currentUser: UserType!
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -344,6 +357,12 @@ input RevertNoteInput {
 }
 
 union RevertNotePayload = NoteType | OperationInfo
+
+type SampleType {
+  name: String!
+  isActive: Boolean!
+  lastModified: DateTime
+}
 
 enum ServiceEnum {
   BLANKET
@@ -386,6 +405,12 @@ type ServiceRequestType {
 enum ServiceRequestTypeEnum {
   PROVIDED
   REQUESTED
+}
+
+type SwitchType {
+  name: String!
+  isActive: Boolean!
+  lastModified: DateTime
 }
 
 enum TaskStatusEnum {
