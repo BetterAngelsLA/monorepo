@@ -1,14 +1,14 @@
 import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BasicInput,
   BodyText,
   DatePicker,
   H5,
   IconButton,
-  Input,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 interface ITitleProps {
@@ -18,24 +18,33 @@ interface ITitleProps {
   noteId: string | undefined;
 }
 
+type TNote = {
+  title: string | undefined;
+  date: string;
+  time?: string | undefined;
+};
+
+const formattedDate = format(new Date(), 'MM/dd/yyyy');
+
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
   const { noteTitle, expanded, setExpanded, noteId } = props;
-  const {
-    setValue,
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext();
-  const title = watch('title');
-  const noteDate = watch('noteDate');
-  const noteTime = watch('noteTime');
+  const [note, setNote] = useState<TNote>({
+    title: noteTitle,
+    date: formattedDate,
+  });
+  const [errors, setErrors] = useState({
+    title: false,
+    noteDate: false,
+    noteTime: false,
+  });
   const isTitle = expanded === 'Title';
 
   useEffect(() => {
-    setValue('title', noteTitle);
-  }, [noteTitle, setValue]);
+    console.log(noteId);
+    console.log(setErrors);
+  }, [expanded]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
@@ -51,7 +60,7 @@ export default function Title(props: ITitleProps) {
             alignItems: 'center',
           }}
         >
-          <H5 mr="sm">{title}</H5>
+          <H5 mr="sm">{note.title}</H5>
           <IconButton
             onPress={() => setExpanded('Title')}
             accessibilityLabel="edit"
@@ -65,7 +74,7 @@ export default function Title(props: ITitleProps) {
           </IconButton>
         </View>
         <BodyText size="xs" mb="md">
-          {noteDate} {noteTime || ''}
+          {note.date} {note?.time || ''}
         </BodyText>
       </View>
       <View
@@ -74,38 +83,33 @@ export default function Title(props: ITitleProps) {
           overflow: 'hidden',
         }}
       >
-        <Input
+        <BasicInput
           error={!!errors.title}
-          rules={{
-            required: true,
-            pattern: Regex.empty,
-          }}
-          control={control}
-          name="title"
+          value={note.title}
+          onChangeText={(e) => setNote({ ...note, title: e })}
         />
         <DatePicker
           error={!!errors.noteDate}
           required
+          disabled
           pattern={Regex.date}
           maxDate={endOfDay}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          control={control}
-          name="noteDate"
+          onSave={(date) => setNote({ ...note, date })}
         />
         <DatePicker
           error={!!errors.noteTime}
-          pattern={Regex.time}
+          disabled
           required
           maxDate={endOfDay}
           mode="time"
           format="HH:mm"
           placeholder="HH:MM"
           mt="xs"
-          control={control}
-          name="noteTime"
+          onSave={(time) => setNote({ ...note, time })}
         />
       </View>
     </View>
