@@ -131,7 +131,7 @@ export default function NextStepInput(props: INextStepProps) {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCreateTask = useCallback(debounce(createTask, 500), [
+  const debouncedCreateTask = useCallback(debounce(createTask, 300), [
     noteId,
     updateTask,
     deleteTask,
@@ -139,7 +139,7 @@ export default function NextStepInput(props: INextStepProps) {
   ]);
 
   const onChange = (e: string, key: 'action' | 'date' | 'time') => {
-    if (loading) return;
+    if (loading && !localId) return;
     setTask({ ...task, [key]: e });
     setNextSteps(
       nextSteps.map((item, idx) =>
