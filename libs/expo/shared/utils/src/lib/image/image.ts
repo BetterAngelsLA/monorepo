@@ -38,7 +38,7 @@ export async function resizeImage(
     }
 
     return await ImageManipulator.manipulateAsync(uri, actions, {
-      compress: 1,
+      compress: 0.8,
       format: ImageManipulator.SaveFormat.JPEG,
     });
   } catch (error) {

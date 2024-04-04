@@ -53,7 +53,6 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         allowsMultipleSelection: true,
-        quality: 0.8,
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
