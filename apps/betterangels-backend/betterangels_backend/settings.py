@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     "strawberry_django",
     "pghistory",
     "pgtrigger",
+    "waffle",
     # Our Apps
     "accounts",
     "common",

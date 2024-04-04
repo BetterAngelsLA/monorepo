@@ -151,6 +151,20 @@ export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
 };
 
+export type FeatureControlData = {
+  __typename?: 'FeatureControlData';
+  flags: Array<FlagType>;
+  samples: Array<SampleType>;
+  switches: Array<SwitchType>;
+};
+
+export type FlagType = {
+  __typename?: 'FlagType';
+  isActive?: Maybe<Scalars['Boolean']['output']>;
+  lastModified?: Maybe<Scalars['DateTime']['output']>;
+  name: Scalars['String']['output'];
+};
+
 export type GetOrCreateAddressPayload = AddressType | OperationInfo;
 
 export type MagicLinkInput = {
@@ -447,6 +461,7 @@ export type Query = {
   address: AddressType;
   addresses: Array<AddressType>;
   currentUser: UserType;
+  featureControls: FeatureControlData;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -527,6 +542,13 @@ export type RevertNoteInput = {
 
 export type RevertNotePayload = NoteType | OperationInfo;
 
+export type SampleType = {
+  __typename?: 'SampleType';
+  isActive: Scalars['Boolean']['output'];
+  lastModified?: Maybe<Scalars['DateTime']['output']>;
+  name: Scalars['String']['output'];
+};
+
 export enum ServiceEnum {
   Blanket = 'BLANKET',
   Book = 'BOOK',
@@ -570,6 +592,13 @@ export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
   Requested = 'REQUESTED'
 }
+
+export type SwitchType = {
+  __typename?: 'SwitchType';
+  isActive: Scalars['Boolean']['output'];
+  lastModified?: Maybe<Scalars['DateTime']['output']>;
+  name: Scalars['String']['output'];
+};
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
