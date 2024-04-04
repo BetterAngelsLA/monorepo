@@ -2,6 +2,7 @@ import { gql, useMutation } from '@apollo/client';
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
+import { resizeImage } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
 import IconButton from '../IconButton';
 
@@ -56,8 +57,9 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       });
       if (!result.canceled && result.assets) {
         const uploadPromises = result.assets.map(async (asset) => {
+          const newFile = await resizeImage(asset.uri);
           const file = new ReactNativeFile({
-            uri: asset.uri,
+            uri: newFile.uri,
             name: asset?.fileName || Date.now().toString(),
             type: asset.mimeType || 'changeme',
           });
