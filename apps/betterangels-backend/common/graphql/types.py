@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment
@@ -37,3 +40,31 @@ class AttachmentInterface:
     # ) -> Optional[ThumbnailType]:
     #     # Example for future dynamic thumbnail transformation
     #     pass
+
+
+@strawberry.type
+class FlagType:
+    name: str
+    is_active: Optional[bool]
+    last_modified: Optional[datetime] = None
+
+
+@strawberry.type
+class SwitchType:
+    name: str
+    is_active: bool
+    last_modified: Optional[datetime] = None
+
+
+@strawberry.type
+class SampleType:
+    name: str
+    is_active: bool
+    last_modified: Optional[datetime] = None
+
+
+@strawberry.type
+class FeatureControlData:
+    flags: list[FlagType]
+    switches: list[SwitchType]
+    samples: list[SampleType]
