@@ -11,9 +11,9 @@ import {
   UPDATE_TASK,
   UpdateTaskMutation,
   UpdateTaskMutationVariables,
-  debounce,
 } from '@monorepo/expo/betterangels';
 import { BasicInput } from '@monorepo/expo/shared/ui-components';
+import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useState } from 'react';
 
 interface IPurposeProps {
@@ -119,10 +119,14 @@ export default function PurposeInput(props: IPurposeProps) {
     });
     setPurposes(newPurposes);
     try {
-      if (purpose.id) {
-        await deleteTask({
-          variables: { id: purpose.id },
+      if (localId) {
+        const { data } = await deleteTask({
+          variables: { id: localId },
         });
+
+        if (!data) {
+          console.log('Error deleting task', deleteError);
+        }
       }
     } catch (error) {
       console.error('Error deleting task:', error);

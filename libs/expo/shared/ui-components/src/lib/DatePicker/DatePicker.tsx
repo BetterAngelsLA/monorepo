@@ -3,7 +3,7 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
 import { useState } from 'react';
-import { Control, Controller, RegisterOptions } from 'react-hook-form';
+import { RegisterOptions } from 'react-hook-form';
 import {
   Keyboard,
   Platform,
@@ -26,10 +26,8 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IDatePickerProps {
   label?: string;
-  control: Control<any>;
   mode: 'date' | 'time';
   height?: 40 | 56 | 200;
-  name: string;
   placeholder?: string;
   required?: boolean;
   pattern?: RegExp;
@@ -48,13 +46,12 @@ interface IDatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
+  onSave: (e: string) => void;
 }
 
 export function DatePicker(props: IDatePickerProps) {
   const {
     label,
-    control,
-    name,
     error,
     required,
     disabled,
@@ -72,23 +69,14 @@ export function DatePicker(props: IDatePickerProps) {
     placeholder,
     format = 'MM/dd/yyyy',
     pattern,
+    onSave,
     ...rest
   } = props;
-
+  const [value, setValue] = useState('');
   const [picker, setPicker] = useState(false);
   const [pickerDate, setPickerDate] = useState(new Date());
 
-  const handleBlur = (onBlur: () => void) => {
-    onBlur();
-    if (props.onBlur) {
-      props.onBlur();
-    }
-  };
-
-  function setDate(
-    onChange: { (...event: any[]): void; (): void },
-    date: Date | undefined
-  ) {
+  function setDate(onChange: (e: string) => void, date: Date | undefined) {
     setPicker(false);
     if (date) {
       const formattedDate = dateFnsFormat(date, format);
@@ -97,129 +85,116 @@ export function DatePicker(props: IDatePickerProps) {
   }
 
   return (
-    <Controller
-      control={control}
-      name={name}
-      rules={{
-        required,
-        pattern,
-      }}
-      render={({ field: { value, onBlur, onChange } }) => (
-        <View
-          style={[
-            styles.inputContainer,
-            componentStyle,
-            {
-              marginBottom: mb && Spacings[mb],
-              marginTop: mt && Spacings[mt],
-              marginLeft: ml && Spacings[ml],
-              marginRight: mr && Spacings[mr],
-              marginHorizontal: mx && Spacings[mx],
-              marginVertical: my && Spacings[my],
-            },
-          ]}
-        >
-          {label && (
-            <View style={styles.label}>
-              <Text style={styles.labelText}>{label}</Text>
-              {required && <Text style={styles.required}>*</Text>}
-            </View>
-          )}
-          <View
-            style={[
-              styles.input,
-              {
-                borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+    <View
+      style={[
+        styles.inputContainer,
+        componentStyle,
+        {
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
+        },
+      ]}
+    >
+      {label && (
+        <View style={styles.label}>
+          <Text style={styles.labelText}>{label}</Text>
+          {required && <Text style={styles.required}>*</Text>}
+        </View>
+      )}
+      <View
+        style={[
+          styles.input,
+          {
+            borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+          },
+        ]}
+      >
+        <TextInput
+          placeholder={placeholder}
+          maxLength={18}
+          style={{
+            color: Colors.PRIMARY_EXTRA_DARK,
+            paddingLeft: 16,
+            paddingRight: 38,
+            fontFamily: 'Poppins-Regular',
+            fontSize: 16,
+            height,
+            ...Platform.select({
+              web: {
+                outline: 'none',
               },
-            ]}
-          >
-            <TextInput
-              placeholder={placeholder}
-              maxLength={18}
-              style={{
-                color: disabled
-                  ? Colors.NEUTRAL_LIGHT
-                  : Colors.PRIMARY_EXTRA_DARK,
-                paddingLeft: 16,
-                paddingRight: 38,
-                fontFamily: 'Poppins-Regular',
-                fontSize: 16,
-                height,
-                ...Platform.select({
-                  web: {
-                    outline: 'none',
-                  },
-                }),
-              }}
-              value={value}
-              onBlur={() => handleBlur(onBlur)}
-              onChangeText={(e) => {
-                onChange(e);
-              }}
-              editable={!disabled}
-              {...rest}
-            />
-            <Pressable
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel="open date picker"
-              accessibilityHint="Opens the date picker to select a date"
+            }),
+          }}
+          value={value}
+          onChangeText={(e) => {
+            setValue(e);
+          }}
+          editable={!disabled}
+          {...rest}
+        />
+        <Pressable
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="open date picker"
+          accessibilityHint="Opens the date picker to select a date"
+          onPress={() => {
+            // value && setPicker(value);
+            setPicker(true);
+            Keyboard.dismiss();
+          }}
+          style={styles.icon}
+        >
+          {mode === 'time' ? (
+            <ClockIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+          ) : (
+            <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+          )}
+        </Pressable>
+      </View>
+      {picker && (
+        <View style={{ marginTop: Spacings.xs }}>
+          <DateTimePicker
+            locale={mode === 'time' ? 'en_GB' : 'en_US'}
+            is24Hour
+            onChange={(event, date) => {
+              if (event.type === 'dismissed' || !date) {
+                return setPicker(false);
+              }
+              setPickerDate(date || new Date());
+              Platform.OS !== 'ios' && setDate(onSave, date);
+            }}
+            style={{
+              backgroundColor: Colors.WHITE,
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            mode={mode}
+            minimumDate={minDate}
+            maximumDate={maxDate}
+            value={pickerDate}
+          />
+          {Platform.OS === 'ios' && (
+            <Button
+              mt="xs"
+              style={{ alignSelf: 'flex-end' }}
+              variant="primary"
+              size="sm"
+              height="sm"
+              accessibilityHint="save date"
               onPress={() => {
-                value && setPicker(value);
-                setPicker(true);
-                Keyboard.dismiss();
+                setDate(onSave, pickerDate);
               }}
-              style={styles.icon}
-            >
-              {mode === 'time' ? (
-                <ClockIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-              ) : (
-                <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-              )}
-            </Pressable>
-          </View>
-          {picker && (
-            <View style={{ marginTop: Spacings.xs }}>
-              <DateTimePicker
-                locale={mode === 'time' ? 'en_GB' : 'en_US'}
-                is24Hour
-                onChange={(event, date) => {
-                  if (event.type === 'dismissed' || !date) {
-                    return setPicker(false);
-                  }
-                  setPickerDate(date || new Date());
-                  Platform.OS !== 'ios' && setDate(onChange, date);
-                }}
-                style={{
-                  backgroundColor: Colors.WHITE,
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                }}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                mode={mode}
-                minimumDate={minDate}
-                maximumDate={maxDate}
-                value={pickerDate}
-              />
-              {Platform.OS === 'ios' && (
-                <Button
-                  mt="xs"
-                  style={{ alignSelf: 'flex-end' }}
-                  variant="primary"
-                  size="sm"
-                  height="sm"
-                  accessibilityHint="save date"
-                  onPress={() => {
-                    setDate(onChange, pickerDate);
-                  }}
-                  title="Done"
-                />
-              )}
-            </View>
+              title="Done"
+            />
           )}
         </View>
       )}
-    />
+    </View>
   );
 }
 
@@ -253,6 +228,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     position: 'absolute',
-    right: 16,
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: Spacings.sm,
   },
 });
