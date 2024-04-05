@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 class AttachmentAdminMixin(object):
     def attachments(self, obj: Union["Note", "Task"]) -> SafeString:
-        attachments = Attachment.objects.filter(
-            content_type=ContentType.objects.get_for_model(obj), object_id=obj.id
-        )
+        attachments = Attachment.objects.filter(content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
         attachment_links = [
             '<a href="{}">{}</a>'.format(
                 reverse("admin:common_attachment_change", args=(attachment.id,)),

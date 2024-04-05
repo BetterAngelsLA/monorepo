@@ -9,9 +9,7 @@ class DjRestAuthTestCase(TestCase):
     @skip("https://betterangels.atlassian.net/browse/DEV-65")
     def test_google_pcke_authentication_flow(self) -> None:
         client = Client()
-        code = (
-            "4/0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA"
-        )
+        code = "4/0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA"
         code_verifier = (
             "7VGpxs4u64mTyhh719aji60LwPOSn48dDUi4KmkrwcDC9CEuLM23aSOWf2tEmmNm"
             "K9fASrMp8o9Rx9LRkBEVvHIBk0HYItZiN6XSwKEnEXAFfI69dpF0M7JyAVU4QFOD"

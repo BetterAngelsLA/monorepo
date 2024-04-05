@@ -87,9 +87,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "content_object",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="notes.task"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="notes.task"),
                 ),
                 (
                     "permission",
@@ -125,15 +123,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "content_object",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="notes.task"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="notes.task"),
                 ),
                 (
                     "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
                 ),
                 (
                     "permission",

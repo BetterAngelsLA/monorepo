@@ -17,13 +17,9 @@ class IdMeOAuth2Adapter(OAuth2Adapter):
     provider_id = IdmeProvider.id
     access_token_url = f"{settings.SOCIALACCOUNT_IDME_BASE_URL}/oauth/token"
     authorize_url = f"{settings.SOCIALACCOUNT_IDME_BASE_URL}/oauth/authorize"
-    profile_url = (
-        f"{settings.SOCIALACCOUNT_IDME_BASE_URL}/api/public/v3/attributes.json"
-    )
+    profile_url = f"{settings.SOCIALACCOUNT_IDME_BASE_URL}/api/public/v3/attributes.json"
 
-    def complete_login(
-        self, request: Request, app: SocialApp, token: SocialToken, **kwargs: Any
-    ) -> SocialLogin:
+    def complete_login(self, request: Request, app: SocialApp, token: SocialToken, **kwargs: Any) -> SocialLogin:
         resp = requests.get(
             self.profile_url,
             headers={"Authorization": f"Bearer {token.token}"},

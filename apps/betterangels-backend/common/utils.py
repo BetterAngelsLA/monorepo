@@ -31,9 +31,7 @@ def get_unique_file_path(instance: Model, filename: str) -> str:
     return os.path.join("attachments/", unique_filename)
 
 
-def convert_to_structured_address(
-    address_components: Union[str, bytes, bytearray]
-) -> dict:
+def convert_to_structured_address(address_components: Union[str, bytes, bytearray]) -> dict:
     structured_address = {}
     address_fields = {
         "street_number": "long_name",

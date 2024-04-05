@@ -10,6 +10,15 @@ license = "Proprietary"
 readme = "README.md"
 package-mode = false
 
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+    | node_modules
+    | .venv/lib
+)/
+'''
+
 [tool.isort]
 profile = "black"
 skip_glob = ["*/migrations/*"]

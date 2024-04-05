@@ -14,9 +14,7 @@ class OrganizationUserTests(TestCase):
 
         self.user = baker.make(User)
 
-        self.caseworker_template = PermissionGroupTemplate.objects.get(
-            name=GroupTemplateNames.CASEWORKER
-        )
+        self.caseworker_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER)
 
         baker.make(
             PermissionGroup,
@@ -36,9 +34,7 @@ class OrganizationUserTests(TestCase):
             organization=self.organization1,
         )
         self.assertTrue(
-            self.user.groups.filter(
-                name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}"
-            ).exists()
+            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )
 
     def test_user_with_multiple_organizations_retains_access(self) -> None:
@@ -53,17 +49,11 @@ class OrganizationUserTests(TestCase):
             organization=self.organization2,
         )
 
-        self.user.organizations_organizationuser.get(
-            organization=self.organization1
-        ).delete()
+        self.user.organizations_organizationuser.get(organization=self.organization1).delete()
 
         self.assertFalse(
-            self.user.groups.filter(
-                name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}"
-            ).exists()
+            self.user.groups.filter(name=f"{self.organization1.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )
         self.assertTrue(
-            self.user.groups.filter(
-                name=f"{self.organization2.name}_{GroupTemplateNames.CASEWORKER}"
-            ).exists()
+            self.user.groups.filter(name=f"{self.organization2.name}_{GroupTemplateNames.CASEWORKER}").exists()
         )

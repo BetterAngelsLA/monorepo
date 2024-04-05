@@ -10,8 +10,7 @@ import django_choices_field.fields
 
 # Generate readable names based on the enum
 PERM_MAP = {
-    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " task"
-    for perm in AttachmentPermissions
+    perm.split(".")[1]: "Can " + perm.name.lower().replace("_", " ") + " task" for perm in AttachmentPermissions
 }
 
 
@@ -177,9 +176,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
                 ),
                 (
                     "permission",
@@ -283,7 +280,5 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(create_permissions_if_not_exist),
-        migrations.RunPython(
-            update_caseworker_permission_template, revert_caseworker_permission_template
-        ),
+        migrations.RunPython(update_caseworker_permission_template, revert_caseworker_permission_template),
     ]
