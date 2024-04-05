@@ -21,20 +21,24 @@ async function getImageDimensions(
  * @param targetResolution The target resolution for the smaller dimension. Defaults to 1080.
  * @returns A promise that resolves to the result of the image manipulation.
  */
-export async function resizeImage(
-  uri: string,
+export async function resizeImage({
+  uri,
   compress = 0.8,
-  targetResolution = 1080
-): Promise<ImageManipulator.ImageResult> {
+  targetResolution = 1080,
+}: {
+  uri: string;
+  compress?: number;
+  targetResolution?: number;
+}): Promise<ImageManipulator.ImageResult> {
   try {
     const { width, height } = await getImageDimensions(uri);
-    const actions: ImageManipulator.ActionResize[] = [];
+    const actions = [];
 
     if (width < height) {
-      const newWidth = Math.min(targetResolution, width); // Prevent upscaling
+      const newWidth = Math.min(targetResolution, width);
       actions.push({ resize: { width: newWidth } });
     } else {
-      const newHeight = Math.min(targetResolution, height); // Prevent upscaling
+      const newHeight = Math.min(targetResolution, height);
       actions.push({ resize: { height: newHeight } });
     }
 
@@ -44,6 +48,6 @@ export async function resizeImage(
     });
   } catch (error) {
     console.error('Error resizing image: ', error);
-    throw error; // Rethrow or handle as appropriate
+    throw error;
   }
 }

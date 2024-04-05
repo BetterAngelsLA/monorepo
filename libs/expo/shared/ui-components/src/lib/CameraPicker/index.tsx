@@ -70,7 +70,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
     try {
       const photo = await cameraRef.current.takePictureAsync();
       if (photo) {
-        const resizedPhoto = await resizeImage(photo.uri);
+        const resizedPhoto = await resizeImage({ uri: photo.uri });
         const file = new ReactNativeFile({
           uri: resizedPhoto.uri,
           name: `${Date.now().toString()}.jpg`,
