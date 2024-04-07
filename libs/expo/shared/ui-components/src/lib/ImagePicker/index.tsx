@@ -13,10 +13,12 @@ interface IImagePickerProps {
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;
   setIsLoading: (e: boolean) => void;
+  isLoading: boolean;
 }
 
 export default function ImagePickerComponent(props: IImagePickerProps) {
-  const { setImages, images, mr, namespace, noteId, setIsLoading } = props;
+  const { setImages, images, mr, namespace, noteId, setIsLoading, isLoading } =
+    props;
   const [createNoteAttachment, { error }] = useMutation(gql`
     mutation CreateNoteAttachment(
       $noteId: ID!
@@ -47,6 +49,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
   `);
 
   const pickImage = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({

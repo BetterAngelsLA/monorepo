@@ -35,6 +35,7 @@ export default function Attachments(props: IAttachmentsProps) {
         <BodyText>Attachments</BodyText>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ImagePicker
+            isLoading={isLoading}
             setIsLoading={setIsLoading}
             noteId={noteId}
             namespace={namespace}
@@ -43,6 +44,7 @@ export default function Attachments(props: IAttachmentsProps) {
             images={images}
           />
           <CameraPicker
+            isLoading={isLoading}
             setIsLoading={setIsLoading}
             noteId={noteId}
             namespace={namespace}
