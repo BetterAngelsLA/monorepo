@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from .models import HowToEnter, Shelter, Service, Population, Requirement, ShelterType
+from .models import HowToEnter, Shelter, Service, Population, Requirement, \
+    ShelterType, Location
+
+
+class LocationInline(admin.TabularInline):
+    model = Location
 
 
 class PopulationInline(admin.TabularInline):
@@ -31,6 +36,7 @@ class ShelterAdmin(admin.ModelAdmin):
         ShelterTypeInline,
         RequirementInline,
         HowToEnterInline,
+        # LocationInline
     ]
     fieldsets = (
         (
@@ -49,14 +55,9 @@ class ShelterAdmin(admin.ModelAdmin):
             "Location",
             {
                 "fields": (
-                    "address",
-                    "city",
-                    "state",
-                    "zip_code",
+                    "location",
                     "confidential",
                     "spa",
-                    "latitude",
-                    "longitude",
                 )
             },
         ),
@@ -87,4 +88,5 @@ class ShelterAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
+admin.site.register(Location)
 admin.site.register(Shelter, ShelterAdmin)

@@ -1,33 +1,35 @@
 from django.db import models
+from django.contrib.gis.db.models import PointField
+
 from django_choices_field import TextChoicesField
 
 from common.models import BaseModel
-
-# from django.contrib.gis.db.models import PointField
 from .enums import (
     HowToEnterEnum, ServiceEnum, PopulationEnum, RequirementEnum, ShelterTypeEnum
 )
 
 
-# Permissions on Service, Population, and Requirement models
-# should be more restrictive than on Shelter
-# Service model should include some reference to the icon
+class Location(BaseModel):
+    point = PointField()
+    address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    zip_code = models.CharField(max_length=50, blank=True)
 
 
 # Set default to make gql returns consistent between charfield and textfield
 class Shelter(BaseModel):
     title = models.CharField(max_length=255)
+
+    # Demo Images are Base64 encoded to embed in the data rather than having to fetch
+    # an image file from a separate location. Will eventually move to the parent
+    # organization once connected to the storage bucket.
     image_url = models.URLField(blank=True, null=True)
 
-    # Location Fields - flat for easier creation via admin console
-    latitude = models.FloatField(blank=True, null=True)
-    longitude = models.FloatField(blank=True, null=True)
-
+    # Location Fields
+    location = models.OneToOneField(Location, on_delete=models.CASCADE,
+                                    null=True, blank=True, related_name='shelter')
     spa = models.PositiveSmallIntegerField(blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, default='')
-    city = models.CharField(max_length=255, blank=True, default='')
-    state = models.CharField(max_length=255, blank=True, default='')
-    zip_code = models.PositiveIntegerField(blank=True, null=True)
     confidential = models.BooleanField(blank=True, null=True)
 
     # Contact Information
@@ -55,7 +57,7 @@ class Shelter(BaseModel):
 
 
 class Population(models.Model):
-    title = TextChoicesField(choices_enum=PopulationEnum, blank=True)
+    title = TextChoicesField(choices_enum=PopulationEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
                                 related_name='populations')
 
@@ -64,7 +66,7 @@ class Population(models.Model):
 
 
 class Requirement(models.Model):
-    title = TextChoicesField(choices_enum=RequirementEnum, blank=True)
+    title = TextChoicesField(choices_enum=RequirementEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
                                 related_name='requirements')
 
@@ -73,7 +75,7 @@ class Requirement(models.Model):
 
 
 class ShelterType(models.Model):
-    title = TextChoicesField(choices_enum=ShelterTypeEnum, blank=True)
+    title = TextChoicesField(choices_enum=ShelterTypeEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
                                 related_name='shelter_type')
 
@@ -82,7 +84,7 @@ class ShelterType(models.Model):
 
 
 class Service(models.Model):
-    title = TextChoicesField(choices_enum=ServiceEnum, blank=True)
+    title = TextChoicesField(choices_enum=ServiceEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
                                 related_name='services')
 
@@ -91,7 +93,9 @@ class Service(models.Model):
 
 
 class HowToEnter(models.Model):
-    title = TextChoicesField(choices_enum=HowToEnterEnum, blank=True)
+    title = TextChoicesField(choices_enum=HowToEnterEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE,
                                 related_name='how_to_enter')
 
+    def __str__(self) -> str:
+        return str(self.title)
