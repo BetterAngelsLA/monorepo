@@ -1,4 +1,3 @@
-import dataclasses
 from typing import Optional, List
 
 import strawberry_django
@@ -71,7 +70,6 @@ class LocationType:
     confidential: Optional[bool]
 
 
-@dataclasses.dataclass
 @strawberry_django.type(models.Shelter, pagination=True, filters=ShelterFilter)
 class ShelterType:
     id: auto
