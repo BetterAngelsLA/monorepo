@@ -1,6 +1,5 @@
 from django.contrib.gis.geos import Point
 from django.test import TestCase
-from shelters.enums import ServiceEnum
 from shelters.models import (
     Location,
     Population,
@@ -60,14 +59,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         }
         """
 
-        expected_response = {'shelters': [{'id': '1',
-                'location': {'latitude': 5.152149, 'longitude': 46.199615},
-                'populations': ['Men', 'Women'],
-                'services': ['Mail', 'Showers'],
-                'title': 'Shelter-1'}]}
+        expected_response = {'shelters':
+                             [{'id': '1', 'location':
+                               {'latitude': 5.152149, 'longitude': 46.199615},
+                               'populations': ['Men', 'Women'],
+                               'services': ['Mail', 'Showers'],
+                               'title': 'Shelter-1'}]}
 
         response = self.execute_graphql(query)
 
         self.assertEqual(len(response['data']['shelters']), 1)
         self.assertEqual(response['data'], expected_response)
-
