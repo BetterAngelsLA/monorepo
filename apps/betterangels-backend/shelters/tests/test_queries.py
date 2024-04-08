@@ -65,8 +65,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
                                'populations': ['Men', 'Women'],
                                'services': ['Mail', 'Showers'],
                                'title': 'Shelter-1'}]}
-
-        response = self.execute_graphql(query)
+        
+        with self.assertNumQueries(5):
+            response = self.execute_graphql(query)
 
         self.assertEqual(len(response['data']['shelters']), 1)
         self.assertEqual(response['data'], expected_response)
