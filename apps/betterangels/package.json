@@ -54,7 +54,8 @@
     "react-native-open-maps": "*",
     "expo-location": "*",
     "expo-clipboard": "*",
-    "apollo-upload-client": "*"
+    "apollo-upload-client": "*",
+    "expo-image-manipulator": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",

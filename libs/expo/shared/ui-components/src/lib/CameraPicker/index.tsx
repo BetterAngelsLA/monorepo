@@ -7,6 +7,7 @@ import {
   CameraIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { resizeImage } from '@monorepo/expo/shared/utils';
 import {
   CameraType,
   CameraView,
@@ -24,10 +25,12 @@ interface ICameraPickerProps {
   namespace: string;
   noteId: string | undefined;
   setIsLoading: (e: boolean) => void;
+  isLoading: boolean;
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images, namespace, noteId, setIsLoading } = props;
+  const { setImages, images, namespace, noteId, setIsLoading, isLoading } =
+    props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -64,14 +67,14 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
-    if (!noteId || !cameraRef.current) return;
+    if (!noteId || !cameraRef.current || isLoading) return;
     setIsLoading(true);
     try {
-      const quality = 0.8;
-      const photo = await cameraRef.current.takePictureAsync({ quality });
+      const photo = await cameraRef.current.takePictureAsync();
       if (photo) {
+        const resizedPhoto = await resizeImage({ uri: photo.uri });
         const file = new ReactNativeFile({
-          uri: photo.uri,
+          uri: resizedPhoto.uri,
           name: `${Date.now().toString()}.jpg`,
           type: 'image/jpeg',
         });
@@ -102,6 +105,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const getPermissionsAndOpenCamera = async () => {
+    if (isLoading) return;
     if (permission) {
       const { granted } = await requestPermission();
       if (granted) {
@@ -238,12 +242,16 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   return (
     <IconButton
+      disabled={isLoading}
       accessibilityLabel="camera"
       accessibilityHint="opens camera"
       variant="transparent"
       onPress={getPermissionsAndOpenCamera}
     >
-      <CameraIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+      <CameraIcon
+        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        size="md"
+      />
     </IconButton>
   );
 }
