@@ -6,8 +6,6 @@ import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import AddressInput, AddressType, AttachmentInterface
 from common.models import Attachment
-from django.contrib.gis.db.models import PointField
-from django.contrib.gis.geos import Point
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions

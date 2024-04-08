@@ -9,7 +9,6 @@ from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Address, Attachment
 from common.permissions.enums import AddressPermissions, AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
-from common.utils import convert_to_structured_address
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -166,22 +165,7 @@ class Mutation:
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
 
-            address = data.address_input
-            structured_address = convert_to_structured_address(address.address_components)
-
-            street_number = structured_address.get("street_number")
-            route = structured_address.get("route")
-            street = f"{street_number} {route}".strip() if street_number and route else route
-
-            address, _ = Address.objects.get_or_create(
-                street=street,
-                city=structured_address.get("locality"),
-                state=structured_address.get("administrative_area_level_1"),
-                zip_code=structured_address.get("postal_code"),
-                address_components=address.address_components,
-                formatted_address=address.formatted_address,
-            )
-
+            address = Address.get_or_create_address(data.address_input.__dict__)
             note = resolvers.update(
                 info,
                 note,
@@ -674,22 +658,7 @@ class Mutation:
             except Task.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this task.")
 
-            address = data.address_input
-            structured_address = convert_to_structured_address(address.address_components)
-
-            street_number = structured_address.get("street_number")
-            route = structured_address.get("route")
-            street = f"{street_number} {route}".strip() if street_number and route else route
-
-            address, _ = Address.objects.get_or_create(
-                street=street,
-                city=structured_address.get("locality"),
-                state=structured_address.get("administrative_area_level_1"),
-                zip_code=structured_address.get("postal_code"),
-                address_components=address.address_components,
-                formatted_address=address.formatted_address,
-            )
-
+            address = Address.get_or_create_address(data.address_input.__dict__)
             task = resolvers.update(
                 info,
                 task,

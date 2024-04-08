@@ -133,9 +133,7 @@ class Address(BaseModel):
         return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
 
     @staticmethod
-    def convert_to_structured_address(
-        address_components: Union[str, bytes, bytearray]
-    ) -> dict:
+    def convert_to_structured_address(address_components: Union[str, bytes, bytearray]) -> dict:
         structured_address = {}
         address_fields = {
             "street_number": "long_name",
@@ -158,15 +156,11 @@ class Address(BaseModel):
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
-        structured_address = cls.convert_to_structured_address(
-            address_data["address_components"]
-        )
+        structured_address = cls.convert_to_structured_address(address_data["address_components"])
 
         street_number = structured_address.get("street_number")
         route = structured_address.get("route")
-        street = (
-            f"{street_number} {route}".strip() if street_number and route else route
-        )
+        street = f"{street_number} {route}".strip() if street_number and route else route
         address, _ = Address.objects.get_or_create(
             street=street,
             city=structured_address.get("locality"),
