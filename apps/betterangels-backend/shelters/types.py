@@ -54,7 +54,7 @@ class ShelterType:
 
     # I've been unable to figure out how to resolve the mypy errors here as it
     # does not detect the strawberry-django behavior of resolving fields in the
-    # parent Shelter class
+    # parent Shelter class, even when I annotate self as a Shelter
     @strawberry_django.field
     def location(self) -> LocationType:
         return LocationType(

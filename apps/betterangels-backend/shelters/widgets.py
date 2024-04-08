@@ -34,9 +34,9 @@ class LatLongField(forms.MultiValueField):
         if data_list:
             # User can decline to provide lat and long, but if they provide one they must provide the other
             latitude, longitude = data_list
-            if latitude is None and longitude is not None:
+            if latitude is None and longitude is not None:  # type: ignore
                 raise ValidationError(_("Latitude is required"))
-            elif longitude is None and latitude is not None:
+            elif longitude is None and latitude is not None:  # type: ignore
                 raise ValidationError(_("Longitude is required"))
             point_str = 'POINT(%f %f)' % tuple(reversed(data_list))
             return point_str
