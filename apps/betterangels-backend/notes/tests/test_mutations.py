@@ -141,11 +141,15 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
+        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
         expected_address = {
-            "street": "200 Geary Street",
-            "city": "San Francisco",
-            "state": "CA",
-            "zipCode": "94102",
+            "street": (
+                f"{self.address_input['addressComponents'][0]['long_name']} "
+                f"{self.address_input['addressComponents'][1]['long_name']}"
+            ),
+            "city": self.address_input["addressComponents"][3]["long_name"],
+            "state": self.address_input["addressComponents"][5]["short_name"],
+            "zipCode": self.address_input["addressComponents"][7]["long_name"],
         }
 
         updated_note = response["data"]["updateNoteLocation"]
@@ -1137,11 +1141,15 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
+        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
         expected_address = {
-            "street": "200 Geary Street",
-            "city": "San Francisco",
-            "state": "CA",
-            "zipCode": "94102",
+            "street": (
+                f"{self.address_input['addressComponents'][0]['long_name']} "
+                f"{self.address_input['addressComponents'][1]['long_name']}"
+            ),
+            "city": self.address_input["addressComponents"][3]["long_name"],
+            "state": self.address_input["addressComponents"][5]["short_name"],
+            "zipCode": self.address_input["addressComponents"][7]["long_name"],
         }
 
         updated_task = response["data"]["updateTaskLocation"]

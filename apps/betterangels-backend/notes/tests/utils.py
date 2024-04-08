@@ -20,7 +20,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self._setup_users()
         self._setup_groups_and_permissions()
 
-        self.address_input = {
+        self.address_input: Dict = {
             "addressComponents": [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
                 {
@@ -120,7 +120,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             state="CA",
             zip_code="90012",
         )
-        self.address_input = {
+        self.address_input: Dict = {
             "addressComponents": [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
                 {
