@@ -10,7 +10,7 @@ from .enums import (
 
 
 class Location(BaseModel):
-    point = PointField(blank=True, null=True)
+    point = PointField(blank=True, null=True, geography=True)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
