@@ -58,6 +58,7 @@ from .types import (
     UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
+    UpdateTaskLocationInput,
 )
 
 
@@ -153,12 +154,8 @@ class Mutation:
             HasPerm(perms=[AddressPermissions.ADD]),
         ]
     )
-    def update_note_location(
-        self, info: Info, data: UpdateNoteLocationInput
-    ) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            id=data.id, timestamp=timezone.now(), label=info.field_name
-        ):
+    def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
+        with transaction.atomic(), pghistory.context(id=data.id, timestamp=timezone.now(), label=info.field_name):
             user = get_current_user(info)
             try:
                 note = filter_for_user(
@@ -170,15 +167,11 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this note.")
 
             address = data.address_input
-            structured_address = convert_to_structured_address(
-                address.address_components
-            )
+            structured_address = convert_to_structured_address(address.address_components)
 
             street_number = structured_address.get("street_number")
             route = structured_address.get("route")
-            street = (
-                f"{street_number} {route}".strip() if street_number and route else route
-            )
+            street = f"{street_number} {route}".strip() if street_number and route else route
 
             address, _ = Address.objects.get_or_create(
                 street=street,
@@ -658,6 +651,51 @@ class Mutation:
                 task,
                 {
                     **task_data,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
+        with transaction.atomic(), pghistory.context(id=data.id, timestamp=timezone.now(), label=info.field_name):
+            user = get_current_user(info)
+            try:
+                task = filter_for_user(
+                    Task.objects.all(),
+                    user,
+                    [TaskPermissions.CHANGE],
+                ).get(id=data.id)
+            except Task.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this task.")
+
+            address = data.address_input
+            structured_address = convert_to_structured_address(address.address_components)
+
+            street_number = structured_address.get("street_number")
+            route = structured_address.get("route")
+            street = f"{street_number} {route}".strip() if street_number and route else route
+
+            address, _ = Address.objects.get_or_create(
+                street=street,
+                city=structured_address.get("locality"),
+                state=structured_address.get("administrative_area_level_1"),
+                zip_code=structured_address.get("postal_code"),
+                address_components=address.address_components,
+                formatted_address=address.formatted_address,
+            )
+
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    "point": data.point,
+                    "address": address,
                 },
             )
 

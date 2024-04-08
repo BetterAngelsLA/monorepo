@@ -226,6 +226,13 @@ class UpdateNoteLocationInput:
     address_input: AddressInput
 
 
+@strawberry_django.input(models.Task)
+class UpdateTaskLocationInput:
+    id: auto
+    point: auto
+    address_input: AddressInput
+
+
 @strawberry_django.input(models.Note)
 class RevertNoteInput:
     id: auto

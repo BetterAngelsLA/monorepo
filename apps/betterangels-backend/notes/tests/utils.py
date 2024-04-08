@@ -713,3 +713,29 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _update_task_location_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
+                updateTaskLocation(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                        point
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
