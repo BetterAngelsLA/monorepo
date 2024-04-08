@@ -10,14 +10,16 @@ from .enums import (
 
 
 class Location(BaseModel):
-    point = PointField()
-    address = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
-    zip_code = models.CharField(max_length=50, blank=True)
+    point = PointField(blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.address if self.address else ''
 
 
-# Set default to make gql returns consistent between charfield and textfield
 class Shelter(BaseModel):
     title = models.CharField(max_length=255)
 
@@ -27,8 +29,8 @@ class Shelter(BaseModel):
     image_url = models.URLField(blank=True, null=True)
 
     # Location Fields
-    location = models.OneToOneField(Location, on_delete=models.CASCADE,
-                                    null=True, blank=True, related_name='shelter')
+    location = models.ForeignKey(Location, on_delete=models.CASCADE,
+                                 null=True, blank=True, related_name='shelter')
     spa = models.PositiveSmallIntegerField(blank=True, null=True)
     confidential = models.BooleanField(blank=True, null=True)
 

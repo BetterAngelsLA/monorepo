@@ -1,11 +1,9 @@
 from django.contrib import admin
 
+from .forms import LocationAdminForm
+
 from .models import HowToEnter, Shelter, Service, Population, Requirement, \
     ShelterType, Location
-
-
-class LocationInline(admin.TabularInline):
-    model = Location
 
 
 class PopulationInline(admin.TabularInline):
@@ -29,6 +27,10 @@ class HowToEnterInline(admin.TabularInline):
     verbose_name_plural = "How to Enter"
 
 
+class LocationAdmin(admin.ModelAdmin):
+    form = LocationAdminForm
+
+
 class ShelterAdmin(admin.ModelAdmin):
     inlines = [
         PopulationInline,
@@ -36,8 +38,8 @@ class ShelterAdmin(admin.ModelAdmin):
         ShelterTypeInline,
         RequirementInline,
         HowToEnterInline,
-        # LocationInline
     ]
+
     fieldsets = (
         (
             "Basic Information",
@@ -88,5 +90,5 @@ class ShelterAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
-admin.site.register(Location)
+admin.site.register(Location, LocationAdmin)
 admin.site.register(Shelter, ShelterAdmin)
