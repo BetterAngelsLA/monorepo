@@ -23,17 +23,19 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self.assertEqual(1, Address.objects.count())
-            self.address_input["addressComponents"][0]["long_name"] = street_number  # type: ignore
+            self.address_input["addressComponents"][0]["long_name"] = street_number
+            # Convert addressComponents to JSON for the mutation
             self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
             response = self._get_or_create_address_fixture(self.address_input)
-
+            # Convert addressComponents back to list for value comparison
+            self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
                 "id": ANY,
-                "street": f"{street_number} Geary Street",
-                "city": "San Francisco",
-                "state": "CA",
-                "zipCode": "94102",
+                "street": f"{street_number} {self.address_input['addressComponents'][1]['long_name']}",
+                "city": self.address_input["addressComponents"][3]["long_name"],
+                "state": self.address_input["addressComponents"][5]["short_name"],
+                "zipCode": self.address_input["addressComponents"][7]["long_name"],
             }
 
             self.assertEqual(expected_address_count, Address.objects.count())

@@ -68,7 +68,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.address_input = {
+        self.address_input: Dict = {
             "addressComponents": [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
                 {
@@ -110,11 +110,12 @@ class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _setup_address(self) -> None:
         # Force login to create an address
         self.graphql_client.force_login(self.org_1_case_manager_1)
+        # Convert addressComponents to JSON for the mutation
         self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
         self.address = self._get_or_create_address_fixture(self.address_input)["data"]["getOrCreateAddress"]
-        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])  # type: ignore
+        # Convert addressComponents back to list for value comparison
+        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
         # Logout after setting up the address
-
         self.graphql_client.logout()
 
     def _get_or_create_address_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:

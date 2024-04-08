@@ -25,7 +25,7 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
         address_count = Address.objects.count()
 
         # Change the street number so we can create a new address.
-        self.address_input["addressComponents"][0]["long_name"] = "201"  # type: ignore
+        self.address_input["addressComponents"][0]["long_name"] = "201"
         response = self._get_or_create_address_fixture(
             {
                 "addressComponents": json.dumps(self.address_input["addressComponents"]),
