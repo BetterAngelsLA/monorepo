@@ -1,7 +1,11 @@
 from accounts.models import User
 from common.tests.utils import AddressGraphQLBaseTestCase, GraphQLBaseTestCase
 from model_bakery import baker
-from waffle.models import Flag, Sample, Switch
+from waffle import (
+    get_waffle_flag_model,
+    get_waffle_sample_model,
+    get_waffle_switch_model,
+)
 
 
 class AddressQueryTestCase(AddressGraphQLBaseTestCase):
@@ -62,9 +66,17 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
 class FeatureControlDataTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.flags = baker.make(Flag, _quantity=3, everyone=True, _fill_optional=True)
-        self.switches = baker.make(Switch, _quantity=2, _fill_optional=True)
-        self.samples = baker.make(Sample, _quantity=1, _fill_optional=True)
+        self.flags = [
+            get_waffle_flag_model().objects.create(name="flag_1", everyone=True),
+            get_waffle_flag_model().objects.create(name="flag_2", everyone=True),
+            get_waffle_flag_model().objects.create(name="flag_3", everyone=True),
+        ]
+        self.switches = [
+            get_waffle_switch_model().objects.create(name="switch_1", active=True),
+            get_waffle_switch_model().objects.create(name="switch_2", active=True),
+        ]
+
+        self.samples = [get_waffle_sample_model().objects.create(name="sample_1", percent=100)]
 
     def test_feature_controls_query(self) -> None:
         query = """
@@ -98,12 +110,10 @@ class FeatureControlDataTestCase(GraphQLBaseTestCase):
 class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-
         self.user_with_access = baker.make(User)
         self.user_without_access = baker.make(User)
 
-        self.feature_flag_name = "new_feature"
-        self.feature_flag = Flag.objects.create(name=self.feature_flag_name, everyone=None)
+        self.feature_flag = get_waffle_flag_model().objects.create(name="flag_1", everyone=None)
         self.feature_flag.users.add(self.user_with_access)  # type: ignore
         self.feature_flag.save()
 
@@ -121,7 +131,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         """
         result = self.execute_graphql(query)
         flags = result["data"]["featureControls"]["flags"]
-        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag_name), {})
+        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag.name), {})
         self.assertIsNotNone(new_feature_flag, "Feature flag not found in response.")
         self.assertTrue(
             new_feature_flag["isActive"],
@@ -142,7 +152,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         """
         result = self.execute_graphql(query)
         flags = result["data"]["featureControls"]["flags"]
-        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag_name), {})
+        new_feature_flag: dict = next((flag for flag in flags if flag["name"] == self.feature_flag.name), {})
         self.assertIsNotNone(new_feature_flag, "Feature flag not found in response.")
         self.assertFalse(
             new_feature_flag["isActive"],
