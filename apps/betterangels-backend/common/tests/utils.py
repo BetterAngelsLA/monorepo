@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
@@ -46,29 +46,15 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         perm_group_2 = permission_group_recipe.make()
         perm_group_2.organization.add_user(self.org_2_case_manager_1)
 
-    def _handle_user_login(self, user_label: Optional[str]) -> None:
-        if user_label:
-            self.graphql_client.force_login(self.user_map[user_label])
-        else:
-            self.graphql_client.logout()
-
-    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
-        """
-        Resets all caches that may prevent query execution.
-        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
-        after external changes to some Django database records).
-
-        https://stackoverflow.com/a/55287613
-        """
-        ContentType.objects.clear_cache()
-        Site.objects.clear_cache()
-        return self.assertNumQueries(query_count)
-
-
-class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.address_input: Dict = {
+    def _get_address_inputs(
+        self,
+        street_number_override: Optional[str] = None,
+        delete_street_number: bool = False,
+        delete_components: bool = False,
+        # ) -> Tuple[Dict[str, str], Dict[str, List[Dict[str, Any]]]]:
+    ) -> Tuple[Dict[str, str], Dict[str, List[Dict[str, Any]]]]:
+        """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
+        address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
             "addressComponents": [
                 {"long_name": "200", "short_name": "200", "types": ["street_number"]},
                 {
@@ -105,16 +91,51 @@ class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
             ],
             "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
         }
+
+        if isinstance(address_input["addressComponents"], list):
+            if street_number_override:
+                address_input["addressComponents"][0]["long_name"] = street_number_override
+
+            if delete_street_number:
+                address_input["addressComponents"].pop(0)
+
+            if delete_components:
+                address_input["addressComponents"] = []
+
+        json_address_input: Dict[str, str] = {"formattedAddress": address_input["formattedAddress"]}
+        json_address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
+
+        return json_address_input, address_input
+
+    def _handle_user_login(self, user_label: Optional[str]) -> None:
+        if user_label:
+            self.graphql_client.force_login(self.user_map[user_label])
+        else:
+            self.graphql_client.logout()
+
+    def assertNumQueriesWithoutCache(self, query_count: int) -> Any:
+        """
+        Resets all caches that may prevent query execution.
+        Needed to ensure deterministic behavior of ``assertNumQueries`` (or
+        after external changes to some Django database records).
+
+        https://stackoverflow.com/a/55287613
+        """
+        ContentType.objects.clear_cache()
+        Site.objects.clear_cache()
+        return self.assertNumQueries(query_count)
+
+
+class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
         self._setup_address()
 
     def _setup_address(self) -> None:
         # Force login to create an address
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        # Convert addressComponents to JSON for the mutation
-        self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
-        self.address = self._get_or_create_address_fixture(self.address_input)["data"]["getOrCreateAddress"]
-        # Convert addressComponents back to list for value comparison
-        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
+        json_address_input, _ = self._get_address_inputs()
+        self.address = self._get_or_create_address_fixture(json_address_input)["data"]["getOrCreateAddress"]
         # Logout after setting up the address
         self.graphql_client.logout()
 

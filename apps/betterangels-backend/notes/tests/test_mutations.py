@@ -1,4 +1,3 @@
-import json
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -130,26 +129,25 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]
-        self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+        json_address_input, address_input = self._get_address_inputs()
         variables = {
             "id": note_id,
             "point": self.point,
-            "address": self.address_input,
+            "address": json_address_input,
         }
 
         expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
-        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
         expected_address = {
             "street": (
-                f"{self.address_input['addressComponents'][0]['long_name']} "
-                f"{self.address_input['addressComponents'][1]['long_name']}"
+                f"{address_input['addressComponents'][0]['long_name']} "
+                f"{address_input['addressComponents'][1]['long_name']}"
             ),
-            "city": self.address_input["addressComponents"][3]["long_name"],
-            "state": self.address_input["addressComponents"][5]["short_name"],
-            "zipCode": self.address_input["addressComponents"][7]["long_name"],
+            "city": address_input["addressComponents"][3]["long_name"],
+            "state": address_input["addressComponents"][5]["short_name"],
+            "zipCode": address_input["addressComponents"][7]["long_name"],
         }
 
         updated_note = response["data"]["updateNoteLocation"]
@@ -498,6 +496,54 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
         self.assertEqual(reverted_note["point"], self.point)
         self.assertEqual(reverted_note["address"]["street"], "106 W 1st St")
+
+    # def test_revert_note_mutation_removes_added_address(self) -> None:
+    #     """
+    #     Asserts that when revertNote mutation is called, the Note's
+    #     Address is reverted to its state at the specified moment.
+
+    #     Test actions:
+    #     1. Add an address
+    #     2. Save now as saved_at
+    #     3. Update the address
+    #     4. Revert to saved_at from Step 2
+    #     5. Assert note has address from Step 1
+    #     """
+    #     note_id = self.note["id"]
+    #     self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+
+    #     # Update - should be persisted
+    #     self._update_note_location_fixture(
+    #         {
+    #             "id": note_id,
+    #             "point": self.point,
+    #             "address": self.address_input,
+    #         }
+    #     )
+
+    #     # Select a moment to revert to
+    #     saved_at = timezone.now()
+
+    #     new_address_input = deepcopy(self.address_input)
+    #     new_address_input["addressComponents"] = json.loads(new_address_input["addressComponents"])
+    #     new_address_input["addressComponents"][0]["long_name"] = "201"
+    #     new_address_input["addressComponents"] = json.dumps(new_address_input["addressComponents"])
+    #     new_address = ""
+    #     # Update - should be discarded
+    #     self._update_note_location_fixture(
+    #         {
+    #             "id": note_id,
+    #             "point": self.point,
+    #             "address": new_address,
+    #         }
+    #     )
+    #     variables = {"id": note_id, "savedAt": saved_at}
+
+    #     expected_query_count = 22
+    #     with self.assertNumQueriesWithoutCache(expected_query_count):
+    #         reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+    #     self.assertEqual(len(reverted_note["moods"]), 1)
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
@@ -1130,26 +1176,25 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
 
     def test_update_task_location_mutation(self) -> None:
         task_id = self.task["id"]
-        self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+        json_address_input, address_input = self._get_address_inputs()
         variables = {
             "id": task_id,
             "point": self.point,
-            "address": self.address_input,
+            "address": json_address_input,
         }
 
         expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
-        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])
         expected_address = {
             "street": (
-                f"{self.address_input['addressComponents'][0]['long_name']} "
-                f"{self.address_input['addressComponents'][1]['long_name']}"
+                f"{address_input['addressComponents'][0]['long_name']} "
+                f"{address_input['addressComponents'][1]['long_name']}"
             ),
-            "city": self.address_input["addressComponents"][3]["long_name"],
-            "state": self.address_input["addressComponents"][5]["short_name"],
-            "zipCode": self.address_input["addressComponents"][7]["long_name"],
+            "city": address_input["addressComponents"][3]["long_name"],
+            "state": address_input["addressComponents"][5]["short_name"],
+            "zipCode": address_input["addressComponents"][7]["long_name"],
         }
 
         updated_task = response["data"]["updateTaskLocation"]
