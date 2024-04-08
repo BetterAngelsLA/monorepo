@@ -66,12 +66,17 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
 class FeatureControlDataTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        get_waffle_flag_model().objects.create(name="myflag1", everyone=True)
-        get_waffle_flag_model().objects.create(name="myflag2", everyone=True)
-        get_waffle_flag_model().objects.create(name="myflag3", everyone=True)
-        get_waffle_switch_model().objects.create(name="myswitch1", active=True)
-        get_waffle_switch_model().objects.create(name="myswitch2", active=True)
-        get_waffle_sample_model().objects.create(name="test_sample_active", percent=100)
+        self.flags = [
+            get_waffle_flag_model().objects.create(name="flag_1", everyone=True),
+            get_waffle_flag_model().objects.create(name="flag_2", everyone=True),
+            get_waffle_flag_model().objects.create(name="flag_3", everyone=True),
+        ]
+        self.switches = [
+            get_waffle_switch_model().objects.create(name="switch_1", active=True),
+            get_waffle_switch_model().objects.create(name="switch_2", active=True),
+        ]
+
+        self.samples = [get_waffle_sample_model().objects.create(name="sample_1", percent=100)]
 
     def test_feature_controls_query(self) -> None:
         query = """
@@ -108,7 +113,7 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         self.user_with_access = baker.make(User)
         self.user_without_access = baker.make(User)
 
-        self.feature_flag = get_waffle_flag_model().objects.create(name="myflag1", everyone=None)
+        self.feature_flag = get_waffle_flag_model().objects.create(name="flag_1", everyone=None)
         self.feature_flag.users.add(self.user_with_access)  # type: ignore
         self.feature_flag.save()
 
