@@ -1,12 +1,18 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ReactNode } from 'react';
+import {
+  DimensionValue,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ICheckboxProps {
   label?: ReactNode;
-  onCheck: (isChecked: boolean) => void;
+  onCheck: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
   size?: 'sm' | 'md';
@@ -20,6 +26,7 @@ interface ICheckboxProps {
   ml?: TSpacing;
   mr?: TSpacing;
   isChecked: boolean;
+  height?: DimensionValue | undefined;
 }
 
 const SIZES = {
@@ -37,21 +44,15 @@ export function Checkbox(props: ICheckboxProps) {
     hasBorder,
     labelFirst = true,
     justifyContent = 'space-between',
-    isChecked: initialChecked,
+    isChecked,
     mb,
     mt,
     mr,
     ml,
     my,
     mx,
+    height,
   } = props;
-  const [isChecked, setIsChecked] = useState(initialChecked || false);
-
-  const toggleCheckbox = () => {
-    const newState = !isChecked;
-    setIsChecked(newState);
-    onCheck(newState);
-  };
 
   return (
     <Pressable
@@ -62,7 +63,11 @@ export function Checkbox(props: ICheckboxProps) {
       style={[
         styles.container,
         {
+          height,
           borderColor: hasBorder ? Colors.NEUTRAL_LIGHT : 'transparent',
+          backgroundColor: isChecked
+            ? Colors.PRIMARY_EXTRA_LIGHT
+            : Colors.WHITE,
           paddingHorizontal: hasBorder ? Spacings.sm : 0,
           paddingVertical: hasBorder ? Spacings.xs : 0,
           justifyContent,
@@ -74,7 +79,7 @@ export function Checkbox(props: ICheckboxProps) {
           marginVertical: my && Spacings[my],
         },
       ]}
-      onPress={toggleCheckbox}
+      onPress={onCheck}
     >
       {labelFirst ? (
         <>

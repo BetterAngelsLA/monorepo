@@ -75,6 +75,17 @@
         "cwd": "apps/betterangels-backend"
       }
     },
+    "format": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "poetry run black --config ../../pyproject.toml .",
+          "poetry run isort ."
+        ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    },
     "generate-graphql-schema": {
       "executor": "@nxlv/python:run-commands",
       "options": {
@@ -104,7 +115,7 @@
       "options": {
         "commands": [
           "poetry run flake8 .",
-          "poetry run black --check .",
+          "poetry run black --config ../../pyproject.toml --check .",
           "poetry run isort . --check-only"
         ],
         "cwd": "apps/betterangels-backend",

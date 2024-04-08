@@ -14,13 +14,13 @@ import { View } from 'react-native';
 interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-  firstName: string;
+  noteTitle?: string;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { firstName, expanded, setExpanded } = props;
+  const { noteTitle, expanded, setExpanded } = props;
   const {
     setValue,
     control,
@@ -28,12 +28,13 @@ export default function Title(props: ITitleProps) {
     formState: { errors },
   } = useFormContext();
   const title = watch('title');
-  const noteDateTime = watch('noteDateTime');
+  const noteDate = watch('noteDate');
+  const noteTime = watch('noteTime');
   const isTitle = expanded === 'Title';
 
   useEffect(() => {
-    setValue('title', `Session with ${firstName}`);
-  }, []);
+    setValue('title', noteTitle);
+  }, [noteTitle, setValue]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
@@ -63,7 +64,7 @@ export default function Title(props: ITitleProps) {
           </IconButton>
         </View>
         <BodyText size="xs" mb="md">
-          {noteDateTime}
+          {noteDate} {noteTime || ''}
         </BodyText>
       </View>
       <View
@@ -82,10 +83,28 @@ export default function Title(props: ITitleProps) {
           name="title"
         />
         <DatePicker
+          error={!!errors.noteDate}
+          required
+          pattern={Regex.date}
           maxDate={endOfDay}
+          mode="date"
+          format="MM/dd/yyyy"
+          placeholder="MM/DD/YYYY"
           mt="xs"
           control={control}
-          name="noteDateTime"
+          name="noteDate"
+        />
+        <DatePicker
+          error={!!errors.noteTime}
+          pattern={Regex.time}
+          required
+          maxDate={endOfDay}
+          mode="time"
+          format="HH:mm"
+          placeholder="HH:MM"
+          mt="xs"
+          control={control}
+          name="noteTime"
         />
       </View>
     </View>

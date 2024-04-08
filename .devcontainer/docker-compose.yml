@@ -20,6 +20,7 @@ services:
       - .:/workspace:cached
       - node_modules:/workspace/node_modules
       - venv:/workspace/.venv
+      - .bash_aliases:/home/betterangels/.bash_aliases
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:

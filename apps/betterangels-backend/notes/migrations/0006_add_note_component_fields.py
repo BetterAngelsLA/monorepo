@@ -7,7 +7,12 @@ import django.db.models.deletion
 import django.utils.timezone
 import django_choices_field.fields
 import notes.enums
-import simple_history.models
+from django.utils.translation import gettext_lazy as _
+
+
+class ServiceTypeEnum(models.TextChoices):
+    PROVIDED = "provided", _("Provided")
+    REQUESTED = "requested", _("Requested")
 
 
 class Migration(migrations.Migration):
@@ -75,9 +80,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="timestamp",
-            field=models.DateTimeField(
-                auto_now_add=True, default=django.utils.timezone.now
-            ),
+            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AlterField(
@@ -137,7 +140,7 @@ class Migration(migrations.Migration):
                     "service_type",
                     django_choices_field.fields.TextChoicesField(
                         choices=[("provided", "Provided"), ("requested", "Requested")],
-                        choices_enum=notes.enums.ServiceTypeEnum,
+                        choices_enum=ServiceTypeEnum,
                         max_length=9,
                     ),
                 ),
@@ -215,9 +218,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("created_at", models.DateTimeField(blank=True, editable=False)),
                 ("updated_at", models.DateTimeField(blank=True, editable=False)),
@@ -296,7 +297,9 @@ class Migration(migrations.Migration):
                 "ordering": ("-history_date", "-history_id"),
                 "get_latest_by": ("history_date", "history_id"),
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
         migrations.AddField(
             model_name="note",

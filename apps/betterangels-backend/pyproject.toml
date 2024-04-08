@@ -17,27 +17,29 @@ license = "Proprietary"
 include = "betterangels_backend"
 
 [tool.poetry.dependencies]
-python = "3.11.5"
-psycopg = "3.1.10"
-django = "^4.2.4"
-django-environ = "^0.10.0"
+python = "3.12.2"
+psycopg = "3.1.18"
+django = "^4.2.11"
+django-environ = "^0.11.2"
 gunicorn = { extras = ["gevent"], version = "^21.2.0" }
 django-extensions = "^3.2.3"
-dj-rest-auth = { extras = ["with-social"], version = "^5.0.0" }
-django-cors-headers = "^4.2.0"
-whitenoise = "^6.5.0"
-django-post-office = "^3.7.1"
-celery-redbeat = "^2.1.1"
-celery = { extras = ["redis"], version = "^5.3.4" }
-django-ses = "^3.5.0"
-hiredis = "^2.2.3"
-django-jazzmin = "^2.6.0"
-django-organizations = "^2.2.0"
-django-sesame = "^3.2.1"
-django-simple-history = "^3.4.0"
-strawberry-graphql-django = "^0.32.0"
+dj-rest-auth = { extras = ["with-social"], version = "^5.0.2" }
+django-cors-headers = "^4.3.1"
+whitenoise = "^6.6.0"
+django-post-office = "^3.8.0"
+celery-redbeat = "^2.2.0"
+celery = { extras = ["redis"], version = "^5.3.6" }
+django-ses = "^3.5.2"
+hiredis = "^2.3.2"
+django-jazzmin = "^2.6.1"
+django-organizations = "^2.4.1"
+django-sesame = "^3.2.2"
+strawberry-graphql-django = "^0.35.1"
 django-guardian = "^2.4.0"
-django-choices-field = "^2.2.2"
+django-choices-field = "^2.3.0"
+django-pghistory = "^3.1.0"
+django-storages = { extras = ["s3"], version = "^1.14.2" }
+django-waffle = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]

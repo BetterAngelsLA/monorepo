@@ -1,16 +1,4 @@
 """
-Will check if the user has any/all permissions for the parent of this field to resolve this.
-
-When the condition fails, the following can be returned (following this priority):
-1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
-2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
-3) An empty list in case the field is a list (e.g. `[String]!`)
-4) An empty `Connection` in case the return type is a relay connection
-2) Otherwise, an error will be raised
-"""
-directive @hasSourcePerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
-
-"""
 Will check if the user has any/all permissions for the resolved value of this field before returning it.
 
 When the condition fails, the following can be returned (following this priority):
@@ -34,27 +22,101 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
-type BedsType {
-  totalBeds: Int
-  privateBeds: Int
-  availableBeds: Int
-  maxStay: Int
-  averageBedRate: Float
-  bedLayoutDescription: String!
+input AddNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
 }
 
-input CreateMoodInput {
-  descriptor: MoodEnum!
+union AddNoteTaskPayload = NoteType | OperationInfo
+
+input AddressInput {
+  addressComponents: JSON
+  formattedAddress: String
 }
+
+type AddressType {
+  id: ID!
+  street: String
+  city: String
+  state: String
+  zipCode: String
+}
+
+interface AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+}
+
+enum AttachmentType {
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  UNKNOWN
+}
+
+input CreateNoteAttachmentInput {
+  note: ID!
+  file: Upload!
+  namespace: NoteNamespaceEnum!
+}
+
+union CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 input CreateNoteInput {
   title: String!
   publicDetails: String
   privateDetails: String
-  client: UserInput
+  client: ID
 }
 
+input CreateNoteMoodInput {
+  descriptor: MoodEnum!
+  noteId: ID!
+}
+
+union CreateNoteMoodPayload = MoodType | OperationInfo
+
 union CreateNotePayload = NoteType | OperationInfo
+
+input CreateNoteServiceRequestInput {
+  service: ServiceEnum!
+  customService: String
+  noteId: ID!
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input CreateNoteTaskInput {
+  title: String!
+  status: TaskStatusEnum!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union CreateNoteTaskPayload = TaskType | OperationInfo
+
+input CreateServiceRequestInput {
+  service: ServiceEnum!
+  status: ServiceRequestStatusEnum!
+  customService: String
+  client: ID
+}
+
+union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input CreateTaskInput {
+  title: String!
+  status: TaskStatusEnum!
+  dueBy: DateTime
+  client: ID
+}
+
+union CreateTaskPayload = TaskType | OperationInfo
 
 """Date with time (isoformat)"""
 scalar DateTime
@@ -63,23 +125,49 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteMoodPayload = DeletedObjectType | OperationInfo
+
+union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
+
 union DeleteNotePayload = NoteType | OperationInfo
 
-type DescriptionType {
-  description: String
-  typicalStayDescription: String
+union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
+
+union DeleteTaskPayload = TaskType | OperationInfo
+
+type DeletedObjectType {
+  id: Int!
 }
 
-type LocationType {
-  latitude: Float
-  longitude: Float
-  spa: Int
-  address: String!
-  city: String!
-  state: String!
-  zipCode: Int
-  confidential: Boolean
+type DjangoFileType {
+  name: String!
+  path: String!
+  size: Int!
+  url: String!
 }
+
+input DjangoModelFilterInput {
+  pk: ID!
+}
+
+type FeatureControlData {
+  flags: [FlagType!]!
+  switches: [SwitchType!]!
+  samples: [SampleType!]!
+}
+
+type FlagType {
+  name: String!
+  isActive: Boolean
+  lastModified: DateTime
+}
+
+union GetOrCreateAddressPayload = AddressType | OperationInfo
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
 
 input MagicLinkInput {
   email: String!
@@ -113,27 +201,86 @@ enum MoodEnum {
 }
 
 type MoodType {
+  id: ID!
   descriptor: MoodEnum!
 }
 
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
+  deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
+  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
+  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
+  createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
+  deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
+  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_service_request"}], any: true)
+  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_service_request"}], any: true)
+  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
+  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
+  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
+}
+
+input NoteAttachmentFilter {
+  attachmentType: AttachmentType
+  namespace: NoteNamespaceEnum!
+  AND: NoteAttachmentFilter
+  OR: NoteAttachmentFilter
+  NOT: NoteAttachmentFilter
+  DISTINCT: Boolean
+}
+
+type NoteAttachmentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+  namespace: NoteNamespaceEnum!
+}
+
+input NoteFilter {
+  client: DjangoModelFilterInput
+  createdBy: DjangoModelFilterInput
+  isSubmitted: Boolean
+  AND: NoteFilter
+  OR: NoteFilter
+  NOT: NoteFilter
+  DISTINCT: Boolean
+}
+
+enum NoteNamespaceEnum {
+  MOOD_ASSESSMENT
+  PROVIDED_SERVICES
+  REQUESTED_SERVICES
 }
 
 type NoteType {
   id: ID!
   title: String!
-  publicDetails: String!
-  client: UserType
+  point: Point
+  address: AddressType
+  attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
+  purposes(pagination: OffsetPaginationInput): [TaskType!]!
+  nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  publicDetails: String!
   isSubmitted: Boolean!
+  client: UserType
   createdAt: DateTime!
   createdBy: UserType!
-  privateDetails: String @hasSourcePerm(permissions: [{app: "notes", permission: "view_note_private_details"}], any: true)
+  timestamp: DateTime!
+  privateDetails: String
 }
 
 input OffsetPaginationInput {
@@ -170,92 +317,166 @@ enum OperationMessageKind {
   VALIDATION
 }
 
-input PopulationFilter {
-  id: ID
-  title: String
-  AND: PopulationFilter
-  OR: PopulationFilter
-  NOT: PopulationFilter
-}
+"""Represents a point as `(x, y, z)` or `(x, y)`."""
+scalar Point
 
 type Query {
   currentUser: UserType!
-  note(pk: ID!): NoteType! @hasPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  shelter(pk: ID!): ShelterType!
-  shelters(filters: ShelterFilter, pagination: OffsetPaginationInput): [ShelterType!]!
+  address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  featureControls: FeatureControlData!
+  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
+  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_service_request"}], any: true)
+  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
 
-input RequirementFilter {
+input RemoveNoteServiceRequestInput {
+  serviceRequestId: ID!
+  noteId: ID!
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
+
+input RemoveNoteTaskInput {
+  taskId: ID!
+  noteId: ID!
+  taskType: TaskTypeEnum!
+}
+
+union RemoveNoteTaskPayload = NoteType | OperationInfo
+
+input RevertNoteInput {
   id: ID
-  title: String
-  AND: RequirementFilter
-  OR: RequirementFilter
-  NOT: RequirementFilter
+  savedAt: DateTime!
 }
 
-input ServicesFilter {
-  id: ID
-  title: String
-  AND: ServicesFilter
-  OR: ServicesFilter
-  NOT: ServicesFilter
+union RevertNotePayload = NoteType | OperationInfo
+
+type SampleType {
+  name: String!
+  isActive: Boolean!
+  lastModified: DateTime
 }
 
-input ShelterFilter {
-  id: Int
-  title: String
-  services: ServicesFilter
-  population: PopulationFilter
-  shelterType: ShelterTypeFilter
-  requirementsFilter: RequirementFilter
-  AND: ShelterFilter
-  OR: ShelterFilter
-  NOT: ShelterFilter
+enum ServiceEnum {
+  BLANKET
+  BOOK
+  CLOTHES
+  DENTAL
+  FOOD
+  HARM_REDUCTION
+  HYGIENE_KIT
+  MEDICAL
+  PET_CARE
+  PET_FOOD
+  SHELTER
+  SHOES
+  SHOWER
+  STABILIZE
+  STORAGE
+  TRANSPORT
+  WATER
+  OTHER
 }
 
-type ShelterType {
+enum ServiceRequestStatusEnum {
+  COMPLETED
+  TO_DO
+}
+
+type ServiceRequestType {
+  id: ID!
+  service: ServiceEnum!
+  customService: String
+  status: ServiceRequestStatusEnum!
+  dueBy: DateTime
+  completedOn: DateTime
+  client: UserType
+  createdBy: UserType!
+  createdAt: DateTime!
+}
+
+enum ServiceRequestTypeEnum {
+  PROVIDED
+  REQUESTED
+}
+
+type SwitchType {
+  name: String!
+  isActive: Boolean!
+  lastModified: DateTime
+}
+
+enum TaskStatusEnum {
+  COMPLETED
+  TO_DO
+}
+
+type TaskType {
   id: ID!
   title: String!
-  imageUrl: String
-  howToEnter: String!
-  email: String
-  phone: String!
-  website: String
-  services: [String!]!
-  population: [String!]!
-  requirements: [String!]!
-  location: LocationType!
-  description: DescriptionType!
-  beds: BedsType!
+  point: Point
+  address: AddressType
+  status: TaskStatusEnum!
+  dueBy: DateTime
+  client: UserType
+  createdAt: DateTime!
+  createdBy: UserType!
 }
 
-input ShelterTypeFilter {
-  id: ID
-  title: String
-  AND: ShelterTypeFilter
-  OR: ShelterTypeFilter
-  NOT: ShelterTypeFilter
+enum TaskTypeEnum {
+  PURPOSE
+  NEXT_STEP
 }
 
 input UpdateNoteInput {
   id: ID
-  title: String!
+  title: String
+  point: Point
+  address: ID
   publicDetails: String
   privateDetails: String
-  moods: [CreateMoodInput!]
   isSubmitted: Boolean
+  timestamp: DateTime
 }
 
 union UpdateNotePayload = NoteType | OperationInfo
 
-input UserInput {
+input UpdateServiceRequestInput {
   id: ID
+  customService: String
+  status: ServiceRequestStatusEnum
+  dueBy: DateTime
+  client: ID
 }
+
+union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
+
+input UpdateTaskInput {
+  id: ID
+  title: String
+  point: Point
+  address: ID
+  status: TaskStatusEnum
+  dueBy: DateTime
+  client: ID
+}
+
+union UpdateTaskPayload = TaskType | OperationInfo
+
+scalar Upload
 
 type UserType {
   id: ID!
   username: String!
+  firstName: String!
+  lastName: String!
   email: String!
 }
 

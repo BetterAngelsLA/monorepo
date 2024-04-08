@@ -7,7 +7,10 @@ import {
   View,
 } from 'react-native';
 
+import { useMutation, useQuery } from '@apollo/client';
 import {
+  CREATE_NOTE,
+  GET_NOTES,
   MainScrollContainer,
   useSignOut,
   useUser,
@@ -31,6 +34,7 @@ import {
   H1,
   H2,
   H4,
+  NoteCard,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -148,12 +152,54 @@ const TOOLS = [
   },
 ];
 
+interface INote {
+  id: string;
+  title: string;
+  purposes: { value: string }[];
+  nextStepActions: { value: string }[];
+  publicDetails: string;
+  noteDateTime: string;
+  moods: string[];
+  providedServices: string[];
+  nextStepDate: Date;
+  requestedServices: string[];
+}
+
 export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
+  const [notes, setNotes] = useState<INote[] | undefined>([]);
+  const [createNote] = useMutation(CREATE_NOTE);
   const navigation = useNavigation();
   const { user } = useUser();
   const { signOut } = useSignOut();
   const router = useRouter();
+
+  const { data, loading: isLoading } = useQuery(GET_NOTES, {
+    fetchPolicy: 'cache-and-network',
+  });
+
+  async function createNoteFunction() {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            // TODO: This should be client name once we're fetching and mapping clients
+            title: `Session with ${user?.firstName}`,
+            client: user?.id,
+          },
+        },
+      });
+      router.navigate(`/add-note/${data?.createNote.id}`);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  useEffect(() => {
+    if (data && !isLoading) {
+      setNotes(data.notes);
+    }
+  }, [data, isLoading]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -272,9 +318,7 @@ export default function TabOneScreen() {
                 />
               ))}
             </ScrollView>
-          ) : (
-            <></>
-          )}
+          ) : null}
         </View>
         <View style={{ paddingHorizontal: Spacings.sm }}>
           <H2 mb="sm">Useful Tools</H2>
@@ -325,21 +369,31 @@ export default function TabOneScreen() {
             </Link>
           </View>
           <ClientCard
-            onPress={() =>
-              router.navigate({
-                pathname: '/add-note/[clientId]',
-                params: {
-                  clientId: '1234',
-                },
-              })
-            }
+            onPress={createNoteFunction}
             mb="sm"
             imageUrl=""
-            address="123 sdaf dasfda"
+            address="361 S Spring St."
             firstName="f"
             lastName="l"
             progress="10%"
           />
+          <View
+            style={{
+              flexDirection: 'row',
+            }}
+          >
+            {notes?.map((note: INote) => {
+              return (
+                <NoteCard
+                  mb="sm"
+                  key={note.id}
+                  title={note.title}
+                  onPress={() => router.navigate(`/add-note/${note.id}`)}
+                />
+              );
+            })}
+          </View>
+
           <Button
             accessibilityHint="loads more active clients"
             borderColor={Colors.PRIMARY}

@@ -20,9 +20,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
     def test_logged_in_user_logout(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
-        session_cache_key = (
-            f"django.contrib.sessions.cache{self.graphql_client.session.session_key}"
-        )
+        session_cache_key = f"django.contrib.sessions.cache{self.graphql_client.session.session_key}"
 
         query = """
         mutation {

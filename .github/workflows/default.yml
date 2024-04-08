@@ -101,23 +101,23 @@ jobs:
 
       - name: 🔄 Spin up monorepo environment
         run: |
-          docker-compose up -d
+          docker compose up -d
 
       - name: 🧹 Lint
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           yarn nx affected -t lint
           EOF
 
       - name: 🔗 Ensure Expo Library Compatibility
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           CI=1 yarn expo install --check
           EOF
 
       - name: 🕵️ Check for missing Django migrations
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           yarn nx affected -t check-migrations
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
@@ -131,7 +131,7 @@ jobs:
       - name: 📝 Make sure GraphQL Schema is up to date
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           yarn nx affected -t validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
@@ -163,20 +163,20 @@ jobs:
 
       - name: 🔬 Typecheck
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           yarn nx affected -t typecheck
           EOF
 
       - name: 🧪 Test
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t test
           EOF
 
       - name: 🛠️ Build and Push Artifacts
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t build --exclude=betterangels
           EOF
@@ -187,7 +187,7 @@ jobs:
       - name: 🚀 Deploy Changes
         if: env.BRANCH_NAME == 'main'
         run: |
-          docker-compose run better-angels bash <<'EOF'
+          docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=betterangels
           EOF
@@ -195,5 +195,5 @@ jobs:
       - name: ⏹️ Spin down monorepo environment
         if: always()
         run: |
-          docker-compose down
+          docker compose down
           sudo chown -R 1001:1001 .git

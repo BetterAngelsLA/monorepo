@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import BodyText from '../BodyText';
 import H2 from '../H2';
 
@@ -17,10 +17,11 @@ interface IFieldCardProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  error?: boolean;
+  error?: string | undefined;
   expanded: string | undefined | null;
   setExpanded: () => void;
   info?: ReactNode;
+  childHeight?: DimensionValue | undefined;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -39,6 +40,7 @@ export function FieldCard(props: IFieldCardProps) {
     expanded,
     setExpanded,
     info,
+    childHeight,
   } = props;
 
   return (
@@ -53,7 +55,7 @@ export function FieldCard(props: IFieldCardProps) {
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
           borderColor:
-            error && expanded !== title ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            !!error && expanded !== title ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
         },
       ]}
     >
@@ -63,12 +65,7 @@ export function FieldCard(props: IFieldCardProps) {
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}
       >
-        <View
-          style={[
-            styles.header,
-            { paddingBottom: expanded === title ? Spacings.sm : Spacings.md },
-          ]}
-        >
+        <View style={[styles.header]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {expanded === title ? (
               <H2>{title}</H2>
@@ -80,7 +77,20 @@ export function FieldCard(props: IFieldCardProps) {
           </View>
           {actionName}
         </View>
-        {children}
+        {error && (
+          <BodyText mt="xs" color={Colors.ERROR}>
+            {error}
+          </BodyText>
+        )}
+        <View
+          style={{
+            height: childHeight,
+            overflow: 'hidden',
+            marginTop: expanded === title ? Spacings.sm : Spacings.md,
+          }}
+        >
+          {children}
+        </View>
       </Pressable>
     </View>
   );

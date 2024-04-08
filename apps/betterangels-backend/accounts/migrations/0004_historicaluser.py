@@ -2,7 +2,7 @@
 
 import django.contrib.auth.validators
 import django.db.models.deletion
-import simple_history.models
+
 from django.conf import settings
 from django.db import migrations, models
 
@@ -18,9 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
@@ -28,9 +26,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
                         max_length=150,
-                        validators=[
-                            django.contrib.auth.validators.UnicodeUsernameValidator()
-                        ],
+                        validators=[django.contrib.auth.validators.UnicodeUsernameValidator()],
                         verbose_name="username",
                     ),
                 ),
@@ -82,6 +78,8 @@ class Migration(migrations.Migration):
                 "ordering": ("-history_date", "-history_id"),
                 "get_latest_by": ("history_date", "history_id"),
             },
-            bases=(simple_history.models.HistoricalChanges, models.Model),
+            # NOTE: simple_history dep has been deprecated
+            # bases=(simple_history.models.HistoricalChanges, models.Model),
+            bases=(models.Model,),
         ),
     ]

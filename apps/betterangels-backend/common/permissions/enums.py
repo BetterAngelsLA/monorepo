@@ -2,8 +2,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class SimpleModelPermissions(models.TextChoices):
-    VIEW = "simplemodels.view_simplemodel", _("Can view simplemodel")
-    CHANGE = "simplemodels.change_simplemodel", _("Can change simplemodel")
-    DELETE = "simplemodels.delete_simplemodel", _("Can delete simplemodel")
-    ADD = "simplemodels.add_simplemodel", _("Can add simplemodel")
+class AttachmentPermissions(models.TextChoices):
+    VIEW = "common.view_attachment", _("Can view attachment")
+    CHANGE = "common.change_attachment", _("Can change attachment")
+    DELETE = "common.delete_attachment", _("Can delete attachment")
+    ADD = "common.add_attachment", _("Can add attachment")
+
+
+class AddressPermissions(models.TextChoices):
+    VIEW = "common.view_address", _("Can view address")
+    ADD = "common.add_address", _("Can add address")
