@@ -1,8 +1,8 @@
-from typing import Optional, Tuple, Any, List
+from typing import Any, List, Optional, Tuple
 
 from django import forms
-from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 

@@ -1,8 +1,7 @@
-from typing import Optional, List
+from typing import List, Optional
 
-import strawberry_django
 import strawberry
-
+import strawberry_django
 from strawberry import auto
 
 from . import models

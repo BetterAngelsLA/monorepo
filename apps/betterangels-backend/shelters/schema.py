@@ -1,7 +1,9 @@
+from typing import List
+
 import strawberry
 import strawberry_django
+
 from .types import ShelterType
-from typing import List
 
 
 @strawberry.type

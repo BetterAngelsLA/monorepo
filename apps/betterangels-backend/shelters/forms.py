@@ -1,8 +1,9 @@
 from typing import Any
 
 from django import forms
-from .widgets import LatLongField
+
 from .models import Location
+from .widgets import LatLongField
 
 
 class LocationAdminForm(forms.ModelForm):
