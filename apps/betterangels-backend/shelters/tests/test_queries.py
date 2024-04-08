@@ -16,28 +16,27 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         super().setUp()
 
         shelter1_data = {
-            'title': 'Shelter-1',
-            'email': 'shelter1@test.com',
-            'description': 'Some description',
-            'typical_stay_description': 'Some typical stay description',
-            'total_beds': 100,
-            'available_beds': 50,
-            'private_beds': 25,
-            'max_stay': 12,
-            'average_bed_rate': 500.23,
-            'bed_layout_description': 'Some bed layout description'
+            "title": "Shelter-1",
+            "email": "shelter1@test.com",
+            "description": "Some description",
+            "typical_stay_description": "Some typical stay description",
+            "total_beds": 100,
+            "available_beds": 50,
+            "private_beds": 25,
+            "max_stay": 12,
+            "average_bed_rate": 500.23,
+            "bed_layout_description": "Some bed layout description",
         }
         shelter1 = Shelter.objects.create(**shelter1_data)
-        ShelterType.objects.create(title='Emergency Shelter', shelter=shelter1).save()
-        Service.objects.create(title='Mail', shelter=shelter1).save()
-        Service.objects.create(title='Showers', shelter=shelter1).save()
-        Population.objects.create(title='Men', shelter=shelter1).save()
-        Population.objects.create(title='Women', shelter=shelter1).save()
-        Requirement.objects.create(title='Veteran', shelter=shelter1).save()
-        Requirement.objects.create(title='Medicaid or Medicare',
-                                   shelter=shelter1).save()
+        ShelterType.objects.create(title="Emergency Shelter", shelter=shelter1).save()
+        Service.objects.create(title="Mail", shelter=shelter1).save()
+        Service.objects.create(title="Showers", shelter=shelter1).save()
+        Population.objects.create(title="Men", shelter=shelter1).save()
+        Population.objects.create(title="Women", shelter=shelter1).save()
+        Requirement.objects.create(title="Veteran", shelter=shelter1).save()
+        Requirement.objects.create(title="Medicaid or Medicare", shelter=shelter1).save()
 
-        location = Location(point=Point(5.152149, 46.199615), address='1234 Main St.')
+        location = Location(point=Point(5.152149, 46.199615), address="1234 Main St.")
         location.save()
 
         shelter1.location = location
@@ -59,15 +58,20 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         }
         """
 
-        expected_response = {'shelters':
-                             [{'id': '1', 'location':
-                               {'latitude': 5.152149, 'longitude': 46.199615},
-                               'populations': ['Men', 'Women'],
-                               'services': ['Mail', 'Showers'],
-                               'title': 'Shelter-1'}]}
-        
+        expected_response = {
+            "shelters": [
+                {
+                    "id": "1",
+                    "location": {"latitude": 5.152149, "longitude": 46.199615},
+                    "populations": ["Men", "Women"],
+                    "services": ["Mail", "Showers"],
+                    "title": "Shelter-1",
+                }
+            ]
+        }
+
         with self.assertNumQueries(5):
             response = self.execute_graphql(query)
 
-        self.assertEqual(len(response['data']['shelters']), 1)
-        self.assertEqual(response['data'], expected_response)
+        self.assertEqual(len(response["data"]["shelters"]), 1)
+        self.assertEqual(response["data"], expected_response)

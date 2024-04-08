@@ -65,7 +65,7 @@ class ShelterType:
             city=self.location.city,
             state=self.location.state,
             zip_code=self.location.zip_code,
-            confidential=self.confidential
+            confidential=self.confidential,
         )
 
     @strawberry_django.field

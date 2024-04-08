@@ -2,8 +2,7 @@ from django.contrib import admin
 
 from .forms import LocationAdminForm
 
-from .models import HowToEnter, Shelter, Service, Population, Requirement, \
-    ShelterType, Location
+from .models import HowToEnter, Shelter, Service, Population, Requirement, ShelterType, Location
 
 
 class PopulationInline(admin.TabularInline):

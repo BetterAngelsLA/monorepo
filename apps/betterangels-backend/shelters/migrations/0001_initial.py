@@ -29,9 +29,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "point",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, geography=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
                 ),
                 ("address", models.CharField(max_length=255)),
                 ("city", models.CharField(blank=True, max_length=100, null=True)),
@@ -71,9 +69,7 @@ class Migration(migrations.Migration):
                 ("max_stay", models.PositiveIntegerField(blank=True, null=True)),
                 (
                     "average_bed_rate",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=10, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
                 ),
                 ("bed_layout_description", models.TextField(blank=True, null=True)),
                 (
