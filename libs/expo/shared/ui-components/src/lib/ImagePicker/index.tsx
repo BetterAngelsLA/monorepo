@@ -93,13 +93,17 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
 
   return (
     <IconButton
+      disabled={isLoading}
       mr={mr}
       onPress={pickImage}
       accessibilityLabel="library"
       accessibilityHint="opens images library"
       variant="transparent"
     >
-      <ImagesIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+      <ImagesIcon
+        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        size="md"
+      />
     </IconButton>
   );
 }

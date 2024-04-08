@@ -115,14 +115,8 @@ export function IconButton(props: IIconButtonProps) {
           width: Width[width],
           borderWidth: 1,
           borderRadius: 8,
-          backgroundColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : VARIANTS[variant].bg,
-          borderColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : borderColor
-            ? borderColor
-            : VARIANTS[variant].border,
+          backgroundColor: VARIANTS[variant].bg,
+          borderColor: borderColor ? borderColor : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],

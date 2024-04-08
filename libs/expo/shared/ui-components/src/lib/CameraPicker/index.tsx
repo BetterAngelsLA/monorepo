@@ -242,12 +242,16 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   return (
     <IconButton
+      disabled={isLoading}
       accessibilityLabel="camera"
       accessibilityHint="opens camera"
       variant="transparent"
       onPress={getPermissionsAndOpenCamera}
     >
-      <CameraIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+      <CameraIcon
+        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        size="md"
+      />
     </IconButton>
   );
 }
