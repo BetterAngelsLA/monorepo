@@ -64,8 +64,8 @@ class LocationType:
     longitude: Optional[float]
     spa: Optional[int]
     address: str
-    city: str
-    state: str
+    city: Optional[str]
+    state: Optional[str]
     zip_code: Optional[int]
     confidential: Optional[bool]
 
@@ -92,13 +92,13 @@ class ShelterType:
     @strawberry_django.field
     def location(self) -> LocationType:
         return LocationType(
-            latitude=self.latitude,
-            longitude=self.longitude,
+            latitude=self.location.point.x,
+            longitude=self.location.point.y,
             spa=self.spa,
-            address=self.address,
-            city=self.city,
-            state=self.state,
-            zip_code=self.zip_code,
+            address=self.location.address,
+            city=self.location.city,
+            state=self.location.state,
+            zip_code=self.location.zip_code,
             confidential=self.confidential
         )
 

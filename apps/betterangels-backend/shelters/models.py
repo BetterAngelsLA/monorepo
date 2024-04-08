@@ -11,13 +11,13 @@ from .enums import (
 
 class Location(BaseModel):
     point = PointField(blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
+    address = models.CharField(max_length=255)
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self) -> str:
-        return self.address if self.address else ''
+        return self.address
 
 
 class Shelter(BaseModel):
