@@ -60,6 +60,16 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type BedsType = {
+  __typename?: 'BedsType';
+  availableBeds?: Maybe<Scalars['Int']['output']>;
+  averageBedRate?: Maybe<Scalars['Float']['output']>;
+  bedLayoutDescription: Scalars['String']['output'];
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  privateBeds?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+};
+
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
   namespace: NoteNamespaceEnum;
@@ -139,6 +149,12 @@ export type DeletedObjectType = {
   id: Scalars['Int']['output'];
 };
 
+export type DescriptionType = {
+  __typename?: 'DescriptionType';
+  description?: Maybe<Scalars['String']['output']>;
+  typicalStayDescription?: Maybe<Scalars['String']['output']>;
+};
+
 export type DjangoFileType = {
   __typename?: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -149,6 +165,11 @@ export type DjangoFileType = {
 
 export type DjangoModelFilterInput = {
   pk: Scalars['ID']['input'];
+};
+
+export type DjangoModelType = {
+  __typename?: 'DjangoModelType';
+  pk: Scalars['ID']['output'];
 };
 
 export type FeatureControlData = {
@@ -166,6 +187,18 @@ export type FlagType = {
 };
 
 export type GetOrCreateAddressPayload = AddressType | OperationInfo;
+
+export type LocationType = {
+  __typename?: 'LocationType';
+  address: Scalars['String']['output'];
+  city?: Maybe<Scalars['String']['output']>;
+  confidential?: Maybe<Scalars['Boolean']['output']>;
+  latitude?: Maybe<Scalars['Float']['output']>;
+  longitude?: Maybe<Scalars['Float']['output']>;
+  spa?: Maybe<Scalars['Int']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['Int']['output']>;
+};
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -468,6 +501,8 @@ export type Query = {
   notes: Array<NoteType>;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
+  shelter: ShelterType;
+  shelters: Array<ShelterType>;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -506,6 +541,16 @@ export type QueryServiceRequestArgs = {
 
 
 export type QueryServiceRequestsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryShelterArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QuerySheltersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -592,6 +637,23 @@ export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
   Requested = 'REQUESTED'
 }
+
+export type ShelterType = {
+  __typename?: 'ShelterType';
+  beds: BedsType;
+  description: DescriptionType;
+  email?: Maybe<Scalars['String']['output']>;
+  howToEnter: Array<DjangoModelType>;
+  id: Scalars['ID']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  location: LocationType;
+  phone: Scalars['String']['output'];
+  populations: Array<Scalars['String']['output']>;
+  requirements: Array<Scalars['String']['output']>;
+  services: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  website?: Maybe<Scalars['String']['output']>;
+};
 
 export type SwitchType = {
   __typename?: 'SwitchType';
