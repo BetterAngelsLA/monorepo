@@ -135,9 +135,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps", 34),
         ],
     )
-    def test_create_note_task_mutation(
-        self, task_type: str, tasks_to_check: str, expected_query_count: int
-    ) -> None:
+    def test_create_note_task_mutation(self, task_type: str, tasks_to_check: str, expected_query_count: int) -> None:
         variables = {
             "title": "New Note Task",
             "noteId": self.note["id"],
@@ -233,9 +231,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "serviceRequestType": service_request_type,
         }
 
-        created_service_request = self._create_note_service_request_fixture(variables)[
-            "data"
-        ]["createNoteServiceRequest"]
+        created_service_request = self._create_note_service_request_fixture(variables)["data"][
+            "createNoteServiceRequest"
+        ]
 
         variables = {
             "serviceRequestId": created_service_request["id"],
@@ -246,9 +244,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # Remove note service request
         expected_query_count = expected_query_count
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            updated_note = self._remove_note_service_request_fixture(variables)["data"][
-                "removeNoteServiceRequest"
-            ]
+            updated_note = self._remove_note_service_request_fixture(variables)["data"]["removeNoteServiceRequest"]
 
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
@@ -330,9 +326,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         returned_note = response["data"]["addNoteTask"]
         self.assertEqual(expected_note, returned_note)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
-        self.assertEqual(
-            int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id
-        )
+        self.assertEqual(int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id)
 
     @parametrize(
         "task_type, tasks_to_check",
@@ -341,16 +335,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps"),
         ],
     )
-    def test_remove_note_task_mutation(
-        self, task_type: str, tasks_to_check: str
-    ) -> None:
+    def test_remove_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
-            "taskId": (
-                self.purpose_1["id"]
-                if tasks_to_check == "purposes"
-                else self.next_step_1["id"]
-            ),
+            "taskId": (self.purpose_1["id"] if tasks_to_check == "purposes" else self.next_step_1["id"]),
             "taskType": task_type,
         }
 
@@ -563,9 +551,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._create_note_mood_fixture(persisted_mood_variables_1)
 
         persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
-        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)[
-            "data"
-        ]["createNoteMood"]["id"]
+        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
 
         # Select a moment to revert to
         saved_at = timezone.now()
@@ -640,9 +626,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(reverted_note["nextSteps"]), 1)
         # Assert that unassociated tasks were not deleted
         self.assertEqual(
-            Task.objects.filter(
-                id__in=[self.next_step_2["id"], self.purpose_2["id"]]
-            ).count(),
+            Task.objects.filter(id__in=[self.next_step_2["id"], self.purpose_2["id"]]).count(),
             2,
         )
 
@@ -891,9 +875,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {"id": note_id, "savedAt": saved_at}
 
         with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
-            not_reverted_note = self._revert_note_fixture(variables)["data"][
-                "revertNote"
-            ]
+            not_reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["title"], "Discarded Title")
@@ -923,9 +905,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
             create_response["data"]["createNoteAttachment"]["originalFilename"],
             file_name,
         )
-        self.assertIsNotNone(
-            create_response["data"]["createNoteAttachment"]["file"]["name"]
-        )
+        self.assertIsNotNone(create_response["data"]["createNoteAttachment"]["file"]["name"])
         self.assertTrue(
             Attachment.objects.filter(id=attachment_id).exists(),
             "The attachment should have been created and exist in the database.",

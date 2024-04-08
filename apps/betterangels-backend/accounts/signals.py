@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_migrate)
 def create_superuser(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(
-            username="admin", email="admin@ba.la", password="admin"
-        )
+        User.objects.create_superuser(username="admin", email="admin@ba.la", password="admin")
 
 
 @receiver(post_migrate)
@@ -49,10 +47,7 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
 
 @receiver(post_migrate)
 def create_test_organization(sender: Any, **kwargs: Any) -> None:
-    if (
-        settings.IS_LOCAL_DEV
-        and not Organization.objects.filter(name="test_org").exists()
-    ):
+    if settings.IS_LOCAL_DEV and not Organization.objects.filter(name="test_org").exists():
         test_usernames = ["admin", "agent"]
         test_users = User.objects.filter(username__in=test_usernames)
         test_org = Organization.objects.create(name="test_org")
@@ -61,17 +56,13 @@ def create_test_organization(sender: Any, **kwargs: Any) -> None:
 
 
 @receiver(pre_delete, sender=Organization)
-def handle_organization_removed(
-    sender: Any, instance: Organization, **kwargs: Any
-) -> None:
+def handle_organization_removed(sender: Any, instance: Organization, **kwargs: Any) -> None:
     remove_organization_permission_group(instance)
     logger.info(f"Organization {instance.name} was removed.")
 
 
 @receiver(post_save, sender=OrganizationUser)
-def handle_organization_user_added(
-    sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any
-) -> None:
+def handle_organization_user_added(sender: Any, instance: OrganizationUser, created: bool, **kwargs: Any) -> None:
     user: User = instance.user
     organization: Organization = instance.organization
     if created:
@@ -80,27 +71,19 @@ def handle_organization_user_added(
 
 
 @receiver(post_delete, sender=OrganizationUser)
-def handle_organization_user_removed(
-    sender: Any, instance: OrganizationUser, **kwargs: Any
-) -> None:
+def handle_organization_user_removed(sender: Any, instance: OrganizationUser, **kwargs: Any) -> None:
     user: User = instance.user
     organization: Organization = instance.organization
     remove_org_group_permissions_from_user(user, organization)
-    logger.info(
-        f"User {user.username} was removed from organization {organization.name}."
-    )
+    logger.info(f"User {user.username} was removed from organization {organization.name}.")
 
 
 @receiver(post_migrate)
 def update_group_permissions(sender: Any, **kwargs: Any) -> None:
     with transaction.atomic():
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
-            name="Caseworker"
-        )
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
         permissions = caseworker_permission_group_template.permissions.all()
-        permission_groups = (
-            caseworker_permission_group_template.permissiongroup_set.all()
-        )
+        permission_groups = caseworker_permission_group_template.permissiongroup_set.all()
 
         for permission_group in permission_groups:
             permission_group.group.permissions.set(permissions)

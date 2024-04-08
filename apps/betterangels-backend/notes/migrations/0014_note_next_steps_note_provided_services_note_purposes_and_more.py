@@ -18,16 +18,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="next_steps",
-            field=models.ManyToManyField(
-                related_name="next_step_notes", to="notes.task"
-            ),
+            field=models.ManyToManyField(related_name="next_step_notes", to="notes.task"),
         ),
         migrations.AddField(
             model_name="note",
             name="provided_services",
-            field=models.ManyToManyField(
-                related_name="provided_notes", to="notes.servicerequest"
-            ),
+            field=models.ManyToManyField(related_name="provided_notes", to="notes.servicerequest"),
         ),
         migrations.AddField(
             model_name="note",
@@ -37,18 +33,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="requested_services",
-            field=models.ManyToManyField(
-                related_name="requested_notes", to="notes.servicerequest"
-            ),
+            field=models.ManyToManyField(related_name="requested_notes", to="notes.servicerequest"),
         ),
         migrations.CreateModel(
             name="HistoricalTask",
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("created_at", models.DateTimeField(blank=True, editable=False)),
                 ("updated_at", models.DateTimeField(blank=True, editable=False)),
@@ -139,9 +131,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("m2m_history_id", models.AutoField(primary_key=True, serialize=False)),
                 (
@@ -189,9 +179,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigIntegerField(
-                        auto_created=True, blank=True, db_index=True, verbose_name="ID"
-                    ),
+                    models.BigIntegerField(auto_created=True, blank=True, db_index=True, verbose_name="ID"),
                 ),
                 ("m2m_history_id", models.AutoField(primary_key=True, serialize=False)),
                 (

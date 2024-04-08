@@ -123,11 +123,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> str:
-        return str(
-            obj.service.label
-            if obj.service != ServiceEnum.OTHER
-            else obj.custom_service
-        )
+        return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.custom_service)
 
 
 admin.site.register(Mood, MoodAdmin)

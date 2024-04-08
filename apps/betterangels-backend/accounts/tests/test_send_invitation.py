@@ -15,7 +15,5 @@ class SendInvitationTest(TestCase):
         self.invitation_backend = CustomInvitations()
 
     def test_send_invitation_case(self) -> None:
-        self.invitation_backend.invite_by_email(
-            self.email, domain={"domain": "localhost:8000"}
-        )
+        self.invitation_backend.invite_by_email(self.email, domain={"domain": "localhost:8000"})
         self.assertEqual(Email.objects.filter(to=self.email).count(), 1)

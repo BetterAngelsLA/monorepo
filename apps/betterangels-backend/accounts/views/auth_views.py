@@ -61,9 +61,7 @@ class AuthRedirectView(APIView):
         # Assuming your app needs the code to obtain tokens.'
         if request.query_params:
             redirect_uri += "?"
-            redirect_uri += "&".join(
-                f"{key}={value}" for key, value in request.query_params.items()
-            )
+            redirect_uri += "&".join(f"{key}={value}" for key, value in request.query_params.items())
         response = Response(status=302)  # 302 is for temporary redirect
         response["Location"] = redirect_uri
         return response

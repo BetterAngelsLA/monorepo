@@ -67,8 +67,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             "client_2",
         ]
         self.user_map = {
-            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}")
-            for user_label in self.user_labels
+            user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in self.user_labels
         }
 
         self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
@@ -78,12 +77,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.client_2 = self.user_map["client_2"]
 
     def _setup_groups_and_permissions(self) -> None:
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
-            name="Caseworker"
-        )
-        perm_group = permission_group_recipe.make(
-            template=caseworker_permission_group_template
-        )
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
         perm_group.organization.add_user(self.org_1_case_manager_1)
         perm_group.organization.add_user(self.org_1_case_manager_2)
 
@@ -212,9 +207,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _update_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_note_fixture("update", variables)
 
-    def _create_or_update_note_fixture(
-        self, operation: str, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_or_update_note_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
             mutation {operation.capitalize()}Note($data: {operation.capitalize()}NoteInput!) {{ # noqa: B950
@@ -273,9 +266,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _create_task_for_note_fixture(
-        self, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_task_for_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateTask($data: CreateTaskInput!) {
                 createTask(data: $data) {
@@ -614,19 +605,13 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Logout after setting up the service request
         self.graphql_client.logout()
 
-    def _create_service_request_fixture(
-        self, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("create", variables)
 
-    def _update_service_request_fixture(
-        self, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _update_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("update", variables)
 
-    def _create_or_update_service_request_fixture(
-        self, operation: str, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_or_update_service_request_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
@@ -691,9 +676,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(
-        self, operation: str, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""

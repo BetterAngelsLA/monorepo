@@ -26,9 +26,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(
         ("username"),
         max_length=150,
-        help_text=(
-            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-        ),
+        help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
     )
     first_name = models.CharField(max_length=30, blank=True)
@@ -47,8 +45,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("active"),
         default=True,
         help_text=(
-            "Designates whether this user should be treated as active. "
-            "Unselect this instead of deleting accounts."
+            "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
         ),
     )
 
@@ -147,9 +144,7 @@ class PermissionGroup(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk and self.template:
-            raise ValidationError(
-                "Updating a PermissionGroup with a template is not allowed."
-            )
+            raise ValidationError("Updating a PermissionGroup with a template is not allowed.")
         # TODO: Update the admin so that when a template is defined you can't enter in a
         # name. Also make it clear that the name of the group will be prefixed by the
         # org name.
