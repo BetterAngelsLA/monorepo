@@ -25,10 +25,12 @@ interface ICameraPickerProps {
   namespace: string;
   noteId: string | undefined;
   setIsLoading: (e: boolean) => void;
+  isLoading: boolean;
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images, namespace, noteId, setIsLoading } = props;
+  const { setImages, images, namespace, noteId, setIsLoading, isLoading } =
+    props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -65,7 +67,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   const cameraRef = useRef<CameraView | null>(null);
 
   const captureImage = async () => {
-    if (!noteId || !cameraRef.current) return;
+    if (!noteId || !cameraRef.current || isLoading) return;
     setIsLoading(true);
     try {
       const photo = await cameraRef.current.takePictureAsync();
@@ -103,6 +105,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
   };
 
   const getPermissionsAndOpenCamera = async () => {
+    if (isLoading) return;
     if (permission) {
       const { granted } = await requestPermission();
       if (granted) {
@@ -239,12 +242,16 @@ export default function CameraPicker(props: ICameraPickerProps) {
 
   return (
     <IconButton
+      disabled={isLoading}
       accessibilityLabel="camera"
       accessibilityHint="opens camera"
       variant="transparent"
       onPress={getPermissionsAndOpenCamera}
     >
-      <CameraIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+      <CameraIcon
+        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        size="md"
+      />
     </IconButton>
   );
 }
