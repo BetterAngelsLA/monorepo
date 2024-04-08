@@ -64,7 +64,8 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
 
 
 class FeatureControlDataTestCase(GraphQLBaseTestCase):
-    def test_feature_controls_query(self) -> None:
+    def setUp(self) -> None:
+        super().setUp()
         get_waffle_flag_model().objects.create(name="myflag1", everyone=True)
         get_waffle_flag_model().objects.create(name="myflag2", everyone=True)
         get_waffle_flag_model().objects.create(name="myflag3", everyone=True)
@@ -72,6 +73,7 @@ class FeatureControlDataTestCase(GraphQLBaseTestCase):
         get_waffle_switch_model().objects.create(name="myswitch2", active=True)
         get_waffle_sample_model().objects.create(name="test_sample_active", percent=100)
 
+    def test_feature_controls_query(self) -> None:
         query = """
         query {
             featureControls {
