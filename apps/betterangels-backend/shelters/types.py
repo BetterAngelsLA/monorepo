@@ -8,40 +8,6 @@ from strawberry import auto
 from . import models
 
 
-@strawberry_django.filter(models.Shelter)
-class ShelterFilter:
-    id: Optional[int]
-    title: Optional[str]
-    services: Optional["ServicesFilter"]
-    population: Optional["PopulationFilter"]
-    shelter_type: Optional["ShelterTypeFilter"]
-    requirements_filter: Optional["RequirementFilter"]
-
-
-@strawberry_django.filter(models.Service)
-class ServicesFilter:
-    id: auto
-    title: auto
-
-
-@strawberry_django.filter(models.ShelterType)
-class ShelterTypeFilter:
-    id: auto
-    title: auto
-
-
-@strawberry_django.filter(models.Population)
-class PopulationFilter:
-    id: auto
-    title: auto
-
-
-@strawberry_django.filter(models.Requirement)
-class RequirementFilter:
-    id: auto
-    title: auto
-
-
 @strawberry.type
 class DescriptionType:
     description: Optional[str]
@@ -70,7 +36,7 @@ class LocationType:
     confidential: Optional[bool]
 
 
-@strawberry_django.type(models.Shelter, pagination=True, filters=ShelterFilter)
+@strawberry_django.type(models.Shelter, pagination=True)
 class ShelterType:
     id: auto
     title: auto
@@ -83,7 +49,7 @@ class ShelterType:
     website: auto
 
     services: List[str]
-    population: List[str]
+    populations: List[str]
     requirements: List[str]
 
     # I've been unable to figure out how to resolve the mypy errors here as it

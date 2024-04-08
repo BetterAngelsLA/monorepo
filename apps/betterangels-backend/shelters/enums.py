@@ -4,7 +4,7 @@ from django.db import models
 # If adding or removing Services, don't forget to update the Services table accordingly.
 class ServiceEnum(models.TextChoices):
     FOOD = "Food", "Food"
-    SHOWERS = "Shower", "Shower"
+    SHOWERS = "Showers", "Showers"
     CLOTHING = "Clothing", "Clothing"
     MAIL = "Mail", "Mail"
     PHONE = "Phone", "Phone"
