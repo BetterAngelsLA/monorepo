@@ -62,10 +62,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       try {
         const { data } = await axios.get(url);
         setValue('location', undefined);
-        console.log(
-          'GEOCODE RESULTS GEOCODE RESULTS GEOCODE RESULTS GEOCODE RESULTS '
-        );
-        console.log(data.results[0]);
         setCurrentLocation({
           longitude,
           latitude,
@@ -88,10 +84,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         });
         setPin(true);
         setSelected(true);
-        console.log(
-          'GEOCODE RESULTS GEOCODE RESULTS GEOCODE RESULTS GEOCODE RESULTS '
-        );
-        console.log(data.results[0]);
       } catch (e) {
         console.log(e);
       }

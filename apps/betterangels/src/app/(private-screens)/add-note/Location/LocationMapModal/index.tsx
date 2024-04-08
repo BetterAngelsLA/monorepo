@@ -231,10 +231,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         latitude,
         name: undefined,
       });
-      console.log(
-        'GEOCODE ADDRESS GEOCODE ADDRESS GEOCODE ADDRESS GEOCODE ADDRESS '
-      );
-      console.log(data.results[0]);
+
       setInitialLocation({
         longitude,
         latitude,
