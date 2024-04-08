@@ -134,7 +134,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": note_id,
             "point": self.point,
-            "addressInput": self.address_input,
+            "address": self.address_input,
         }
 
         expected_query_count = 20
@@ -1130,7 +1130,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": task_id,
             "point": self.point,
-            "addressInput": self.address_input,
+            "address": self.address_input,
         }
 
         expected_query_count = 18

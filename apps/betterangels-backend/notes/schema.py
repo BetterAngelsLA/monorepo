@@ -1,5 +1,5 @@
 import uuid
-from typing import List, cast
+from typing import Dict, List, cast
 
 import pghistory
 import strawberry
@@ -165,7 +165,8 @@ class Mutation:
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
 
-            address = Address.get_or_create_address(data.address_input.__dict__)
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
             note = resolvers.update(
                 info,
                 note,
@@ -658,7 +659,8 @@ class Mutation:
             except Task.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this task.")
 
-            address = Address.get_or_create_address(data.address_input.__dict__)
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
             task = resolvers.update(
                 info,
                 task,

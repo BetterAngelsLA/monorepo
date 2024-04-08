@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from accounts.models import User
 from common.enums import AttachmentType
@@ -133,8 +133,7 @@ class Address(BaseModel):
         return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
 
     @staticmethod
-    def convert_to_structured_address(address_components: Union[str, bytes, bytearray]) -> dict:
-        structured_address = {}
+    def convert_to_structured_address(address_components: str) -> dict:
         address_fields = {
             "street_number": "long_name",
             "route": "long_name",
@@ -143,19 +142,20 @@ class Address(BaseModel):
             "country": "long_name",
             "postal_code": "long_name",
         }
+
         components = json.loads(address_components)
 
-        for component in components:
-            for field, name_type in address_fields.items():
-                if field in component["types"]:
-                    structured_address[field] = component.get(name_type)
-
-                    break
+        structured_address = {
+            field: next((component.get(name_type) for component in components if field in component["types"]), None)
+            for field, name_type in address_fields.items()
+        }
 
         return structured_address
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+        # This function expects a Google Geocoding API payload
+        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
         structured_address = cls.convert_to_structured_address(address_data["address_components"])
 
         street_number = structured_address.get("street_number")

@@ -221,14 +221,14 @@ class UpdateNoteInput:
 class UpdateNoteLocationInput:
     id: auto
     point: auto
-    address_input: AddressInput
+    address: AddressInput
 
 
 @strawberry_django.input(models.Task)
 class UpdateTaskLocationInput:
     id: auto
     point: auto
-    address_input: AddressInput
+    address: AddressInput
 
 
 @strawberry_django.input(models.Note)

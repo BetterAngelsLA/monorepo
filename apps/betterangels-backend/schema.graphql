@@ -451,7 +451,7 @@ input UpdateNoteInput {
 input UpdateNoteLocationInput {
   id: ID
   point: Point
-  addressInput: AddressInput!
+  address: AddressInput!
 }
 
 union UpdateNoteLocationPayload = NoteType | OperationInfo
@@ -481,7 +481,7 @@ input UpdateTaskInput {
 input UpdateTaskLocationInput {
   id: ID
   point: Point
-  addressInput: AddressInput!
+  address: AddressInput!
 }
 
 union UpdateTaskLocationPayload = TaskType | OperationInfo
