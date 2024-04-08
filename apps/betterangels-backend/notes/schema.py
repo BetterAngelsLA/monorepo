@@ -154,7 +154,7 @@ class Mutation:
         ]
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(id=data.id, timestamp=timezone.now(), label=info.field_name):
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
             user = get_current_user(info)
             try:
                 note = filter_for_user(
@@ -647,7 +647,7 @@ class Mutation:
         ]
     )
     def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
-        with transaction.atomic(), pghistory.context(id=data.id, timestamp=timezone.now(), label=info.field_name):
+        with transaction.atomic():
             user = get_current_user(info)
             try:
                 task = filter_for_user(
