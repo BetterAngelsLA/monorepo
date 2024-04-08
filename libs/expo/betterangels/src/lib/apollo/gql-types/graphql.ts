@@ -227,8 +227,10 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateNote: UpdateNotePayload;
+  updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
+  updateTaskLocation: UpdateTaskLocationPayload;
 };
 
 
@@ -327,6 +329,11 @@ export type MutationUpdateNoteArgs = {
 };
 
 
+export type MutationUpdateNoteLocationArgs = {
+  data: UpdateNoteLocationInput;
+};
+
+
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
 };
@@ -334,6 +341,11 @@ export type MutationUpdateServiceRequestArgs = {
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
+};
+
+
+export type MutationUpdateTaskLocationArgs = {
+  data: UpdateTaskLocationInput;
 };
 
 export type NoteAttachmentFilter = {
@@ -634,6 +646,14 @@ export type UpdateNoteInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateNoteLocationInput = {
+  address: AddressInput;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+};
+
+export type UpdateNoteLocationPayload = NoteType | OperationInfo;
+
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateServiceRequestInput = {
@@ -655,6 +675,14 @@ export type UpdateTaskInput = {
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type UpdateTaskLocationInput = {
+  address: AddressInput;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+};
+
+export type UpdateTaskLocationPayload = OperationInfo | TaskType;
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
 
