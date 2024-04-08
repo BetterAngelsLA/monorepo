@@ -72,7 +72,7 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
-            self.address_input["addressComponents"].pop(missing_component_index)  # type: ignore
+            self.address_input["addressComponents"].pop(missing_component_index)
             self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
 
             response = self._get_or_create_address_fixture(self.address_input)
