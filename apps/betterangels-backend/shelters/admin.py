@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from .forms import LocationAdminForm
-
 from .models import (
     HowToEnter,
     Location,
