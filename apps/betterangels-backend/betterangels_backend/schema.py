@@ -11,7 +11,7 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 
 # Schema Stiching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountQuery, CommonQuery, NoteQuery)
+queries = (AccountQuery, CommonQuery, NoteQuery, ShelterQuery)
 Query = merge_types("Query", queries)
 
 mutations = (AccountMutation, CommonMutation, NoteMutation)

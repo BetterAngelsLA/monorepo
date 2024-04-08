@@ -456,14 +456,6 @@ export type PermDefinition = {
   permission?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type PopulationFilter = {
-  AND?: InputMaybe<PopulationFilter>;
-  NOT?: InputMaybe<PopulationFilter>;
-  OR?: InputMaybe<PopulationFilter>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type Query = {
   __typename?: 'Query';
   address: AddressType;
