@@ -68,52 +68,51 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.address_components = [
-            {"long_name": "200", "short_name": "200", "types": ["street_number"]},
-            {
-                "long_name": "Geary Street",
-                "short_name": "Geary St",
-                "types": ["route"],
-            },
-            {
-                "long_name": "Union Square",
-                "short_name": "Union Square",
-                "types": ["neighborhood", "political"],
-            },
-            {
-                "long_name": "San Francisco",
-                "short_name": "SF",
-                "types": ["locality", "political"],
-            },
-            {
-                "long_name": "San Francisco County",
-                "short_name": "San Francisco County",
-                "types": ["administrative_area_level_2", "political"],
-            },
-            {
-                "long_name": "California",
-                "short_name": "CA",
-                "types": ["administrative_area_level_1", "political"],
-            },
-            {
-                "long_name": "United States",
-                "short_name": "US",
-                "types": ["country", "political"],
-            },
-            {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
-        ]
-        self.formatted_address = "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
+        self.address_input = {
+            "addressComponents": [
+                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
+                {
+                    "long_name": "Geary Street",
+                    "short_name": "Geary St",
+                    "types": ["route"],
+                },
+                {
+                    "long_name": "Union Square",
+                    "short_name": "Union Square",
+                    "types": ["neighborhood", "political"],
+                },
+                {
+                    "long_name": "San Francisco",
+                    "short_name": "SF",
+                    "types": ["locality", "political"],
+                },
+                {
+                    "long_name": "San Francisco County",
+                    "short_name": "San Francisco County",
+                    "types": ["administrative_area_level_2", "political"],
+                },
+                {
+                    "long_name": "California",
+                    "short_name": "CA",
+                    "types": ["administrative_area_level_1", "political"],
+                },
+                {
+                    "long_name": "United States",
+                    "short_name": "US",
+                    "types": ["country", "political"],
+                },
+                {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
+            ],
+            "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+        }
         self._setup_address()
 
     def _setup_address(self) -> None:
         # Force login to create an address
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.address = self._get_or_create_address_fixture(
-            {
-                "addressComponents": json.dumps(self.address_components),
-                "formattedAddress": self.formatted_address,
-            },
-        )["data"]["getOrCreateAddress"]
+        self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+        self.address = self._get_or_create_address_fixture(self.address_input)["data"]["getOrCreateAddress"]
+        self.address_input["addressComponents"] = json.loads(self.address_input["addressComponents"])  # type: ignore
         # Logout after setting up the address
 
         self.graphql_client.logout()

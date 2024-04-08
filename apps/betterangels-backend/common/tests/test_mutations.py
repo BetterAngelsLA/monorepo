@@ -23,23 +23,17 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self.assertEqual(1, Address.objects.count())
-
-            self.address_components[0]["long_name"] = street_number
-
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            self.address_input["addressComponents"][0]["long_name"] = street_number  # type: ignore
+            self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+            response = self._get_or_create_address_fixture(self.address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
                 "id": ANY,
-                "street": f"{street_number} {self.address_components[1]['long_name']}",
-                "city": self.address_components[3]["long_name"],
-                "state": self.address_components[5]["short_name"],
-                "zipCode": self.address_components[7]["long_name"],
+                "street": f"{street_number} Geary Street",
+                "city": "San Francisco",
+                "state": "CA",
+                "zipCode": "94102",
             }
 
             self.assertEqual(expected_address_count, Address.objects.count())
@@ -49,14 +43,9 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
+            self.address_input["addressComponents"] = json.dumps([])
 
-            self.address_components = []
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            response = self._get_or_create_address_fixture(self.address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
@@ -81,27 +70,18 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
+            self.address_input["addressComponents"].pop(missing_component_index)  # type: ignore
+            self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
 
-            expected_city = self.address_components[3]["long_name"]
-            expected_state = self.address_components[5]["short_name"]
-            expected_zip_code = self.address_components[7]["long_name"]
-
-            self.address_components.pop(missing_component_index)
-
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            response = self._get_or_create_address_fixture(self.address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
                 "id": ANY,
                 "street": "Geary Street" if missing_component_index == 0 else None,
-                "city": expected_city,
-                "state": expected_state,
-                "zipCode": expected_zip_code,
+                "city": "San Francisco",
+                "state": "CA",
+                "zipCode": "94102",
             }
 
             self.assertEqual(address_count + 1, Address.objects.count())
