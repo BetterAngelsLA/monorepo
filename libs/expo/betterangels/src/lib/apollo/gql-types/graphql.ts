@@ -190,6 +190,17 @@ export type FlagType = {
 
 export type GetOrCreateAddressPayload = AddressType | OperationInfo;
 
+export type LocationType = {
+  __typename?: 'LocationType';
+  address?: Maybe<Scalars['String']['output']>;
+  city?: Maybe<Scalars['String']['output']>;
+  confidential?: Maybe<Scalars['Boolean']['output']>;
+  point?: Maybe<Scalars['Point']['output']>;
+  spa?: Maybe<Scalars['Int']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
+
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
 };
@@ -636,6 +647,7 @@ export type ShelterType = {
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
+  location: LocationType;
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;
