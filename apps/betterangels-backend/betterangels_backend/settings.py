@@ -355,6 +355,9 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
+# Jazzmin
+JAZZMIN_SETTINGS = {"changeform_format": "single"}
+
 SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
