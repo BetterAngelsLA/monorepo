@@ -20,7 +20,6 @@ const LocationListScreen = () => {
             program={item.program}
             population={item.population}
             services={item.services}
-            // requirements={item.requirements}
           />
         )}
         keyExtractor={(item) => item.id}
