@@ -53,9 +53,9 @@ jobs:
           IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
-      outputs:
-        matrix: ${{ steps.set-matrix.outputs.matrix }}
-        is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   preview:
     needs: prepare
