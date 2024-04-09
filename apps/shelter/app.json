@@ -11,7 +11,8 @@
       "backgroundColor": "#1E3342"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/24ba06ee-d41f-4fe0-964e-06fa68f3d137"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
