@@ -1,5 +1,3 @@
-import json
-
 from common.models import Address
 from common.tests.utils import AddressGraphQLBaseTestCase
 from unittest_parametrize import parametrize
@@ -25,13 +23,8 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
         address_count = Address.objects.count()
 
         # Change the street number so we can create a new address.
-        self.address_components[0]["long_name"] = "201"
-        response = self._get_or_create_address_fixture(
-            {
-                "addressComponents": json.dumps(self.address_components),
-                "formattedAddress": self.formatted_address,
-            }
-        )
+        json_address_input, _ = self._get_address_inputs(street_number_override="201")
+        response = self._get_or_create_address_fixture(json_address_input)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["getOrCreateAddress"]["id"])

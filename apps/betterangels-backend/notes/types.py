@@ -4,7 +4,7 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from accounts.types import UserType
-from common.graphql.types import AddressType, AttachmentInterface
+from common.graphql.types import AddressInput, AddressType, AttachmentInterface
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
@@ -215,6 +215,20 @@ class UpdateNoteInput:
     private_details: auto
     is_submitted: auto
     timestamp: auto
+
+
+@strawberry_django.input(models.Note)
+class UpdateNoteLocationInput:
+    id: auto
+    point: auto
+    address: AddressInput
+
+
+@strawberry_django.input(models.Task)
+class UpdateTaskLocationInput:
+    id: auto
+    point: auto
+    address: AddressInput
 
 
 @strawberry_django.input(models.Note)
