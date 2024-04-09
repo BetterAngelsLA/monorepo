@@ -21,6 +21,10 @@
         "auto": true
       }
     },
+    "sync-deps": {
+      "executor": "@nx/expo:sync-deps",
+      "options": {}
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
