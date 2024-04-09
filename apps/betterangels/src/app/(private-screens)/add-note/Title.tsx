@@ -15,7 +15,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { format } from 'date-fns';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 interface ITitleProps {
@@ -82,11 +82,6 @@ export default function Title(props: ITitleProps) {
     setNote({ ...note, [key]: value });
     updateNoteFunction(key, value);
   };
-
-  useEffect(() => {
-    console.log(noteId);
-    console.log(setError);
-  }, [expanded]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
