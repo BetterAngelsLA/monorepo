@@ -1,4 +1,5 @@
-from typing import List, Optional
+from decimal import Decimal
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -20,8 +21,8 @@ class BedsType:
     private_beds: Optional[int]
     available_beds: Optional[int]
     max_stay: Optional[int]
-    average_bed_rate: Optional[float]
-    bed_layout_description: str
+    average_bed_rate: Optional[Decimal]
+    bed_layout_description: Optional[str]
 
 
 @strawberry.type
@@ -51,35 +52,35 @@ class ShelterType:
     populations: List[str]
     requirements: List[str]
 
-    # I've been unable to figure out how to resolve the mypy errors here as it
-    # does not detect the strawberry-django behavior of resolving fields in the
-    # parent Shelter class, even when I annotate self as a Shelter
-    @strawberry_django.field
+    # The following fields are likely in need of restrucutring post MVP.
     def location(self) -> LocationType:
+        shelter = cast(models.Shelter, self)
         return LocationType(
-            point = self.location.point,
-            spa=self.spa,
-            address=self.location.address,
-            city=self.location.city,
-            state=self.location.state,
-            zip_code=self.location.zip_code,
-            confidential=self.confidential,
+            point=shelter.location.point,
+            spa=shelter.spa,
+            address=shelter.location.address,
+            city=shelter.location.city,
+            state=shelter.location.state,
+            zip_code=shelter.location.zip_code,
+            confidential=shelter.confidential,
         )
 
     @strawberry_django.field
     def description(self) -> DescriptionType:
+        shelter = cast(models.Shelter, self)
         return DescriptionType(
-            description=self.description,
-            typical_stay_description=self.typical_stay_description,
+            description=shelter.description,
+            typical_stay_description=shelter.typical_stay_description,
         )
 
     @strawberry_django.field
     def beds(self) -> BedsType:
+        shelter = cast(models.Shelter, self)
         return BedsType(
-            total_beds=self.total_beds,
-            private_beds=self.private_beds,
-            available_beds=self.available_beds,
-            max_stay=self.max_stay,
-            average_bed_rate=self.average_bed_rate,
-            bed_layout_description=self.bed_layout_description,
+            total_beds=shelter.total_beds,
+            private_beds=shelter.private_beds,
+            available_beds=shelter.available_beds,
+            max_stay=shelter.max_stay,
+            average_bed_rate=shelter.average_bed_rate,
+            bed_layout_description=shelter.bed_layout_description,
         )
