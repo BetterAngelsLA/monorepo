@@ -47,8 +47,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
                 id
                 title
                 location {
-                    latitude
-                    longitude
+                    point
                 }
                 populations
                 services
@@ -60,7 +59,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
             "shelters": [
                 {
                     "id": "1",
-                    "location": {"latitude": 5.152149, "longitude": 46.199615},
+                    "location": {"point": [5.152149, 46.199615]},
                     "populations": ["Men", "Women"],
                     "services": ["Mail", "Showers"],
                     "title": "Shelter-1",

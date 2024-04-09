@@ -3,6 +3,7 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from strawberry import auto
+from strawberry_django.fields import types
 
 from . import models
 
@@ -25,8 +26,7 @@ class BedsType:
 
 @strawberry.type
 class LocationType:
-    latitude: Optional[float]
-    longitude: Optional[float]
+    point: Optional[types.Point]
     spa: Optional[int]
     address: str
     city: Optional[str]
@@ -57,8 +57,7 @@ class ShelterType:
     @strawberry_django.field
     def location(self) -> LocationType:
         return LocationType(
-            latitude=self.location.point.x,
-            longitude=self.location.point.y,
+            point = self.location.point,
             spa=self.spa,
             address=self.location.address,
             city=self.location.city,
