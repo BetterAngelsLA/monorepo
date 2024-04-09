@@ -29,10 +29,10 @@ class BedsType:
 class LocationType:
     point: Optional[types.Point]
     spa: Optional[int]
-    address: str
+    address: Optional[str]
     city: Optional[str]
     state: Optional[str]
-    zip_code: Optional[int]
+    zip_code: Optional[str]
     confidential: Optional[bool]
 
 
@@ -55,13 +55,23 @@ class ShelterType:
     # The following fields are likely in need of restrucutring post MVP.
     def location(self) -> LocationType:
         shelter = cast(models.Shelter, self)
+        location = shelter.location
+
+        point = address = city = state = zip_code = None
+        if location:
+            point = location.point
+            address = location.address
+            city = location.city
+            state = location.state
+            zip_code = location.zip_code
+
         return LocationType(
-            point=shelter.location.point,
+            point=point,
             spa=shelter.spa,
-            address=shelter.location.address,
-            city=shelter.location.city,
-            state=shelter.location.state,
-            zip_code=shelter.location.zip_code,
+            address=address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
             confidential=shelter.confidential,
         )
 
