@@ -3727,9 +3727,9 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     eslint-plugin-react-native-a11y: ^3.3.0
-    expo: ~50.0.14
+    expo: ~50.0.15
     expo-auth-session: ~5.4.0
-    expo-camera: ~14.1.1
+    expo-camera: ~14.1.2
     expo-clipboard: ^5.0.1
     expo-constants: ~15.4.5
     expo-dev-client: ~3.3.11
@@ -13196,14 +13196,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~14.1.1":
-  version: 14.1.1
-  resolution: "expo-camera@npm:14.1.1"
+"expo-camera@npm:~14.1.2":
+  version: 14.1.2
+  resolution: "expo-camera@npm:14.1.2"
   dependencies:
     invariant: ^2.2.4
   peerDependencies:
     expo: "*"
-  checksum: 56d9e6e3f3817025010449a901961fbfa2cd6a4c5dc693453e2b77f9627bbaec8d80eb2390d0b7c2b3b3351cfa25f09304b8b77107823621e80589a85ded8cbf
+  checksum: 0979397b51027e759c3fae302577e084063347f2864bfa42d2b7771ee44c39c940fda16b716401ce2e84294882bc65ffc760b9611cb829fb754235823d9554e5
   languageName: node
   linkType: hard
 
@@ -13410,12 +13410,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-modules-core@npm:1.11.12":
-  version: 1.11.12
-  resolution: "expo-modules-core@npm:1.11.12"
+"expo-modules-core@npm:1.11.13":
+  version: 1.11.13
+  resolution: "expo-modules-core@npm:1.11.13"
   dependencies:
     invariant: ^2.2.4
-  checksum: 70efae62c180fde08cdccabb9a121a478c92e71e011c0f27e12c48792ac74818bebda68899feb1f65276fcc825b2dc9e8c63256abc7ece0bf92021c2c47270d5
+  checksum: c478dcf5652a71e4d14f36977f1f72b3e43760a8b5f0f4049fbf461927de68446eccdf6d5da1864cf27a49ae2a01c04f64ee5d474ecfcde29532ac10747e5cd9
   languageName: node
   linkType: hard
 
@@ -13530,9 +13530,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~50.0.14":
-  version: 50.0.14
-  resolution: "expo@npm:50.0.14"
+"expo@npm:~50.0.15":
+  version: 50.0.15
+  resolution: "expo@npm:50.0.15"
   dependencies:
     "@babel/runtime": ^7.20.0
     "@expo/cli": 0.17.8
@@ -13546,12 +13546,12 @@ __metadata:
     expo-font: ~11.10.3
     expo-keep-awake: ~12.8.2
     expo-modules-autolinking: 1.10.3
-    expo-modules-core: 1.11.12
+    expo-modules-core: 1.11.13
     fbemitter: ^3.0.0
     whatwg-url-without-unicode: 8.0.0-3
   bin:
     expo: bin/cli
-  checksum: 6295f2a4db54ad86d350920c879144fd8191b33449f4da9aa4abd08fb7e46476eb280ca75228d10f0c0a701c44ccec8d437913619ccf7ca5715b047eb5988dc2
+  checksum: d03afd04ba150ede3a565118ca6bea63bb51f6b5310190e5e78f7597f518a0c95b5f34c9bd11d93d980cd1c375887f7ee671911c0bfd57b2b35ed68eebcaa011
   languageName: node
   linkType: hard
 
