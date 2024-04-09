@@ -363,41 +363,72 @@ POST_OFFICE_EMAIL_BACKEND=django_ses.SESBackend
 
 Sending & Receiving: With the above configuration, any emails sent from the application will now be dispatched through Amazon SES.
 
-### Integrating Django Simple History
+### Integrating Django PG History
 
-[Django Simple History](https://django-simple-history.readthedocs.io/en/3.4.0/quick_start.html) is used in this project to track changes to model instances over time. The `django-simple-history` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:
+[Django PG History](https://django-pghistory.readthedocs.io/en/3.0.0/) is used in this project to track changes to model instances over time. The `django-pghistory` should already be added into the project's setting. If you're developing a new model or want to add historical tracking to an existing model, follow these steps:
 
-#### Step 1: Modify Your Model
+#### Step 1. Modify Your Model
 
-Within the container, update your model to include historical records. Edit the model file to include:
+Update your model to allow pghistory to track events. Edit the model file to include:
 
 ```python
-from simple_history.models import HistoricalRecords
+import pghistory
 
+@pghistory.track()
 class YourModel(models.Model):
-    # your fields here
-    history = HistoricalRecords()
+   # your fields here
 ```
 
-#### Step 2 (Optional): Update Admin Interface
-
-If Django admin integration is desired, modify your model's admin class:
+Optionally, include specific events to track:
 
 ```python
-from simple_history.admin import SimpleHistoryAdmin
+import pghistory
 
-@admin.register(YourModel)
-class YourModelAdmin(SimpleHistoryAdmin):
-    pass
-
+@pghistory.track(
+   pghistory.InsertEvent("your_model.add"),
+   pghistory.UpdateEvent('your_model.update'),
+   pghistory.DeleteEvent("your_model.remove"),
+)
+class YourModel(models.Model):
+   # your fields here
 ```
 
-#### Step 3 (Optional): Generate and apply migrations to update your database schema
+#### Step 2. Generate and apply migrations to update your database schema
 
 ```bash
+   yarn nx run betterangels-backend:makemigrations
    yarn nx run betterangels-backend:migrate
 ```
 
-#### Step 4: Accessing History in Views/Templates
+#### Step 3. Add pghistory context manager when updating models you want to track
 
-Use the `history` attribute of your model instance to access historical records.
+<details>
+<summary>
+
+The pghistory library has some unexpected behavior around `pgh_created_at` timestamp.
+
+</summary>
+<img width="597" alt="image" src="https://github.com/BetterAngelsLA/monorepo/assets/4707640/81b9bed2-17eb-403c-83ee-1a3ade72709a">
+</details>
+
+In order to keep track of the of an event, a custom context manager (`pghistory.context`) needs to be added whenever the tracked model is being modified:
+
+```python
+class Mutation:
+
+   def modify_tracked_model_mutation(self, info: Info, data: SomeMutationInput) -> TrackedModelType:
+      with transaction.atomic(), pghistory.context(
+         tracked_model_id=data.tracked_model_id, timestamp=timezone.now(), label=info.field_name
+      ):
+         # your mutation logic here
+```
+
+#### Step 4. Track events that occurred
+
+To track the historical events for a certain model based on their id and timestamp, query the `Context` table using the custom `tracked_model_id` and `timestamp` metadata fields added in Step 3.
+
+```python
+Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by('metadata__timestamp')
+```
+
+</details>

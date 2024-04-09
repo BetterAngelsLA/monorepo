@@ -49,7 +49,6 @@ export default function Purpose(props: IPurposeProps) {
   const hasAnyValidPurpose = purposes.some((purpose) => purpose.value);
 
   const typedErrors = formState.errors as NoteFormErrors;
-  const hasError = !!typedErrors.purposes;
 
   useEffect(() => {
     if (!isPurpose) {
@@ -68,7 +67,11 @@ export default function Purpose(props: IPurposeProps) {
     <FieldCard
       expanded={expanded}
       setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
-      error={!!typedErrors?.purposes}
+      error={
+        typedErrors.purposes && !isPurpose
+          ? `Please enter the purpose(s) of today's interaction`
+          : undefined
+      }
       required
       mb="xs"
       actionName={
@@ -76,11 +79,6 @@ export default function Purpose(props: IPurposeProps) {
       }
       title="Purpose"
     >
-      {hasError && !isPurpose && (
-        <BodyText mb="sm" size="sm" color={Colors.ERROR}>
-          Please enter the purpose(s) of today's interaction
-        </BodyText>
-      )}
       <View
         style={{
           paddingBottom: isPurpose ? Spacings.md : 0,

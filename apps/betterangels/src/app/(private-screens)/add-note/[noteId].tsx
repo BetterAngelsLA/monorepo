@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@apollo/client';
 import {
+  DELETE_NOTE,
   GET_NOTE,
   MainScrollContainer,
   UPDATE_NOTE,
-  generatedPublicNote,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -12,7 +12,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -46,7 +46,6 @@ interface INote {
 }
 
 export default function AddNote() {
-  const { clientId } = useLocalSearchParams<{ clientId: string }>();
   const router = useRouter();
   const [note, setNote] = useState<INote | undefined>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
@@ -55,6 +54,7 @@ export default function AddNote() {
     fetchPolicy: 'cache-and-network',
   });
   const [updateNote] = useMutation(UPDATE_NOTE);
+  const [deleteNote] = useMutation(DELETE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
@@ -65,12 +65,22 @@ export default function AddNote() {
       publicDetails: 'G -\nI -\nR -\nP - ',
       noteDate: format(new Date(), 'MM/dd/yyyy'),
       noteTime: format(new Date(), 'HH:mm'),
-      moods: [],
-      providedServices: [],
-      requestedServices: [],
       privateDetails: '',
     },
   });
+
+  async function deleteNoteFunction() {
+    try {
+      await deleteNote({
+        variables: {
+          data: { id: noteId },
+        },
+      });
+      router.back();
+    } catch (e) {
+      console.log(e);
+    }
+  }
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -78,19 +88,10 @@ export default function AddNote() {
     }
   }, [data, isLoading]);
 
-  const watchedValues = methods.watch([
-    'purposes',
-    'moods',
-    'providedServices',
-    'nextStepActions',
-    'requestedServices',
-    'publicDetails',
-  ]);
-  const publicNote = methods.watch('publicDetails');
-
   const props = {
     expanded,
     setExpanded,
+    noteId,
   };
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {
@@ -114,32 +115,6 @@ export default function AddNote() {
     }
   }
 
-  useEffect(() => {
-    if (isPublicNoteEdited) {
-      return;
-    }
-    const [
-      purposes,
-      moods,
-      providedServices,
-      nextStepActions,
-      requestedServices,
-    ] = watchedValues;
-
-    const generateOjbect = {
-      purposes,
-      moods,
-      providedServices,
-      nextStepActions,
-      requestedServices,
-    };
-
-    const newPublicNote = generatedPublicNote(generateOjbect);
-    if (newPublicNote !== publicNote) {
-      methods.setValue('publicDetails', newPublicNote);
-    }
-  }, [isPublicNoteEdited, methods, publicNote, watchedValues]);
-
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
@@ -158,49 +133,19 @@ export default function AddNote() {
           />
           <PrivateNote {...props} />
         </MainScrollContainer>
-        {/* TODO: remove in future, only for testing */}
-        <View>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, hmisId: '12345678', mood: 'suicidal' },
-            }}
-          >
-            suicidal
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'anxious', hmisId: '12345678' },
-            }}
-          >
-            anxious
-          </Link>
-          <Link
-            style={{ padding: 10 }}
-            href={{
-              pathname: '/form',
-              params: { clientId, mood: 'depressed', hmisId: '12345678' },
-            }}
-          >
-            depressed
-          </Link>
-        </View>
         <BottomActions
           cancel={
             <CancelModal
               body="All data associated with this note will be deleted"
               title="Delete note?"
+              onDelete={deleteNoteFunction}
             />
           }
           optionalAction={
             <TextButton
               mr="sm"
               fontSize="sm"
-              // NOTE: Not sure how to access form values here, without handleSubmit & useFormContext
-              onPress={() => console.log('save for later')}
+              onPress={router.back}
               accessibilityHint="saves the note for later"
               title="Save for later"
             />

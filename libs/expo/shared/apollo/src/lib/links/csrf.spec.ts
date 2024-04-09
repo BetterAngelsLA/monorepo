@@ -5,11 +5,11 @@ import {
   execute,
   gql,
 } from '@apollo/client';
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '../../constants';
-import { getItem, setItem } from '../../storage';
+import { getItem, setItem } from '@monorepo/expo/shared/utils';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
 import { csrfLink } from './csrf';
 
-jest.mock('../../storage', () => ({
+jest.mock('@monorepo/expo/shared/utils', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
 }));

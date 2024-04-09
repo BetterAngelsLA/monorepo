@@ -22,9 +22,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "id",
-                    models.BigAutoField(
-                        editable=False, primary_key=True, serialize=False, unique=True
-                    ),
+                    models.BigAutoField(editable=False, primary_key=True, serialize=False, unique=True),
                 ),
                 (
                     "content_type",
@@ -72,9 +70,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "id",
-                    models.BigAutoField(
-                        editable=False, primary_key=True, serialize=False, unique=True
-                    ),
+                    models.BigAutoField(editable=False, primary_key=True, serialize=False, unique=True),
                 ),
                 (
                     "content_type",
@@ -85,9 +81,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
                 ),
                 (
                     "permission",

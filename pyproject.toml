@@ -8,13 +8,23 @@ description = ""
 authors = []
 license = "Proprietary"
 readme = "README.md"
+package-mode = false
+
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+    | node_modules
+    | .venv/lib
+)/
+'''
 
 [tool.isort]
 profile = "black"
 skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
-python = "3.11.5"
+python = "3.12.2"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
@@ -39,6 +49,7 @@ pytest-django = "^4.7.0"
 boto3-stubs = { extras = ["essential"], version = "^1.29.0" }
 model-bakery = "^1.17.0"
 unittest-parametrize = "^1.4.0"
+time-machine = "^2.14.1"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "betterangels_backend.settings"

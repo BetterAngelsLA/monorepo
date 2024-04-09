@@ -13,15 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="notegroupobjectpermission",
             name="content_object",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="notes.note"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="notes.note"),
         ),
         migrations.AlterField(
             model_name="noteuserobjectpermission",
             name="content_object",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="notes.note"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="notes.note"),
         ),
     ]
