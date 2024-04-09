@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
@@ -49,7 +49,7 @@ class ServiceRequest(BaseModel):
     def __str__(self) -> str:
         return str(self.service if not self.custom_service else self.custom_service)
 
-    def revert_action(self, action: str) -> None:
+    def revert_action(self, action: str, *args: Any, **kwargs: Any) -> None:
         if action == "add":
             self.delete()
 
@@ -115,6 +115,13 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return self.title
+
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        if action == "update":
+            for field, changes in diff.items():
+                setattr(self, field, changes[0])
+
+            self.save()
 
     class Meta:
         permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)
@@ -214,7 +221,7 @@ class Mood(BaseModel):
 
     objects = models.Manager()
 
-    def revert_action(self, action: str) -> None:
+    def revert_action(self, action: str, *args: Any, **kwargs: Any) -> None:
         if action == "add":
             self.delete()
 
