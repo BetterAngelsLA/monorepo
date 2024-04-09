@@ -53,6 +53,7 @@ class ShelterType:
     requirements: List[str]
 
     # The following fields are likely in need of restrucutring post MVP.
+    @strawberry_django.field
     def location(self) -> LocationType:
         shelter = cast(models.Shelter, self)
         location = shelter.location
