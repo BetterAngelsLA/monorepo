@@ -13,7 +13,7 @@ import BadgeRow from '../../../components/BadgeRow';
 import BottomOptions from '../../../components/BottomOptions';
 import ContactButtonsRow from '../../../components/ContactButtonsRow';
 import Description from '../../../components/Description';
-import ExternalLink from '../../../components/ExternalLink';
+import { ExternalLink } from '../../../components/ExternalLink';
 import ProfileImage from '../../../components/ProfileImage';
 import { Text, View } from '../../../components/Themed';
 
