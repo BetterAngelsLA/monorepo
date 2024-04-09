@@ -14,8 +14,8 @@ import {
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { format } from 'date-fns';
-import { useRef, useState } from 'react';
+import { format, parse, setHours, setMinutes } from 'date-fns';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 interface ITitleProps {
@@ -23,28 +23,27 @@ interface ITitleProps {
   setExpanded: (e: string | undefined | null) => void;
   noteTitle?: string;
   noteId: string | undefined;
+  noteDate: Date;
 }
 
 type TNote = {
   title: string | undefined;
   date: string;
-  time?: string | undefined;
+  time: string;
 };
-
-const formattedDate = format(new Date(), 'MM/dd/yyyy');
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { noteTitle, expanded, setExpanded, noteId } = props;
+  const { noteTitle, expanded, setExpanded, noteId, noteDate } = props;
   const [updateNote] = useMutation<
     UpdateNoteMutation,
     UpdateNoteMutationVariables
   >(UPDATE_NOTE);
   const [note, setNote] = useState<TNote>({
     title: noteTitle,
-    date: formattedDate,
-    time: '',
+    date: format(noteDate, 'MM/dd/yyyy'),
+    time: format(noteDate, 'HH:mm'),
   });
 
   const [error, setError] = useState({
@@ -52,17 +51,35 @@ export default function Title(props: ITitleProps) {
     date: false,
     time: false,
   });
+  const noteRef = useRef(note);
   const isTitle = expanded === 'Title';
 
   const updateNoteFunction = useRef(
-    debounce(async (key: string, value: string) => {
+    debounce(async (key: 'time' | 'title' | 'date', value: string) => {
       if (!noteId || !value) return;
+      const currentNote = noteRef.current;
+      const dateValue = key === 'date' ? value : currentNote.date;
+      const timeValue = key === 'time' ? value : currentNote.time;
+      let updatingField = value;
+
+      const updatingKey = key === 'title' ? 'title' : 'timestamp';
+      if (key === 'time' || key === 'date') {
+        const parsedDate = parse(dateValue, 'MM/dd/yyyy', new Date());
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        const combinedDateTime = setMinutes(
+          setHours(parsedDate, hours),
+          minutes
+        );
+
+        updatingField = new Date(combinedDateTime).toISOString();
+      }
+
       try {
         await updateNote({
           variables: {
             data: {
               id: noteId,
-              [key]: value,
+              [updatingKey]: updatingField,
             },
           },
         });
@@ -82,6 +99,10 @@ export default function Title(props: ITitleProps) {
     setNote({ ...note, [key]: value });
     updateNoteFunction(key, value);
   };
+
+  useEffect(() => {
+    noteRef.current = note;
+  }, [note]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>

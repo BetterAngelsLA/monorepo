@@ -128,7 +128,11 @@ export default function AddNote() {
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title noteTitle={data.note.title} {...props} />
+          <Title
+            noteTitle={data.note.title}
+            noteDate={data.note.timestamp}
+            {...props}
+          />
           <Location {...props} />
           <Purpose {...props} />
           <Mood {...props} />

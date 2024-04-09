@@ -26,10 +26,44 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       title
+      point
+      address {
+        street
+        city
+        state
+        zipCode
+      }
+      moods {
+        descriptor
+      }
+      purposes {
+        id
+        title
+      }
+      nextSteps {
+        id
+        title
+      }
+      providedServices {
+        id
+        service
+        customService
+      }
+      requestedServices {
+        id
+        service
+        customService
+      }
       publicDetails
+      privateDetails
+      isSubmitted
       client {
         id
       }
+      createdBy {
+        id
+      }
+      timestamp
     }
   }
 `;
