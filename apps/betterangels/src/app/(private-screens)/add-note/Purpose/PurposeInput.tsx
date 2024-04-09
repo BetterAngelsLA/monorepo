@@ -14,7 +14,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { BasicInput } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface IPurposeProps {
   index: number;
@@ -42,60 +42,54 @@ export default function PurposeInput(props: IPurposeProps) {
     DeleteTaskMutationVariables
   >(DELETE_TASK);
 
-  const createTask = async (e: string, id: string | undefined) => {
-    if (!noteId) return;
-    try {
-      if (id && e) {
-        const { data } = await updateTask({
-          variables: {
-            data: {
-              id,
-              title: e,
+  const createTask = useRef(
+    debounce(async (e: string, id: string | undefined) => {
+      if (!noteId) return;
+      try {
+        if (id && e) {
+          const { data } = await updateTask({
+            variables: {
+              data: {
+                id,
+                title: e,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.log('Error updating task', updateError);
-        }
-      } else if (id && !e) {
-        const { data } = await deleteTask({
-          variables: { id },
-        });
-        setLocalId(undefined);
-        if (!data) {
-          console.log('Error deleting task', deleteError);
-        }
-      } else {
-        const { data } = await createNoteTask({
-          variables: {
-            data: {
-              title: e,
-              noteId,
-              status: TaskStatusEnum.ToDo,
-              taskType: TaskTypeEnum.Purpose,
+          });
+          if (!data) {
+            console.log('Error updating task', updateError);
+          }
+        } else if (id && !e) {
+          const { data } = await deleteTask({
+            variables: { id },
+          });
+          setLocalId(undefined);
+          if (!data) {
+            console.log('Error deleting task', deleteError);
+          }
+        } else {
+          const { data } = await createNoteTask({
+            variables: {
+              data: {
+                title: e,
+                noteId,
+                status: TaskStatusEnum.ToDo,
+                taskType: TaskTypeEnum.Purpose,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.log('Error creating task', error);
-          return;
+          });
+          if (!data) {
+            console.log('Error creating task', error);
+            return;
+          }
+          if ('id' in data.createNoteTask) {
+            setLocalId(data.createNoteTask.id);
+          }
         }
-        if ('id' in data.createNoteTask) {
-          setLocalId(data.createNoteTask.id);
-        }
+      } catch (error) {
+        console.error('Error creating task:', error);
       }
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCreateTask = useCallback(debounce(createTask, 500), [
-    noteId,
-    updateTask,
-    deleteTask,
-    createNoteTask,
-  ]);
+    }, 500)
+  ).current;
 
   const onChange = (e: string) => {
     if (loading) return;
@@ -105,7 +99,7 @@ export default function PurposeInput(props: IPurposeProps) {
         idx === index ? { ...item, value: e } : item
       )
     );
-    debouncedCreateTask(e, localId);
+    createTask(e, localId);
   };
 
   const onDelete = async () => {

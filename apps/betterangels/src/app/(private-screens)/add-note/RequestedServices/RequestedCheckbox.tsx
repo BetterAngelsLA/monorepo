@@ -13,7 +13,7 @@ import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface IRequestedCheckboxProps {
@@ -53,62 +53,51 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
     DeleteServiceRequestMutationVariables
   >(DELETE_SERVICE_REQUEST);
 
-  const executeMutation = useCallback(async () => {
-    if (!noteId) return;
-    try {
-      if (isChecked && id) {
-        const { data } = await deleteServiceRequest({
-          variables: {
-            data: {
-              id,
+  const executeMutation = useRef(
+    debounce(async () => {
+      if (!noteId) return;
+      try {
+        if (isChecked && id) {
+          const { data } = await deleteServiceRequest({
+            variables: {
+              data: {
+                id,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.error('Error deleting service', deleteError);
-        }
+          });
+          if (!data) {
+            console.error('Error deleting service', deleteError);
+          }
 
-        setId(undefined);
-      } else {
-        const { data } = await createNoteServiceRequest({
-          variables: {
-            data: {
-              service: service.enum,
-              noteId,
-              serviceRequestType: ServiceRequestTypeEnum.Requested,
+          setId(undefined);
+        } else {
+          const { data } = await createNoteServiceRequest({
+            variables: {
+              data: {
+                service: service.enum,
+                noteId,
+                serviceRequestType: ServiceRequestTypeEnum.Requested,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.log('Error creating service', error);
-          return;
-        }
+          });
+          if (!data) {
+            console.log('Error creating service', error);
+            return;
+          }
 
-        if ('id' in data.createNoteServiceRequest) {
-          const createdServiceId = data.createNoteServiceRequest.id;
+          if ('id' in data.createNoteServiceRequest) {
+            const createdServiceId = data.createNoteServiceRequest.id;
 
-          setId(createdServiceId);
+            setId(createdServiceId);
+          }
         }
+        setIsLoading(false);
+      } catch (e) {
+        setIsLoading(false);
+        console.log('Error creating service', e);
       }
-      setIsLoading(false);
-    } catch (e) {
-      setIsLoading(false);
-      console.log('Error creating service', e);
-    }
-  }, [
-    noteId,
-    isChecked,
-    id,
-    deleteServiceRequest,
-    deleteError,
-    createNoteServiceRequest,
-    service.enum,
-    error,
-  ]);
-
-  const debouncedExecuteMutation = useCallback(debounce(executeMutation, 500), [
-    executeMutation,
-  ]);
+    }, 300)
+  ).current;
 
   const handleCheck = () => {
     if (isLoading) return;
@@ -126,7 +115,7 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
           },
         ];
     setServices(newServices);
-    debouncedExecuteMutation();
+    executeMutation();
   };
 
   return (
