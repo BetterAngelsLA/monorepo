@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "common",
     "dwelling",
     "notes",
+    "shelters",
 ]
 
 MIDDLEWARE = [
