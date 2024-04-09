@@ -27,6 +27,15 @@
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
-    "plugins": []
+    "plugins": [],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "24ba06ee-d41f-4fe0-964e-06fa68f3d137"
+      }
+    },
+    "owner": "better-angels"
   }
 }
