@@ -498,53 +498,52 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(reverted_note["point"], self.point)
         self.assertEqual(reverted_note["address"]["street"], "106 W 1st St")
 
-    # def test_revert_note_mutation_removes_added_address(self) -> None:
-    #     """
-    #     Asserts that when revertNote mutation is called, the Note's
-    #     Address is reverted to its state at the specified moment.
+    def test_revert_note_mutation_reverts_updated_address(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note's
+        Address is reverted to its state at the specified moment.
 
-    #     Test actions:
-    #     1. Add an address
-    #     2. Save now as saved_at
-    #     3. Update the address
-    #     4. Revert to saved_at from Step 2
-    #     5. Assert note has address from Step 1
-    #     """
-    #     note_id = self.note["id"]
-    #     self.address_input["addressComponents"] = json.dumps(self.address_input["addressComponents"])
+        Test actions:
+        1. Add an address
+        2. Save now as saved_at
+        3. Update the address
+        4. Revert to saved_at from Step 2
+        5. Assert note has address from Step 1
+        """
+        note_id = self.note["id"]
+        json_address_input, _ = self._get_address_inputs()
 
-    #     # Update - should be persisted
-    #     self._update_note_location_fixture(
-    #         {
-    #             "id": note_id,
-    #             "point": self.point,
-    #             "address": self.address_input,
-    #         }
-    #     )
+        # Update - should be persisted
+        self._update_note_location_fixture(
+            {
+                "id": note_id,
+                "point": self.point,
+                "address": json_address_input,
+            }
+        )
 
-    #     # Select a moment to revert to
-    #     saved_at = timezone.now()
+        # Select a moment to revert to
+        saved_at = timezone.now()
 
-    #     new_address_input = deepcopy(self.address_input)
-    #     new_address_input["addressComponents"] = json.loads(new_address_input["addressComponents"])
-    #     new_address_input["addressComponents"][0]["long_name"] = "201"
-    #     new_address_input["addressComponents"] = json.dumps(new_address_input["addressComponents"])
-    #     new_address = ""
-    #     # Update - should be discarded
-    #     self._update_note_location_fixture(
-    #         {
-    #             "id": note_id,
-    #             "point": self.point,
-    #             "address": new_address,
-    #         }
-    #     )
-    #     variables = {"id": note_id, "savedAt": saved_at}
+        discarded_json_address_input, _ = self._get_address_inputs(street_number_override="201")
+        discarded_point = [-118.0, 34.0]
 
-    #     expected_query_count = 22
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+        # Update - should be discarded
+        self._update_note_location_fixture(
+            {
+                "id": note_id,
+                "point": discarded_point,
+                "address": discarded_json_address_input,
+            }
+        )
+        variables = {"id": note_id, "savedAt": saved_at}
 
-    #     self.assertEqual(len(reverted_note["moods"]), 1)
+        expected_query_count = 21
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual("200 Geary Street", reverted_note["address"]["street"])
+        self.assertEqual(self.point, reverted_note["point"])
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """

@@ -188,6 +188,7 @@ class Mutation:
             "deleteMood",
             "removeNoteTask",
             "removeNoteServiceRequest",
+            "updateNoteLocation",
             # TODO: add note update mutations
         }
         note = Note.objects.get(id=data.id)
@@ -232,7 +233,7 @@ class Mutation:
                         apps.get_model(event.pgh_model).objects.get(
                             id=event.pgh_obj_id,
                             pgh_context_id__in=contexts_to_revert,
-                        ).pgh_obj.revert_action(action=action)
+                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
 
                     except ObjectDoesNotExist:
                         # If object has already been deleted, restore it
