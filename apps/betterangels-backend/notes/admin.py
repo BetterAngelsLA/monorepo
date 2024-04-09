@@ -1,3 +1,4 @@
+from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from notes.enums import ServiceEnum
 
@@ -9,7 +10,6 @@ class MoodAdmin(admin.ModelAdmin):
         "descriptor",
         "note",
         "note_client",
-        "created_by",
     )
     list_filter = (
         "descriptor",
@@ -21,6 +21,7 @@ class MoodAdmin(admin.ModelAdmin):
         "note__created_by__email",
         "note__client__email",
     )
+    readonly_fields = ("created_at",)
 
     def note_client(self, obj: Mood) -> str:
         return obj.note.client.email if obj.note.client else ""
@@ -34,14 +35,12 @@ class MoodInline(admin.TabularInline):
     extra = 1
 
 
-class NoteAdmin(admin.ModelAdmin):
+class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
         "note_title",
         "client",
         "created_by",
         "organization",
-        "created_at",
-        "updated_at",
     )
     list_filter = (
         "is_submitted",
@@ -56,21 +55,25 @@ class NoteAdmin(admin.ModelAdmin):
         "client__email",
         "organization__name",
     )
-    inlines = [MoodInline]
+    inlines = [
+        MoodInline,
+    ]
+    readonly_fields = (
+        "attachments",
+        "created_at",
+        "updated_at",
+    )
 
     def note_title(self, obj: Note) -> str:
         return f"{obj.title} ({obj.pk})"
 
 
-class TaskAdmin(admin.ModelAdmin):
+class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
         "title",
         "client",
         "due_by",
         "status",
-        "created_by",
-        "created_at",
-        "updated_at",
     )
     list_filter = (
         "due_by",
@@ -82,6 +85,11 @@ class TaskAdmin(admin.ModelAdmin):
         "title",
         "created_by__email",
         "client__email",
+    )
+    readonly_fields = (
+        "attachments",
+        "created_at",
+        "updated_at",
     )
 
 
@@ -115,11 +123,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> str:
-        return str(
-            obj.service.label
-            if obj.service != ServiceEnum.OTHER
-            else obj.custom_service
-        )
+        return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.custom_service)
 
 
 admin.site.register(Mood, MoodAdmin)

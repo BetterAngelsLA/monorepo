@@ -64,9 +64,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="point",
-            field=django.contrib.gis.db.models.fields.PointField(
-                blank=True, geography=True, null=True, srid=4326
-            ),
+            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
         ),
         migrations.AddField(
             model_name="noteevent",
@@ -84,9 +82,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="noteevent",
             name="point",
-            field=django.contrib.gis.db.models.fields.PointField(
-                blank=True, geography=True, null=True, srid=4326
-            ),
+            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
         ),
         migrations.AddField(
             model_name="task",
@@ -102,9 +98,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="task",
             name="point",
-            field=django.contrib.gis.db.models.fields.PointField(
-                blank=True, geography=True, null=True, srid=4326
-            ),
+            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
         ),
         migrations.AddField(
             model_name="taskevent",
@@ -122,9 +116,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="taskevent",
             name="point",
-            field=django.contrib.gis.db.models.fields.PointField(
-                blank=True, geography=True, null=True, srid=4326
-            ),
+            field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
         ),
         pgtrigger.migrations.AddTrigger(
             model_name="note",

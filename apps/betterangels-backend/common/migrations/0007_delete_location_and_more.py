@@ -20,44 +20,32 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="addressuserobjectpermission",
             name="content_object",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="common.address"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="common.address"),
         ),
         migrations.AddField(
             model_name="addressuserobjectpermission",
             name="permission",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="auth.permission"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.permission"),
         ),
         migrations.AddField(
             model_name="addressuserobjectpermission",
             name="user",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name="addressgroupobjectpermission",
             name="content_object",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="common.address"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="common.address"),
         ),
         migrations.AddField(
             model_name="addressgroupobjectpermission",
             name="group",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
         ),
         migrations.AddField(
             model_name="addressgroupobjectpermission",
             name="permission",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="auth.permission"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.permission"),
         ),
         migrations.AddIndex(
             model_name="address",

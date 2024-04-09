@@ -1,4 +1,10 @@
-import { Attachments, OtherCategory } from '@monorepo/expo/betterangels';
+import {
+  Attachments,
+  NoteNamespaceEnum,
+  OtherCategory,
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+} from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
   BlanketIcon,
@@ -21,20 +27,15 @@ import {
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BodyText,
-  Checkbox,
-  FieldCard,
-  H3,
-  H5,
-} from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { FieldCard, H3, H5 } from '@monorepo/expo/shared/ui-components';
+import { useState } from 'react';
+import { View } from 'react-native';
+import RequestedCheckbox from './RequestedCheckbox';
 
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -62,80 +63,90 @@ const SERVICES = [
   {
     title: 'Food and Water',
     items: [
-      { Icon: BurgerSodaIcon, title: 'Food' },
-      { Icon: BottleWaterIcon, title: 'Water' },
+      { Icon: BurgerSodaIcon, title: 'Food', enum: ServiceEnum.Food },
+      { Icon: BottleWaterIcon, title: 'Water', enum: ServiceEnum.Water },
     ],
   },
   {
     title: 'Household Items',
     items: [
-      { Icon: BlanketIcon, title: 'Blanket' },
-      { Icon: BookOpenIcon, title: 'Book' },
-      { Icon: ShirtIcon, title: 'Clothes' },
-      { Icon: ToothbrushIcon, title: 'Hygiene Kit' },
-      { Icon: PawIcon, title: 'Pet Food' },
-      { Icon: ShoePrintsIcon, title: 'Shoes' },
-      { Icon: ShowerIcon, title: 'Shower' },
+      { Icon: BlanketIcon, title: 'Blanket', enum: ServiceEnum.Blanket },
+      { Icon: BookOpenIcon, title: 'Book', enum: ServiceEnum.Book },
+      { Icon: ShirtIcon, title: 'Clothes', enum: ServiceEnum.Clothes },
+      {
+        Icon: ToothbrushIcon,
+        title: 'Hygiene Kit',
+        enum: ServiceEnum.HygieneKit,
+      },
+      { Icon: PawIcon, title: 'Pet Food', enum: ServiceEnum.PetFood },
+      { Icon: ShoePrintsIcon, title: 'Shoes', enum: ServiceEnum.Shoes },
+      { Icon: ShowerIcon, title: 'Shower', enum: ServiceEnum.Shower },
     ],
   },
   {
     title: 'Living Essentials',
     items: [
-      { Icon: PeopleRoofIcon, title: 'Shelter' },
-      { Icon: WarehouseIcon, title: 'Storage' },
-      { Icon: CarIcon, title: 'Transport' },
+      { Icon: PeopleRoofIcon, title: 'Shelter', enum: ServiceEnum.Shelter },
+      { Icon: WarehouseIcon, title: 'Storage', enum: ServiceEnum.Storage },
+      { Icon: CarIcon, title: 'Transport', enum: ServiceEnum.Transport },
     ],
   },
   {
     title: 'Medical Items',
     items: [
-      { Icon: ToothIcon, title: 'Dental' },
-      { Icon: SyringeIcon, title: 'Harm Reduction' },
-      { Icon: BriefcaseMedicalIcon, title: 'Medical' },
-      { Icon: PawIcon, title: 'Pet Care' },
+      { Icon: ToothIcon, title: 'Dental', enum: ServiceEnum.Dental },
+      {
+        Icon: SyringeIcon,
+        title: 'Harm Reduction',
+        enum: ServiceEnum.HarmReduction,
+      },
+      {
+        Icon: BriefcaseMedicalIcon,
+        title: 'Medical',
+        enum: ServiceEnum.Medical,
+      },
+      { Icon: PawIcon, title: 'Pet Care', enum: ServiceEnum.PetCare },
     ],
   },
   {
     title: 'Other Items',
-    items: [{ Icon: ArrowTrendUpIcon, title: 'Stabilize' }],
+    items: [
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Stabilize',
+        enum: ServiceEnum.Stabilize,
+      },
+    ],
   },
 ];
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { expanded, setExpanded } = props;
-  const { setValue, watch, control } = useFormContext();
-  const [requestedOtherCategory, setRequestedOtherCategory] = useState<
-    string[]
+  const { expanded, setExpanded, noteId } = props;
+  const [images, setImages] = useState<
+    Array<{ id: string | undefined; uri: string }>
+  >([]);
+  const [services, setServices] = useState<
+    Array<{
+      id: string | undefined;
+      service: string;
+      enum: ServiceEnum;
+    }>
+  >([]);
+  const [customServices, setCustomServices] = useState<
+    { title: string; id: string | undefined }[]
   >([]);
 
-  const requestedServicesImages = watch('requestedServicesImages', []);
-  const services = watch('requestedServices') || [];
   const isRequestedServices = expanded === 'Requested Services';
-  const isLessThanOneRequestedService = services.length < 1;
-  const isLessThanOneRequestedServiceImages =
-    requestedServicesImages.length < 1;
-  const isGreaterThanZeroRequestedService = services.length > 0;
-  const isGreaterThanZeroRequestedServiceImages =
-    requestedServicesImages?.length > 0;
-
-  const toggleServices = (service: string) => {
-    const newServices = services.includes(service)
-      ? services.filter((m: string) => m !== service)
-      : [...services, service];
-    setValue('requestedServices', newServices);
-  };
-
-  useEffect(() => {
-    if (!isRequestedServices) {
-      const includedValues = requestedOtherCategory.filter((element) =>
-        services.includes(element)
-      );
-      setRequestedOtherCategory(includedValues);
-    }
-  }, [expanded]);
+  const isLessThanOneRequestedService =
+    services.length < 1 && customServices.length < 1;
+  const isLessThanOneRequestedServiceImages = images.length < 1;
+  const isGreaterThanZeroRequestedService =
+    services.length > 0 || customServices.length > 0;
+  const isGreaterThanZeroRequestedServiceImages = images?.length > 0;
 
   return (
     <FieldCard
+      childHeight={isRequestedServices ? 'auto' : 0}
       actionName={
         isRequestedServices &&
         isLessThanOneRequestedService &&
@@ -144,17 +155,26 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         ) : isGreaterThanZeroRequestedService ||
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {services.map((service: string) => {
-              const IconComponent = ICONS[service] || PlusIcon;
+            {services.map((item, index) => {
+              const IconComponent = ICONS[item.service];
               return (
                 <IconComponent
                   mr="xs"
-                  key={service}
+                  key={index}
                   size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
               );
             })}
+
+            {customServices.length > 0 && (
+              <PlusIcon
+                mr="xs"
+                size="md"
+                color={Colors.PRIMARY_EXTRA_DARK}
+                key="plusIcon"
+              />
+            )}
             {isGreaterThanZeroRequestedServiceImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
             )}
@@ -170,62 +190,39 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         setExpanded(isRequestedServices ? null : 'Requested Services')
       }
     >
-      {isRequestedServices && (
-        <View style={{ paddingBottom: Spacings.md }}>
-          {SERVICES.map((service, idx) => (
-            <View
-              style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
-              key={service.title}
-            >
-              <H3 mb="xs">{service.title}</H3>
-              {service.items.map((item, idx) => (
-                <Checkbox
-                  isChecked={services.includes(item.title)}
-                  mt={idx !== 0 ? 'xs' : undefined}
-                  key={item.title}
-                  hasBorder
-                  onCheck={() => toggleServices(item.title)}
-                  accessibilityHint={item.title}
-                  label={
-                    <View style={styles.labelContainer}>
-                      <item.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-                      <BodyText ml="xs">{item.title}</BodyText>
-                    </View>
-                  }
-                />
-              ))}
-            </View>
-          ))}
-          <OtherCategory
-            main="requestedServices"
-            other="requestedOtherCategory"
-            services={services}
-            setValue={setValue}
-            control={control}
-            otherCategories={requestedOtherCategory}
-            setOtherCategories={setRequestedOtherCategory}
-          />
+      <View style={{ paddingBottom: Spacings.md }}>
+        {SERVICES.map((service, idx) => (
+          <View
+            style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
+            key={service.title}
+          >
+            <H3 mb="xs">{service.title}</H3>
+            {service.items.map((item, idx) => (
+              <RequestedCheckbox
+                key={item.enum}
+                services={services}
+                setServices={setServices}
+                noteId={noteId}
+                service={item}
+                idx={idx}
+              />
+            ))}
+          </View>
+        ))}
+        <OtherCategory
+          noteId={noteId}
+          setServices={setCustomServices}
+          serviceType={ServiceRequestTypeEnum.Requested}
+          services={customServices}
+        />
 
-          <Attachments
-            images={requestedServicesImages}
-            setImages={(array) => setValue('requestedServicesImages', array)}
-          />
-        </View>
-      )}
+        <Attachments
+          noteId={noteId}
+          namespace={NoteNamespaceEnum.RequestedServices}
+          images={images}
+          setImages={setImages}
+        />
+      </View>
     </FieldCard>
   );
 }
-
-const styles = StyleSheet.create({
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  attach: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    height: 56,
-    alignItems: 'center',
-    marginTop: Spacings.xs,
-  },
-});

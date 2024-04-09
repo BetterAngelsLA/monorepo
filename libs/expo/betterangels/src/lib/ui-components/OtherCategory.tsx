@@ -1,71 +1,117 @@
+import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox, Input } from '@monorepo/expo/shared/ui-components';
-import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import {
+  CREATE_NOTE_SERVICE_REQUEST,
+  CreateNoteServiceRequestMutation,
+  CreateNoteServiceRequestMutationVariables,
+  DELETE_SERVICE_REQUEST,
+  DeleteServiceRequestMutation,
+  DeleteServiceRequestMutationVariables,
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+} from '../apollo';
 
 interface IOtherCategoryProps {
-  main: string;
-  other: string;
-  services: string[];
-  setValue: (name: string, value: any) => void;
-  control: ReturnType<typeof useForm>['control'];
-  otherCategories: string[];
-  setOtherCategories: (e: string[]) => void;
+  noteId: string | undefined;
+  services: { title: string; id: string | undefined }[];
+  setServices: (e: { title: string; id: string | undefined }[]) => void;
+  serviceType:
+    | ServiceRequestTypeEnum.Provided
+    | ServiceRequestTypeEnum.Requested;
 }
 
 export default function OtherCategory(props: IOtherCategoryProps) {
-  const {
-    main,
-    other,
-    services,
-    setValue,
-    control,
-    otherCategories,
-    setOtherCategories,
-  } = props;
+  const { services, serviceType, setServices, noteId } = props;
+  const [createNoteServiceRequest, { error }] = useMutation<
+    CreateNoteServiceRequestMutation,
+    CreateNoteServiceRequestMutationVariables
+  >(CREATE_NOTE_SERVICE_REQUEST);
+  const [deleteServiceRequest, { error: deleteError }] = useMutation<
+    DeleteServiceRequestMutation,
+    DeleteServiceRequestMutationVariables
+  >(DELETE_SERVICE_REQUEST);
+  const { control, setValue } = useForm();
 
-  const handleOtherCategory = (e: string) => {
-    if (otherCategories.includes(e)) {
+  const toggleServices = async (service: string) => {
+    if (!noteId) return;
+    try {
+      if (services.some((s) => s.title === service)) {
+        const id = services.find((s) => s.title === service)?.id;
+
+        if (!id) throw new Error('Something went wrong');
+        const { data } = await deleteServiceRequest({
+          variables: {
+            data: {
+              id,
+            },
+          },
+        });
+        if (!data) {
+          console.error('Error deleting service', deleteError);
+          return;
+        }
+
+        const newServices = services.filter((s) => s.id !== id);
+        setServices(newServices);
+      } else {
+        const { data } = await createNoteServiceRequest({
+          variables: {
+            data: {
+              service: ServiceEnum.Other,
+              customService: service,
+              noteId,
+              serviceRequestType: serviceType,
+            },
+          },
+        });
+        if (!data) {
+          console.error('Error creating service', error);
+          return;
+        }
+
+        if ('id' in data.createNoteServiceRequest) {
+          const newServices = [
+            ...services,
+            {
+              id: data.createNoteServiceRequest.id,
+              title: service,
+            },
+          ];
+
+          setServices(newServices);
+        }
+      }
+    } catch (e) {
+      console.log('TOOGLE CHECKBOX ERROR: ', e);
+    }
+  };
+
+  const handleOtherCategory = async (e: string) => {
+    if (services.some((s) => s.title === e)) {
       return;
     }
-    setOtherCategories([...otherCategories, e]);
-    setValue(main, [...services, e]);
-    setValue(other, '');
+    toggleServices(e);
+    setValue('otherCategory', '');
   };
-
-  const toggleServices = (service: string) => {
-    const newServices = services.includes(service)
-      ? services.filter((m: string) => m !== service)
-      : [...services, service];
-    setValue(main, newServices);
-  };
-
-  const otherCategoryError = useMemo(() => {
-    const allIncluded = otherCategories.every((element) =>
-      services.includes(element)
-    );
-    if (!allIncluded) {
-      return true;
-    }
-    return false;
-  }, [otherCategories, services]);
 
   return (
     <>
-      {otherCategories?.map((item) => (
+      {services.map((service) => (
         <Checkbox
-          isChecked={services.includes(item)}
+          isChecked={services.some((s) => s.title === service.title)}
           mt={'xs'}
-          key={item}
+          key={service.title}
           hasBorder
-          onCheck={() => toggleServices(item)}
-          accessibilityHint={item}
+          onCheck={() => toggleServices(service.title)}
+          accessibilityHint={service.title}
           label={
             <View style={styles.labelContainer}>
               <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-              <BodyText ml="xs">{item}</BodyText>
+              <BodyText ml="xs">{service.title}</BodyText>
             </View>
           }
         />
@@ -75,16 +121,10 @@ export default function OtherCategory(props: IOtherCategoryProps) {
         onSubmitEditing={(e) => handleOtherCategory(e.nativeEvent.text)}
         icon={<PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />}
         mt="xs"
-        name={other}
+        name="otherCategory"
         height={40}
         control={control}
       />
-      {otherCategoryError && (
-        <BodyText mt="xs" color={Colors.ERROR} size="xs">
-          The unchecked "other" category item will be deleted when the section
-          closes.
-        </BodyText>
-      )}
     </>
   );
 }

@@ -22,9 +22,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_note_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         note_count = Note.objects.count()
@@ -54,9 +52,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_note_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_delete_note_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         note_count = Note.objects.count()
@@ -72,9 +68,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         variables = {"id": self.note["id"]}
         self.execute_graphql(mutation, variables)
 
-        self.assertTrue(
-            Note.objects.filter(id=self.note["id"]).exists() != should_succeed
-        )
+        self.assertTrue(Note.objects.filter(id=self.note["id"]).exists() != should_succeed)
         if should_succeed:
             self.assertEqual(note_count - 1, Note.objects.count())
         else:
@@ -88,9 +82,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_note_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_update_note_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -155,7 +147,9 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     "title": "New Task",
                     "status": "TO_DO",
                 }
-            )["data"]["createTask"]["id"]
+            )["data"][
+                "createTask"
+            ]["id"]
 
         self._handle_user_login("org_1_case_manager_1")
         variables = {
@@ -226,7 +220,9 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     "title": "New Task",
                     "status": "TO_DO",
                 }
-            )["data"]["createTask"]["id"]
+            )["data"][
+                "createTask"
+            ]["id"]
 
         self._handle_user_login("org_1_case_manager_1")
         variables = {
@@ -320,9 +316,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             ),  # Other org case manager should not succeed
         ],
     )
-    def test_view_note_private_details_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_note_private_details_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -354,9 +348,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             ),  # Other org case manager should not succeed
         ],
     )
-    def test_view_notes_private_details_permission(
-        self, user_label: str, expected_private_details_count: int
-    ) -> None:
+    def test_view_notes_private_details_permission(self, user_label: str, expected_private_details_count: int) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -370,9 +362,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query, {})
         notes_data = response["data"]["notes"]
 
-        private_details_visible = len(
-            [note for note in notes_data if note.get("privateDetails") is not None]
-        )
+        private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
 
         self.assertEqual(private_details_visible, expected_private_details_count)
 
@@ -409,9 +399,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_attachment_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_note_attachment_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         response = self._create_note_attachment_fixture(
             self.note["id"],
@@ -419,9 +407,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             b"This is a test file",
             "test.txt",
         )
-        attachment_id = (
-            response.get("data", {}).get("createNoteAttachment", {}).get("id")
-        )
+        attachment_id = response.get("data", {}).get("createNoteAttachment", {}).get("id")
         if should_succeed:
             self.assertIsNotNone(attachment_id)
         else:
@@ -443,9 +429,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_note_attachment_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_delete_note_attachment_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login("org_1_case_manager_1")
         response = self._create_note_attachment_fixture(
             self.note["id"],
@@ -457,9 +441,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         self._delete_note_attachment_fixture(note_attachment_id)
 
-        self.assertTrue(
-            Attachment.objects.filter(id=note_attachment_id).exists() != should_succeed
-        )
+        self.assertTrue(Attachment.objects.filter(id=note_attachment_id).exists() != should_succeed)
 
     @parametrize(
         "user_label, should_succeed",
@@ -477,9 +459,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_note_attachment_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_note_attachment_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         query = """
             query ViewNoteAttachment($id: ID!) {
@@ -518,9 +498,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_note_attachments_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_note_attachments_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -533,9 +511,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query)
 
         if should_succeed:
-            returned_ids = {
-                attachment["id"] for attachment in response["data"]["noteAttachments"]
-            }
+            returned_ids = {attachment["id"] for attachment in response["data"]["noteAttachments"]}
             expected_ids = set(self.attachment_ids)
             self.assertSetEqual(
                 returned_ids,
@@ -565,9 +541,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_mood_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_note_mood_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -589,9 +563,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
                     response["errors"][0]["message"],
                     "You must be logged in to perform this action.",
                 )
-        self.assertTrue(
-            Mood.objects.filter(note_id=self.note["id"]).exists() == should_succeed
-        )
+        self.assertTrue(Mood.objects.filter(note_id=self.note["id"]).exists() == should_succeed)
 
     @parametrize(
         "user_label, should_succeed",
@@ -608,22 +580,10 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_mood_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_delete_mood_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         mood = baker.make(Mood, note_id=self.note["id"])
-        mutation = """
-            mutation DeleteMood($id: ID!) {
-                deleteMood(data: { id: $id }) {
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": mood.pk}
-        self.execute_graphql(mutation, variables)
+        self._delete_mood_fixture(mood_id=mood.pk)
 
         self.assertTrue(Mood.objects.filter(id=mood.pk).exists() != should_succeed)
 
@@ -644,9 +604,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_service_request_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_note_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         service_request_count = ServiceRequest.objects.count()
@@ -694,9 +652,7 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_task_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_note_task_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
@@ -737,9 +693,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_service_request_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         service_request_count = ServiceRequest.objects.count()
@@ -773,9 +727,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_service_request_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_delete_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
@@ -790,10 +742,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         variables = {"id": self.service_request["id"]}
         self.execute_graphql(mutation, variables)
 
-        self.assertTrue(
-            ServiceRequest.objects.filter(id=self.service_request["id"]).exists()
-            != should_succeed
-        )
+        self.assertTrue(ServiceRequest.objects.filter(id=self.service_request["id"]).exists() != should_succeed)
 
     @parametrize(
         "user_label, should_succeed",
@@ -807,9 +756,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_service_request_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_update_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -844,9 +791,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_service_request_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -878,9 +823,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_service_requests_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_view_service_requests_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
@@ -905,9 +848,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_task_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_create_task_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
@@ -944,9 +885,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_task_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_delete_task_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
@@ -961,9 +900,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         variables = {"id": self.task["id"]}
         self.execute_graphql(mutation, variables)
 
-        self.assertTrue(
-            Task.objects.filter(id=self.task["id"]).exists() != should_succeed
-        )
+        self.assertTrue(Task.objects.filter(id=self.task["id"]).exists() != should_succeed)
 
     @parametrize(
         "user_label, should_succeed",
@@ -980,9 +917,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_task_permission(
-        self, user_label: str, should_succeed: bool
-    ) -> None:
+    def test_update_task_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {

@@ -1,13 +1,13 @@
 import uuid
-from typing import List, cast
+from typing import Dict, List, cast
 
 import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
-from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
+from common.models import Address, Attachment
+from common.permissions.enums import AddressPermissions, AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -54,16 +54,16 @@ from .types import (
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
+    UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
+    UpdateTaskLocationInput,
 )
 
 
 @strawberry.type
 class Query:
-    note: NoteType = strawberry_django.field(
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter
-    )
+    note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
     notes: List[NoteType] = strawberry_django.field(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
@@ -85,13 +85,9 @@ class Query:
         extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
     )
 
-    task: TaskType = strawberry_django.field(
-        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
-    )
+    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
-    tasks: List[TaskType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
-    )
+    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
 
 @strawberry.type
@@ -132,13 +128,9 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])]
-    )
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.id, timestamp=timezone.now(), label=info.field_name
-        ):
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
             note_data = asdict(data)
             note = Note.objects.get(id=data.id)
             note = resolvers.update(
@@ -155,6 +147,37 @@ class Mutation:
 
             return cast(NoteType, note)
 
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    "point": data.point,
+                    "address": address,
+                },
+            )
+
+            return cast(NoteType, note)
+
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         NOTE_UPDATES = {
@@ -165,6 +188,7 @@ class Mutation:
             "deleteMood",
             "removeNoteTask",
             "removeNoteServiceRequest",
+            "updateNoteLocation",
             # TODO: add note update mutations
         }
         note = Note.objects.get(id=data.id)
@@ -196,26 +220,20 @@ class Mutation:
                 )
 
                 # Revert changes made to PROXY model instances (no pgh_obj_id)
-                for event in Events.objects.filter(
-                    pgh_context_id__in=contexts_to_revert, pgh_obj_id=None
-                ):
+                for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
                     action = event.pgh_label.split(".")[1]
 
-                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(
-                        action=action, **event.pgh_data
-                    )
+                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
                 # Revert changes made to REAL model instances (have pgh_obj_id)
-                for event in Events.objects.references(note).filter(
-                    pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False
-                ):
+                for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False):
                     action = event.pgh_label.split(".")[1]
 
                     try:
                         apps.get_model(event.pgh_model).objects.get(
                             id=event.pgh_obj_id,
                             pgh_context_id__in=contexts_to_revert,
-                        ).pgh_obj.revert_action(action=action)
+                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
 
                     except ObjectDoesNotExist:
                         # If object has already been deleted, restore it
@@ -250,9 +268,7 @@ class Mutation:
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_note_attachment(
-        self, info: Info, data: CreateNoteAttachmentInput
-    ) -> NoteAttachmentType:
+    def create_note_attachment(self, info: Info, data: CreateNoteAttachmentInput) -> NoteAttachmentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
             note = filter_for_user(
@@ -384,9 +400,7 @@ class Mutation:
             return cast(MoodType, mood)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def delete_mood(
-        self, info: Info, data: DeleteDjangoObjectInput
-    ) -> DeletedObjectType:
+    def delete_mood(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         user = get_current_user(info)
         try:
             mood = Mood.objects.get(
@@ -415,9 +429,7 @@ class Mutation:
         return DeletedObjectType(id=mood_id)
 
     @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
-    def create_service_request(
-        self, info: Info, data: CreateServiceRequestInput
-    ) -> ServiceRequestType:
+    def create_service_request(self, info: Info, data: CreateServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
@@ -443,9 +455,7 @@ class Mutation:
             return cast(ServiceRequestType, service_request)
 
     @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
-    def create_note_service_request(
-        self, info: Info, data: CreateNoteServiceRequestInput
-    ) -> ServiceRequestType:
+    def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
         ):
@@ -496,12 +506,8 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(
-        extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])]
-    )
-    def update_service_request(
-        self, info: Info, data: UpdateServiceRequestInput
-    ) -> ServiceRequestType:
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])])
+    def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic():
             service_request_data = asdict(data)
             service_request = ServiceRequest.objects.get(id=data.id)
@@ -516,9 +522,7 @@ class Mutation:
             return cast(ServiceRequestType, service_request)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def remove_note_service_request(
-        self, info: Info, data: RemoveNoteServiceRequestInput
-    ) -> NoteType:
+    def remove_note_service_request(self, info: Info, data: RemoveNoteServiceRequestInput) -> NoteType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
         ):
@@ -623,9 +627,7 @@ class Mutation:
 
             return cast(TaskType, task)
 
-    @strawberry_django.mutation(
-        extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])]
-    )
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])])
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         with transaction.atomic():
             task_data = asdict(data)
@@ -635,6 +637,37 @@ class Mutation:
                 task,
                 {
                     **task_data,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                task = filter_for_user(
+                    Task.objects.all(),
+                    user,
+                    [TaskPermissions.CHANGE],
+                ).get(id=data.id)
+            except Task.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this task.")
+
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    "point": data.point,
+                    "address": address,
                 },
             )
 

@@ -46,9 +46,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(delete_old_caseworker_group),
         migrations.RunPython(delete_all_notes),
-        migrations.RunPython(
-            create_caseworker_permission_template, delete_caseworker_permission_template
-        ),
+        migrations.RunPython(create_caseworker_permission_template, delete_caseworker_permission_template),
         migrations.AddField(
             model_name="note",
             name="organization",

@@ -1,4 +1,5 @@
-from typing import Any
+import json
+from typing import Any, Dict
 
 from accounts.models import User
 from common.enums import AttachmentType
@@ -48,9 +49,7 @@ class Attachment(BaseModel):
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
 
-    uploaded_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
-    )
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
     associated_with = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -59,6 +58,9 @@ class Attachment(BaseModel):
 
     attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
     attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
+
+    def __str__(self) -> str:
+        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
 
     class Meta:
         indexes = [
@@ -129,6 +131,46 @@ class Address(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+
+    @staticmethod
+    def convert_to_structured_address(address_components: str) -> dict:
+        address_fields = {
+            "street_number": "long_name",
+            "route": "long_name",
+            "locality": "long_name",
+            "administrative_area_level_1": "short_name",
+            "country": "long_name",
+            "postal_code": "long_name",
+        }
+
+        components = json.loads(address_components)
+
+        structured_address = {
+            field: next((component.get(name_type) for component in components if field in component["types"]), None)
+            for field, name_type in address_fields.items()
+        }
+
+        return structured_address
+
+    @classmethod
+    def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+        # This function expects a Google Geocoding API payload
+        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+        structured_address = cls.convert_to_structured_address(address_data["address_components"])
+
+        street_number = structured_address.get("street_number")
+        route = structured_address.get("route")
+        street = f"{street_number} {route}".strip() if street_number and route else route
+        address, _ = Address.objects.get_or_create(
+            street=street,
+            city=structured_address.get("locality"),
+            state=structured_address.get("administrative_area_level_1"),
+            zip_code=structured_address.get("postal_code"),
+            address_components=address_data["address_components"],
+            formatted_address=address_data["formatted_address"],
+        )
+
+        return address
 
 
 # Permissions

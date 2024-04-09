@@ -108,11 +108,13 @@ INSTALLED_APPS = [
     "strawberry_django",
     "pghistory",
     "pgtrigger",
+    "waffle",
     # Our Apps
     "accounts",
     "common",
     "dwelling",
     "notes",
+    "shelters",
 ]
 
 MIDDLEWARE = [
@@ -190,9 +192,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
     # Tokens by default are not unique accross devices.
     # We want to use session auth by default for now.
     "TOKEN_CREATOR": None,
@@ -354,6 +354,9 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+
+# Jazzmin
+JAZZMIN_SETTINGS = {"changeform_format": "single"}
 
 SITE_ID = 1
 

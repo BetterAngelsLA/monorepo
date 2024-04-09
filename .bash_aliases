@@ -1,4 +1,5 @@
 alias ynx-check-migrations="yarn nx affected -t check-migrations"
+alias ynx-format-be="yarn nx affected -t format betterangels-backend"
 alias ynx-generate-schema="yarn nx affected -t generate-graphql-schema"
 alias ynx-generate-types="yarn nx affected -t generate-graphql-types"
 alias ynx-generate="ynx-generate-schema && ynx-generate-types"

@@ -91,6 +91,7 @@ django-post-office = "^3.8.0"
 django-ses = "^3.5.2"
 django-sesame = "^3.2.2"
 django-storages = {version = "^1.14.2", extras = ["s3"]}
+django-waffle = "^4.1.0"
 gunicorn = {version = "^21.2.0", extras = ["gevent"]}
 hiredis = "^2.3.2"
 psycopg = "3.1.18"
@@ -177,17 +178,17 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.75"
+version = "1.34.77"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.75-py3-none-any.whl", hash = "sha256:ba5d2104bba4370766036d64ad9021eb6289d154265852a2a821ec6a5e816faa"},
-    {file = "boto3-1.34.75.tar.gz", hash = "sha256:eaec72fda124084105a31bcd67eafa1355b34df6da70cadae0c0f262d8a4294f"},
+    {file = "boto3-1.34.77-py3-none-any.whl", hash = "sha256:7abd327980258ec2ae980d2ff7fc32ede7448146b14d34c56bf0be074e2a149b"},
+    {file = "boto3-1.34.77.tar.gz", hash = "sha256:8ebed4fa5a3b84dd4037f28226985af00e00fb860d739fc8b1ed6381caa4b330"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.75,<1.35.0"
+botocore = ">=1.34.77,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -196,13 +197,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.75"
-description = "Type annotations for boto3 1.34.75 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.77"
+description = "Type annotations for boto3 1.34.77 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-stubs-1.34.75.tar.gz", hash = "sha256:bb55fe97f474ea800c762592d81369bb6c23a8e53a5b2d8497145f87c1d7640c"},
-    {file = "boto3_stubs-1.34.75-py3-none-any.whl", hash = "sha256:78093a0bf5a03bc66a79d6cddb9f0eb67b67ed6b008cba4cf394c0c9d11de2c1"},
+    {file = "boto3-stubs-1.34.77.tar.gz", hash = "sha256:28274392b14c5382fa132aeb1f1effdc8216ed9f33ea7305ef19403645f910ab"},
+    {file = "boto3_stubs-1.34.77-py3-none-any.whl", hash = "sha256:d15c6e7e55ce50b632c390548bd6e8f9f8f32cb44b01fd82e3faa8bda549e26a"},
 ]
 
 [package.dependencies]
@@ -259,7 +260,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.75)", "botocore (==1.34.75)"]
+boto3 = ["boto3 (==1.34.77)", "botocore (==1.34.77)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -604,13 +605,13 @@ xray = ["mypy-boto3-xray (>=1.34.0,<1.35.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.75"
+version = "1.34.77"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.75-py3-none-any.whl", hash = "sha256:1d7f683d99eba65076dfb9af3b42fa967c64f11111d9699b65757420902aa002"},
-    {file = "botocore-1.34.75.tar.gz", hash = "sha256:06113ee2587e6160211a6bd797e135efa6aa21b5bde97bf455c02f7dff40203c"},
+    {file = "botocore-1.34.77-py3-none-any.whl", hash = "sha256:6d6a402032ca0b89525212356a865397f8f2839683dd53d41b8cee1aa84b2b4b"},
+    {file = "botocore-1.34.77.tar.gz", hash = "sha256:6dab60261cdbfb7d0059488ea39408d5522fad419c004ba5db3484e6df854ea8"},
 ]
 
 [package.dependencies]
@@ -1377,6 +1378,20 @@ files = [
 [package.dependencies]
 django = "*"
 typing-extensions = "*"
+
+[[package]]
+name = "django-waffle"
+version = "4.1.0"
+description = "A feature flipper for Django."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-waffle-4.1.0.tar.gz", hash = "sha256:e49d7d461d89f3bd8e53f20efe39310acca8f275c9888495e68e195345bf18b1"},
+    {file = "django_waffle-4.1.0-py3-none-any.whl", hash = "sha256:5979a2f3dd674ef7086480525b39651fc2045427f6d8e6a614192656d3402c5b"},
+]
+
+[package.dependencies]
+django = ">=3.2"
 
 [[package]]
 name = "djangorestframework"
@@ -2156,13 +2171,13 @@ reports = ["lxml"]
 
 [[package]]
 name = "mypy-boto3-cloudformation"
-version = "1.34.66"
-description = "Type annotations for boto3.CloudFormation 1.34.66 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.77"
+description = "Type annotations for boto3.CloudFormation 1.34.77 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-cloudformation-1.34.66.tar.gz", hash = "sha256:295ddb878f3f4b61489b83bd4bad949382deb8a478ff5ae66c22ca3ffbabbe95"},
-    {file = "mypy_boto3_cloudformation-1.34.66-py3-none-any.whl", hash = "sha256:e0080e4ba0cd464479f3ee285faddd863e40147e8f331b78445aef210afc91ed"},
+    {file = "mypy-boto3-cloudformation-1.34.77.tar.gz", hash = "sha256:990014182681f9df2257f185056126c0db30bf1260f6cd3d46cedb3cf467f0ad"},
+    {file = "mypy_boto3_cloudformation-1.34.77-py3-none-any.whl", hash = "sha256:4a32a2f7e1e06a1ed4daa1e278149b1a70876b108f0056507f7d7483856a93a6"},
 ]
 
 [[package]]
@@ -2189,13 +2204,13 @@ files = [
 
 [[package]]
 name = "mypy-boto3-lambda"
-version = "1.34.58"
-description = "Type annotations for boto3.Lambda 1.34.58 service generated with mypy-boto3-builder 7.23.2"
+version = "1.34.77"
+description = "Type annotations for boto3.Lambda 1.34.77 service generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-boto3-lambda-1.34.58.tar.gz", hash = "sha256:903822c74bd1b34748eb2d72eab0f132fbc3b392c8041aa8fe4d9552a44b0c65"},
-    {file = "mypy_boto3_lambda-1.34.58-py3-none-any.whl", hash = "sha256:6ab1b9611ff396e9310ad77f02994a6e03d40c8a0eea51085e355b4fd2a0cbc9"},
+    {file = "mypy-boto3-lambda-1.34.77.tar.gz", hash = "sha256:7b81d2a5604fb592e92fe0b284ecd259de071703360a33b71c9b54df46d81c9c"},
+    {file = "mypy_boto3_lambda-1.34.77-py3-none-any.whl", hash = "sha256:e21022d2eef12aa731af80790410afdba9412b056339823252813bae2adbf553"},
 ]
 
 [[package]]
@@ -3069,13 +3084,13 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.31.0.20240402"
+version = "2.31.0.20240403"
 description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-requests-2.31.0.20240402.tar.gz", hash = "sha256:e5c09a202f8ae79cd6ffbbba2203b6c3775a83126283bb2a6abbc129abc02a12"},
-    {file = "types_requests-2.31.0.20240402-py3-none-any.whl", hash = "sha256:bd7eb7102168d4b5b489f15cdd9842b63ab7fe56aa82a0589fa595b94195acf4"},
+    {file = "types-requests-2.31.0.20240403.tar.gz", hash = "sha256:e1e0cd0b655334f39d9f872b68a1310f0e343647688bf2cee932ec4c2b04de59"},
+    {file = "types_requests-2.31.0.20240403-py3-none-any.whl", hash = "sha256:06abf6a68f5c4f2a62f6bb006672dfb26ed50ccbfddb281e1ee6f09a65707d5d"},
 ]
 
 [package.dependencies]
