@@ -1,13 +1,13 @@
 import uuid
-from typing import List, cast
+from typing import Dict, List, cast
 
 import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
-from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
+from common.models import Address, Attachment
+from common.permissions.enums import AddressPermissions, AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -54,8 +54,10 @@ from .types import (
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
+    UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
+    UpdateTaskLocationInput,
 )
 
 
@@ -145,6 +147,37 @@ class Mutation:
 
             return cast(NoteType, note)
 
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    "point": data.point,
+                    "address": address,
+                },
+            )
+
+            return cast(NoteType, note)
+
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         NOTE_UPDATES = {
@@ -155,6 +188,7 @@ class Mutation:
             "deleteMood",
             "removeNoteTask",
             "removeNoteServiceRequest",
+            "updateNoteLocation",
             # TODO: add note update mutations
         }
         note = Note.objects.get(id=data.id)
@@ -199,7 +233,7 @@ class Mutation:
                         apps.get_model(event.pgh_model).objects.get(
                             id=event.pgh_obj_id,
                             pgh_context_id__in=contexts_to_revert,
-                        ).pgh_obj.revert_action(action=action)
+                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
 
                     except ObjectDoesNotExist:
                         # If object has already been deleted, restore it
@@ -603,6 +637,37 @@ class Mutation:
                 task,
                 {
                     **task_data,
+                },
+            )
+
+            return cast(TaskType, task)
+
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
+            HasPerm(perms=[AddressPermissions.ADD]),
+        ]
+    )
+    def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                task = filter_for_user(
+                    Task.objects.all(),
+                    user,
+                    [TaskPermissions.CHANGE],
+                ).get(id=data.id)
+            except Task.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this task.")
+
+            location_data: Dict = strawberry.asdict(data)
+            address = Address.get_or_create_address(location_data["address"])
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    "point": data.point,
+                    "address": address,
                 },
             )
 

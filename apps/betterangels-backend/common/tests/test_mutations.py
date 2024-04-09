@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 from unittest.mock import ANY
 
 from common.models import Address
@@ -23,23 +24,18 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self.assertEqual(1, Address.objects.count())
-
-            self.address_components[0]["long_name"] = street_number
-
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            address_input: Dict[str, Any]
+            json_address_input, address_input = self._get_address_inputs(street_number_override=street_number)
+            response = self._get_or_create_address_fixture(json_address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
+            assert isinstance(address_input["addressComponents"], list)
             expected_address = {
                 "id": ANY,
-                "street": f"{street_number} {self.address_components[1]['long_name']}",
-                "city": self.address_components[3]["long_name"],
-                "state": self.address_components[5]["short_name"],
-                "zipCode": self.address_components[7]["long_name"],
+                "street": f"{street_number} {address_input['addressComponents'][1]['long_name']}",
+                "city": address_input["addressComponents"][3]["long_name"],
+                "state": address_input["addressComponents"][5]["short_name"],
+                "zipCode": address_input["addressComponents"][7]["long_name"],
             }
 
             self.assertEqual(expected_address_count, Address.objects.count())
@@ -49,14 +45,9 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
+            json_address_input, _ = self._get_address_inputs(delete_components=True)
 
-            self.address_components = []
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            response = self._get_or_create_address_fixture(json_address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
@@ -81,19 +72,16 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         expected_query_count = 11
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
+            _, address_input = self._get_address_inputs()
+            assert isinstance(address_input["addressComponents"], list)
 
-            expected_city = self.address_components[3]["long_name"]
-            expected_state = self.address_components[5]["short_name"]
-            expected_zip_code = self.address_components[7]["long_name"]
+            expected_city = address_input["addressComponents"][3]["long_name"]
+            expected_state = address_input["addressComponents"][5]["short_name"]
+            expected_zip_code = address_input["addressComponents"][7]["long_name"]
+            address_input["addressComponents"].pop(missing_component_index)
+            address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
 
-            self.address_components.pop(missing_component_index)
-
-            response = self._get_or_create_address_fixture(
-                {
-                    "addressComponents": json.dumps(self.address_components),
-                    "formattedAddress": self.formatted_address,
-                }
-            )
+            response = self._get_or_create_address_fixture(address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
             expected_address = {
