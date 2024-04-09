@@ -16,6 +16,8 @@ export type Scalars = {
   Float: { input: number; output: number; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
+  /** Decimal (fixed-point) */
+  Decimal: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSON: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
@@ -63,8 +65,8 @@ export enum AttachmentType {
 export type BedsType = {
   __typename?: 'BedsType';
   availableBeds?: Maybe<Scalars['Int']['output']>;
-  averageBedRate?: Maybe<Scalars['Float']['output']>;
-  bedLayoutDescription: Scalars['String']['output'];
+  averageBedRate?: Maybe<Scalars['Decimal']['output']>;
+  bedLayoutDescription?: Maybe<Scalars['String']['output']>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   privateBeds?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
@@ -187,18 +189,6 @@ export type FlagType = {
 };
 
 export type GetOrCreateAddressPayload = AddressType | OperationInfo;
-
-export type LocationType = {
-  __typename?: 'LocationType';
-  address: Scalars['String']['output'];
-  city?: Maybe<Scalars['String']['output']>;
-  confidential?: Maybe<Scalars['Boolean']['output']>;
-  latitude?: Maybe<Scalars['Float']['output']>;
-  longitude?: Maybe<Scalars['Float']['output']>;
-  spa?: Maybe<Scalars['Int']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-  zipCode?: Maybe<Scalars['Int']['output']>;
-};
 
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
@@ -646,7 +636,6 @@ export type ShelterType = {
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
-  location: LocationType;
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;
