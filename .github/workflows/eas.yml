@@ -104,7 +104,7 @@ jobs:
       - name: 🧹 Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Create preview
