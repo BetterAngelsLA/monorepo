@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 from unittest.mock import ANY
 
 from common.models import Address
@@ -23,10 +24,12 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self.assertEqual(1, Address.objects.count())
+            address_input: Dict[str, Any]
             json_address_input, address_input = self._get_address_inputs(street_number_override=street_number)
             response = self._get_or_create_address_fixture(json_address_input)
 
             returned_address = response["data"]["getOrCreateAddress"]
+            assert isinstance(address_input["addressComponents"], list)
             expected_address = {
                 "id": ANY,
                 "street": f"{street_number} {address_input['addressComponents'][1]['long_name']}",
@@ -70,6 +73,7 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
             _, address_input = self._get_address_inputs()
+            assert isinstance(address_input["addressComponents"], list)
             address_input["addressComponents"].pop(missing_component_index)
             address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
 

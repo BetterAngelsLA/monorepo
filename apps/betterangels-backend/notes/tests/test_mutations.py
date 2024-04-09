@@ -140,6 +140,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
+        assert isinstance(address_input["addressComponents"], list)
         expected_address = {
             "street": (
                 f"{address_input['addressComponents'][0]['long_name']} "
@@ -1187,6 +1188,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
+        assert isinstance(address_input["addressComponents"], list)
         expected_address = {
             "street": (
                 f"{address_input['addressComponents'][0]['long_name']} "
