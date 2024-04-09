@@ -35,24 +35,24 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🧩 Determine Affected Projects for eas-update
-        id: set-matrix
-        run: |
-          # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
-          # Convert the list to a JSON matrix
-          MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
-            split("\n") |
-            map(select(. != "")) |
-            if length == 0 then
-                {}
-            else
-                {include: map({project: .})}
-            end'
-          )
-          IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
-          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
-          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+    - name: 🧩 Determine Affected Projects for eas-update
+      id: set-matrix
+      run: |
+        # Get the list of affected projects with eas-update target
+        affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+        # Convert the list to a JSON matrix
+        MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
+          split("\n") |
+          map(select(. != "")) |
+          if length == 0 then
+              {}
+          else
+              {include: map({project: .})}
+          end'
+        )
+        IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
+        echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+        echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
