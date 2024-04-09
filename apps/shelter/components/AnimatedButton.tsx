@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Animated, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface AnimatedButtonProps {
   iconName: string;
@@ -13,23 +13,24 @@ const AnimatedButton = ({ iconName, onPress }: AnimatedButtonProps) => {
   const animatePressIn = () => {
     Animated.spring(scale, {
       toValue: 0.85,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
   const animatePressOut = () => {
     Animated.spring(scale, {
       toValue: 1,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   };
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity 
-        onPressIn={animatePressIn} 
-        onPressOut={animatePressOut} 
-        onPress={onPress} 
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPressIn={animatePressIn}
+        onPressOut={animatePressOut}
+        onPress={onPress}
         style={styles.button}
       >
         <FontAwesome name={iconName as any} size={28} color="black" />

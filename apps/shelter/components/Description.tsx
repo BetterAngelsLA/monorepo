@@ -2,15 +2,15 @@ import { StyleSheet } from 'react-native';
 import { Text, View } from './Themed';
 
 interface DescriptionProps {
-    text: string;
-    title?: string;
-  }
+  text: string;
+  title?: string;
+}
 
 const Description = ({ text, title }: DescriptionProps) => (
   <View style={styles.container}>
     {title && <Text style={styles.title}>{title}</Text>}
     <View style={styles.textContainer}>
-        <Text style={styles.description}>{text}</Text>
+      <Text style={styles.description}>{text}</Text>
     </View>
   </View>
 );

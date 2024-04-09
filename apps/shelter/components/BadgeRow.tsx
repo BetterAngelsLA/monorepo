@@ -1,14 +1,14 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Badge from './Badge';
 
 interface BadgeRowProps {
-    badges: string[];
-    title?: string;
-  }
+  badges: string[];
+  title?: string;
+}
 
 const BadgeRow = ({ badges, title }: BadgeRowProps) => (
   <View style={styles.container}>
-    {title && <Text style={styles.title}>{title}</Text>} 
+    {title && <Text style={styles.title}>{title}</Text>}
 
     <View style={styles.badgesContainer}>
       {badges.map((badge, index) => (

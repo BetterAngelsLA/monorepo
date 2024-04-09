@@ -1,4 +1,4 @@
-import { StyleSheet, Image } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { Text, View } from './Themed';
 
 interface ProfileImageProps {
@@ -6,23 +6,21 @@ interface ProfileImageProps {
   imageUrl?: string;
 }
 
-const ProfileImage = ({ title, imageUrl }: ProfileImageProps) => (
-  <>
-  {imageUrl ? (
-      <Image
-        accessibilityRole="image"
-        style={styles.image}
-        source={{
-            uri: imageUrl,
-        }}
-      />
+const ProfileImage = ({ title, imageUrl }: ProfileImageProps) =>
+  imageUrl ? (
+    <Image
+      accessibilityRole="image"
+      accessibilityIgnoresInvertColors={true} // Also, add the missing prop here
+      style={styles.image}
+      source={{
+        uri: imageUrl,
+      }}
+    />
   ) : (
-      <View style={styles.fallbackImage}>
-        <Text style={styles.fallbackLetter}>{title.substring(0, 1)}</Text>
-      </View>
-  )}    
-  </>
-);
+    <View style={styles.fallbackImage}>
+      <Text style={styles.fallbackLetter}>{title.substring(0, 1)}</Text>
+    </View>
+  );
 
 const styles = StyleSheet.create({
   image: {
@@ -33,18 +31,18 @@ const styles = StyleSheet.create({
   },
   fallbackImage: {
     width: 60,
-    height: 60,        
+    height: 60,
     borderRadius: 40,
 
     borderColor: 'black',
     borderStyle: 'solid',
     borderWidth: 2,
 
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   fallbackLetter: {
     fontSize: 30,
-    textAlign: 'center'
+    textAlign: 'center',
   },
 });
 
