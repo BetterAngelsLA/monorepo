@@ -32,16 +32,15 @@
     "expo-updates": "*",
     "expo-web-browser": "*",
     "graphql": "*",
+    "@expo/vector-icons": "*",
     "react": "*",
-    "react-dom": "*",
-    "react-hook-form": "*",
-    "react-native-gesture-handler": "*",
-    "react-native-maps": "*",
-    "react-native-open-maps": "*",
-    "react-native-safe-area-context": "*",
-    "react-native-screens": "*",
     "react-native-svg-transformer": "*",
-    "tslib": "*"
+    "@react-navigation/native": "*",
+    "expo-font": "*",
+    "@storybook/react": "*",
+    "react-hook-form": "*",
+    "tsconfig-paths-webpack-plugin": "*",
+    "@nx/webpack": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter",
