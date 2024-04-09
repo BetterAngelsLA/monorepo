@@ -74,6 +74,10 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
             address_count = Address.objects.count()
             _, address_input = self._get_address_inputs()
             assert isinstance(address_input["addressComponents"], list)
+
+            expected_city = address_input["addressComponents"][3]["long_name"]
+            expected_state = address_input["addressComponents"][5]["short_name"]
+            expected_zip_code = address_input["addressComponents"][7]["long_name"]
             address_input["addressComponents"].pop(missing_component_index)
             address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
 
@@ -83,9 +87,9 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
             expected_address = {
                 "id": ANY,
                 "street": "Geary Street" if missing_component_index == 0 else None,
-                "city": "San Francisco",
-                "state": "CA",
-                "zipCode": "94102",
+                "city": expected_city,
+                "state": expected_state,
+                "zipCode": expected_zip_code,
             }
 
             self.assertEqual(address_count + 1, Address.objects.count())
