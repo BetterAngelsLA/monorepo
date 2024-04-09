@@ -22,20 +22,16 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
+type TNextStep = {
+  action: string;
+  time?: string | undefined;
+  date?: string | undefined;
+};
+
 interface INextStepProps {
   index: number;
-  setNextSteps: (
-    e: {
-      action: string;
-      time?: string | undefined;
-      date?: string | undefined;
-    }[]
-  ) => void;
-  nextSteps: {
-    action: string;
-    time?: string | undefined;
-    date?: string | undefined;
-  }[];
+  setNextSteps: (nextSteps: TNextStep[]) => void;
+  nextSteps: TNextStep[];
   nextStep: {
     action: string;
     time?: string | undefined;
@@ -51,7 +47,7 @@ export default function NextStepInput(props: INextStepProps) {
     time: nextStep.time,
     date: nextStep.date,
   });
-  const [localId, setLocalId] = useState<string | undefined>(undefined);
+  const [id, setId] = useState<string | undefined>(undefined);
   const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
@@ -102,7 +98,7 @@ export default function NextStepInput(props: INextStepProps) {
         const { data } = await deleteTask({
           variables: { id },
         });
-        setLocalId(undefined);
+        setId(undefined);
         if (!data) {
           console.log('Error deleting task', deleteError);
         }
@@ -122,7 +118,7 @@ export default function NextStepInput(props: INextStepProps) {
           return;
         }
         if ('id' in data.createNoteTask) {
-          setLocalId(data.createNoteTask.id);
+          setId(data.createNoteTask.id);
         }
       }
     } catch (error) {
@@ -139,7 +135,7 @@ export default function NextStepInput(props: INextStepProps) {
   ]);
 
   const onChange = (e: string, key: 'action' | 'date' | 'time') => {
-    if (loading && !localId) return;
+    if (loading && !id) return;
     setTask({ ...task, [key]: e });
     setNextSteps(
       nextSteps.map((item, idx) =>
@@ -152,7 +148,7 @@ export default function NextStepInput(props: INextStepProps) {
       ...task,
       [key]: e,
     };
-    debouncedCreateTask(taskObj, localId);
+    debouncedCreateTask(taskObj, id);
   };
 
   const onDelete = async () => {
@@ -169,11 +165,11 @@ export default function NextStepInput(props: INextStepProps) {
     });
     setNextSteps(newNextSteps);
     try {
-      if (localId) {
+      if (id) {
         await deleteTask({
-          variables: { id: localId },
+          variables: { id },
         });
-        setLocalId(undefined);
+        setId(undefined);
       }
     } catch (error) {
       console.error('Error deleting task:', error);

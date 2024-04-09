@@ -61,7 +61,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
-        console.log(data);
         setValue('location', undefined);
         setCurrentLocation({
           longitude,
