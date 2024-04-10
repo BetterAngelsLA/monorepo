@@ -36,61 +36,6 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_add_insert",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "notes_noteevent" ("address_id", "client_id", "created_at", "created_by_id", "id", "interacted_at", "is_submitted", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "point", "private_details", "public_details", "timestamp", "title", "updated_at") VALUES (NEW."address_id", NEW."client_id", NEW."created_at", NEW."created_by_id", NEW."id", NEW."interacted_at", NEW."is_submitted", NEW."organization_id", _pgh_attach_context(), NOW(), \'note.add\', NEW."id", NEW."point", NEW."private_details", NEW."public_details", NEW."timestamp", NEW."title", NEW."updated_at"); RETURN NULL;',
-                    hash="cae7416366a402229201b45ae024d73b10b31136",
-                    operation="INSERT",
-                    pgid="pgtrigger_note_add_insert_e05e6",
-                    table="notes_note",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_update_update",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    condition="WHEN (OLD.* IS DISTINCT FROM NEW.*)",
-                    func='INSERT INTO "notes_noteevent" ("address_id", "client_id", "created_at", "created_by_id", "id", "interacted_at", "is_submitted", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "point", "private_details", "public_details", "timestamp", "title", "updated_at") VALUES (NEW."address_id", NEW."client_id", NEW."created_at", NEW."created_by_id", NEW."id", NEW."interacted_at", NEW."is_submitted", NEW."organization_id", _pgh_attach_context(), NOW(), \'note.update\', NEW."id", NEW."point", NEW."private_details", NEW."public_details", NEW."timestamp", NEW."title", NEW."updated_at"); RETURN NULL;',
-                    hash="b8910afe2d96cea3551aaef7e22a5f492bd1f65b",
-                    operation="UPDATE",
-                    pgid="pgtrigger_note_update_update_ac81f",
-                    table="notes_note",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_remove_delete",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "notes_noteevent" ("address_id", "client_id", "created_at", "created_by_id", "id", "interacted_at", "is_submitted", "organization_id", "pgh_context_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "point", "private_details", "public_details", "timestamp", "title", "updated_at") VALUES (OLD."address_id", OLD."client_id", OLD."created_at", OLD."created_by_id", OLD."id", OLD."interacted_at", OLD."is_submitted", OLD."organization_id", _pgh_attach_context(), NOW(), \'note.remove\', OLD."id", OLD."point", OLD."private_details", OLD."public_details", OLD."timestamp", OLD."title", OLD."updated_at"); RETURN NULL;',
-                    hash="578e4e3796e784a877dd25b6911a8a8953f6bf0a",
-                    operation="DELETE",
-                    pgid="pgtrigger_note_remove_delete_dd722",
-                    table="notes_note",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_add_insert",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_update_update",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_remove_delete",
-        ),
         migrations.RemoveField(
             model_name="note",
             name="timestamp",
