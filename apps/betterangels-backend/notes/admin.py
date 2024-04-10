@@ -41,7 +41,7 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "client",
         "created_by",
         "organization",
-        "timestamp",
+        "interacted_at",
         "updated_at",
     )
     list_filter = (
@@ -62,7 +62,7 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     ]
     readonly_fields = (
         "attachments",
-        "timestamp",
+        "interacted_at",
         "updated_at",
     )
 
