@@ -5,7 +5,12 @@ import pytest
 
 
 class PytestTestRunner:
-    """Runs pytest to discover and run tests."""
+    """
+    Runs pytest to discover and run tests.
+
+    Reference:
+    https://pytest-django.readthedocs.io/en/latest/faq.html#how-can-i-use-manage-py-test-with-pytest-django
+    """
 
     def __init__(self, verbosity: int = 1, failfast: bool = False, keepdb: bool = False, **kwargs: Any) -> None:
         self.verbosity = verbosity
