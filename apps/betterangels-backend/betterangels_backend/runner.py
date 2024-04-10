@@ -7,10 +7,6 @@ import pytest
 class PytestTestRunner:
     """Runs pytest to discover and run tests."""
 
-    verbosity: int
-    failfast: bool
-    keepdb: bool
-
     def __init__(self, verbosity: int = 1, failfast: bool = False, keepdb: bool = False, **kwargs: Any) -> None:
         self.verbosity = verbosity
         self.failfast = failfast
@@ -25,7 +21,7 @@ class PytestTestRunner:
 
         It translates some of Django's test command option to pytest's.
         """
-        argv: List[str] = []
+        argv = []
         if self.verbosity == 0:
             argv.append("--quiet")
         if self.verbosity == 2:
