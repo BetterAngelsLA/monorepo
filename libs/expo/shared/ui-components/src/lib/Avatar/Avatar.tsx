@@ -11,6 +11,7 @@ interface IAvatarProps {
    */
   size?: 'sm' | 'md' | 'lg';
   imageUrl?: string;
+  hasBorder?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -20,6 +21,7 @@ interface IAvatarProps {
   alt?: string;
   accessibilityLabel: string;
   accessibilityHint: string;
+  borderColor?: string;
 }
 
 export const SIZE = {
@@ -40,6 +42,8 @@ export function Avatar(props: IAvatarProps) {
     mx,
     accessibilityLabel,
     accessibilityHint,
+    hasBorder,
+    borderColor,
   } = props;
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
@@ -59,6 +63,7 @@ export function Avatar(props: IAvatarProps) {
         height: SIZE[size],
         width: SIZE[size],
         borderRadius: 100,
+
         backgroundColor: Colors.NEUTRAL_LIGHT,
         marginBottom: mb && Spacings[mb],
         marginTop: mt && Spacings[mt],
@@ -66,8 +71,8 @@ export function Avatar(props: IAvatarProps) {
         marginRight: mr && Spacings[mr],
         marginHorizontal: mx && Spacings[mx],
         marginVertical: my && Spacings[my],
-        borderWidth: size === 'sm' ? 1 : 0,
-        borderColor: Colors.PRIMARY_EXTRA_DARK,
+        borderWidth: hasBorder ? 1 : 0,
+        borderColor,
       }}
     >
       <View

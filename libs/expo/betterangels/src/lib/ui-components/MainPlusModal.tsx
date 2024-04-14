@@ -1,55 +1,32 @@
 import {
-  BurgerSodaIcon,
-  CalendarIcon,
+  ArrowRightFromArcIcon,
   FilePlusIcon,
-  ImageIcon,
-  LocationDotIcon,
-  MicrophoneIcon,
-  PaperclipIcon,
-  UserIcon,
+  XmarkIcon,
 } from '@monorepo/expo/shared/icons';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Pressable, StyleSheet } from 'react-native';
 import MainModal from './MainModal';
 
 const ACTIONS = [
   {
-    title: 'Add a client',
-    Icon: UserIcon,
-    route: 'add-client',
+    title: 'Sign Up Process',
+    Icon: ArrowRightFromArcIcon,
+    route: '#',
   },
   {
-    title: 'Add a note',
+    title: 'Add interaction',
     Icon: FilePlusIcon,
-    route: '',
+    route: '#',
   },
   {
-    title: 'Add a voice note',
-    Icon: MicrophoneIcon,
-    route: '',
+    title: 'Add event',
+    Icon: FilePlusIcon,
+    route: '#',
   },
   {
-    title: 'Add a location',
-    Icon: LocationDotIcon,
-    route: '',
-  },
-  {
-    title: 'Add an appointment',
-    Icon: CalendarIcon,
-    route: '',
-  },
-  {
-    title: 'upload photo/video',
-    Icon: ImageIcon,
-    route: '',
-  },
-  {
-    title: 'Attach files',
-    Icon: PaperclipIcon,
-    route: '',
-  },
-  {
-    title: 'Add a service',
-    Icon: BurgerSodaIcon,
-    route: 'add-service',
+    title: 'Add task',
+    Icon: FilePlusIcon,
+    route: '#',
   },
 ];
 
@@ -65,6 +42,30 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       actions={ACTIONS}
       isModalVisible={isModalVisible}
       closeModal={closeModal}
+      bottomSection={
+        <Pressable
+          onPress={closeModal}
+          accessibilityRole="button"
+          accessibilityHint="Closing homepage main modal"
+          style={styles.middleButton}
+        >
+          <XmarkIcon color={Colors.WHITE} />
+        </Pressable>
+      }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  middleButton: {
+    marginTop: Spacings.sm,
+    height: 66,
+    width: 66,
+    borderRadius: 100,
+    backgroundColor: Colors.PRIMARY,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  },
+});

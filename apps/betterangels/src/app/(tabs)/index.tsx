@@ -1,32 +1,21 @@
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useMutation, useQuery } from '@apollo/client';
 import {
   CREATE_NOTE,
   GET_NOTES,
   MainScrollContainer,
-  useSignOut,
+  NavModal,
   useUser,
 } from '@monorepo/expo/betterangels';
 import {
-  BarsIcon,
-  BellIcon,
   BurgerSodaIcon,
   ChevronLeftIcon,
-  SearchIcon,
   WalkingIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Alert,
-  Avatar,
   BodyText,
   Button,
   ClientCard,
@@ -36,8 +25,9 @@ import {
   H4,
   NoteCard,
 } from '@monorepo/expo/shared/ui-components';
-import { Link, useNavigation, useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import Logo from '../assets/images/logo.svg';
 
 const EVENTS = [
   {
@@ -169,9 +159,7 @@ export default function TabOneScreen() {
   const [tab, toggle] = useState(1);
   const [notes, setNotes] = useState<INote[] | undefined>([]);
   const [createNote] = useMutation(CREATE_NOTE);
-  const navigation = useNavigation();
   const { user } = useUser();
-  const { signOut } = useSignOut();
   const router = useRouter();
 
   const { data, loading: isLoading } = useQuery(GET_NOTES, {
@@ -201,65 +189,31 @@ export default function TabOneScreen() {
     }
   }, [data, isLoading]);
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={styles.headerContainer}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityHint="focuses on input to search"
-            accessible
-            accessibilityLabel="Navbar Search Icon"
-            onPress={() => signOut()}
-          >
-            <Text>Logout: {user?.username} </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityHint="focuses on input to search"
-            accessible
-            accessibilityLabel="Navbar Search Icon"
-          >
-            <SearchIcon color={Colors.PRIMARY_EXTRA_DARK} />
-          </Pressable>
-          <Pressable
-            accessible
-            accessibilityRole="button"
-            accessibilityHint="opens notifications screen"
-            accessibilityLabel="Navbar Notifications Icon"
-            style={{ marginHorizontal: Spacings.md }}
-          >
-            <BellIcon color={Colors.PRIMARY_EXTRA_DARK} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessible
-            accessibilityHint="opens menu popup"
-            accessibilityLabel="Navbar Menu Icon"
-          >
-            <BarsIcon color={Colors.PRIMARY_EXTRA_DARK} />
-          </Pressable>
-        </View>
-      ),
-    });
-  }, [navigation, signOut, user?.username]);
-
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.heading}>
         <View>
-          <Image
-            style={{ width: 100, height: 19 }}
-            source={require('../assets/images/blackLogo.png')}
-            accessibilityIgnoresInvertColors={true}
+          <Logo
+            style={{ marginBottom: Spacings.xs }}
+            color={Colors.WHITE}
+            width={73}
+            height={11}
           />
-          <H1 size="2xl">Home</H1>
+          <H1 color={Colors.WHITE} size="xl">
+            Home
+          </H1>
         </View>
-        <Avatar
-          accessibilityHint="my avatar"
-          accessibilityLabel="My Avatar"
-          size="lg"
-        />
+        <View style={{ alignItems: 'center' }}>
+          <NavModal />
+          <View
+            style={{
+              height: 6,
+              width: 6,
+              borderRadius: 100,
+              backgroundColor: Colors.ERROR,
+            }}
+          />
+        </View>
       </View>
       <MainScrollContainer px={0} pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View style={{ paddingHorizontal: Spacings.sm }}>
@@ -415,23 +369,10 @@ export default function TabOneScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: Spacings.md,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-  },
-  containerContent: {
-    paddingBottom: 80,
-    paddingTop: 24,
-  },
   heading: {
     paddingHorizontal: Spacings.sm,
-    paddingBottom: Spacings.md,
-    backgroundColor: Colors.WHITE,
+    paddingBottom: Spacings.xs,
+    backgroundColor: Colors.BRAND_DARK_BLUE,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',

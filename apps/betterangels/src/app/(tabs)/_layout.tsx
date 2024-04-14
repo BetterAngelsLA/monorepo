@@ -65,6 +65,9 @@ export default function TabLayout() {
           name="index"
           options={{
             title: '',
+            headerStyle: {
+              backgroundColor: Colors.BRAND_DARK_BLUE,
+            },
             headerShadowVisible: false,
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
@@ -119,7 +122,7 @@ export default function TabLayout() {
                   <UsersIcon color={color} />
                 )}
                 <BodyText color={color} size="xs">
-                  Clients
+                  All Clients
                 </BodyText>
               </View>
             ),
@@ -138,7 +141,7 @@ export default function TabLayout() {
             tabBarIcon: () => (
               <View style={styles.wrapper}>
                 <View style={styles.middleButton}>
-                  <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                  <PlusIcon color={Colors.WHITE} />
                 </View>
               </View>
             ),
