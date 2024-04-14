@@ -18,7 +18,7 @@ import { useCallback, useState } from 'react';
 
 interface IPurposeProps {
   index: number;
-  setPurposes: (e: { value: string; id: string | undefined }[]) => void;
+  setPurposes: (purpose: { value: string; id: string | undefined }[]) => void;
   purposes: { value: string; id: string | undefined }[];
   purpose: { value: string; id: string | undefined };
   hasError: boolean;

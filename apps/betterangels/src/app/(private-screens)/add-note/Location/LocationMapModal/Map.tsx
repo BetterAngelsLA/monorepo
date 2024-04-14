@@ -15,11 +15,14 @@ interface IMapProps {
       | undefined
   ) => void;
   pin: boolean;
-  setInitialLocation: (e: { longitude: number; latitude: number }) => void;
+  setInitialLocation: (initialLocation: {
+    longitude: number;
+    latitude: number;
+  }) => void;
   initialLocation: { longitude: number; latitude: number };
   setPin: (e: boolean) => void;
   setSelected: (e: boolean) => void;
-  setAddress: (e: { full: string; short: string } | undefined) => void;
+  setAddress: (address: { full: string; short: string } | undefined) => void;
   setChooseDirections: (e: boolean) => void;
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;

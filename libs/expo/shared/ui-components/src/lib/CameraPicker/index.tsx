@@ -21,7 +21,7 @@ import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 interface ICameraPickerProps {
   images: { id: string | undefined; uri: string }[];
-  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  setImages: (images: { id: string | undefined; uri: string }[]) => void;
   namespace: string;
   noteId: string | undefined;
   setIsLoading: (e: boolean) => void;
