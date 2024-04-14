@@ -358,6 +358,9 @@ GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 # Jazzmin
 JAZZMIN_SETTINGS = {"changeform_format": "single"}
 
+# Test Runner
+TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
+
 SITE_ID = 1
 
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = env("ACCOUNT_DEFAULT_HTTP_PROTOCOL")
