@@ -101,8 +101,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setIsSearch(true);
 
       setSuggestions(response.data.predictions);
-    } catch (error) {
-      console.error('Error fetching place data:', error);
+    } catch (err) {
+      console.error('Error fetching place data:', err);
       return [];
     }
   };
@@ -154,8 +154,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setPin(true);
       setSelected(true);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -254,8 +254,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         name: undefined,
       });
       setSelected(true);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   };
 

@@ -123,8 +123,8 @@ export default function NextStepInput(props: INextStepProps) {
               setId(data.createNoteTask.id);
             }
           }
-        } catch (error) {
-          console.error('Error creating task:', error);
+        } catch (err) {
+          console.error('Error creating task:', err);
         }
       },
       500
@@ -168,8 +168,8 @@ export default function NextStepInput(props: INextStepProps) {
         });
         setId(undefined);
       }
-    } catch (error) {
-      console.error('Error deleting task:', error);
+    } catch (err) {
+      console.error('Error deleting task:', err);
     }
   };
 

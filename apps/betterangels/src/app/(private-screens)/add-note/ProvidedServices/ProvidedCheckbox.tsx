@@ -92,9 +92,9 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
           }
         }
         setIsLoading(false);
-      } catch (e) {
+      } catch (err) {
         setIsLoading(false);
-        console.log('Error creating service', e);
+        console.log('Error creating service', err);
       }
     }, 300)
   ).current;

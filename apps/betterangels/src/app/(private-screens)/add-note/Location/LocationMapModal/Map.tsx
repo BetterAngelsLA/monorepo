@@ -87,8 +87,8 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         });
         setPin(true);
         setSelected(true);
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        console.log(err);
       }
     } else {
       setAddress(undefined);

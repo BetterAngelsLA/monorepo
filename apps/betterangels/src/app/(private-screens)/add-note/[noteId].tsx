@@ -88,8 +88,8 @@ export default function AddNote() {
         },
       });
       router.back();
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
 
@@ -115,8 +115,8 @@ export default function AddNote() {
       if (isSubmitted === true) {
         router.back();
       }
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
 

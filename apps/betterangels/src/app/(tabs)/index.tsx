@@ -190,8 +190,8 @@ export default function TabOneScreen() {
         },
       });
       router.navigate(`/add-note/${data?.createNote.id}`);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
 

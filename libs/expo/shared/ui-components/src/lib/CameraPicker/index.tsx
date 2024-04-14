@@ -98,9 +98,9 @@ export default function CameraPicker(props: ICameraPickerProps) {
       }
       setIsCameraOpen(false);
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       setIsLoading(false);
-      console.log(e);
+      console.log(err);
     }
   };
 

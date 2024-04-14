@@ -85,8 +85,8 @@ export default function PurposeInput(props: IPurposeProps) {
             setLocalId(data.createNoteTask.id);
           }
         }
-      } catch (error) {
-        console.error('Error creating task:', error);
+      } catch (err) {
+        console.error('Error creating task:', err);
       }
     }, 500)
   ).current;
@@ -125,8 +125,8 @@ export default function PurposeInput(props: IPurposeProps) {
           console.log('Error deleting task', deleteError);
         }
       }
-    } catch (error) {
-      console.error('Error deleting task:', error);
+    } catch (err) {
+      console.error('Error deleting task:', err);
     }
   };
 

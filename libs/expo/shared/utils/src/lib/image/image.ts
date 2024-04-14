@@ -46,8 +46,8 @@ export async function resizeImage({
       compress: compress,
       format: ImageManipulator.SaveFormat.JPEG,
     });
-  } catch (error) {
-    console.error('Error resizing image: ', error);
-    throw error;
+  } catch (err) {
+    console.error('Error resizing image: ', err);
+    throw err;
   }
 }

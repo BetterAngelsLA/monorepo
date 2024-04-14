@@ -28,6 +28,6 @@ try {
     join(projectRoot, 'package.json'),
     JSON.stringify(projectPackage, null, 2)
   );
-} catch (e) {
-  console.error('Error reading package.json file', e);
+} catch (err) {
+  console.error('Error reading package.json file', err);
 }

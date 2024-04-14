@@ -85,9 +85,9 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         setImages([...images, ...uploadedImages]);
       }
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       setIsLoading(false);
-      console.log(e);
+      console.log(err);
     }
   };
 

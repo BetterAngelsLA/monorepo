@@ -85,8 +85,8 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           setServices(newServices);
         }
       }
-    } catch (e) {
-      console.log('TOOGLE CHECKBOX ERROR: ', e);
+    } catch (err) {
+      console.log('TOOGLE CHECKBOX ERROR: ', err);
     }
   };
 

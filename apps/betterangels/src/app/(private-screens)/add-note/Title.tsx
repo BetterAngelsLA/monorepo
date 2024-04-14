@@ -83,8 +83,8 @@ export default function Title(props: ITitleProps) {
             },
           },
         });
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        console.log(err);
       }
     }, 500)
   ).current;
