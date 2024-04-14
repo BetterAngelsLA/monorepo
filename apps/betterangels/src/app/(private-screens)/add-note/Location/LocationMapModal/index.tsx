@@ -39,7 +39,7 @@ type locationLongLat = {
 interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {

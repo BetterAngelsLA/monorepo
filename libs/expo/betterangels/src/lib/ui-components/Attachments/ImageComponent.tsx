@@ -12,7 +12,7 @@ import {
 interface IImageComponentProps {
   width: number;
   image: { id: string | undefined; uri: string };
-  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  setImages: (images: { id: string | undefined; uri: string }[]) => void;
   images: { id: string | undefined; uri: string }[];
   isLoading: boolean;
 }

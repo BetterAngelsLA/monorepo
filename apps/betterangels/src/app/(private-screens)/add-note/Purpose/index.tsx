@@ -7,7 +7,7 @@ import PurposeInput from './PurposeInput';
 
 interface IPurposeProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
 }
 

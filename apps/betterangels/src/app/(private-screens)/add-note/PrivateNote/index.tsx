@@ -8,7 +8,7 @@ import { useFormContext } from 'react-hook-form';
 
 interface IPrivateNoteProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 export default function PrivateNote(props: IPrivateNoteProps) {
