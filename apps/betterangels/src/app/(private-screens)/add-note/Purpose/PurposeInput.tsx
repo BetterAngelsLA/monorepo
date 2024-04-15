@@ -42,22 +42,22 @@ export default function PurposeInput(props: IPurposeProps) {
     DeleteTaskMutationVariables
   >(DELETE_TASK);
 
-  const createTask = async (e: string, id: string | undefined) => {
+  const createTask = async (title: string, id: string | undefined) => {
     if (!noteId) return;
     try {
-      if (id && e) {
+      if (id && title) {
         const { data } = await updateTask({
           variables: {
             data: {
               id,
-              title: e,
+              title: title,
             },
           },
         });
         if (!data) {
           console.log('Error updating task', updateError);
         }
-      } else if (id && !e) {
+      } else if (id && !title) {
         const { data } = await deleteTask({
           variables: { id },
         });
@@ -69,7 +69,7 @@ export default function PurposeInput(props: IPurposeProps) {
         const { data } = await createNoteTask({
           variables: {
             data: {
-              title: e,
+              title,
               noteId,
               status: TaskStatusEnum.Completed,
               taskType: TaskTypeEnum.Purpose,
