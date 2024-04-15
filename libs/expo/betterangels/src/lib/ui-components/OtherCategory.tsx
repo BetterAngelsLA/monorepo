@@ -18,7 +18,7 @@ import {
 interface IOtherCategoryProps {
   noteId: string | undefined;
   services: { title: string; id: string | undefined }[];
-  setServices: (e: { title: string; id: string | undefined }[]) => void;
+  setServices: (services: { title: string; id: string | undefined }[]) => void;
   serviceType:
     | ServiceRequestTypeEnum.Provided
     | ServiceRequestTypeEnum.Requested;

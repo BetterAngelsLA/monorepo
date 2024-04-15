@@ -1,64 +1,36 @@
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BodyText,
-  DatePicker,
-  FieldCard,
-  H3,
-  H5,
-  Input,
-} from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
-import {
-  FieldErrors,
-  useFieldArray,
-  useFormContext,
-  useWatch,
-} from 'react-hook-form';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import NextStepInput from './NextStepInput';
 
 interface INextStepProps {
   expanded: string | undefined | null;
   setExpanded: (e: string | undefined | null) => void;
-}
-
-interface INextStepsObject {
-  nextStepActions: TNextSteps;
+  noteId: string | undefined;
 }
 
 type TNextSteps = {
   action: string;
-  date?: Date;
-  time?: Date;
-  location?: string;
+  date?: string;
+  time?: string;
 }[];
 
-type NextStepFormErrors = FieldErrors<INextStepsObject>;
-
 export default function NextStep(props: INextStepProps) {
-  const { expanded, setExpanded } = props;
-  const { control, setValue, formState } = useFormContext();
-  const { fields, append } = useFieldArray({
-    name: 'nextStepActions',
-  });
+  const { expanded, setExpanded, noteId } = props;
+  const [nextSteps, setNextSteps] = useState<TNextSteps>([]);
 
   const isNextStep = expanded === 'Next Step';
-  const typedErrors = formState.errors as NextStepFormErrors;
 
-  const nextStepActions: TNextSteps = useWatch({
-    name: 'nextStepActions',
-    control,
-  });
-  const isZeroNextStepActions = nextStepActions.length === 0;
+  const isZeroNextSteps = nextSteps.length === 0;
 
-  const hasValidActions = nextStepActions.some((item) => item.action);
+  const hasValidActions = nextSteps.some((item) => item.action);
 
   useEffect(() => {
     if (!isNextStep) {
-      const filteredNextSteps = nextStepActions.filter(
-        (field) => !!field.action
-      );
-      setValue('nextStepActions', filteredNextSteps);
+      const filteredNextSteps = nextSteps.filter((field) => !!field.action);
+      setNextSteps(filteredNextSteps);
     }
   }, [expanded]);
 
@@ -67,8 +39,9 @@ export default function NextStep(props: INextStepProps) {
       expanded={expanded}
       mb="xs"
       setExpanded={() => {
-        if (isZeroNextStepActions)
-          append({ action: '', date: '', location: '' });
+        if (isZeroNextSteps) {
+          setNextSteps([{ action: '', date: '', time: '' }]);
+        }
 
         setExpanded(isNextStep ? null : 'Next Step');
       }}
@@ -84,43 +57,22 @@ export default function NextStep(props: INextStepProps) {
           overflow: 'hidden',
         }}
       >
-        {fields.map((item, index) => (
-          <View
-            style={{ gap: Spacings.xs, marginBottom: Spacings.xs }}
-            key={item.id}
-          >
-            {fields.length > 1 && <H3>Action {index + 1}</H3>}
-            <Input
-              control={control}
-              name={`nextStepActions.${index}.action`}
-              label="Action Item"
-            />
-            <DatePicker
-              error={!!typedErrors.nextStepActions?.[index]?.date}
-              pattern={Regex.date}
-              label="Date (optional)"
-              control={control}
-              mode="date"
-              placeholder="MM/DD/YYYY"
-              format="MM/dd/yyyy"
-              name={`nextStepActions.${index}.date`}
-            />
-            <DatePicker
-              error={!!typedErrors.nextStepActions?.[index]?.time}
-              pattern={Regex.time}
-              label="Time (optional)"
-              control={control}
-              format="HH:mm"
-              placeholder="HH:MM"
-              mode="time"
-              name={`nextStepActions.${index}.time`}
-            />
-          </View>
+        {nextSteps.map((item, index) => (
+          <NextStepInput
+            key={index}
+            index={index}
+            nextStep={item}
+            setNextSteps={setNextSteps}
+            noteId={noteId}
+            nextSteps={nextSteps}
+          />
         ))}
         <H5
           textAlign="right"
           color={Colors.PRIMARY}
-          onPress={() => append({ action: '', date: '', location: '' })}
+          onPress={() =>
+            setNextSteps([...nextSteps, { action: '', date: '', time: '' }])
+          }
           size="sm"
         >
           Add another plan
@@ -136,7 +88,7 @@ export default function NextStep(props: INextStepProps) {
           }}
         >
           {hasValidActions &&
-            nextStepActions.map((action, index) => (
+            nextSteps.map((action, index) => (
               <View
                 key={index}
                 style={{

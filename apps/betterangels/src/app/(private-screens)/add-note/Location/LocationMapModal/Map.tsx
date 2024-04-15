@@ -15,11 +15,14 @@ interface IMapProps {
       | undefined
   ) => void;
   pin: boolean;
-  setInitialLocation: (e: { longitude: number; latitude: number }) => void;
+  setInitialLocation: (initialLocation: {
+    longitude: number;
+    latitude: number;
+  }) => void;
   initialLocation: { longitude: number; latitude: number };
   setPin: (e: boolean) => void;
   setSelected: (e: boolean) => void;
-  setAddress: (e: { full: string; short: string } | undefined) => void;
+  setAddress: (address: { full: string; short: string } | undefined) => void;
   setChooseDirections: (e: boolean) => void;
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;
@@ -57,7 +60,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address&key=${apiKey}`
+        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_component&key=${apiKey}`
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
