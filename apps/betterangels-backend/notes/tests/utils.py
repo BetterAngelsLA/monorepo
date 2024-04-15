@@ -124,7 +124,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         createdBy {{
                             id
                         }}
-                        timestamp
+                        interactedAt
                     }}
                 }}
             }}
