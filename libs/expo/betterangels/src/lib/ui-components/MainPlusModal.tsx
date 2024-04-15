@@ -1,6 +1,7 @@
 import {
-  ArrowRightFromArcIcon,
+  CalendarPlusIcon,
   FilePlusIcon,
+  SignUpIcon,
   XmarkIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -10,7 +11,7 @@ import MainModal from './MainModal';
 const ACTIONS = [
   {
     title: 'Sign Up Process',
-    Icon: ArrowRightFromArcIcon,
+    Icon: SignUpIcon,
     route: '#',
   },
   {
@@ -20,12 +21,12 @@ const ACTIONS = [
   },
   {
     title: 'Add event',
-    Icon: FilePlusIcon,
+    Icon: CalendarPlusIcon,
     route: '#',
   },
   {
     title: 'Add task',
-    Icon: FilePlusIcon,
+    Icon: CalendarPlusIcon,
     route: '#',
   },
 ];

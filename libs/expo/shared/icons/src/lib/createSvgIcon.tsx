@@ -16,7 +16,7 @@ const createSvgIcon = (SvgComponent: React.ComponentType<SvgProps>) => {
     ml,
     my,
     mx,
-    ...props // we should avoid passing all props
+    ...props
   }) => {
     const { w, h } = extractSize(size);
     return (

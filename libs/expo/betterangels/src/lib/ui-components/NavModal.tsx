@@ -1,6 +1,12 @@
 import {
-  ArrowRightFromArcIcon,
-  FilePlusIcon,
+  BurgerSodaIcon,
+  CalendarIcon,
+  HouseBlankIcon,
+  ListIcon,
+  MapIcon,
+  NoteIcon,
+  SignOutIcon,
+  UsersIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, BodyText } from '@monorepo/expo/shared/ui-components';
@@ -12,37 +18,37 @@ import MainModal from './MainModal';
 const ACTIONS = [
   {
     title: 'Home',
-    Icon: ArrowRightFromArcIcon,
+    Icon: HouseBlankIcon,
     route: '#',
   },
   {
     title: 'Clients',
-    Icon: FilePlusIcon,
+    Icon: UsersIcon,
     route: '#',
   },
   {
     title: 'Map',
-    Icon: FilePlusIcon,
+    Icon: MapIcon,
     route: '#',
   },
   {
     title: 'Interactions',
-    Icon: FilePlusIcon,
+    Icon: NoteIcon,
     route: '#',
   },
   {
     title: 'Tasks',
-    Icon: FilePlusIcon,
+    Icon: ListIcon,
     route: '#',
   },
   {
     title: 'Services',
-    Icon: FilePlusIcon,
+    Icon: BurgerSodaIcon,
     route: '#',
   },
   {
     title: 'Schedule',
-    Icon: FilePlusIcon,
+    Icon: CalendarIcon,
     route: '#',
   },
 ];
@@ -103,7 +109,7 @@ export default function NavModal(props: INavModalProps) {
                   paddingVertical: Spacings.sm,
                 }}
               >
-                <FilePlusIcon mr="md" color={Colors.PRIMARY_EXTRA_DARK} />
+                <SignOutIcon mr="md" color={Colors.PRIMARY_EXTRA_DARK} />
 
                 <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
                   Log Out
