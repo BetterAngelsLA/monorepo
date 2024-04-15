@@ -24,6 +24,7 @@ export function H4({
   style,
   textDecorationLine,
   onPress,
+  size = 'md',
 }: {
   children: ReactNode;
   onPress?: ((event: GestureResponderEvent) => void) | undefined;
@@ -44,6 +45,7 @@ export function H4({
   align?: 'auto' | 'center' | 'left' | 'right' | 'justify';
   spacing?: number;
   style?: TextStyle;
+  size?: 'md' | 'sm' | 'xs' | 'xxs';
 }) {
   return (
     <Text
@@ -63,6 +65,8 @@ export function H4({
           textDecorationLine,
           color,
           letterSpacing: spacing,
+          fontSize: FontSizes[size].fontSize,
+          lineHeight: FontSizes[size].lineHeight,
         },
       ]}
     >
@@ -74,7 +78,5 @@ export function H4({
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'Poppins-SemiBold',
-    fontSize: FontSizes.xsm.fontSize,
-    lineHeight: FontSizes.xsm.lineHeight,
   },
 });

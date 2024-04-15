@@ -1,31 +1,11 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  GestureResponderEvent,
-  StyleSheet,
-  Text,
-  TextStyle,
-} from 'react-native';
+import { StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export function BodyText({
-  children,
-  textTransform,
-  mb,
-  mt,
-  mr,
-  ml,
-  my,
-  mx,
-  onPress,
-  textDecorationLine,
-  color = Colors.PRIMARY_EXTRA_DARK,
-  size = 'md',
-  style,
-}: {
+interface IBodyTextProps extends TextProps {
   children: ReactNode;
-  onPress?: ((event: GestureResponderEvent) => void) | undefined;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -42,10 +22,26 @@ export function BodyText({
   color?: string;
   size?: 'md' | 'sm' | 'xs' | 'xxs';
   style?: TextStyle;
-}) {
+}
+
+export function BodyText(props: IBodyTextProps) {
+  const {
+    children,
+    textTransform,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    textDecorationLine,
+    color = Colors.PRIMARY_EXTRA_DARK,
+    size = 'md',
+    style,
+    ...rest
+  } = props;
   return (
     <Text
-      onPress={onPress}
       style={[
         styles.text,
         style,
@@ -58,11 +54,13 @@ export function BodyText({
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
           textDecorationLine,
+
           color,
           fontSize: FontSizes[size].fontSize,
           lineHeight: FontSizes[size].lineHeight,
         },
       ]}
+      {...rest}
     >
       {children}
     </Text>

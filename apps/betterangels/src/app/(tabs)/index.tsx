@@ -29,104 +29,25 @@ import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import Logo from '../assets/images/logo.svg';
 
-const EVENTS = [
+const EVENTS: { tasks: string[]; type: 'event' | 'task' }[] = [
   {
-    title: 'Event Card somehthng somet dasf',
-    time: '09:00 AM',
-    address: '123 Wilshire Blvd',
-    participants: [
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
+    tasks: [
+      'Event 1',
+      'Event 2',
+      'Event 3',
+      'Event to test longer text for wrapping',
+      'Event 5',
     ],
+    type: 'event',
   },
   {
-    title: 'Event Card somehthng somet dasf',
-    time: '09:00 AM',
-    address: '123 Wilshire Blvd',
-    participants: [
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
+    tasks: [
+      'Task 1',
+      'Task 2',
+      'Task 3',
+      'Task to test longer text for wrapping',
     ],
+    type: 'task',
   },
 ];
 const TOOLS = [
@@ -265,10 +186,8 @@ export default function TabOneScreen() {
                 <EventCard
                   mr="xs"
                   key={idx}
-                  title={event.title}
-                  time={event.time}
-                  address={event.address}
-                  participants={event.participants}
+                  type={event.type}
+                  tasks={event.tasks}
                 />
               ))}
             </ScrollView>

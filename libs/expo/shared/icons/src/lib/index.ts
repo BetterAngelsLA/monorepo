@@ -92,6 +92,7 @@ export { default as IdMeIcon } from './components/IdMeIcon';
 export { default as ImageIcon } from './components/ImageIcon';
 export { default as ImagesIcon } from './components/ImagesIcon';
 export { default as InfoIcon } from './components/InfoIcon';
+export { default as ListIcon } from './components/ListIcon';
 export { default as LocationArrowIcon } from './components/LocationArrowIcon';
 export { default as LocationDotIcon } from './components/LocationDotIcon';
 export { default as LocationPinIcon } from './components/LocationPinIcon';
