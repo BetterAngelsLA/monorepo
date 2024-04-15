@@ -312,7 +312,7 @@ type NoteType {
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
-  timestamp: DateTime!
+  interactedAt: DateTime!
   privateDetails: String
 }
 
@@ -494,7 +494,7 @@ input UpdateNoteInput {
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
-  timestamp: DateTime
+  interactedAt: DateTime
 }
 
 input UpdateNoteLocationInput {

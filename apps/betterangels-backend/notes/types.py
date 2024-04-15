@@ -174,7 +174,7 @@ class NoteType:
     client: Optional[UserType]
     created_at: auto
     created_by: UserType
-    timestamp: auto
+    interacted_at: auto
 
     @strawberry_django.field(
         annotate={
@@ -214,7 +214,7 @@ class UpdateNoteInput:
     public_details: auto
     private_details: auto
     is_submitted: auto
-    timestamp: auto
+    interacted_at: auto
 
 
 @strawberry_django.input(models.Note)
