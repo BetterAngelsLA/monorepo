@@ -71,7 +71,7 @@ export default function PurposeInput(props: IPurposeProps) {
             data: {
               title: e,
               noteId,
-              status: TaskStatusEnum.ToDo,
+              status: TaskStatusEnum.Completed,
               taskType: TaskTypeEnum.Purpose,
             },
           },
