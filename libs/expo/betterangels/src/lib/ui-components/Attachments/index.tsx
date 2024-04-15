@@ -11,7 +11,7 @@ import ImageComponent from './ImageComponent';
 
 interface IAttachmentsProps {
   images: { id: string | undefined; uri: string }[];
-  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  setImages: (images: { id: string | undefined; uri: string }[]) => void;
   namespace:
     | NoteNamespaceEnum.MoodAssessment
     | NoteNamespaceEnum.ProvidedServices

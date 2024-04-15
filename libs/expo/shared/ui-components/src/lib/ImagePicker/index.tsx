@@ -8,7 +8,7 @@ import IconButton from '../IconButton';
 
 interface IImagePickerProps {
   images: { id: string | undefined; uri: string }[];
-  setImages: (e: { id: string | undefined; uri: string }[]) => void;
+  setImages: (images: { id: string | undefined; uri: string }[]) => void;
   namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;

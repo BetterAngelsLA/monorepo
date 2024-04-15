@@ -138,6 +138,76 @@ export const DELETE_MOOD = gql`
   }
 `;
 
+export const CREATE_NOTE_TASK = gql`
+  mutation CreateNoteTask($data: CreateNoteTaskInput!) {
+    createNoteTask(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on TaskType {
+        id
+        title
+        status
+        dueBy
+        client {
+          id
+        }
+        createdBy {
+          id
+        }
+        createdAt
+      }
+    }
+  }
+`;
+
+export const UPDATE_TASK = gql`
+  mutation UpdateTask($data: UpdateTaskInput!) {
+    updateTask(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on TaskType {
+        id
+        title
+        status
+        dueBy
+        client {
+          id
+        }
+        createdBy {
+          id
+        }
+        createdAt
+      }
+    }
+  }
+`;
+export const DELETE_TASK = gql`
+  mutation DeleteTask($id: ID!) {
+    deleteTask(data: { id: $id }) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on TaskType {
+        id
+      }
+    }
+  }
+`;
+
 export const CREATE_NOTE_ATTACHMENT = gql`
   mutation CreateNoteAttachment(
     $noteId: ID!
