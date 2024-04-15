@@ -27,7 +27,7 @@ interface IPurposeProps {
 
 export default function PurposeInput(props: IPurposeProps) {
   const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
-  const [value, setValue] = useState(purpose.value);
+  const [task, setTask] = useState(purpose.value);
   const [localId, setLocalId] = useState<string | undefined>(undefined);
   const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
@@ -99,7 +99,7 @@ export default function PurposeInput(props: IPurposeProps) {
 
   const onChange = (e: string) => {
     if (loading) return;
-    setValue(e);
+    setTask(e);
     setPurposes(
       purposes.map((item, idx) =>
         idx === index ? { ...item, value: e } : item
@@ -109,7 +109,7 @@ export default function PurposeInput(props: IPurposeProps) {
   };
 
   const onDelete = async () => {
-    setValue('');
+    setTask('');
     const newPurposes = purposes.map((item, idx) => {
       if (idx === index) {
         return {
@@ -142,7 +142,7 @@ export default function PurposeInput(props: IPurposeProps) {
       placeholder="Enter a purpose"
       mt={index !== 0 ? 'xs' : undefined}
       error={hasError && index === 0}
-      value={value}
+      value={task}
       onChangeText={onChange}
     />
   );
