@@ -27,7 +27,7 @@ interface IPurposeProps {
 
 export default function PurposeInput(props: IPurposeProps) {
   const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
-  const [value, setValue] = useState(purpose.value);
+  const [task, setTask] = useState(purpose.value);
   const [localId, setLocalId] = useState<string | undefined>(undefined);
   const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
@@ -43,22 +43,22 @@ export default function PurposeInput(props: IPurposeProps) {
   >(DELETE_TASK);
 
   const createTask = useRef(
-    debounce(async (e: string, id: string | undefined) => {
+    debounce(async (title: string, id: string | undefined) => {
       if (!noteId) return;
       try {
-        if (id && e) {
+        if (id && title) {
           const { data } = await updateTask({
             variables: {
               data: {
                 id,
-                title: e,
+                title,
               },
             },
           });
           if (!data) {
             console.log('Error updating task', updateError);
           }
-        } else if (id && !e) {
+        } else if (id && !title) {
           const { data } = await deleteTask({
             variables: { id },
           });
@@ -70,9 +70,9 @@ export default function PurposeInput(props: IPurposeProps) {
           const { data } = await createNoteTask({
             variables: {
               data: {
-                title: e,
+                title,
                 noteId,
-                status: TaskStatusEnum.ToDo,
+                status: TaskStatusEnum.Completed,
                 taskType: TaskTypeEnum.Purpose,
               },
             },
@@ -93,7 +93,7 @@ export default function PurposeInput(props: IPurposeProps) {
 
   const onChange = (e: string) => {
     if (loading) return;
-    setValue(e);
+    setTask(e);
     setPurposes(
       purposes.map((item, idx) =>
         idx === index ? { ...item, value: e } : item
@@ -103,7 +103,7 @@ export default function PurposeInput(props: IPurposeProps) {
   };
 
   const onDelete = async () => {
-    setValue('');
+    setTask('');
     const newPurposes = purposes.map((item, idx) => {
       if (idx === index) {
         return {
@@ -136,7 +136,7 @@ export default function PurposeInput(props: IPurposeProps) {
       placeholder="Enter a purpose"
       mt={index !== 0 ? 'xs' : undefined}
       error={hasError && index === 0}
-      value={value}
+      value={task}
       onChangeText={onChange}
     />
   );
