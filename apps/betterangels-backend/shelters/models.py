@@ -36,7 +36,7 @@ class Shelter(BaseModel):
 
     # Location Fields
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-    spa = models.PositiveSmallIntegerField(blank=True, null=True)
+    spa = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name='SPA')
     confidential = models.BooleanField(blank=True, null=True)
 
     # Contact Information
