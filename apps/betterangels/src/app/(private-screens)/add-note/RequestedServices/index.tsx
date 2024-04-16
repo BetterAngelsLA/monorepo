@@ -34,7 +34,7 @@ import RequestedCheckbox from './RequestedCheckbox';
 
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
 }
 

@@ -1,40 +1,108 @@
+import { useMutation } from '@apollo/client';
+import {
+  UPDATE_NOTE,
+  UpdateNoteMutation,
+  UpdateNoteMutationVariables,
+} from '@monorepo/expo/betterangels';
 import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BasicInput,
   BodyText,
   DatePicker,
   H5,
   IconButton,
-  Input,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { format, parse, setHours, setMinutes } from 'date-fns';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 interface ITitleProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
   noteTitle?: string;
+  noteId: string | undefined;
+  noteDate: Date;
 }
+
+type TNote = {
+  title: string | undefined;
+  date: string;
+  time: string;
+};
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { noteTitle, expanded, setExpanded } = props;
-  const {
-    setValue,
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext();
-  const title = watch('title');
-  const noteDate = watch('noteDate');
-  const noteTime = watch('noteTime');
+  const { noteTitle, expanded, setExpanded, noteId, noteDate } = props;
+  const [updateNote] = useMutation<
+    UpdateNoteMutation,
+    UpdateNoteMutationVariables
+  >(UPDATE_NOTE);
+  const [note, setNote] = useState<TNote>({
+    title: noteTitle,
+    date: format(noteDate, 'MM/dd/yyyy'),
+    time: format(noteDate, 'HH:mm'),
+  });
+
+  const [error, setError] = useState({
+    title: false,
+    date: false,
+    time: false,
+  });
+  const noteRef = useRef(note);
   const isTitle = expanded === 'Title';
 
+  const updateNoteFunction = useRef(
+    debounce(async (key: 'time' | 'title' | 'date', value: string) => {
+      if (!noteId || !value) return;
+      const currentNote = noteRef.current;
+      const dateValue = key === 'date' ? value : currentNote.date;
+      const timeValue = key === 'time' ? value : currentNote.time;
+      let updatingField = value;
+
+      const updatingKey = key === 'title' ? 'title' : 'interactedAt';
+      if (key === 'time' || key === 'date') {
+        const parsedDate = parse(dateValue, 'MM/dd/yyyy', new Date());
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        const combinedDateTime = setMinutes(
+          setHours(parsedDate, hours),
+          minutes
+        );
+
+        updatingField = new Date(combinedDateTime).toISOString();
+      }
+
+      try {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              [updatingKey]: updatingField,
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }, 500)
+  ).current;
+
+  const onChange = (key: 'title' | 'date' | 'time', value: string) => {
+    if (!value) {
+      setError({ ...error, [key]: true });
+    }
+    if (error[key]) {
+      setError({ ...error, [key]: false });
+    }
+    setNote({ ...note, [key]: value });
+    updateNoteFunction(key, value);
+  };
+
   useEffect(() => {
-    setValue('title', noteTitle);
-  }, [noteTitle, setValue]);
+    noteRef.current = note;
+  }, [note]);
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
@@ -50,7 +118,7 @@ export default function Title(props: ITitleProps) {
             alignItems: 'center',
           }}
         >
-          <H5 mr="sm">{title}</H5>
+          <H5 mr="sm">{note.title}</H5>
           <IconButton
             onPress={() => setExpanded('Title')}
             accessibilityLabel="edit"
@@ -59,12 +127,12 @@ export default function Title(props: ITitleProps) {
           >
             <SolidPeincilIcon
               size="lg"
-              color={errors.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
+              color={error.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
             />
           </IconButton>
         </View>
         <BodyText size="xs" mb="md">
-          {noteDate} {noteTime || ''}
+          {note.date} {note?.time || ''}
         </BodyText>
       </View>
       <View
@@ -73,38 +141,37 @@ export default function Title(props: ITitleProps) {
           overflow: 'hidden',
         }}
       >
-        <Input
-          error={!!errors.title}
-          rules={{
-            required: true,
-            pattern: Regex.empty,
+        <BasicInput
+          onDelete={() => {
+            setNote({ ...note, title: '' });
+            setError({ ...error, title: true });
           }}
-          control={control}
-          name="title"
+          error={!!error.title}
+          value={note.title}
+          onChangeText={(e) => onChange('title', e)}
         />
         <DatePicker
-          error={!!errors.noteDate}
+          error={!!error.date}
           required
+          disabled
           pattern={Regex.date}
           maxDate={endOfDay}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          control={control}
-          name="noteDate"
+          onSave={(date) => onChange('date', date)}
         />
         <DatePicker
-          error={!!errors.noteTime}
-          pattern={Regex.time}
+          error={!!error.time}
+          disabled
           required
           maxDate={endOfDay}
           mode="time"
           format="HH:mm"
           placeholder="HH:MM"
           mt="xs"
-          control={control}
-          name="noteTime"
+          onSave={(time) => onChange('time', time)}
         />
       </View>
     </View>

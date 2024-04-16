@@ -32,7 +32,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
-                "timestamp": "2024-03-12T11:12:13+00:00",
+                "interactedAt": "2024-03-12T11:12:13+00:00",
             }
         )
         # Add moods
@@ -91,7 +91,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     createdBy {
                         id
                     }
-                    timestamp
+                    interactedAt
                 }
             }
         """
@@ -151,7 +151,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "timestamp": "2024-03-12T11:12:13+00:00",
+            "interactedAt": "2024-03-12T11:12:13+00:00",
         }
         self.assertEqual(expected_note, note)
 
@@ -198,7 +198,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     createdBy {
                         id
                     }
-                    timestamp
+                    interactedAt
                 }
             }
         """

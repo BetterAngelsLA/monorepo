@@ -18,7 +18,7 @@ import {
 interface IOtherCategoryProps {
   noteId: string | undefined;
   services: { title: string; id: string | undefined }[];
-  setServices: (e: { title: string; id: string | undefined }[]) => void;
+  setServices: (services: { title: string; id: string | undefined }[]) => void;
   serviceType:
     | ServiceRequestTypeEnum.Provided
     | ServiceRequestTypeEnum.Requested;
@@ -85,8 +85,8 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           setServices(newServices);
         }
       }
-    } catch (e) {
-      console.log('TOOGLE CHECKBOX ERROR: ', e);
+    } catch (err) {
+      console.log('TOOGLE CHECKBOX ERROR: ', err);
     }
   };
 

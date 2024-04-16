@@ -8,14 +8,14 @@ import { useFormContext } from 'react-hook-form';
 
 interface IDateProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function DateComponent(props: IDateProps) {
   const { expanded, setExpanded } = props;
-  const { control, watch } = useFormContext();
+  const { watch } = useFormContext();
 
   const dateValue = watch('date');
   const isDate = expanded === 'Date';
@@ -42,8 +42,7 @@ export default function DateComponent(props: IDateProps) {
           format="MM/dd/yy"
           mb="md"
           maxDate={endOfDay}
-          control={control}
-          name={`date`}
+          onSave={(e) => console.log(e)}
         />
       )}
     </FieldCard>

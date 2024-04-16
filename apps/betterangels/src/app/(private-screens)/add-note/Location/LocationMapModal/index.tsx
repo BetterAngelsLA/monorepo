@@ -39,7 +39,7 @@ type locationLongLat = {
 interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
@@ -101,8 +101,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setIsSearch(true);
 
       setSuggestions(response.data.predictions);
-    } catch (error) {
-      console.error('Error fetching place data:', error);
+    } catch (err) {
+      console.error('Error fetching place data:', err);
       return [];
     }
   };
@@ -118,7 +118,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         {
           params: {
             place_id: place.place_id,
-            fields: 'geometry',
+            fields: 'geometry,address_component',
             key: apiKey,
           },
         }
@@ -154,8 +154,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setPin(true);
       setSelected(true);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -225,6 +225,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     try {
       const { data } = await axios.get(url);
+
       setValue('location', undefined);
       setCurrentLocation({
         longitude,
@@ -253,8 +254,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         name: undefined,
       });
       setSelected(true);
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   };
 

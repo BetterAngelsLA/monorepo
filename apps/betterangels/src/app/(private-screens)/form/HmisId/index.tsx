@@ -8,7 +8,7 @@ import { useFormContext } from 'react-hook-form';
 
 interface IHmisIdProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 export default function HmisId(props: IHmisIdProps) {
