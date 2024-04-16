@@ -62,7 +62,7 @@ export default function Title(props: ITitleProps) {
       const timeValue = key === 'time' ? value : currentNote.time;
       let updatingField = value;
 
-      const updatingKey = key === 'title' ? 'title' : 'timestamp';
+      const updatingKey = key === 'title' ? 'title' : 'interactedAt';
       if (key === 'time' || key === 'date') {
         const parsedDate = parse(dateValue, 'MM/dd/yyyy', new Date());
         const [hours, minutes] = timeValue.split(':').map(Number);
