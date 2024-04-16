@@ -130,7 +130,7 @@ export default function AddNote() {
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
           <Title
             noteTitle={data.note.title}
-            noteDate={data.note.timestamp}
+            noteDate={data.note.interactedAt}
             {...props}
           />
           <Location {...props} />
