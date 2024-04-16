@@ -1,14 +1,12 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import {
   CREATE_NOTE,
-  GET_NOTES,
   MainScrollContainer,
   NavModal,
   useUser,
 } from '@monorepo/expo/betterangels';
-import { BurgerSodaIcon, WalkingIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BodyText,
@@ -18,7 +16,6 @@ import {
   H2,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
 import Logo from '../assets/images/logo.svg';
 
 const EVENTS: { tasks: string[]; type: 'event' | 'task' }[] = [
@@ -42,41 +39,11 @@ const EVENTS: { tasks: string[]; type: 'event' | 'task' }[] = [
     type: 'task',
   },
 ];
-const TOOLS = [
-  {
-    icon: <BurgerSodaIcon size="sm" color={Colors.SECONDARY} />,
-    title: 'Services',
-    link: '',
-  },
-  {
-    icon: <WalkingIcon size="sm" color={Colors.SECONDARY} />,
-    title: 'Activity',
-    link: '',
-  },
-];
-
-interface INote {
-  id: string;
-  title: string;
-  purposes: { value: string }[];
-  nextStepActions: { value: string }[];
-  publicDetails: string;
-  noteDateTime: string;
-  moods: string[];
-  providedServices: string[];
-  nextStepDate: Date;
-  requestedServices: string[];
-}
 
 export default function TabOneScreen() {
-  const [notes, setNotes] = useState<INote[] | undefined>([]);
   const [createNote] = useMutation(CREATE_NOTE);
   const { user } = useUser();
   const router = useRouter();
-
-  const { data, loading: isLoading } = useQuery(GET_NOTES, {
-    fetchPolicy: 'cache-and-network',
-  });
 
   async function createNoteFunction() {
     try {
@@ -94,12 +61,6 @@ export default function TabOneScreen() {
       console.log(err);
     }
   }
-
-  useEffect(() => {
-    if (data && !isLoading) {
-      setNotes(data.notes);
-    }
-  }, [data, isLoading]);
 
   return (
     <View style={{ flex: 1 }}>
