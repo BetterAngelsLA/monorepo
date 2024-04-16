@@ -63,7 +63,7 @@ export const GET_NOTE = gql`
       createdBy {
         id
       }
-      timestamp
+      interactedAt
     }
   }
 `;
