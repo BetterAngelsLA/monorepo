@@ -1,4 +1,5 @@
 from accounts.models import User
+from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -62,3 +63,44 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             user.username,
             "Username does not match the logged-in user",
         )
+
+
+class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_get_client(self) -> None:
+        client = baker.make(
+            User,
+            username="client_query_test",
+            first_name="Todd",
+            last_name="Chavez",
+            email="todd@pblivin.com",
+        )
+
+        query = """
+            query ViewClient($id: ID!) {
+                client(pk: $id) {
+                    id
+                    firstName
+                    lastName
+                    email
+                }
+            }
+        """
+
+        variables = {"id": client.pk}
+        expected_query_count = 1
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        returned_client = response["data"]["client"]
+        expected_client = {
+            "id": str(client.pk),
+            "firstName": "Todd",
+            "lastName": "Chavez",
+            "email": "todd@pblivin.com",
+        }
+
+        self.assertEqual(returned_client, expected_client)

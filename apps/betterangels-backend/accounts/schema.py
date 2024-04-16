@@ -1,4 +1,7 @@
+from typing import List
+
 import strawberry
+import strawberry_django
 from accounts.services import send_magic_link
 from strawberry.types import Info
 from strawberry_django import auth
@@ -10,6 +13,10 @@ from .types import MagicLinkInput, MagicLinkResponse, UserType
 @strawberry.type
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
+
+    client: UserType = strawberry_django.field()
+
+    clients: List[UserType] = strawberry_django.field()
 
 
 @strawberry.type

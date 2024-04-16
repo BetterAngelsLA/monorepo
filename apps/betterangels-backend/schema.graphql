@@ -355,6 +355,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
+  client(pk: ID!): UserType!
+  clients: [UserType!]!
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   featureControls: FeatureControlData!
