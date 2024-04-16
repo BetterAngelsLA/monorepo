@@ -60,6 +60,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class ClientProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+
+
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)
 
