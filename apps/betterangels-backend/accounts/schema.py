@@ -3,6 +3,7 @@ from typing import List
 import strawberry
 import strawberry_django
 from accounts.services import send_magic_link
+from django.contrib.auth import get_user_model
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.utils.requests import get_request
@@ -16,7 +17,13 @@ class Query:
 
     client: UserType = strawberry_django.field()
 
-    clients: List[UserType] = strawberry_django.field()
+    @strawberry.field
+    def clients(self) -> List[UserType]:
+        User = get_user_model()
+
+        clients: List[UserType] = User.objects.filter(client_profile__isnull=False)  # type: ignore
+
+        return clients
 
 
 @strawberry.type

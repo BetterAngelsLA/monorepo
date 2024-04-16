@@ -1,4 +1,4 @@
-from accounts.models import User
+from accounts.models import ClientProfile, User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -69,7 +69,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    def test_get_client(self) -> None:
+    def test_get_client_query(self) -> None:
         client = baker.make(
             User,
             username="client_query_test",
@@ -104,3 +104,25 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         }
 
         self.assertEqual(returned_client, expected_client)
+
+    def test_get_clients_query(self) -> None:
+        query = """
+            query GetClients {
+                clients {
+                    id
+                    firstName
+                    lastName
+                    email
+                }
+            }
+        """
+        expected_query_count = 1
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
+
+        clients = response["data"]["clients"]
+        client_count = User.objects.filter(username__icontains="client").count()
+
+        # The number of clients in the db is one more than we create in the test because we're
+        # also creating one via signal in apps/betterangels-backend/accounts/signals.py
+        self.assertEqual(client_count, len(clients) + 1)
