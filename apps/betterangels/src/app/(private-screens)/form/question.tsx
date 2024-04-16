@@ -9,7 +9,7 @@ import { View } from 'react-native';
 
 interface IQuestionProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
   field: string;
   title: string;
 }

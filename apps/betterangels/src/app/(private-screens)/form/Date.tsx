@@ -8,7 +8,7 @@ import { useFormContext } from 'react-hook-form';
 
 interface IDateProps {
   expanded: string | undefined | null;
-  setExpanded: (e: string | undefined | null) => void;
+  setExpanded: (expanded: string | undefined | null) => void;
 }
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
