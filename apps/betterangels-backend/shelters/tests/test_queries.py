@@ -9,6 +9,7 @@ from shelters.models import (
     Shelter,
     ShelterType,
 )
+from organizations.models import Organization
 from test_utils.mixins import GraphQLTestCaseMixin
 
 
@@ -20,6 +21,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         self.shelter1 = baker.make(
             Shelter,
             title="Shelter-1",
+            organization=baker.make(Organization, name="Organization-1", slug="organization_1"),
             email="shelter1@test.com",
             description="Some description",
             typical_stay_description="Some typical stay description",
@@ -46,6 +48,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
             shelters {
                 id
                 title
+                organization
                 location {
                     point
                 }
@@ -59,6 +62,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
             "shelters": [
                 {
                     "id": "1",
+                    "organization": "Organization-1",
                     "location": {"point": [5.152149, 46.199615]},
                     "populations": ["Men", "Women"],
                     "services": ["Mail", "Showers"],

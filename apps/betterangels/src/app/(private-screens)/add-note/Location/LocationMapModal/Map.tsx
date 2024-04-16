@@ -10,7 +10,7 @@ interface IMapProps {
     | { longitude: number; latitude: number; name: string | undefined }
     | undefined;
   setCurrentLocation: (
-    e:
+    currentLocation:
       | { longitude: number; latitude: number; name: string | undefined }
       | undefined
   ) => void;
@@ -20,10 +20,10 @@ interface IMapProps {
     latitude: number;
   }) => void;
   initialLocation: { longitude: number; latitude: number };
-  setPin: (e: boolean) => void;
-  setSelected: (e: boolean) => void;
+  setPin: (pin: boolean) => void;
+  setSelected: (selected: boolean) => void;
   setAddress: (address: { full: string; short: string } | undefined) => void;
-  setChooseDirections: (e: boolean) => void;
+  setChooseDirections: (chooseDirections: boolean) => void;
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;
 }
@@ -87,8 +87,8 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         });
         setPin(true);
         setSelected(true);
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        console.log(err);
       }
     } else {
       setAddress(undefined);

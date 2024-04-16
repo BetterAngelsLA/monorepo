@@ -14,11 +14,11 @@ import {
 } from '@monorepo/expo/betterangels';
 import { BasicInput } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface IPurposeProps {
   index: number;
-  setPurposes: (purpose: { value: string; id: string | undefined }[]) => void;
+  setPurposes: (purposes: { value: string; id: string | undefined }[]) => void;
   purposes: { value: string; id: string | undefined }[];
   purpose: { value: string; id: string | undefined };
   hasError: boolean;
@@ -42,60 +42,54 @@ export default function PurposeInput(props: IPurposeProps) {
     DeleteTaskMutationVariables
   >(DELETE_TASK);
 
-  const createTask = async (title: string, id: string | undefined) => {
-    if (!noteId) return;
-    try {
-      if (id && title) {
-        const { data } = await updateTask({
-          variables: {
-            data: {
-              id,
-              title: title,
+  const createTask = useRef(
+    debounce(async (title: string, id: string | undefined) => {
+      if (!noteId) return;
+      try {
+        if (id && title) {
+          const { data } = await updateTask({
+            variables: {
+              data: {
+                id,
+                title,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.log('Error updating task', updateError);
-        }
-      } else if (id && !title) {
-        const { data } = await deleteTask({
-          variables: { id },
-        });
-        setLocalId(undefined);
-        if (!data) {
-          console.log('Error deleting task', deleteError);
-        }
-      } else {
-        const { data } = await createNoteTask({
-          variables: {
-            data: {
-              title,
-              noteId,
-              status: TaskStatusEnum.Completed,
-              taskType: TaskTypeEnum.Purpose,
+          });
+          if (!data) {
+            console.log('Error updating task', updateError);
+          }
+        } else if (id && !title) {
+          const { data } = await deleteTask({
+            variables: { id },
+          });
+          setLocalId(undefined);
+          if (!data) {
+            console.log('Error deleting task', deleteError);
+          }
+        } else {
+          const { data } = await createNoteTask({
+            variables: {
+              data: {
+                title,
+                noteId,
+                status: TaskStatusEnum.Completed,
+                taskType: TaskTypeEnum.Purpose,
+              },
             },
-          },
-        });
-        if (!data) {
-          console.log('Error creating task', error);
-          return;
+          });
+          if (!data) {
+            console.log('Error creating task', error);
+            return;
+          }
+          if ('id' in data.createNoteTask) {
+            setLocalId(data.createNoteTask.id);
+          }
         }
-        if ('id' in data.createNoteTask) {
-          setLocalId(data.createNoteTask.id);
-        }
+      } catch (err) {
+        console.error('Error creating task:', err);
       }
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCreateTask = useCallback(debounce(createTask, 500), [
-    noteId,
-    updateTask,
-    deleteTask,
-    createNoteTask,
-  ]);
+    }, 500)
+  ).current;
 
   const onChange = (e: string) => {
     if (loading) return;
@@ -105,7 +99,7 @@ export default function PurposeInput(props: IPurposeProps) {
         idx === index ? { ...item, value: e } : item
       )
     );
-    debouncedCreateTask(e, localId);
+    createTask(e, localId);
   };
 
   const onDelete = async () => {
@@ -131,8 +125,8 @@ export default function PurposeInput(props: IPurposeProps) {
           console.log('Error deleting task', deleteError);
         }
       }
-    } catch (error) {
-      console.error('Error deleting task:', error);
+    } catch (err) {
+      console.error('Error deleting task:', err);
     }
   };
 

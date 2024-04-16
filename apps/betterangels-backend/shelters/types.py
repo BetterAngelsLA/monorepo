@@ -77,6 +77,11 @@ class ShelterType:
         )
 
     @strawberry_django.field
+    def organization(self) -> str:
+        shelter = cast(models.Shelter, self)
+        return str(shelter.organization.name) if shelter.organization else ''
+
+    @strawberry_django.field
     def description(self) -> DescriptionType:
         shelter = cast(models.Shelter, self)
         return DescriptionType(

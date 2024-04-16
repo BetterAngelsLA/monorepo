@@ -18,8 +18,8 @@ export default function useSignIn(mutation: DocumentNode) {
           },
         });
         refetchUser();
-      } catch (signInError) {
-        console.error('Error during sign in:', signInError);
+      } catch (err) {
+        console.error('Error during sign in:', err);
       }
     },
     [socialAuth, refetchUser]

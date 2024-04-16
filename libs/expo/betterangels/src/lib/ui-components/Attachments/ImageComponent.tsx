@@ -35,8 +35,8 @@ export default function ImageComponent(props: IImageComponentProps) {
         return;
       }
       setImages(images.filter((i) => i.uri !== image.uri));
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     }
   };
   return (

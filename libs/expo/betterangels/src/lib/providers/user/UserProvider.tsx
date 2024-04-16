@@ -34,8 +34,8 @@ export default function UserProvider({ children }: UserProviderProps) {
       if (response.data) {
         setUser(response.data.currentUser);
       }
-    } catch (error) {
-      console.error('Error refetching user data:', error);
+    } catch (err) {
+      console.error('Error refetching user data:', err);
     }
   }, [refetch]);
 

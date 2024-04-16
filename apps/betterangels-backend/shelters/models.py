@@ -2,6 +2,7 @@ from common.models import BaseModel
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
+from organizations.models import Organization
 
 from .enums import (
     HowToEnterEnum,
@@ -25,6 +26,7 @@ class Location(BaseModel):
 
 class Shelter(BaseModel):
     title = models.CharField(max_length=255)
+    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
 
     # Demo Images are Base64 encoded to embed in the data rather than having to fetch
     # an image file from a separate location. Will eventually move to the parent

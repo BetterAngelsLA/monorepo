@@ -19,7 +19,7 @@ import {
   H3,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 type TNextStep = {
@@ -61,78 +61,75 @@ export default function NextStepInput(props: INextStepProps) {
     DeleteTaskMutationVariables
   >(DELETE_TASK);
 
-  const createTask = async (
-    obj: { action: string; date?: string; time?: string },
-    id: string | undefined
-  ) => {
-    if (!noteId) return;
-    // TODO: for future design
-    //   let combinedDateTime;
-    //   let isoDateTime = '';
+  const createTask = useRef(
+    debounce(
+      async (
+        obj: { action: string; date?: string; time?: string },
+        id: string | undefined
+      ) => {
+        if (!noteId) return;
+        // TODO: for future design
+        //   let combinedDateTime;
+        //   let isoDateTime = '';
 
-    //   if (obj.date) {
-    //     const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
-    //     combinedDateTime = parsedDate;
+        //   if (obj.date) {
+        //     const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
+        //     combinedDateTime = parsedDate;
 
-    //     if (obj.time) {
-    //       const [hours, minutes] = obj.time.split(':').map(Number);
-    //       combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
-    //     }
+        //     if (obj.time) {
+        //       const [hours, minutes] = obj.time.split(':').map(Number);
+        //       combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
+        //     }
 
-    //     isoDateTime = combinedDateTime.toISOString();
-    //   }
-    try {
-      if (id && obj.action) {
-        const { data } = await updateTask({
-          variables: {
-            data: {
-              id,
-              title: obj.action,
-            },
-          },
-        });
-        if (!data) {
-          console.log('Error updating task', updateError);
+        //     isoDateTime = combinedDateTime.toISOString();
+        //   }
+        try {
+          if (id && obj.action) {
+            const { data } = await updateTask({
+              variables: {
+                data: {
+                  id,
+                  title: obj.action,
+                },
+              },
+            });
+            if (!data) {
+              console.log('Error updating task', updateError);
+            }
+          } else if (id && !obj.action) {
+            const { data } = await deleteTask({
+              variables: { id },
+            });
+            setId(undefined);
+            if (!data) {
+              console.log('Error deleting task', deleteError);
+            }
+          } else {
+            const { data } = await createNoteTask({
+              variables: {
+                data: {
+                  title: obj.action,
+                  noteId,
+                  status: TaskStatusEnum.ToDo,
+                  taskType: TaskTypeEnum.NextStep,
+                },
+              },
+            });
+            if (!data) {
+              console.log('Error creating task', error);
+              return;
+            }
+            if ('id' in data.createNoteTask) {
+              setId(data.createNoteTask.id);
+            }
+          }
+        } catch (err) {
+          console.error('Error creating task:', err);
         }
-      } else if (id && !obj.action) {
-        const { data } = await deleteTask({
-          variables: { id },
-        });
-        setId(undefined);
-        if (!data) {
-          console.log('Error deleting task', deleteError);
-        }
-      } else {
-        const { data } = await createNoteTask({
-          variables: {
-            data: {
-              title: obj.action,
-              noteId,
-              status: TaskStatusEnum.ToDo,
-              taskType: TaskTypeEnum.NextStep,
-            },
-          },
-        });
-        if (!data) {
-          console.log('Error creating task', error);
-          return;
-        }
-        if ('id' in data.createNoteTask) {
-          setId(data.createNoteTask.id);
-        }
-      }
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCreateTask = useCallback(debounce(createTask, 500), [
-    noteId,
-    updateTask,
-    deleteTask,
-    createNoteTask,
-  ]);
+      },
+      500
+    )
+  ).current;
 
   const onChange = (e: string, key: 'action' | 'date' | 'time') => {
     if (loading && !id) return;
@@ -148,7 +145,7 @@ export default function NextStepInput(props: INextStepProps) {
       ...task,
       [key]: e,
     };
-    debouncedCreateTask(taskObj, id);
+    createTask(taskObj, id);
   };
 
   const onDelete = async () => {
@@ -171,8 +168,8 @@ export default function NextStepInput(props: INextStepProps) {
         });
         setId(undefined);
       }
-    } catch (error) {
-      console.error('Error deleting task:', error);
+    } catch (err) {
+      console.error('Error deleting task:', err);
     }
   };
 

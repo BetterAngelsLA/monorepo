@@ -52,6 +52,7 @@ class ShelterAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "title",
+                    "organization",
                     "email",
                     "phone",
                     "website",

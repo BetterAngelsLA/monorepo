@@ -12,7 +12,7 @@ interface IImagePickerProps {
   namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;
-  setIsLoading: (e: boolean) => void;
+  setIsLoading: (isLoading: boolean) => void;
   isLoading: boolean;
 }
 
@@ -85,9 +85,9 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         setImages([...images, ...uploadedImages]);
       }
       setIsLoading(false);
-    } catch (e) {
+    } catch (err) {
       setIsLoading(false);
-      console.log(e);
+      console.log(err);
     }
   };
 

@@ -12,7 +12,7 @@ import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { ComponentType, useCallback, useState } from 'react';
+import { ComponentType, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 type Mood = {
@@ -55,53 +55,41 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
     DeleteMoodMutationVariables
   >(DELETE_MOOD);
 
-  const executeMutation = useCallback(async () => {
-    if (!noteId) return;
+  const executeMutation = useRef(
+    debounce(async () => {
+      if (!noteId) return;
 
-    if (isChecked && moodId) {
-      const { data } = await deleteMood({
-        variables: {
-          data: { id: moodId },
-        },
-      });
-      if (!data) {
-        console.log('Error deleting mood', deleteError);
-        return;
-      }
-      setMoodId(undefined);
-    } else if (!isChecked && noteId) {
-      const { data } = await createNoteMood({
-        variables: {
-          data: {
-            noteId,
-            descriptor: mood.enum,
+      if (isChecked && moodId) {
+        const { data } = await deleteMood({
+          variables: {
+            data: { id: moodId },
           },
-        },
-      });
-      if (!data) {
-        console.log('Error creating mood', error);
-        return;
+        });
+        if (!data) {
+          console.log('Error deleting mood', deleteError);
+          return;
+        }
+        setMoodId(undefined);
+      } else if (!isChecked && noteId) {
+        const { data } = await createNoteMood({
+          variables: {
+            data: {
+              noteId,
+              descriptor: mood.enum,
+            },
+          },
+        });
+        if (!data) {
+          console.log('Error creating mood', error);
+          return;
+        }
+        if ('id' in data.createNoteMood) {
+          setMoodId(data.createNoteMood.id);
+        }
       }
-      if ('id' in data.createNoteMood) {
-        setMoodId(data.createNoteMood.id);
-      }
-    }
-    setIsLoading(false);
-  }, [
-    noteId,
-    isChecked,
-    moodId,
-    deleteMood,
-    deleteError,
-    createNoteMood,
-    mood.enum,
-    error,
-  ]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedExecuteMutation = useCallback(debounce(executeMutation, 300), [
-    executeMutation,
-  ]);
+      setIsLoading(false);
+    }, 300)
+  ).current;
 
   const handleCheck = () => {
     if (isLoading) return;
@@ -111,7 +99,7 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
       ? moods.filter((m) => m.enum !== mood.enum)
       : [...moods, { title: mood.title, enum: mood.enum }];
     setMoods(newMoods);
-    debouncedExecuteMutation();
+    executeMutation();
   };
 
   if (tab !== mood.tab) return null;
