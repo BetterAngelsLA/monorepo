@@ -19,8 +19,8 @@ interface ISelectedProps {
     name: string | undefined;
   };
   address: { full: string; short: string } | undefined;
-  setChooseDirections: (e: boolean) => void;
-  setSelected: (e: boolean) => void;
+  setChooseDirections: (chooseDirections: boolean) => void;
+  setSelected: (selected: boolean) => void;
   closeModal: () => void;
 }
 

@@ -4,6 +4,10 @@ import {
   GET_NOTE,
   MainScrollContainer,
   UPDATE_NOTE,
+  UpdateNoteMutation,
+  UpdateNoteMutationVariables,
+  ViewNoteQuery,
+  ViewNoteQueryVariables,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -13,7 +17,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import Location from './Location';
@@ -47,13 +51,21 @@ interface INote {
 
 export default function AddNote() {
   const router = useRouter();
-  const [note, setNote] = useState<INote | undefined>();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
-  const { data, loading: isLoading } = useQuery(GET_NOTE, {
+  if (!noteId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+  const { data, loading: isLoading } = useQuery<
+    ViewNoteQuery,
+    ViewNoteQueryVariables
+  >(GET_NOTE, {
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
   });
-  const [updateNote] = useMutation(UPDATE_NOTE);
+  const [updateNote] = useMutation<
+    UpdateNoteMutation,
+    UpdateNoteMutationVariables
+  >(UPDATE_NOTE);
   const [deleteNote] = useMutation(DELETE_NOTE);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
@@ -76,16 +88,10 @@ export default function AddNote() {
         },
       });
       router.back();
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
   }
-
-  useEffect(() => {
-    if (data && !isLoading) {
-      setNote(data.note);
-    }
-  }, [data, isLoading]);
 
   const props = {
     expanded,
@@ -109,16 +115,24 @@ export default function AddNote() {
       if (isSubmitted === true) {
         router.back();
       }
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.log(err);
     }
+  }
+
+  if (!data || isLoading) {
+    return null;
   }
 
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title noteTitle={note?.title} {...props} />
+          <Title
+            noteTitle={data.note.title}
+            noteDate={data.note.interactedAt}
+            {...props}
+          />
           <Location {...props} />
           <Purpose {...props} />
           <Mood {...props} />
