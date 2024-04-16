@@ -356,7 +356,22 @@ GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
 # Jazzmin
-JAZZMIN_SETTINGS = {"changeform_format": "single"}
+JAZZMIN_SETTINGS = {
+    "changeform_format": "single",
+    "site_title": "Better Angels Dashboard",
+    "site_header": "Better Angels",
+    "site_brand": " ",
+    "show_ui_builder": False,
+    "site_logo": "assets/images/logo.svg",
+    # "site_icon": "assets/images/favicon.png",
+    "site_logo_classes": "",
+    "related_modal_active": True,
+    "custom_css": "assets/css/betterangels-admin.css",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+}
 
 # Test Runner
 TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"

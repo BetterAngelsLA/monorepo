@@ -1,0 +1,33 @@
+@font-face {
+  font-family: Poppins;
+  src: url('../fonts/Poppins-Regular.ttf');
+}
+
+.brand-image {
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.brand-link {
+  border-bottom: none !important;
+}
+
+.btn-primary {
+  background-color: #216af8;
+}
+
+.btn-secondary {
+  background-color: #052b73;
+}
+
+.btn-info {
+  background-color: #6a97da;
+}
+
+.btn-success {
+  background-color: #23ce6b;
+}
+
+body {
+  font-family: Poppins;
+}
