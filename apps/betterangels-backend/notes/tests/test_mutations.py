@@ -49,7 +49,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "timestamp": "2024-03-12T10:11:12+00:00",
+            "interactedAt": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, created_note)
 
@@ -63,7 +63,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "timestamp": "2024-03-12T10:11:12+00:00",
+            "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
         expected_query_count = 24
@@ -91,7 +91,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": False,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "timestamp": "2024-03-12T10:11:12+00:00",
+            "interactedAt": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
 
@@ -100,7 +100,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "isSubmitted": True,
-            "timestamp": "2024-03-12T10:11:12+00:00",
+            "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
         expected_query_count = 22
@@ -123,7 +123,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "isSubmitted": True,
             "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "timestamp": "2024-03-12T10:11:12+00:00",
+            "interactedAt": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
 
