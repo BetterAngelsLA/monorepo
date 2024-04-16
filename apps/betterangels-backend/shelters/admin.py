@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .forms import LocationAdminForm
 from .models import (
+    Funder,
     HowToEnter,
     Location,
     Population,
@@ -9,7 +10,6 @@ from .models import (
     Service,
     Shelter,
     ShelterType,
-    Funder
 )
 
 
@@ -40,7 +40,7 @@ class LocationAdmin(admin.ModelAdmin):
 
 class FunderInline(admin.TabularInline):
     model = Funder
-    verbose_name_plural = 'Funders'
+    verbose_name_plural = "Funders"
 
 
 class ShelterAdmin(admin.ModelAdmin):

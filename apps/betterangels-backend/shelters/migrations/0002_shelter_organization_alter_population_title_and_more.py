@@ -65,9 +65,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="shelter",
             name="spa",
-            field=models.PositiveSmallIntegerField(
-                blank=True, null=True, verbose_name="SPA"
-            ),
+            field=models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="SPA"),
         ),
         migrations.CreateModel(
             name="Funder",

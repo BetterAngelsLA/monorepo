@@ -1,16 +1,16 @@
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 from model_bakery import baker
+from organizations.models import Organization
 from shelters.models import (
+    Funder,
     Location,
     Population,
     Requirement,
     Service,
     Shelter,
     ShelterType,
-    Funder
 )
-from organizations.models import Organization
 from test_utils.mixins import GraphQLTestCaseMixin
 
 
@@ -71,7 +71,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
                     "populations": ["Men", "Women"],
                     "services": ["Mail", "Showers"],
                     "title": "Shelter-1",
-                    "funders": ["MPP", "DMH"]
+                    "funders": ["MPP", "DMH"],
                 }
             ]
         }

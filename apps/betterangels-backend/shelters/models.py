@@ -5,12 +5,12 @@ from django_choices_field import TextChoicesField
 from organizations.models import Organization
 
 from .enums import (
+    FunderEnum,
     HowToEnterEnum,
     PopulationEnum,
     RequirementEnum,
     ServiceEnum,
     ShelterTypeEnum,
-    FunderEnum,
 )
 
 
@@ -36,7 +36,7 @@ class Shelter(BaseModel):
 
     # Location Fields
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-    spa = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name='SPA')
+    spa = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="SPA")
     confidential = models.BooleanField(blank=True, null=True)
 
     # Contact Information
@@ -104,7 +104,7 @@ class HowToEnter(models.Model):
 
 class Funder(models.Model):
     title = TextChoicesField(choices_enum=FunderEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name='funders')
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="funders")
 
     def __str__(self) -> str:
         return str(self.title)
