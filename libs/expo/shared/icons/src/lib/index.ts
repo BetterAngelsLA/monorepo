@@ -126,6 +126,7 @@ export { default as SquareCheckIcon } from './components/SquareCheckIcon';
 export { default as StethoscopeIcon } from './components/StethoscopeIcon';
 export { default as SyringeIcon } from './components/SyringeIcon';
 export { default as TargetIcon } from './components/TargetIcon';
+export { default as TentIcon } from './components/TentIcon';
 export { default as ToothIcon } from './components/ToothIcon';
 export { default as ToothbrushIcon } from './components/ToothbrushIcon';
 export { default as UserDoctorHairIcon } from './components/UserDoctorHairIcon';
