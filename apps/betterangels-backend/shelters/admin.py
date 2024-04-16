@@ -9,6 +9,7 @@ from .models import (
     Service,
     Shelter,
     ShelterType,
+    Funder
 )
 
 
@@ -37,8 +38,14 @@ class LocationAdmin(admin.ModelAdmin):
     form = LocationAdminForm
 
 
+class FunderInline(admin.TabularInline):
+    model = Funder
+    verbose_name_plural = 'Funders'
+
+
 class ShelterAdmin(admin.ModelAdmin):
     inlines = [
+        FunderInline,
         PopulationInline,
         ServiceInline,
         ShelterTypeInline,

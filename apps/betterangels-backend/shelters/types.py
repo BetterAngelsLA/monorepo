@@ -52,6 +52,8 @@ class ShelterType:
     populations: List[str]
     requirements: List[str]
 
+    funders: List[str]
+
     # The following fields are likely in need of restrucutring post MVP.
     @strawberry_django.field
     def location(self) -> LocationType:

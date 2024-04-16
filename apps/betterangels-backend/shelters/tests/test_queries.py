@@ -8,6 +8,7 @@ from shelters.models import (
     Service,
     Shelter,
     ShelterType,
+    Funder
 )
 from organizations.models import Organization
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -41,6 +42,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         baker.make(Population, shelter=self.shelter1, title="Men")
         baker.make(Population, shelter=self.shelter1, title="Women")
         baker.make(Requirement, shelter=self.shelter1, title="Veteran")
+        baker.make(Funder, shelter=self.shelter1, title="MPP")
+        baker.make(Funder, shelter=self.shelter1, title="DMH")
 
     def test_shelters_query(self) -> None:
         query = """
@@ -54,6 +57,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
                 }
                 populations
                 services
+                funders
             }
         }
         """
@@ -67,11 +71,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
                     "populations": ["Men", "Women"],
                     "services": ["Mail", "Showers"],
                     "title": "Shelter-1",
+                    "funders": ["MPP", "DMH"]
                 }
             ]
         }
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.execute_graphql(query)
 
         self.assertEqual(len(response["data"]["shelters"]), 1)

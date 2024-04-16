@@ -10,6 +10,7 @@ from .enums import (
     RequirementEnum,
     ServiceEnum,
     ShelterTypeEnum,
+    FunderEnum,
 )
 
 
@@ -96,6 +97,14 @@ class Service(models.Model):
 class HowToEnter(models.Model):
     title = TextChoicesField(choices_enum=HowToEnterEnum)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="how_to_enter")
+
+    def __str__(self) -> str:
+        return str(self.title)
+
+
+class Funder(models.Model):
+    title = TextChoicesField(choices_enum=FunderEnum)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name='funders')
 
     def __str__(self) -> str:
         return str(self.title)

@@ -67,3 +67,10 @@ class ShelterTypeEnum(models.TextChoices):
     ROADMAP_HOME = "Roadmap Home", _("Roadmap Home")
     RAPID_REHOUSING = "Rapid Re-housing", _("Rapid Re-housing")
     SOBER_LIVING = "Sober Living", _("Sober Living")
+
+
+class FunderEnum(models.TextChoices):
+    MPP = "MPP", _("MPP")
+    LAHSA = "LAHSA", _("LAHSA")
+    DMH = "DMH", _("DMH")
+    DHS = "DHS", _("DHS")
