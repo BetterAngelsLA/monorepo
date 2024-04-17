@@ -12,7 +12,7 @@ from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
-from strawberry_django.permissions import HasPerm
+from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.requests import get_request
 
 from .types import (
@@ -29,9 +29,14 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    client: ClientType = strawberry_django.field()
+    client: ClientType = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientPermissions.VIEW])],
+    )
 
-    clients: List[ClientType] = strawberry_django.field(filters=ClientFilter)
+    clients: List[ClientType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientPermissions.VIEW])],
+        filters=ClientFilter,
+    )
 
 
 @strawberry.type

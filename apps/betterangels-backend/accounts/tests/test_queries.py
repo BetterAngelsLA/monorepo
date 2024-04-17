@@ -71,6 +71,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
 class ClientQueryTestCase(ClientGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_get_client_query(self) -> None:
         client_id = self.client_1["id"]
@@ -86,7 +87,7 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
         """
 
         variables = {"id": client_id}
-        expected_query_count = 1
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -112,7 +113,7 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 1
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -143,7 +144,7 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
             }
         """
 
-        expected_query_count = 1
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_parameter})
 

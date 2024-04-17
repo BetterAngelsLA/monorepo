@@ -390,8 +390,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
-  client(pk: ID!): ClientType!
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]!
+  client(pk: ID!): ClientType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
+  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   featureControls: FeatureControlData!
