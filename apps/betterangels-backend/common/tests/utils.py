@@ -37,8 +37,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.client_2 = baker.make(User, first_name="Mister", last_name="Peanutbutter", email="mister@pblivin.com")
         self.user_map["client_1"] = self.client_1
         self.user_map["client_2"] = self.client_2
-        baker.make(ClientProfile, user=self.client_1)
-        baker.make(ClientProfile, user=self.client_2)
+        baker.make(ClientProfile, user=self.client_1, hmis_id="A1B2C3")
+        baker.make(ClientProfile, user=self.client_2, hmis_id="A1B3C4")
 
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")

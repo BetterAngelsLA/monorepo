@@ -19,7 +19,9 @@ class UserType:
 class ClientFilter:
     @strawberry_django.filter_field
     def search(self, value: str, prefix: str) -> Q:
-        return Q(Q(first_name__icontains=value) | Q(last_name__icontains=value))
+        return Q(
+            Q(first_name__icontains=value) | Q(last_name__icontains=value) | Q(client_profile__hmis_id__icontains=value)
+        )
 
 
 @strawberry_django.type(Client, pagination=True, filters=ClientFilter)

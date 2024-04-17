@@ -124,9 +124,12 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         ("search_parameter, expected_client_count"),
         [
             (None, 2),
-            ("tod", 1),
-            ("pea", 1),
-            ("tod pea", 0),
+            ("tod", 1),  # first_name search
+            ("pea", 1),  # last_name search
+            ("tod pea", 0),  # first and last name search
+            ("A1B", 2),  # hmis_id partial search matching two clients
+            ("A1B2", 1),  # hmis_id partial search matching one client
+            ("A1B3", 1),  # hmis_id partial search matching one client
         ],
     )
     def test_clients_query_search(self, search_parameter: Optional[str], expected_client_count: int) -> None:
