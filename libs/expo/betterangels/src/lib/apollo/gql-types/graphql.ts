@@ -72,6 +72,14 @@ export type BedsType = {
   totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ClientFilter = {
+  AND?: InputMaybe<ClientFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ClientFilter>;
+  OR?: InputMaybe<ClientFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ClientType = {
   __typename?: 'ClientType';
   email: Scalars['String']['output'];
@@ -539,6 +547,12 @@ export type QueryAddressArgs = {
 
 export type QueryClientArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientsArgs = {
+  filters?: InputMaybe<ClientFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
