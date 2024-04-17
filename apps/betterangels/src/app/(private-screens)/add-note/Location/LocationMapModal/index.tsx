@@ -1,3 +1,9 @@
+import { useMutation } from '@apollo/client';
+import {
+  UPDATE_NOTE_LOCATION,
+  UpdateNoteLocationMutation,
+  UpdateNoteLocationMutationVariables,
+} from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -40,10 +46,11 @@ interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { isModalVisible, toggleModal, setExpanded } = props;
+  const { isModalVisible, toggleModal, setExpanded, noteId } = props;
   const { trigger, setValue } = useFormContext();
   const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
@@ -64,6 +71,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
+  const [updateNoteLocation, { error }] = useMutation<
+    UpdateNoteLocationMutation,
+    UpdateNoteLocationMutationVariables
+  >(UPDATE_NOTE_LOCATION);
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
@@ -155,7 +166,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setPin(true);
       setSelected(true);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -254,8 +265,26 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         name: undefined,
       });
       setSelected(true);
+      console.log(data.results[0].address_components);
+      console.log(data.results[0].address_components);
+      console.log(googleAddress);
+      const { data: locationData } = await updateNoteLocation({
+        variables: {
+          data: {
+            point: [longitude, latitude],
+            address: {
+              addressComponents: data.results[0].address_components,
+              formattedAddress: googleAddress,
+            },
+            id: noteId,
+          },
+        },
+      });
+      if (!locationData) {
+        console.error('Error updating note location', error);
+      }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

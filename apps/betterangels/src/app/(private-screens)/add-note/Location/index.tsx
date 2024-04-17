@@ -10,10 +10,11 @@ import LocationMapModal from './LocationMapModal';
 interface ILocationProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
+  noteId: string | undefined;
 }
 
 export default function LocationComponent(props: ILocationProps) {
-  const { expanded, setExpanded } = props;
+  const { expanded, setExpanded, noteId } = props;
   const {
     control,
     watch,
@@ -96,6 +97,7 @@ export default function LocationComponent(props: ILocationProps) {
         </View>
       )}
       <LocationMapModal
+        noteId={noteId}
         toggleModal={toggleModal}
         setExpanded={setExpanded}
         isModalVisible={isModalVisible}
