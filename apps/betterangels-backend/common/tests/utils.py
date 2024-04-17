@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from accounts.models import ClientProfile, PermissionGroupTemplate, User
+from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
