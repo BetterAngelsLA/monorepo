@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .forms import LocationAdminForm
 from .models import (
+    Funder,
     HowToEnter,
     Location,
     Population,
@@ -37,8 +38,14 @@ class LocationAdmin(admin.ModelAdmin):
     form = LocationAdminForm
 
 
+class FunderInline(admin.TabularInline):
+    model = Funder
+    verbose_name_plural = "Funders"
+
+
 class ShelterAdmin(admin.ModelAdmin):
     inlines = [
+        FunderInline,
         PopulationInline,
         ServiceInline,
         ShelterTypeInline,
@@ -52,6 +59,7 @@ class ShelterAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "title",
+                    "organization",
                     "email",
                     "phone",
                     "website",
