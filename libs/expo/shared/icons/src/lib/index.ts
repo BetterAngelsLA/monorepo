@@ -38,7 +38,7 @@ export { default as FaceFrownIcon } from './components/FaceFrownIcon';
 export { default as FaceHandYawnIcon } from './components/FaceHandYawnIcon';
 export { default as FaceHeadBandageIcon } from './components/FaceHeadBandageIcon';
 export { default as FaceLaughBeamIcon } from './components/FaceLaughBeamIcon';
-export { default as FaceLaughIcon } from './components/FaceLaughIcon';
+export { default as FaceGrinStarsIcon } from './components/FaceGrinStarsIcon';
 export { default as FaceLaughSquintIcon } from './components/FaceLaughSquintIcon';
 export { default as FaceMaskIcon } from './components/FaceMaskIcon';
 export { default as FaceMehBlankIcon } from './components/FaceMehBlankIcon';
