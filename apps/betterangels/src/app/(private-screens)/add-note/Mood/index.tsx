@@ -5,20 +5,20 @@ import {
 } from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
+  FaceCalmIcon,
   FaceCloudsIcon,
   FaceDisappointedIcon,
   FaceFrownIcon,
   FaceGrinStarsIcon,
+  FaceGrinWinkIcon,
   FaceHandYawnIcon,
-  FaceLaughBeamIcon,
+  FaceLaughIcon,
   FaceMehBlankIcon,
   FaceMehIcon,
   FaceMeltingIcon,
   FacePoutingIcon,
   FaceRelievedIcon,
-  FaceSmileIcon,
   FaceSmileRelaxedIcon,
-  FaceSmilingHandsIcon,
   FaceSpiralEyesIcon,
   FaceSunglassesIcon,
   FaceSwearIcon,
@@ -48,19 +48,19 @@ interface IMoodProps {
 
 const MOOD_DATA: Mood[] = [
   {
-    Icon: FaceSmilingHandsIcon,
+    Icon: FaceGrinWinkIcon,
     title: 'Agreeable',
     enum: MoodEnum.Agreeable,
     tab: 'pleasant',
   },
   {
-    Icon: FaceSmileIcon,
+    Icon: FaceCalmIcon,
     title: 'Euthymic',
     enum: MoodEnum.Euthymic,
     tab: 'pleasant',
   },
   {
-    Icon: FaceLaughBeamIcon,
+    Icon: FaceLaughIcon,
     title: 'Happy',
     tab: 'pleasant',
     enum: MoodEnum.Happy,
@@ -176,9 +176,9 @@ const TABS: ['pleasant', 'neutral', 'unpleasant'] = [
 ];
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  Agreeable: FaceSmilingHandsIcon,
-  Euthymic: FaceSmileIcon,
-  Happy: FaceLaughBeamIcon,
+  Agreeable: FaceGrinWinkIcon,
+  Euthymic: FaceCalmIcon,
+  Happy: FaceLaughIcon,
   Motivated: FaceGrinStarsIcon,
   Optimistic: FaceRelievedIcon,
   Personable: FaceSunglassesIcon,
