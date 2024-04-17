@@ -1,4 +1,5 @@
 from accounts.models import User
+from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -62,3 +63,56 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             user.username,
             "Username does not match the logged-in user",
         )
+
+
+class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_get_client_query(self) -> None:
+        client_id = self.client_1.pk
+        query = """
+            query ViewClient($id: ID!) {
+                client(pk: $id) {
+                    id
+                    firstName
+                    lastName
+                    email
+                }
+            }
+        """
+
+        variables = {"id": client_id}
+        expected_query_count = 1
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        returned_client = response["data"]["client"]
+        expected_client = {
+            "id": str(client_id),
+            "firstName": self.client_1.first_name,
+            "lastName": self.client_1.last_name,
+            "email": self.client_1.email,
+        }
+
+        self.assertEqual(returned_client, expected_client)
+
+    def test_get_clients_query(self) -> None:
+        query = """
+            query GetClients {
+                clients {
+                    id
+                    firstName
+                    lastName
+                    email
+                }
+            }
+        """
+        expected_query_count = 1
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
+
+        clients = response["data"]["clients"]
+        client_count = User.objects.filter(client_profile__isnull=False).count()
+        self.assertEqual(client_count, len(clients))

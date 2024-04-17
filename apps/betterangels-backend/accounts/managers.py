@@ -1,10 +1,11 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
-    from .models import User
+    from .models import Client, User
 
 
 class UserManager(BaseUserManager["User"]):
@@ -35,3 +36,8 @@ class UserManager(BaseUserManager["User"]):
             return self.get(email__iexact=email)
         except self.model.DoesNotExist:
             return None
+
+
+class ClientManager(BaseUserManager["Client"]):
+    def get_queryset(self) -> QuerySet["Client"]:
+        return super().get_queryset().filter(client_profile__isnull=False)
