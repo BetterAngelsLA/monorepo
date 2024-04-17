@@ -1,4 +1,4 @@
-from accounts.models import ClientProfile, User
+from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -70,14 +70,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
 
     def test_get_client_query(self) -> None:
-        client = baker.make(
-            User,
-            username="client_query_test",
-            first_name="Todd",
-            last_name="Chavez",
-            email="todd@pblivin.com",
-        )
-
+        client_id = self.client_1.pk
         query = """
             query ViewClient($id: ID!) {
                 client(pk: $id) {
@@ -89,7 +82,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
 
-        variables = {"id": client.pk}
+        variables = {"id": client_id}
         expected_query_count = 1
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -97,10 +90,10 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
 
         returned_client = response["data"]["client"]
         expected_client = {
-            "id": str(client.pk),
-            "firstName": "Todd",
-            "lastName": "Chavez",
-            "email": "todd@pblivin.com",
+            "id": str(client_id),
+            "firstName": self.client_1.first_name,
+            "lastName": self.client_1.last_name,
+            "email": self.client_1.email,
         }
 
         self.assertEqual(returned_client, expected_client)
@@ -121,8 +114,5 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
             response = self.execute_graphql(query)
 
         clients = response["data"]["clients"]
-        client_count = User.objects.filter(username__icontains="client").count()
-
-        # The number of clients in the db is one more than we create in the test because we're
-        # also creating one via signal in apps/betterangels-backend/accounts/signals.py
-        self.assertEqual(client_count, len(clients) + 1)
+        client_count = User.objects.filter(client_profile__isnull=False).count()
+        self.assertEqual(client_count, len(clients))

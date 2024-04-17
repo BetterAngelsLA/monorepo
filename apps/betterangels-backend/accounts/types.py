@@ -2,7 +2,7 @@ import strawberry
 import strawberry_django
 from strawberry import auto
 
-from .models import User
+from .models import Client, User
 
 
 @strawberry_django.type(User)
@@ -12,6 +12,11 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
+
+
+@strawberry_django.type(Client)
+class ClientType(UserType):
+    pass
 
 
 @strawberry_django.input(User)
