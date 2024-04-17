@@ -1,7 +1,9 @@
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 from model_bakery import baker
+from organizations.models import Organization
 from shelters.models import (
+    Funder,
     Location,
     Population,
     Requirement,
@@ -20,6 +22,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         self.shelter1 = baker.make(
             Shelter,
             title="Shelter-1",
+            organization=baker.make(Organization, name="Organization-1", slug="organization_1"),
             email="shelter1@test.com",
             description="Some description",
             typical_stay_description="Some typical stay description",
@@ -39,6 +42,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         baker.make(Population, shelter=self.shelter1, title="Men")
         baker.make(Population, shelter=self.shelter1, title="Women")
         baker.make(Requirement, shelter=self.shelter1, title="Veteran")
+        baker.make(Funder, shelter=self.shelter1, title="MPP")
+        baker.make(Funder, shelter=self.shelter1, title="DMH")
 
     def test_shelters_query(self) -> None:
         query = """
@@ -46,11 +51,13 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
             shelters {
                 id
                 title
+                organization
                 location {
                     point
                 }
                 populations
                 services
+                funders
             }
         }
         """
@@ -59,15 +66,17 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
             "shelters": [
                 {
                     "id": "1",
+                    "organization": "Organization-1",
                     "location": {"point": [5.152149, 46.199615]},
                     "populations": ["Men", "Women"],
                     "services": ["Mail", "Showers"],
                     "title": "Shelter-1",
+                    "funders": ["MPP", "DMH"],
                 }
             ]
         }
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             response = self.execute_graphql(query)
 
         self.assertEqual(len(response["data"]["shelters"]), 1)

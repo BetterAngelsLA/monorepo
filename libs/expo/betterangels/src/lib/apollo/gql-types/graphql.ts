@@ -72,6 +72,23 @@ export type BedsType = {
   totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ClientFilter = {
+  AND?: InputMaybe<ClientFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ClientFilter>;
+  OR?: InputMaybe<ClientFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientType = {
+  __typename?: 'ClientType';
+  email: Scalars['String']['output'];
+  firstName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lastName: Scalars['String']['output'];
+  username: Scalars['String']['output'];
+};
+
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
   namespace: NoteNamespaceEnum;
@@ -506,6 +523,8 @@ export type Query = {
   __typename?: 'Query';
   address: AddressType;
   addresses: Array<AddressType>;
+  client: ClientType;
+  clients: Array<ClientType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
   note: NoteType;
@@ -523,6 +542,17 @@ export type Query = {
 
 export type QueryAddressArgs = {
   pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientsArgs = {
+  filters?: InputMaybe<ClientFilter>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -656,10 +686,12 @@ export type ShelterType = {
   beds: BedsType;
   description: DescriptionType;
   email?: Maybe<Scalars['String']['output']>;
+  funders: Array<Scalars['String']['output']>;
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
   location: LocationType;
+  organization: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;
