@@ -59,6 +59,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["first_name"],
+            ),
+            models.Index(
+                fields=["last_name"],
+            ),
+        ]
+
 
 class Client(User):
     objects = ClientManager()  # type: ignore
@@ -70,6 +80,13 @@ class Client(User):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     hmis_id = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["hmis_id"],
+            )
+        ]
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
