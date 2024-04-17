@@ -89,7 +89,7 @@ export default function AddNote() {
       });
       router.back();
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -133,7 +133,11 @@ export default function AddNote() {
             noteDate={data.note.interactedAt}
             {...props}
           />
-          <Location {...props} />
+          <Location
+            address={data.note.address}
+            point={data.note.point}
+            {...props}
+          />
           <Purpose {...props} />
           <Mood {...props} />
           <ProvidedServices {...props} />

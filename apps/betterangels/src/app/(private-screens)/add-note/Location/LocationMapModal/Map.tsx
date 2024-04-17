@@ -22,7 +22,11 @@ interface IMapProps {
   initialLocation: { longitude: number; latitude: number };
   setPin: (pin: boolean) => void;
   setSelected: (selected: boolean) => void;
-  setAddress: (address: { full: string; short: string } | undefined) => void;
+  setAddress: (
+    address:
+      | { full: string; short: string; address_components: any[] }
+      | undefined
+  ) => void;
   setChooseDirections: (chooseDirections: boolean) => void;
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;
@@ -60,7 +64,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_component&key=${apiKey}`
+        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
@@ -79,11 +83,17 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         const googleAddress = isId
           ? data.result.formatted_address
           : data.results[0].formatted_address;
+        const address_components = isId
+          ? data.result.address_components
+          : data.results[0].address_components;
+
+        console.log('address components: ', address_components);
         const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
         setAddress({
           short: shortAddress,
           full: googleAddress,
+          address_components,
         });
         setPin(true);
         setSelected(true);
