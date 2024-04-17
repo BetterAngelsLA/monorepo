@@ -1,7 +1,7 @@
 from typing import Optional
 
 from accounts.models import User
-from common.tests.utils import GraphQLBaseTestCase
+from accounts.tests.utils import ClientGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -68,7 +68,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         )
 
 
-class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
+class ClientQueryTestCase(ClientGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
