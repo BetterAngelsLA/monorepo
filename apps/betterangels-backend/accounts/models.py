@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.managers import UserManager
+from accounts.managers import ClientManager, UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -58,6 +58,17 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self: "User") -> str:
         return self.email
+
+
+class Client(User):
+    objects = ClientManager()  # type: ignore
+
+    class Meta:
+        proxy = True
+
+
+class ClientProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

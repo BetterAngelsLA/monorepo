@@ -72,6 +72,15 @@ export type BedsType = {
   totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ClientType = {
+  __typename?: 'ClientType';
+  email: Scalars['String']['output'];
+  firstName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lastName: Scalars['String']['output'];
+  username: Scalars['String']['output'];
+};
+
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
   namespace: NoteNamespaceEnum;
@@ -506,6 +515,8 @@ export type Query = {
   __typename?: 'Query';
   address: AddressType;
   addresses: Array<AddressType>;
+  client: ClientType;
+  clients: Array<ClientType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
   note: NoteType;
@@ -522,6 +533,11 @@ export type Query = {
 
 
 export type QueryAddressArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientArgs = {
   pk: Scalars['ID']['input'];
 };
 
