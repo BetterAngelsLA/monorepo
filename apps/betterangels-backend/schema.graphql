@@ -463,7 +463,9 @@ type ShelterType {
   services: [String!]!
   populations: [String!]!
   requirements: [String!]!
+  funders: [String!]!
   location: LocationType!
+  organization: String!
   description: DescriptionType!
   beds: BedsType!
 }

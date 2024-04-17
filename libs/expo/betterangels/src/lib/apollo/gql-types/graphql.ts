@@ -672,10 +672,12 @@ export type ShelterType = {
   beds: BedsType;
   description: DescriptionType;
   email?: Maybe<Scalars['String']['output']>;
+  funders: Array<Scalars['String']['output']>;
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
   location: LocationType;
+  organization: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
   requirements: Array<Scalars['String']['output']>;

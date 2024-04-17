@@ -25,12 +25,13 @@ class PopulationEnum(models.TextChoices):
     MEN = "Men", _("Men")
     WOMEN = "Women", _("Women")
     FAMILIES = "Families", _("Families")
-    YOUTH = "Youth", _("Youth")
+    YOUTH = "Youth (TAY)", _("Youth (TAY)")
     BOYS = "Boys", _("Boys")
     GIRLS = "Girls", _("Girls")
-    SENIORS = "Seniors", _("Seniors")
+    SENIORS = "Seniors (55+)", _("Seniors (55+)")
     VETERANS = "Veterans", _("Veterans")
     LGBTQ = "LGBTQ", _("LGBTQ")
+    HIV_AND_AIDS = "HIV/AIDS", _("HIV/AIDS")
 
 
 class RequirementEnum(models.TextChoices):
@@ -39,6 +40,9 @@ class RequirementEnum(models.TextChoices):
     VETERAN = "Veteran", _("Veteran")
     RESERVATION = "Reservation", _("Reservation")
     REFERRAL = "Referral", _("Referral")
+    WHEELCHAIR_ACCESSIBLE = "Wheelchair Accessibel", _("Wheelchair Accessible")
+    MEDICAL_EQUIPMENT_PERMITTED = "Medical Equipment Permitted", _("Medical Equipment Permitted")
+    PETS_ALLOWED = "Pets Allowed", _("Pets Allowed")
 
 
 class HowToEnterEnum(models.TextChoices):
@@ -67,3 +71,10 @@ class ShelterTypeEnum(models.TextChoices):
     ROADMAP_HOME = "Roadmap Home", _("Roadmap Home")
     RAPID_REHOUSING = "Rapid Re-housing", _("Rapid Re-housing")
     SOBER_LIVING = "Sober Living", _("Sober Living")
+
+
+class FunderEnum(models.TextChoices):
+    MPP = "MPP", _("MPP")
+    LAHSA = "LAHSA", _("LAHSA")
+    DMH = "DMH", _("DMH")
+    DHS = "DHS", _("DHS")
