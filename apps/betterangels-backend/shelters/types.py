@@ -52,6 +52,8 @@ class ShelterType:
     populations: List[str]
     requirements: List[str]
 
+    funders: List[str]
+
     # The following fields are likely in need of restrucutring post MVP.
     @strawberry_django.field
     def location(self) -> LocationType:
@@ -75,6 +77,11 @@ class ShelterType:
             zip_code=zip_code,
             confidential=shelter.confidential,
         )
+
+    @strawberry_django.field
+    def organization(self) -> str:
+        shelter = cast(models.Shelter, self)
+        return str(shelter.organization.name) if shelter.organization else ""
 
     @strawberry_django.field
     def description(self) -> DescriptionType:
