@@ -8,8 +8,21 @@
   opacity: 1 !important;
 }
 
-.brand-link {
-  border-bottom: none !important;
+.ba-sidebar {
+  background-color: #1e3342;
+}
+
+.ba-navbar .navbar-nav .nav-link {
+  color: #052b73;
+}
+
+.ba-navbar {
+  color: #052b73;
+  background-color: #f4f6fd;
+}
+
+.content-wrapper {
+  background-color: #fff;
 }
 
 .btn-primary {
@@ -30,4 +43,6 @@
 
 body {
   font-family: Poppins;
+  color: #052b73;
+  background-color: #f2fafc;
 }
