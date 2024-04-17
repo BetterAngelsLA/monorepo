@@ -149,7 +149,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "client": {"id": str(self.fake_client_1.pk)},
+            "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
@@ -222,12 +222,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             # case manager, client, and/or is_submitted
             ("org_1_case_manager_1", None, None, 1, "note", None),
             ("org_1_case_manager_2", None, None, 2, "note_2", "note_3"),
-            ("org_1_case_manager_1", "fake_client_1", None, 1, "note", None),
-            ("org_1_case_manager_1", "fake_client_2", None, 0, None, None),
-            ("org_1_case_manager_2", "fake_client_1", None, 1, "note_2", None),
-            ("org_1_case_manager_2", "fake_client_2", None, 1, "note_3", None),
-            ("org_1_case_manager_2", "fake_client_1", True, 0, None, None),
-            ("org_1_case_manager_2", "fake_client_1", False, 1, "note_2", None),
+            ("org_1_case_manager_1", "client_1", None, 1, "note", None),
+            ("org_1_case_manager_1", "client_2", None, 0, None, None),
+            ("org_1_case_manager_2", "client_1", None, 1, "note_2", None),
+            ("org_1_case_manager_2", "client_2", None, 1, "note_3", None),
+            ("org_1_case_manager_2", "client_1", True, 0, None, None),
+            ("org_1_case_manager_2", "client_1", False, 1, "note_2", None),
             ("org_1_case_manager_2", None, False, 2, "note_2", "note_3"),
             (None, None, True, 0, None, None),
             (None, None, None, 3, None, None),
@@ -244,11 +244,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.fake_client_1.pk})["data"][
+        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_1.pk})["data"][
             "createNote"
         ]
 
-        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.fake_client_2.pk})["data"][
+        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_2.pk})["data"][
             "createNote"
         ]
 
@@ -363,7 +363,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.fake_client_1.pk,
+                "client": self.client_1.pk,
             }
         )
 
@@ -400,7 +400,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
-            "client": {"id": str(self.fake_client_1.pk)},
+            "client": {"id": str(self.client_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -454,7 +454,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "address": self.address.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
-                "client": self.fake_client_1.pk,
+                "client": self.client_1.pk,
             }
         )
 
@@ -502,7 +502,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
             "client": {
-                "id": str(self.fake_client_1.pk),
+                "id": str(self.client_1.pk),
             },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",

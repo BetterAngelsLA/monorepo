@@ -48,7 +48,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_2_case_manager_1", False),  # Other org CM should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -136,7 +136,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "title": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.fake_client_1.pk,
+                    "client": self.client_1.pk,
                 }
             )["data"]["createNote"]["id"]
 
@@ -209,7 +209,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "title": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.fake_client_1.pk,
+                    "client": self.client_1.pk,
                 }
             )["data"]["createNote"]["id"]
 
@@ -258,7 +258,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other case manager should succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -286,7 +286,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_2_case_manager_1", True),  # Other case manager should succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -395,7 +395,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Client modifying note should not succeed
+            ("client_1", False),  # Client modifying note should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -425,7 +425,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # CM in a different org should not succeed
-            ("fake_client_1", False),  # Client should not succeed
+            ("client_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -455,7 +455,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # CM from a different org should not succeed
-            ("fake_client_1", False),  # Client should not succeed
+            ("client_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -494,7 +494,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # CM from a different org should not succeed
-            ("fake_client_1", False),  # Client should not succeed
+            ("client_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -723,7 +723,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -787,7 +787,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -819,7 +819,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -881,7 +881,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -952,7 +952,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -987,7 +987,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
                 "org_2_case_manager_1",
                 False,
             ),  # Other CM in different org should not succeed
-            ("fake_client_1", False),  # Non CM should not succeed
+            ("client_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )

@@ -12,7 +12,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Force login the case manager to create clients
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.client_1_profile = {"hmisId": "A1B2C3"}
-        self.client_1 = self._create_client_fixture(
+        self.client_user_1 = self._create_client_fixture(
             {
                 "firstName": "Todd",
                 "lastName": "Chavez",
@@ -21,7 +21,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         )["data"]["createClient"]
         self.client_2_profile = {"hmisId": "A1B3C4"}
-        self.client_2 = self._create_client_fixture(
+        self.client_user_2 = self._create_client_fixture(
             {
                 "firstName": "Mister",
                 "lastName": "Peanutbutter",

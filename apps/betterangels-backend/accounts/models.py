@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, ClassVar, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.managers import ClientManager, UserManager
@@ -66,10 +66,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Client(User):
-    objects = ClientManager()  # type: ignore
+    objects: ClassVar = ClientManager()
 
-    clientuserobjectpermission_set: models.QuerySet["Client"]
-    clientgroupobjectpermission_set: models.QuerySet["Client"]
+    clientuserobjectpermission_set: models.QuerySet["ClientUserObjectPermission"]
+    clientgroupobjectpermission_set: models.QuerySet["ClientGroupObjectPermission"]
 
     class Meta:
         proxy = True

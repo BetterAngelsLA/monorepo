@@ -16,7 +16,6 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.requests import get_request
 
 from .types import (
-    ClientFilter,
     ClientType,
     CreateClientInput,
     MagicLinkInput,
@@ -35,7 +34,6 @@ class Query:
 
     clients: List[ClientType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientPermissions.VIEW])],
-        filters=ClientFilter,
     )
 
 
@@ -59,9 +57,9 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             client = Client.objects.create_client(
-                first_name=str(client_data.get("first_name")),
-                last_name=str(client_data.get("last_name")),
-                email=str(client_data.get("email")),
+                first_name=client_data.get("first_name"),
+                last_name=client_data.get("last_name"),
+                email=client_data.get("email"),
             )
             resolvers.create(
                 info,

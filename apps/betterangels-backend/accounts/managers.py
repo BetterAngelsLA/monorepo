@@ -39,9 +39,6 @@ class UserManager(BaseUserManager["User"]):
             return None
 
 
-DEFAULT_CLIENT_PASSWORD = "password"
-
-
 class ClientManager(UserManager):
     def get_queryset(self) -> QuerySet["User"]:
         return super().get_queryset().filter(client_profile__isnull=False)
