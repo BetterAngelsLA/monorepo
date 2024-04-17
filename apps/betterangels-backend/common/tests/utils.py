@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from accounts.models import PermissionGroupTemplate, User
+from accounts.models import ClientProfile, PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
@@ -35,6 +35,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
         self.client_1 = self.user_map["client_1"]
         self.client_2 = self.user_map["client_2"]
+        baker.make(ClientProfile, user=self.client_1)
+        baker.make(ClientProfile, user=self.client_2)
 
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
