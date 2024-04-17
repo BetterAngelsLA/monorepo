@@ -122,7 +122,9 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
 
         clients = response["data"]["clients"]
         client_count = User.objects.filter(username__icontains="client").count()
+        from IPython import embed
 
+        embed()
         # The number of clients in the db is one more than we create in the test because we're
         # also creating one via signal in apps/betterangels-backend/accounts/signals.py
         self.assertEqual(client_count, len(clients) + 1)
