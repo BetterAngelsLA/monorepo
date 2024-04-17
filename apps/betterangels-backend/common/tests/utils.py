@@ -19,22 +19,24 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self._setup_groups_and_permissions()
 
     def _setup_users(self) -> None:
+        # Create case manager users
         self.user_labels = [
             "org_1_case_manager_1",
             "org_1_case_manager_2",
             "org_2_case_manager_1",
-            "client_1",
-            "client_2",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in self.user_labels
         }
-
         self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
         self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
         self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
-        self.client_1 = self.user_map["client_1"]
-        self.client_2 = self.user_map["client_2"]
+
+        # Create client users and add them to the user map
+        self.client_1 = baker.make(User, first_name="Todd", last_name="Chavez", email="todd@pblivin.com")
+        self.client_2 = baker.make(User, first_name="Mister", last_name="Peanutbutter", email="mister@pblivin.com")
+        self.user_map["client_1"] = self.client_1
+        self.user_map["client_2"] = self.client_2
         baker.make(ClientProfile, user=self.client_1)
         baker.make(ClientProfile, user=self.client_2)
 

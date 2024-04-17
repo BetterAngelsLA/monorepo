@@ -67,6 +67,14 @@ type BedsType {
   bedLayoutDescription: String
 }
 
+input ClientFilter {
+  AND: ClientFilter
+  OR: ClientFilter
+  NOT: ClientFilter
+  DISTINCT: Boolean
+  search: String
+}
+
 type ClientType {
   id: ID!
   username: String!
@@ -364,7 +372,7 @@ scalar Point
 type Query {
   currentUser: UserType!
   client(pk: ID!): ClientType!
-  clients: [ClientType!]!
+  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]!
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   featureControls: FeatureControlData!

@@ -7,7 +7,7 @@ from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.utils.requests import get_request
 
-from .types import ClientType, MagicLinkInput, MagicLinkResponse, UserType
+from .types import ClientFilter, ClientType, MagicLinkInput, MagicLinkResponse, UserType
 
 
 @strawberry.type
@@ -16,7 +16,7 @@ class Query:
 
     client: ClientType = strawberry_django.field()
 
-    clients: List[ClientType] = strawberry_django.field()
+    clients: List[ClientType] = strawberry_django.field(filters=ClientFilter)
 
 
 @strawberry.type
