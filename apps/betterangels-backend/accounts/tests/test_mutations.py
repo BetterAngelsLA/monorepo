@@ -27,7 +27,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         mutation {
             logout
         }
-        """
+    """
         response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
