@@ -69,6 +69,7 @@ class Client(User):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+    hmis_id = models.CharField(max_length=50, blank=True, null=True)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
