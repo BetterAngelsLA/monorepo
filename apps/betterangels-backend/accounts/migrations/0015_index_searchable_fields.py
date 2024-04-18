@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("accounts", "0012_clientprofile_hmis_id"),
+        ("accounts", "0014_casemanager_client_permissions"),
     ]
 
     operations = [
