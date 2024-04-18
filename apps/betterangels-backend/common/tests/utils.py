@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from common.models import Address
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
@@ -156,6 +157,53 @@ class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
                         city
                         state
                         zipCode
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
+class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        # self._setup_address()
+        self.point = [-118.2437, 34.0522]
+
+    # def _setup_address(self) -> None:
+    #     # Force login to create an address
+    #     self.graphql_client.force_login(self.org_1_case_manager_1)
+    #     json_address_input, address_input = self._get_address_inputs()
+
+    #     variables = {
+    #         "address": json_address_input,
+    #         "point": self.point,
+    #     }
+    #     self.address = Address.get_or_create_address(variables)
+    #     # Logout after setting up the address
+    #     self.graphql_client.logout()
+
+    def _create_location_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateLocation($data: NoteLocationInput!) { # noqa: B950
+                createLocation(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteLocationType {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                 }
             }

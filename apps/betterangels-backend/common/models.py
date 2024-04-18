@@ -1,11 +1,12 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
@@ -135,6 +136,7 @@ class Address(BaseModel):
     @staticmethod
     def convert_to_structured_address(address_components: str) -> dict:
         address_fields = {
+            "point_of_interest": "long_name",
             "street_number": "long_name",
             "route": "long_name",
             "locality": "long_name",
@@ -153,7 +155,8 @@ class Address(BaseModel):
         return structured_address
 
     @classmethod
-    def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+    def get_or_create_address(cls, address_data: Dict[str, Any]) -> Tuple["Address", Optional[str]]:
+        """Gets or creates an address and returns the address and point of interest."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
         structured_address = cls.convert_to_structured_address(address_data["address_components"])
@@ -170,7 +173,13 @@ class Address(BaseModel):
             formatted_address=address_data["formatted_address"],
         )
 
-        return address
+        return address, structured_address.get("point_of_interest")
+
+
+class Location(BaseModel):
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
+    point = PointField(geography=True, null=True, blank=True)
+    point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
 
 # Permissions

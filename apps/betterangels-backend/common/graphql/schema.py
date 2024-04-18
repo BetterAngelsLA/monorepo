@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -8,13 +8,16 @@ from common.graphql.types import (
     AddressType,
     FeatureControlData,
     FlagType,
+    NoteLocationInput,
+    NoteLocationType,
     SampleType,
     SwitchType,
 )
-from common.models import Address
+from common.models import Address, Location
 from common.permissions.enums import AddressPermissions
 from django.db import transaction
 from strawberry.types import Info
+from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm
 from waffle import (
     get_waffle_flag_model,
@@ -85,3 +88,22 @@ class Mutation:
             address = Address.get_or_create_address(strawberry.asdict(data))
 
             return cast(AddressType, address)
+
+    @strawberry_django.mutation()
+    def create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
+        with transaction.atomic():
+            location_data = strawberry.asdict(data)
+            address_data = location_data.pop("address")
+            address, point_of_interest = Address.get_or_create_address(address_data)
+
+            location = resolvers.create(
+                info,
+                Location,
+                {
+                    "address": address,
+                    "point": location_data["point"],
+                    "point_of_interest": point_of_interest,
+                },
+            )
+
+            return cast(NoteLocationType, location)
