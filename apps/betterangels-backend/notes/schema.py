@@ -166,7 +166,7 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this note.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
+            address, _ = Address.get_or_create_address(location_data["address"])
             note = resolvers.update(
                 info,
                 note,
@@ -661,7 +661,7 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this task.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
+            address, _ = Address.get_or_create_address(location_data["address"])
             task = resolvers.update(
                 info,
                 task,

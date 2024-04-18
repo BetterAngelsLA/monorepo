@@ -93,7 +93,7 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
     def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
         with transaction.atomic():
-            address = Address.get_or_create_address(strawberry.asdict(data))
+            address, _ = Address.get_or_create_address(strawberry.asdict(data))
 
             return cast(AddressType, address)
 
