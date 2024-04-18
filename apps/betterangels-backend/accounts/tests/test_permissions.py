@@ -44,7 +44,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_1", False),  # Non CM should not succeed
+            ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -61,7 +61,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": self.client_user_1["id"]}
+        variables = {"id": self.client_1["id"]}
         response = self.execute_graphql(mutation, variables)
 
         if should_succeed:
@@ -75,7 +75,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_1", False),  # Non CM should not succeed
+            ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -92,7 +92,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": self.client_user_1["id"]}
+        variables = {"id": self.client_1["id"]}
 
         response = self.execute_graphql(mutation, variables)
 
