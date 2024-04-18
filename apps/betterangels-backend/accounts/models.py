@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, ClassVar, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.managers import ClientManager, UserManager
@@ -11,7 +11,12 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
-from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
+from guardian.models import (
+    GroupObjectPermissionAbstract,
+    GroupObjectPermissionBase,
+    UserObjectPermissionAbstract,
+    UserObjectPermissionBase,
+)
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 
@@ -29,8 +34,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
     )
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=30, blank=True)
+    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -61,7 +66,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Client(User):
-    objects = ClientManager()  # type: ignore
+    objects: ClassVar = ClientManager()
+
+    clientuserobjectpermission_set: models.QuerySet["ClientUserObjectPermission"]
+    clientgroupobjectpermission_set: models.QuerySet["ClientGroupObjectPermission"]
 
     class Meta:
         proxy = True
@@ -69,7 +77,7 @@ class Client(User):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
-    hmis_id = models.CharField(max_length=50, blank=True, null=True)
+    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
@@ -173,3 +181,15 @@ class PermissionGroup(models.Model):
             self.group.permissions.set(permissions_to_apply)
 
         super().save(*args, **kwargs)
+
+
+class ClientUserObjectPermission(UserObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="client_user_object_permission"
+    )
+
+
+class ClientGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="client_group_object_permission"
+    )

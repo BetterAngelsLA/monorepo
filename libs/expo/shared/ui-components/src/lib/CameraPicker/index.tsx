@@ -15,7 +15,7 @@ import {
   useCameraPermissions,
 } from 'expo-camera/next';
 import { useRef, useState } from 'react';
-import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
 import H5 from '../H5';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
@@ -194,7 +194,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
               accessibilityHint="closes camera"
               title="Cancel"
             />
-            <TouchableOpacity
+            <Pressable
               onPress={captureImage}
               style={{ flex: 2, alignItems: 'center' }}
               accessibilityRole="button"
@@ -202,17 +202,30 @@ export default function CameraPicker(props: ICameraPickerProps) {
               accessibilityLabel="capture"
               accessibilityHint="captures image"
             >
-              <View
-                style={{
-                  backgroundColor: Colors.WHITE,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 100,
-                  height: 70,
-                  width: 70,
-                }}
-              />
-            </TouchableOpacity>
+              {({ pressed }) => (
+                <View
+                  style={{
+                    backgroundColor: Colors.BLACK,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 100,
+                    borderWidth: 5,
+                    borderColor: Colors.WHITE,
+                    height: 60,
+                    width: 60,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: Colors.WHITE,
+                      borderRadius: 100,
+                      height: pressed ? 38 : 45,
+                      width: pressed ? 38 : 45,
+                    }}
+                  />
+                </View>
+              )}
+            </Pressable>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <View
                 style={{
