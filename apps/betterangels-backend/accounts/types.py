@@ -10,23 +10,34 @@ from strawberry_django.filters import filter
 
 from .models import Client, ClientProfile, User
 
-
 ACTIVE_CLIENT_THRESHOLD_DAYS = 90
 
 
 @filter(Client)
 class ClientFilter:
     @strawberry_django.filter_field
-    def active(self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str) -> Tuple[QuerySet[Client], Q]:
-        if value is True:
+    def active(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: Optional[bool],
+        prefix: str,
+    ) -> Tuple[QuerySet[Client], Q]:
+        if value:
             active_client_threshold = timezone.now() - timedelta(days=ACTIVE_CLIENT_THRESHOLD_DAYS)
 
-            return queryset.filter(notes__interacted_at__lte=active_client_threshold), Q()
+            return queryset.filter(client_notes__interacted_at__gte=active_client_threshold), Q()
 
         return queryset, Q()
 
     @strawberry_django.filter_field
-    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Tuple[QuerySet[Client], Q]:
+    def search(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> Tuple[QuerySet[Client], Q]:
         if value:
             return (
                 queryset.filter(
