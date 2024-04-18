@@ -181,6 +181,8 @@ class Location(BaseModel):
     point = PointField(geography=True, null=True, blank=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
+    objects = models.Manager()
+
     locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
     locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
 
