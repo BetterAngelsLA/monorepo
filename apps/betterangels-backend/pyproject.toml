@@ -19,9 +19,9 @@ include = "betterangels_backend"
 [tool.poetry.dependencies]
 python = "3.12.2"
 psycopg = "3.1.18"
-django = "^4.2.11"
+django = "^5.0.4"
 django-environ = "^0.11.2"
-gunicorn = { extras = ["gevent"], version = "^21.2.0" }
+gunicorn = { extras = ["gevent"], version = "^22.0.0" }
 django-extensions = "^3.2.3"
 dj-rest-auth = { extras = ["with-social"], version = "^5.0.2" }
 django-cors-headers = "^4.3.1"
