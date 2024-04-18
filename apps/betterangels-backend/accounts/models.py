@@ -79,14 +79,6 @@ class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True)
 
-    class Meta:
-        indexes = [
-            models.Index(
-                fields=["hmis_id"],
-                name="accounts_client_hmis_id_idx",
-            )
-        ]
-
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)
