@@ -23,6 +23,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             "org_1_case_manager_1",
             "org_1_case_manager_2",
             "org_2_case_manager_1",
+            # Calling these client_users because they're note Client instances,
+            # but ordinary users created to facilitate testing.
             "client_user_1",
             "client_user_2",
         ]
