@@ -34,8 +34,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
     )
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=30, blank=True)
+    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -64,18 +64,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
-    class Meta:
-        indexes = [
-            models.Index(
-                fields=["first_name"],
-                name="accounts_user_first_name_idx",
-            ),
-            models.Index(
-                fields=["last_name"],
-                name="accounts_user_last_name_idx",
-            ),
-        ]
-
 
 class Client(User):
     objects: ClassVar = ClientManager()
@@ -89,7 +77,7 @@ class Client(User):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
-    hmis_id = models.CharField(max_length=50, blank=True, null=True)
+    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True)
 
     class Meta:
         indexes = [
