@@ -52,8 +52,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self,
         street_number_override: Optional[str] = None,
         delete_street_number: bool = False,
-        delete_components: bool = False,
         include_point_of_interest: bool = False,
+        delete_components: bool = False,
     ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
@@ -103,7 +103,11 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
             if include_point_of_interest:
                 address_input["addressComponents"].append(
-                    {"long_name": "200", "short_name": "200", "types": ["point_of_interest"]},
+                    {
+                        "long_name": "An Interesting Point",
+                        "short_name": "An Interesting Point",
+                        "types": ["point_of_interest"],
+                    },
                 )
 
             if delete_components:
