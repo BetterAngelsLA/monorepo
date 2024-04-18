@@ -27,9 +27,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "point",
-                    django.contrib.gis.db.models.fields.PointField(
-                        blank=True, geography=True, null=True, srid=4326
-                    ),
+                    django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326),
                 ),
                 (
                     "point_of_interest",

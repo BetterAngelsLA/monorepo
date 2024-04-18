@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
-from common.models import Address
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase

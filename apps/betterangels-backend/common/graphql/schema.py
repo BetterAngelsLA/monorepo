@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -97,7 +97,7 @@ class Mutation:
     def create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
         with transaction.atomic():
             location_data = strawberry.asdict(data)
-            address_data = location_data.pop("address")
+            address_data = strawberry.asdict(location_data.pop("address"))
             address, point_of_interest = Address.get_or_create_address(address_data)
 
             location = resolvers.create(
