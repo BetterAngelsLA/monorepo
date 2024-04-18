@@ -77,6 +77,7 @@ export type ClientFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ClientFilter>;
   OR?: InputMaybe<ClientFilter>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
