@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -14,7 +14,7 @@ from common.graphql.types import (
     SwitchType,
 )
 from common.models import Address, Location
-from common.permissions.enums import AddressPermissions
+from common.permissions.enums import AddressPermissions, LocationPermissions
 from django.db import transaction
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
@@ -36,9 +36,13 @@ class Query:
         extensions=[HasPerm(AddressPermissions.VIEW)],
     )
 
-    location: NoteLocationType = strawberry_django.field()
+    location: NoteLocationType = strawberry_django.field(
+        extensions=[HasPerm(LocationPermissions.VIEW)],
+    )
 
-    locations: List[NoteLocationType] = strawberry_django.field()
+    locations: List[NoteLocationType] = strawberry_django.field(
+        extensions=[HasPerm(LocationPermissions.VIEW)],
+    )
 
     @strawberry.field
     def feature_controls(self, info: Info) -> FeatureControlData:
@@ -93,11 +97,11 @@ class Mutation:
 
             return cast(AddressType, address)
 
-    @strawberry_django.mutation()
+    @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
     def create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
         with transaction.atomic():
-            location_data = strawberry.asdict(data)
-            address_data = strawberry.asdict(location_data.pop("address"))
+            location_data: Dict[str, Any] = strawberry.asdict(data)
+            address_data = location_data.pop("address")
             address, point_of_interest = Address.get_or_create_address(address_data)
 
             location = resolvers.create(
