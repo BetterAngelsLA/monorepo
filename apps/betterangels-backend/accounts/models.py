@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, ClassVar, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.managers import ClientManager, UserManager
@@ -11,7 +11,12 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
-from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
+from guardian.models import (
+    GroupObjectPermissionAbstract,
+    GroupObjectPermissionBase,
+    UserObjectPermissionAbstract,
+    UserObjectPermissionBase,
+)
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 
@@ -73,7 +78,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Client(User):
-    objects = ClientManager()  # type: ignore
+    objects: ClassVar = ClientManager()
+
+    clientuserobjectpermission_set: models.QuerySet["ClientUserObjectPermission"]
+    clientgroupobjectpermission_set: models.QuerySet["ClientGroupObjectPermission"]
 
     class Meta:
         proxy = True
@@ -193,3 +201,15 @@ class PermissionGroup(models.Model):
             self.group.permissions.set(permissions_to_apply)
 
         super().save(*args, **kwargs)
+
+
+class ClientUserObjectPermission(UserObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="client_user_object_permission"
+    )
+
+
+class ClientGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: models.ForeignKey = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="client_group_object_permission"
+    )

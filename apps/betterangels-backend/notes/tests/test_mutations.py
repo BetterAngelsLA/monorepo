@@ -29,7 +29,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 {
                     "title": "New note title",
                     "publicDetails": "New public details",
-                    "client": self.client_1.pk,
+                    "client": self.client_user_1.pk,
                 }
             )
 
@@ -47,7 +47,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "privateDetails": "",
             "isSubmitted": False,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
@@ -89,7 +89,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
@@ -121,7 +121,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
@@ -1014,7 +1014,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": self.service_request["id"],
             "dueBy": "2024-03-11T11:12:13+00:00",
             "status": "COMPLETED",
-            "client": self.client_1.pk,
+            "client": self.client_user_1.pk,
         }
 
         expected_query_count = 16
@@ -1029,7 +1029,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1039,7 +1039,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
     def test_partial_update_service_request_mutation(self) -> None:
         variables = {
             "id": self.service_request["id"],
-            "client": self.client_1.pk,
+            "client": self.client_user_1.pk,
         }
 
         expected_query_count = 16
@@ -1054,7 +1054,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "completedOn": None,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1126,7 +1126,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "point": self.point,
             "address": self.address.pk,
             "status": "COMPLETED",
-            "client": self.client_1.pk,
+            "client": self.client_user_1.pk,
         }
 
         expected_query_count = 18
@@ -1145,7 +1145,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             },
             "status": "COMPLETED",
             "dueBy": None,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
