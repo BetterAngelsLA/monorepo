@@ -40,16 +40,17 @@ class PermissionGroupTests(TestCase):
         organization = organization_recipe.make()
         _ = permission_group_recipe.make(_quantity=3, organization=organization)
 
-        permission_groups_before_delete = PermissionGroup.objects.filter(organization=organization).count()
-        groups_before_delete = Group.objects.filter(permissiongroup__organization=organization).count()
+        organization_pk = organization.pk
+        permission_groups_before_delete = PermissionGroup.objects.filter(organization=organization_pk).count()
+        groups_before_delete = Group.objects.filter(permissiongroup__organization=organization_pk).count()
 
         self.assertEqual(permission_groups_before_delete, 3)
         self.assertEqual(groups_before_delete, 3)
 
         organization.delete()
 
-        permission_groups_after_delete = PermissionGroup.objects.filter(organization=organization).exists()
-        groups_after_delete = Group.objects.filter(permissiongroup__organization=organization).exists()
+        permission_groups_after_delete = PermissionGroup.objects.filter(organization=organization_pk).exists()
+        groups_after_delete = Group.objects.filter(permissiongroup__organization=organization_pk).exists()
 
         self.assertFalse(permission_groups_after_delete)
         self.assertFalse(groups_after_delete)
