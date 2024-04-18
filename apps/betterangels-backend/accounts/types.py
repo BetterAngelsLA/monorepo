@@ -1,18 +1,11 @@
+from typing import Optional
+
 import strawberry
 import strawberry_django
 from django.db.models import Q
 from strawberry import auto
 
-from .models import Client, User
-
-
-@strawberry_django.type(User)
-class UserType:
-    id: auto
-    username: auto
-    first_name: auto
-    last_name: auto
-    email: auto
+from .models import Client, ClientProfile, User
 
 
 @strawberry_django.filters.filter(Client)
@@ -24,14 +17,36 @@ class ClientFilter:
         )
 
 
+@strawberry_django.type(User)
+class UserType:
+    id: auto
+    username: auto
+    first_name: auto
+    last_name: auto
+    email: auto
+
+
+@strawberry_django.type(ClientProfile)
+class ClientProfileType:
+    hmis_id: auto
+
+
 @strawberry_django.type(Client, pagination=True, filters=ClientFilter)
 class ClientType(UserType):
-    pass
+    client_profile: ClientProfileType
 
 
-@strawberry_django.input(User)
-class UserInput:
-    id: auto
+@strawberry_django.input(ClientProfile)
+class ClientProfileInput:
+    hmis_id: auto
+
+
+@strawberry_django.input(Client)
+class CreateClientInput:
+    first_name: auto
+    last_name: auto
+    email: auto
+    client_profile: Optional[ClientProfileInput]
 
 
 @strawberry.input

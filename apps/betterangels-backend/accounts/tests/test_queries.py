@@ -1,8 +1,9 @@
 from typing import Optional
 
 from accounts.models import User
-from common.tests.utils import GraphQLBaseTestCase
+from accounts.tests.utils import ClientGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
+from IPython import embed
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import parametrize
@@ -68,12 +69,14 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         )
 
 
-class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
+class ClientQueryTestCase(ClientGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_get_client_query(self) -> None:
-        client_id = self.client_1.pk
+        client_id = self.client_1["id"]
+        embed
         query = """
             query ViewClient($id: ID!) {
                 client(pk: $id) {
@@ -86,7 +89,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
 
         variables = {"id": client_id}
-        expected_query_count = 1
+        expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -94,9 +97,9 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
         returned_client = response["data"]["client"]
         expected_client = {
             "id": str(client_id),
-            "firstName": self.client_1.first_name,
-            "lastName": self.client_1.last_name,
-            "email": self.client_1.email,
+            "firstName": self.client_1["firstName"],
+            "lastName": self.client_1["lastName"],
+            "email": self.client_1["email"],
         }
 
         self.assertEqual(returned_client, expected_client)
@@ -112,7 +115,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 1
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -143,7 +146,7 @@ class ClientGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
 
-        expected_query_count = 1
+        expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"search": search_parameter})
 

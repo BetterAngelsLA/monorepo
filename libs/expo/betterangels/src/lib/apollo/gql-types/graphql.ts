@@ -80,14 +80,33 @@ export type ClientFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ClientProfileInput = {
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientProfileType = {
+  __typename?: 'ClientProfileType';
+  hmisId?: Maybe<Scalars['String']['output']>;
+};
+
 export type ClientType = {
   __typename?: 'ClientType';
+  clientProfile: ClientProfileType;
   email: Scalars['String']['output'];
   firstName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];
   username: Scalars['String']['output'];
 };
+
+export type CreateClientInput = {
+  clientProfile?: InputMaybe<ClientProfileInput>;
+  email: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateClientPayload = ClientType | OperationInfo;
 
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
@@ -259,6 +278,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
+  createClient: CreateClientPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -287,6 +307,11 @@ export type Mutation = {
 
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
+};
+
+
+export type MutationCreateClientArgs = {
+  data: CreateClientInput;
 };
 
 
