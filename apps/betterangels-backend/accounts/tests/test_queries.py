@@ -4,6 +4,7 @@ from typing import Optional
 import time_machine
 from accounts.models import Client, User
 from accounts.tests.utils import ClientGraphQLBaseTestCase
+from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import TestCase, ignore_warnings
 from IPython import embed
 from model_bakery import baker
@@ -169,10 +170,8 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
             }
         """
 
-        MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = 90  # in days
-
         with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS + 1))
+            traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             baker.make(
                 Note,
