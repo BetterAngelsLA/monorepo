@@ -136,7 +136,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "address": json_address_input,
         }
 
-        expected_query_count = 20
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 
@@ -538,7 +538,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 21
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -1183,7 +1183,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "address": json_address_input,
         }
 
-        expected_query_count = 18
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
