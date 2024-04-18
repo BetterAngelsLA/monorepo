@@ -181,6 +181,9 @@ class Location(BaseModel):
     point = PointField(geography=True, null=True, blank=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
+    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
+    locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
+
 
 # Permissions
 class AttachmentUserObjectPermission(UserObjectPermissionBase):
@@ -203,3 +206,11 @@ class AddressUserObjectPermission(UserObjectPermissionBase):
 
 class AddressGroupObjectPermission(GroupObjectPermissionBase):
     content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+
+class LocationUserObjectPermission(UserObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)
+
+
+class LocationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)
