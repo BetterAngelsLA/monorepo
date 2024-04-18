@@ -133,10 +133,10 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
         [
             (None, False, 2),  # no filter parameters
             (None, True, 1),  # active filter
-            ("tod", False, 1),  # first_name search matching active client
-            ("tod", True, 0),  # first_name search matching active client + active filter
-            ("pea", False, 1),  # last_name search matching inactive client
-            ("pea", True, 1),  # last_name search matching inactive client + active filter
+            ("tod", False, 1),  # first_name search matching inactive client
+            ("tod", True, 0),  # first_name search matching inactive client + active filter
+            ("pea", False, 1),  # last_name search matching active client
+            ("pea", True, 1),  # last_name search matching active client + active filter
             ("tod pea", False, 0),  # no match first_name, last_name search
             ("tod pea", True, 0),  # no match first_name, last_name search + active filter
             ("A1B", False, 2),  # hmis_id search matching both clients
