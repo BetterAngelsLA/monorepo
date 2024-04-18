@@ -16,7 +16,7 @@ ACTIVE_CLIENT_THRESHOLD_DAYS = 90
 @filter(Client)
 class ClientFilter:
     @strawberry_django.filter_field
-    def active(
+    def is_active(
         self,
         queryset: QuerySet,
         info: Info,

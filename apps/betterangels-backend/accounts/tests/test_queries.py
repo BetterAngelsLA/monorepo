@@ -162,8 +162,8 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
         )
 
         query = """
-            query Clients($active: Boolean, $search: String) {
-                clients(filters: {active: $active, search: $search}) {
+            query Clients($isActive: Boolean, $search: String) {
+                clients(filters: {isActive: $isActive, search: $search}) {
                     id
                 }
             }
@@ -182,7 +182,7 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
 
             expected_query_count = 3
             with self.assertNumQueriesWithoutCache(expected_query_count):
-                response = self.execute_graphql(query, variables={"search": search_value, "active": is_active})
+                response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         clients = response["data"]["clients"]
         self.assertEqual(expected_client_count, len(clients))
