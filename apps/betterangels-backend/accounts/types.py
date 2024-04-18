@@ -10,7 +10,7 @@ from strawberry_django.filters import filter
 
 from .models import Client, ClientProfile, User
 
-ACTIVE_CLIENT_THRESHOLD_DAYS = 90
+MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 
 @filter(Client)
@@ -24,9 +24,9 @@ class ClientFilter:
         prefix: str,
     ) -> Tuple[QuerySet[Client], Q]:
         if value:
-            active_client_threshold = timezone.now() - timedelta(days=ACTIVE_CLIENT_THRESHOLD_DAYS)
+            earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
 
-            return queryset.filter(client_notes__interacted_at__gte=active_client_threshold), Q()
+            return queryset.filter(client_notes__interacted_at__gte=earliest_interaction_threshold), Q()
 
         return queryset, Q()
 

@@ -169,10 +169,10 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
             }
         """
 
-        ACTIVE_CLIENT_THRESHOLD_DAYS = 90
+        MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = 90  # in days
 
         with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(days=ACTIVE_CLIENT_THRESHOLD_DAYS + 91))
+            traveller.shift(timedelta(MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS + 1))
 
             baker.make(
                 Note,
