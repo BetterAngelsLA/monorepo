@@ -56,8 +56,8 @@ class Attachment(BaseModel):
         related_name="associated_attachments",
     )
 
-    attachmentuserobjectpermission_set: models.QuerySet["Attachment"]
-    attachmentgroupobjectpermission_set: models.QuerySet["Attachment"]
+    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
+    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     def __str__(self) -> str:
         return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
@@ -109,8 +109,8 @@ class Address(BaseModel):
     address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
-    addressuserobjectpermission_set: models.QuerySet["Address"]
-    addressgroupobjectpermission_set: models.QuerySet["Address"]
+    addressuserobjectpermission_set: models.QuerySet["AddressUserObjectPermission"]
+    addressgroupobjectpermission_set: models.QuerySet["AddressGroupObjectPermission"]
 
     objects = models.Manager()
 
