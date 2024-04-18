@@ -16,6 +16,7 @@ interface IMainModalProps {
   bottomSection?: React.ReactNode;
   topSection?: React.ReactNode;
   closeButton?: boolean;
+  transparent?: boolean;
 }
 
 export default function MainModal(props: IMainModalProps) {
@@ -26,73 +27,82 @@ export default function MainModal(props: IMainModalProps) {
     bottomSection,
     topSection,
     closeButton,
+    transparent = false,
   } = props;
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-  const statusBarHeight = insets.top;
   return (
     <Modal
       animationType="slide"
-      transparent={false}
+      transparent={transparent}
       visible={isModalVisible}
       onRequestClose={closeModal}
     >
       <View
         style={{
           flex: 1,
-          paddingTop: statusBarHeight,
-          paddingHorizontal: Spacings.sm,
-          paddingBottom: 35 + bottomOffset,
+          justifyContent: 'flex-end',
         }}
       >
-        {closeButton && (
-          <Pressable
-            style={{ marginLeft: 'auto' }}
-            accessible
-            accessibilityHint="closes the modal"
-            accessibilityRole="button"
-            accessibilityLabel="close"
-            onPress={closeModal}
-          >
-            <XmarkIcon size="md" color={Colors.BLACK} />
-          </Pressable>
-        )}
-        <View style={styles.modalOverlay}>
-          {topSection}
-          {actions.map((action, idx: number) => (
+        <View
+          style={{
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            paddingTop: Spacings.md,
+            paddingHorizontal: Spacings.sm,
+            paddingBottom: 35 + bottomOffset,
+            backgroundColor: Colors.WHITE,
+          }}
+        >
+          {closeButton && (
             <Pressable
+              style={{ marginLeft: 'auto' }}
+              accessible
+              accessibilityHint="closes the modal"
               accessibilityRole="button"
-              key={idx}
-              style={styles.container}
+              accessibilityLabel="close"
+              onPress={closeModal}
             >
-              {({ pressed }) => (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    flex: 1,
-                    backgroundColor: pressed
-                      ? Colors.NEUTRAL_EXTRA_LIGHT
-                      : Colors.WHITE,
-                    borderRadius: 8,
-                    paddingHorizontal: Spacings.sm,
-                    paddingVertical: Spacings.sm,
-                  }}
-                >
-                  <action.Icon
-                    style={{ marginRight: Spacings.md }}
-                    color={Colors.PRIMARY_EXTRA_DARK}
-                  />
-
-                  <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
-                    {action.title}
-                  </BodyText>
-                </View>
-              )}
+              <XmarkIcon size="md" color={Colors.BLACK} />
             </Pressable>
-          ))}
-          {bottomSection}
+          )}
+          <View style={styles.modalOverlay}>
+            {topSection}
+            {actions.map((action, idx: number) => (
+              <Pressable
+                accessibilityRole="button"
+                key={idx}
+                style={styles.container}
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      flex: 1,
+                      backgroundColor: pressed
+                        ? Colors.NEUTRAL_EXTRA_LIGHT
+                        : Colors.WHITE,
+                      borderRadius: 8,
+                      paddingHorizontal: Spacings.sm,
+                      paddingVertical: Spacings.sm,
+                    }}
+                  >
+                    <action.Icon
+                      style={{ marginRight: Spacings.md }}
+                      color={Colors.PRIMARY_EXTRA_DARK}
+                    />
+
+                    <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+                      {action.title}
+                    </BodyText>
+                  </View>
+                )}
+              </Pressable>
+            ))}
+            {bottomSection}
+          </View>
         </View>
       </View>
     </Modal>
@@ -101,7 +111,6 @@ export default function MainModal(props: IMainModalProps) {
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: Colors.WHITE,

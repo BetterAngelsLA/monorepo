@@ -58,7 +58,7 @@ interface INavModalProps {
 }
 
 export default function NavModal(props: INavModalProps) {
-  //   const { image } = props;
+  const { image } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const openModal = () => {
     setModalVisible(true);
@@ -85,10 +85,44 @@ export default function NavModal(props: INavModalProps) {
         />
       </Pressable>
       <MainModal
+        transparent
         closeButton
         actions={ACTIONS}
         isModalVisible={isModalVisible}
         closeModal={closeModal}
+        topSection={
+          <Pressable accessibilityRole="button" style={styles.container}>
+            {({ pressed }) => (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  flex: 1,
+                  backgroundColor: pressed
+                    ? Colors.NEUTRAL_EXTRA_LIGHT
+                    : Colors.WHITE,
+                  borderRadius: 8,
+                  paddingRight: Spacings.sm,
+                  paddingLeft: Spacings.xs,
+                  paddingVertical: Spacings.sm,
+                }}
+              >
+                <View style={{ marginRight: 20 }}>
+                  <Avatar
+                    imageUrl={image}
+                    size="md"
+                    hasBorder
+                    borderColor={Colors.BLACK}
+                    accessibilityHint="my avatar"
+                    accessibilityLabel="My Avatar"
+                  />
+                </View>
+
+                <BodyText color={Colors.PRIMARY_EXTRA_DARK}>Profile</BodyText>
+              </View>
+            )}
+          </Pressable>
+        }
         bottomSection={
           <Pressable
             onPress={signOut}
