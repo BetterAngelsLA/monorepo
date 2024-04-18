@@ -72,16 +72,35 @@ input ClientFilter {
   OR: ClientFilter
   NOT: ClientFilter
   DISTINCT: Boolean
+  isActive: Boolean
   search: String
+}
+
+input ClientProfileInput {
+  hmisId: String
+}
+
+type ClientProfileType {
+  hmisId: String
 }
 
 type ClientType {
   id: ID!
   username: String!
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   email: String!
+  clientProfile: ClientProfileType!
 }
+
+input CreateClientInput {
+  firstName: String
+  lastName: String
+  email: String!
+  clientProfile: ClientProfileInput
+}
+
+union CreateClientPayload = ClientType | OperationInfo
 
 input CreateNoteAttachmentInput {
   note: ID!
@@ -255,6 +274,7 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
+  createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
@@ -371,8 +391,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
-  client(pk: ID!): ClientType!
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]!
+  client(pk: ID!): ClientType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
+  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   featureControls: FeatureControlData!
@@ -562,8 +582,8 @@ scalar Upload
 type UserType {
   id: ID!
   username: String!
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   email: String!
 }
 

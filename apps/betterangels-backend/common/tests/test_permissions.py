@@ -13,7 +13,7 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Case Manager user should succeed
             ("org_2_case_manager_1", True),  # Case Manager user should succeed
             # TODO: We'll probably give Clients access to this at some point.
-            ("client_1", False),  # Client user should not succeed
+            ("client_user_1", False),  # Client user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -46,7 +46,7 @@ class AddressPermissionTestCase(AddressGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Case Manager user should succeed
             ("org_2_case_manager_1", True),  # Case Manager user should succeed
             # TODO: We'll probably give Clients access to this at some point.
-            ("client_1", False),  # Non CM should not succeed
+            ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )

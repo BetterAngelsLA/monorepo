@@ -39,6 +39,7 @@ def delete_all_notes(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
+        ("accounts", "0008_permissiongrouptemplate_permissiongroup"),
         ("organizations", "0006_alter_organization_slug"),
         ("notes", "0004_alter_notegroupobjectpermission_content_object_and_more"),
     ]

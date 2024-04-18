@@ -80,14 +80,33 @@ export type ClientFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ClientProfileInput = {
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientProfileType = {
+  __typename?: 'ClientProfileType';
+  hmisId?: Maybe<Scalars['String']['output']>;
+};
+
 export type ClientType = {
   __typename?: 'ClientType';
+  clientProfile: ClientProfileType;
   email: Scalars['String']['output'];
-  firstName: Scalars['String']['output'];
+  firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  lastName: Scalars['String']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };
+
+export type CreateClientInput = {
+  clientProfile?: InputMaybe<ClientProfileInput>;
+  email: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateClientPayload = ClientType | OperationInfo;
 
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
@@ -259,6 +278,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
+  createClient: CreateClientPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -287,6 +307,11 @@ export type Mutation = {
 
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
+};
+
+
+export type MutationCreateClientArgs = {
+  data: CreateClientInput;
 };
 
 
@@ -784,9 +809,9 @@ export type UpdateTaskPayload = OperationInfo | TaskType;
 export type UserType = {
   __typename?: 'UserType';
   email: Scalars['String']['output'];
-  firstName: Scalars['String']['output'];
+  firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  lastName: Scalars['String']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };
 
@@ -800,14 +825,14 @@ export type CreateNoteMutationVariables = Exact<{
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName: string, lastName: string, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
 export type UpdateNoteMutationVariables = Exact<{
   data: UpdateNoteInput;
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName: string, lastName: string, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Exact<{
   data: DeleteDjangoObjectInput;
