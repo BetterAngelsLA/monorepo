@@ -91,7 +91,7 @@ export default function TabOneScreen() {
       <MainScrollContainer px={0} pt="sm" bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View style={{ paddingHorizontal: Spacings.sm }}>
           <H2 mb="sm">Today</H2>
-          <ScrollView horizontal>
+          <ScrollView style={{ paddingBottom: Spacings.lg }} horizontal>
             {EVENTS.map((event, idx) => (
               <EventCard
                 mr="xs"
@@ -107,7 +107,6 @@ export default function TabOneScreen() {
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: Spacings.sm,
-              marginTop: Spacings.lg,
             }}
           >
             <H2>Active Clients</H2>

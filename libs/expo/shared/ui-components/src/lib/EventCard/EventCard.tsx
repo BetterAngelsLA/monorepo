@@ -82,6 +82,11 @@ const styles = StyleSheet.create({
     width: 272,
     flexDirection: 'row',
     alignItems: 'flex-start',
+    shadowColor: Colors.NEUTRAL,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
   },
   itemContainer: {
     flexDirection: 'row',
