@@ -72,6 +72,7 @@ input ClientFilter {
   OR: ClientFilter
   NOT: ClientFilter
   DISTINCT: Boolean
+  isActive: Boolean
   search: String
 }
 
