@@ -37,8 +37,8 @@ class ServiceRequest(BaseModel):
 
     objects = models.Manager()
 
-    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
-    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
+    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
+    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequestGroupObjectPermission"]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.status == ServiceRequestStatusEnum.COMPLETED:
@@ -73,8 +73,8 @@ class Task(BaseModel):
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
-    taskuserobjectpermission_set: models.QuerySet["Task"]
-    taskgroupobjectpermission_set: models.QuerySet["Task"]
+    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
+    taskgroupobjectpermission_set: models.QuerySet["TaskGroupObjectPermission"]
 
     def __str__(self) -> str:
         return self.title
@@ -107,8 +107,8 @@ class Note(BaseModel):
 
     objects = models.Manager()
 
-    noteuserobjectpermission_set: models.QuerySet["Note"]
-    notegroupobjectpermission_set: models.QuerySet["Note"]
+    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
+    notegroupobjectpermission_set: models.QuerySet["NoteGroupObjectPermission"]
 
     # Type hints for permission annotations
     _private_details: Optional[str]
