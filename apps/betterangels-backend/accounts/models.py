@@ -63,9 +63,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         indexes = [
             models.Index(
                 fields=["first_name"],
+                name="accounts_user_first_name_idx",
             ),
             models.Index(
                 fields=["last_name"],
+                name="accounts_user_last_name_idx",
             ),
         ]
 
@@ -85,6 +87,7 @@ class ClientProfile(models.Model):
         indexes = [
             models.Index(
                 fields=["hmis_id"],
+                name="accounts_client_hmis_id_idx",
             )
         ]
 
