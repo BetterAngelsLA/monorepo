@@ -87,8 +87,8 @@ type ClientProfileType {
 type ClientType {
   id: ID!
   username: String!
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   email: String!
   clientProfile: ClientProfileType!
 }
@@ -582,8 +582,8 @@ scalar Upload
 type UserType {
   id: ID!
   username: String!
-  firstName: String!
-  lastName: String!
+  firstName: String
+  lastName: String
   email: String!
 }
 
