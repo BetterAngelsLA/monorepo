@@ -36,6 +36,10 @@ class Query:
         extensions=[HasPerm(AddressPermissions.VIEW)],
     )
 
+    location: NoteLocationType = strawberry_django.field()
+
+    locations: List[NoteLocationType] = strawberry_django.field()
+
     @strawberry.field
     def feature_controls(self, info: Info) -> FeatureControlData:
         request = info.context["request"]

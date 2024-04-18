@@ -53,6 +53,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         street_number_override: Optional[str] = None,
         delete_street_number: bool = False,
         delete_components: bool = False,
+        include_point_of_interest: bool = False,
     ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
@@ -99,6 +100,11 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
             if delete_street_number:
                 address_input["addressComponents"].pop(0)
+
+            if include_point_of_interest:
+                address_input["addressComponents"].append(
+                    {"long_name": "200", "short_name": "200", "types": ["point_of_interest"]},
+                )
 
             if delete_components:
                 address_input["addressComponents"] = []
@@ -169,19 +175,19 @@ class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         # self._setup_address()
         self.point = [-118.2437, 34.0522]
+        self._setup_location()
+        self.graphql_client.logout()
 
-    # def _setup_address(self) -> None:
-    #     # Force login to create an address
-    #     self.graphql_client.force_login(self.org_1_case_manager_1)
-    #     json_address_input, address_input = self._get_address_inputs()
+    def _setup_location(self) -> None:
+        # Force login to create a location
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        json_address_input, _ = self._get_address_inputs()
 
-    #     variables = {
-    #         "address": json_address_input,
-    #         "point": self.point,
-    #     }
-    #     self.address = Address.get_or_create_address(variables)
-    #     # Logout after setting up the address
-    #     self.graphql_client.logout()
+        variables = {
+            "address": json_address_input,
+            "point": self.point,
+        }
+        self.location = self._create_location_fixture(variables)["data"]["createLocation"]
 
     def _create_location_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         mutation: str = """

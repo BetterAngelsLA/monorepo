@@ -1,5 +1,9 @@
 from accounts.models import User
-from common.tests.utils import AddressGraphQLBaseTestCase, GraphQLBaseTestCase
+from common.tests.utils import (
+    AddressGraphQLBaseTestCase,
+    GraphQLBaseTestCase,
+    LocationGraphQLBaseTestCase,
+)
 from model_bakery import baker
 from waffle import (
     get_waffle_flag_model,
@@ -160,56 +164,58 @@ class FeatureControlsAccessTestCase(GraphQLBaseTestCase):
         )
 
 
-# class LocationQueryTestCase(LocationGraphQLBaseTestCase):
-#     def setUp(self) -> None:
-#         super().setUp()
-#         self.graphql_client.force_login(self.org_1_case_manager_1)
+class LocationQueryTestCase(LocationGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
-#     def test_address_query(self) -> None:
-#         expected_address = {
-#             "id": self.address["id"],
-#             "street": self.address["street"],
-#             "city": self.address["city"],
-#             "state": self.address["state"],
-#             "zipCode": self.address["zipCode"],
-#         }
+    def test_location_query(self) -> None:
+        query = """
+            query ViewLocation($id: ID!) {
+                location(pk: $id) {
+                    id
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
+                    point
+                    pointOfInterest
+                }
+            }
+        """
+        variables = {"id": self.location["id"]}
 
-#         query = """
-#             query ViewAddress($id: ID!) {
-#                 address(pk: $id) {
-#                     id
-#                     street
-#                     city
-#                     state
-#                     zipCode
-#                 }
-#             }
-#         """
-#         variables = {"id": self.address["id"]}
+        expected_query_count = 1
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
-#         expected_query_count = 4
-#         with self.assertNumQueriesWithoutCache(expected_query_count):
-#             response = self.execute_graphql(query, variables)
+        location = response["data"]["location"]
+        self.assertEqual(self.location, location)
 
-#         address = response["data"]["address"]
-#         self.assertEqual(expected_address, address)
+    def test_locations_query(self) -> None:
+        query = """
+            {
+                locations {
+                    id
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
+                    point
+                    pointOfInterest
+                }
+            }
+        """
+        variables = {"id": self.location["id"]}
 
-#     def test_addresses_query(self) -> None:
-#         query = """
-#             {
-#                 addresses {
-#                     id
-#                     street
-#                     city
-#                     state
-#                     zipCode
-#                 }
-#             }
-#         """
-#         expected_query_count = 4
-#         with self.assertNumQueriesWithoutCache(expected_query_count):
-#             response = self.execute_graphql(query)
+        expected_query_count = 1
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
-#         addresses = response["data"]["addresses"]
-#         self.assertEqual(len(addresses), 1)
-#         self.assertEqual(self.address, addresses[0])
+        locations = response["data"]["locations"]
+        self.assertEqual(len(locations), 1)
+        self.assertEqual(self.location, locations[0])

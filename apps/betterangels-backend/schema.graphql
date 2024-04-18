@@ -410,6 +410,8 @@ type Query {
   clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  location(pk: ID!): NoteLocationType!
+  locations: [NoteLocationType!]!
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
