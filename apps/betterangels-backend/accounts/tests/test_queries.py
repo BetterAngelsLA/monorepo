@@ -1,12 +1,17 @@
+from datetime import datetime, timedelta
 from typing import Optional
 
-from accounts.models import User
+import time_machine
+from accounts.models import Client, User
 from accounts.tests.utils import ClientGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from IPython import embed
 from model_bakery import baker
+from notes.models import Note
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import parametrize
+
+from .baker_recipes import organization_recipe
 
 
 @ignore_warnings(category=UserWarning)
@@ -124,31 +129,60 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
         self.assertEqual(client_count, len(clients))
 
     @parametrize(
-        ("search_parameter, expected_client_count"),
+        ("search_value, is_active, expected_client_count"),
         [
-            (None, 2),
-            ("tod", 1),  # first_name search
-            ("pea", 1),  # last_name search
-            ("tod pea", 0),  # first and last name search
-            ("A1B", 2),  # hmis_id partial search matching two clients
-            ("A1B2", 1),  # hmis_id partial search matching one client
-            ("A1B3", 1),  # hmis_id partial search matching one client
+            (None, False, 2),  # no filter parameters
+            (None, True, 1),  # active filter
+            ("tod", False, 1),  # first_name search matching inactive client
+            ("tod", True, 0),  # first_name search matching inactive client + active filter
+            ("pea", False, 1),  # last_name search matching active client
+            ("pea", True, 1),  # last_name search matching active client + active filter
+            ("tod pea", False, 0),  # no match first_name, last_name search
+            ("tod pea", True, 0),  # no match first_name, last_name search + active filter
+            ("A1B", False, 2),  # hmis_id search matching both clients
+            ("A1B", True, 1),  # hmis_id search matching both clients + active filter
+            ("A1B2", False, 1),  # hmis_id search matching inactive client
+            ("A1B2", True, 0),  # hmis_id search matching inactive client + active filter
+            ("A1B3", False, 1),  # hmis_id search matching active client
+            ("A1B3", True, 1),  # hmis_id search matching active client + active filter
         ],
     )
-    def test_clients_query_search(self, search_parameter: Optional[str], expected_client_count: int) -> None:
+    def test_clients_query_search(
+        self, search_value: Optional[str], is_active: Optional[bool], expected_client_count: int
+    ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
+        self.organization = organization_recipe.make()
+        self.client_1 = Client.objects.get(id=self.client_1["id"])
+        self.client_2 = Client.objects.get(id=self.client_2["id"])
+        baker.make(
+            Note,
+            organization=self.organization,
+            client=self.client_1,
+        )
+
         query = """
-            query Clients($search: String) {
-                clients(filters: {search: $search}) {
+            query Clients($isActive: Boolean, $search: String) {
+                clients(filters: {isActive: $isActive, search: $search}) {
                     id
                 }
             }
         """
 
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"search": search_parameter})
+        MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = 90  # in days
+
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS + 1))
+
+            baker.make(
+                Note,
+                organization=self.organization,
+                client=self.client_2,
+            )
+
+            expected_query_count = 3
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         clients = response["data"]["clients"]
-        self.assertEqual(len(clients), expected_client_count)
+        self.assertEqual(expected_client_count, len(clients))
