@@ -25,7 +25,7 @@ export function H1({
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  color?: '#F2FAFC' | '#052B73';
+  color?: '#F2FAFC' | '#052B73' | '#ffffff';
 }) {
   return (
     <Text
