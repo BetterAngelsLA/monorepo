@@ -2,26 +2,50 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import LocationMapModal from './LocationMapModal';
 
 interface ILocationProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
+  noteId: string | undefined;
+  point?: number[] | null;
+  address?:
+    | {
+        __typename?: 'AddressType' | undefined;
+        street?: string | null | undefined;
+        city?: string | null | undefined;
+        state?: string | null | undefined;
+        zipCode?: string | null | undefined;
+      }
+    | null
+    | undefined;
 }
 
+type TLocation =
+  | {
+      address: string | null | undefined;
+      latitude: number | null | undefined;
+      longitude: number | null | undefined;
+      name: string | null | undefined;
+    }
+  | undefined;
+
 export default function LocationComponent(props: ILocationProps) {
-  const { expanded, setExpanded } = props;
-  const {
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext();
+  const { expanded, setExpanded, noteId, address, point } = props;
+  const [error, setError] = useState(false);
+  const [location, setLocation] = useState<TLocation>({
+    latitude: point ? point[1] : null,
+    longitude: point ? point[0] : null,
+    address: address
+      ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
+      : null,
+    name: address && address.street ? address.street : null,
+  });
+
   const [isModalVisible, toggleModal] = useState(false);
 
-  const location = watch('location');
   const isLocation = expanded === 'Location';
 
   return (
@@ -29,7 +53,7 @@ export default function LocationComponent(props: ILocationProps) {
       required
       expanded={expanded}
       mb="xs"
-      error={errors.location ? 'Please enter a location' : undefined}
+      error={error ? 'Please enter a location' : undefined}
       setExpanded={() => {
         if (isLocation) {
           setExpanded(undefined);
@@ -49,27 +73,13 @@ export default function LocationComponent(props: ILocationProps) {
             {location && location.latitude
               ? location?.name
                 ? location.name
-                : location.address.split(', ')[0]
+                : location.address?.split(', ')[0]
               : 'Add Location'}
           </H5>
         )
       }
     >
-      <Controller
-        control={control}
-        name="location.address"
-        rules={{ required: true }}
-        render={({ field: { value, onChange } }) => (
-          <TextInput
-            style={{ height: 0, width: 0 }}
-            accessibilityLabel=""
-            accessibilityHint=""
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      />
-      {location && location.address && (
+      {location && location.longitude && location.latitude && (
         <View style={{ paddingBottom: Spacings.md }}>
           <MapView
             zoomEnabled={false}
@@ -86,7 +96,6 @@ export default function LocationComponent(props: ILocationProps) {
             <Marker
               coordinate={{
                 latitude: location.latitude,
-
                 longitude: location.longitude,
               }}
             >
@@ -96,6 +105,10 @@ export default function LocationComponent(props: ILocationProps) {
         </View>
       )}
       <LocationMapModal
+        setError={setError}
+        setLocation={setLocation}
+        location={location}
+        noteId={noteId}
         toggleModal={toggleModal}
         setExpanded={setExpanded}
         isModalVisible={isModalVisible}

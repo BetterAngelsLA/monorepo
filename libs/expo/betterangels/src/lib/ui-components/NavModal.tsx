@@ -102,12 +102,11 @@ export default function NavModal(props: INavModalProps) {
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
                   borderRadius: 8,
-                  paddingRight: Spacings.sm,
-                  paddingLeft: Spacings.xs,
+                  paddingHorizontal: 16,
                   paddingVertical: Spacings.sm,
                 }}
               >
-                <View style={{ marginRight: 20 }}>
+                <View style={{ marginRight: Spacings.sm }}>
                   <Avatar
                     imageUrl={image}
                     size="md"
@@ -143,11 +142,19 @@ export default function NavModal(props: INavModalProps) {
                   paddingVertical: Spacings.sm,
                 }}
               >
-                <SignOutIcon mr="md" color={Colors.PRIMARY_EXTRA_DARK} />
+                <View
+                  style={{
+                    marginRight: Spacings.sm,
+                    height: 40,
+                    width: 40,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SignOutIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                </View>
 
-                <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
-                  Log Out
-                </BodyText>
+                <BodyText color={Colors.PRIMARY_EXTRA_DARK}>Log Out</BodyText>
               </View>
             )}
           </Pressable>
