@@ -60,13 +60,13 @@ enum AttachmentType {
 
 input AuthInput {
   code: String!
-  codeVerifier: String!
-  redirectUri: String!
+  code_verifier: String!
+  redirect_uri: String!
 }
 
 type AuthResponse {
   code: String!
-  codeVerifier: String!
+  code_verifier: String!
 }
 
 type BedsType {

@@ -64,14 +64,14 @@ export enum AttachmentType {
 
 export type AuthInput = {
   code: Scalars['String']['input'];
-  codeVerifier: Scalars['String']['input'];
-  redirectUri: Scalars['String']['input'];
+  code_verifier: Scalars['String']['input'];
+  redirect_uri: Scalars['String']['input'];
 };
 
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   code: Scalars['String']['output'];
-  codeVerifier: Scalars['String']['output'];
+  code_verifier: Scalars['String']['output'];
 };
 
 export type BedsType = {

@@ -9,8 +9,8 @@ export const GOOGLE_AUTH_MUTATION = gql`
     googleAuth(
       input: {
         code: $code
-        codeVerifier: $codeVerifier
-        redirectUri: $redirectUri
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
       }
     )
       @rest(
@@ -20,7 +20,7 @@ export const GOOGLE_AUTH_MUTATION = gql`
         bodyKey: "input"
       ) {
       code
-      codeVerifier
+      code_verifier
     }
   }
 `;
@@ -34,8 +34,8 @@ export const IDME_AUTH_MUTATION = gql`
     idmeAuth(
       input: {
         code: $code
-        codeVerifier: $codeVerifier
-        redirectUri: $redirectUri
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
       }
     )
       @rest(
@@ -45,7 +45,7 @@ export const IDME_AUTH_MUTATION = gql`
         bodyKey: "input"
       ) {
       code
-      codeVerifier
+      code_verifier
     }
   }
 `;

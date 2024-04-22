@@ -64,14 +64,14 @@ export enum AttachmentType {
 
 export type AuthInput = {
   code: Scalars['String']['input'];
-  codeVerifier: Scalars['String']['input'];
-  redirectUri: Scalars['String']['input'];
+  code_verifier: Scalars['String']['input'];
+  redirect_uri: Scalars['String']['input'];
 };
 
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   code: Scalars['String']['output'];
-  codeVerifier: Scalars['String']['output'];
+  code_verifier: Scalars['String']['output'];
 };
 
 export type BedsType = {
@@ -847,7 +847,7 @@ export type GoogleAuthMutationVariables = Types.Exact<{
 }>;
 
 
-export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', code: string, codeVerifier: string } };
+export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
 
 export type IdmeAuthMutationVariables = Types.Exact<{
   code: Types.Scalars['String']['input'];
@@ -856,4 +856,4 @@ export type IdmeAuthMutationVariables = Types.Exact<{
 }>;
 
 
-export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', code: string, codeVerifier: string } };
+export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
