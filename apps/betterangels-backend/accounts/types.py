@@ -13,6 +13,19 @@ from .models import Client, ClientProfile, User
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 
+@strawberry.input
+class AuthInput:
+    code: str
+    code_verifier: str
+    redirect_uri: str
+
+
+@strawberry.type
+class AuthResponse:
+    code: str
+    code_verifier: str
+
+
 @filter(Client)
 class ClientFilter:
     @strawberry_django.filter_field

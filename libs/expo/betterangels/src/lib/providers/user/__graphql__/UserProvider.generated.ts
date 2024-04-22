@@ -62,6 +62,18 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuthInput = {
+  code: Scalars['String']['input'];
+  codeVerifier: Scalars['String']['input'];
+  redirectUri: Scalars['String']['input'];
+};
+
+export type AuthResponse = {
+  __typename?: 'AuthResponse';
+  code: Scalars['String']['output'];
+  codeVerifier: Scalars['String']['output'];
+};
+
 export type BedsType = {
   __typename?: 'BedsType';
   availableBeds?: Maybe<Scalars['Int']['output']>;
@@ -294,6 +306,8 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   getOrCreateAddress: GetOrCreateAddressPayload;
+  googleAuth: AuthResponse;
+  idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
@@ -383,6 +397,16 @@ export type MutationGenerateMagicLinkArgs = {
 
 export type MutationGetOrCreateAddressArgs = {
   data: AddressInput;
+};
+
+
+export type MutationGoogleAuthArgs = {
+  input: AuthInput;
+};
+
+
+export type MutationIdmeAuthArgs = {
+  input: AuthInput;
 };
 
 
