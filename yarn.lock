@@ -2979,6 +2979,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-codegen/typescript-react-apollo@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "@graphql-codegen/typescript-react-apollo@npm:4.3.0"
+  dependencies:
+    "@graphql-codegen/plugin-helpers": ^3.0.0
+    "@graphql-codegen/visitor-plugin-common": 2.13.1
+    auto-bind: ~4.0.0
+    change-case-all: 1.0.15
+    tslib: ~2.6.0
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    graphql-tag: ^2.0.0
+  checksum: 49ad7592d1447e3b613cb0080d2d378192ef5aad2ccfcced1d9e36d8025ba2e4bf273b8334f75ba3baa2f2afd34362ee6cd9f9096eb7c8f1b849a1f602822ea5
+  languageName: node
+  linkType: hard
+
 "@graphql-codegen/typescript@npm:^4.0.6":
   version: 4.0.6
   resolution: "@graphql-codegen/typescript@npm:4.0.6"
@@ -3907,6 +3923,7 @@ __metadata:
     "@graphql-codegen/cli": ^5.0.0
     "@graphql-codegen/client-preset": ^4.1.0
     "@graphql-codegen/near-operation-file-preset": ^3.0.0
+    "@graphql-codegen/typescript-react-apollo": ^4.3.0
     "@iarna/toml": ^2.2.5
     "@nx-tools/container-metadata": ^5.0.3
     "@nx-tools/nx-container": 5.1.0
