@@ -50,7 +50,7 @@ export default function MainModal(props: IMainModalProps) {
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
             paddingTop: Spacings.md,
-            paddingHorizontal: Spacings.sm,
+            paddingHorizontal: Spacings.md,
             paddingBottom: 35 + bottomOffset,
             backgroundColor: Colors.WHITE,
           }}
@@ -89,12 +89,19 @@ export default function MainModal(props: IMainModalProps) {
                       paddingVertical: Spacings.sm,
                     }}
                   >
-                    <action.Icon
-                      style={{ marginRight: Spacings.md }}
-                      color={Colors.PRIMARY_EXTRA_DARK}
-                    />
+                    <View
+                      style={{
+                        marginRight: Spacings.sm,
+                        height: 40,
+                        width: 40,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <action.Icon color={Colors.PRIMARY_EXTRA_DARK} />
+                    </View>
 
-                    <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+                    <BodyText color={Colors.PRIMARY_EXTRA_DARK}>
                       {action.title}
                     </BodyText>
                   </View>

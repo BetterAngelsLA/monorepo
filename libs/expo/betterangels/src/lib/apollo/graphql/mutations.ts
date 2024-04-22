@@ -253,3 +253,27 @@ export const DELETE_NOTE_ATTACHMENT = gql`
     }
   }
 `;
+
+export const UPDATE_NOTE_LOCATION = gql`
+  mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
+    updateNoteLocation(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteType {
+        id
+        point
+        address {
+          street
+          city
+          state
+          zipCode
+        }
+      }
+    }
+  }
+`;
