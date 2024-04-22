@@ -24,7 +24,7 @@ interface IMapProps {
   setSelected: (selected: boolean) => void;
   setAddress: (
     address:
-      | { full: string; short: string; address_components: any[] }
+      | { full: string; short: string; addressComponents: any[] }
       | undefined
   ) => void;
   setChooseDirections: (chooseDirections: boolean) => void;
@@ -83,17 +83,16 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         const googleAddress = isId
           ? data.result.formatted_address
           : data.results[0].formatted_address;
-        const address_components = isId
+        const addressComponents = isId
           ? data.result.address_components
           : data.results[0].address_components;
 
-        console.log('address components: ', address_components);
         const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
         setAddress({
           short: shortAddress,
           full: googleAddress,
-          address_components,
+          addressComponents,
         });
         setPin(true);
         setSelected(true);

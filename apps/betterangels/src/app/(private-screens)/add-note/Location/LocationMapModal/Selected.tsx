@@ -33,7 +33,7 @@ interface ISelectedProps {
     name: string | undefined;
   };
   address:
-    | { full: string; short: string; address_components: any[] }
+    | { full: string; short: string; addressComponents: any[] }
     | undefined
     | null;
   setChooseDirections: (chooseDirections: boolean) => void;
@@ -80,7 +80,7 @@ export default function Selected(props: ISelectedProps) {
             data: {
               point: [currentLocation.longitude, currentLocation.latitude],
               address: {
-                addressComponents: JSON.stringify(address.address_components),
+                addressComponents: JSON.stringify(address.addressComponents),
                 formattedAddress: address.full,
               },
               id: noteId,

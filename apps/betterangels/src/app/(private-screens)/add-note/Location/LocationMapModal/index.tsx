@@ -81,11 +81,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
-    { short: string; full: string; address_components: any[] } | undefined
+    { short: string; full: string; addressComponents: any[] } | undefined
   >({
     short: '',
     full: '',
-    address_components: [],
+    addressComponents: [],
   });
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
@@ -185,7 +185,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setAddress({
         short: place.description,
         full: place.description,
-        address_components: response.data.result.address_components,
+        addressComponents: response.data.result.address_components,
       });
       setPin(true);
       setSelected(true);
@@ -198,7 +198,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress({
       full: query,
       short: query,
-      address_components: [],
+      addressComponents: [],
     });
     setSearchQuery(query);
   };
@@ -281,7 +281,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setAddress({
         short: shortAddress,
         full: googleAddress,
-        address_components: data.results[0].address_components,
+        addressComponents: data.results[0].address_components,
       });
       setPin(true);
 
