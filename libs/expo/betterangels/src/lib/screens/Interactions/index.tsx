@@ -1,13 +1,8 @@
 import { useQuery } from '@apollo/client';
-import { SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BasicInput,
-  BodyText,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
+import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList } from 'react-native';
 import {
   GET_NOTES,
   NoteType,
@@ -15,6 +10,8 @@ import {
   NotesQueryVariables,
 } from '../../apollo';
 import { MainContainer, NoteCard } from '../../ui-components';
+import InteractionsHeader from './InteractionsHeader';
+import InteractionsSorting from './InteractionsSorting';
 
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
@@ -22,10 +19,7 @@ export default function Interactions() {
     GET_NOTES
   );
   const [notes, setNotes] = useState<Array<NoteType>>();
-
-  function onDelete() {
-    setSearch('');
-  }
+  const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
 
   useEffect(() => {
     if (!data) return;
@@ -38,29 +32,10 @@ export default function Interactions() {
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: Spacings.lg,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <BasicInput
-            placeholder="Search Clients"
-            onDelete={onDelete}
-            icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-        <TextButton
-          ml="sm"
-          title="Filter"
-          accessibilityHint={'opens interactions filter'}
-        />
-      </View>
+      <InteractionsHeader search={search} setSearch={setSearch} />
+      <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       <FlatList
+        style={{ gap: Spacings.xs }}
         data={notes}
         renderItem={({ item }) => <NoteCard note={item} />}
         keyExtractor={(item) => item.id}
