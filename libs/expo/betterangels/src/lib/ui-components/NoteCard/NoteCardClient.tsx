@@ -20,7 +20,7 @@ export default function NoteCardClient(props: INoteCardClientProps) {
         }
       />
       <BodyText size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-        {client?.firstName} {client?.lastName} test
+        {client?.firstName} {client?.lastName}
       </BodyText>
     </View>
   );
