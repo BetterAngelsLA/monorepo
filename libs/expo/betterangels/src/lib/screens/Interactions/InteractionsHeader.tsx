@@ -32,6 +32,7 @@ export default function InteractionsHeader(props: IInteractionsHeaderProps) {
         />
       </View>
       <TextButton
+        regular
         ml="sm"
         title="Filter"
         accessibilityHint={'opens interactions filter'}

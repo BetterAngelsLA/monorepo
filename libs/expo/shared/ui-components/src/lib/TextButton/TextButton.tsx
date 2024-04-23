@@ -25,6 +25,7 @@ interface ITextButtonProps {
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
+  regular?: boolean;
 }
 
 export function TextButton(props: ITextButtonProps) {
@@ -44,6 +45,7 @@ export function TextButton(props: ITextButtonProps) {
     accessibilityLabel,
     testID,
     accessibilityHint,
+    regular = false,
   } = props;
 
   return (
@@ -73,7 +75,7 @@ export function TextButton(props: ITextButtonProps) {
           styles.text,
           {
             color: disabled ? Colors.NEUTRAL_DARK : color,
-            fontFamily: 'Poppins-SemiBold',
+            fontFamily: regular ? 'Poppins-Regular' : 'Poppins-SemiBold',
             fontSize: FontSizes[fontSize].fontSize,
             lineHeight: FontSizes[fontSize].lineHeight,
           } as TextStyle,
