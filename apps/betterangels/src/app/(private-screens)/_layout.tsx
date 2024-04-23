@@ -62,6 +62,26 @@ export default function PrivateLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="interactions"
+        options={{
+          title: 'Interactions',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <BodyText color={Colors.WHITE}>Back</BodyText>
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 }
