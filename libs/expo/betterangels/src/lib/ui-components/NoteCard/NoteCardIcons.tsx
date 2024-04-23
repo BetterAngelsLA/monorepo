@@ -99,7 +99,6 @@ export default function NoteCardIcons({
 }: {
   icons: (MoodType | ServiceRequestType)[];
 }) {
-  console.log(icons.length);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {icons.slice(0, 5).map((icon) => {
