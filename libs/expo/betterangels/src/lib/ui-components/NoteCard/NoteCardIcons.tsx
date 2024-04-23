@@ -6,7 +6,6 @@ import {
   BriefcaseMedicalIcon,
   BurgerSodaIcon,
   CarIcon,
-  EyeIcon,
   FaceAnxiousSweatIcon,
   FaceCloudsIcon,
   FaceDisappointedIcon,
@@ -28,6 +27,7 @@ import {
   FaceWearyIcon,
   PawIcon,
   PeopleRoofIcon,
+  PlusIcon,
   ShirtIcon,
   ShoePrintsIcon,
   ShowerIcon,
@@ -39,12 +39,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import {
-  MoodEnum,
-  MoodType,
-  ServiceEnum,
-  ServiceRequestType,
-} from '../../apollo';
+import { MoodEnum, ServiceEnum } from '../../apollo';
 
 const ICONS = [
   { Icon: BurgerSodaIcon, title: 'Food', enum: ServiceEnum.Food },
@@ -97,18 +92,37 @@ const ICONS = [
 export default function NoteCardIcons({
   icons,
 }: {
-  icons: (MoodType | ServiceRequestType)[];
+  icons: {
+    id: string;
+    descriptor?: MoodEnum;
+    service?: ServiceEnum;
+    customService?: string | null | undefined;
+  }[];
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {icons.slice(0, 5).map((icon) => {
-        let iconEnumValue: string;
+        let iconEnumValue = '';
 
         if ('descriptor' in icon) {
-          iconEnumValue = icon.descriptor;
-        } else {
-          iconEnumValue = icon.service;
+          iconEnumValue = icon.descriptor as string;
+        } else if ('service' in icon) {
+          iconEnumValue = icon.service as string;
+        } else if ('customService' in icon) {
+          iconEnumValue = 'customService';
         }
+
+        if (iconEnumValue === 'customService') {
+          return (
+            <PlusIcon
+              mr="xs"
+              size="md"
+              color={Colors.PRIMARY_EXTRA_DARK}
+              key="plusIcon"
+            />
+          );
+        }
+
         const iconObject = ICONS.find((i) => i.enum === iconEnumValue);
 
         if (iconObject && iconObject.Icon) {
@@ -122,7 +136,7 @@ export default function NoteCardIcons({
             />
           );
         }
-        return <EyeIcon color={Colors.NEUTRAL_DARK} />;
+        return null;
       })}
       {icons.length > 5 && (
         <BodyText color={Colors.NEUTRAL_DARK} size="sm">

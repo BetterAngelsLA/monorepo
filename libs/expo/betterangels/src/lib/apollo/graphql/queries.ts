@@ -23,17 +23,6 @@ export const GET_NOTES = gql`
         state
         zipCode
       }
-      attachments {
-        id
-        file {
-          path
-          url
-          name
-          size
-        }
-        namespace
-        attachmentType
-      }
       moods {
         id
         descriptor
@@ -41,48 +30,20 @@ export const GET_NOTES = gql`
       purposes {
         id
         title
-        status
-        createdAt
-        createdBy {
-          id
-          email
-          username
-        }
       }
       nextSteps {
         id
         title
-        status
-        createdAt
-        createdBy {
-          id
-          email
-          username
-        }
       }
       providedServices {
         id
         service
         customService
-        status
-        createdAt
-        createdBy {
-          id
-          email
-          username
-        }
       }
       requestedServices {
         id
         service
         customService
-        status
-        createdAt
-        createdBy {
-          id
-          email
-          username
-        }
       }
       publicDetails
       privateDetails
@@ -98,7 +59,6 @@ export const GET_NOTES = gql`
         username
       }
       interactedAt
-      createdAt
     }
   }
 `;

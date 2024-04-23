@@ -6,10 +6,10 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { H2 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { NoteType } from '../../apollo';
+import { NotesQuery } from '../../apollo';
 
 interface IInteractionsSortingProps {
-  notes: NoteType[] | undefined;
+  notes: NotesQuery['notes'] | undefined;
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
 }

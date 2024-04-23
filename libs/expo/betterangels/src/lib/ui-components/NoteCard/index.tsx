@@ -1,13 +1,13 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
-import { NoteType } from '../../apollo';
+import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
 import NoteCardHeader from './NoteCardHeader';
 import NoteCardIcons from './NoteCardIcons';
 
 interface INoteCardProps {
-  note: NoteType;
+  note: NotesQuery['notes'][0];
 }
 
 export default function NoteCard(props: INoteCardProps) {
