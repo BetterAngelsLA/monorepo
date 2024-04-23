@@ -108,17 +108,15 @@ export default function NoteCardIcons({
           iconEnumValue = icon.descriptor as string;
         } else if ('service' in icon) {
           iconEnumValue = icon.service as string;
-        } else if ('customService' in icon) {
-          iconEnumValue = 'customService';
         }
 
-        if (iconEnumValue === 'customService') {
+        if (iconEnumValue === 'OTHER') {
           return (
             <PlusIcon
+              key={icon.id}
               mr="xs"
-              size="md"
-              color={Colors.PRIMARY_EXTRA_DARK}
-              key="plusIcon"
+              size="sm"
+              color={Colors.NEUTRAL_DARK}
             />
           );
         }
