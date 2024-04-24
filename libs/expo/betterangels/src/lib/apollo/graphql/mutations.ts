@@ -9,31 +9,6 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
   }
 `;
 
-export const CREATE_NOTE = gql`
-  mutation CreateNote($data: CreateNoteInput!) {
-    createNote(data: $data) {
-      ... on NoteType {
-        id
-        title
-        publicDetails
-        client {
-          id
-          username
-          firstName
-          lastName
-          email
-        }
-        createdAt
-        createdBy {
-          id
-          username
-          email
-        }
-      }
-    }
-  }
-`;
-
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {

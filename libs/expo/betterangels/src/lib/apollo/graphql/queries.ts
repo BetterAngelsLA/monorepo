@@ -167,4 +167,6 @@ export const IDME_AUTH_MUTATION = gql`
       ) {
       code
       code_verifier
+    }
+  }
 `;
