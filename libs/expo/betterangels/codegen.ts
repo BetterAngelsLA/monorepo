@@ -5,11 +5,14 @@ const config: CodegenConfig = {
   schema: '../../../apps/betterangels-backend/schema.graphql',
   documents: 'src/**/*.{graphql,ts,tsx}',
   generates: {
+    './src/types.ts': {
+      plugins: ['typescript'],
+    },
     './src/': {
       preset: 'near-operation-file',
       plugins: ['typescript-operations', 'typescript-react-apollo'],
       presetConfig: {
-        baseTypesPath: 'types.ts',
+        baseTypesPath: 'graphql/types.ts',
         folder: '__graphql__',
       },
     },
