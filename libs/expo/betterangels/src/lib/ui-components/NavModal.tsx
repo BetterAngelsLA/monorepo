@@ -34,7 +34,7 @@ const ACTIONS = [
   {
     title: 'Interactions',
     Icon: NoteIcon,
-    route: '#',
+    route: '/interactions',
   },
   {
     title: 'Tasks',

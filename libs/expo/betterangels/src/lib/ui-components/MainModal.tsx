@@ -1,6 +1,7 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +30,8 @@ export default function MainModal(props: IMainModalProps) {
     closeButton,
     transparent = false,
   } = props;
+
+  const router = useRouter();
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
@@ -71,6 +74,10 @@ export default function MainModal(props: IMainModalProps) {
             {topSection}
             {actions.map((action, idx: number) => (
               <Pressable
+                onPress={() => {
+                  closeModal();
+                  router.navigate(action.route);
+                }}
                 accessibilityRole="button"
                 key={idx}
                 style={styles.container}
