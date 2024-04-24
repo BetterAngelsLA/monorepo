@@ -11,7 +11,8 @@
         "command": "graphql-codegen --config codegen.ts"
       },
       "outputs": [
-        "{workspaceRoot}/libs/expo/betterangels/src/lib/apollo/gql-types/"
+        "{workspaceRoot}/libs/expo/betterangels/src/lib/apollo/graphql/",
+        "{workspaceRoot}/libs/expo/betterangels/src/lib/**/__generated/"
       ]
     },
     "lint": {
