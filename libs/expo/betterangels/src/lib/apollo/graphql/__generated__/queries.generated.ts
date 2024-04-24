@@ -3,17 +3,20 @@ import * as Types from './types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type NotesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type NotesQueryVariables = Types.Exact<{
+  filters?: Types.InputMaybe<Types.NoteFilter>;
+  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
+}>;
 
 
-export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any }> };
+export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, title: string, point?: any | null, publicDetails: string, privateDetails?: string | null, isSubmitted: boolean, interactedAt: any, address?: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, purposes: Array<{ __typename?: 'TaskType', id: string, title: string }>, nextSteps: Array<{ __typename?: 'TaskType', id: string, title: string }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, client?: { __typename?: 'UserType', id: string, email: string, username: string } | null, createdBy: { __typename?: 'UserType', id: string, email: string, username: string } }> };
 
 export type ViewNoteQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, title: string, point?: any | null, publicDetails: string, privateDetails?: string | null, isSubmitted: boolean, interactedAt: any, address?: { __typename?: 'AddressType', street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null, moods: Array<{ __typename?: 'MoodType', descriptor: Types.MoodEnum }>, purposes: Array<{ __typename?: 'TaskType', id: string, title: string }>, nextSteps: Array<{ __typename?: 'TaskType', id: string, title: string }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
+export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, title: string, point?: any | null, publicDetails: string, privateDetails?: string | null, isSubmitted: boolean, interactedAt: any, createdAt: any, address?: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', path: string, url: string, name: string, size: number } }>, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, purposes: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, createdAt: any, createdBy: { __typename?: 'UserType', id: string, email: string, username: string } }>, nextSteps: Array<{ __typename?: 'TaskType', id: string, title: string }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
 export type GoogleAuthMutationVariables = Types.Exact<{
   code: Types.Scalars['String']['input'];
@@ -24,23 +27,56 @@ export type GoogleAuthMutationVariables = Types.Exact<{
 
 export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
 
-export type IdmeAuthMutationVariables = Types.Exact<{
-  code: Types.Scalars['String']['input'];
-  codeVerifier: Types.Scalars['String']['input'];
-  redirectUri: Types.Scalars['String']['input'];
-}>;
-
-
-export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
-
 
 export const NotesDocument = gql`
-    query notes {
-  notes {
+    query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput) {
+  notes(filters: $filters, pagination: $pagination) {
     id
     title
+    point
+    address {
+      id
+      street
+      city
+      state
+      zipCode
+    }
+    moods {
+      id
+      descriptor
+    }
+    purposes {
+      id
+      title
+    }
+    nextSteps {
+      id
+      title
+    }
+    providedServices {
+      id
+      service
+      customService
+    }
+    requestedServices {
+      id
+      service
+      customService
+    }
     publicDetails
-    createdAt
+    privateDetails
+    isSubmitted
+    client {
+      id
+      email
+      username
+    }
+    createdBy {
+      id
+      email
+      username
+    }
+    interactedAt
   }
 }
     `;
@@ -57,6 +93,8 @@ export const NotesDocument = gql`
  * @example
  * const { data, loading, error } = useNotesQuery({
  *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
@@ -83,17 +121,37 @@ export const ViewNoteDocument = gql`
     title
     point
     address {
+      id
       street
       city
       state
       zipCode
     }
+    attachments {
+      id
+      file {
+        path
+        url
+        name
+        size
+      }
+      namespace
+      attachmentType
+    }
     moods {
+      id
       descriptor
     }
     purposes {
       id
       title
+      status
+      createdAt
+      createdBy {
+        id
+        email
+        username
+      }
     }
     nextSteps {
       id
@@ -119,6 +177,7 @@ export const ViewNoteDocument = gql`
       id
     }
     interactedAt
+    createdAt
   }
 }
     `;
@@ -193,41 +252,3 @@ export function useGoogleAuthMutation(baseOptions?: Apollo.MutationHookOptions<G
 export type GoogleAuthMutationHookResult = ReturnType<typeof useGoogleAuthMutation>;
 export type GoogleAuthMutationResult = Apollo.MutationResult<GoogleAuthMutation>;
 export type GoogleAuthMutationOptions = Apollo.BaseMutationOptions<GoogleAuthMutation, GoogleAuthMutationVariables>;
-export const IdmeAuthDocument = gql`
-    mutation IdmeAuth($code: String!, $codeVerifier: String!, $redirectUri: String!) {
-  idmeAuth(
-    input: {code: $code, code_verifier: $codeVerifier, redirect_uri: $redirectUri}
-  ) @rest(type: "AuthResponse", path: "/rest-auth/idme/?redirect_uri={args.input.redirectUri}", method: "POST", bodyKey: "input") {
-    code
-    code_verifier
-  }
-}
-    `;
-export type IdmeAuthMutationFn = Apollo.MutationFunction<IdmeAuthMutation, IdmeAuthMutationVariables>;
-
-/**
- * __useIdmeAuthMutation__
- *
- * To run a mutation, you first call `useIdmeAuthMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useIdmeAuthMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [idmeAuthMutation, { data, loading, error }] = useIdmeAuthMutation({
- *   variables: {
- *      code: // value for 'code'
- *      codeVerifier: // value for 'codeVerifier'
- *      redirectUri: // value for 'redirectUri'
- *   },
- * });
- */
-export function useIdmeAuthMutation(baseOptions?: Apollo.MutationHookOptions<IdmeAuthMutation, IdmeAuthMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<IdmeAuthMutation, IdmeAuthMutationVariables>(IdmeAuthDocument, options);
-      }
-export type IdmeAuthMutationHookResult = ReturnType<typeof useIdmeAuthMutation>;
-export type IdmeAuthMutationResult = Apollo.MutationResult<IdmeAuthMutation>;
-export type IdmeAuthMutationOptions = Apollo.BaseMutationOptions<IdmeAuthMutation, IdmeAuthMutationVariables>;

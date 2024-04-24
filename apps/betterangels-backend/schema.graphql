@@ -22,6 +22,8 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+directive @rest(type: String!, path: String!, method: String! = "GET", bodyKey: String = null) on FIELD_DEFINITION
+
 input AddNoteTaskInput {
   taskId: ID!
   noteId: ID!
