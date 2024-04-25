@@ -1,8 +1,8 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
-import H2 from '../H2';
+import TextMedium from '../TextMedium';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -68,19 +68,19 @@ export function FieldCard(props: IFieldCardProps) {
         <View style={[styles.header]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {expanded === title ? (
-              <H2>{title}</H2>
+              <TextMedium size="lg">{title}</TextMedium>
             ) : (
-              <BodyText size="sm">{title}</BodyText>
+              <TextRegular size="sm">{title}</TextRegular>
             )}
-            {required && <BodyText color={Colors.ERROR}>*</BodyText>}
+            {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
             {info && info}
           </View>
           {actionName}
         </View>
         {error && (
-          <BodyText mt="xs" color={Colors.ERROR}>
+          <TextRegular mt="xs" color={Colors.ERROR}>
             {error}
-          </BodyText>
+          </TextRegular>
         )}
         <View
           style={{

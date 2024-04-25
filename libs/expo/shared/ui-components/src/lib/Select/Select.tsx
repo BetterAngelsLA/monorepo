@@ -11,7 +11,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
@@ -82,9 +82,9 @@ export function Select(props: ISelectProps) {
       ]}
     >
       {label && (
-        <BodyText mb="xs" size="sm">
+        <TextRegular mb="xs" size="sm">
           {label}
-        </BodyText>
+        </TextRegular>
       )}
       <Pressable
         accessible
@@ -93,7 +93,7 @@ export function Select(props: ISelectProps) {
         onPress={handleDropdown}
       >
         <View style={styles.select} ref={buttonRef}>
-          <BodyText>{value ? value : placeholder}</BodyText>
+          <TextRegular>{value ? value : placeholder}</TextRegular>
           <View style={styles.icon}>
             <ChevronLeftIcon
               rotate={showDropdown ? '90deg' : '-90deg'}
@@ -123,7 +123,7 @@ export function Select(props: ISelectProps) {
               key={idx}
               onPress={() => handlePress(item)}
             >
-              <BodyText>{item}</BodyText>
+              <TextRegular>{item}</TextRegular>
             </TouchableOpacity>
           ))}
         </ScrollView>

@@ -1,7 +1,7 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 interface ITagProps {
   value: string;
@@ -12,7 +12,7 @@ export function Tag(props: ITagProps) {
   const { value, onRemove } = props;
   return (
     <View style={styles.container}>
-      <BodyText>{value}</BodyText>
+      <TextRegular>{value}</TextRegular>
       <Pressable
         accessible
         accessibilityRole="button"

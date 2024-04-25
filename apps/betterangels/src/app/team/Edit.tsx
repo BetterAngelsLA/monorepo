@@ -1,11 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   Button,
-  H1,
-  H4,
   Input,
   StatusBadge,
+  TextBold,
+  TextRegular,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction } from 'react';
@@ -49,7 +48,9 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
 
   return (
     <>
-      <H1 mb="md">Edit Clinical Team</H1>
+      <TextBold size="xl" mb="md">
+        Edit Clinical Team
+      </TextBold>
       <Input mb="md" label="Team Name" control={control} name="name" />
       <Textarea
         mb="md"
@@ -58,7 +59,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
         control={control}
         name="description"
       />
-      <H4 mb="xs">Invited by me</H4>
+      <TextBold mb="xs">Invited by me</TextBold>
       {INVITED_USERS.map((user, index) => (
         <View
           key={index}
@@ -70,7 +71,7 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
             },
           ]}
         >
-          <BodyText>{user.name}</BodyText>
+          <TextRegular>{user.name}</TextRegular>
           <View style={{ flexDirection: 'row' }}>
             <StatusBadge title={user.status} />
             <Button

@@ -1,10 +1,10 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 
 export default function ClientsScreen() {
   return (
     <MainScrollContainer>
-      <BodyText>Clients</BodyText>
+      <TextRegular>Clients</TextRegular>
     </MainScrollContainer>
   );
 }

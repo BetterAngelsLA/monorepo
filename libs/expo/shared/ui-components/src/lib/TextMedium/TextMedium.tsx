@@ -1,32 +1,11 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  GestureResponderEvent,
-  StyleSheet,
-  Text,
-  TextStyle,
-} from 'react-native';
+import { StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export function H5({
-  children,
-  textTransform,
-  mb,
-  mt,
-  mr,
-  ml,
-  my,
-  mx,
-  onPress,
-  textDecorationLine,
-  color = Colors.PRIMARY_EXTRA_DARK,
-  size = 'md',
-  textAlign = 'auto',
-  style,
-}: {
+interface ITextMediumProps extends TextProps {
   children: ReactNode;
-  onPress?: ((event: GestureResponderEvent) => void) | undefined;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -41,19 +20,39 @@ export function H5({
     | 'underline line-through'
     | undefined;
   color?: string;
-  size?: 'md' | 'sm' | 'xs' | 'xxs';
+  /**
+   * size:
+   * - xxs: 10 xs: 12 sm: 14 md: 16 lg: 20 xl: 24 2xl: 36
+   */
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   style?: TextStyle;
-  textAlign?: 'center' | 'auto' | 'justify' | 'right' | 'left';
-}) {
+  textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+}
+
+export function TextMedium(props: ITextMediumProps) {
+  const {
+    children,
+    textTransform,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    textDecorationLine,
+    color = Colors.PRIMARY_EXTRA_DARK,
+    size = 'md',
+    style,
+    textAlign,
+    ...rest
+  } = props;
   return (
     <Text
-      onPress={onPress}
       style={[
         styles.text,
         style,
         {
           textTransform,
-          textAlign,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -61,11 +60,14 @@ export function H5({
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
           textDecorationLine,
+
           color,
           fontSize: FontSizes[size].fontSize,
           lineHeight: FontSizes[size].lineHeight,
+          textAlign: textAlign,
         },
       ]}
+      {...rest}
     >
       {children}
     </Text>
