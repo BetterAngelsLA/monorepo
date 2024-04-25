@@ -24,7 +24,7 @@ export default function Note({ id }: { id: string }) {
         <TextButton
           color={Colors.WHITE}
           regular
-          onPress={() => router.navigate(`/add-note/${data?.note.id}`)}
+          onPress={() => router.navigate(`/add-note/${id}`)}
           title="Edit"
           accessibilityHint="takes to edit the note"
         />
@@ -34,7 +34,7 @@ export default function Note({ id }: { id: string }) {
 
   if (loading) return <BodyText>Loading</BodyText>;
 
-  if (error) throw new Error('Something went wrong. Please try again.');
+  if (error || !id) throw new Error('Something went wrong. Please try again.');
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
