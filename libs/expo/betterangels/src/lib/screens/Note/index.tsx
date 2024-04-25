@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, TextButton } from '@monorepo/expo/shared/ui-components';
+import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
 import { useNavigation, useRouter } from 'expo-router';
@@ -40,7 +40,7 @@ export default function Note({ id }: { id: string }) {
     });
   }, []);
 
-  if (loading) return <BodyText>Loading</BodyText>;
+  if (loading) return <TextRegular>Loading</TextRegular>;
 
   if (error || !id) throw new Error('Something went wrong. Please try again.');
 

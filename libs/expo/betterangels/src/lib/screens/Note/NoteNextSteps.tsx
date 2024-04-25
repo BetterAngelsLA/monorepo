@@ -1,6 +1,6 @@
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, H4 } from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ViewNoteQuery } from '../../apollo';
 
@@ -11,9 +11,9 @@ export default function NoteNextSteps({
 }) {
   return (
     <View>
-      <H4 mb="xs" size="sm">
+      <TextBold mb="xs" size="sm">
         Next Steps
-      </H4>
+      </TextBold>
       {note?.nextSteps.map((step, index) => (
         <View
           key={index}
@@ -24,9 +24,9 @@ export default function NoteNextSteps({
           }}
         >
           <SolidCircleIcon size="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-          <BodyText size="sm" ml="xs">
+          <TextRegular size="sm" ml="xs">
             {step.title}
-          </BodyText>
+          </TextRegular>
         </View>
       ))}
     </View>

@@ -1,6 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, H4 } from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ViewNoteQuery } from '../../apollo';
@@ -12,9 +12,9 @@ export default function NoteLocation({
 }) {
   return (
     <View>
-      <H4 mb="xs" size="sm">
+      <TextBold mb="xs" size="sm">
         Location
-      </H4>
+      </TextBold>
       <MapView
         zoomEnabled={false}
         scrollEnabled={false}
@@ -36,7 +36,7 @@ export default function NoteLocation({
           <LocationPinIcon size="2xl" />
         </Marker>
       </MapView>
-      <BodyText mt="xs">{note?.address?.street}</BodyText>
+      <TextRegular mt="xs">{note?.address?.street}</TextRegular>
     </View>
   );
 }

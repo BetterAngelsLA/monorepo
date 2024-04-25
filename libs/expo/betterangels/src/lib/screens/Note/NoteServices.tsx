@@ -37,7 +37,7 @@ import {
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MoodEnum, ServiceEnum, ViewNoteQuery } from '../../apollo';
 
@@ -167,16 +167,16 @@ export default function NoteServices({
     >
       {SERVICES.map((service) => (
         <View key={service.title} style={styles.services}>
-          <BodyText size="sm">{service.title}</BodyText>
+          <TextRegular size="sm">{service.title}</TextRegular>
           <View style={{ alignItems: 'center', flexDirection: 'row' }}>
             {note?.[service.field] &&
               note[service.field].length > 0 &&
               getIcons(note[service.field])}
 
             {note?.[service.field] && note[service.field].length > 4 && (
-              <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK} size="sm">
+              <TextRegular ml="xs" color={Colors.PRIMARY_EXTRA_DARK} size="sm">
                 + {note?.[service.field].length - 4}
-              </BodyText>
+              </TextRegular>
             )}
           </View>
         </View>

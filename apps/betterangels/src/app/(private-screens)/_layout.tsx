@@ -97,7 +97,7 @@ export default function PrivateLayout() {
               accessibilityHint="goes to previous screen"
               onPress={router.back}
             >
-              <BodyText color={Colors.WHITE}>Back</BodyText>
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
             </Pressable>
           ),
         }}
