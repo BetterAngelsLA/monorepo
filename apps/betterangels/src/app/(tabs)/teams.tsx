@@ -10,10 +10,9 @@ import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import { BarsIcon, BellIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
-  H1,
-  H4,
   SearchableDropdown,
+  TextBold,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -81,10 +80,12 @@ export default function TeamsScreen() {
 
   return (
     <MainScrollContainer>
-      <H1 mb="sm">Teams</H1>
-      <BodyText mb="md" size="sm">
+      <TextBold size="xl" mb="sm">
+        Teams
+      </TextBold>
+      <TextRegular mb="md" size="sm">
         Add your team names in order to build your teams.
-      </BodyText>
+      </TextRegular>
       <SearchableDropdown
         accessibilityHint="searches for a team"
         mb="lg"
@@ -93,7 +94,7 @@ export default function TeamsScreen() {
         placeholder="Enter team name"
         label="Team Name"
       />
-      <H4>Teams List</H4>
+      <TextBold>Teams List</TextBold>
 
       {teams && teams.length < 1 ? (
         <View style={{ alignItems: 'center' }}>
@@ -103,9 +104,12 @@ export default function TeamsScreen() {
             width={200}
             source={require('../assets/images/no-teams.png')}
           />
-          <H4 style={{ maxWidth: 265 }} align="center" mt="md" spacing={0.5}>
+          <TextBold
+            style={{ maxWidth: 265, textAlign: 'center', letterSpacing: 0.5 }}
+            mt="md"
+          >
             No teams have been added yet. Let’s start building your team!
-          </H4>
+          </TextBold>
         </View>
       ) : (
         teams?.map((team, idx) => (
@@ -116,7 +120,7 @@ export default function TeamsScreen() {
             style={{ padding: Spacings.sm, marginTop: Spacings.md }}
             key={idx}
           >
-            <BodyText>{team.title}</BodyText>
+            <TextRegular>{team.title}</TextRegular>
           </TouchableOpacity>
         ))
       )}

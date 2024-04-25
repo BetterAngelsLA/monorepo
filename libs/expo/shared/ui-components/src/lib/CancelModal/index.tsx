@@ -2,10 +2,10 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import { View } from 'react-native';
 import BasicModal from '../BasicModal';
-import BodyText from '../BodyText';
 import Button from '../Button';
-import H1 from '../H1';
+import TextBold from '../TextBold';
 import TextButton from '../TextButton';
+import TextRegular from '../TextRegular';
 
 export default function CancelModal({
   title,
@@ -27,8 +27,10 @@ export default function CancelModal({
         title="Cancel"
       />
       <BasicModal visible={visible} setVisible={setVisible}>
-        <H1 mb="sm">{title}</H1>
-        <BodyText mb="md">{body}</BodyText>
+        <TextBold size="xl" mb="sm">
+          {title}
+        </TextBold>
+        <TextRegular mb="md">{body}</TextRegular>
         <View
           style={{
             flexDirection: 'row',

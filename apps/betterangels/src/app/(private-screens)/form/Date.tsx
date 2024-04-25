@@ -1,8 +1,8 @@
 import {
-  BodyText,
   DatePicker,
   FieldCard,
-  H5,
+  TextMedium,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 
@@ -30,9 +30,9 @@ export default function DateComponent(props: IDateProps) {
       title="Date"
       actionName={
         !dateValue && !isDate ? (
-          <H5 size="sm">Add Date</H5>
+          <TextMedium size="sm">Add Date</TextMedium>
         ) : (
-          <BodyText>{dateValue}</BodyText>
+          <TextRegular>{dateValue}</TextRegular>
         )
       }
     >

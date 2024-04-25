@@ -1,10 +1,10 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import {
-  BodyText,
   BottomActions,
   CancelModal,
-  H2,
-  H3,
+  TextBold,
+  TextMedium,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
@@ -179,16 +179,18 @@ export default function FormScreen() {
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer pt="lg">
-          <H2 mb="sm">Patient Health Questionnaire({formType})</H2>
-          <BodyText mb="sm" size="sm">
+          <TextMedium size="lg" mb="sm">
+            Patient Health Questionnaire({formType})
+          </TextMedium>
+          <TextRegular mb="sm" size="sm">
             Please fill the information below and start answering 10 questions.
             It will give the score at the end. (Takes about 2-3 min){' '}
-          </BodyText>
+          </TextRegular>
           <HmisId {...props} />
           <DateComponent {...props} />
-          <H3 ml="xs" mt="lg" mb="sm">
+          <TextBold ml="xs" mt="lg" mb="sm">
             Questions
-          </H3>
+          </TextBold>
           {QUESTIONS[mood].questions.map(
             (question: { field: string; title: string }, index: number) => (
               <Question

@@ -2,9 +2,9 @@ import { LocationDotIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
-import BodyText from '../BodyText';
-import H4 from '../H4';
 import IconButton from '../IconButton';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -43,7 +43,7 @@ export function NoteCard(props: INoteCardProps) {
           mb="xs"
           size="lg"
         />
-        <H4>{title}</H4>
+        <TextBold>{title}</TextBold>
         <View
           style={{
             flexDirection: 'row',
@@ -52,7 +52,7 @@ export function NoteCard(props: INoteCardProps) {
           }}
         >
           <LocationDotIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-          <BodyText size="sm">update {title}</BodyText>
+          <TextRegular size="sm">update {title}</TextRegular>
         </View>
         <IconButton
           accessibilityHint={`goes to edit ${title} note`}

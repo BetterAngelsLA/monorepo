@@ -1,6 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
+import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -67,15 +67,15 @@ export default function LocationComponent(props: ILocationProps) {
       title="Location "
       actionName={
         (!location || (location && !location.address)) && !isLocation ? (
-          <H5 size="sm">Add Location</H5>
+          <TextMedium size="sm">Add Location</TextMedium>
         ) : (
-          <H5 size="sm">
+          <TextMedium size="sm">
             {location && location.latitude
               ? location?.name
                 ? location.name
                 : location.address?.split(', ')[0]
               : 'Add Location'}
-          </H5>
+          </TextMedium>
         )
       }
     >

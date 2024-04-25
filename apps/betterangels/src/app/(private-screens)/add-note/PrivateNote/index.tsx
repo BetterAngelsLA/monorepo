@@ -1,7 +1,7 @@
 import {
-  BodyText,
   FieldCard,
-  H5,
+  TextMedium,
+  TextRegular,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
@@ -26,14 +26,14 @@ export default function PrivateNote(props: IPrivateNoteProps) {
       title="Private Note (Optional)"
       actionName={
         !privateNote && !isPrivateNote ? (
-          <H5 size="sm">Add private note</H5>
+          <TextMedium size="sm">Add private note</TextMedium>
         ) : null
       }
     >
       {isPrivateNote ? (
         <Textarea mb="md" name="privateNote" control={control} />
       ) : (
-        privateNote && <BodyText mb="md">{privateNote}</BodyText>
+        privateNote && <TextRegular mb="md">{privateNote}</TextRegular>
       )}
     </FieldCard>
   );

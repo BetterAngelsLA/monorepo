@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
 import NoteCardHeader from './NoteCardHeader';
@@ -12,17 +13,22 @@ interface INoteCardProps {
 
 export default function NoteCard(props: INoteCardProps) {
   const { note } = props;
+  const router = useRouter();
   return (
-    <View style={styles.container}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.navigate(`/note/${note.id}`)}
+      style={styles.container}
+    >
       <NoteCardHeader
         isSubmitted={note.isSubmitted}
         title={note.title}
         interactedAt={note.interactedAt}
       />
       <NoteCardClient client={note.client} />
-      <BodyText numberOfLines={2} ellipsizeMode="tail" size="sm">
+      <TextRegular numberOfLines={2} ellipsizeMode="tail" size="sm">
         What Text should be here
-      </BodyText>
+      </TextRegular>
       {(note.moods.length > 0 ||
         note.providedServices.length > 0 ||
         note.requestedServices.length > 0) && (
@@ -34,7 +40,7 @@ export default function NoteCard(props: INoteCardProps) {
           ]}
         />
       )}
-    </View>
+    </Pressable>
   );
 }
 

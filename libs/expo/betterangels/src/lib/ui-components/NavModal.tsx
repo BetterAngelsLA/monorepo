@@ -9,7 +9,7 @@ import {
   UsersIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, BodyText } from '@monorepo/expo/shared/ui-components';
+import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSignOut } from '../hooks';
@@ -117,7 +117,9 @@ export default function NavModal(props: INavModalProps) {
                   />
                 </View>
 
-                <BodyText color={Colors.PRIMARY_EXTRA_DARK}>Profile</BodyText>
+                <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
+                  Profile
+                </TextRegular>
               </View>
             )}
           </Pressable>
@@ -154,7 +156,9 @@ export default function NavModal(props: INavModalProps) {
                   <SignOutIcon color={Colors.PRIMARY_EXTRA_DARK} />
                 </View>
 
-                <BodyText color={Colors.PRIMARY_EXTRA_DARK}>Log Out</BodyText>
+                <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
+                  Log Out
+                </TextRegular>
               </View>
             )}
           </Pressable>
