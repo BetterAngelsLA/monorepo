@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, H3 } from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Pressable, View } from 'react-native';
 import openMap from 'react-native-open-maps';
 
@@ -63,7 +63,7 @@ export default function Directions(props: IDirectionsProps) {
           accessibilityRole="button"
           accessibilityHint="opens apple maps"
         >
-          <BodyText color={Colors.PRIMARY}>Apple Maps</BodyText>
+          <TextRegular color={Colors.PRIMARY}>Apple Maps</TextRegular>
         </Pressable>
         <Pressable
           onPress={() => {
@@ -83,7 +83,7 @@ export default function Directions(props: IDirectionsProps) {
           accessibilityRole="button"
           accessibilityHint="opens google maps"
         >
-          <BodyText color={Colors.PRIMARY}>Google Maps</BodyText>
+          <TextRegular color={Colors.PRIMARY}>Google Maps</TextRegular>
         </Pressable>
       </View>
       <Pressable
@@ -108,7 +108,7 @@ export default function Directions(props: IDirectionsProps) {
           setSelected(true);
         }}
       >
-        <H3 color={Colors.PRIMARY}>Cancel</H3>
+        <TextBold color={Colors.PRIMARY}>Cancel</TextBold>
       </Pressable>
     </View>
   );

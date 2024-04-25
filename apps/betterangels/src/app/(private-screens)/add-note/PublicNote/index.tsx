@@ -1,7 +1,7 @@
 import {
-  BodyText,
   FieldCard,
-  H5,
+  TextMedium,
+  TextRegular,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
@@ -32,7 +32,7 @@ export default function PublicNote(props: IPublicNoteProps) {
       info={<InfoModal />}
       actionName={
         isEmptyOrTemplate && !isPublicNote ? (
-          <H5 size="sm">Add HMIS note</H5>
+          <TextMedium size="sm">Add HMIS note</TextMedium>
         ) : null
       }
     >
@@ -45,7 +45,7 @@ export default function PublicNote(props: IPublicNoteProps) {
           control={control}
         />
       ) : (
-        !isEmptyOrTemplate && <BodyText mb="md">{hmisNote}</BodyText>
+        !isEmptyOrTemplate && <TextRegular mb="md">{hmisNote}</TextRegular>
       )}
     </FieldCard>
   );

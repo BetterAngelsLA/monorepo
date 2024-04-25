@@ -67,8 +67,7 @@ input AuthInput {
 }
 
 type AuthResponse {
-  code: String!
-  code_verifier: String!
+  status_code: String!
 }
 
 type BedsType {

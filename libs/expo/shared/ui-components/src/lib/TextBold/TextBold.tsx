@@ -4,7 +4,7 @@ import { StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IBodyTextProps extends TextProps {
+interface ITextBoldProps extends TextProps {
   children: ReactNode;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
   mb?: TSpacing;
@@ -20,11 +20,16 @@ interface IBodyTextProps extends TextProps {
     | 'underline line-through'
     | undefined;
   color?: string;
-  size?: 'md' | 'sm' | 'xs' | 'xxs';
+  /**
+   * size:
+   * - xxs: 10 xs: 12 sm: 14 md: 16 lg: 20 xl: 24 2xl: 36
+   */
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   style?: TextStyle;
+  textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
 }
 
-export function BodyText(props: IBodyTextProps) {
+export function TextBold(props: ITextBoldProps) {
   const {
     children,
     textTransform,
@@ -38,6 +43,7 @@ export function BodyText(props: IBodyTextProps) {
     color = Colors.PRIMARY_EXTRA_DARK,
     size = 'md',
     style,
+    textAlign,
     ...rest
   } = props;
   return (
@@ -58,6 +64,7 @@ export function BodyText(props: IBodyTextProps) {
           color,
           fontSize: FontSizes[size].fontSize,
           lineHeight: FontSizes[size].lineHeight,
+          textAlign,
         },
       ]}
       {...rest}
@@ -69,6 +76,6 @@ export function BodyText(props: IBodyTextProps) {
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-SemiBold',
   },
 });

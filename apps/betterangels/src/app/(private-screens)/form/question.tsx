@@ -1,8 +1,8 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   FieldCard,
   Radio,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
@@ -66,7 +66,7 @@ export default function Question(props: IQuestionProps) {
         </View>
       )}
       {!isQuestion && question?.label && (
-        <BodyText mb="md">{question.label}</BodyText>
+        <TextRegular mb="md">{question.label}</TextRegular>
       )}
     </FieldCard>
   );

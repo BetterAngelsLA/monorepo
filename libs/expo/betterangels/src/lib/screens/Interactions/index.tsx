@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { NotesQuery, useNotesQuery } from '../../apollo';
@@ -19,7 +19,7 @@ export default function Interactions() {
     setNotes(data.notes);
   }, [data]);
 
-  if (loading) return <BodyText>Loading</BodyText>;
+  if (loading) return <TextRegular>Loading</TextRegular>;
 
   if (error) throw new Error('Something went wrong!');
 

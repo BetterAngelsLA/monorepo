@@ -13,7 +13,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 const MIN_FITABLE_HEIGHT = 300;
 const DROPDOWN_MAX_HEIGHT = 150;
@@ -105,9 +105,9 @@ export function SearchableDropdown({
         marginVertical: my && Spacings[my],
       }}
     >
-      <BodyText mb="xs" size="sm">
+      <TextRegular mb="xs" size="sm">
         {label}
-      </BodyText>
+      </TextRegular>
       <View style={styles.textInput}>
         <TextInput
           accessible
@@ -164,7 +164,7 @@ export function SearchableDropdown({
               key={idx}
               onPress={() => handlePress(item)}
             >
-              <BodyText>{item}</BodyText>
+              <TextRegular>{item}</TextRegular>
             </TouchableOpacity>
           ))}
           {extraTitle && (
@@ -181,7 +181,7 @@ export function SearchableDropdown({
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-                <BodyText ml="xs">{extraTitle}</BodyText>
+                <TextRegular ml="xs">{extraTitle}</TextRegular>
               </View>
             </TouchableOpacity>
           )}

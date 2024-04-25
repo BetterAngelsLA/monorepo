@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { EventCard, H2 } from '@monorepo/expo/shared/ui-components';
+import { EventCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { ScrollView } from 'react-native';
 
 const EVENTS: { tasks: string[]; type: 'event' | 'task' }[] = [
@@ -27,7 +27,9 @@ const EVENTS: { tasks: string[]; type: 'event' | 'task' }[] = [
 export default function Events() {
   return (
     <>
-      <H2 mb="sm">Today</H2>
+      <TextMedium size="lg" mb="sm">
+        Today
+      </TextMedium>
       <ScrollView style={{ paddingBottom: Spacings.lg }} horizontal>
         {EVENTS.map((event, idx) => (
           <EventCard mr="xs" key={idx} type={event.type} tasks={event.tasks} />

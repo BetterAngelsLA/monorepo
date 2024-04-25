@@ -24,8 +24,7 @@ class AuthInput:
 # The code and code verifier is passed in
 @strawberry.type
 class AuthResponse:
-    code: str = strawberry.field(name="code")
-    code_verifier: str = strawberry.field(name="code_verifier")
+    status_code: str = strawberry.field(name="status_code")
 
 
 @filter(Client)

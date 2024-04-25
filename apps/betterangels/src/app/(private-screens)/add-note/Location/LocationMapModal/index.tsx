@@ -8,8 +8,8 @@ import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  BodyText,
   IconButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
@@ -408,11 +408,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                   accessibilityRole="button"
                   onPress={() => onSuggestionsSelect(item)}
                 >
-                  <BodyText>{item.description.split(', ')[0]}</BodyText>
-                  <BodyText color={Colors.NEUTRAL_DARK} size="xxs">
+                  <TextRegular>{item.description.split(', ')[0]}</TextRegular>
+                  <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
                     {item.description.split(', ')[1]},{' '}
                     {item.description.split(', ')[2]}
-                  </BodyText>
+                  </TextRegular>
                 </TouchableOpacity>
               )}
             />

@@ -2,7 +2,7 @@ import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, IconButton } from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
 import { Link, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -77,7 +77,9 @@ function RootLayoutNav() {
                     }}
                   >
                     <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                    <BodyText color={Colors.PRIMARY_LIGHT}>Teams</BodyText>
+                    <TextRegular color={Colors.PRIMARY_LIGHT}>
+                      Teams
+                    </TextRegular>
                   </View>
                 </Link>
               ),

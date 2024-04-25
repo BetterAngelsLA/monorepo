@@ -1,61 +1,58 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  GestureResponderEvent,
-  StyleSheet,
-  Text,
-  TextStyle,
-} from 'react-native';
+import { StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export function H4({
-  children,
-  textTransform,
-  mb,
-  mt,
-  mr,
-  ml,
-  my,
-  mx,
-  color = Colors.PRIMARY_EXTRA_DARK,
-  align,
-  spacing,
-  style,
-  textDecorationLine,
-  onPress,
-  size = 'md',
-}: {
+interface ITextRegularProps extends TextProps {
   children: ReactNode;
-  onPress?: ((event: GestureResponderEvent) => void) | undefined;
   textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase' | undefined;
-  textDecorationLine?:
-    | 'none'
-    | 'underline'
-    | 'line-through'
-    | 'underline line-through'
-    | undefined;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  color?: '#052B73' | '#FFF82E' | '#9CDCED' | '#216AF8';
-  align?: 'auto' | 'center' | 'left' | 'right' | 'justify';
-  spacing?: number;
+  textDecorationLine?:
+    | 'none'
+    | 'underline'
+    | 'line-through'
+    | 'underline line-through'
+    | undefined;
+  color?: string;
+  /**
+   * size:
+   * - xxs: 10 xs: 12 sm: 14 md: 16 lg: 20 xl: 24 2xl: 36
+   */
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   style?: TextStyle;
-  size?: 'md' | 'sm' | 'xs' | 'xxs';
-}) {
+  textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+}
+
+export function TextRegular(props: ITextRegularProps) {
+  const {
+    children,
+    textTransform,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    textDecorationLine,
+    color = Colors.PRIMARY_EXTRA_DARK,
+    size = 'md',
+    style,
+    textAlign,
+    ...rest
+  } = props;
   return (
     <Text
-      onPress={onPress}
       style={[
         styles.text,
         style,
         {
           textTransform,
-          textAlign: align,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -63,12 +60,14 @@ export function H4({
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
           textDecorationLine,
+
           color,
-          letterSpacing: spacing,
           fontSize: FontSizes[size].fontSize,
           lineHeight: FontSizes[size].lineHeight,
+          textAlign,
         },
       ]}
+      {...rest}
     >
       {children}
     </Text>
@@ -77,6 +76,6 @@ export function H4({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Poppins-Regular',
   },
 });

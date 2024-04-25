@@ -25,7 +25,7 @@ export type GoogleAuthMutationVariables = Types.Exact<{
 }>;
 
 
-export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
+export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', status_code: string } };
 
 export type IdmeAuthMutationVariables = Types.Exact<{
   code: Types.Scalars['String']['input'];
@@ -34,7 +34,7 @@ export type IdmeAuthMutationVariables = Types.Exact<{
 }>;
 
 
-export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', code: string, code_verifier: string } };
+export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', status_code: string } };
 
 
 export const NotesDocument = gql`
@@ -227,9 +227,8 @@ export const GoogleAuthDocument = gql`
     mutation GoogleAuth($code: String!, $codeVerifier: String!, $redirectUri: String!) {
   googleAuth(
     input: {code: $code, code_verifier: $codeVerifier, redirect_uri: $redirectUri}
-  ) @rest(type: "AuthResponse", path: "/rest-auth/google/?redirect_uri={args.input.redirectUri}", method: "POST", bodyKey: "input") {
-    code
-    code_verifier
+  ) @rest(type: "AuthResponse", path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}", method: "POST", bodyKey: "input") {
+    status_code
   }
 }
     `;
@@ -265,9 +264,8 @@ export const IdmeAuthDocument = gql`
     mutation IdmeAuth($code: String!, $codeVerifier: String!, $redirectUri: String!) {
   idmeAuth(
     input: {code: $code, code_verifier: $codeVerifier, redirect_uri: $redirectUri}
-  ) @rest(type: "AuthResponse", path: "/rest-auth/idme/?redirect_uri={args.input.redirectUri}", method: "POST", bodyKey: "input") {
-    code
-    code_verifier
+  ) @rest(type: "AuthResponse", path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}", method: "POST", bodyKey: "input") {
+    status_code
   }
 }
     `;

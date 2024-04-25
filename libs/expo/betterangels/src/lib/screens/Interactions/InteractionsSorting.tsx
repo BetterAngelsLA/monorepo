@@ -4,7 +4,7 @@ import {
   SolidSortIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { H2 } from '@monorepo/expo/shared/ui-components';
+import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../apollo';
 
@@ -30,10 +30,10 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         justifyContent: 'space-between',
       }}
     >
-      <H2>
+      <TextMedium size="lg">
         {notes?.length} interaction
         {notes?.length && notes.length > 1 ? 's' : ''}
-      </H2>
+      </TextMedium>
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
         <Pressable
           onPress={() => onSort('list')}
