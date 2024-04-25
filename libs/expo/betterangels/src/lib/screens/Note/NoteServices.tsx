@@ -166,7 +166,7 @@ export default function NoteServices({
       }}
     >
       {SERVICES.map((service) => (
-        <View style={styles.services}>
+        <View key={service.title} style={styles.services}>
           <BodyText size="sm">{service.title}</BodyText>
           <View style={{ alignItems: 'center', flexDirection: 'row' }}>
             {note?.[service.field] &&
