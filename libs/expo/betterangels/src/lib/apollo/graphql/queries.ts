@@ -70,6 +70,10 @@ export const GET_NOTE = gql`
         id
         namespace
         attachmentType
+        file {
+          url
+          name
+        }
       }
       moods {
         id
