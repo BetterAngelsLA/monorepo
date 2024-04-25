@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NoteNamespaceEnum } from '../../apollo/gql-types';
+import { NoteNamespaceEnum } from '../../apollo/graphql/__generated__/types';
 import ImageComponent from './ImageComponent';
 
 interface IAttachmentsProps {

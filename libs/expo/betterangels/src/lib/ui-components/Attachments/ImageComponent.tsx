@@ -3,11 +3,11 @@ import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { Image, View } from 'react-native';
+import { DELETE_NOTE_ATTACHMENT } from '../../apollo';
 import {
-  DELETE_NOTE_ATTACHMENT,
   DeleteNoteAttachmentMutation,
   DeleteNoteAttachmentMutationVariables,
-} from '../../apollo';
+} from '../../apollo/graphql/__generated__/mutations.generated';
 
 interface IImageComponentProps {
   width: number;
