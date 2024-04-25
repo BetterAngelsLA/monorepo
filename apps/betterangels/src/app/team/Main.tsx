@@ -1,9 +1,8 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
-  H1,
-  H4,
   StatusBadge,
+  TextBold,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -38,23 +37,23 @@ export default function TeamMainScreen(props: ITeamMainScreenProps) {
   return (
     <>
       <View style={styles.headerContainer}>
-        <H1>Clinical Team</H1>
-        <BodyText
+        <TextBold size="xl">Clinical Team</TextBold>
+        <TextRegular
           onPress={() => setFlow('2')}
           color={Colors.PRIMARY_LIGHT}
           textDecorationLine="underline"
         >
           Edit
-        </BodyText>
+        </TextRegular>
       </View>
-      <H4 mb="sm">Description</H4>
-      <BodyText mb="md">
+      <TextBold mb="sm">Description</TextBold>
+      <TextRegular mb="md">
         We provide supervision and review of clinical documentation, including
         progress notes, treatment plans, assessments, and any other clinical
         documentation as it arises in the client record in adherence to Medi-Cal
         and DMH requirements.
-      </BodyText>
-      <H4 mb="xs">Invited by me</H4>
+      </TextRegular>
+      <TextBold mb="xs">Invited by me</TextBold>
       {INVITED_USERS.map((user, index) => (
         <View
           key={index}
@@ -66,7 +65,7 @@ export default function TeamMainScreen(props: ITeamMainScreenProps) {
             },
           ]}
         >
-          <BodyText>{user.name}</BodyText>
+          <TextRegular>{user.name}</TextRegular>
           <StatusBadge title={user.status} />
         </View>
       ))}

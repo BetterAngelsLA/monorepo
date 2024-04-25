@@ -7,11 +7,11 @@ import {
 import { TargetIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   Button,
   Copy,
-  H3,
+  TextBold,
   TextButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
@@ -106,9 +106,9 @@ export default function Selected(props: ISelectedProps) {
         borderTopRightRadius: 20,
       }}
     >
-      <H3 mx="md">
+      <TextBold mx="md">
         {currentLocation?.name ? currentLocation?.name : address?.short}
-      </H3>
+      </TextBold>
       <View
         style={{
           position: 'relative',
@@ -125,7 +125,7 @@ export default function Selected(props: ISelectedProps) {
           accessibilityHint="long press to copy address"
           onLongPress={() => setCopy('address')}
         >
-          <BodyText mx="md">{address?.full}</BodyText>
+          <TextRegular mx="md">{address?.full}</TextRegular>
         </Pressable>
       </View>
       <TextButton
@@ -177,10 +177,10 @@ export default function Selected(props: ISelectedProps) {
             accessibilityHint="long press to copy coordinates"
             onLongPress={() => setCopy('geo')}
           >
-            <H3 style={{ flex: 1 }}>
+            <TextBold style={{ flex: 1 }}>
               {currentLocation.latitude.toFixed(7)}{' '}
               {currentLocation.longitude.toFixed(7)}
-            </H3>
+            </TextBold>
           </Pressable>
         </View>
       </View>

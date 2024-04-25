@@ -16,7 +16,7 @@ import {
 } from 'expo-camera/next';
 import { useRef, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
-import H5 from '../H5';
+import TextMedium from '../TextMedium';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 interface ICameraPickerProps {
@@ -177,9 +177,14 @@ export default function CameraPicker(props: ICameraPickerProps) {
             paddingHorizontal: Spacings.md,
           }}
         >
-          <H5 textAlign="center" mb="md" size="sm" color={Colors.WARNING}>
+          <TextMedium
+            textAlign="center"
+            mb="md"
+            size="sm"
+            color={Colors.WARNING}
+          >
             PHOTO
-          </H5>
+          </TextMedium>
           <View
             style={{
               flexDirection: 'row',

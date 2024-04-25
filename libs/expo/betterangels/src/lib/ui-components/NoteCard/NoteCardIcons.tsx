@@ -37,7 +37,7 @@ import {
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { MoodEnum, ServiceEnum } from '../../apollo';
 
@@ -137,9 +137,9 @@ export default function NoteCardIcons({
         return null;
       })}
       {icons.length > 5 && (
-        <BodyText color={Colors.NEUTRAL_DARK} size="sm">
+        <TextRegular color={Colors.NEUTRAL_DARK} size="sm">
           + {icons.length - 5}
-        </BodyText>
+        </TextRegular>
       )}
     </View>
   );

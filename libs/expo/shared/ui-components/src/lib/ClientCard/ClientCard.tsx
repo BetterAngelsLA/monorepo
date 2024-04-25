@@ -13,9 +13,9 @@ import {
   View,
 } from 'react-native';
 import Avatar from '../Avatar';
-import BodyText from '../BodyText';
-import H4 from '../H4';
 import IconButton from '../IconButton';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 import { useState } from 'react';
 
@@ -81,16 +81,16 @@ export function ClientCard(props: IClientCardProps) {
           mr="sm"
         />
         <View style={{ gap: Spacings.xs, flex: 2 }}>
-          <H4 size="sm">
+          <TextBold size="sm">
             {firstName} {lastName}
-          </H4>
+          </TextBold>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <BodyText size="xs"> 24 Days</BodyText>
+            <TextRegular size="xs"> 24 Days</TextRegular>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <BodyText size="xs"> {address}</BodyText>
+            <TextRegular size="xs"> {address}</TextRegular>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
@@ -130,7 +130,7 @@ export function ClientCard(props: IClientCardProps) {
                       },
                     ]}
                   >
-                    <H4 size="sm">Edit Profile</H4>
+                    <TextBold size="sm">Edit Profile</TextBold>
                   </View>
                 )}
               </Pressable>
@@ -149,7 +149,7 @@ export function ClientCard(props: IClientCardProps) {
                       },
                     ]}
                   >
-                    <H4 size="sm">Add Note</H4>
+                    <TextBold size="sm">Add Note</TextBold>
                   </View>
                 )}
               </Pressable>

@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import * as Clipboard from 'expo-clipboard';
 import { Pressable, StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 const Copy = ({
   textToCopy,
@@ -22,7 +22,7 @@ const Copy = ({
         style={styles.bubble}
         onPress={copyToClipboard}
       >
-        <BodyText size="xs">Copy</BodyText>
+        <TextRegular size="xs">Copy</TextRegular>
       </Pressable>
       <View style={styles.triangle} />
     </View>
