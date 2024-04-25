@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { H4 } from '@monorepo/expo/shared/ui-components';
+import { BodyText, H4 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ViewNoteQuery } from '../../apollo';
 
@@ -20,7 +20,7 @@ export default function NotePublicNote({
           borderRadius: 4,
         }}
       >
-        {note?.publicDetails}
+        <BodyText>{note?.publicDetails}</BodyText>
       </View>
     </View>
   );
