@@ -22,6 +22,8 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+directive @rest(type: String!, path: String!, method: String! = "GET", bodyKey: String = null) on FIELD_DEFINITION
+
 input AddNoteTaskInput {
   taskId: ID!
   noteId: ID!
@@ -56,6 +58,17 @@ enum AttachmentType {
   AUDIO
   VIDEO
   UNKNOWN
+}
+
+input AuthInput {
+  code: String!
+  code_verifier: String!
+  redirect_uri: String!
+}
+
+type AuthResponse {
+  code: String!
+  code_verifier: String!
 }
 
 type BedsType {
@@ -273,6 +286,8 @@ type MoodType {
 
 type Mutation {
   logout: Boolean!
+  idmeAuth(input: AuthInput!): AuthResponse!
+  googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
