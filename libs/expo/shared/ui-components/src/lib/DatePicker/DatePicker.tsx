@@ -47,7 +47,7 @@ interface IDatePickerProps {
   maxDate?: Date;
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
   onSave: (e: string) => void;
-  initialDate: Date;
+  initialDate?: Date;
 }
 
 export function DatePicker(props: IDatePickerProps) {
