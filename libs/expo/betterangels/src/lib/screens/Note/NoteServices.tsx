@@ -108,7 +108,12 @@ const getIcons = (
 
     if (iconEnumValue === 'OTHER') {
       return (
-        <PlusIcon key={icon.id} ml="xs" size="sm" color={Colors.NEUTRAL_DARK} />
+        <PlusIcon
+          key={icon.id}
+          ml="xs"
+          size="sm"
+          color={Colors.PRIMARY_EXTRA_DARK}
+        />
       );
     }
 
@@ -119,7 +124,7 @@ const getIcons = (
       return (
         <IconComponent
           size="sm"
-          color={Colors.NEUTRAL_DARK}
+          color={Colors.PRIMARY_EXTRA_DARK}
           key={icon.id}
           ml="xs"
         />
