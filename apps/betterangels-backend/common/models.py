@@ -146,7 +146,9 @@ class Address(BaseModel):
         }
 
         components = json.loads(address_components)
+        from IPython import embed
 
+        embed()
         structured_address = {
             field: next((component.get(name_type) for component in components if field in component["types"]), None)
             for field, name_type in address_fields.items()
@@ -155,7 +157,7 @@ class Address(BaseModel):
         return structured_address
 
     @classmethod
-    def get_or_create_address(cls, address_data: Dict[str, Any]) -> Tuple["Address", Optional[str]]:
+    def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
         """Gets or creates an address and returns the address and point of interest."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
@@ -173,7 +175,21 @@ class Address(BaseModel):
             formatted_address=address_data["formatted_address"],
         )
 
-        return address, structured_address.get("point_of_interest")
+        return address
+
+        # @classmethod
+        # def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
+        #     """Returns the point of interest from the address data."""
+        #     # structured_address = cls.convert_to_structured_address(address_data["address_components"])
+        #     components = json.loads(address_components)
+        #     return structured_address.get("point_of_interest")
+        # point_of_interest = {
+        #     next(
+        #         (component.get("long_name") for component in components if "point_of_interest" in component["types"]),
+        #         None,
+        #     )
+        #     for component in components
+        # }
 
 
 class Location(BaseModel):
