@@ -27,7 +27,11 @@ import {
   PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { ComponentType, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
@@ -277,7 +281,7 @@ export default function Mood(props: IMoodProps) {
             )}
           </View>
         ) : (
-          <H5 size="sm">Add Mood</H5>
+          <TextMedium size="sm">Add Mood</TextMedium>
         )
       }
       title="Mood"
@@ -304,9 +308,9 @@ export default function Mood(props: IMoodProps) {
                 },
               ]}
             >
-              <BodyText size="xs">
+              <TextRegular size="xs">
                 {tabName.charAt(0).toUpperCase() + tabName.slice(1)}
-              </BodyText>
+              </TextRegular>
             </Pressable>
           ))}
         </View>

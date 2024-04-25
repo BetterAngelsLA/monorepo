@@ -1,5 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Avatar, BodyText } from '@monorepo/expo/shared/ui-components';
+import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
 
@@ -19,9 +19,9 @@ export default function NoteCardClient(props: INoteCardClientProps) {
           `${client?.email} client's avatar` || `client's avatar`
         }
       />
-      <BodyText size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
+      <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
         {client?.firstName} {client?.lastName}
-      </BodyText>
+      </TextRegular>
     </View>
   );
 }

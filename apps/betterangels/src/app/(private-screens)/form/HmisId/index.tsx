@@ -1,8 +1,8 @@
 import {
-  BodyText,
   FieldCard,
-  H5,
+  TextMedium,
   Input,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 
@@ -26,9 +26,9 @@ export default function HmisId(props: IHmisIdProps) {
       title="HMIS ID#"
       actionName={
         !hmisId && !isHmisId ? (
-          <H5 size="sm">Add ID#</H5>
+          <TextMedium size="sm">Add ID#</TextMedium>
         ) : (
-          <BodyText>{hmisId}</BodyText>
+          <TextRegular>{hmisId}</TextRegular>
         )
       }
     >

@@ -7,7 +7,11 @@ import {
 } from '@monorepo/expo/betterangels';
 import { IdMeIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
+import {
+  Button,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
@@ -182,21 +186,21 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
-        <H4 textTransform="uppercase" mb="xs" color={Colors.BRAND_YELLOW}>
+        <TextBold textTransform="uppercase" mb="xs" color={Colors.BRAND_YELLOW}>
           {FLOW[flow].welcome}
-        </H4>
-        <H1
+        </TextBold>
+        <TextBold
           mb="xl"
           color={Colors.BRAND_ANGEL_BLUE}
           size="2xl"
           textTransform="uppercase"
         >
           {FLOW[flow].title}
-        </H1>
+        </TextBold>
         {FLOW[flow].message && (
-          <BodyText mb="md" color={Colors.WHITE}>
+          <TextRegular mb="md" color={Colors.WHITE}>
             {FLOW[flow].message}
-          </BodyText>
+          </TextRegular>
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
           <Button
@@ -225,15 +229,15 @@ export default function SignIn() {
           {magicLinkData && <Text>Magic Link Generated Successfully</Text>}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <BodyText color={Colors.WHITE}>{FLOW[flow].question}</BodyText>
-          <H4
+          <TextRegular color={Colors.WHITE}>{FLOW[flow].question}</TextRegular>
+          <TextBold
             textDecorationLine="underline"
             onPress={() => setFlow(flow === 'sign-in' ? 'sign-up' : 'sign-in')}
             color={Colors.BRAND_SKY_BLUE}
           >
             {' '}
             {FLOW[flow].link}
-          </H4>
+          </TextBold>
         </View>
       </View>
     </AuthContainer>

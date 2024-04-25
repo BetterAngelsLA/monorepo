@@ -1,6 +1,10 @@
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import NextStepInput from './NextStepInput';
@@ -47,7 +51,11 @@ export default function NextStep(props: INextStepProps) {
       }}
       title="Next Step"
       actionName={
-        hasValidActions || isNextStep ? '' : <H5 size="sm">Add Plan</H5>
+        hasValidActions || isNextStep ? (
+          ''
+        ) : (
+          <TextMedium size="sm">Add Plan</TextMedium>
+        )
       }
     >
       <View
@@ -67,8 +75,8 @@ export default function NextStep(props: INextStepProps) {
             nextSteps={nextSteps}
           />
         ))}
-        <H5
-          textAlign="right"
+        <TextMedium
+          style={{ textAlign: 'right' }}
           color={Colors.PRIMARY}
           onPress={() =>
             setNextSteps([...nextSteps, { action: '', date: '', time: '' }])
@@ -76,7 +84,7 @@ export default function NextStep(props: INextStepProps) {
           size="sm"
         >
           Add another plan
-        </H5>
+        </TextMedium>
       </View>
 
       {hasValidActions && (
@@ -98,7 +106,9 @@ export default function NextStep(props: INextStepProps) {
                 }}
               >
                 <SolidCircleIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-                <BodyText ml="xs">{action.action + ' ' + action.date}</BodyText>
+                <TextRegular ml="xs">
+                  {action.action + ' ' + action.date}
+                </TextRegular>
               </View>
             ))}
         </View>

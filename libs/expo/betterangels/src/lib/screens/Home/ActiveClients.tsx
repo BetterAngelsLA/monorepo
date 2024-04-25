@@ -1,6 +1,10 @@
 import { useMutation } from '@apollo/client';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, ClientCard, H2 } from '@monorepo/expo/shared/ui-components';
+import {
+  ClientCard,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { CREATE_NOTE } from '../../apollo';
@@ -37,14 +41,14 @@ export default function ActiveClients() {
           marginBottom: Spacings.sm,
         }}
       >
-        <H2>Active Clients</H2>
+        <TextMedium size="lg">Active Clients</TextMedium>
         <Link
           accessible
           accessibilityHint="goes to all active clients list"
           accessibilityRole="button"
           href="#"
         >
-          <BodyText color={Colors.PRIMARY}>All Clients</BodyText>
+          <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
         </Link>
       </View>
       <ClientCard

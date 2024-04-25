@@ -1,7 +1,7 @@
 import { SirenIcon, WarningIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -72,18 +72,18 @@ export function Alert(props: IAlertProps) {
       }}
     >
       {VARIANTS[variant].icon}
-      <BodyText color={VARIANTS[variant].color} style={{ flex: 1 }} ml="sm">
+      <TextRegular color={VARIANTS[variant].color} style={{ flex: 1 }} ml="sm">
         {text}
-      </BodyText>
+      </TextRegular>
       {actionText && (
-        <BodyText
+        <TextRegular
           ml="sm"
           color={VARIANTS[variant].color}
           textDecorationLine="underline"
           onPress={onActionPress}
         >
           {actionText}
-        </BodyText>
+        </TextRegular>
       )}
     </View>
   );

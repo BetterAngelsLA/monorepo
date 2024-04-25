@@ -1,6 +1,6 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -108,9 +108,9 @@ export default function MainModal(props: IMainModalProps) {
                       <action.Icon color={Colors.PRIMARY_EXTRA_DARK} />
                     </View>
 
-                    <BodyText color={Colors.PRIMARY_EXTRA_DARK}>
+                    <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
                       {action.title}
-                    </BodyText>
+                    </TextRegular>
                   </View>
                 )}
               </Pressable>

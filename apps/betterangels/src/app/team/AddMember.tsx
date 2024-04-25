@@ -1,12 +1,12 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   Button,
-  H1,
   Input,
   SearchableDropdown,
   Select,
   Tag,
+  TextBold,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -31,11 +31,13 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
 
   return (
     <>
-      <H1 mb="sm">Add Team Members</H1>
-      <BodyText mb="md">
+      <TextBold size="xl" mb="sm">
+        Add Team Members
+      </TextBold>
+      <TextRegular mb="md">
         You can send an invitation by filling out their information down below.
         They will receive the invite via email so they can sign up later on.
-      </BodyText>
+      </TextRegular>
       <Button
         accessibilityHint="opens popup to view already invited members"
         disabled

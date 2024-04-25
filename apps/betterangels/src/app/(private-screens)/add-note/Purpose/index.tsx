@@ -1,6 +1,10 @@
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import PurposeInput from './PurposeInput';
@@ -65,7 +69,11 @@ export default function Purpose(props: IPurposeProps) {
       required
       mb="xs"
       actionName={
-        !hasAnyValidPurpose && !isPurpose ? <H5 size="sm">Add Purpose</H5> : ''
+        !hasAnyValidPurpose && !isPurpose ? (
+          <TextMedium size="sm">Add Purpose</TextMedium>
+        ) : (
+          ''
+        )
       }
       title="Purpose"
     >
@@ -90,9 +98,9 @@ export default function Purpose(props: IPurposeProps) {
         {isGreaterThanZeroPurpses &&
           isLessThanElevenPurpses &&
           lastPurposeHasValue && (
-            <H5
+            <TextMedium
               mt="xs"
-              textAlign="right"
+              style={{ textAlign: 'right' }}
               color={Colors.PRIMARY}
               onPress={() =>
                 setPurposes([...purposes, { value: '', id: undefined }])
@@ -100,7 +108,7 @@ export default function Purpose(props: IPurposeProps) {
               size="sm"
             >
               Add another Purpose
-            </H5>
+            </TextMedium>
           )}
       </View>
 
@@ -122,7 +130,7 @@ export default function Purpose(props: IPurposeProps) {
               }}
             >
               <SolidCircleIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-              <BodyText ml="xs">{purpose.value}</BodyText>
+              <TextRegular ml="xs">{purpose.value}</TextRegular>
             </View>
           ))}
         </View>

@@ -8,10 +8,10 @@ import { SolidPeincilIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  BodyText,
   DatePicker,
-  H5,
+  TextMedium,
   IconButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { format, parse, setHours, setMinutes } from 'date-fns';
@@ -118,7 +118,7 @@ export default function Title(props: ITitleProps) {
             alignItems: 'center',
           }}
         >
-          <H5 mr="sm">{note.title}</H5>
+          <TextMedium mr="sm">{note.title}</TextMedium>
           <IconButton
             onPress={() => setExpanded('Title')}
             accessibilityLabel="edit"
@@ -131,9 +131,9 @@ export default function Title(props: ITitleProps) {
             />
           </IconButton>
         </View>
-        <BodyText size="xs" mb="md">
+        <TextRegular size="xs" mb="md">
           {note.date} {note?.time || ''}
-        </BodyText>
+        </TextRegular>
       </View>
       <View
         style={{
