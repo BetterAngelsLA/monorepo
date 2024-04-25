@@ -1,15 +1,5 @@
 import { gql } from '@apollo/client';
 
-export const GET_CURRENT_USER = gql`
-  query currentUser {
-    currentUser {
-      id
-      username
-      email
-    }
-  }
-`;
-
 export const GET_NOTES = gql`
   query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput) {
     notes(filters: $filters, pagination: $pagination) {
@@ -129,4 +119,52 @@ export const GET_NOTE = gql`
       createdAt
     }
   }
+`;
+
+export const GOOGLE_AUTH_MUTATION = gql`
+  mutation GoogleAuth(
+    $code: String!
+    $codeVerifier: String!
+    $redirectUri: String!
+  ) {
+    googleAuth(
+      input: {
+        code: $code
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
+      }
+    )
+      @rest(
+        type: "AuthResponse"
+        path: "/rest-auth/google/?redirect_uri={args.input.redirectUri}"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+      code
+      code_verifier
+    }
+  }
+`;
+
+export const IDME_AUTH_MUTATION = gql`
+  mutation IdmeAuth(
+    $code: String!
+    $codeVerifier: String!
+    $redirectUri: String!
+  ) {
+    idmeAuth(
+      input: {
+        code: $code
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
+      }
+    )
+      @rest(
+        type: "AuthResponse"
+        path: "/rest-auth/idme/?redirect_uri={args.input.redirectUri}"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+      code
+      code_verifier
 `;

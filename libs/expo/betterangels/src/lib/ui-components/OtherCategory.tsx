@@ -8,16 +8,17 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { CREATE_NOTE_SERVICE_REQUEST, DELETE_SERVICE_REQUEST } from '../apollo';
 import {
-  CREATE_NOTE_SERVICE_REQUEST,
   CreateNoteServiceRequestMutation,
   CreateNoteServiceRequestMutationVariables,
-  DELETE_SERVICE_REQUEST,
   DeleteServiceRequestMutation,
   DeleteServiceRequestMutationVariables,
+} from '../apollo/graphql/__generated__/mutations.generated';
+import {
   ServiceEnum,
   ServiceRequestTypeEnum,
-} from '../apollo';
+} from '../apollo/graphql/__generated__/types';
 
 interface IOtherCategoryProps {
   noteId: string | undefined;

@@ -1,6 +1,6 @@
 {
   "extends": ["plugin:@nx/react", "../../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*", "/src/lib/apollo/gql-types"],
+  "ignorePatterns": ["**/__generated__/**"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
