@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { BodyText } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
 import NoteCardHeader from './NoteCardHeader';
@@ -12,8 +13,15 @@ interface INoteCardProps {
 
 export default function NoteCard(props: INoteCardProps) {
   const { note } = props;
+
+  const router = useRouter();
+
   return (
-    <View style={styles.container}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.navigate(`/note/${note.id}`)}
+      style={styles.container}
+    >
       <NoteCardHeader
         isSubmitted={note.isSubmitted}
         title={note.title}
@@ -34,7 +42,7 @@ export default function NoteCard(props: INoteCardProps) {
           ]}
         />
       )}
-    </View>
+    </Pressable>
   );
 }
 
