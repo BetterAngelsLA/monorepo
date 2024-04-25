@@ -136,12 +136,11 @@ export const GOOGLE_AUTH_MUTATION = gql`
     )
       @rest(
         type: "AuthResponse"
-        path: "/rest-auth/google/?redirect_uri={args.input.redirectUri}"
+        path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}"
         method: "POST"
         bodyKey: "input"
       ) {
-      code
-      code_verifier
+      status_code
     }
   }
 `;
@@ -161,10 +160,11 @@ export const IDME_AUTH_MUTATION = gql`
     )
       @rest(
         type: "AuthResponse"
-        path: "/rest-auth/idme/?redirect_uri={args.input.redirectUri}"
+        path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}"
         method: "POST"
         bodyKey: "input"
       ) {
-      code
-      code_verifier
+      status_code
+    }
+  }
 `;
