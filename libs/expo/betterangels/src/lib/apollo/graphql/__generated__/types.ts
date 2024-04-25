@@ -68,8 +68,7 @@ export type AuthInput = {
 
 export type AuthResponse = {
   __typename?: 'AuthResponse';
-  code: Scalars['String']['output'];
-  code_verifier: Scalars['String']['output'];
+  status_code: Scalars['String']['output'];
 };
 
 export type BedsType = {

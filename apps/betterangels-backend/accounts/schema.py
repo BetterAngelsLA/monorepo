@@ -46,12 +46,12 @@ class Mutation:
     @strawberry.mutation
     def idme_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(code="", code_verifier="")
+        return AuthResponse(status_code="")
 
     @strawberry.mutation
     def google_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(code="", code_verifier="")
+        return AuthResponse(status_code="")
 
     @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
