@@ -68,12 +68,6 @@ export const GET_NOTE = gql`
       }
       attachments {
         id
-        file {
-          path
-          url
-          name
-          size
-        }
         namespace
         attachmentType
       }

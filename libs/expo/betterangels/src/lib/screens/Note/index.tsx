@@ -42,7 +42,7 @@ export default function Note({ id }: { id: string }) {
 
   if (loading) return <TextRegular>Loading</TextRegular>;
 
-  if (error || !id) throw new Error('Something went wrong. Please try again.');
+  if (error) throw new Error('Something went wrong. Please try again.');
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
