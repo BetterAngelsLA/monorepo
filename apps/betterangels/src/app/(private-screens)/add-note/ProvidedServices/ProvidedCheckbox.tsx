@@ -11,7 +11,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, Checkbox } from '@monorepo/expo/shared/ui-components';
+import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -128,7 +128,7 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
       label={
         <View style={styles.labelContainer}>
           <service.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
-          <BodyText ml="xs">{service.title}</BodyText>
+          <TextRegular ml="xs">{service.title}</TextRegular>
         </View>
       }
     />

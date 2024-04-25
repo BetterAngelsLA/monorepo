@@ -16,7 +16,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   DatePicker,
-  H3,
+  TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
@@ -175,7 +175,7 @@ export default function NextStepInput(props: INextStepProps) {
 
   return (
     <View style={{ gap: Spacings.xs, marginBottom: Spacings.xs }} key={index}>
-      {nextSteps.length > 1 && <H3>Action {index + 1}</H3>}
+      {nextSteps.length > 1 && <TextBold>Action {index + 1}</TextBold>}
       <BasicInput
         label="Action Item"
         onDelete={onDelete}
