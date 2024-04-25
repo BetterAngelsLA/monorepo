@@ -1,6 +1,5 @@
 from accounts.schema import Mutation as AccountMutation
 from accounts.schema import Query as AccountQuery
-from common.graphql.directives import rest
 from common.graphql.schema import Mutation as CommonMutation
 from common.graphql.schema import Query as CommonQuery
 from notes.schema import Mutation as NoteMutation
@@ -24,5 +23,4 @@ schema = Schema(
     extensions=[
         DjangoOptimizerExtension,
     ],
-    directives=[rest],
 )
