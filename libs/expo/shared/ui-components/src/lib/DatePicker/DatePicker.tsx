@@ -47,6 +47,7 @@ interface IDatePickerProps {
   maxDate?: Date;
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
   onSave: (e: string) => void;
+  initialDate: Date;
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -70,11 +71,14 @@ export function DatePicker(props: IDatePickerProps) {
     format = 'MM/dd/yyyy',
     pattern,
     onSave,
+    initialDate,
     ...rest
   } = props;
   const [value, setValue] = useState('');
   const [picker, setPicker] = useState(false);
-  const [pickerDate, setPickerDate] = useState(new Date());
+  const [pickerDate, setPickerDate] = useState(
+    initialDate ? new Date(initialDate) : new Date()
+  );
 
   function setDate(onChange: (e: string) => void, date: Date | undefined) {
     setPicker(false);
