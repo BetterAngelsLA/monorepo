@@ -13,7 +13,9 @@ interface INoteCardProps {
 
 export default function NoteCard(props: INoteCardProps) {
   const { note } = props;
+
   const router = useRouter();
+
   return (
     <Pressable
       accessibilityRole="button"
