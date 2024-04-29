@@ -112,6 +112,8 @@ input CreateClientInput {
 
 union CreateClientPayload = ClientType | OperationInfo
 
+union CreateLocationPayload = NoteLocationType | OperationInfo
+
 input CreateNoteAttachmentInput {
   note: ID!
   file: Upload!
@@ -288,6 +290,7 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
+  createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
@@ -336,6 +339,19 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+}
+
+input NoteLocationInput {
+  address: AddressInput
+  point: Point
+  pointOfInterest: String
+}
+
+type NoteLocationType {
+  id: ID!
+  address: AddressType!
+  point: Point
+  pointOfInterest: String
 }
 
 enum NoteNamespaceEnum {
@@ -407,6 +423,8 @@ type Query {
   clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
+  location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
+  locations: [NoteLocationType!]! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
