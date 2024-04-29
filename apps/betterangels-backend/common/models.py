@@ -176,12 +176,11 @@ class Address(BaseModel):
 
     @classmethod
     def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
-        components: list[Dict] = json.loads(address_data["address_components"])
-        from IPython import embed
+        components: list[Dict[str, str]] = json.loads(address_data["address_components"])
 
         for component in components:
             if "point_of_interest" in component["types"]:
-                return str(component["long_name"])
+                return component["long_name"]
 
         return None
 
