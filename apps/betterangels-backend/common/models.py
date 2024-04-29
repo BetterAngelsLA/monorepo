@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from accounts.models import User
 from common.enums import AttachmentType
@@ -155,7 +155,7 @@ class Address(BaseModel):
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
-        """Gets or creates an address and returns the address and point of interest."""
+        """Gets or creates an address and returns it."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
         structured_address = cls.convert_to_structured_address(address_data["address_components"])
