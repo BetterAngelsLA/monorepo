@@ -1,11 +1,12 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
@@ -135,6 +136,7 @@ class Address(BaseModel):
     @staticmethod
     def convert_to_structured_address(address_components: str) -> dict:
         address_fields = {
+            "point_of_interest": "long_name",
             "street_number": "long_name",
             "route": "long_name",
             "locality": "long_name",
@@ -144,7 +146,6 @@ class Address(BaseModel):
         }
 
         components = json.loads(address_components)
-
         structured_address = {
             field: next((component.get(name_type) for component in components if field in component["types"]), None)
             for field, name_type in address_fields.items()
@@ -154,6 +155,7 @@ class Address(BaseModel):
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
+        """Gets or creates an address and returns it."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
         structured_address = cls.convert_to_structured_address(address_data["address_components"])
@@ -171,6 +173,27 @@ class Address(BaseModel):
         )
 
         return address
+
+    @classmethod
+    def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
+        components: list[Dict[str, str]] = json.loads(address_data["address_components"])
+
+        for component in components:
+            if "point_of_interest" in component["types"]:
+                return component["long_name"]
+
+        return None
+
+
+class Location(BaseModel):
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
+    point = PointField(geography=True, null=True, blank=True)
+    point_of_interest = models.CharField(max_length=255, blank=True, null=True)
+
+    objects = models.Manager()
+
+    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
+    locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
 
 
 # Permissions
@@ -194,3 +217,11 @@ class AddressUserObjectPermission(UserObjectPermissionBase):
 
 class AddressGroupObjectPermission(GroupObjectPermissionBase):
     content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+
+class LocationUserObjectPermission(UserObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)
+
+
+class LocationGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)
