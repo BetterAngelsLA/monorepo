@@ -21,10 +21,13 @@ def create_permissions_if_not_exist(apps, schema_editor):
     LocationContentType = ContentType.objects.get_for_model(Location)
     db_alias = schema_editor.connection.alias
 
+    content_type = ContentType.objects.get_for_model("common", "Location")
+
     for codename, name in PERM_MAP.items():
         Permission.objects.using(db_alias).get_or_create(
             codename=codename,
             defaults={"name": name, "content_type": LocationContentType},
+            content_type=content_type,
         )
 
 
