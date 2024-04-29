@@ -24,7 +24,8 @@ def create_permissions_if_not_exist(apps, schema_editor):
     for codename, name in PERM_MAP.items():
         Permission.objects.using(db_alias).get_or_create(
             codename=codename,
-            defaults={"name": name, "content_type": LocationContentType},
+            defaults={"name": name},
+            content_type=LocationContentType,
         )
 
 
