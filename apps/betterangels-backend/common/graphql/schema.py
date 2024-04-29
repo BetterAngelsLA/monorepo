@@ -93,7 +93,7 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
     def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
         with transaction.atomic():
-            address, _ = Address.get_or_create_address(strawberry.asdict(data))
+            address = Address.get_or_create_address(strawberry.asdict(data))
 
             return cast(AddressType, address)
 
@@ -102,7 +102,8 @@ class Mutation:
         with transaction.atomic():
             location_data: Dict[str, Any] = strawberry.asdict(data)
             address_data = location_data.pop("address")
-            address, point_of_interest = Address.get_or_create_address(address_data)
+            point_of_interest = location_data.pop("point_of_interest") or Address.get_point_of_interest(address_data)
+            address = Address.get_or_create_address(address_data)
 
             location = resolvers.create(
                 info,

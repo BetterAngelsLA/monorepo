@@ -332,6 +332,7 @@ input NoteFilter {
 input NoteLocationInput {
   address: AddressInput
   point: Point
+  pointOfInterest: String
 }
 
 type NoteLocationType {

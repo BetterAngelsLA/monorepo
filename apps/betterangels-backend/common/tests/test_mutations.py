@@ -101,42 +101,56 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    # @parametrize(
-    #     ("street_number", "expected_address_count", "include_point_of_interest", "expected_query_count"),
-    #     [
-    #         # ("200", 1, False, 12),
-    #         # ("201", 2, False, 15),
-    #         ("202", 2, True, 15),
-    #     ],
-    # )
+    @parametrize(
+        (
+            "street_number",
+            "expected_address_count",
+            "include_standalone_point_of_interest",
+            "include_component_point_of_interest",
+            "expected_query_count",
+        ),
+        [
+            ("200", 1, False, False, 12),
+            ("201", 2, False, False, 15),
+            ("200", 2, False, True, 15),
+            ("200", 1, True, False, 12),
+            ("200", 2, True, True, 15),
+        ],
+    )
     def test_create_location_mutation(
         self,
         street_number: str,
         expected_address_count: int,
-        include_point_of_interest: bool,
+        include_standalone_point_of_interest: bool,
+        include_component_point_of_interest: bool,
         expected_query_count: int,
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            print("ayyyyyy")
-            from IPython import embed
-
-            embed()
             self.assertEqual(1, Address.objects.count())
             address_input: Dict[str, Any]
-            json_address_input, address_input = self._get_address_inputs()
-            # json_address_input, address_input = self._get_address_inputs(
-            #     street_number_override=street_number,
-            #     include_point_of_interest=include_point_of_interest,
-            # )
+            json_address_input, address_input = self._get_address_inputs(
+                street_number_override=street_number,
+                include_point_of_interest=include_component_point_of_interest,
+            )
+
             variables = {
                 "address": json_address_input,
                 "point": self.point,
+                "pointOfInterest": (
+                    "An Interesting Point (Standalone)" if include_standalone_point_of_interest else None
+                ),
             }
             response = self._create_location_fixture(variables)
 
             returned_location = response["data"]["createLocation"]
 
             assert isinstance(address_input["addressComponents"], list)
+            expected_point_of_interest = None
+            if include_component_point_of_interest:
+                expected_point_of_interest = "An Interesting Point (Component)"
+            if include_standalone_point_of_interest:
+                expected_point_of_interest = "An Interesting Point (Standalone)"
+
             expected_location = {
                 "id": ANY,
                 "address": {
@@ -146,11 +160,8 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
                     "zipCode": address_input["addressComponents"][7]["long_name"],
                 },
                 "point": self.point,
-                "pointOfInterest": (
-                    address_input["addressComponents"][-1]["long_name"] if include_point_of_interest else None
-                ),
+                "pointOfInterest": expected_point_of_interest,
             }
-
             self.assertEqual(expected_address_count, Address.objects.count())
             self.assertEqual(expected_location, returned_location)
 

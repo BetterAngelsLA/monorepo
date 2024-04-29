@@ -49,10 +49,10 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
     def _get_address_inputs(
         self,
-        # street_number_override: Optional[str] = None,
-        # delete_street_number: bool = False,
-        # include_point_of_interest: bool = False,
-        # delete_components: bool = False,
+        street_number_override: Optional[str] = None,
+        delete_street_number: bool = False,
+        include_point_of_interest: bool = False,
+        delete_components: bool = False,
     ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
@@ -88,34 +88,29 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                     "short_name": "US",
                     "types": ["country", "political"],
                 },
-                {
-                    "long_name": "An Interesting Point",
-                    "short_name": "An Interesting Point",
-                    "types": ["point_of_interest"],
-                },
                 {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
             ],
             "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
         }
 
-        # if isinstance(address_input["addressComponents"], list):
-        #     if street_number_override:
-        #         address_input["addressComponents"][0]["long_name"] = street_number_override
+        if isinstance(address_input["addressComponents"], list):
+            if street_number_override:
+                address_input["addressComponents"][0]["long_name"] = street_number_override
 
-        #     if delete_street_number:
-        #         address_input["addressComponents"].pop(0)
+            if delete_street_number:
+                address_input["addressComponents"].pop(0)
 
-        #     if include_point_of_interest:
-        #         address_input["addressComponents"].append(
-        #             {
-        #                 "long_name": "An Interesting Point",
-        #                 "short_name": "An Interesting Point",
-        #                 "types": ["point_of_interest"],
-        #             },
-        #         )
+            if include_point_of_interest:
+                address_input["addressComponents"].append(
+                    {
+                        "long_name": "An Interesting Point (Component)",
+                        "short_name": "An Interesting Point (Component)",
+                        "types": ["point_of_interest"],
+                    },
+                )
 
-        #     if delete_components:
-        #         address_input["addressComponents"] = []
+            if delete_components:
+                address_input["addressComponents"] = []
 
         json_address_input: Dict[str, str] = {"formattedAddress": str(address_input["formattedAddress"])}
         json_address_input["addressComponents"] = json.dumps(address_input["addressComponents"])

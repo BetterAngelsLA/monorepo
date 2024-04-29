@@ -39,6 +39,7 @@ class NoteLocationType:
 class NoteLocationInput:
     address: Optional[AddressInput]
     point: auto
+    point_of_interest: auto
 
 
 @strawberry_django.type(Attachment, is_interface=True)

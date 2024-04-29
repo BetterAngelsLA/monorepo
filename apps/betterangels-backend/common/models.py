@@ -146,9 +146,6 @@ class Address(BaseModel):
         }
 
         components = json.loads(address_components)
-        from IPython import embed
-
-        embed()
         structured_address = {
             field: next((component.get(name_type) for component in components if field in component["types"]), None)
             for field, name_type in address_fields.items()
@@ -177,19 +174,16 @@ class Address(BaseModel):
 
         return address
 
-        # @classmethod
-        # def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
-        #     """Returns the point of interest from the address data."""
-        #     # structured_address = cls.convert_to_structured_address(address_data["address_components"])
-        #     components = json.loads(address_components)
-        #     return structured_address.get("point_of_interest")
-        # point_of_interest = {
-        #     next(
-        #         (component.get("long_name") for component in components if "point_of_interest" in component["types"]),
-        #         None,
-        #     )
-        #     for component in components
-        # }
+    @classmethod
+    def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
+        components: list[Dict] = json.loads(address_data["address_components"])
+        from IPython import embed
+
+        for component in components:
+            if "point_of_interest" in component["types"]:
+                return str(component["long_name"])
+
+        return None
 
 
 class Location(BaseModel):
