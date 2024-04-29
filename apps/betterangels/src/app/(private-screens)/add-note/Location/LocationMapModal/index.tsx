@@ -283,6 +283,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         full: googleAddress,
         addressComponents: data.results[0].address_components,
       });
+
       setPin(true);
 
       setLocation({
