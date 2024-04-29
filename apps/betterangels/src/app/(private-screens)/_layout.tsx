@@ -1,6 +1,6 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { Pressable, Text } from 'react-native';
 
@@ -39,7 +39,7 @@ export default function PrivateLayout() {
               accessibilityHint="goes to previous screen"
               onPress={router.back}
             >
-              <BodyText color={Colors.WHITE}>Back</BodyText>
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
             </Pressable>
           ),
         }}
@@ -57,7 +57,27 @@ export default function PrivateLayout() {
               accessibilityHint="goes to previous screen"
               onPress={router.back}
             >
-              <BodyText color={Colors.WHITE}>Back</BodyText>
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="interactions"
+        options={{
+          title: 'Interactions',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
             </Pressable>
           ),
         }}

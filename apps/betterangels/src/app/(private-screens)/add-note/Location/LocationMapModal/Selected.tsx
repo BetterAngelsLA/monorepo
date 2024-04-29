@@ -1,16 +1,30 @@
+import { useMutation } from '@apollo/client';
+import {
+  UPDATE_NOTE_LOCATION,
+  UpdateNoteLocationMutation,
+  UpdateNoteLocationMutationVariables,
+} from '@monorepo/expo/betterangels';
 import { TargetIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   Button,
   Copy,
-  H3,
+  TextBold,
   TextButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { Platform, Pressable, View } from 'react-native';
 import openMap from 'react-native-open-maps';
+
+type TLocation =
+  | {
+      address: string | null | undefined;
+      latitude: number | null | undefined;
+      longitude: number | null | undefined;
+      name: string | null | undefined;
+    }
+  | undefined;
 
 interface ISelectedProps {
   currentLocation: {
@@ -18,10 +32,15 @@ interface ISelectedProps {
     longitude: number;
     name: string | undefined;
   };
-  address: { full: string; short: string } | undefined;
+  address:
+    | { full: string; short: string; addressComponents: any[] }
+    | undefined
+    | null;
   setChooseDirections: (chooseDirections: boolean) => void;
   setSelected: (selected: boolean) => void;
-  closeModal: () => void;
+  closeModal: (hasLocation: boolean) => void;
+  setLocation: (location: TLocation) => void;
+  noteId: string | undefined;
 }
 
 export default function Selected(props: ISelectedProps) {
@@ -31,23 +50,50 @@ export default function Selected(props: ISelectedProps) {
     setChooseDirections,
     setSelected,
     closeModal,
+    setLocation,
+    noteId,
   } = props;
-  const { setValue } = useFormContext();
   const [copy, setCopy] = useState<string | null>();
+  const [updateNoteLocation, { error }] = useMutation<
+    UpdateNoteLocationMutation,
+    UpdateNoteLocationMutationVariables
+  >(UPDATE_NOTE_LOCATION);
 
   const handleIosDirections = () => {
     setChooseDirections(true);
     setSelected(false);
   };
 
-  function selectLocation() {
-    setValue('location', {
+  async function selectLocation() {
+    setLocation({
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
       address: address?.full,
       name: currentLocation?.name,
     });
-    closeModal();
+
+    closeModal(true);
+    try {
+      if (address && currentLocation) {
+        const { data } = await updateNoteLocation({
+          variables: {
+            data: {
+              point: [currentLocation.longitude, currentLocation.latitude],
+              address: {
+                addressComponents: JSON.stringify(address.addressComponents),
+                formattedAddress: address.full,
+              },
+              id: noteId,
+            },
+          },
+        });
+        if (!data) {
+          console.error(error);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -60,9 +106,9 @@ export default function Selected(props: ISelectedProps) {
         borderTopRightRadius: 20,
       }}
     >
-      <H3 mx="md">
+      <TextBold mx="md">
         {currentLocation?.name ? currentLocation?.name : address?.short}
-      </H3>
+      </TextBold>
       <View
         style={{
           position: 'relative',
@@ -79,7 +125,7 @@ export default function Selected(props: ISelectedProps) {
           accessibilityHint="long press to copy address"
           onLongPress={() => setCopy('address')}
         >
-          <BodyText mx="md">{address?.full}</BodyText>
+          <TextRegular mx="md">{address?.full}</TextRegular>
         </Pressable>
       </View>
       <TextButton
@@ -131,10 +177,10 @@ export default function Selected(props: ISelectedProps) {
             accessibilityHint="long press to copy coordinates"
             onLongPress={() => setCopy('geo')}
           >
-            <H3 style={{ flex: 1 }}>
+            <TextBold style={{ flex: 1 }}>
               {currentLocation.latitude.toFixed(7)}{' '}
               {currentLocation.longitude.toFixed(7)}
-            </H3>
+            </TextBold>
           </Pressable>
         </View>
       </View>

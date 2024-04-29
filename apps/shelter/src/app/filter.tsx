@@ -9,7 +9,7 @@ import { View } from '../../components/Themed';
 import ToggleRow from '../../components/ToggleRow';
 
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, H1, H4 } from '@monorepo/expo/shared/ui-components';
+import { Button, TextBold } from '@monorepo/expo/shared/ui-components';
 import BottomOptions from '../../components/BottomOptions';
 
 import { router } from 'expo-router';
@@ -152,15 +152,17 @@ export default function FiltetrScreen() {
       <View style={styles.screenContainer}>
         <ScrollView>
           <View style={styles.filterContainer}>
-            <H1 mb="md">Shelter Filters</H1>
-            <H4 mb="sm">SPA</H4>
+            <TextBold size="xl" mb="md">
+              Shelter Filters
+            </TextBold>
+            <TextBold mb="sm">SPA</TextBold>
             <ToggleRow
               togglesData={toggleSPAValues}
               onSelectionChange={(values) => handleToggleChange(values, 'sPA')}
             />
 
             <Separator />
-            <H4 mb="sm">Population</H4>
+            <TextBold mb="sm">Population</TextBold>
             <ToggleRow
               togglesData={togglePopulationValues}
               onSelectionChange={(values) =>
@@ -169,7 +171,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <H4 mb="sm">Program</H4>
+            <TextBold mb="sm">Program</TextBold>
             <ToggleRow
               togglesData={toggleProgramValues}
               onSelectionChange={(values) =>
@@ -178,7 +180,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <H4 mb="sm">Services</H4>
+            <TextBold mb="sm">Services</TextBold>
             <ChipGroup
               chipsData={servicesChipData}
               onSelectionChange={(values) =>
@@ -187,7 +189,7 @@ export default function FiltetrScreen() {
             />
 
             <Separator />
-            <H4 mb="sm">Requirements</H4>
+            <TextBold mb="sm">Requirements</TextBold>
             <RequirementRow
               requirementsData={requirementData}
               onSelectionChange={(value, isSelected) =>

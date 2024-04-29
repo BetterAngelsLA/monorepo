@@ -13,6 +13,20 @@ from .models import Client, ClientProfile, User
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 
+@strawberry.input
+class AuthInput:
+    code: str = strawberry.field(name="code")
+    code_verifier: str = strawberry.field(name="code_verifier")
+    redirect_uri: str = strawberry.field(name="redirect_uri")
+
+
+# TODO: I don't think this is the right response
+# The code and code verifier is passed in
+@strawberry.type
+class AuthResponse:
+    status_code: str = strawberry.field(name="status_code")
+
+
 @filter(Client)
 class ClientFilter:
     @strawberry_django.filter_field

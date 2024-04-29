@@ -16,6 +16,8 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.requests import get_request
 
 from .types import (
+    AuthInput,
+    AuthResponse,
     ClientType,
     CreateClientInput,
     MagicLinkInput,
@@ -40,6 +42,16 @@ class Query:
 @strawberry.type
 class Mutation:
     logout = auth.logout()
+
+    @strawberry.mutation
+    def idme_auth(self, input: AuthInput) -> AuthResponse:
+        # The is a stub and logic is handled client-side by Apollo
+        return AuthResponse(status_code="")
+
+    @strawberry.mutation
+    def google_auth(self, input: AuthInput) -> AuthResponse:
+        # The is a stub and logic is handled client-side by Apollo
+        return AuthResponse(status_code="")
 
     @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:

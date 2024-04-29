@@ -1,9 +1,8 @@
 import { CalendarIcon, ListIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
-import H1 from '../H1';
-import H4 from '../H4';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -43,29 +42,29 @@ export function EventCard(props: IEventCardProps) {
         )}
 
         <View>
-          <H1 size="2xl">{tasks?.length || 0}</H1>
-          <BodyText textTransform="capitalize" size="xs">
+          <TextBold size="2xl">{tasks?.length || 0}</TextBold>
+          <TextRegular textTransform="capitalize" size="xs">
             {type + (tasks.length > 1 ? 's' : '')}
-          </BodyText>
+          </TextRegular>
         </View>
       </View>
       <View style={{ flex: 3 }}>
         {tasks.slice(0, 4).map((item, index) => (
           <View key={index} style={styles.itemContainer}>
-            <BodyText mr="xs">{'\u2022'}</BodyText>
-            <BodyText
+            <TextRegular mr="xs">{'\u2022'}</TextRegular>
+            <TextRegular
               numberOfLines={1}
               ellipsizeMode="tail"
               style={styles.item}
             >
               {item}
-            </BodyText>
+            </TextRegular>
           </View>
         ))}
         {tasks.length > 4 && (
-          <H4 color={Colors.PRIMARY} size="xs" mt="xs">
+          <TextBold color={Colors.PRIMARY} size="xs" mt="xs">
             {tasks.length - 4} more
-          </H4>
+          </TextBold>
         )}
       </View>
     </View>

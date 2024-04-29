@@ -2,7 +2,7 @@ import { PawIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 import { Checkbox } from './Checkbox';
 
 describe('Checkbox Component', () => {
@@ -13,7 +13,7 @@ describe('Checkbox Component', () => {
         label={
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-            <BodyText ml="xs">Check Me</BodyText>
+            <TextRegular ml="xs">Check Me</TextRegular>
           </View>
         }
         onCheck={() => console.log('Checkbox checked')}
@@ -31,7 +31,7 @@ describe('Checkbox Component', () => {
         label={
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-            <BodyText ml="xs">Check Me</BodyText>
+            <TextRegular ml="xs">Check Me</TextRegular>
           </View>
         }
         onCheck={mockOnCheck}
@@ -50,7 +50,7 @@ describe('Checkbox Component', () => {
         label={
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-            <BodyText ml="xs">Accessible Checkbox</BodyText>
+            <TextRegular ml="xs">Accessible Checkbox</TextRegular>
           </View>
         }
         onCheck={() => console.log('Checkbox checked')}

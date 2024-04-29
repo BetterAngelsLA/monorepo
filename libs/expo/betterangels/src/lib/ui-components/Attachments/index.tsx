@@ -1,12 +1,12 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BodyText,
   CameraPicker,
   ImagePicker,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NoteNamespaceEnum } from '../../apollo/gql-types/graphql';
+import { NoteNamespaceEnum } from '../../apollo/graphql/__generated__/types';
 import ImageComponent from './ImageComponent';
 
 interface IAttachmentsProps {
@@ -32,7 +32,7 @@ export default function Attachments(props: IAttachmentsProps) {
   return (
     <View>
       <View style={styles.attach}>
-        <BodyText>Attachments</BodyText>
+        <TextRegular>Attachments</TextRegular>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ImagePicker
             isLoading={isLoading}

@@ -1,6 +1,7 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +31,8 @@ export default function MainModal(props: IMainModalProps) {
     transparent = false,
   } = props;
 
+  const router = useRouter();
+
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   return (
@@ -50,7 +53,7 @@ export default function MainModal(props: IMainModalProps) {
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
             paddingTop: Spacings.md,
-            paddingHorizontal: Spacings.sm,
+            paddingHorizontal: Spacings.md,
             paddingBottom: 35 + bottomOffset,
             backgroundColor: Colors.WHITE,
           }}
@@ -71,6 +74,10 @@ export default function MainModal(props: IMainModalProps) {
             {topSection}
             {actions.map((action, idx: number) => (
               <Pressable
+                onPress={() => {
+                  closeModal();
+                  router.navigate(action.route);
+                }}
                 accessibilityRole="button"
                 key={idx}
                 style={styles.container}
@@ -89,14 +96,21 @@ export default function MainModal(props: IMainModalProps) {
                       paddingVertical: Spacings.sm,
                     }}
                   >
-                    <action.Icon
-                      style={{ marginRight: Spacings.md }}
-                      color={Colors.PRIMARY_EXTRA_DARK}
-                    />
+                    <View
+                      style={{
+                        marginRight: Spacings.sm,
+                        height: 40,
+                        width: 40,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <action.Icon color={Colors.PRIMARY_EXTRA_DARK} />
+                    </View>
 
-                    <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+                    <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
                       {action.title}
-                    </BodyText>
+                    </TextRegular>
                   </View>
                 )}
               </Pressable>

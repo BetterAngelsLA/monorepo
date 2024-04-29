@@ -9,7 +9,7 @@ import {
   UsersIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, BodyText } from '@monorepo/expo/shared/ui-components';
+import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSignOut } from '../hooks';
@@ -34,7 +34,7 @@ const ACTIONS = [
   {
     title: 'Interactions',
     Icon: NoteIcon,
-    route: '#',
+    route: '/interactions',
   },
   {
     title: 'Tasks',
@@ -102,12 +102,11 @@ export default function NavModal(props: INavModalProps) {
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
                   borderRadius: 8,
-                  paddingRight: Spacings.sm,
-                  paddingLeft: Spacings.xs,
+                  paddingHorizontal: 16,
                   paddingVertical: Spacings.sm,
                 }}
               >
-                <View style={{ marginRight: 20 }}>
+                <View style={{ marginRight: Spacings.sm }}>
                   <Avatar
                     imageUrl={image}
                     size="md"
@@ -118,7 +117,9 @@ export default function NavModal(props: INavModalProps) {
                   />
                 </View>
 
-                <BodyText color={Colors.PRIMARY_EXTRA_DARK}>Profile</BodyText>
+                <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
+                  Profile
+                </TextRegular>
               </View>
             )}
           </Pressable>
@@ -143,11 +144,21 @@ export default function NavModal(props: INavModalProps) {
                   paddingVertical: Spacings.sm,
                 }}
               >
-                <SignOutIcon mr="md" color={Colors.PRIMARY_EXTRA_DARK} />
+                <View
+                  style={{
+                    marginRight: Spacings.sm,
+                    height: 40,
+                    width: 40,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SignOutIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                </View>
 
-                <BodyText ml="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+                <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
                   Log Out
-                </BodyText>
+                </TextRegular>
               </View>
             )}
           </Pressable>

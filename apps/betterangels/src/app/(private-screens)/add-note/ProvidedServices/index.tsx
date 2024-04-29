@@ -27,7 +27,11 @@ import {
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, H3, H5 } from '@monorepo/expo/shared/ui-components';
+import {
+  FieldCard,
+  TextBold,
+  TextMedium,
+} from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 import ProvidedCheckbox from './ProvidedCheckbox';
@@ -180,7 +184,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
             )}
           </View>
         ) : (
-          <H5 size="sm">Add Services</H5>
+          <TextMedium size="sm">Add Services</TextMedium>
         )
       }
       mb="xs"
@@ -196,7 +200,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
             style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
             key={service.title}
           >
-            <H3 mb="xs">{service.title}</H3>
+            <TextBold mb="xs">{service.title}</TextBold>
             {service.items.map((item, idx) => (
               <ProvidedCheckbox
                 key={item.enum}

@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -39,7 +39,7 @@ export function StatusBadge({
         },
       ]}
     >
-      <BodyText size="sm">{title}</BodyText>
+      <TextRegular size="sm">{title}</TextRegular>
     </View>
   );
 }

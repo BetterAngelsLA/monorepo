@@ -1,19 +1,24 @@
 import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, Checkbox, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  Checkbox,
+  Input,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { CREATE_NOTE_SERVICE_REQUEST, DELETE_SERVICE_REQUEST } from '../apollo';
 import {
-  CREATE_NOTE_SERVICE_REQUEST,
   CreateNoteServiceRequestMutation,
   CreateNoteServiceRequestMutationVariables,
-  DELETE_SERVICE_REQUEST,
   DeleteServiceRequestMutation,
   DeleteServiceRequestMutationVariables,
+} from '../apollo/graphql/__generated__/mutations.generated';
+import {
   ServiceEnum,
   ServiceRequestTypeEnum,
-} from '../apollo';
+} from '../apollo/graphql/__generated__/types';
 
 interface IOtherCategoryProps {
   noteId: string | undefined;
@@ -111,7 +116,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           label={
             <View style={styles.labelContainer}>
               <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-              <BodyText ml="xs">{service.title}</BodyText>
+              <TextRegular ml="xs">{service.title}</TextRegular>
             </View>
           }
         />

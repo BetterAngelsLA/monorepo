@@ -58,6 +58,16 @@ enum AttachmentType {
   UNKNOWN
 }
 
+input AuthInput {
+  code: String!
+  code_verifier: String!
+  redirect_uri: String!
+}
+
+type AuthResponse {
+  status_code: String!
+}
+
 type BedsType {
   totalBeds: Int
   privateBeds: Int
@@ -275,6 +285,8 @@ type MoodType {
 
 type Mutation {
   logout: Boolean!
+  idmeAuth(input: AuthInput!): AuthResponse!
+  googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
