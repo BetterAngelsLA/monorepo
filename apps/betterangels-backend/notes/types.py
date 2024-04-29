@@ -4,8 +4,14 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from accounts.types import UserType
-from common.graphql.types import AddressInput, AddressType, AttachmentInterface
-from common.models import Attachment
+from common.graphql.types import (
+    AddressInput,
+    AddressType,
+    AttachmentInterface,
+    NoteLocationInput,
+    NoteLocationType,
+)
+from common.models import Attachment, Location
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
@@ -163,6 +169,7 @@ class NoteType:
     title: auto
     point: auto
     address: Optional[AddressType]
+    location: Optional[NoteLocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
     purposes: List[TaskType]
@@ -217,11 +224,14 @@ class UpdateNoteInput:
     interacted_at: auto
 
 
-@strawberry_django.input(models.Note)
-class UpdateNoteLocationInput:
+@strawberry_django.input(Location)
+class CreateNoteLocationInput(NoteLocationInput):
+    note_id: ID
+
+
+@strawberry_django.input(Location)
+class UpdateNoteLocationInput(NoteLocationInput):
     id: auto
-    point: auto
-    address: AddressInput
 
 
 @strawberry_django.input(models.Task)

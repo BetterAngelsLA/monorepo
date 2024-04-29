@@ -29,18 +29,18 @@ class LocationPermissionTestCase(LocationGraphQLBaseTestCase):
             "address": json_address_input,
             "point": self.point,
         }
-        response = self._create_location_fixture(variables)
+        response = self._get_or_create_location_fixture(variables)
 
         if should_succeed:
-            self.assertIsNotNone(response["data"]["createLocation"]["id"])
+            self.assertIsNotNone(response["data"]["getOrCreateLocation"]["id"])
             self.assertEqual(address_count + 1, Address.objects.count())
             self.assertEqual(location_count + 1, Location.objects.count())
         else:
             self.assertEqual(
-                response["data"]["createLocation"]["messages"][0],
+                response["data"]["getOrCreateLocation"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": "createLocation",
+                    "field": "getOrCreateLocation",
                     "message": "You don't have permission to access this app.",
                 },
             )

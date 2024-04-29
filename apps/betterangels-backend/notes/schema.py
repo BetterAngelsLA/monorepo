@@ -5,9 +5,17 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import DeleteDjangoObjectInput
-from common.models import Address, Attachment
-from common.permissions.enums import AddressPermissions, AttachmentPermissions
+from common.graphql.types import (
+    DeleteDjangoObjectInput,
+    NoteLocationInput,
+    NoteLocationType,
+)
+from common.models import Attachment, Location
+from common.permissions.enums import (
+    AddressPermissions,
+    AttachmentPermissions,
+    LocationPermissions,
+)
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -54,7 +62,6 @@ from .types import (
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
-    UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
     UpdateTaskLocationInput,
@@ -147,36 +154,12 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-            HasPerm(perms=[AddressPermissions.ADD]),
-        ]
-    )
-    def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
+    @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
+    def get_or_create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
+        with transaction.atomic():
+            location = Location.get_or_create_location(strawberry.asdict(data))
 
-            location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
-            note = resolvers.update(
-                info,
-                note,
-                {
-                    "point": data.point,
-                    "address": address,
-                },
-            )
-
-            return cast(NoteType, note)
+            return cast(NoteLocationType, location)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
@@ -661,7 +644,7 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this task.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
+            address = Location.get_or_create_address(location_data["address"])
             task = resolvers.update(
                 info,
                 task,

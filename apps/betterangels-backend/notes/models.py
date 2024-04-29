@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
-from common.models import Address, Attachment, BaseModel
+from common.models import Address, Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
@@ -93,6 +93,7 @@ class Note(BaseModel):
     interacted_at = models.DateTimeField(auto_now_add=True)
     point = PointField(geography=True, null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")

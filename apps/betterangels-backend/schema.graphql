@@ -112,8 +112,6 @@ input CreateClientInput {
 
 union CreateClientPayload = ClientType | OperationInfo
 
-union CreateLocationPayload = NoteLocationType | OperationInfo
-
 input CreateNoteAttachmentInput {
   note: ID!
   file: Upload!
@@ -230,7 +228,7 @@ type FlagType {
   lastModified: DateTime
 }
 
-union GetOrCreateAddressPayload = AddressType | OperationInfo
+union GetOrCreateLocationPayload = NoteLocationType | OperationInfo
 
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
@@ -289,15 +287,13 @@ type Mutation {
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
-  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
-  createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
+  getOrCreateLocation(data: NoteLocationInput!): GetOrCreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
@@ -365,6 +361,7 @@ type NoteType {
   title: String!
   point: Point
   address: AddressType
+  location: NoteLocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
   purposes(pagination: OffsetPaginationInput): [TaskType!]!
@@ -566,14 +563,6 @@ input UpdateNoteInput {
   isSubmitted: Boolean
   interactedAt: DateTime
 }
-
-input UpdateNoteLocationInput {
-  id: ID
-  point: Point
-  address: AddressInput!
-}
-
-union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
 

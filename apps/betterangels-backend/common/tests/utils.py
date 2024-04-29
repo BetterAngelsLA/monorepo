@@ -136,47 +136,11 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         return self.assertNumQueries(query_count)
 
 
-class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._setup_address()
-
-    def _setup_address(self) -> None:
-        # Force login to create an address
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        json_address_input, _ = self._get_address_inputs()
-        self.address = self._get_or_create_address_fixture(json_address_input)["data"]["getOrCreateAddress"]
-        # Logout after setting up the address
-        self.graphql_client.logout()
-
-    def _get_or_create_address_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        mutation: str = """
-            mutation GetOrCreateAddress($data: AddressInput!) { # noqa: B950
-                getOrCreateAddress(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on AddressType {
-                        id
-                        street
-                        city
-                        state
-                        zipCode
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
-
 class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.point = [-118.2437, 34.0522]
+        self.point_of_interest = "An Interesting Point (Standalone)"
         self._setup_location()
         self.graphql_client.logout()
 
@@ -189,12 +153,12 @@ class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
             "address": json_address_input,
             "point": self.point,
         }
-        self.location = self._create_location_fixture(variables)["data"]["createLocation"]
+        self.location = self._get_or_create_location_fixture(variables)["data"]["getOrCreateLocation"]
 
-    def _create_location_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_or_create_location_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         mutation: str = """
-            mutation CreateLocation($data: NoteLocationInput!) { # noqa: B950
-                createLocation(data: $data) {
+            mutation GetOrCreateLocation($data: NoteLocationInput!) { # noqa: B950
+                getOrCreateLocation(data: $data) {
                     ... on OperationInfo {
                         messages {
                             kind

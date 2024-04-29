@@ -241,32 +241,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _update_note_location_fixture(self, variables: Dict) -> Dict[str, Any]:
-        mutation: str = """
-            mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
-                updateNoteLocation(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteType {
-                        id
-                        point
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
     def _create_note_mood_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteMood($data: CreateNoteMoodInput!) {

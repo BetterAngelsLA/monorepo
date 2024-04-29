@@ -133,6 +133,17 @@ class Address(BaseModel):
     def __str__(self) -> str:
         return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
 
+
+class Location(BaseModel):
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
+    point = PointField(geography=True, null=True, blank=True)
+    point_of_interest = models.CharField(max_length=255, blank=True, null=True)
+
+    objects = models.Manager()
+
+    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
+    locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
+
     @staticmethod
     def convert_to_structured_address(address_components: str) -> dict:
         address_fields = {
@@ -184,16 +195,21 @@ class Address(BaseModel):
 
         return None
 
+    @classmethod
+    def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
+        """Gets or creates an location and returns it."""
+        # This function expects a Google Geocoding API payload
+        # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+        address = Location.get_or_create_address(location_data["address"])
 
-class Location(BaseModel):
-    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
-    point = PointField(geography=True, null=True, blank=True)
-    point_of_interest = models.CharField(max_length=255, blank=True, null=True)
+        location, _ = Location.objects.get_or_create(
+            address=address,
+            point=location_data["point"],
+            point_of_interest=location_data["point_of_interest"]
+            or Location.get_point_of_interest(location_data["address"]),
+        )
 
-    objects = models.Manager()
-
-    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
-    locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
+        return location
 
 
 # Permissions

@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 import strawberry
 import strawberry_django
 from common.graphql.types import (
-    AddressInput,
     AddressType,
     FeatureControlData,
     FlagType,
@@ -13,11 +12,10 @@ from common.graphql.types import (
     SampleType,
     SwitchType,
 )
-from common.models import Address, Location
+from common.models import Location
 from common.permissions.enums import AddressPermissions, LocationPermissions
 from django.db import transaction
 from strawberry.types import Info
-from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm
 from waffle import (
     get_waffle_flag_model,
@@ -90,29 +88,9 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
-    def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
-        with transaction.atomic():
-            address = Address.get_or_create_address(strawberry.asdict(data))
-
-            return cast(AddressType, address)
-
     @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
-    def create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
+    def get_or_create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
         with transaction.atomic():
-            location_data: Dict[str, Any] = strawberry.asdict(data)
-            address_data = location_data.pop("address")
-            point_of_interest = location_data.pop("point_of_interest") or Address.get_point_of_interest(address_data)
-            address = Address.get_or_create_address(address_data)
-
-            location = resolvers.create(
-                info,
-                Location,
-                {
-                    "address": address,
-                    "point": location_data["point"],
-                    "point_of_interest": point_of_interest,
-                },
-            )
+            location = Location.get_or_create_location(strawberry.asdict(data))
 
             return cast(NoteLocationType, location)
