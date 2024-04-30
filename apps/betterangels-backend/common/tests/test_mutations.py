@@ -21,11 +21,11 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
             "expected_query_count",
         ),
         [
-            ("200", 1, False, False, 10),
-            ("201", 2, False, False, 15),
-            ("200", 2, False, True, 15),
-            ("200", 1, True, False, 12),
-            ("200", 2, True, True, 15),
+            ("106", 1, False, False, 10),
+            ("104", 2, False, False, 15),
+            ("106", 2, False, True, 15),
+            ("106", 1, True, False, 12),
+            ("106", 2, True, True, 15),
         ],
     )
     def test_get_or_create_location_mutation(
@@ -37,9 +37,6 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            from IPython import embed
-
-            # embed()
             self.assertEqual(1, Address.objects.count())
             address_input: Dict[str, Any]
             json_address_input, address_input = self._get_address_inputs(

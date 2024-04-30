@@ -1,7 +1,8 @@
 from typing import Any, Dict
 
-from common.models import Address
+from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
@@ -12,6 +13,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self._setup_note()
         self._setup_note_tasks()
+        self._setup_location()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
@@ -57,6 +59,23 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         )["data"]["createTask"]
         # Logout after setting up the tasks
         self.graphql_client.logout()
+
+    def _setup_location(self) -> None:
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
+        self.point = [-118.2437, 34.0522]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
+        )
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_note_fixture("create", variables)
@@ -232,6 +251,36 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         nextSteps {
                             id
                             title
+                        }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _update_note_location_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
+                updateNoteLocation(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on NoteType {
+                        id
+                        location {
+                            id
+                            address {
+                                street
+                                city
+                                state
+                                zipCode
+                            }
+                            point
+                            pointOfInterest
                         }
                     }
                 }
@@ -486,6 +535,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_task()
+        self._setup_location()
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
@@ -498,6 +548,23 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         )["data"]["createTask"]
         # Logout after setting up the task
         self.graphql_client.logout()
+
+    def _setup_location(self) -> None:
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
+        self.point = [-118.2437, 34.0522]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
+        )
 
     def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
@@ -521,12 +588,16 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on TaskType {{
                         id
                         title
-                        point
-                        address {{
-                            street
-                            city
-                            state
-                            zipCode
+                        location {{
+                            id
+                            address {{
+                                street
+                                city
+                                state
+                                zipCode
+                            }}
+                            point
+                            pointOfInterest
                         }}
                         status
                         dueBy
@@ -556,12 +627,16 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }
                     ... on TaskType {
                         id
-                        point
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
+                        location {
+                            id
+                            address {
+                                street
+                                city
+                                state
+                                zipCode
+                            }
+                            point
+                            pointOfInterest
                         }
                     }
                 }

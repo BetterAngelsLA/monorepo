@@ -2,7 +2,7 @@ from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.models import Address, Attachment
+from common.models import Address, Attachment, Location
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from model_bakery import baker
@@ -128,6 +128,45 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
         self.assertEqual(expected_note, updated_note)
+
+    def test_update_note_location_mutation(self) -> None:
+        note_id = self.note["id"]
+        json_address_input, address_input = self._get_address_inputs()
+
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+        variables = {
+            "id": note_id,
+            "location": location,
+        }
+
+        expected_query_count = 24
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_note_location_fixture(variables)
+
+        assert isinstance(address_input["addressComponents"], list)
+        expected_address = {
+            "street": (
+                f"{address_input['addressComponents'][0]['long_name']} "
+                f"{address_input['addressComponents'][1]['long_name']}"
+            ),
+            "city": address_input["addressComponents"][3]["long_name"],
+            "state": address_input["addressComponents"][5]["short_name"],
+            "zipCode": address_input["addressComponents"][7]["long_name"],
+        }
+
+        updated_note_location = response["data"]["updateNoteLocation"]["location"]
+        self.assertEqual(self.point, updated_note_location["point"])
+        self.assertEqual(expected_address, updated_note_location["address"])
+
+        note = Note.objects.get(id=note_id)
+        self.assertIsNotNone(note.location)
+
+        location = Location.objects.get(id=note.location.pk)  # type: ignore
+        self.assertEqual(note, location.notes.first())
 
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
@@ -1102,7 +1141,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "client": self.client_user_1.pk,
         }
 
-        expected_query_count = 18
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1153,13 +1192,17 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
     def test_update_task_location_mutation(self) -> None:
         task_id = self.task["id"]
         json_address_input, address_input = self._get_address_inputs()
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         variables = {
             "id": task_id,
-            "point": self.point,
-            "address": json_address_input,
+            "location": location,
         }
 
-        expected_query_count = 18
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
@@ -1174,15 +1217,15 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "zipCode": address_input["addressComponents"][7]["long_name"],
         }
 
-        updated_task = response["data"]["updateTaskLocation"]
-        self.assertEqual(self.point, updated_task["point"])
-        self.assertEqual(expected_address, updated_task["address"])
+        updated_task_location = response["data"]["updateTaskLocation"]["location"]
+        self.assertEqual(self.point, updated_task_location["point"])
+        self.assertEqual(expected_address, updated_task_location["address"])
 
         task = Task.objects.get(id=task_id)
-        self.assertIsNotNone(task.address)
+        self.assertIsNotNone(task.location)
 
-        address = Address.objects.get(id=task.address.pk)  # type: ignore
-        self.assertEqual(task, address.tasks.first())
+        location = Location.objects.get(id=task.location.pk)  # type: ignore
+        self.assertEqual(task, location.tasks.first())
 
     def test_delete_task_mutation(self) -> None:
         mutation = """

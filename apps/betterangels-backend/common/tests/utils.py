@@ -1,12 +1,9 @@
 import json
 import uuid
-from django.contrib.gis.geos import Point
-
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
-from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
@@ -21,21 +18,6 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.maxDiff = None
         self._setup_users()
         self._setup_groups_and_permissions()
-        self.address = baker.make(
-            Address,
-            street="106 W 1st St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
-        )
-        self.point = [-118.2437, 34.0522]
-        self.point_of_interest = "An Interesting Point"
-        self.location = baker.make(
-            Location,
-            address=self.address,
-            point=Point(self.point),
-            point_of_interest=self.point_of_interest,
-        )
 
     def _setup_users(self) -> None:
         self.user_labels = [
@@ -76,25 +58,29 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
             "addressComponents": [
-                {"long_name": "106", "short_name": "106", "types": ["street_number"]},
                 {
-                    "long_name": "Geary Street",
-                    "short_name": "Geary St",
+                    "long_name": "106",
+                    "short_name": "106",
+                    "types": ["street_number"],
+                },
+                {
+                    "long_name": "West 1st Street",
+                    "short_name": "W 1st St",
                     "types": ["route"],
                 },
                 {
-                    "long_name": "Union Square",
-                    "short_name": "Union Square",
+                    "long_name": "Downtown Los Angeles",
+                    "short_name": "Downtown Los Angeles",
                     "types": ["neighborhood", "political"],
                 },
                 {
-                    "long_name": "San Francisco",
-                    "short_name": "SF",
+                    "long_name": "Los Angeles",
+                    "short_name": "Los Angeles",
                     "types": ["locality", "political"],
                 },
                 {
-                    "long_name": "San Francisco County",
-                    "short_name": "San Francisco County",
+                    "long_name": "Los Angeles County",
+                    "short_name": "Los Angeles County",
                     "types": ["administrative_area_level_2", "political"],
                 },
                 {
@@ -107,9 +93,9 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                     "short_name": "US",
                     "types": ["country", "political"],
                 },
-                {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
+                {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
             ],
-            "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+            "formattedAddress": "106 West 1st Street, Los Angeles, CA 90012, USA",
         }
 
         if isinstance(address_input["addressComponents"], list):
@@ -167,9 +153,6 @@ class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Force login to create a location
         self.graphql_client.force_login(self.org_1_case_manager_1)
         json_address_input, _ = self._get_address_inputs()
-        from IPython import embed
-
-        embed()
         variables = {
             "address": json_address_input,
             "point": self.point,
