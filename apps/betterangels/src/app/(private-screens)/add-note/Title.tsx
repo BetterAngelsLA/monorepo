@@ -154,6 +154,7 @@ export default function Title(props: ITitleProps) {
           error={!!error.date}
           required
           disabled
+          initialDate={noteDate}
           pattern={Regex.date}
           maxDate={endOfDay}
           mode="date"
@@ -167,6 +168,7 @@ export default function Title(props: ITitleProps) {
           disabled
           required
           maxDate={endOfDay}
+          initialDate={noteDate}
           mode="time"
           format="HH:mm"
           placeholder="HH:MM"
