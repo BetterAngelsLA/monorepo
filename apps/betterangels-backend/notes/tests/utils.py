@@ -68,7 +68,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             state="CA",
             zip_code="90012",
         )
-        self.point = [-118.2437, 34.0522]
+        self.point = [-118.2437207, 34.0521723]
         self.point_of_interest = "An Interesting Point"
         self.location = baker.make(
             Location,
@@ -557,7 +557,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
             state="CA",
             zip_code="90012",
         )
-        self.point = [-118.2437, 34.0522]
+        self.point = [-118.2437207, 34.0521723]
         self.point_of_interest = "An Interesting Point"
         self.location = baker.make(
             Location,

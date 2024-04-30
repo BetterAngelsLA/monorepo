@@ -200,6 +200,7 @@ class Location(BaseModel):
         """Gets or creates an location and returns it."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
+
         address = Location.get_or_create_address(location_data["address"])
 
         location, _ = Location.objects.get_or_create(
