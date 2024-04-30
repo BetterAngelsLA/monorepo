@@ -358,6 +358,9 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
+# Logging Configuration
+# https://django-structlog.readthedocs.io/en/latest/getting_started.html
+# https://betterstack.com/community/guides/logging/structlog/
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -368,15 +371,6 @@ LOGGING = {
         },
     },
     "handlers": {
-        # Important notes regarding handlers.
-        #
-        # 1. Make sure you use handlers adapted for your project.
-        # These handlers configurations are only examples for this library.
-        # See python's logging.handlers: https://docs.python.org/3/library/logging.handlers.html
-        #
-        # 2. You might also want to use different logging configurations depending of the environment.
-        # Different files (local.py, tests.py, production.py, ci.py, etc.) or only conditions.
-        # See https://docs.djangoproject.com/en/dev/topics/settings/#designating-the-settings
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "json_formatter",
