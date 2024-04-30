@@ -287,13 +287,14 @@ type Mutation {
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
-  getOrCreateLocation(data: NoteLocationInput!): GetOrCreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_service_request"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
+  getOrCreateLocation(data: NoteLocationInput!): GetOrCreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
@@ -307,7 +308,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
+  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
 }
 
 input NoteAttachmentFilter {
@@ -537,8 +538,7 @@ enum TaskStatusEnum {
 type TaskType {
   id: ID!
   title: String!
-  point: Point
-  address: AddressType
+  location: NoteLocationType
   status: TaskStatusEnum!
   dueBy: DateTime
   client: UserType
@@ -554,13 +554,19 @@ enum TaskTypeEnum {
 input UpdateNoteInput {
   id: ID
   title: String
-  point: Point
   location: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
   interactedAt: DateTime
 }
+
+input UpdateNoteLocationInput {
+  id: ID
+  location: NoteLocationInput!
+}
+
+union UpdateNoteLocationPayload = NoteType | OperationInfo
 
 union UpdateNotePayload = NoteType | OperationInfo
 
@@ -577,8 +583,7 @@ union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 input UpdateTaskInput {
   id: ID
   title: String
-  point: Point
-  address: ID
+  location: ID
   status: TaskStatusEnum
   dueBy: DateTime
   client: ID
@@ -586,8 +591,7 @@ input UpdateTaskInput {
 
 input UpdateTaskLocationInput {
   id: ID
-  point: Point
-  address: AddressInput!
+  location: NoteLocationInput!
 }
 
 union UpdateTaskLocationPayload = TaskType | OperationInfo

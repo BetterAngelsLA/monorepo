@@ -5,8 +5,6 @@ import strawberry
 import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import (
-    AddressInput,
-    AddressType,
     AttachmentInterface,
     NoteLocationInput,
     NoteLocationType,
@@ -82,8 +80,7 @@ class UpdateServiceRequestInput:
 class TaskType:
     id: auto
     title: auto
-    point: auto
-    address: Optional[AddressType]
+    location: Optional[NoteLocationType]
     status: auto
     due_by: auto
     client: Optional[UserType]
@@ -111,8 +108,7 @@ class CreateNoteTaskInput:
 class UpdateTaskInput:
     id: auto
     title: auto
-    point: auto
-    address: Optional[ID]
+    location: Optional[ID]
     status: auto
     due_by: auto
     client: Optional[ID]
@@ -214,7 +210,6 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    point: auto
     location: Optional[ID]
     public_details: auto
     private_details: auto
@@ -222,21 +217,16 @@ class UpdateNoteInput:
     interacted_at: auto
 
 
-@strawberry_django.input(Location)
-class CreateNoteLocationInput(NoteLocationInput):
-    note_id: ID
-
-
-@strawberry_django.input(Location)
-class UpdateNoteLocationInput(NoteLocationInput):
+@strawberry_django.input(models.Note)
+class UpdateNoteLocationInput:
     id: auto
+    location: NoteLocationInput
 
 
 @strawberry_django.input(models.Task)
 class UpdateTaskLocationInput:
     id: auto
-    point: auto
-    address: AddressInput
+    location: NoteLocationInput
 
 
 @strawberry_django.input(models.Note)

@@ -1,8 +1,7 @@
 from typing import Any, Dict
 
-from common.models import Address, Location
+from common.models import Address
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
@@ -15,21 +14,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note_tasks()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
-        self.address = baker.make(
-            Address,
-            street="106 W 1st St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
-        )
-        self.point = [-118.2437, 34.0522]
-        self.point_of_interest = "An Interesting Point"
-        self.location = baker.make(
-            Location,
-            address=self.address,
-            point=Point(self.point),
-            point_of_interest=self.point_of_interest,
-        )
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -502,14 +486,6 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_task()
-        self.point = [-118.2437, 34.0522]
-        self.address = baker.make(
-            Address,
-            street="106 W 1st St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
-        )
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task

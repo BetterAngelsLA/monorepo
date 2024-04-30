@@ -1,5 +1,6 @@
-from unittest.mock import ANY, patch
 from unittest import skip
+from unittest.mock import ANY, patch
+
 import time_machine
 from common.models import Address, Attachment
 from django.test import ignore_warnings, override_settings
@@ -1083,8 +1084,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": ANY,
             "title": "New Task",
-            "point": None,
-            "address": None,
+            "location": None,
             "status": "TO_DO",
             "dueBy": None,
             "client": None,
@@ -1097,8 +1097,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "point": self.point,
-            "address": self.address.pk,
+            "location": self.location.pk,
             "status": "COMPLETED",
             "client": self.client_user_1.pk,
         }
@@ -1110,12 +1109,16 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": "106 W 1st St",
+                    "city": "Los Angeles",
+                    "state": "CA",
+                    "zipCode": "90012",
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "status": "COMPLETED",
             "dueBy": None,
@@ -1138,8 +1141,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": self.task["id"],
             "title": "Updated task title",
-            "point": None,
-            "address": None,
+            "location": None,
             "status": "TO_DO",
             "dueBy": None,
             "client": None,

@@ -60,8 +60,6 @@ class ServiceRequest(BaseModel):
 )
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
-    point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
@@ -92,8 +90,6 @@ class Note(BaseModel):
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
     interacted_at = models.DateTimeField(auto_now_add=True)
-    point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")

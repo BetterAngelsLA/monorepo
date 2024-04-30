@@ -659,7 +659,7 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
-            HasPerm(perms=[AddressPermissions.ADD]),
+            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
@@ -675,13 +675,12 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this task.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Location.get_or_create_address(location_data["address"])
+            location = Location.get_or_create_location(location_data["location"])
             task = resolvers.update(
                 info,
                 task,
                 {
-                    "point": data.point,
-                    "address": address,
+                    "location": location,
                 },
             )
 

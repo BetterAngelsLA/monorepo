@@ -1,9 +1,12 @@
 import json
 import uuid
+from django.contrib.gis.geos import Point
+
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
@@ -18,6 +21,21 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.maxDiff = None
         self._setup_users()
         self._setup_groups_and_permissions()
+        self.address = baker.make(
+            Address,
+            street="106 W 1st St",
+            city="Los Angeles",
+            state="CA",
+            zip_code="90012",
+        )
+        self.point = [-118.2437, 34.0522]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
+        )
 
     def _setup_users(self) -> None:
         self.user_labels = [
@@ -58,7 +76,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
             "addressComponents": [
-                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
+                {"long_name": "106", "short_name": "106", "types": ["street_number"]},
                 {
                     "long_name": "Geary Street",
                     "short_name": "Geary St",
@@ -149,7 +167,9 @@ class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Force login to create a location
         self.graphql_client.force_login(self.org_1_case_manager_1)
         json_address_input, _ = self._get_address_inputs()
+        from IPython import embed
 
+        embed()
         variables = {
             "address": json_address_input,
             "point": self.point,

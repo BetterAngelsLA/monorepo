@@ -84,13 +84,3 @@ class Query:
             switches=switch_data,
             samples=sample_data,
         )
-
-
-@strawberry.type
-class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
-    def get_or_create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
-        with transaction.atomic():
-            location = Location.get_or_create_location(strawberry.asdict(data))
-
-            return cast(NoteLocationType, location)
