@@ -62,6 +62,7 @@ from .types import (
     ServiceRequestType,
     TaskType,
     UpdateNoteInput,
+    UpdateNoteLocationInput,
     UpdateServiceRequestInput,
     UpdateTaskInput,
     UpdateTaskLocationInput,
@@ -151,6 +152,36 @@ class Mutation:
             # Annotated Fields for Permission Checks. This is a workaround since
             # annotations are not applied during mutations.
             note._private_details = note.private_details
+
+            return cast(NoteType, note)
+
+    @strawberry_django.mutation(
+        extensions=[
+            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
+            HasPerm(perms=[LocationPermissions.ADD]),
+        ]
+    )
+    def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
+            user = get_current_user(info)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.id)
+            except Note.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this note.")
+
+            location_data: Dict = strawberry.asdict(data)
+            location = Location.get_or_create_location(location_data["location"])
+            note = resolvers.update(
+                info,
+                note,
+                {
+                    "location": location,
+                },
+            )
 
             return cast(NoteType, note)
 
