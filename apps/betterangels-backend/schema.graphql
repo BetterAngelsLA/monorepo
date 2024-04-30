@@ -359,8 +359,6 @@ enum NoteNamespaceEnum {
 type NoteType {
   id: ID!
   title: String!
-  point: Point
-  address: AddressType
   location: NoteLocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
@@ -557,7 +555,7 @@ input UpdateNoteInput {
   id: ID
   title: String
   point: Point
-  address: ID
+  location: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean

@@ -1,7 +1,8 @@
 from typing import Any, Dict
 
-from common.models import Address
+from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
@@ -14,13 +15,20 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self._setup_note_tasks()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
-        self.point = [-118.2437, 34.0522]
         self.address = baker.make(
             Address,
             street="106 W 1st St",
             city="Los Angeles",
             state="CA",
             zip_code="90012",
+        )
+        self.point = [-118.2437, 34.0522]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
         )
 
     def _setup_note(self) -> None:
@@ -87,12 +95,16 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on NoteType {{
                         id
                         title
-                        point
-                        address {{
-                            street
-                            city
-                            state
-                            zipCode
+                        location {{
+                            id
+                            address {{
+                                street
+                                city
+                                state
+                                zipCode
+                            }}
+                            point
+                            pointOfInterest
                         }}
                         moods {{
                             descriptor
@@ -159,12 +171,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         title
                         publicDetails
-                        point
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
+                        location {
+                            address {
+                                street
+                                city
+                                state
+                                zipCode
+                            }
+                            point
                         }
                         moods {
                             descriptor

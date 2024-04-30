@@ -167,8 +167,6 @@ class NoteFilter:
 class NoteType:
     id: auto
     title: auto
-    point: auto
-    address: Optional[AddressType]
     location: Optional[NoteLocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
@@ -217,7 +215,7 @@ class UpdateNoteInput:
     id: auto
     title: auto
     point: auto
-    address: Optional[ID]
+    location: Optional[ID]
     public_details: auto
     private_details: auto
     is_submitted: auto

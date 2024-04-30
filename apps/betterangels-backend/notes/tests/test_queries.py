@@ -27,8 +27,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "point": self.point,
-                "address": self.address.pk,
+                "location": self.location.pk,
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
@@ -54,12 +53,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
@@ -106,12 +109,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "title": "Updated Note",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [
@@ -153,6 +160,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
+
         self.assertEqual(expected_note, note)
 
     def test_notes_query(self) -> None:
@@ -161,12 +169,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 notes {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
