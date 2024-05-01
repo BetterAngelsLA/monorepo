@@ -14,7 +14,7 @@ export default function Interactions() {
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { data, loading, error, refetch } = useNotesQuery({
-    variables: { pagination: { limit: paginationLimit, offset: offset } },
+    variables: { pagination: { limit: paginationLimit + 1, offset: offset } },
   });
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
@@ -25,14 +25,16 @@ export default function Interactions() {
     setOffset(0);
     try {
       const response = await refetch({
-        pagination: { limit: paginationLimit, offset: 0 },
+        pagination: { limit: paginationLimit + 1, offset: 0 },
       });
-      if (
+      const isMoreAvailable =
         response.data &&
         'notes' in response.data &&
-        response.data.notes.length === paginationLimit
-      ) {
+        response.data.notes.length > paginationLimit;
+      if (isMoreAvailable) {
         setHasMore(true);
+      } else {
+        setHasMore(false);
       }
     } catch (err) {
       console.error(err);
@@ -43,14 +45,19 @@ export default function Interactions() {
   useEffect(() => {
     if (!data || !('notes' in data)) return;
 
+    const isMoreAvailable = data.notes.length > paginationLimit;
+    const notesToShow = isMoreAvailable
+      ? data.notes.slice(0, paginationLimit)
+      : data.notes;
+
     if (offset === 0) {
-      setNotes(data.notes);
+      setNotes(notesToShow);
     } else {
-      setNotes((prevNotes) => [...prevNotes, ...data.notes]);
+      setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
     }
 
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
-    if (data.notes.length < paginationLimit) setHasMore(false);
+    setHasMore(isMoreAvailable);
   }, [data]);
 
   if (loading) return <TextRegular>Loading</TextRegular>;
