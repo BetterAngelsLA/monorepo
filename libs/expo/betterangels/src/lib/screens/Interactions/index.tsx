@@ -31,11 +31,7 @@ export default function Interactions() {
         response.data &&
         'notes' in response.data &&
         response.data.notes.length > paginationLimit;
-      if (isMoreAvailable) {
-        setHasMore(true);
-      } else {
-        setHasMore(false);
-      }
+      setHasMore(isMoreAvailable);
     } catch (err) {
       console.error(err);
     }
@@ -58,7 +54,7 @@ export default function Interactions() {
 
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
-  }, [data]);
+  }, [data, offset]);
 
   if (loading) return <TextRegular>Loading</TextRegular>;
 
