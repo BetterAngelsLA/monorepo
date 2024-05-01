@@ -41,10 +41,8 @@ export default function Interactions() {
   useEffect(() => {
     if (!data || !('notes' in data)) return;
 
-    const isMoreAvailable = data.notes.length > paginationLimit;
-    const notesToShow = isMoreAvailable
-      ? data.notes.slice(0, paginationLimit)
-      : data.notes;
+    const notesToShow = data.notes.slice(0, paginationLimit);
+    const isMoreAvailable = data.notes.length > notesToShow.length;
 
     if (offset === 0) {
       setNotes(notesToShow);
