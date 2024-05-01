@@ -15,9 +15,14 @@ from unittest_parametrize import ParametrizedTestCase
 class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.maxDiff = None
         self._setup_users()
         self._setup_groups_and_permissions()
+
+        # This is for the address used by most tests
+        self.street = "106 W 1st St"
+        self.city = "Los Angeles"
+        self.state = "CA"
+        self.zip_code = "90012"
 
     def _setup_users(self) -> None:
         self.user_labels = [

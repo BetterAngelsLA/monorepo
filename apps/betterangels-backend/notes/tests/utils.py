@@ -63,10 +63,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _setup_location(self) -> None:
         self.address = baker.make(
             Address,
-            street="106 W 1st St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
+            street=self.street,
+            city=self.city,
+            state=self.state,
+            zip_code=self.zip_code,
         )
         self.point = [-118.2437207, 34.0521723]
         self.point_of_interest = "An Interesting Point"
@@ -552,10 +552,10 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _setup_location(self) -> None:
         self.address = baker.make(
             Address,
-            street="106 W 1st St",
-            city="Los Angeles",
-            state="CA",
-            zip_code="90012",
+            street=self.street,
+            city=self.city,
+            state=self.state,
+            zip_code=self.zip_code,
         )
         self.point = [-118.2437207, 34.0521723]
         self.point_of_interest = "An Interesting Point"

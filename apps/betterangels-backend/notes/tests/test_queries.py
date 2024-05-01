@@ -510,10 +510,10 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "location": {
                 "id": str(self.location.pk),
                 "address": {
-                    "street": "106 W 1st St",
-                    "city": "Los Angeles",
-                    "state": "CA",
-                    "zipCode": "90012",
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
                 },
                 "point": self.point,
                 "pointOfInterest": self.point_of_interest,

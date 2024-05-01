@@ -9,7 +9,7 @@ from common.graphql.types import (
     NoteLocationInput,
     NoteLocationType,
 )
-from common.models import Attachment, Location
+from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions

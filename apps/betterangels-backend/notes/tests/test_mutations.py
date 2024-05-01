@@ -76,10 +76,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": {
                 "id": str(self.location.pk),
                 "address": {
-                    "street": "106 W 1st St",
-                    "city": "Los Angeles",
-                    "state": "CA",
-                    "zipCode": "90012",
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
                 },
                 "point": self.point,
                 "pointOfInterest": self.point_of_interest,
@@ -1151,10 +1151,10 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": {
                 "id": str(self.location.pk),
                 "address": {
-                    "street": "106 W 1st St",
-                    "city": "Los Angeles",
-                    "state": "CA",
-                    "zipCode": "90012",
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
                 },
                 "point": self.point,
                 "pointOfInterest": self.point_of_interest,
@@ -1216,10 +1216,14 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "state": address_input["addressComponents"][5]["short_name"],
             "zipCode": address_input["addressComponents"][7]["long_name"],
         }
-
+        expected_location = {
+            "id": ANY,
+            "address": expected_address,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
         updated_task_location = response["data"]["updateTaskLocation"]["location"]
-        self.assertEqual(self.point, updated_task_location["point"])
-        self.assertEqual(expected_address, updated_task_location["address"])
+        self.assertEqual(expected_location, updated_task_location)
 
         task = Task.objects.get(id=task_id)
         self.assertIsNotNone(task.location)

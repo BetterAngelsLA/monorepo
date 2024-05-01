@@ -119,7 +119,6 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
         ],
     )
     def test_get_or_create_location_mutation_partial_street(self, missing_component_index: int) -> None:
-        self.maxDiff = None
         expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()

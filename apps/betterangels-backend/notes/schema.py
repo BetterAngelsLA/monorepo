@@ -11,11 +11,7 @@ from common.graphql.types import (
     NoteLocationType,
 )
 from common.models import Attachment, Location
-from common.permissions.enums import (
-    AddressPermissions,
-    AttachmentPermissions,
-    LocationPermissions,
-)
+from common.permissions.enums import AttachmentPermissions, LocationPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType

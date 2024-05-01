@@ -7,14 +7,11 @@ from common.graphql.types import (
     AddressType,
     FeatureControlData,
     FlagType,
-    NoteLocationInput,
     NoteLocationType,
     SampleType,
     SwitchType,
 )
-from common.models import Location
 from common.permissions.enums import AddressPermissions, LocationPermissions
-from django.db import transaction
 from strawberry.types import Info
 from strawberry_django.permissions import HasPerm
 from waffle import (
