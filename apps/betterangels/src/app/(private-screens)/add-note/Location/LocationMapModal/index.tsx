@@ -1,9 +1,4 @@
-import { useMutation } from '@apollo/client';
-import {
-  UPDATE_NOTE_LOCATION,
-  UpdateNoteLocationMutation,
-  UpdateNoteLocationMutationVariables,
-} from '@monorepo/expo/betterangels';
+import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -90,10 +85,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
-  const [updateNoteLocation, { error: updateError }] = useMutation<
-    UpdateNoteLocationMutation,
-    UpdateNoteLocationMutationVariables
-  >(UPDATE_NOTE_LOCATION);
+  const [updateNoteLocation, { error: updateError }] =
+    useUpdateNoteLocationMutation();
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
