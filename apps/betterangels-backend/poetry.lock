@@ -616,6 +616,20 @@ files = [
 Django = ">=2.2"
 
 [[package]]
+name = "django-ipware"
+version = "7.0.1"
+description = "A Django application to retrieve user's IP address"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-ipware-7.0.1.tar.gz", hash = "sha256:d9ec43d2bf7cdf216fed8d494a084deb5761a54860a53b2e74346a4f384cff47"},
+    {file = "django_ipware-7.0.1-py2.py3-none-any.whl", hash = "sha256:db16bbee920f661ae7f678e4270460c85850f03c6761a4eaeb489bdc91f64709"},
+]
+
+[package.dependencies]
+python-ipware = ">=2.0.3"
+
+[[package]]
 name = "django-jazzmin"
 version = "2.6.1"
 description = "Drop-in theme for django admin, that utilises AdminLTE 3 & Bootstrap 4 to make yo' admin look jazzy"
@@ -759,6 +773,27 @@ google = ["google-cloud-storage (>=1.27)"]
 libcloud = ["apache-libcloud"]
 s3 = ["boto3 (>=1.4.4)"]
 sftp = ["paramiko (>=1.15)"]
+
+[[package]]
+name = "django-structlog"
+version = "8.0.0"
+description = "Structured Logging for Django"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-structlog-8.0.0.tar.gz", hash = "sha256:e439ae173d8d852b5f991ff7528d8ce5b0ae003cc6ea513215334b3204aee09c"},
+    {file = "django_structlog-8.0.0-py3-none-any.whl", hash = "sha256:8431db72e9093850f4ec952a74768619667ff43987e1559526de39a82e5869a7"},
+]
+
+[package.dependencies]
+asgiref = ">=3.6.0"
+django = ">=3.2"
+django-ipware = ">=6.0.2"
+structlog = ">=21.4.0"
+
+[package.extras]
+celery = ["celery (>=5.1)"]
+commands = ["django-extensions (>=1.4.9)"]
 
 [[package]]
 name = "django-waffle"
@@ -1237,6 +1272,20 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-ipware"
+version = "3.0.0"
+description = "A Python package to retrieve user's IP address"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python_ipware-3.0.0-py3-none-any.whl", hash = "sha256:fc936e6e7ec9fcc107f9315df40658f468ac72f739482a707181742882e36b60"},
+    {file = "python_ipware-3.0.0.tar.gz", hash = "sha256:9117b1c4dddcb5d5ca49e6a9617de2fc66aec2ef35394563ac4eecabdf58c062"},
+]
+
+[package.extras]
+dev = ["coverage[toml]", "coveralls (>=3.3,<4.0)", "ruff", "twine"]
+
+[[package]]
 name = "python3-openid"
 version = "3.2.0"
 description = "OpenID support for modern servers and consumers."
@@ -1432,6 +1481,23 @@ debug-toolbar = ["django-debug-toolbar (>=3.4)"]
 enum = ["django-choices-field (>=2.2.2)"]
 
 [[package]]
+name = "structlog"
+version = "24.1.0"
+description = "Structured Logging for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "structlog-24.1.0-py3-none-any.whl", hash = "sha256:3f6efe7d25fab6e86f277713c218044669906537bb717c1807a09d46bca0714d"},
+    {file = "structlog-24.1.0.tar.gz", hash = "sha256:41a09886e4d55df25bdcb9b5c9674bccfab723ff43e0a86a1b7b236be8e57b16"},
+]
+
+[package.extras]
+dev = ["structlog[tests,typing]"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "sphinxext-opengraph", "twisted"]
+tests = ["freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "simplejson"]
+typing = ["mypy (>=1.4)", "rich", "twisted"]
+
+[[package]]
 name = "tenacity"
 version = "8.2.3"
 description = "Retry code until it succeeds"
@@ -1623,4 +1689,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.2"
-content-hash = "faeeabfd2284ba8099524e6e27eee7849303ee15bf805318655a55d3dd8e363b"
+content-hash = "721fec4f723360357aa46bf711c4839f615cf14f221f3aaadc0ba1b9c3270ac7"
