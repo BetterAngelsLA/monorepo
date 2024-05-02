@@ -1,3 +1,26 @@
+mutation CreateNote($data: CreateNoteInput!) {
+  createNote(data: $data) {
+    ... on NoteType {
+      id
+      title
+      publicDetails
+      client {
+        id
+        username
+        firstName
+        lastName
+        email
+      }
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
+    }
+}
+
+
 query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
   clients(filters: $filters, pagination: $pagination) {
     email
@@ -5,5 +28,5 @@ query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
     id
     lastName
     username
-  }
+    }
 }
