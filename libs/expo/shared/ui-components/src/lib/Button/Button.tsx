@@ -47,8 +47,8 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.WHITE,
-    color: Colors.PRIMARY_EXTRA_DARK,
-    border: Colors.NEUTRAL,
+    color: Colors.PRIMARY,
+    border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
     bg: Colors.WHITE,
