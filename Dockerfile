@@ -155,4 +155,3 @@ FROM base AS production
 COPY --from=poetry /workspace /workspace
 COPY --from=yarn /workspace /workspace
 COPY --chown=betterangels . /workspace
-
