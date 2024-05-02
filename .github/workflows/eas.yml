@@ -14,7 +14,7 @@ jobs:
       contents: read # Required for actions/checkout
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
@@ -69,7 +69,7 @@ jobs:
       pull-requests: write # Allow comments on PRs
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # https://github.com/expo/expo-github-action/issues/229
           ref: ${{ github.event.pull_request.head.ref }}

@@ -11,7 +11,7 @@ jobs:
       contents: read # Required for actions/checkout
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
@@ -39,12 +39,12 @@ jobs:
           affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
           # Convert the list to a JSON matrix
           MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
-            split("\n") | 
-            map(select(. != "")) | 
-            if length == 0 then 
-                {} 
-            else 
-                {include: map({project: .})} 
+            split("\n") |
+            map(select(. != "")) |
+            if length == 0 then
+                {}
+            else
+                {include: map({project: .})}
             end'
           )
           IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
@@ -60,7 +60,7 @@ jobs:
     if: needs.prepare.outputs.is_matrix_empty == 'false'
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Setup Node
         uses: actions/setup-node@v3
