@@ -12,8 +12,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="clientprofile",
             name="hmis_id",
-            field=models.CharField(
-                blank=True, db_index=True, max_length=50, null=True, unique=True
-            ),
+            field=models.CharField(blank=True, db_index=True, max_length=50, null=True, unique=True),
         ),
     ]
