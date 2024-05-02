@@ -28,7 +28,9 @@ interface IPurposeProps {
 export default function PurposeInput(props: IPurposeProps) {
   const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
   const [task, setTask] = useState(purpose.value);
-  const [localId, setLocalId] = useState<string | undefined>(undefined);
+  const [localId, setLocalId] = useState<string | undefined>(
+    purpose.id || undefined
+  );
   const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
