@@ -24,26 +24,27 @@ type Mood = {
 };
 
 interface MoodCheckboxProps {
+  id: string | undefined;
   mood: Mood;
   idx: number;
   noteId: string | undefined;
   tab: 'pleasant' | 'neutral' | 'unpleasant';
   setMoods: (
-    e: {
+    moods: {
       enum: MoodEnum;
-      title: string;
+      id: string | undefined;
     }[]
   ) => void;
   moods: {
     enum: MoodEnum;
-    title: string;
+    id: string | undefined;
   }[];
 }
 
 export default function MoodCheckbox(props: MoodCheckboxProps) {
-  const { mood, idx, noteId, tab, moods, setMoods } = props;
-  const [isChecked, setIsChecked] = useState(false);
-  const [moodId, setMoodId] = useState<string | undefined>(undefined);
+  const { mood, idx, noteId, tab, moods, setMoods, id } = props;
+  const [isChecked, setIsChecked] = useState(id ? true : false);
+  const [moodId, setMoodId] = useState<string | undefined>(id || undefined);
   const [isLoading, setIsLoading] = useState(false);
 
   const [createNoteMood, { error }] = useMutation<
@@ -56,13 +57,13 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   >(DELETE_MOOD);
 
   const executeMutation = useRef(
-    debounce(async () => {
+    debounce(async (checked, currentId) => {
       if (!noteId) return;
 
-      if (isChecked && moodId) {
+      if (!checked && currentId) {
         const { data } = await deleteMood({
           variables: {
-            data: { id: moodId },
+            data: { id: currentId },
           },
         });
         if (!data) {
@@ -70,7 +71,7 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
           return;
         }
         setMoodId(undefined);
-      } else if (!isChecked && noteId) {
+      } else if (checked) {
         const { data } = await createNoteMood({
           variables: {
             data: {
@@ -94,12 +95,13 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   const handleCheck = () => {
     if (isLoading) return;
     setIsLoading(true);
-    setIsChecked((prev) => !prev);
+    setIsChecked(!isChecked);
     const newMoods = moodId
       ? moods.filter((m) => m.enum !== mood.enum)
-      : [...moods, { title: mood.title, enum: mood.enum }];
+      : [...moods, { enum: mood.enum, id: undefined }];
+
     setMoods(newMoods);
-    executeMutation();
+    executeMutation(!isChecked, moodId);
   };
 
   if (tab !== mood.tab) return null;

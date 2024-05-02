@@ -2,6 +2,7 @@ import {
   Attachments,
   MoodEnum,
   NoteNamespaceEnum,
+  ViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import {
   FaceAnxiousSweatIcon,
@@ -32,7 +33,7 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ComponentType, useState } from 'react';
+import { ComponentType, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
@@ -48,6 +49,7 @@ interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  moods: ViewNoteQuery['note']['moods'];
 }
 
 const MOOD_DATA: Mood[] = [
@@ -180,48 +182,49 @@ const TABS: ['pleasant', 'neutral', 'unpleasant'] = [
 ];
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  Agreeable: FaceSmilingHandsIcon,
-  Euthymic: FaceSmileIcon,
-  Happy: FaceLaughBeamIcon,
-  Motivated: FaceLaughIcon,
-  Optimistic: FaceRelievedIcon,
-  Personable: FaceSunglassesIcon,
-  Pleasant: FaceSmileRelaxedIcon,
-  Anxious: FaceAnxiousSweatIcon,
-  Depressed: FaceDisappointedIcon,
-  Detached: FaceMehIcon,
-  Disoriented: FaceMeltingIcon,
-  Escalated: FaceSpiralEyesIcon,
-  Hopeless: FaceWearyIcon,
-  Manic: FaceSwearIcon,
-  Suicidal: FaceCloudsIcon,
-  Agitated: FacePoutingIcon,
-  'Disorganized Thought': FaceSpiralEyesIcon,
-  'Flat/blunted': FaceMehBlankIcon,
-  Indifferent: FaceHandYawnIcon,
-  Restless: FaceFrownIcon,
+  AGREEABLE: FaceSmilingHandsIcon,
+  EUTHYMIC: FaceSmileIcon,
+  HAPPY: FaceLaughBeamIcon,
+  MOTIVATED: FaceLaughIcon,
+  OPTIMISTIC: FaceRelievedIcon,
+  PERSONABLE: FaceSunglassesIcon,
+  PLEASANT: FaceSmileRelaxedIcon,
+  ANXIOUS: FaceAnxiousSweatIcon,
+  DEPRESSED: FaceDisappointedIcon,
+  DETACHED: FaceMehIcon,
+  DISORIENTED: FaceMeltingIcon,
+  ESCALATED: FaceSpiralEyesIcon,
+  HOPELESS: FaceWearyIcon,
+  MANIC: FaceSwearIcon,
+  SUICIDAL: FaceCloudsIcon,
+  AGITATED: FacePoutingIcon,
+  DISORGANIZED_THOUGHT: FaceSpiralEyesIcon,
+  FLAT_BLUNTED: FaceMehBlankIcon,
+  INDIFFERENT: FaceHandYawnIcon,
+  RESTLESS: FaceFrownIcon,
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const { expanded, setExpanded, noteId, moods: initialMoods } = props;
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }>
   >([]);
   const [moods, setMoods] = useState<
-    {
-      enum: MoodEnum;
-      title: string;
-    }[]
-  >([]);
+    | {
+        id: string | undefined;
+        enum: MoodEnum;
+      }[]
+    | undefined
+  >(undefined);
   const [tab, setTab] = useState<'pleasant' | 'neutral' | 'unpleasant'>(
     'pleasant'
   );
 
   const isMood = expanded === 'Mood';
-  const isLessThanOneMood = moods.length < 1;
+  const isLessThanOneMood = moods && moods.length < 1;
   const isLessThanOneMoodImages = images.length < 1;
   const isGreaterThanZeroMoodImages = images?.length > 0;
-  const isGreaterThanOneMood = moods.length > 0;
+  const isGreaterThanOneMood = moods && moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
   const isNeutralTab = tab === 'neutral';
@@ -251,6 +254,21 @@ export default function Mood(props: IMoodProps) {
     }
   };
 
+  useEffect(() => {
+    if (initialMoods.length === 0) {
+      setMoods([]);
+      return;
+    }
+
+    const filteredMoods = initialMoods.map((item) => ({
+      enum: item.descriptor,
+      id: item.id,
+    }));
+    setMoods(filteredMoods);
+  }, [initialMoods]);
+
+  if (!moods) return null;
+
   return (
     <FieldCard
       childHeight={isMood ? 'auto' : 0}
@@ -265,12 +283,12 @@ export default function Mood(props: IMoodProps) {
               flexWrap: 'wrap',
             }}
           >
-            {moods.map((mood: { title: string; enum: MoodEnum }) => {
-              const IconComponent = ICONS[mood.title];
+            {moods.map((mood: { enum: MoodEnum }) => {
+              const IconComponent = ICONS[mood.enum];
               return (
                 <IconComponent
                   mr="xs"
-                  key={mood.title}
+                  key={mood.enum}
                   size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
