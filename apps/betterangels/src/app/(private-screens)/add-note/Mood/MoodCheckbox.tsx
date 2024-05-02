@@ -1,12 +1,7 @@
-import { useMutation } from '@apollo/client';
 import {
-  CREATE_NOTE_MOOD,
-  CreateNoteMoodMutation,
-  CreateNoteMoodMutationVariables,
-  DELETE_MOOD,
-  DeleteMoodMutation,
-  DeleteMoodMutationVariables,
   MoodEnum,
+  useCreateNoteMoodMutation,
+  useDeleteMoodMutation,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -47,14 +42,8 @@ export default function MoodCheckbox(props: MoodCheckboxProps) {
   const [moodId, setMoodId] = useState<string | undefined>(id || undefined);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [createNoteMood, { error }] = useMutation<
-    CreateNoteMoodMutation,
-    CreateNoteMoodMutationVariables
-  >(CREATE_NOTE_MOOD);
-  const [deleteMood, { error: deleteError }] = useMutation<
-    DeleteMoodMutation,
-    DeleteMoodMutationVariables
-  >(DELETE_MOOD);
+  const [createNoteMood, { error }] = useCreateNoteMoodMutation();
+  const [deleteMood, { error: deleteError }] = useDeleteMoodMutation();
 
   const executeMutation = useRef(
     debounce(async (checked, currentId) => {

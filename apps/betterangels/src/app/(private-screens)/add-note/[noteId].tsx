@@ -1,7 +1,6 @@
-import { useMutation } from '@apollo/client';
 import {
-  DELETE_NOTE,
   MainScrollContainer,
+  useDeleteNoteMutation,
   useUpdateNoteMutation,
   useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
@@ -35,9 +34,8 @@ export default function AddNote() {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [udpateNote, { error: updateError }] = useUpdateNoteMutation();
-
-  const [deleteNote] = useMutation(DELETE_NOTE);
+  const [updateNote, { error: updateError }] = useUpdateNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
 
@@ -45,7 +43,7 @@ export default function AddNote() {
     try {
       await deleteNote({
         variables: {
-          data: { id: noteId },
+          data: { id: noteId || '' },
         },
       });
       router.back();
@@ -62,7 +60,7 @@ export default function AddNote() {
 
   async function submitNote() {
     try {
-      const result = await udpateNote({
+      const result = await updateNote({
         variables: {
           data: {
             id: noteId,

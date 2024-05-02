@@ -1,13 +1,8 @@
-import { useMutation } from '@apollo/client';
 import {
-  CREATE_NOTE_SERVICE_REQUEST,
-  CreateNoteServiceRequestMutation,
-  CreateNoteServiceRequestMutationVariables,
-  DELETE_SERVICE_REQUEST,
-  DeleteServiceRequestMutation,
-  DeleteServiceRequestMutationVariables,
   ServiceEnum,
   ServiceRequestTypeEnum,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -44,14 +39,10 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [createNoteServiceRequest, { error }] = useMutation<
-    CreateNoteServiceRequestMutation,
-    CreateNoteServiceRequestMutationVariables
-  >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest, { error: deleteError }] = useMutation<
-    DeleteServiceRequestMutation,
-    DeleteServiceRequestMutationVariables
-  >(DELETE_SERVICE_REQUEST);
+  const [createNoteServiceRequest, { error }] =
+    useCreateNoteServiceRequestMutation();
+  const [deleteServiceRequest, { error: deleteError }] =
+    useDeleteServiceRequestMutation();
 
   const executeMutation = useRef(
     debounce(async (checked, currentId) => {

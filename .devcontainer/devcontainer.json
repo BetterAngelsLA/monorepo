@@ -48,7 +48,8 @@
         "batisteo.vscode-django",
         "monosans.djlint",
         "matangover.mypy",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "GraphQL.vscode-graphql"
       ]
     }
   },

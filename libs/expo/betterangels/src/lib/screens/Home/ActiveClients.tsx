@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
@@ -7,11 +6,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { CREATE_NOTE } from '../../apollo';
 import { useUser } from '../../hooks';
+import { useCreateNoteMutation } from './__generated__/ActiveClients.generated';
 
 export default function ActiveClients() {
-  const [createNote] = useMutation(CREATE_NOTE);
+  const [createNote] = useCreateNoteMutation();
   const { user } = useUser();
   const router = useRouter();
 
@@ -26,7 +25,9 @@ export default function ActiveClients() {
           },
         },
       });
-      router.navigate(`/add-note/${data?.createNote.id}`);
+      if (data?.createNote && 'id' in data.createNote) {
+        router.navigate(`/add-note/${data?.createNote.id}`);
+      }
     } catch (err) {
       console.log(err);
     }
