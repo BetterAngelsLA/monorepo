@@ -106,7 +106,13 @@ export default function AddNote() {
           services={data.note.providedServices}
           {...props}
         />
-        <RequestedServices services={data.note.requestedServices} {...props} />
+        <RequestedServices
+          attachments={data.note.attachments.filter(
+            (item) => item.namespace === 'REQUESTED_SERVICES'
+          )}
+          services={data.note.requestedServices}
+          {...props}
+        />
         <NextStep nextSteps={data.note.nextSteps} {...props} />
         <PublicNote
           note={data.note.publicDetails}

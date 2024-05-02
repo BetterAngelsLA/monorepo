@@ -42,6 +42,7 @@ interface IRequestedServicesProps {
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
   services: ViewNoteQuery['note']['requestedServices'];
+  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
