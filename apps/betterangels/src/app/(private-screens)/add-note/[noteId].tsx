@@ -1,13 +1,8 @@
-import { useMutation, useQuery } from '@apollo/client';
 import {
-  DELETE_NOTE,
-  GET_NOTE,
   MainScrollContainer,
-  UPDATE_NOTE,
-  UpdateNoteMutation,
-  UpdateNoteMutationVariables,
-  ViewNoteQuery,
-  ViewNoteQueryVariables,
+  useDeleteNoteMutation,
+  useUpdateNoteMutation,
+  useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -55,18 +50,12 @@ export default function AddNote() {
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
-  const { data, loading: isLoading } = useQuery<
-    ViewNoteQuery,
-    ViewNoteQueryVariables
-  >(GET_NOTE, {
+  const { data, loading: isLoading } = useViewNoteQuery({
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
   });
-  const [updateNote] = useMutation<
-    UpdateNoteMutation,
-    UpdateNoteMutationVariables
-  >(UPDATE_NOTE);
-  const [deleteNote] = useMutation(DELETE_NOTE);
+  const [updateNote] = useUpdateNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const methods = useForm<INote>({
@@ -84,7 +73,7 @@ export default function AddNote() {
     try {
       await deleteNote({
         variables: {
-          data: { id: noteId },
+          data: { id: noteId || '' },
         },
       });
       router.back();
