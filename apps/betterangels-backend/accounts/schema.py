@@ -70,8 +70,8 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             client = Client.objects.create_client(
-                first_name=data.first_name if data.first_name else "",
-                last_name=data.last_name if data.last_name else "",
+                first_name=data.first_name,
+                last_name=data.last_name,
                 email=data.email,
             )
             resolvers.create(
