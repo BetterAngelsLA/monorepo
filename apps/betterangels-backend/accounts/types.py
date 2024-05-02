@@ -94,7 +94,7 @@ class CreateClientInput:
     first_name: auto
     last_name: auto
     email: auto
-    client_profile: Optional[ClientProfileInput] = None
+    client_profile: Optional[ClientProfileInput]
 
 
 @strawberry.input
