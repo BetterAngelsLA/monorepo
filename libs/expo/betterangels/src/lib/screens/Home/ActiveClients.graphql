@@ -1,0 +1,9 @@
+query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
+  clients(filters: $filters, pagination: $pagination) {
+    email
+    firstName
+    id
+    lastName
+    username
+  }
+}
