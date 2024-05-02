@@ -18,15 +18,17 @@ mutation CreateNote($data: CreateNoteInput!) {
         email
       }
     }
+  }
 }
-
 
 query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
   clients(filters: $filters, pagination: $pagination) {
-    email
-    firstName
-    id
-    lastName
-    username
+    ... on ClientType {
+      email
+      firstName
+      id
+      lastName
+      username
     }
+  }
 }
