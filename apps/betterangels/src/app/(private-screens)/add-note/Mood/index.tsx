@@ -50,6 +50,7 @@ interface IMoodProps {
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
   moods: ViewNoteQuery['note']['moods'];
+  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const MOOD_DATA: Mood[] = [
@@ -205,10 +206,16 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded, noteId, moods: initialMoods } = props;
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    moods: initialMoods,
+    attachments,
+  } = props;
   const [images, setImages] = useState<
-    Array<{ id: string | undefined; uri: string }>
-  >([]);
+    Array<{ id: string | undefined; uri: string }> | undefined
+  >(undefined);
   const [moods, setMoods] = useState<
     | {
         id: string | undefined;
@@ -222,8 +229,8 @@ export default function Mood(props: IMoodProps) {
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods && moods.length < 1;
-  const isLessThanOneMoodImages = images.length < 1;
-  const isGreaterThanZeroMoodImages = images?.length > 0;
+  const isLessThanOneMoodImages = images && images.length < 1;
+  const isGreaterThanZeroMoodImages = images && images?.length > 0;
   const isGreaterThanOneMood = moods && moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
@@ -267,7 +274,19 @@ export default function Mood(props: IMoodProps) {
     setMoods(filteredMoods);
   }, [initialMoods]);
 
-  if (!moods) return null;
+  useEffect(() => {
+    if (attachments.length === 0) {
+      setImages([]);
+      return;
+    }
+    const newImages = attachments.map((attachment) => ({
+      id: attachment.id,
+      uri: attachment.file.url,
+    }));
+    setImages(newImages);
+  }, [attachments]);
+
+  if (!moods || !images) return null;
 
   return (
     <FieldCard

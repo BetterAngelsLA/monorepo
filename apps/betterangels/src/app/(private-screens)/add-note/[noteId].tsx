@@ -98,7 +98,13 @@ export default function AddNote() {
           {...props}
         />
         <Purpose purposes={data.note.purposes} {...props} />
-        <Mood moods={data.note.moods} {...props} />
+        <Mood
+          attachments={data.note.attachments.filter(
+            (item) => item.namespace === 'MOOD_ASSESSMENT'
+          )}
+          moods={data.note.moods}
+          {...props}
+        />
         <ProvidedServices
           attachments={data.note.attachments.filter(
             (item) => item.namespace === 'PROVIDED_SERVICES'

@@ -128,10 +128,16 @@ const SERVICES = [
 ];
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { expanded, setExpanded, noteId, services: initialServices } = props;
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    services: initialServices,
+    attachments,
+  } = props;
   const [images, setImages] = useState<
-    Array<{ id: string | undefined; uri: string }>
-  >([]);
+    Array<{ id: string | undefined; uri: string }> | undefined
+  >(undefined);
   const [services, setServices] = useState<
     | Array<{
         id: string | undefined;
@@ -149,11 +155,11 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     services.length < 1 &&
     customServices &&
     customServices.length < 1;
-  const isLessThanOneRequestedServiceImages = images.length < 1;
+  const isLessThanOneRequestedServiceImages = images && images.length < 1;
   const isGreaterThanZeroRequestedService =
     (services && services.length > 0) ||
     (customServices && customServices.length > 0);
-  const isGreaterThanZeroRequestedServiceImages = images?.length > 0;
+  const isGreaterThanZeroRequestedServiceImages = images && images?.length > 0;
 
   useEffect(() => {
     if (initialServices.length === 0) {
@@ -194,7 +200,19 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     }
   }, [initialServices]);
 
-  if (!services || !customServices) return null;
+  useEffect(() => {
+    if (attachments.length === 0) {
+      setImages([]);
+      return;
+    }
+    const newImages = attachments.map((attachment) => ({
+      id: attachment.id,
+      uri: attachment.file.url,
+    }));
+    setImages(newImages);
+  }, [attachments]);
+
+  if (!services || !customServices || !images) return null;
 
   return (
     <FieldCard
