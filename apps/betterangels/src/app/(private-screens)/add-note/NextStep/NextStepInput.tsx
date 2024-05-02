@@ -23,6 +23,7 @@ import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 type TNextStep = {
+  id?: string;
   action: string;
   time?: string | undefined;
   date?: string | undefined;
@@ -33,6 +34,7 @@ interface INextStepProps {
   setNextSteps: (nextSteps: TNextStep[]) => void;
   nextSteps: TNextStep[];
   nextStep: {
+    id?: string;
     action: string;
     time?: string | undefined;
     date?: string | undefined;
@@ -47,7 +49,7 @@ export default function NextStepInput(props: INextStepProps) {
     time: nextStep.time,
     date: nextStep.date,
   });
-  const [id, setId] = useState<string | undefined>(undefined);
+  const [id, setId] = useState<string | undefined>(nextStep.id || undefined);
   const [createNoteTask, { error, loading }] = useMutation<
     CreateNoteTaskMutation,
     CreateNoteTaskMutationVariables
@@ -155,7 +157,7 @@ export default function NextStepInput(props: INextStepProps) {
         return {
           ...item,
           id: undefined,
-          value: '',
+          action: '',
         };
       }
       return item;
