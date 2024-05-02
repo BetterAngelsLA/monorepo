@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
@@ -8,12 +7,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { CREATE_NOTE_SERVICE_REQUEST, DELETE_SERVICE_REQUEST } from '../apollo';
 import {
-  CreateNoteServiceRequestMutation,
-  CreateNoteServiceRequestMutationVariables,
-  DeleteServiceRequestMutation,
-  DeleteServiceRequestMutationVariables,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
 } from '../apollo/graphql/__generated__/mutations.generated';
 import {
   ServiceEnum,
@@ -31,14 +27,10 @@ interface IOtherCategoryProps {
 
 export default function OtherCategory(props: IOtherCategoryProps) {
   const { services, serviceType, setServices, noteId } = props;
-  const [createNoteServiceRequest, { error }] = useMutation<
-    CreateNoteServiceRequestMutation,
-    CreateNoteServiceRequestMutationVariables
-  >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest, { error: deleteError }] = useMutation<
-    DeleteServiceRequestMutation,
-    DeleteServiceRequestMutationVariables
-  >(DELETE_SERVICE_REQUEST);
+  const [createNoteServiceRequest, { error }] =
+    useCreateNoteServiceRequestMutation();
+  const [deleteServiceRequest, { error: deleteError }] =
+    useDeleteServiceRequestMutation();
   const { control, setValue } = useForm();
 
   const toggleServices = async (service: string) => {

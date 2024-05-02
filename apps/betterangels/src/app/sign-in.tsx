@@ -1,8 +1,7 @@
-import { useMutation } from '@apollo/client';
 import {
   AuthContainer,
-  GENERATE_MAGIC_LINK_MUTATION,
   IDME_AUTH_MUTATION,
+  useGenerateMagicLinkMutation,
   useSignIn,
 } from '@monorepo/expo/betterangels';
 import { IdMeIcon } from '@monorepo/expo/shared/icons';
@@ -77,7 +76,7 @@ export default function SignIn() {
   const [
     generateMagicLink,
     { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
-  ] = useMutation(GENERATE_MAGIC_LINK_MUTATION);
+  ] = useGenerateMagicLinkMutation();
   const { signIn } = useSignIn(IDME_AUTH_MUTATION);
   const discovery = useAutoDiscoveryLocal(discoveryUrl);
   const { type } = useLocalSearchParams();
