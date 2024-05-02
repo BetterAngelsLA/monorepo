@@ -1,13 +1,10 @@
 import json
-import stat
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from common.models import Address, Location
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 from model_bakery import baker
-
-# from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
@@ -18,11 +15,14 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
 
     def _setup_location(self) -> None:
         # Force login to create a location
-        address_input: Dict[str, List]
         json_address_input, address_input = self._get_address_inputs()
+        assert isinstance(address_input["address_components"], list)
         self.address = baker.make(
             Address,
-            street=f"{address_input['address_components'][0]['long_name']} {address_input['address_components'][1]['long_name']}",
+            street=(
+                f"{address_input['address_components'][0]['long_name']} "
+                f"{address_input['address_components'][1]['long_name']}"
+            ),
             city=address_input["address_components"][3]["long_name"],
             state=address_input["address_components"][5]["short_name"],
             zip_code=address_input["address_components"][7]["long_name"],
@@ -155,7 +155,10 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
             expected_point_of_interest = "An Interesting Point (Standalone)"
 
         assert isinstance(address_input["address_components"], list)
-        expected_street = f"{address_input['address_components'][0]['long_name']} {address_input['address_components'][1]['long_name']}"
+        expected_street = (
+            f"{address_input['address_components'][0]['long_name']} "
+            f"{address_input['address_components'][1]['long_name']}"
+        )
         expected_city = address_input["address_components"][3]["long_name"]
         expected_state = address_input["address_components"][5]["short_name"]
         expected_zip_code = address_input["address_components"][7]["long_name"]
@@ -175,3 +178,47 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         self.assertEqual(location.address.address_components, expected_address_components)
         self.assertEqual(location.point.coords, self.point)
         self.assertEqual(location.point_of_interest, expected_point_of_interest)
+
+    def test_create_location_missing_components(self) -> None:
+        address_count = Address.objects.count()
+        json_address_input, _ = self._get_address_inputs(delete_components=True)
+
+        location_data = {
+            "address": json_address_input,
+            "point": Point(self.point),
+            "point_of_interest": None,
+        }
+        location = Location.get_or_create_location(location_data)
+
+        self.assertEqual(address_count + 1, Address.objects.count())
+        assert location.address
+        self.assertIsNone(location.address.street)
+        self.assertIsNone(location.address.city)
+        self.assertIsNone(location.address.state)
+        self.assertIsNone(location.address.zip_code)
+
+    @parametrize(
+        ("missing_component_index"),
+        [
+            (0,),  # Remove street number
+            (1,),  # Remove route
+        ],
+    )
+    def test_get_or_create_location_partial_street(self, missing_component_index: int) -> None:
+        address_count = Address.objects.count()
+        _, address_input = self._get_address_inputs()
+        assert isinstance(address_input["address_components"], list)
+
+        expected_street = "West 1st Street" if missing_component_index == 0 else None
+        address_input["address_components"].pop(missing_component_index)
+        address_input["address_components"] = json.dumps(address_input["address_components"])
+        location_data = {
+            "address": address_input,
+            "point": Point(self.point),
+            "point_of_interest": None,
+        }
+        location = Location.get_or_create_location(location_data)
+
+        assert location.address
+        self.assertEqual(address_count + 1, Address.objects.count())
+        self.assertEqual(location.address.street, expected_street)
