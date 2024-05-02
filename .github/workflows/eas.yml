@@ -108,7 +108,7 @@ jobs:
         uses: expo/expo-github-action/preview@v8
         id: expo_preview
         with:
-          command: eas update --auto --branch ${{ github.event.pull_request.head.ref }} --message "${{ github.event.workflow_run.head_commit.message }}"
+          command: eas update --auto --branch ${{ github.event.pull_request.head.ref }} --message "${{ github.event.head_commit.message }}"
           comment: true
           working-directory: apps/${{ matrix.project }}
           qr-target: expo-go
