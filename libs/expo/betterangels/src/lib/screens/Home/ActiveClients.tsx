@@ -6,23 +6,27 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { CREATE_NOTE } from '../../apollo';
-import { useUser } from '../../hooks';
+import { useClientsQuery } from './__generated__/ActiveClients.generated';
 
 export default function ActiveClients() {
   const [createNote] = useMutation(CREATE_NOTE);
-  const { user } = useUser();
+  const { data, loading, error } = useClientsQuery({
+    variables: { filters: { isActive: false } },
+  });
   const router = useRouter();
 
-  async function createNoteFunction() {
+  async function createNoteFunction(
+    id: string,
+    firstName: string | undefined | null
+  ) {
     try {
       const { data } = await createNote({
         variables: {
           data: {
-            // TODO: This should be client name once we're fetching and mapping clients
-            title: `Session with ${user?.firstName}`,
-            client: user?.id,
+            title: `Session with ${firstName || 'Client'}`,
+            client: id,
           },
         },
       });
@@ -31,6 +35,9 @@ export default function ActiveClients() {
       console.log(err);
     }
   }
+  if (!data) return null;
+
+  console.log(data?.clients);
   return (
     <>
       <View
@@ -51,15 +58,21 @@ export default function ActiveClients() {
           <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
         </Link>
       </View>
-      <ClientCard
-        onPress={createNoteFunction}
-        mb="sm"
-        imageUrl=""
-        address="361 S Spring St."
-        firstName="first name"
-        lastName="last name"
-        progress="10%"
-      />
+      {loading ? (
+        <ActivityIndicator />
+      ) : error ? (
+        <TextRegular>Something went wrong!</TextRegular>
+      ) : (
+        data?.clients.map((client) => (
+          <ClientCard
+            key={client.id}
+            onPress={() => createNoteFunction(client.id, client.firstName)}
+            mb="sm"
+            firstName={client.firstName}
+            lastName={client.lastName}
+          />
+        ))
+      )}
     </>
   );
 }
