@@ -17,8 +17,6 @@ import IconButton from '../IconButton';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
-import { useState } from 'react';
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IClientCardProps {
@@ -35,6 +33,9 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
+  menu: string | undefined;
+  setMenu: (menu: string | undefined) => void;
+  id: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -51,13 +52,17 @@ export function ClientCard(props: IClientCardProps) {
     my,
     mx,
     onPress,
+    menu,
+    setMenu,
+    id,
   } = props;
-  const [menu, setMenu] = useState(false);
+
   return (
     <TouchableWithoutFeedback
+      style={{ flex: 1 }}
       onPress={() => {
         if (menu) {
-          setMenu(false);
+          setMenu(undefined);
         }
       }}
       accessibilityRole="button"
@@ -104,14 +109,14 @@ export function ClientCard(props: IClientCardProps) {
         </View>
         <View style={{ justifyContent: 'center', position: 'relative' }}>
           <IconButton
-            onPress={() => setMenu(true)}
+            onPress={() => setMenu(id)}
             variant="transparent"
             accessibilityLabel="More options"
             accessibilityHint="Opens more options"
           >
             <MoreIcon color={Colors.NEUTRAL_DARK} />
           </IconButton>
-          {menu && (
+          {menu === id && (
             <View
               style={{
                 position: 'absolute',
