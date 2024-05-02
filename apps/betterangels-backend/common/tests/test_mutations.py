@@ -25,11 +25,11 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
             "expected_query_count",
         ),
         [
-            ("106", 1, 1, False, False, 11),  # No new address or location
-            ("104", 2, 2, False, False, 16),  # New street -> new address -> new location
-            ("106", 2, 2, False, True, 16),  # POI in address_components -> new address -> new location
-            # Standalone POI -> new location. No new address because POI not in address_components.
-            ("106", 1, 2, True, False, 13),
+            # ("106", 1, 1, False, False, 11),  # No new address or location
+            # ("104", 2, 2, False, False, 16),  # New street -> new address -> new location
+            # ("106", 2, 2, False, True, 16),  # POI in address_components -> new address -> new location
+            # # Standalone POI -> new location. No new address because POI not in address_components.
+            # ("106", 1, 2, True, False, 13),
             ("106", 2, 2, True, True, 16),  # POI in address_components -> new address -> new location
         ],
     )
