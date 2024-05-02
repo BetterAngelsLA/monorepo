@@ -57,7 +57,11 @@ class UserAdmin(BaseUserAdmin):
 
 
 class ClientProfileAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["get_client"]
+
+    @admin.display(description="Client")
+    def get_client(self, obj: ClientProfile) -> str:
+        return str(obj.user)
 
 
 @admin.register(PermissionGroup)

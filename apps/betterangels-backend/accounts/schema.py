@@ -63,15 +63,16 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientPermissions.ADD])])
     def create_client(self, info: Info, data: CreateClientInput) -> ClientType:
         with transaction.atomic():
-            client_data = strawberry.asdict(data)
-            client_profile_data: dict = client_data.pop("client_profile")  # type: ignore
+            client_profile_data = strawberry.asdict(data)
+            _ = client_profile_data.pop("client_profile")
+
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
 
             client = Client.objects.create_client(
-                first_name=client_data.get("first_name"),
-                last_name=client_data.get("last_name"),
-                email=client_data.get("email"),
+                first_name=data.first_name if data.first_name else "",
+                last_name=data.last_name if data.last_name else "",
+                email=data.email,
             )
             resolvers.create(
                 info,
