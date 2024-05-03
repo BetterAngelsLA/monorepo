@@ -113,7 +113,11 @@ export default function TabLayout() {
         <Tabs.Screen
           name="clients"
           options={{
-            title: 'Clients',
+            headerShadowVisible: false,
+            headerStyle: {
+              backgroundColor: Colors.BRAND_DARK_BLUE,
+            },
+            title: '',
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
