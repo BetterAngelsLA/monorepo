@@ -1,7 +1,8 @@
-import { SearchIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { SearchIcon, UserAddIcon } from '@monorepo/expo/shared/icons';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
+  Button,
   ClientCard,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
@@ -9,7 +10,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, View } from 'react-native';
-import { Header, MainContainer } from '../../ui-components';
+import { Header } from '../../ui-components';
 import {
   ClientsQuery,
   useClientsQuery,
@@ -131,7 +132,15 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   return (
     <View style={{ flex: 1 }}>
       <Header title="Clients" Logo={Logo} />
-      <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          paddingHorizontal: Spacings.sm,
+          paddingBottom: Spacings.xl,
+          paddingTop: Spacings.sm,
+        }}
+      >
         <BasicInput
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
@@ -170,7 +179,15 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
         />
-      </MainContainer>
+        <Button
+          height="xl"
+          icon={<UserAddIcon size="md" color={Colors.PRIMARY} />}
+          title="Add Client"
+          size="auto"
+          variant="secondary"
+          accessibilityHint="adding new client"
+        />
+      </View>
     </View>
   );
 }

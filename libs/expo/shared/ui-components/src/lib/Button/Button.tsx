@@ -27,6 +27,7 @@ const HEIGHT = {
   sm: 32,
   md: 40,
   lg: 46,
+  xl: 56,
 };
 
 const VARIANTS: TVariants = {
@@ -74,7 +75,7 @@ interface IButtonProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  height?: 'sm' | 'md' | 'lg';
+  height?: 'sm' | 'md' | 'lg' | 'xl';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
   accessibilityLabel?: string;
