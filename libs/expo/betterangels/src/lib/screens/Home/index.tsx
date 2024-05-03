@@ -13,7 +13,8 @@ import {
   View,
 } from 'react-native';
 import Events from './Events';
-import Header from './Header';
+
+import { Header } from '../../ui-components';
 import {
   ClientsQuery,
   useClientsQuery,
@@ -74,13 +75,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clients' in data)) return;
 
-    const notesToShow = data.clients.slice(0, paginationLimit);
-    const isMoreAvailable = data.clients.length > notesToShow.length;
+    const clientsToShow = data.clients.slice(0, paginationLimit);
+    const isMoreAvailable = data.clients.length > clientsToShow.length;
 
     if (offset === 0) {
-      setClients(notesToShow);
+      setClients(clientsToShow);
     } else {
-      setClients((prevNotes) => [...prevNotes, ...notesToShow]);
+      setClients((prevClients) => [...prevClients, ...clientsToShow]);
     }
 
     setHasMore(isMoreAvailable);
@@ -98,7 +99,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
       accessibilityRole="button"
     >
       <View style={{ flex: 1 }}>
-        <Header Logo={Logo} />
+        <Header title="Home" Logo={Logo} />
         <FlatList
           style={{
             flex: 1,
