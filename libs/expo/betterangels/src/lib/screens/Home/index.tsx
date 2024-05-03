@@ -74,13 +74,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clients' in data)) return;
 
-    const notesToShow = data.clients.slice(0, paginationLimit);
-    const isMoreAvailable = data.clients.length > notesToShow.length;
+    const clientsToShow = data.clients.slice(0, paginationLimit);
+    const isMoreAvailable = data.clients.length > clientsToShow.length;
 
     if (offset === 0) {
-      setClients(notesToShow);
+      setClients(clientsToShow);
     } else {
-      setClients((prevNotes) => [...prevNotes, ...notesToShow]);
+      setClients((prevClients) => [...prevClients, ...clientsToShow]);
     }
 
     setHasMore(isMoreAvailable);
