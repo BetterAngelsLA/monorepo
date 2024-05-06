@@ -10,6 +10,7 @@ export { default as Checkbox } from './Checkbox';
 export { default as ClientCard } from './ClientCard';
 export { default as Copy } from './Copy';
 export { default as DatePicker } from './DatePicker';
+export { default as DeleteModal } from './DeleteModal';
 export { default as EventCard } from './EventCard';
 export { default as FieldCard } from './FieldCard';
 export { default as IconButton } from './IconButton';
