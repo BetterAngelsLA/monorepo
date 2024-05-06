@@ -30,7 +30,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
-  const [menu, setMenu] = useState<string | undefined>();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { data, loading } = useClientsQuery({
@@ -160,8 +159,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             data ? (
               <ClientCard
                 id={item.id}
-                menu={menu}
-                setMenu={setMenu}
                 onPress={() => createNoteFunction(item.id, item.firstName)}
                 mb="sm"
                 firstName={item.firstName}
