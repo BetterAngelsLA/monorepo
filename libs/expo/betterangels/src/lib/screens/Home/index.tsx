@@ -119,7 +119,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         }
         renderItem={({ item }) => (
           <ClientCard
-            id={item.id}
             onPress={() => createNoteFunction(item.id, item.firstName)}
             mb="sm"
             firstName={item.firstName}

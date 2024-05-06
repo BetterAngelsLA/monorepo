@@ -26,7 +26,6 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
-  id: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -43,7 +42,6 @@ export function ClientCard(props: IClientCardProps) {
     my,
     mx,
     onPress,
-    id,
   } = props;
 
   return (

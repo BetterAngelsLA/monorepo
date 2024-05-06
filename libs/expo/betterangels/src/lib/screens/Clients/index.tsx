@@ -158,7 +158,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item }) =>
             data ? (
               <ClientCard
-                id={item.id}
                 onPress={() => createNoteFunction(item.id, item.firstName)}
                 mb="sm"
                 firstName={item.firstName}

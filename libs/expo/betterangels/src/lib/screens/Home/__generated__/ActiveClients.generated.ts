@@ -8,7 +8,7 @@ export type CreateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type ClientsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientFilter>;
@@ -22,6 +22,13 @@ export type ClientsQuery = { __typename?: 'Query', clients: Array<{ __typename?:
 export const CreateNoteDocument = gql`
     mutation CreateNote($data: CreateNoteInput!) {
   createNote(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
     ... on NoteType {
       id
       title

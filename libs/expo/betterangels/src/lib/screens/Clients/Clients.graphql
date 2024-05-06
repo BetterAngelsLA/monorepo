@@ -1,5 +1,13 @@
 mutation CreateNote($data: CreateNoteInput!) {
   createNote(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
     ... on NoteType {
       id
       title
