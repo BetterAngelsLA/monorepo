@@ -88,9 +88,6 @@ export function ClientCard(props: IClientCardProps) {
       <View style={{ justifyContent: 'center', position: 'relative' }}>
         <TextButton
           fontSize="sm"
-          style={{
-            maxWidth: 50,
-          }}
           title="Add Note"
           onPress={onPress}
           accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
