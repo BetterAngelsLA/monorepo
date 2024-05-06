@@ -105,6 +105,9 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
 
         return json_address_input, address_input
 
+    def test_parse_address_components(self) -> None:
+        pass
+
     @parametrize(
         (
             "street_number",
@@ -196,6 +199,32 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         self.assertIsNone(location.address.city)
         self.assertIsNone(location.address.state)
         self.assertIsNone(location.address.zip_code)
+
+    @parametrize(
+        ("missing_component_index"),
+        [
+            (0,),  # Remove street number
+            (1,),  # Remove route
+        ],
+    )
+    def test_get_or_create_location_partial_street(self, missing_component_index: int) -> None:
+        address_count = Address.objects.count()
+        _, address_input = self._get_address_inputs()
+        assert isinstance(address_input["address_components"], list)
+
+        expected_street = "West 1st Street" if missing_component_index == 0 else None
+        address_input["address_components"].pop(missing_component_index)
+        address_input["address_components"] = json.dumps(address_input["address_components"])
+        location_data = {
+            "address": address_input,
+            "point": Point(self.point),
+            "point_of_interest": None,
+        }
+        location = Location.get_or_create_location(location_data)
+
+        assert location.address
+        self.assertEqual(address_count + 1, Address.objects.count())
+        self.assertEqual(location.address.street, expected_street)
 
     @parametrize(
         ("missing_component_index"),

@@ -145,7 +145,7 @@ class Location(BaseModel):
     locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
 
     @staticmethod
-    def convert_to_structured_address(address_components: str) -> dict:
+    def parse_address_components(address_components: str) -> dict:
         address_fields = {
             "point_of_interest": "long_name",
             "street_number": "long_name",
@@ -157,28 +157,28 @@ class Location(BaseModel):
         }
 
         components = json.loads(address_components)
-        structured_address = {
+        parsed_address = {
             field: next((component.get(name_type) for component in components if field in component["types"]), None)
             for field, name_type in address_fields.items()
         }
 
-        return structured_address
+        return parsed_address
 
     @classmethod
     def get_or_create_address(cls, address_data: Dict[str, Any]) -> "Address":
         """Gets or creates an address and returns it."""
         # This function expects a Google Geocoding API payload
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
-        structured_address = cls.convert_to_structured_address(address_data["address_components"])
+        parsed_address = cls.parse_address_components(address_data["address_components"])
 
-        street_number = structured_address.get("street_number")
-        route = structured_address.get("route")
+        street_number = parsed_address.get("street_number")
+        route = parsed_address.get("route")
         street = f"{street_number} {route}".strip() if street_number and route else route
         address, _ = Address.objects.get_or_create(
             street=street,
-            city=structured_address.get("locality"),
-            state=structured_address.get("administrative_area_level_1"),
-            zip_code=structured_address.get("postal_code"),
+            city=parsed_address.get("locality"),
+            state=parsed_address.get("administrative_area_level_1"),
+            zip_code=parsed_address.get("postal_code"),
             address_components=address_data["address_components"],
             formatted_address=address_data["formatted_address"],
         )
