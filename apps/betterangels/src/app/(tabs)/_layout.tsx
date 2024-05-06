@@ -81,13 +81,6 @@ export default function TabLayout() {
                   Home
                 </TextRegular>
               </View>
-              // options={{
-              //   title: '',
-              //   tabBarIcon: () => (
-              //     <View style={styles.wrapper}>
-              //       <View style={styles.middleButton}>
-              //         <PlusIcon color={Colors.WHITE} />
-              //       </View>
             ),
           }}
         />
