@@ -357,6 +357,7 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+GUARDIAN_GET_CONTENT_TYPE = "common.utils.get_content_type"
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

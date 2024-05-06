@@ -1,7 +1,8 @@
 from typing import Any, Tuple, Type
 
 import strawberry
-from django.db.models import TextChoices
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Model, TextChoices
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -32,3 +33,7 @@ class IsAuthenticated(strawberry.BasePermission):
             return False
 
         return True
+
+
+def get_content_type(obj: Model) -> ContentType:
+    return ContentType.objects.get_for_model(obj, for_concrete_model=False)

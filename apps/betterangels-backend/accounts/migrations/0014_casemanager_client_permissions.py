@@ -18,7 +18,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     Client = apps.get_model("accounts", "Client")
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
-    ClientContentType = ContentType.objects.get_for_model(Client)
+    ClientContentType = ContentType.objects.get_for_model(Client, for_concrete_model=False)
     db_alias = schema_editor.connection.alias
 
     for codename, name in PERM_MAP.items():

@@ -26,7 +26,7 @@ def rename_client_permissions(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     Client = apps.get_model("accounts", "Client")
     ContentType = apps.get_model("contenttypes", "ContentType")
-    ClientContentType = ContentType.objects.get_for_model(Client)
+    ClientContentType = ContentType.objects.get_for_model(Client, for_concrete_model=False)
 
     PERM_MAP = {perm.split(".")[1]: perm.label for perm in ClientPermissions}
 
