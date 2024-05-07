@@ -77,40 +77,27 @@ type BedsType {
   bedLayoutDescription: String
 }
 
-input ClientFilter {
-  AND: ClientFilter
-  OR: ClientFilter
-  NOT: ClientFilter
+input ClientProfileFilter {
+  AND: ClientProfileFilter
+  OR: ClientProfileFilter
+  NOT: ClientProfileFilter
   DISTINCT: Boolean
   isActive: Boolean
   search: String
 }
 
-input ClientProfileInput {
-  hmisId: String
-}
-
 type ClientProfileType {
-  hmisId: String
-}
-
-type ClientType {
   id: ID!
-  username: String!
-  firstName: String
-  lastName: String
-  email: String!
-  clientProfile: ClientProfileType!
+  hmisId: String
+  user: UserType!
 }
 
-input CreateClientInput {
-  firstName: String
-  lastName: String
-  email: String!
-  clientProfile: ClientProfileInput
+input CreateClientProfileInput {
+  hmisId: String
+  user: CreateUserInput!
 }
 
-union CreateClientPayload = ClientType | OperationInfo
+union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
 union CreateLocationPayload = NoteLocationType | OperationInfo
 
@@ -173,6 +160,12 @@ input CreateTaskInput {
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
+
+input CreateUserInput {
+  firstName: String
+  lastName: String
+  email: String
+}
 
 """Date with time (isoformat)"""
 scalar DateTime
@@ -288,8 +281,8 @@ type Mutation {
   idmeAuth(input: AuthInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
-  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
+  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
+  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
@@ -297,7 +290,7 @@ type Mutation {
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
@@ -311,7 +304,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
+  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
 }
 
 input NoteAttachmentFilter {
@@ -419,8 +412,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
-  client(pk: ID!): ClientType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfiles(filters: ClientProfileFilter): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
