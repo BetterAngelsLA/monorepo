@@ -84,7 +84,7 @@ class ClientProfileType:
 class CreateUserInput:
     first_name: auto
     last_name: auto
-    email: auto
+    email: Optional[str]
 
 
 @strawberry_django.input(ClientProfile, partial=True)

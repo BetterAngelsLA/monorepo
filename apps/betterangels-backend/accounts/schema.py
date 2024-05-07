@@ -30,11 +30,11 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    client: ClientProfileType = strawberry_django.field(
+    client_profile: ClientProfileType = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    clients: List[ClientProfileType] = strawberry_django.field(
+    client_profiles: List[ClientProfileType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
