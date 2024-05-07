@@ -28,7 +28,7 @@ class AuthResponse:
 
 
 @filter(ClientProfile)
-class ClientFilter:
+class ClientProfileFilter:
     @strawberry_django.filter_field
     def is_active(
         self,
@@ -74,7 +74,7 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientFilter)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter)
 class ClientProfileType:
     id: auto
     hmis_id: auto
