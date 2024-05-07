@@ -1,16 +1,19 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  Button,
   DeleteModal,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
-import { useMutation } from '@apollo/client';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
-import { DELETE_NOTE } from '../../apollo/graphql/mutations';
+import {
+  ViewNoteQuery,
+  useDeleteNoteMutation,
+  useViewNoteQuery,
+} from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import NoteLocation from './NoteLocation';
 import NoteNextSteps from './NoteNextSteps';
@@ -46,11 +49,11 @@ export default function Note({ id }: { id: string }) {
     });
   }, []);
 
-  const [deleteNote] = useMutation(DELETE_NOTE);
+  const [deleteNote, { error: deleteError }] = useDeleteNoteMutation();
 
   async function deleteNoteFunction() {
     try {
-      await deleteNote({
+      const result = await deleteNote({
         variables: {
           data: { id },
         },
@@ -62,6 +65,10 @@ export default function Note({ id }: { id: string }) {
           }
         },
       });
+
+      if (!result.data)
+        throw new Error(`Error uploading image: ${deleteError}`);
+
       router.back();
     } catch (err) {
       console.error(err);
@@ -88,12 +95,20 @@ export default function Note({ id }: { id: string }) {
           <NoteNextSteps note={data?.note} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data?.note} />}
-        <DeleteModal
-          title="Confirm Delete"
-          body="Are you sure you want to delete this note?"
-          onDelete={deleteNoteFunction}
-        />
       </View>
+      <DeleteModal
+        body="All data associated with this note will be deleted"
+        title="Delete note?"
+        onDelete={deleteNoteFunction}
+        button={
+          <Button
+            accessibilityHint="deletes creation"
+            title="Delete Note"
+            variant="negative"
+            size="full"
+          />
+        }
+      />
     </MainScrollContainer>
   );
 }
@@ -101,6 +116,7 @@ export default function Note({ id }: { id: string }) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.WHITE,
+    marginBottom: Spacings.xs,
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.md,
     gap: Spacings.sm,
