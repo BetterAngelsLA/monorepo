@@ -1,18 +1,6 @@
-import { gql, useQuery } from '@apollo/client';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import UserContext, { TUser } from './UserContext';
-
-const GET_CURRENT_USER = gql`
-  query currentUser {
-    currentUser {
-      id
-      username
-      firstName
-      lastName
-      email
-    }
-  }
-`;
+import { useCurrentUserQuery } from './__generated__/UserProvider.generated';
 
 interface UserProviderProps {
   children: ReactNode;
@@ -24,15 +12,24 @@ export default function UserProvider({ children }: UserProviderProps) {
     data,
     loading: isLoading,
     refetch,
-  } = useQuery(GET_CURRENT_USER, {
+  } = useCurrentUserQuery({
     fetchPolicy: 'network-only',
   });
 
   const refetchUser = useCallback(async () => {
     try {
       const response = await refetch();
-      if (response.data) {
-        setUser(response.data.currentUser);
+      if (response.data && response.data.currentUser) {
+        const { id, username, firstName, lastName, email } =
+          response.data.currentUser;
+        setUser({
+          id,
+          username,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          email,
+          hasOrganization: false,
+        });
       }
     } catch (err) {
       console.error('Error refetching user data:', err);
@@ -41,7 +38,15 @@ export default function UserProvider({ children }: UserProviderProps) {
 
   useEffect(() => {
     if (data && !isLoading) {
-      setUser(data.currentUser);
+      const { id, username, firstName, lastName, email } = data.currentUser;
+      setUser({
+        id,
+        username,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        email,
+        hasOrganization: false,
+      });
     }
   }, [data, isLoading]);
 

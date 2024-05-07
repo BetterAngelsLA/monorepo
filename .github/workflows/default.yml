@@ -25,13 +25,13 @@ jobs:
 
     steps:
       - name: 🚦 Turnstyle
-        uses: softprops/turnstyle@v1
+        uses: softprops/turnstyle@master
         if: github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🏗 Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
