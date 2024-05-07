@@ -4,6 +4,11 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def create_caseworker_permission_template(apps, schema_editor):
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+    PermissionGroupTemplate.objects.create(name="Caseworker")
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("organizations", "0006_alter_organization_slug"),
@@ -74,4 +79,5 @@ class Migration(migrations.Migration):
                 "unique_together": {("organization", "group")},
             },
         ),
+        migrations.RunPython(create_caseworker_permission_template),
     ]

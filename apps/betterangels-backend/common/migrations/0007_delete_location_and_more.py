@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("common", "0006_address_and_address_permissions"),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("notes", "0018_add_point_to_note_and_task"),
+        # ("notes", "0018_add_point_to_note_and_task"),
     ]
 
     operations = [
