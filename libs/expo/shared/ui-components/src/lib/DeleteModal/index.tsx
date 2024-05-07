@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
@@ -11,22 +11,23 @@ export default function DeleteModal({
   title,
   body,
   onDelete,
+  button,
 }: {
   title: string;
   body: string;
   onDelete: () => void;
+  button: ReactElement;
 }) {
   const [visible, setVisible] = useState(false);
 
+  const clonedButton = React.cloneElement(button, {
+    onPress: () => setVisible(true),
+    accessibilityHint: 'opens delete modal',
+  });
+
   return (
     <>
-      <Button
-        onPress={() => setVisible(true)}
-        accessibilityHint="initiates deletion"
-        title="Delete"
-        variant="negative"
-        size="full"
-      />
+      {clonedButton}
       <BasicModal visible={visible} setVisible={setVisible}>
         <TextBold size="xl" mb="sm">
           {title}
@@ -46,14 +47,14 @@ export default function DeleteModal({
               fontSize="sm"
               onPress={() => setVisible(false)}
               color={Colors.PRIMARY}
-              accessibilityHint="cancel deletion"
+              accessibilityHint="continue to work on the note"
               title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               size="full"
-              accessibilityHint="confirms and performs deletion"
+              accessibilityHint="deletes the note"
               onPress={async () => {
                 await onDelete();
                 setVisible(false);

@@ -1,8 +1,9 @@
 import { MainScrollContainer } from '@monorepo/expo/betterangels';
 import {
   BottomActions,
-  CancelModal,
+  DeleteModal,
   TextBold,
+  TextButton,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -204,10 +205,17 @@ export default function FormScreen() {
         </MainScrollContainer>
         <BottomActions
           cancel={
-            <CancelModal
+            <DeleteModal
               body={`All data associated with ${formType} form will be deleted`}
               title={`Delete ${formType} form?`}
               onDelete={() => console.log('delete')}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="deletes creation"
+                  title="Cancel"
+                />
+              }
             />
           }
           onSubmit={methods.handleSubmit(onSubmit)}

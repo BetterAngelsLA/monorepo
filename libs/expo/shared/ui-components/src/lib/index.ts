@@ -5,7 +5,6 @@ export { default as BasicModal } from './BasicModal';
 export { default as BottomActions } from './BottomActions';
 export { default as Button } from './Button';
 export { default as CameraPicker } from './CameraPicker';
-export { default as CancelModal } from './CancelModal';
 export { default as Checkbox } from './Checkbox';
 export { default as ClientCard } from './ClientCard';
 export { default as Copy } from './Copy';
