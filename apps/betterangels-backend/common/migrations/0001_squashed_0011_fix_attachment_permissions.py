@@ -2,7 +2,7 @@
 
 import common.enums
 
-from common.permissions.enums import AttachmentPermissions, LocationPermissions
+from common.permissions.enums import AddressPermissions, AttachmentPermissions, LocationPermissions
 import common.utils
 import django.contrib.gis.db.models.fields
 import django.db.models.deletion
@@ -14,14 +14,11 @@ from django.db import migrations, models
 def create_permissions_if_not_exist(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
-    Attachment = apps.get_model("common", "Attachment")
-    Location = apps.get_model("common", "Location")
-    AttachmentContentType = ContentType.objects.get_for_model(Attachment)
-    LocationContentType = ContentType.objects.get_for_model(Location)
     db_alias = schema_editor.connection.alias
 
+    Attachment = apps.get_model("common", "Attachment")
+    AttachmentContentType = ContentType.objects.get_for_model(Attachment)
     ATTACHMENT_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentPermissions}
-    LOCATION_PERM_MAP = {perm.split(".")[1]: perm.label for perm in LocationPermissions}
 
     for codename, name in ATTACHMENT_PERM_MAP.items():
         cur_perm = Permission.objects.using(db_alias).create(
@@ -30,6 +27,22 @@ def create_permissions_if_not_exist(apps, schema_editor):
         )
         cur_perm.name = name
         cur_perm.save()
+
+    Address = apps.get_model("common", "Address")
+    AddressContentType = ContentType.objects.get_for_model(Address)
+    ADDRESS_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AddressPermissions}
+
+    for codename, name in ADDRESS_PERM_MAP.items():
+        cur_perm = Permission.objects.using(db_alias).create(
+            codename=codename,
+            content_type=AddressContentType,
+        )
+        cur_perm.name = name
+        cur_perm.save()
+
+    Location = apps.get_model("common", "Location")
+    LocationContentType = ContentType.objects.get_for_model(Location)
+    LOCATION_PERM_MAP = {perm.split(".")[1]: perm.label for perm in LocationPermissions}
 
     for codename, name in LOCATION_PERM_MAP.items():
         cur_perm = Permission.objects.using(db_alias).create(
@@ -51,6 +64,8 @@ def update_caseworker_permission_template(apps, schema_editor):
             "common.add_attachment",
             "common.add_location",
             "common.view_location",
+            # "common.add_address",
+            # "common.view_address",
         ]
     ]
 
@@ -59,7 +74,6 @@ def update_caseworker_permission_template(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     replaces = [
         ("common", "0001_initial"),
         ("common", "0002_add_location"),
@@ -250,4 +264,5 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunPython(create_permissions_if_not_exist),
+        migrations.RunPython(update_caseworker_permission_template),
     ]
