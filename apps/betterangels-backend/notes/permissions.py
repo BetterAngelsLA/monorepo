@@ -14,10 +14,10 @@ class PrivateDetailsPermissions(models.TextChoices):
 
 
 class ServiceRequestPermissions(models.TextChoices):
-    VIEW = "notes.view_service_request", _("Can view service request")
-    CHANGE = "notes.change_service_request", _("Can change service request")
-    DELETE = "notes.delete_service_request", _("Can delete service request")
-    ADD = "notes.add_service_request", _("Can add service request")
+    VIEW = "notes.view_servicerequest", _("Can view service request")
+    CHANGE = "notes.change_servicerequest", _("Can change service request")
+    DELETE = "notes.delete_servicerequest", _("Can delete service request")
+    ADD = "notes.add_servicerequest", _("Can add service request")
 
 
 class TaskPermissions(models.TextChoices):
