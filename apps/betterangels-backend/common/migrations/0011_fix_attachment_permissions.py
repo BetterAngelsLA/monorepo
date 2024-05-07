@@ -13,9 +13,13 @@ def rename_attachment_permissions(apps, schema_editor):
     PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentPermissions}
 
     for codename, name in PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).get(
+        cur_perm, _ = Permission.objects.using(db_alias).get_or_create(
             codename=codename,
             content_type=AttachmentContentType,
+            defaults={
+                "codename": codename,
+                "content_type": AttachmentContentType,
+            },
         )
         cur_perm.name = name
         cur_perm.save()
@@ -31,9 +35,13 @@ def rename_client_permissions(apps, schema_editor):
     PERM_MAP = {perm.split(".")[1]: perm.label for perm in ClientPermissions}
 
     for codename, name in PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).get(
+        cur_perm, _ = Permission.objects.using(db_alias).get_or_create(
             codename=codename,
             content_type=ClientContentType,
+            defaults={
+                "codename": codename,
+                "content_type": ClientContentType,
+            },
         )
         cur_perm.name = name
         cur_perm.save()

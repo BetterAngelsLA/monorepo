@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING, Any, Optional
 from django.contrib.auth.base_user import BaseUserManager
 from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
+from polymorphic.managers import PolymorphicManager
 
 if TYPE_CHECKING:
     from .models import User
 
 
-class UserManager(BaseUserManager["User"]):
+class UserManager(BaseUserManager["User"], PolymorphicManager):
     def create_user(self, email: str, password: str = "", **extra_fields: Any) -> "User":
         if not email:
             raise ValueError("The Email field must be set")

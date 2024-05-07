@@ -18,6 +18,7 @@ from guardian.models import (
     UserObjectPermissionBase,
 )
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+from polymorphic.models import PolymorphicModel
 
 
 @pghistory.track(
@@ -25,7 +26,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
     pghistory.UpdateEvent("user.update"),
     pghistory.DeleteEvent("user.remove"),
 )
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin, PolymorphicModel):
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
@@ -70,9 +71,6 @@ class Client(User):
 
     clientuserobjectpermission_set: models.QuerySet["ClientUserObjectPermission"]
     clientgroupobjectpermission_set: models.QuerySet["ClientGroupObjectPermission"]
-
-    class Meta:
-        proxy = True
 
 
 class ClientProfile(models.Model):

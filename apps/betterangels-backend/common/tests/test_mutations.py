@@ -15,8 +15,8 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
     @parametrize(
         ("street_number", "expected_address_count", "expected_query_count"),
         [
-            ("200", 1, 8),
-            ("201", 2, 11),
+            ("200", 1, 9),
+            ("201", 2, 12),
         ],
     )
     def test_get_or_create_address_mutation(
@@ -42,7 +42,7 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
             self.assertEqual(expected_address, returned_address)
 
     def test_get_or_create_address_mutation_missing_components(self) -> None:
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
             json_address_input, _ = self._get_address_inputs(delete_components=True)
@@ -69,7 +69,7 @@ class AddressMutationTestCase(AddressGraphQLBaseTestCase):
         ],
     )
     def test_get_or_create_address_mutation_partial_street(self, missing_component_index: int) -> None:
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
             _, address_input = self._get_address_inputs()
@@ -110,11 +110,11 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
             "expected_query_count",
         ),
         [
-            ("200", 1, False, False, 12),
-            ("201", 2, False, False, 15),
-            ("200", 2, False, True, 15),
-            ("200", 1, True, False, 12),
-            ("200", 2, True, True, 15),
+            ("200", 1, False, False, 13),
+            ("201", 2, False, False, 16),
+            ("200", 2, False, True, 16),
+            ("200", 1, True, False, 13),
+            ("200", 2, True, True, 16),
         ],
     )
     def test_create_location_mutation(
@@ -166,7 +166,7 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
             self.assertEqual(expected_location, returned_location)
 
     def test_create_location_mutation_missing_components(self) -> None:
-        expected_query_count = 15
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
             json_address_input, _ = self._get_address_inputs(delete_components=True)
@@ -200,7 +200,7 @@ class LocationMutationTestCase(LocationGraphQLBaseTestCase):
         ],
     )
     def test_create_location_mutation_partial_street(self, missing_component_index: int) -> None:
-        expected_query_count = 15
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             address_count = Address.objects.count()
             _, address_input = self._get_address_inputs()

@@ -83,7 +83,10 @@ DEBUG = env("DEBUG")
 
 # Application definition
 INSTALLED_APPS = [
+    # 3rd Part Required for Bootstrap
     "jazzmin",
+    "polymorphic",
+    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -357,6 +360,7 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+GUARDIAN_GET_CONTENT_TYPE = "polymorphic.contrib.guardian.get_polymorphic_base_content_type"
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

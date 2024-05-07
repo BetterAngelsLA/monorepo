@@ -39,7 +39,7 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
         """
         variables = {"id": self.address["id"]}
 
-        expected_query_count = 4
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -58,7 +58,7 @@ class AddressQueryTestCase(AddressGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 4
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -187,7 +187,7 @@ class LocationQueryTestCase(LocationGraphQLBaseTestCase):
         """
         variables = {"id": self.location["id"]}
 
-        expected_query_count = 4
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -212,7 +212,7 @@ class LocationQueryTestCase(LocationGraphQLBaseTestCase):
         """
         variables = {"id": self.location["id"]}
 
-        expected_query_count = 4
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 

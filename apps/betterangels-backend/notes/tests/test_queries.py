@@ -97,7 +97,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 8
+        expected_query_count = 9
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -202,7 +202,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 8
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -271,7 +271,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
 
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
@@ -388,7 +388,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": service_request_id}
 
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -427,7 +427,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -484,7 +484,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -535,7 +535,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

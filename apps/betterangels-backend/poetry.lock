@@ -694,6 +694,20 @@ files = [
 django = ">=3"
 
 [[package]]
+name = "django-polymorphic"
+version = "3.1.0"
+description = "Seamless polymorphic inheritance for Django models"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-polymorphic-3.1.0.tar.gz", hash = "sha256:d6955b5308bf6e41dcb22ba7c96f00b51dfa497a8a5ab1e9c06c7951bf417bf8"},
+    {file = "django_polymorphic-3.1.0-py3-none-any.whl", hash = "sha256:08bc4f4f4a773a19b2deced5a56deddd1ef56ebd15207bf4052e2901c25ef57e"},
+]
+
+[package.dependencies]
+Django = ">=2.1"
+
+[[package]]
 name = "django-post-office"
 version = "3.8.0"
 description = "A Django app to monitor and send mail asynchronously, complete with template support."
@@ -1689,4 +1703,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.2"
-content-hash = "721fec4f723360357aa46bf711c4839f615cf14f221f3aaadc0ba1b9c3270ac7"
+content-hash = "5016c9eca9f63ea29ce0a7639b75c94dbbe1b0359a1fa86f9fe7e29ef0827db7"
