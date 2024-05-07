@@ -33,27 +33,26 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(response["data"]["logout"], True)
 
 
-class ClientMutationTestCase(ClientProfileGraphQLBaseTestCase):
-    def test_create_client_mutation(self) -> None:
+class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def test_create_client_profile_mutation(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        client_profile = {"hmisId": "12345678"}
-        variables = {
+        client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "email": "firsty_lasty@example.com",
-            "clientProfile": client_profile,
         }
+        variables = {"hmisId": "12345678", "user": client_profile_user}
 
-        response = self._create_client_fixture(variables)
-        client = response["data"]["createClient"]
-        expected_client = {
+        response = self._create_client_profile_fixture(variables)
+        client = response["data"]["createClientProfile"]
+        expected_client_profile = {
             "id": ANY,
-            "username": ANY,
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "email": "firsty_lasty@example.com",
-            "clientProfile": {
-                "hmisId": "12345678",
+            "user": {
+                "username": ANY,
+                "firstName": "Firsty",
+                "lastName": "Lasty",
+                "email": "firsty_lasty@example.com",
             },
+            "hmisId": "12345678",
         }
-        self.assertEqual(client, expected_client)
+        self.assertEqual(client, expected_client_profile)
