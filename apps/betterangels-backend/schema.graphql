@@ -77,6 +77,15 @@ type BedsType {
   bedLayoutDescription: String
 }
 
+input ClientFilter {
+  AND: ClientFilter
+  OR: ClientFilter
+  NOT: ClientFilter
+  DISTINCT: Boolean
+  isActive: Boolean
+  search: String
+}
+
 type ClientProfileType {
   id: ID!
   hmisId: String
@@ -404,7 +413,7 @@ scalar Point
 type Query {
   currentUser: UserType!
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
-  clientProfiles: [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfiles(filters: ClientFilter): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
