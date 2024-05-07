@@ -1,9 +1,9 @@
-from accounts.models import Client
-from accounts.tests.utils import ClientGraphQLBaseTestCase
+from accounts.models import ClientProfile
+from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
-class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
+class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
@@ -14,7 +14,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
     def test_create_client_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        client_count = Client.objects.count()
+        client_count = ClientProfile.objects.count()
         client_profile = {"hmisId": "12345678"}
         variables = {
             "firstName": "Firsty",
@@ -26,7 +26,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createClient"]["id"])
-            self.assertEqual(client_count + 1, Client.objects.count())
+            self.assertEqual(client_count + 1, ClientProfile.objects.count())
         else:
             self.assertEqual(
                 response["data"]["createClient"]["messages"][0],
@@ -36,7 +36,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
                     "message": "You don't have permission to access this app.",
                 },
             )
-            self.assertEqual(client_count, Client.objects.count())
+            self.assertEqual(client_count, ClientProfile.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -53,11 +53,14 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
 
         mutation = """
             query ViewClient($id: ID!) {
-                client(pk: $id) {
+                clientProfile(pk: $id) {
                     id
-                    firstName
-                    lastName
-                    email
+                    user {
+                        firstName
+                        lastName
+                        email
+                    }
+                    hmisId
                 }
             }
         """
@@ -81,7 +84,7 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
     )
     def test_view_clients_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        client_count = Client.objects.count()
+        client_count = ClientProfile.objects.count()
         mutation = """
             query ViewClients {
                 clients {

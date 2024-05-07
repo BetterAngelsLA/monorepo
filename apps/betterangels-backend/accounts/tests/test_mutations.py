@@ -1,7 +1,7 @@
 from unittest.mock import ANY
 
 from accounts.models import User
-from accounts.tests.utils import ClientGraphQLBaseTestCase
+from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
@@ -33,7 +33,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(response["data"]["logout"], True)
 
 
-class ClientMutationTestCase(ClientGraphQLBaseTestCase):
+class ClientMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_create_client_mutation(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         client_profile = {"hmisId": "12345678"}

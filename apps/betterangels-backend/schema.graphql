@@ -78,16 +78,17 @@ type BedsType {
 }
 
 type ClientProfileType {
+  id: ID!
   hmisId: String
-  user: DjangoModelType!
+  user: UserType!
 }
-
-union CreateClientPayload = ClientProfileType | OperationInfo
 
 input CreateClientProfileInput {
   hmisId: String
   user: CreateUserInput!
 }
+
+union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
 union CreateLocationPayload = NoteLocationType | OperationInfo
 
@@ -154,7 +155,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 input CreateUserInput {
   firstName: String
   lastName: String
-  email: String!
+  email: String
 }
 
 """Date with time (isoformat)"""
@@ -271,7 +272,7 @@ type Mutation {
   idmeAuth(input: AuthInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  createClient(data: CreateClientProfileInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
+  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
@@ -402,8 +403,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
-  client(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
-  clients: [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfiles: [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)

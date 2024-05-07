@@ -23,7 +23,7 @@ class UserManager(BaseUserManager["User"]):
     def create_client(self, email: str, **extra_fields: Any) -> "User":
         random_id = uuid.uuid4()
         email = email or self.normalize_email(f"client_{random_id}@example.com")
-        client = self.create_client(email, **extra_fields)
+        client = self.create_user(email, **extra_fields)
         client.set_unusable_password()
         return client
 

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.models import Client, User
-from accounts.tests.utils import ClientGraphQLBaseTestCase
+from accounts.models import ClientProfile, User
+from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -74,48 +74,59 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         )
 
 
-class ClientQueryTestCase(ClientGraphQLBaseTestCase):
+class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-    def test_get_client_query(self) -> None:
-        client_id = self.client_1["id"]
+    def test_get_client_profile_query(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
         query = """
-            query ViewClient($id: ID!) {
-                client(pk: $id) {
+            query ViewClientProfile($id: ID!) {
+                clientProfile(pk: $id) {
                     id
-                    firstName
-                    lastName
-                    email
+                    hmisId
+                    user {
+                        firstName
+                        lastName
+                        email
+                    }
                 }
             }
         """
 
-        variables = {"id": client_id}
+        variables = {"id": client_profile_id}
         expected_query_count = 3
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        returned_client = response["data"]["client"]
+        returned_client = response["data"]["clientProfile"]
+
+        expected_user = {
+            "firstName": self.client_profile_1_user["firstName"],
+            "lastName": self.client_profile_1_user["lastName"],
+            "email": self.client_profile_1_user["email"],
+        }
         expected_client = {
-            "id": str(client_id),
-            "firstName": self.client_1["firstName"],
-            "lastName": self.client_1["lastName"],
-            "email": self.client_1["email"],
+            "id": str(client_profile_id),
+            "hmisId": self.client_profile_1["hmisId"],
+            "user": expected_user,
         }
 
         self.assertEqual(returned_client, expected_client)
 
     def test_get_clients_query(self) -> None:
         query = """
-            query GetClients {
-                clients {
+            query ViewClientProfiles {
+                clientProfiles{
                     id
-                    firstName
-                    lastName
-                    email
+                    hmisId
+                    user {
+                        firstName
+                        lastName
+                        email
+                    }
                 }
             }
         """
@@ -124,11 +135,11 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
             response = self.execute_graphql(query)
 
         clients = response["data"]["clients"]
-        client_count = User.objects.filter(client_profile__isnull=False).count()
-        self.assertEqual(client_count, len(clients))
+        client_profile_count = ClientProfile.objects.count()
+        self.assertEqual(client_profile_count, len(clients))
 
     @parametrize(
-        ("search_value, is_active, expected_client_count"),
+        ("search_value, is_active, expected_client_profile_count"),
         [
             (None, False, 2),  # no filter parameters
             (None, True, 1),  # active filter
@@ -147,17 +158,17 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
         ],
     )
     def test_clients_query_search(
-        self, search_value: Optional[str], is_active: Optional[bool], expected_client_count: int
+        self, search_value: Optional[str], is_active: Optional[bool], expected_client_profile_count: int
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         self.organization = organization_recipe.make()
-        self.client_1 = Client.objects.get(id=self.client_1["id"])
-        self.client_2 = Client.objects.get(id=self.client_2["id"])
+        self.client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        self.client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
         baker.make(
             Note,
             organization=self.organization,
-            client=self.client_1,
+            client=self.client_profile_1,
         )
 
         query = """
@@ -174,7 +185,7 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
             baker.make(
                 Note,
                 organization=self.organization,
-                client=self.client_2,
+                client=self.client_profile_2,
             )
 
             expected_query_count = 3
@@ -182,4 +193,4 @@ class ClientQueryTestCase(ClientGraphQLBaseTestCase):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         clients = response["data"]["clients"]
-        self.assertEqual(expected_client_count, len(clients))
+        self.assertEqual(expected_client_profile_count, len(clients))

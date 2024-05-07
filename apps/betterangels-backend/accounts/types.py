@@ -76,8 +76,9 @@ class UserType:
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileType:
+    id: auto
     hmis_id: auto
-    user: auto
+    user: UserType
 
 
 @strawberry_django.input(User)

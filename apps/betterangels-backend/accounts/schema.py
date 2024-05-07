@@ -61,7 +61,7 @@ class Mutation:
         return MagicLinkResponse(message="Email link sent.")
 
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
-    def create_client(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
+    def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user") or {}
@@ -88,4 +88,4 @@ class Mutation:
             for perm in permissions:
                 assign_perm(perm, permission_group.group, client_profile)
 
-            return cast(ClientProfileType, client)
+            return cast(ClientProfileType, client_profile)
