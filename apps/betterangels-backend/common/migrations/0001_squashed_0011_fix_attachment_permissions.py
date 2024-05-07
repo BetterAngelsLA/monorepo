@@ -24,7 +24,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     LOCATION_PERM_MAP = {perm.split(".")[1]: perm.label for perm in LocationPermissions}
 
     for codename, name in ATTACHMENT_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).get(
+        cur_perm = Permission.objects.using(db_alias).create(
             codename=codename,
             content_type=AttachmentContentType,
         )
@@ -32,7 +32,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
         cur_perm.save()
 
     for codename, name in LOCATION_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).get(
+        cur_perm = Permission.objects.using(db_alias).create(
             codename=codename,
             content_type=LocationContentType,
         )
@@ -81,8 +81,6 @@ class Migration(migrations.Migration):
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0001_initial"),
         ("contenttypes", "0002_remove_content_type_name"),
-        # ("notes", "0005_alter_note_options_note_organization_and_more"),
-        # ("notes", "0018_add_point_to_note_and_task"),
         ("post_office", "0011_models_help_text"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
