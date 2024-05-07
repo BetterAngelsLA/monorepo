@@ -8,7 +8,7 @@ from django.utils import timezone
 from strawberry import Info, auto
 from strawberry_django.filters import filter
 
-from .models import Client, ClientProfile, User
+from .models import ClientProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -27,7 +27,7 @@ class AuthResponse:
     status_code: str = strawberry.field(name="status_code")
 
 
-@filter(Client)
+@filter(ClientProfile)
 class ClientFilter:
     @strawberry_django.filter_field
     def is_active(
@@ -36,7 +36,7 @@ class ClientFilter:
         info: Info,
         value: Optional[bool],
         prefix: str,
-    ) -> Tuple[QuerySet[Client], Q]:
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
         if value:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
 
@@ -51,13 +51,13 @@ class ClientFilter:
         info: Info,
         value: Optional[str],
         prefix: str,
-    ) -> Tuple[QuerySet[Client], Q]:
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
         if value:
             return (
                 queryset.filter(
-                    Q(first_name__icontains=value)
-                    | Q(last_name__icontains=value)
-                    | Q(client_profile__hmis_id__icontains=value)
+                    Q(user__first_name__icontains=value)
+                    | Q(user__last_name__icontains=value)
+                    | Q(hmis_id__icontains=value)
                 ),
                 Q(),
             )

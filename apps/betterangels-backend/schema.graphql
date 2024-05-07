@@ -77,40 +77,17 @@ type BedsType {
   bedLayoutDescription: String
 }
 
-input ClientFilter {
-  AND: ClientFilter
-  OR: ClientFilter
-  NOT: ClientFilter
-  DISTINCT: Boolean
-  isActive: Boolean
-  search: String
-}
-
-input ClientProfileInput {
-  hmisId: String
-}
-
 type ClientProfileType {
   hmisId: String
+  user: DjangoModelType!
 }
 
-type ClientType {
-  id: ID!
-  username: String!
-  firstName: String
-  lastName: String
-  email: String!
-  clientProfile: ClientProfileType!
-}
+union CreateClientPayload = ClientProfileType | OperationInfo
 
-input CreateClientInput {
-  firstName: String
-  lastName: String
-  email: String!
-  clientProfile: ClientProfileInput
+input CreateClientProfileInput {
+  hmisId: String
+  user: CreateUserInput!
 }
-
-union CreateClientPayload = ClientType | OperationInfo
 
 union CreateLocationPayload = NoteLocationType | OperationInfo
 
@@ -173,6 +150,12 @@ input CreateTaskInput {
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
+
+input CreateUserInput {
+  firstName: String
+  lastName: String
+  email: String!
+}
 
 """Date with time (isoformat)"""
 scalar DateTime
@@ -288,7 +271,7 @@ type Mutation {
   idmeAuth(input: AuthInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
-  createClient(data: CreateClientInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_client"}], any: true)
+  createClient(data: CreateClientProfileInput!): CreateClientPayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_address"}], any: true)
   createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
@@ -419,8 +402,8 @@ scalar Point
 
 type Query {
   currentUser: UserType!
-  client(pk: ID!): ClientType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
-  clients(filters: ClientFilter, pagination: OffsetPaginationInput): [ClientType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_client"}], any: true)
+  client(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clients: [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
   location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
