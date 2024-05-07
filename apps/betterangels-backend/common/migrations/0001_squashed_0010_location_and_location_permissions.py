@@ -28,18 +28,6 @@ def create_permissions_if_not_exist(apps, schema_editor):
         cur_perm.name = name
         cur_perm.save()
 
-    Address = apps.get_model("common", "Address")
-    AddressContentType = ContentType.objects.get_for_model(Address)
-    ADDRESS_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AddressPermissions}
-
-    for codename, name in ADDRESS_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
-            codename=codename,
-            content_type=AddressContentType,
-        )
-        cur_perm.name = name
-        cur_perm.save()
-
     Location = apps.get_model("common", "Location")
     LocationContentType = ContentType.objects.get_for_model(Location)
     LOCATION_PERM_MAP = {perm.split(".")[1]: perm.label for perm in LocationPermissions}
@@ -56,18 +44,32 @@ def create_permissions_if_not_exist(apps, schema_editor):
 def update_caseworker_permission_template(apps, schema_editor):
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
     Permission = apps.get_model("auth", "Permission")
+    ContentType = apps.get_model("contenttypes", "ContentType")
     caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+
+    Attachment = apps.get_model("common", "Attachment")
+    AttachmentContentType = ContentType.objects.get_for_model(Attachment)
+
+    Location = apps.get_model("common", "Location")
+    LocationContentType = ContentType.objects.get_for_model(Location)
 
     perm_map = [
         perm.split(".")[1]
         for perm in [
             "common.add_attachment",
+        ]
+    ]
+    permissions = list(Permission.objects.filter(codename__in=perm_map, content_type=AttachmentContentType))
+
+    perm_map = [
+        perm.split(".")[1]
+        for perm in [
             "common.add_location",
             "common.view_location",
         ]
     ]
+    permissions.extend(Permission.objects.filter(codename__in=perm_map, content_type=LocationContentType))
 
-    permissions = Permission.objects.filter(codename__in=perm_map)
     caseworker_template.permissions.add(*permissions)
 
 
