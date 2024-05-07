@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
         ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("common", "0003_alter_location_point"),
-        # ("notes", "0005_alter_note_options_note_organization_and_more"),
+        ("accounts", "0008_permissiongrouptemplate_permissiongroup"),
     ]
 
     operations = [
