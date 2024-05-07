@@ -75,6 +75,7 @@ def update_caseworker_permission_template(apps, schema_editor):
         perm.split(".")[1]
         for perm in [
             "notes.add_note",
+            "notes.view_note",
             "notes.add_servicerequest",
             "notes.add_task",
         ]
@@ -85,30 +86,6 @@ def update_caseworker_permission_template(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
-    # replaces = [
-    #     ("notes", "0001_initial"),
-    #     ("notes", "0002_noteuserobjectpermission_notegroupobjectpermission"),
-    #     ("notes", "0003_add_casemanager_note_permissions"),
-    #     ("notes", "0004_alter_notegroupobjectpermission_content_object_and_more"),
-    #     ("notes", "0005_alter_note_options_note_organization_and_more"),
-    #     ("notes", "0006_add_note_component_fields"),
-    #     ("notes", "0007_add_private_note_permissions"),
-    #     ("notes", "0008_historicalnote_history_relation_alter_mood_note_and_more"),
-    #     ("notes", "0009_move_location_to_common"),
-    #     ("notes", "0010_add_task_and_taskpermission"),
-    #     ("notes", "0011_add_casemanager_task_permissions"),
-    #     ("notes", "0012_add_servicerequest_and_servicerequestpermission"),
-    #     ("notes", "0013_add_casemanager_service_request_permissions"),
-    #     ("notes", "0014_note_next_steps_note_provided_services_note_purposes_and_more"),
-    #     ("notes", "0015_remove_historicalnote_client_and_more"),
-    #     ("notes", "0016_moodevent_noteevent_notenextstepsevent_and_more"),
-    #     ("notes", "0017_remove_note_insert_insert_remove_note_update_update_and_more"),
-    #     ("notes", "0018_add_point_to_note_and_task"),
-    #     ("notes", "0019_note_tasks_and_services_requests_optional"),
-    #     ("notes", "0020_replace_timestamp_with_interacted_at"),
-    # ]
-
     initial = True
 
     dependencies = [
