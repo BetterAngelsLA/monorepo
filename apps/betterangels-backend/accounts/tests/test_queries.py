@@ -116,7 +116,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(returned_client, expected_client)
 
-    def test_get_clients_query(self) -> None:
+    def test_get_client_profiles_query(self) -> None:
         query = """
             query ViewClientProfiles {
                 clientProfiles{
@@ -134,9 +134,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
-        clients = response["data"]["clients"]
+        client_profiles = response["data"]["clientProfiles"]
         client_profile_count = ClientProfile.objects.count()
-        self.assertEqual(client_profile_count, len(clients))
+        self.assertEqual(client_profile_count, len(client_profiles))
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
@@ -157,7 +157,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("A1B3", True, 1),  # hmis_id search matching active client + active filter
         ],
     )
-    def test_clients_query_search(
+    def test_client_profiles_query_search(
         self, search_value: Optional[str], is_active: Optional[bool], expected_client_profile_count: int
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -168,12 +168,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         baker.make(
             Note,
             organization=self.organization,
-            client=self.client_profile_1,
+            client=self.client_profile_1.user,
         )
 
         query = """
-            query Clients($isActive: Boolean, $search: String) {
-                clients(filters: {isActive: $isActive, search: $search}) {
+            query ClientProfiles($isActive: Boolean, $search: String) {
+                clientProfiles(filters: {isActive: $isActive, search: $search}) {
                     id
                 }
             }
@@ -185,12 +185,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             baker.make(
                 Note,
                 organization=self.organization,
-                client=self.client_profile_2,
+                client=self.client_profile_2.user,
             )
 
             expected_query_count = 3
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
-        clients = response["data"]["clients"]
-        self.assertEqual(expected_client_profile_count, len(clients))
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(expected_client_profile_count, len(client_profiles))

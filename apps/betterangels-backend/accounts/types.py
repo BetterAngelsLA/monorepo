@@ -40,7 +40,7 @@ class ClientFilter:
         if value:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
 
-            return queryset.filter(client_notes__interacted_at__gte=earliest_interaction_threshold), Q()
+            return queryset.filter(user__client_notes__interacted_at__gte=earliest_interaction_threshold), Q()
 
         return queryset, Q()
 
@@ -74,7 +74,7 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile)
+@strawberry_django.type(ClientProfile, filters=ClientFilter)
 class ClientProfileType:
     id: auto
     hmis_id: auto
