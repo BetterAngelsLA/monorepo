@@ -12,9 +12,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
@@ -68,6 +68,7 @@ export default function AddNote() {
       privateDetails: '',
     },
   });
+  const scrollRef = useRef<ScrollView>(null);
 
   async function deleteNoteFunction() {
     try {
@@ -86,6 +87,7 @@ export default function AddNote() {
     expanded,
     setExpanded,
     noteId,
+    scrollRef,
   };
 
   async function updateNoteFunction(values: INote, isSubmitted: boolean) {
@@ -116,7 +118,11 @@ export default function AddNote() {
   return (
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
-        <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
+        <MainScrollContainer
+          ref={scrollRef}
+          bg={Colors.NEUTRAL_EXTRA_LIGHT}
+          pt="sm"
+        >
           <Title
             noteTitle={data.note.title}
             noteDate={data.note.interactedAt}

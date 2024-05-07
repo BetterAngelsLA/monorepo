@@ -4,15 +4,18 @@ import {
   TextRegular,
   Textarea,
 } from '@monorepo/expo/shared/ui-components';
+import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { ScrollView } from 'react-native';
 
 interface IPrivateNoteProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function PrivateNote(props: IPrivateNoteProps) {
-  const { expanded, setExpanded } = props;
+  const { expanded, setExpanded, scrollRef } = props;
   const { control, watch } = useFormContext();
 
   const privateNote = watch('privateNote');
@@ -20,6 +23,7 @@ export default function PrivateNote(props: IPrivateNoteProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       mb="xs"
       setExpanded={() => setExpanded(isPrivateNote ? null : 'Private Note')}

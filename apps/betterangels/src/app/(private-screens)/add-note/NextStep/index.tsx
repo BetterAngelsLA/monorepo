@@ -5,14 +5,15 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { RefObject, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import NextStepInput from './NextStepInput';
 
 interface INextStepProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
 }
 
 type TNextSteps = {
@@ -22,7 +23,7 @@ type TNextSteps = {
 }[];
 
 export default function NextStep(props: INextStepProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const { expanded, setExpanded, noteId, scrollRef } = props;
   const [nextSteps, setNextSteps] = useState<TNextSteps>([]);
 
   const isNextStep = expanded === 'Next Step';
@@ -40,6 +41,7 @@ export default function NextStep(props: INextStepProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       mb="xs"
       setExpanded={() => {

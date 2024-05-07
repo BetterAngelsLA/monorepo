@@ -1,6 +1,12 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
-import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
+import { ReactNode, RefObject, useRef } from 'react';
+import {
+  DimensionValue,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import TextMedium from '../TextMedium';
 import TextRegular from '../TextRegular';
 
@@ -22,6 +28,7 @@ interface IFieldCardProps {
   setExpanded: () => void;
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -41,10 +48,20 @@ export function FieldCard(props: IFieldCardProps) {
     setExpanded,
     info,
     childHeight,
+    scrollRef,
   } = props;
+
+  const viewRef = useRef<View>(null);
+
+  const scrollToElement = () => {
+    viewRef.current?.measure((fx, fy, width, height, px, py) => {
+      scrollRef.current?.scrollTo({ x: 0, y: py, animated: true });
+    });
+  };
 
   return (
     <View
+      ref={viewRef}
       style={[
         styles.container,
         {
@@ -60,7 +77,10 @@ export function FieldCard(props: IFieldCardProps) {
       ]}
     >
       <Pressable
-        onPress={setExpanded}
+        onPress={() => {
+          setExpanded();
+          expanded !== title && scrollToElement();
+        }}
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}

@@ -32,14 +32,15 @@ import {
   TextBold,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { RefObject, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import ProvidedCheckbox from './ProvidedCheckbox';
 
 interface IProvidedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
@@ -125,7 +126,7 @@ const SERVICES = [
 ];
 
 export default function ProvidedServices(props: IProvidedServicesProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const { expanded, setExpanded, noteId, scrollRef } = props;
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }>
   >([]);
@@ -150,6 +151,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isProvidedServices ? 'auto' : 0}
       actionName={
         isProvidedServices &&

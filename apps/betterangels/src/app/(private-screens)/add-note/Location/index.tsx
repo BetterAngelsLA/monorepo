@@ -1,12 +1,13 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { RefObject, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import LocationMapModal from './LocationMapModal';
 
 interface ILocationProps {
+  scrollRef: RefObject<ScrollView>;
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
@@ -33,7 +34,7 @@ type TLocation =
   | undefined;
 
 export default function LocationComponent(props: ILocationProps) {
-  const { expanded, setExpanded, noteId, address, point } = props;
+  const { expanded, setExpanded, noteId, address, point, scrollRef } = props;
   const [error, setError] = useState(false);
   const [location, setLocation] = useState<TLocation>({
     latitude: point ? point[1] : null,
@@ -50,6 +51,7 @@ export default function LocationComponent(props: ILocationProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       required
       expanded={expanded}
       mb="xs"

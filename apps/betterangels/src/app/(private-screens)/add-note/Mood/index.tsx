@@ -32,8 +32,8 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ComponentType, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ComponentType, RefObject, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
 interface Mood {
@@ -48,6 +48,7 @@ interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
 }
 
 const MOOD_DATA: Mood[] = [
@@ -203,7 +204,7 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const { expanded, setExpanded, noteId, scrollRef } = props;
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }>
   >([]);
@@ -253,6 +254,7 @@ export default function Mood(props: IMoodProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isMood ? 'auto' : 0}
       mb="xs"
       actionName={
