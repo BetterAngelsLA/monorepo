@@ -1,4 +1,4 @@
-from accounts.permissions import ClientProfilePermissions
+from accounts.permissions import ClientPermissions
 from common.permissions.enums import AttachmentPermissions
 from django.db import migrations
 
@@ -28,7 +28,7 @@ def rename_client_permissions(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     ClientContentType = ContentType.objects.get_for_model(Client)
 
-    PERM_MAP = {perm.split(".")[1]: perm.label for perm in ClientProfilePermissions}
+    PERM_MAP = {perm.split(".")[1]: perm.label for perm in ClientPermissions}
 
     for codename, name in PERM_MAP.items():
         cur_perm = Permission.objects.using(db_alias).get(
