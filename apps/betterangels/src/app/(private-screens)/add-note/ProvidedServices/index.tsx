@@ -194,7 +194,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         setExpanded(isProvidedServices ? null : 'Provided Services');
       }}
     >
-      <View style={{ paddingBottom: Spacings.md }}>
+      <View>
         {SERVICES.map((service, idx) => (
           <View
             style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}

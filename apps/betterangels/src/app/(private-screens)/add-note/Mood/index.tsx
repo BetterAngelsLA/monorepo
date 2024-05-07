@@ -288,11 +288,7 @@ export default function Mood(props: IMoodProps) {
       expanded={expanded}
       setExpanded={() => setExpanded(isMood ? null : 'Mood')}
     >
-      <View
-        style={{
-          paddingBottom: Spacings.md,
-        }}
-      >
+      <View>
         <View style={styles.tabContainer}>
           {TABS.map((tabName) => (
             <Pressable

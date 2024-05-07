@@ -40,7 +40,6 @@ export default function PublicNote(props: IPublicNoteProps) {
         <Textarea
           textAreaChanged={isPublicNoteEdited}
           setTextAreaChanged={setIsPublicNoteEdited}
-          mb="md"
           name="hmisNote"
           control={control}
         />
