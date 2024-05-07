@@ -64,8 +64,6 @@ def update_caseworker_permission_template(apps, schema_editor):
             "common.add_attachment",
             "common.add_location",
             "common.view_location",
-            # "common.add_address",
-            # "common.view_address",
         ]
     ]
 
@@ -85,7 +83,6 @@ class Migration(migrations.Migration):
         ("common", "0008_location"),
         ("common", "0009_locationuserobjectpermission_and_more"),
         ("common", "0010_location_and_location_permissions"),
-        ("common", "0011_fix_attachment_permissions"),
     ]
 
     initial = True
