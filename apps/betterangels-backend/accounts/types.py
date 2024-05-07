@@ -77,24 +77,20 @@ class UserType:
 @strawberry_django.type(ClientProfile)
 class ClientProfileType:
     hmis_id: auto
+    user: auto
 
 
-@strawberry_django.type(Client, pagination=True, filters=ClientFilter)
-class ClientType(UserType):
-    client_profile: ClientProfileType
-
-
-@strawberry_django.input(ClientProfile)
-class ClientProfileInput:
-    hmis_id: auto
-
-
-@strawberry_django.input(Client)
-class CreateClientInput:
+@strawberry_django.input(User)
+class CreateUserInput:
     first_name: auto
     last_name: auto
     email: auto
-    client_profile: Optional[ClientProfileInput]
+
+
+@strawberry_django.input(ClientProfile, partial=True)
+class CreateClientProfileInput:
+    hmis_id: auto
+    user: CreateUserInput
 
 
 @strawberry.input
