@@ -83,10 +83,12 @@ export function FieldCard(props: IFieldCardProps) {
           </TextRegular>
         )}
         <View
+          onStartShouldSetResponder={() => true}
           style={{
             height: childHeight,
             overflow: 'hidden',
             marginTop: expanded === title ? Spacings.sm : Spacings.md,
+            marginBottom: expanded === title ? Spacings.md : 0,
           }}
         >
           {children}
