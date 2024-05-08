@@ -2,9 +2,15 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { ElementType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NavModal } from '../../ui-components';
+import NavModal from './NavModal';
 
-export default function Header({ Logo }: { Logo: ElementType }) {
+export default function Header({
+  Logo,
+  title,
+}: {
+  Logo: ElementType;
+  title: string;
+}) {
   return (
     <View style={styles.heading}>
       <View>
@@ -15,7 +21,7 @@ export default function Header({ Logo }: { Logo: ElementType }) {
           height={11}
         />
         <TextBold size="xl" color={Colors.WHITE}>
-          Home
+          {title}
         </TextBold>
       </View>
       <View style={{ alignItems: 'center' }}>

@@ -6,14 +6,10 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import Events from './Events';
-import Header from './Header';
+
+import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -24,7 +20,6 @@ const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const [createNote] = useCreateNoteMutation();
-  const [menu, setMenu] = useState<string | undefined>();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
@@ -32,7 +27,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   );
   const { data, loading } = useClientProfilesQuery({
     variables: {
-      filters: { isActive: true },
+      filters: { isActive: false },
       pagination: { limit: paginationLimit + 1, offset: offset },
     },
   });
@@ -90,70 +85,58 @@ export default function Home({ Logo }: { Logo: ElementType }) {
 
   if (!data) return null;
   return (
-    // TODO: discuss with @vecchp about the need of this TouchableWithoutFeedback. Can potentional give performance issues with big data. Is it mandatory to close menu from everywhere clicked? I would prefer only within the client card component(Product required menu to be closed from everywhere)
-    <TouchableWithoutFeedback
-      onPress={() => {
-        if (menu) {
-          setMenu(undefined);
-        }
-      }}
-      accessibilityRole="button"
-    >
-      <View style={{ flex: 1 }}>
-        <Header Logo={Logo} />
-        <FlatList
-          style={{
-            flex: 1,
-            backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-            paddingBottom: 80,
-            paddingTop: Spacings.sm,
-            paddingHorizontal: Spacings.sm,
-          }}
-          data={clients}
-          ListHeaderComponent={
-            <>
-              <Events />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: Spacings.sm,
-                }}
+    <View style={{ flex: 1 }}>
+      <Header title="Home" Logo={Logo} />
+      <FlatList
+        style={{
+          flex: 1,
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          paddingBottom: 80,
+          paddingTop: Spacings.sm,
+          paddingHorizontal: Spacings.sm,
+        }}
+        data={clients}
+        ListHeaderComponent={
+          <>
+            <Events />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: Spacings.sm,
+              }}
+            >
+              <TextMedium size="lg">Active Clients</TextMedium>
+              <Link
+                accessible
+                accessibilityHint="goes to all active clients list"
+                accessibilityRole="button"
+                href="#"
               >
-                <TextMedium size="lg">Active Clients</TextMedium>
-                <Link
-                  accessible
-                  accessibilityHint="goes to all active clients list"
-                  accessibilityRole="button"
-                  href="#"
-                >
-                  <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
-                </Link>
-              </View>
-            </>
-          }
-          renderItem={({ item }) => (
-            <View onStartShouldSetResponder={() => true}>
-              <ClientCard
-                id={item.user.id}
-                menu={menu}
-                setMenu={setMenu}
-                onPress={() =>
-                  createNoteFunction(item.user.id, item.user.firstName)
-                }
-                mb="sm"
-                firstName={item.user.firstName}
-                lastName={item.user.lastName}
-              />
+                <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
+              </Link>
             </View>
-          )}
-          keyExtractor={(item) => item.user.id}
-          onEndReached={loadMoreClients}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={renderFooter}
-        />
-      </View>
-    </TouchableWithoutFeedback>
+          </>
+        }
+        renderItem={({ item: clientProfile }) => (
+          <ClientCard
+            onPress={() =>
+              createNoteFunction(
+                clientProfile.user.id,
+                clientProfile.user.firstName
+              )
+            }
+            mb="sm"
+            firstName={clientProfile.user.firstName}
+            lastName={clientProfile.user.lastName}
+          />
+        )}
+        keyExtractor={(clientProfile) => clientProfile.user.id}
+        onEndReached={loadMoreClients}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+      />
+    </View>
   );
 }

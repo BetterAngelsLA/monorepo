@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Button } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import { NotesQuery, useNotesQuery } from '../../apollo';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
@@ -52,9 +52,7 @@ export default function Interactions() {
 
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
-  }, [data, offset]);
-
-  if (loading) return <TextRegular>Loading</TextRegular>;
+  }, [data]);
 
   if (error) throw new Error('Something went wrong!');
 
@@ -67,10 +65,14 @@ export default function Interactions() {
         onRefresh={onRefresh}
         ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
         data={notes}
-        renderItem={({ item }) => <NoteCard note={item} />}
-        keyExtractor={(item) => item.id}
+        renderItem={({ item: note }) => <NoteCard note={note} />}
+        keyExtractor={(note) => note.id}
         ListFooterComponent={() =>
-          hasMore && (
+          loading ? (
+            <View style={{ marginTop: 10, alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+          ) : !loading && hasMore ? (
             <Button
               mt="lg"
               title="Load More"
@@ -79,7 +81,7 @@ export default function Interactions() {
               variant="secondary"
               accessibilityHint={`loads more notes from the server`}
             />
-          )
+          ) : null
         }
       />
     </MainContainer>
