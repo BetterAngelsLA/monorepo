@@ -69,7 +69,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clients' in data)) return;
+    if (!data || !('clientProfiles' in data)) return;
 
     const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
     const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
@@ -83,7 +83,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
-  if (!data) return null;
+  if (!data?.clientProfiles) return null;
   return (
     <View style={{ flex: 1 }}>
       <Header title="Home" Logo={Logo} />
