@@ -12,8 +12,6 @@ import { View } from 'react-native';
 import client from './apollo';
 import Logo from './assets/images/logo.svg';
 
-import 'react-native-reanimated';
-
 export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
