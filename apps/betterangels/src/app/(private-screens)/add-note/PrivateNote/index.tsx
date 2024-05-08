@@ -1,10 +1,10 @@
 import {
+  BasicTextarea,
   FieldCard,
   TextMedium,
   TextRegular,
-  Textarea,
 } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { useState } from 'react';
 
 interface IPrivateNoteProps {
   expanded: string | undefined | null;
@@ -13,9 +13,7 @@ interface IPrivateNoteProps {
 
 export default function PrivateNote(props: IPrivateNoteProps) {
   const { expanded, setExpanded } = props;
-  const { control, watch } = useFormContext();
-
-  const privateNote = watch('privateNote');
+  const [value, setValue] = useState<string>('');
   const isPrivateNote = expanded === 'Private Note';
 
   return (
@@ -25,15 +23,19 @@ export default function PrivateNote(props: IPrivateNoteProps) {
       setExpanded={() => setExpanded(isPrivateNote ? null : 'Private Note')}
       title="Private Note (Optional)"
       actionName={
-        !privateNote && !isPrivateNote ? (
+        !value && !isPrivateNote ? (
           <TextMedium size="sm">Add private note</TextMedium>
         ) : null
       }
     >
       {isPrivateNote ? (
-        <Textarea mb="md" name="privateNote" control={control} />
+        <BasicTextarea
+          mb="md"
+          value={value}
+          onChangeText={(e) => setValue(e)}
+        />
       ) : (
-        privateNote && <TextRegular mb="md">{privateNote}</TextRegular>
+        value && <TextRegular mb="md">{value}</TextRegular>
       )}
     </FieldCard>
   );

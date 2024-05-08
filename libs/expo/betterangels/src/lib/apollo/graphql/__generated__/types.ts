@@ -118,6 +118,8 @@ export type CreateClientInput = {
 
 export type CreateClientPayload = ClientType | OperationInfo;
 
+export type CreateLocationPayload = NoteLocationType | OperationInfo;
+
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
   namespace: NoteNamespaceEnum;
@@ -289,6 +291,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
   createClient: CreateClientPayload;
+  createLocation: CreateLocationPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -324,6 +327,11 @@ export type MutationAddNoteTaskArgs = {
 
 export type MutationCreateClientArgs = {
   data: CreateClientInput;
+};
+
+
+export type MutationCreateLocationArgs = {
+  data: NoteLocationInput;
 };
 
 
@@ -474,6 +482,20 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export type NoteLocationInput = {
+  address?: InputMaybe<AddressInput>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+  pointOfInterest?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type NoteLocationType = {
+  __typename?: 'NoteLocationType';
+  address: AddressType;
+  id: Scalars['ID']['output'];
+  point?: Maybe<Scalars['Point']['output']>;
+  pointOfInterest?: Maybe<Scalars['String']['output']>;
+};
+
 export enum NoteNamespaceEnum {
   MoodAssessment = 'MOOD_ASSESSMENT',
   ProvidedServices = 'PROVIDED_SERVICES',
@@ -574,6 +596,8 @@ export type Query = {
   clients: Array<ClientType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  location: NoteLocationType;
+  locations: Array<NoteLocationType>;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -600,6 +624,11 @@ export type QueryClientArgs = {
 export type QueryClientsArgs = {
   filters?: InputMaybe<ClientFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryLocationArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
