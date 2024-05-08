@@ -157,15 +157,18 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             flex: 1,
           }}
           sections={sections}
-          renderItem={({ item }) =>
+          renderItem={({ item: clientProfile }) =>
             data ? (
               <ClientCard
                 onPress={() =>
-                  createNoteFunction(item.user.id, item.user.firstName)
+                  createNoteFunction(
+                    clientProfile.user.id,
+                    clientProfile.user.firstName
+                  )
                 }
                 mb="sm"
-                firstName={item.user.firstName}
-                lastName={item.user.lastName}
+                firstName={clientProfile.user.firstName}
+                lastName={clientProfile.user.lastName}
               />
             ) : null
           }
@@ -174,7 +177,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               {title}
             </TextBold>
           )}
-          keyExtractor={(item) => item.user.id}
+          keyExtractor={(clientProfile) => clientProfile.user.id}
           onEndReached={loadMoreClients}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
