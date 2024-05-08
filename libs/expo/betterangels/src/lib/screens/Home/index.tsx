@@ -136,17 +136,19 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           renderItem={({ item }) => (
             <View onStartShouldSetResponder={() => true}>
               <ClientCard
-                id={item.id}
+                id={item.user.id}
                 menu={menu}
                 setMenu={setMenu}
-                onPress={() => createNoteFunction(item.id, item.user.firstName)}
+                onPress={() =>
+                  createNoteFunction(item.user.id, item.user.firstName)
+                }
                 mb="sm"
                 firstName={item.user.firstName}
                 lastName={item.user.lastName}
               />
             </View>
           )}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.user.id}
           onEndReached={loadMoreClients}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}

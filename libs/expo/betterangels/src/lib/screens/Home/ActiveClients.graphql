@@ -30,6 +30,7 @@ query ClientProfiles(
       id
       hmisId
       user {
+        id
         email
         firstName
         lastName
