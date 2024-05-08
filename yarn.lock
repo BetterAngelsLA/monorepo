@@ -4166,7 +4166,7 @@ __metadata:
     "@types/apollo-upload-client": ^18.0.0
     "@types/jest": ^29.4.0
     "@types/node": 18.19.14
-    "@types/react": 18.2.54
+    "@types/react": 18.2.79
     "@typescript-eslint/eslint-plugin": 7.6.0
     "@typescript-eslint/parser": 7.6.0
     "@yarnpkg/sdks": ^3.0.0-rc.48
@@ -4207,7 +4207,7 @@ __metadata:
     jest-circus: ^29.4.1
     jest-environment-jsdom: ^29.4.1
     jest-environment-node: ^29.4.1
-    jest-expo: ~50.0.4
+    jest-expo: ~51.0.1
     metro: ~0.80.4
     metro-react-native-babel-transformer: ^0.77.0
     nx: 18.2.4
@@ -4230,7 +4230,7 @@ __metadata:
     ts-jest: ^29.1.0
     ts-node: 10.9.1
     tslib: ^2.3.0
-    typescript: ^5.3.0
+    typescript: ^5.3.3
   languageName: unknown
   linkType: soft
 
@@ -8589,14 +8589,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:18.2.54":
-  version: 18.2.54
-  resolution: "@types/react@npm:18.2.54"
+"@types/react@npm:18.2.79":
+  version: 18.2.79
+  resolution: "@types/react@npm:18.2.79"
   dependencies:
     "@types/prop-types": "*"
-    "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: 261bf1f5d8320708f059b9b2e691eb60dff94a2b7d2e821f55289b611b8a215b4b23d69358d621ef9b5969d88198a32024ef43d5dd979c9df60aeae98cd27b0e
+  checksum: 85aa96e0e88725c84d8fc5f04f10a4da6a1f507dde33557ac9cc211414756867721264bfefd9e02bae1288ce2905351d949b652b931e734ea24519ee5c625138
   languageName: node
   linkType: hard
 
@@ -8630,13 +8629,6 @@ __metadata:
   version: 0.12.0
   resolution: "@types/retry@npm:0.12.0"
   checksum: 61a072c7639f6e8126588bf1eb1ce8835f2cb9c2aba795c4491cf6310e013267b0c8488039857c261c387e9728c1b43205099223f160bb6a76b4374f741b5603
-  languageName: node
-  linkType: hard
-
-"@types/scheduler@npm:*":
-  version: 0.23.0
-  resolution: "@types/scheduler@npm:0.23.0"
-  checksum: 874d753aa65c17760dfc460a91e6df24009bde37bfd427a031577b30262f7770c1b8f71a21366c7dbc76111967384cf4090a31d65315155180ef14bd7acccb32
   languageName: node
   linkType: hard
 
@@ -9345,25 +9337,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/fslib@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@yarnpkg/fslib@npm:3.0.2"
+"@yarnpkg/fslib@npm:^3.0.2, @yarnpkg/fslib@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@yarnpkg/fslib@npm:3.1.0"
   dependencies:
     tslib: ^2.4.0
-  checksum: b0795df777e43eb1c2bd8aa1d6c45f88b8a1d3922ee8bf264cdca916cc6f9455551a9499761a9c1f585aa576350d84adcc315e497fc031cdbbbc1a5c71942e1b
+  checksum: 5274c63731cb30283a93e1446d6796b890fc56c55ed046156b2963a527465bc3add091a1e7f471b7533c8b1aa67b8532960e64589787014dee2cf3d97a9304f6
   languageName: node
   linkType: hard
 
 "@yarnpkg/libzip@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "@yarnpkg/libzip@npm:3.0.1"
+  version: 3.1.0
+  resolution: "@yarnpkg/libzip@npm:3.1.0"
   dependencies:
     "@types/emscripten": ^1.39.6
-    "@yarnpkg/fslib": ^3.0.2
+    "@yarnpkg/fslib": ^3.1.0
     tslib: ^2.4.0
   peerDependencies:
-    "@yarnpkg/fslib": ^3.0.2
-  checksum: 932b1fc35bb60ca57d033aab7a940f7b1d7bf52a68bfff6c755fe26827c0f1b373fda33e373afabbae98de3ed31ae4f0e9ee2ef24588cd074b75fb814117827d
+    "@yarnpkg/fslib": ^3.1.0
+  checksum: 2bb7c10b41184a079906ec4ebdadda69e4cd3b101d11aae965c08934254dbd303e51e9869fd8d799c5f58d59214cd13d67d454ad96e1c76ce9384816d58da08c
   languageName: node
   linkType: hard
 
@@ -17008,12 +17000,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-expo@npm:~50.0.4":
-  version: 50.0.4
-  resolution: "jest-expo@npm:50.0.4"
+"jest-expo@npm:~51.0.1":
+  version: 51.0.1
+  resolution: "jest-expo@npm:51.0.1"
   dependencies:
-    "@expo/config": ~8.5.0
-    "@expo/json-file": ^8.2.37
+    "@expo/config": ~9.0.0-beta.0
+    "@expo/json-file": ^8.3.0
     "@jest/create-cache-key-function": ^29.2.1
     babel-jest: ^29.2.1
     find-up: ^5.0.0
@@ -17026,7 +17018,7 @@ __metadata:
     stacktrace-js: ^2.0.2
   bin:
     jest: bin/jest.js
-  checksum: 8c352d8ec813c4cf293bd7b0d224352cb75a32210efb85da92e66d90bdadeb1d0dad351731af956a3310ef36eec325d5381ddd7194c301c865e2005bd34bbf2b
+  checksum: 8ecc6c723ddbdd76f6f53c8e0ff114bf20b277aa03abfcf5ab5fbf1f9d6ff17f4861f9c5eb34a62852349e86c9811899348b67ab9a6e1754cddfbbdf7e01e11e
   languageName: node
   linkType: hard
 
@@ -24371,7 +24363,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.3.0, typescript@npm:~5.4.2":
+"typescript@npm:^5.3.3, typescript@npm:~5.4.2":
   version: 5.4.5
   resolution: "typescript@npm:5.4.5"
   bin:
@@ -24381,7 +24373,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^5.3.0#~builtin<compat/typescript>, typescript@patch:typescript@~5.4.2#~builtin<compat/typescript>":
+"typescript@patch:typescript@^5.3.3#~builtin<compat/typescript>, typescript@patch:typescript@~5.4.2#~builtin<compat/typescript>":
   version: 5.4.5
   resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=f3b441"
   bin:
