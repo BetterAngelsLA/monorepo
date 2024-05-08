@@ -39,6 +39,7 @@ export default function ImageComponent(props: IImageComponentProps) {
       console.error(err);
     }
   };
+
   return (
     <View
       style={{
