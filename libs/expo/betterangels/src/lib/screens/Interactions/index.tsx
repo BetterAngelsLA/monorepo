@@ -65,8 +65,8 @@ export default function Interactions() {
         onRefresh={onRefresh}
         ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
         data={notes}
-        renderItem={({ item }) => <NoteCard note={item} />}
-        keyExtractor={(item) => item.id}
+        renderItem={({ item: note }) => <NoteCard note={note} />}
+        keyExtractor={(note) => note.id}
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>

@@ -119,15 +119,20 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             </View>
           </>
         }
-        renderItem={({ item }) => (
+        renderItem={({ item: clientProfile }) => (
           <ClientCard
-            onPress={() => createNoteFunction(item.id, item.user.firstName)}
+            onPress={() =>
+              createNoteFunction(
+                clientProfile.user.id,
+                clientProfile.user.firstName
+              )
+            }
             mb="sm"
-            firstName={item.user.firstName}
-            lastName={item.user.lastName}
+            firstName={clientProfile.user.firstName}
+            lastName={clientProfile.user.lastName}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(clientProfile) => clientProfile.user.id}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
