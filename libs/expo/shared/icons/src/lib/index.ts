@@ -131,6 +131,7 @@ export { default as TargetIcon } from './components/TargetIcon';
 export { default as TentIcon } from './components/TentIcon';
 export { default as ToothIcon } from './components/ToothIcon';
 export { default as ToothbrushIcon } from './components/ToothbrushIcon';
+export { default as UserAddIcon } from './components/UserAddIcon';
 export { default as UserDoctorHairIcon } from './components/UserDoctorHairIcon';
 export { default as UserIcon } from './components/UserIcon';
 export { default as UsersIcon } from './components/UsersIcon';

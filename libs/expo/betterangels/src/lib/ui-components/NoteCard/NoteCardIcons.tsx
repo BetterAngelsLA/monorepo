@@ -101,7 +101,7 @@ export default function NoteCardIcons({
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      {icons.slice(0, 5).map((icon) => {
+      {icons.slice(0, 5).map((icon, idx) => {
         let iconEnumValue = '';
 
         if ('descriptor' in icon) {
@@ -112,12 +112,7 @@ export default function NoteCardIcons({
 
         if (iconEnumValue === 'OTHER') {
           return (
-            <PlusIcon
-              key={icon.id}
-              mr="xs"
-              size="sm"
-              color={Colors.NEUTRAL_DARK}
-            />
+            <PlusIcon key={idx} mr="xs" size="sm" color={Colors.NEUTRAL_DARK} />
           );
         }
 
@@ -129,7 +124,7 @@ export default function NoteCardIcons({
             <IconComponent
               size="sm"
               color={Colors.NEUTRAL_DARK}
-              key={icon.id}
+              key={idx}
               mr="xs"
             />
           );
