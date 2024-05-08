@@ -107,7 +107,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
     const groupedContacts = clientsToShow.reduce(
       (acc: IGroupedClients, client) => {
-        const firstLetter = client.user.firstName?.[0].toUpperCase();
+        const firstName = client.user.firstName || ''; // Default to empty string if firstName is undefined or null
+        const firstLetter = firstName[0]?.toUpperCase() || '#'; // Use '#' or another placeholder for names without a valid first letter
+
         if (firstLetter && !acc[firstLetter]) {
           acc[firstLetter] = {
             title: firstLetter,
