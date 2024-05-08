@@ -17,16 +17,15 @@ import IconButton from '../IconButton';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
-import { useState } from 'react';
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IClientCardProps {
-  imageUrl: string;
-  firstName: string;
-  lastName: string;
-  address: string;
-  progress: DimensionValue;
+  imageUrl?: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  address?: string;
+  progress?: DimensionValue;
+  daysActive?: number;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -34,6 +33,9 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
+  menu: string | undefined;
+  setMenu: (menu: string | undefined) => void;
+  id: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -42,6 +44,7 @@ export function ClientCard(props: IClientCardProps) {
     firstName,
     lastName,
     address,
+    daysActive,
     mb,
     mt,
     mr,
@@ -49,13 +52,17 @@ export function ClientCard(props: IClientCardProps) {
     my,
     mx,
     onPress,
+    menu,
+    setMenu,
+    id,
   } = props;
-  const [menu, setMenu] = useState(false);
+
   return (
     <TouchableWithoutFeedback
+      style={{ flex: 1 }}
       onPress={() => {
         if (menu) {
-          setMenu(false);
+          setMenu(undefined);
         }
       }}
       accessibilityRole="button"
@@ -84,28 +91,32 @@ export function ClientCard(props: IClientCardProps) {
           <TextBold size="sm">
             {firstName} {lastName}
           </TextBold>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs"> 24 Days</TextRegular>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs"> {address}</TextRegular>
-          </View>
+          {daysActive && (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
+              <TextRegular size="xs"> {daysActive} Days</TextRegular>
+            </View>
+          )}
+          {address && (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
+              <TextRegular size="xs"> {address}</TextRegular>
+            </View>
+          )}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
           </View>
         </View>
         <View style={{ justifyContent: 'center', position: 'relative' }}>
           <IconButton
-            onPress={() => setMenu(true)}
+            onPress={() => setMenu(id)}
             variant="transparent"
             accessibilityLabel="More options"
             accessibilityHint="Opens more options"
           >
             <MoreIcon color={Colors.NEUTRAL_DARK} />
           </IconButton>
-          {menu && (
+          {menu === id && (
             <View
               style={{
                 position: 'absolute',
