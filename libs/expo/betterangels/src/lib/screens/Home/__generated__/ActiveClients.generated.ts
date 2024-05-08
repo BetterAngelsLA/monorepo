@@ -10,13 +10,13 @@ export type CreateNoteMutationVariables = Types.Exact<{
 
 export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
-export type ClientsQueryVariables = Types.Exact<{
-  filters?: Types.InputMaybe<Types.ClientFilter>;
+export type ClientProfilesQueryVariables = Types.Exact<{
+  filters?: Types.InputMaybe<Types.ClientProfileFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
 
-export type ClientsQuery = { __typename?: 'Query', clients: Array<{ __typename?: 'ClientType', email: string, firstName?: string | null, id: string, lastName?: string | null, username: string }> };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, hmisId?: string | null, user: { __typename?: 'UserType', email: string, firstName?: string | null, lastName?: string | null, username: string } }> };
 
 
 export const CreateNoteDocument = gql`
@@ -69,50 +69,53 @@ export function useCreateNoteMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutation>;
 export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
 export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;
-export const ClientsDocument = gql`
-    query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
-  clients(filters: $filters, pagination: $pagination) {
-    ... on ClientType {
-      email
-      firstName
+export const ClientProfilesDocument = gql`
+    query ClientProfiles($filters: ClientProfileFilter, $pagination: OffsetPaginationInput) {
+  clientProfiles(filters: $filters, pagination: $pagination) {
+    ... on ClientProfileType {
       id
-      lastName
-      username
+      hmisId
+      user {
+        email
+        firstName
+        lastName
+        username
+      }
     }
   }
 }
     `;
 
 /**
- * __useClientsQuery__
+ * __useClientProfilesQuery__
  *
- * To run a query within a React component, call `useClientsQuery` and pass it any options that fit your needs.
- * When your component renders, `useClientsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useClientProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useClientProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useClientsQuery({
+ * const { data, loading, error } = useClientProfilesQuery({
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
  *   },
  * });
  */
-export function useClientsQuery(baseOptions?: Apollo.QueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
+export function useClientProfilesQuery(baseOptions?: Apollo.QueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
+        return Apollo.useQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
       }
-export function useClientsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
+export function useClientProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
+          return Apollo.useLazyQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
         }
-export function useClientsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientsQuery, ClientsQueryVariables>) {
+export function useClientProfilesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ClientsQuery, ClientsQueryVariables>(ClientsDocument, options);
+          return Apollo.useSuspenseQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
         }
-export type ClientsQueryHookResult = ReturnType<typeof useClientsQuery>;
-export type ClientsLazyQueryHookResult = ReturnType<typeof useClientsLazyQuery>;
-export type ClientsSuspenseQueryHookResult = ReturnType<typeof useClientsSuspenseQuery>;
-export type ClientsQueryResult = Apollo.QueryResult<ClientsQuery, ClientsQueryVariables>;
+export type ClientProfilesQueryHookResult = ReturnType<typeof useClientProfilesQuery>;
+export type ClientProfilesLazyQueryHookResult = ReturnType<typeof useClientProfilesLazyQuery>;
+export type ClientProfilesSuspenseQueryHookResult = ReturnType<typeof useClientProfilesSuspenseQuery>;
+export type ClientProfilesQueryResult = Apollo.QueryResult<ClientProfilesQuery, ClientProfilesQueryVariables>;

@@ -74,7 +74,7 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, pagination=True)
 class ClientProfileType:
     id: auto
     hmis_id: auto

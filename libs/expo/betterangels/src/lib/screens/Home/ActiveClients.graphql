@@ -21,14 +21,20 @@ mutation CreateNote($data: CreateNoteInput!) {
   }
 }
 
-query Clients($filters: ClientFilter, $pagination: OffsetPaginationInput) {
-  clients(filters: $filters, pagination: $pagination) {
-    ... on ClientType {
-      email
-      firstName
+query ClientProfiles(
+  $filters: ClientProfileFilter
+  $pagination: OffsetPaginationInput
+) {
+  clientProfiles(filters: $filters, pagination: $pagination) {
+    ... on ClientProfileType {
       id
-      lastName
-      username
+      hmisId
+      user {
+        email
+        firstName
+        lastName
+        username
+      }
     }
   }
 }
