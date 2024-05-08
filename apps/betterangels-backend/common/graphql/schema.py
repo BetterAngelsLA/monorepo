@@ -90,7 +90,7 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
+    @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
     def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
         with transaction.atomic():
             address = Address.get_or_create_address(strawberry.asdict(data))

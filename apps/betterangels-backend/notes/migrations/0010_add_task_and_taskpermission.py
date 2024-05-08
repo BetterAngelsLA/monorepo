@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("common", "0003_alter_location_point"),
         ("notes", "0009_move_location_to_common"),
     ]
 
