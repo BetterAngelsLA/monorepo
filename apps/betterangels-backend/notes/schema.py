@@ -7,7 +7,7 @@ import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Address, Attachment
-from common.permissions.enums import AddressPermissions, AttachmentPermissions
+from common.permissions.enums import AttachmentPermissions, LocationPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -150,7 +150,7 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-            HasPerm(perms=[AddressPermissions.ADD]),
+            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
@@ -645,7 +645,7 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
-            HasPerm(perms=[AddressPermissions.ADD]),
+            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:

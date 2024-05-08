@@ -1,9 +1,9 @@
-from accounts.models import Client
-from accounts.tests.utils import ClientGraphQLBaseTestCase
+from accounts.models import ClientProfile
+from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
-class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
+class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
@@ -11,32 +11,31 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_client_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        client_count = Client.objects.count()
-        client_profile = {"hmisId": "12345678"}
-        variables = {
+        client_count = ClientProfile.objects.count()
+        client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "email": "firsty_lasty@example.com",
-            "clientProfile": client_profile,
         }
-        response = self._create_client_fixture(variables)
+        variables = {"hmisId": "12345678", "user": client_profile_user}
+        response = self._create_client_profile_fixture(variables)
 
         if should_succeed:
-            self.assertIsNotNone(response["data"]["createClient"]["id"])
-            self.assertEqual(client_count + 1, Client.objects.count())
+            self.assertIsNotNone(response["data"]["createClientProfile"]["id"])
+            self.assertEqual(client_count + 1, ClientProfile.objects.count())
         else:
             self.assertEqual(
-                response["data"]["createClient"]["messages"][0],
+                response["data"]["createClientProfile"]["messages"][0],
                 {
                     "kind": "PERMISSION",
-                    "field": "createClient",
+                    "field": "createClientProfile",
                     "message": "You don't have permission to access this app.",
                 },
             )
-            self.assertEqual(client_count, Client.objects.count())
+            self.assertEqual(client_count, ClientProfile.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -48,20 +47,23 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
-            query ViewClient($id: ID!) {
-                client(pk: $id) {
+            query ViewClientProfile($id: ID!) {
+                clientProfile(pk: $id) {
                     id
-                    firstName
-                    lastName
-                    email
+                    hmisId
+                    user {
+                        firstName
+                        lastName
+                        email
+                    }
                 }
             }
         """
-        variables = {"id": self.client_1["id"]}
+        variables = {"id": self.client_profile_1["id"]}
         response = self.execute_graphql(mutation, variables)
 
         if should_succeed:
@@ -79,22 +81,25 @@ class ClientPermissionTestCase(ClientGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_clients_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_profiles_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-        client_count = Client.objects.count()
+        client_count = ClientProfile.objects.count()
         mutation = """
-            query ViewClients {
-                clients {
+            query ViewClientProfiles {
+                clientProfiles {
                     id
-                    firstName
-                    lastName
-                    email
+                    hmisId
+                    user {
+                        firstName
+                        lastName
+                        email
+                    }
                 }
             }
         """
-        variables = {"id": self.client_1["id"]}
+        variables = {"id": self.client_profile_1["id"]}
 
         response = self.execute_graphql(mutation, variables)
 
         expected_client_count = client_count if should_succeed else 0
-        self.assertTrue(len(response["data"]["clients"]) == expected_client_count)
+        self.assertTrue(len(response["data"]["clientProfiles"]) == expected_client_count)

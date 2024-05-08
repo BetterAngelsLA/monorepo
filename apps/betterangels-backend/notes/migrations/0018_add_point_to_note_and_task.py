@@ -9,7 +9,6 @@ import pgtrigger.migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0006_address_and_address_permissions"),
         ("notes", "0017_remove_note_insert_insert_remove_note_update_update_and_more"),
     ]
 
