@@ -112,7 +112,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
                 accessible
                 accessibilityHint="goes to all active clients list"
                 accessibilityRole="button"
-                href="#"
+                href="/clients"
               >
                 <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
               </Link>
