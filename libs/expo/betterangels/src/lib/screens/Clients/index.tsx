@@ -96,7 +96,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
 
   useEffect(() => {
-    if (!data || !('clients' in data)) return;
+    if (!data || !('clientProfiles' in data)) return;
 
     const clientsToShow = data.clientProfiles
       .slice(0, paginationLimit)
