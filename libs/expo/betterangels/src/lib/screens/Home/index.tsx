@@ -88,7 +88,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
 
   if (!data) return null;
   return (
-    // TODO: discuss with @vecchp about the need of this TouchableWithoutFeedback. Can potentional give performance issues with big data. Is it mandatory to close menu from everywhere clicked? I would prefer only within the client card component(Product required menu to be closed from everywhere)
     <TouchableWithoutFeedback
       onPress={() => {
         if (menu) {
