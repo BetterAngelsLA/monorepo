@@ -20,7 +20,7 @@ export default function NotePublicNote({
           borderRadius: 4,
         }}
       >
-        <TextRegular>{note?.publicDetails}</TextRegular>
+        <TextRegular size="sm">{note?.publicDetails}</TextRegular>
       </View>
     </View>
   );

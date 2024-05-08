@@ -18,14 +18,14 @@ interface MoodSelectorProps {
   noteId: string | undefined;
   tab: 'pleasant' | 'neutral' | 'unpleasant';
   setMoods: (
-    e: {
+    moods: {
       enum: MoodEnum;
-      title: string;
+      id: string | undefined;
     }[]
   ) => void;
   moods: {
     enum: MoodEnum;
-    title: string;
+    id: string | undefined;
   }[];
 }
 
@@ -38,17 +38,21 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({
 }) => {
   return (
     <View>
-      {moodsData.map((mood, idx) => (
-        <MoodCheckbox
-          moods={moods}
-          setMoods={setMoods}
-          tab={tab}
-          noteId={noteId}
-          idx={idx}
-          key={mood.enum}
-          mood={mood}
-        />
-      ))}
+      {moodsData.map((mood, idx) => {
+        const moodId = moods.find((item) => item.enum === mood.enum)?.id;
+        return (
+          <MoodCheckbox
+            id={moodId}
+            moods={moods}
+            setMoods={setMoods}
+            tab={tab}
+            noteId={noteId}
+            idx={idx}
+            key={mood.enum}
+            mood={mood}
+          />
+        );
+      })}
     </View>
   );
 };
