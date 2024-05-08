@@ -12,8 +12,8 @@ import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, View } from 'react-native';
 import { Header } from '../../ui-components';
 import {
-  ClientsQuery,
-  useClientsQuery,
+  ClientProfilesQuery,
+  useClientProfilesQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
@@ -22,7 +22,7 @@ const paginationLimit = 20;
 interface IGroupedClients {
   [key: string]: {
     title: string;
-    data: ClientsQuery['clients'];
+    data: ClientProfilesQuery['clientProfiles'];
   };
 }
 
@@ -32,7 +32,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [createNote] = useCreateNoteMutation();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading } = useClientsQuery({
+  const { data, loading } = useClientProfilesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset },
       filters: {
@@ -98,14 +98,16 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clients' in data)) return;
 
-    const clientsToShow = data.clients
+    const clientsToShow = data.clientProfiles
       .slice(0, paginationLimit)
-      .sort((a, b) => a.firstName?.localeCompare(b.firstName || '') || 0);
-    const isMoreAvailable = data.clients.length > clientsToShow.length;
+      .sort(
+        (a, b) => a.user.firstName?.localeCompare(b.user.firstName || '') || 0
+      );
+    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
 
     const groupedContacts = clientsToShow.reduce(
       (acc: IGroupedClients, client) => {
-        const firstLetter = client.firstName?.[0].toUpperCase();
+        const firstLetter = client.user.firstName?.[0].toUpperCase();
         if (firstLetter && !acc[firstLetter]) {
           acc[firstLetter] = {
             title: firstLetter,
@@ -158,10 +160,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item }) =>
             data ? (
               <ClientCard
-                onPress={() => createNoteFunction(item.id, item.firstName)}
+                onPress={() => createNoteFunction(item.id, item.user.firstName)}
                 mb="sm"
-                firstName={item.firstName}
-                lastName={item.lastName}
+                firstName={item.user.firstName}
+                lastName={item.user.lastName}
               />
             ) : null
           }

@@ -11,8 +11,8 @@ import Events from './Events';
 
 import { Header } from '../../ui-components';
 import {
-  ClientsQuery,
-  useClientsQuery,
+  ClientProfilesQuery,
+  useClientProfilesQuery,
   useCreateNoteMutation,
 } from './__generated__/ActiveClients.generated';
 
@@ -22,8 +22,10 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const [createNote] = useCreateNoteMutation();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [clients, setClients] = useState<ClientsQuery['clients']>([]);
-  const { data, loading } = useClientsQuery({
+  const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
+    []
+  );
+  const { data, loading } = useClientProfilesQuery({
     variables: {
       filters: { isActive: false },
       pagination: { limit: paginationLimit + 1, offset: offset },
@@ -69,8 +71,8 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clients' in data)) return;
 
-    const clientsToShow = data.clients.slice(0, paginationLimit);
-    const isMoreAvailable = data.clients.length > clientsToShow.length;
+    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
+    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
 
     if (offset === 0) {
       setClients(clientsToShow);
@@ -119,10 +121,10 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         }
         renderItem={({ item }) => (
           <ClientCard
-            onPress={() => createNoteFunction(item.id, item.firstName)}
+            onPress={() => createNoteFunction(item.id, item.user.firstName)}
             mb="sm"
-            firstName={item.firstName}
-            lastName={item.lastName}
+            firstName={item.user.firstName}
+            lastName={item.user.lastName}
           />
         )}
         keyExtractor={(item) => item.id}
