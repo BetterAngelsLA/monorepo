@@ -132,6 +132,13 @@ export default function AddNote() {
             body="All data associated with this note will be deleted"
             title="Delete note?"
             onDelete={deleteNoteFunction}
+            button={
+              <TextButton
+                fontSize="sm"
+                accessibilityHint="deletes creation"
+                title="Cancel"
+              />
+            }
           />
         }
         optionalAction={

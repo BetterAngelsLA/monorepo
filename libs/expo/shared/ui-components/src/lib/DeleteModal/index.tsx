@@ -60,7 +60,7 @@ export default function DeleteModal({
               size="full"
               accessibilityHint="deletes the note"
               onPress={async () => {
-                await onDelete();
+                onDelete();
                 setVisible(false);
               }}
               variant="primary"
