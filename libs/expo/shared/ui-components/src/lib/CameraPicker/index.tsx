@@ -13,12 +13,12 @@ import {
   CameraView,
   FlashMode,
   useCameraPermissions,
-} from 'expo-camera/next';
+} from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
-import TextMedium from '../TextMedium';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
+import TextMedium from '../TextMedium';
 interface ICameraPickerProps {
   images: { id: string | undefined; uri: string }[];
   setImages: (images: { id: string | undefined; uri: string }[]) => void;
