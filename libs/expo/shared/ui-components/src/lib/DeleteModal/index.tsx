@@ -1,31 +1,37 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { ReactElement, cloneElement, useState } from 'react';
+import { ButtonProps, View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
 
-export default function CancelModal({
+export default function DeleteModal({
   title,
   body,
   onDelete,
+  button,
 }: {
   title: string;
   body: string;
   onDelete: () => void;
+  button: ReactElement;
 }) {
   const [visible, setVisible] = useState(false);
 
+  const clonedButton = cloneElement(button as ReactElement<ButtonProps>, {
+    onPress: () => {
+      setVisible(true);
+      if (button.props.onPress) {
+        button.props.onPress();
+      }
+    },
+  });
+
   return (
     <>
-      <TextButton
-        fontSize="sm"
-        onPress={() => setVisible(true)}
-        accessibilityHint="cancels creation"
-        title="Cancel"
-      />
+      {clonedButton}
       <BasicModal visible={visible} setVisible={setVisible}>
         <TextBold size="xl" mb="sm">
           {title}
@@ -54,7 +60,7 @@ export default function CancelModal({
               size="full"
               accessibilityHint="deletes the note"
               onPress={async () => {
-                await onDelete();
+                onDelete();
                 setVisible(false);
               }}
               variant="primary"

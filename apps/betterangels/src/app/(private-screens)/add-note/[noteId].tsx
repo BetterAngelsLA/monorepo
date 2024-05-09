@@ -7,7 +7,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
-  CancelModal,
+  DeleteModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -128,10 +128,17 @@ export default function AddNote() {
       </MainScrollContainer>
       <BottomActions
         cancel={
-          <CancelModal
+          <DeleteModal
             body="All data associated with this note will be deleted"
             title="Delete note?"
             onDelete={deleteNoteFunction}
+            button={
+              <TextButton
+                fontSize="sm"
+                accessibilityHint="deletes creation"
+                title="Cancel"
+              />
+            }
           />
         }
         optionalAction={
