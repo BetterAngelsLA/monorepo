@@ -2157,9 +2157,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/cli@npm:0.18.9":
-  version: 0.18.9
-  resolution: "@expo/cli@npm:0.18.9"
+"@expo/cli@npm:0.18.10":
+  version: 0.18.10
+  resolution: "@expo/cli@npm:0.18.10"
   dependencies:
     "@babel/runtime": ^7.20.0
     "@expo/code-signing-certificates": 0.0.5
@@ -2239,7 +2239,7 @@ __metadata:
     ws: ^8.12.1
   bin:
     expo-internal: build/bin/cli
-  checksum: b69dcb343b220cb28a57aa73df50e134ca010929afd5d99e89ecd8abbdbc260b542a6e03e4f4668a231967019181d674a3f3b61be79c0c771fbe96cefbe76d67
+  checksum: 462d0fd3827fbebca4fb549784ee1f45892190c147ecfef6793aeff7691438c6e08ae9905e3241875d4754396dc52f94984232b4d8e95b981e3183441af8d69b
   languageName: node
   linkType: hard
 
@@ -4118,9 +4118,9 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     eslint-plugin-react-native-a11y: ^3.3.0
-    expo: ~51.0.0
+    expo: 51.0.1
     expo-auth-session: ~5.5.2
-    expo-camera: ~15.0.4
+    expo-camera: ~15.0.5
     expo-clipboard: ~6.0.3
     expo-constants: ~16.0.1
     expo-dev-client: ~4.0.11
@@ -4128,11 +4128,11 @@ __metadata:
     expo-image-picker: ~15.0.4
     expo-linking: ~6.3.1
     expo-location: ~17.0.1
-    expo-router: ~3.5.10
+    expo-router: ~3.5.11
     expo-secure-store: ~13.0.1
     expo-splash-screen: ~0.27.4
     expo-status-bar: ~1.12.1
-    expo-updates: ~0.25.9
+    expo-updates: ~0.25.10
     expo-web-browser: ~13.0.3
     graphql: ^16.8.1
     jest: ^29.4.1
@@ -4155,7 +4155,7 @@ __metadata:
     react-native-reanimated: 3.10.0
     react-native-safe-area-context: 4.10.1
     react-native-screens: 3.31.1
-    react-native-svg: 15.2.0-rc.0
+    react-native-svg: 15.2.0
     react-native-svg-transformer: 1.3.0
     react-native-web: 0.19.10
     react-test-renderer: 18.2.0
@@ -13741,14 +13741,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~15.0.4":
-  version: 15.0.4
-  resolution: "expo-camera@npm:15.0.4"
+"expo-camera@npm:~15.0.5":
+  version: 15.0.5
+  resolution: "expo-camera@npm:15.0.5"
   dependencies:
     invariant: ^2.2.4
   peerDependencies:
     expo: "*"
-  checksum: 7e84e7836f5cd045de7cae56389d90af94fe39fb3ad1e8ec3160f03b42448d14bfd465f6e21ee1a312b38027fa44a3b8f6ad5f3ef80da60f017a5c5490d7c584
+  checksum: 4e80d1398b902ec214c2a42a57eb44f1e0f9bb08e8560e0832a23a16c32bfe4482f66dc30de20eaaf9f5f114204c08f606a439d4cf2d2cd8c90a82b19b69d9ed
   languageName: node
   linkType: hard
 
@@ -13954,18 +13954,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-modules-core@npm:1.12.9":
-  version: 1.12.9
-  resolution: "expo-modules-core@npm:1.12.9"
+"expo-modules-core@npm:1.12.10":
+  version: 1.12.10
+  resolution: "expo-modules-core@npm:1.12.10"
   dependencies:
     invariant: ^2.2.4
-  checksum: 0c7fb32f022b35639b9db8ca4961683c055ea9555841e1313fcd81ba0d1f80432217afe771aac0e2eed1c5ea41cf0a1304a70a51660ed2c78eb1e431bcf56ddd
+  checksum: 6a19f4a62c6e27bddc92eb92d22364633f5ffa45854bc95847ae37ad9705ae8d18f450045de6a66d31a514e7c13eb99f665cab31679dd88d3fbf66236e934f25
   languageName: node
   linkType: hard
 
-"expo-router@npm:~3.5.10":
-  version: 3.5.10
-  resolution: "expo-router@npm:3.5.10"
+"expo-router@npm:~3.5.11":
+  version: 3.5.11
+  resolution: "expo-router@npm:3.5.11"
   dependencies:
     "@expo/metro-runtime": 3.2.1
     "@expo/server": ^0.4.0
@@ -13992,7 +13992,7 @@ __metadata:
       optional: true
     react-native-reanimated:
       optional: true
-  checksum: 548cb5b3792d80d9c87f2a2e943c31df9736fe38fad9683e7fdf76173473c80bad47f244d75e01830e5fb9735856346ed24d1f878c3ab5c6bfb4d80b60c87f6e
+  checksum: a82f8b9212118745bafd286308eaa16d09a6ad55031fc81e9387670862361b034f1aeeb03bc55380a34021c779d2f177e9779ed3c3119422be5e4b9d18e4bae6
   languageName: node
   linkType: hard
 
@@ -14039,9 +14039,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-updates@npm:~0.25.9":
-  version: 0.25.9
-  resolution: "expo-updates@npm:0.25.9"
+"expo-updates@npm:~0.25.10":
+  version: 0.25.10
+  resolution: "expo-updates@npm:0.25.10"
   dependencies:
     "@expo/code-signing-certificates": 0.0.5
     "@expo/config": ~9.0.0-beta.0
@@ -14062,7 +14062,7 @@ __metadata:
     expo: "*"
   bin:
     expo-updates: bin/cli.js
-  checksum: 213636a5725da2dc6894836afe410db5c91a42435a10a747ac0991db1abc763437aa0602c65c61bc069b55e3eab54363a412b891a940eb3fabb6d90b17fdb763
+  checksum: ebbb533ceb79d7ddf13901ce4e8c2db9dce8c80f897a49822bbc9c9ff33fe12c12cc8bac0ba8b62a5a382040bf1c37f0a048bf1616ce6caa0cd13b6999d86651
   languageName: node
   linkType: hard
 
@@ -14075,12 +14075,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~51.0.0":
-  version: 51.0.0
-  resolution: "expo@npm:51.0.0"
+"expo@npm:51.0.1":
+  version: 51.0.1
+  resolution: "expo@npm:51.0.1"
   dependencies:
     "@babel/runtime": ^7.20.0
-    "@expo/cli": 0.18.9
+    "@expo/cli": 0.18.10
     "@expo/config": 9.0.1
     "@expo/config-plugins": 8.0.4
     "@expo/metro-config": 0.18.3
@@ -14091,12 +14091,12 @@ __metadata:
     expo-font: ~12.0.4
     expo-keep-awake: ~13.0.1
     expo-modules-autolinking: 1.11.1
-    expo-modules-core: 1.12.9
+    expo-modules-core: 1.12.10
     fbemitter: ^3.0.0
     whatwg-url-without-unicode: 8.0.0-3
   bin:
     expo: bin/cli
-  checksum: 8655db6c50a90372bae54ffed1b41e609c2da42ec7e348bfe0246b0f780fd6b5ed4c49a9a4925b02d711f4275351fcfe1b0831750d9afc94465f8a3d44bad2c1
+  checksum: bcb695a19489494a24474390ab96d181db44feee49798d5cdb4bac4b2fb6eb3d544087b9b3ddcd1827cc2e8df40c68bcaeadaa039c1b59e090ecc0967b3a2b1c
   languageName: node
   linkType: hard
 
@@ -21295,16 +21295,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-svg@npm:15.2.0-rc.0":
-  version: 15.2.0-rc.0
-  resolution: "react-native-svg@npm:15.2.0-rc.0"
+"react-native-svg@npm:15.2.0":
+  version: 15.2.0
+  resolution: "react-native-svg@npm:15.2.0"
   dependencies:
     css-select: ^5.1.0
     css-tree: ^1.1.3
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 9d7b2cd6d1557b2fb9b72a2f81528a7ddc306f29da810403425fea9ea60ab64ed7b8622f772aabcbdf39b731f39827de86f7fb0993502393e23aa3bdb86e659e
+  checksum: 0075d3c5bcf6bbbebe064364ec72c02eeff3fc0f2b1ba127bde26a8ecedc190a7890a910a6a051687318fa80504a3bc335eee2bfd6846b90193ca1608bae821e
   languageName: node
   linkType: hard
 
