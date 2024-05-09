@@ -4107,7 +4107,7 @@ __metadata:
     axios: ^1.6.7
     babel-jest: ^29.4.1
     babel-plugin-react-native-web: ^0.19.8
-    babel-preset-expo: ~11.0.0
+    babel-preset-expo: ~11.0.5
     core-js: 3.36.1
     date-fns: ^3.0.4
     detox: 20.18.5
@@ -10245,7 +10245,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-preset-expo@npm:~11.0.0, babel-preset-expo@npm:~11.0.5":
+"babel-preset-expo@npm:~11.0.5":
   version: 11.0.5
   resolution: "babel-preset-expo@npm:11.0.5"
   dependencies:
