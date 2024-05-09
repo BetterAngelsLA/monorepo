@@ -117,7 +117,7 @@
     "typescript": "~5.3.3"
   },
   "engines": {
-    "node": "20.13.11"
+    "node": "20.13.1"
   },
   "packageManager": "yarn@3.6.3"
 }
