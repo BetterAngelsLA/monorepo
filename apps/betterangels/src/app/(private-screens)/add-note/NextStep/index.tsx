@@ -78,7 +78,6 @@ export default function NextStep(props: INextStepProps) {
     >
       <View
         style={{
-          paddingBottom: isNextStep ? Spacings.md : 0,
           height: isNextStep ? 'auto' : 0,
           overflow: 'hidden',
         }}
