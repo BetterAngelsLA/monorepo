@@ -1,3 +1,6 @@
+# This patch address the following error when creating an expo preview
+# Property exported of ExportSpecifier expected node to be of a type ["Identifier","StringLiteral"] but instead got "BooleanLiteral"
+# Seems to be a regression reintroduced in Expo 51: https://github.com/expo/expo/issues/25965
 diff --git a/utilities/globals/index.js b/utilities/globals/index.js
 index a62ebd261bdc5ae2f6a20abde91db425225759bb..d887d5a9c8823c8be63eb00abcfe66a640696d78 100644
 --- a/utilities/globals/index.js
