@@ -29,7 +29,7 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20.13.1
+          node-version: 20.12.2
           cache: yarn
 
       - name: 📦 Install dependencies
@@ -77,7 +77,7 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20.13.1
+          node-version: 20.12.2
           cache: yarn
 
       - name: 🔧 Setup EAS
