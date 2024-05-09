@@ -1,0 +1,12 @@
+diff --git a/utilities/globals/index.js b/utilities/globals/index.js
+index a62ebd261bdc5ae2f6a20abde91db425225759bb..d887d5a9c8823c8be63eb00abcfe66a640696d78 100644
+--- a/utilities/globals/index.js
++++ b/utilities/globals/index.js
+@@ -10,5 +10,5 @@ export { invariant, newInvariantError, InvariantError };
+ // so we have to write it out here
+ // @ts-ignore
+ export var DEV = globalThis.__DEV__ !== false;
+-export { DEV as __DEV__ };
++// export { DEV as __DEV__ };
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file
