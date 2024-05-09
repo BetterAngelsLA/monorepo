@@ -16,6 +16,4 @@ class AddressPermissions(models.TextChoices):
 
 class LocationPermissions(models.TextChoices):
     VIEW = "common.view_location", _("Can view location")
-    CHANGE = "common.change_location", _("Can change location")
-    DELETE = "common.delete_location", _("Can delete location")
     ADD = "common.add_location", _("Can add location")

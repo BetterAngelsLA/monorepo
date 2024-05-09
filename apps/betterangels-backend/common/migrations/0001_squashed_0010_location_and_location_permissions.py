@@ -2,7 +2,7 @@
 
 import common.enums
 
-from common.permissions.enums import AddressPermissions, AttachmentPermissions, LocationPermissions
+from common.permissions.enums import AttachmentPermissions, LocationPermissions
 import common.utils
 import django.contrib.gis.db.models.fields
 import django.db.models.deletion
