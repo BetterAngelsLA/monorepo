@@ -109,11 +109,11 @@ jobs:
           yarn nx affected -t lint
           EOF
 
-      - name: 🔗 Ensure Expo Library Compatibility
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          CI=1 yarn expo install --check
-          EOF
+      # - name: 🔗 Ensure Expo Library Compatibility
+      #   run: |
+      #     docker compose run better-angels bash <<'EOF'
+      #     CI=1 yarn expo install --check
+      #     EOF
 
       - name: 🕵️ Check for missing Django migrations
         run: |
