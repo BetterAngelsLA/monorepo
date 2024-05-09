@@ -2,6 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
+import { Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 interface IMapProps {
@@ -109,11 +110,12 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       showsUserLocation={userLocation ? true : false}
       showsMyLocationButton={false}
       mapType="standard"
-      onPoiClick={(e) => placePin(e, true)}
+      onPoiClick={(e) => console.log(e.nativeEvent.name)}
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
-      provider={PROVIDER_GOOGLE}
+      // https://github.com/expo/expo/issues/28705
+      provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
       initialRegion={{
         longitudeDelta: 0.005,
         latitudeDelta: 0.005,

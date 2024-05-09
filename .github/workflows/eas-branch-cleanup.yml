@@ -26,8 +26,14 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18.17.1
-          cache: yarn
+          node-version: 20.12.2
+      - run: |
+          corepack enable &&
+          corepack install # use the in-repo yarn version
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
       - name: 📦 Install dependencies
         run: yarn install
@@ -65,13 +71,19 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18.17.1
-          cache: yarn
+          node-version: 20.12.2
+      - run: |
+          corepack enable &&
+          corepack install # use the in-repo yarn version
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: 7.0.0
+          eas-version: 9.0.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
