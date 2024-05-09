@@ -4152,7 +4152,7 @@ __metadata:
     react-native-gesture-handler: "npm:~2.16.1"
     react-native-maps: "npm:1.14.0"
     react-native-open-maps: "npm:^0.4.3"
-    react-native-reanimated: "npm:3.10.0"
+    react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.1"
     react-native-screens: "npm:3.31.1"
     react-native-svg: "npm:15.2.0"
@@ -21128,9 +21128,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.10.0":
-  version: 3.10.0
-  resolution: "react-native-reanimated@npm:3.10.0"
+"react-native-reanimated@npm:~3.10.1":
+  version: 3.10.1
+  resolution: "react-native-reanimated@npm:3.10.1"
   dependencies:
     "@babel/plugin-transform-arrow-functions": "npm:^7.0.0-0"
     "@babel/plugin-transform-nullish-coalescing-operator": "npm:^7.0.0-0"
@@ -21144,7 +21144,7 @@ __metadata:
     "@babel/core": ^7.0.0-0
     react: "*"
     react-native: "*"
-  checksum: 10/253f2d128a8b90dc3c3e66e5ad1cac9e3fd4dfe6cdce5b7ec34da41e6df3ae615f6302c25a22d1f49a3560a2874b065fa6969725d0ada023348fb51bc99c906d
+  checksum: 10/bb2a0802fd619999dd5d1dd9734875fc14699de29d3537003997e85040dd3a0b430716192388c71544d600fc7abf243af1cfc24ce2513c282b046e8bb3430125
   languageName: node
   linkType: hard
 
