@@ -74,19 +74,6 @@ def update_caseworker_permission_template(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("common", "0001_initial"),
-        ("common", "0002_add_location"),
-        ("common", "0003_alter_location_point"),
-        ("common", "0004_attachment_attachmentgroupobjectpermission_and_more"),
-        ("common", "0005_fix_attachment_permission"),
-        ("common", "0006_address_and_address_permissions"),
-        ("common", "0007_delete_location_and_more"),
-        ("common", "0008_location"),
-        ("common", "0009_locationuserobjectpermission_and_more"),
-        ("common", "0010_location_and_location_permissions"),
-    ]
-
     initial = True
 
     dependencies = [
