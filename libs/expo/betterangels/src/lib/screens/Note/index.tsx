@@ -31,7 +31,12 @@ const hasServicesOrMoods = (note: ViewNoteQuery['note']) => {
 };
 
 export default function Note({ id }: { id: string }) {
-  const { data, loading, error } = useViewNoteQuery({ variables: { id } });
+  const { data, loading, error } = useViewNoteQuery({
+    variables: { id },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
+
   const navigation = useNavigation();
   const router = useRouter();
 

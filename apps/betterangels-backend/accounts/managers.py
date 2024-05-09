@@ -2,7 +2,6 @@ import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
@@ -21,6 +20,13 @@ class UserManager(BaseUserManager["User"]):
         user.save(using=self._db)
         return user
 
+    def create_client(self, email: str, **extra_fields: Any) -> "User":
+        random_id = uuid.uuid4()
+        email = email or self.normalize_email(f"client_{random_id}@example.com")
+        client = self.create_user(email, **extra_fields)
+        client.set_unusable_password()
+        return client
+
     def create_superuser(self, email: str, password: str = "", **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -37,20 +43,3 @@ class UserManager(BaseUserManager["User"]):
             return self.get(email__iexact=email)
         except self.model.DoesNotExist:
             return None
-
-
-class ClientManager(UserManager):
-    def get_queryset(self) -> QuerySet["User"]:
-        return super().get_queryset().filter(client_profile__isnull=False)
-
-    def create_client(self, email: str | None = None, **extra_fields: Any) -> "User":
-        random_id = uuid.uuid4()
-        email = email or self.normalize_email(f"client_{random_id}@example.com")
-        username = f"client_{random_id}"
-
-        user = super().create_user(email=email, username=username, **extra_fields)
-
-        user.set_unusable_password()
-        user.save()
-
-        return user

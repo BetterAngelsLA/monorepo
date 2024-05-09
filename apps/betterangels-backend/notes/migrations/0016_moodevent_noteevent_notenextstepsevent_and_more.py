@@ -13,7 +13,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("organizations", "0006_alter_organization_slug"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("common", "0004_attachment_attachmentgroupobjectpermission_and_more"),
         ("pghistory", "0006_delete_aggregateevent"),
         ("notes", "0015_remove_historicalnote_client_and_more"),
     ]
