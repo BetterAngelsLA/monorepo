@@ -260,7 +260,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         setExpanded(isRequestedServices ? null : 'Requested Services')
       }
     >
-      <View style={{ paddingBottom: Spacings.md }}>
+      <View>
         {SERVICES.map((service, idx) => (
           <View
             style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
