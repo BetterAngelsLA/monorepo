@@ -2,7 +2,6 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { useFormContext } from 'react-hook-form';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 interface IMapProps {
@@ -48,9 +47,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
     chooseDirections,
     userLocation,
   } = props;
-  const { watch, setValue } = useFormContext();
-
-  const location = watch('location');
 
   async function placePin(e: any, isId: boolean) {
     if (chooseDirections) {
@@ -68,7 +64,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
-        setValue('location', undefined);
+
         setCurrentLocation({
           longitude,
           latitude,
@@ -104,7 +100,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       setCurrentLocation(undefined);
       setPin(false);
       setSelected(false);
-      setValue('location', undefined);
     }
   }
 
@@ -138,13 +133,11 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         width: '100%',
       }}
     >
-      {(currentLocation || (location && location.address)) && (
+      {currentLocation && (
         <Marker
           coordinate={{
-            latitude: location ? location.latitude : currentLocation?.latitude,
-            longitude: location
-              ? location.longitude
-              : currentLocation?.longitude,
+            latitude: currentLocation.latitude,
+            longitude: currentLocation?.longitude,
           }}
         >
           <LocationPinIcon size="2xl" />

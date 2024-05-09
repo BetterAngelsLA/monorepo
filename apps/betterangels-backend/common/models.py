@@ -110,9 +110,6 @@ class Address(BaseModel):
     address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
 
-    addressuserobjectpermission_set: models.QuerySet["AddressUserObjectPermission"]
-    addressgroupobjectpermission_set: models.QuerySet["AddressGroupObjectPermission"]
-
     objects = models.Manager()
 
     class Meta(BaseModel.Meta):
@@ -226,14 +223,6 @@ class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
         Attachment,
         on_delete=models.CASCADE,
     )
-
-
-class AddressUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
-
-
-class AddressGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(Address, on_delete=models.CASCADE)
 
 
 class LocationUserObjectPermission(UserObjectPermissionBase):

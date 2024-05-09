@@ -6,7 +6,6 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("common", "0002_add_location"),
         ("notes", "0008_historicalnote_history_relation_alter_mood_note_and_more"),
     ]
 

@@ -2,8 +2,8 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import Client, ClientProfile
-from accounts.permissions import ClientPermissions
+from accounts.models import ClientProfile, User
+from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from django.db import transaction
 from guardian.shortcuts import assign_perm
@@ -18,8 +18,8 @@ from strawberry_django.utils.requests import get_request
 from .types import (
     AuthInput,
     AuthResponse,
-    ClientType,
-    CreateClientInput,
+    ClientProfileType,
+    CreateClientProfileInput,
     MagicLinkInput,
     MagicLinkResponse,
     UserType,
@@ -30,12 +30,12 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    client: ClientType = strawberry_django.field(
-        extensions=[HasRetvalPerm(perms=[ClientPermissions.VIEW])],
+    client_profile: ClientProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    clients: List[ClientType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(perms=[ClientPermissions.VIEW])],
+    client_profiles: List[ClientProfileType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
 
@@ -60,20 +60,18 @@ class Mutation:
         send_magic_link(data.email, base_url)
         return MagicLinkResponse(message="Email link sent.")
 
-    @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientPermissions.ADD])])
-    def create_client(self, info: Info, data: CreateClientInput) -> ClientType:
+    @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
+    def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-            client_data = strawberry.asdict(data)
-            client_profile_data: dict = client_data.pop("client_profile")  # type: ignore
+            client_profile_data: dict = strawberry.asdict(data)
+            user_data = client_profile_data.pop("user") or {}
+
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
 
-            client = Client.objects.create_client(
-                first_name=client_data.get("first_name"),
-                last_name=client_data.get("last_name"),
-                email=client_data.get("email"),
-            )
-            resolvers.create(
+            client = User.objects.create_client(**user_data)
+
+            client_profile = resolvers.create(
                 info,
                 ClientProfile,
                 {
@@ -83,11 +81,11 @@ class Mutation:
             )
 
             permissions = [
-                ClientPermissions.VIEW,
-                ClientPermissions.CHANGE,
-                ClientPermissions.DELETE,
+                ClientProfilePermissions.VIEW,
+                ClientProfilePermissions.CHANGE,
+                ClientProfilePermissions.DELETE,
             ]
             for perm in permissions:
-                assign_perm(perm, permission_group.group, client)
+                assign_perm(perm, permission_group.group, client_profile)
 
-            return cast(ClientType, client)
+            return cast(ClientProfileType, client_profile)

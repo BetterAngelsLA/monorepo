@@ -1,10 +1,6 @@
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Clients } from '@monorepo/expo/betterangels';
+import Logo from '../assets/images/logo.svg';
 
 export default function ClientsScreen() {
-  return (
-    <MainScrollContainer>
-      <TextRegular>Clients</TextRegular>
-    </MainScrollContainer>
-  );
+  return <Clients Logo={Logo} />;
 }

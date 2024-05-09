@@ -5,13 +5,16 @@ export const GET_NOTES = gql`
     notes(filters: $filters, pagination: $pagination) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       moods {
         id
@@ -58,13 +61,16 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       attachments {
         id
@@ -115,54 +121,6 @@ export const GET_NOTE = gql`
       }
       interactedAt
       createdAt
-    }
-  }
-`;
-
-export const GOOGLE_AUTH_MUTATION = gql`
-  mutation GoogleAuth(
-    $code: String!
-    $codeVerifier: String!
-    $redirectUri: String!
-  ) {
-    googleAuth(
-      input: {
-        code: $code
-        code_verifier: $codeVerifier
-        redirect_uri: $redirectUri
-      }
-    )
-      @rest(
-        type: "AuthResponse"
-        path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}"
-        method: "POST"
-        bodyKey: "input"
-      ) {
-      status_code
-    }
-  }
-`;
-
-export const IDME_AUTH_MUTATION = gql`
-  mutation IdmeAuth(
-    $code: String!
-    $codeVerifier: String!
-    $redirectUri: String!
-  ) {
-    idmeAuth(
-      input: {
-        code: $code
-        code_verifier: $codeVerifier
-        redirect_uri: $redirectUri
-      }
-    )
-      @rest(
-        type: "AuthResponse"
-        path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}"
-        method: "POST"
-        bodyKey: "input"
-      ) {
-      status_code
     }
   }
 `;

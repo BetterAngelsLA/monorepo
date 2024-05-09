@@ -81,42 +81,28 @@ export type BedsType = {
   totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
-export type ClientFilter = {
-  AND?: InputMaybe<ClientFilter>;
+export type ClientProfileFilter = {
+  AND?: InputMaybe<ClientProfileFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ClientFilter>;
-  OR?: InputMaybe<ClientFilter>;
+  NOT?: InputMaybe<ClientProfileFilter>;
+  OR?: InputMaybe<ClientProfileFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ClientProfileInput = {
-  hmisId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   hmisId?: Maybe<Scalars['String']['output']>;
-};
-
-export type ClientType = {
-  __typename?: 'ClientType';
-  clientProfile: ClientProfileType;
-  email: Scalars['String']['output'];
-  firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  lastName?: Maybe<Scalars['String']['output']>;
-  username: Scalars['String']['output'];
+  user: UserType;
 };
 
-export type CreateClientInput = {
-  clientProfile?: InputMaybe<ClientProfileInput>;
-  email: Scalars['String']['input'];
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
+export type CreateClientProfileInput = {
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+  user: CreateUserInput;
 };
 
-export type CreateClientPayload = ClientType | OperationInfo;
+export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
@@ -178,6 +164,12 @@ export type CreateTaskInput = {
 
 export type CreateTaskPayload = OperationInfo | TaskType;
 
+export type CreateUserInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -234,7 +226,7 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
-export type GetOrCreateAddressPayload = AddressType | OperationInfo;
+export type GetOrCreateLocationPayload = NoteLocationType | OperationInfo;
 
 export type LocationType = {
   __typename?: 'LocationType';
@@ -288,7 +280,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
-  createClient: CreateClientPayload;
+  createClientProfile: CreateClientProfilePayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -302,7 +294,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
-  getOrCreateAddress: GetOrCreateAddressPayload;
+  getOrCreateLocation: GetOrCreateLocationPayload;
   googleAuth: AuthResponse;
   idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
@@ -322,8 +314,8 @@ export type MutationAddNoteTaskArgs = {
 };
 
 
-export type MutationCreateClientArgs = {
-  data: CreateClientInput;
+export type MutationCreateClientProfileArgs = {
+  data: CreateClientProfileInput;
 };
 
 
@@ -392,8 +384,8 @@ export type MutationGenerateMagicLinkArgs = {
 };
 
 
-export type MutationGetOrCreateAddressArgs = {
-  data: AddressInput;
+export type MutationGetOrCreateLocationArgs = {
+  data: NoteLocationInput;
 };
 
 
@@ -474,6 +466,20 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+export type NoteLocationInput = {
+  address?: InputMaybe<AddressInput>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+  pointOfInterest?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type NoteLocationType = {
+  __typename?: 'NoteLocationType';
+  address: AddressType;
+  id: Scalars['ID']['output'];
+  point?: Maybe<Scalars['Point']['output']>;
+  pointOfInterest?: Maybe<Scalars['String']['output']>;
+};
+
 export enum NoteNamespaceEnum {
   MoodAssessment = 'MOOD_ASSESSMENT',
   ProvidedServices = 'PROVIDED_SERVICES',
@@ -482,7 +488,6 @@ export enum NoteNamespaceEnum {
 
 export type NoteType = {
   __typename?: 'NoteType';
-  address?: Maybe<AddressType>;
   attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
@@ -490,9 +495,9 @@ export type NoteType = {
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
+  location?: Maybe<NoteLocationType>;
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
-  point?: Maybe<Scalars['Point']['output']>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
@@ -570,10 +575,12 @@ export type Query = {
   __typename?: 'Query';
   address: AddressType;
   addresses: Array<AddressType>;
-  client: ClientType;
-  clients: Array<ClientType>;
+  clientProfile: ClientProfileType;
+  clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  location: NoteLocationType;
+  locations: Array<NoteLocationType>;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -592,14 +599,19 @@ export type QueryAddressArgs = {
 };
 
 
-export type QueryClientArgs = {
+export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
-export type QueryClientsArgs = {
-  filters?: InputMaybe<ClientFilter>;
+export type QueryClientProfilesArgs = {
+  filters?: InputMaybe<ClientProfileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryLocationArgs = {
+  pk: Scalars['ID']['input'];
 };
 
 
@@ -761,13 +773,12 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  address?: Maybe<AddressType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  point?: Maybe<Scalars['Point']['output']>;
+  location?: Maybe<NoteLocationType>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
 };
@@ -778,20 +789,18 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateNoteInput = {
-  address?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
-  address: AddressInput;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location: NoteLocationInput;
 };
 
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
@@ -809,19 +818,17 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
-  address?: InputMaybe<Scalars['ID']['input']>;
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTaskLocationInput = {
-  address: AddressInput;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location: NoteLocationInput;
 };
 
 export type UpdateTaskLocationPayload = OperationInfo | TaskType;

@@ -8,12 +8,23 @@ export type GenerateMagicLinkMutationVariables = Types.Exact<{ [key: string]: ne
 
 export type GenerateMagicLinkMutation = { __typename?: 'Mutation', generateMagicLink: { __typename?: 'MagicLinkResponse', message: string } };
 
-export type CreateNoteMutationVariables = Types.Exact<{
-  data: Types.CreateNoteInput;
+export type GoogleAuthMutationVariables = Types.Exact<{
+  code: Types.Scalars['String']['input'];
+  codeVerifier: Types.Scalars['String']['input'];
+  redirectUri: Types.Scalars['String']['input'];
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
+export type GoogleAuthMutation = { __typename?: 'Mutation', googleAuth: { __typename?: 'AuthResponse', status_code: string } };
+
+export type IdmeAuthMutationVariables = Types.Exact<{
+  code: Types.Scalars['String']['input'];
+  codeVerifier: Types.Scalars['String']['input'];
+  redirectUri: Types.Scalars['String']['input'];
+}>;
+
+
+export type IdmeAuthMutation = { __typename?: 'Mutation', idmeAuth: { __typename?: 'AuthResponse', status_code: string } };
 
 export type UpdateNoteMutationVariables = Types.Exact<{
   data: Types.UpdateNoteInput;
@@ -99,7 +110,7 @@ export type UpdateNoteLocationMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation: { __typename?: 'NoteType', id: string, point?: any | null, address?: { __typename?: 'AddressType', street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } | null } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation: { __typename?: 'NoteType', id: string, location?: { __typename?: 'NoteLocationType', point?: any | null, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const GenerateMagicLinkDocument = gql`
@@ -134,56 +145,80 @@ export function useGenerateMagicLinkMutation(baseOptions?: Apollo.MutationHookOp
 export type GenerateMagicLinkMutationHookResult = ReturnType<typeof useGenerateMagicLinkMutation>;
 export type GenerateMagicLinkMutationResult = Apollo.MutationResult<GenerateMagicLinkMutation>;
 export type GenerateMagicLinkMutationOptions = Apollo.BaseMutationOptions<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
-export const CreateNoteDocument = gql`
-    mutation CreateNote($data: CreateNoteInput!) {
-  createNote(data: $data) {
-    ... on NoteType {
-      id
-      title
-      publicDetails
-      client {
-        id
-        username
-        firstName
-        lastName
-        email
-      }
-      createdAt
-      createdBy {
-        id
-        username
-        email
-      }
-    }
+export const GoogleAuthDocument = gql`
+    mutation GoogleAuth($code: String!, $codeVerifier: String!, $redirectUri: String!) {
+  googleAuth(
+    input: {code: $code, code_verifier: $codeVerifier, redirect_uri: $redirectUri}
+  ) @rest(type: "AuthResponse", path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}", method: "POST", bodyKey: "input") {
+    status_code
   }
 }
     `;
-export type CreateNoteMutationFn = Apollo.MutationFunction<CreateNoteMutation, CreateNoteMutationVariables>;
+export type GoogleAuthMutationFn = Apollo.MutationFunction<GoogleAuthMutation, GoogleAuthMutationVariables>;
 
 /**
- * __useCreateNoteMutation__
+ * __useGoogleAuthMutation__
  *
- * To run a mutation, you first call `useCreateNoteMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNoteMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useGoogleAuthMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGoogleAuthMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createNoteMutation, { data, loading, error }] = useCreateNoteMutation({
+ * const [googleAuthMutation, { data, loading, error }] = useGoogleAuthMutation({
  *   variables: {
- *      data: // value for 'data'
+ *      code: // value for 'code'
+ *      codeVerifier: // value for 'codeVerifier'
+ *      redirectUri: // value for 'redirectUri'
  *   },
  * });
  */
-export function useCreateNoteMutation(baseOptions?: Apollo.MutationHookOptions<CreateNoteMutation, CreateNoteMutationVariables>) {
+export function useGoogleAuthMutation(baseOptions?: Apollo.MutationHookOptions<GoogleAuthMutation, GoogleAuthMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateNoteMutation, CreateNoteMutationVariables>(CreateNoteDocument, options);
+        return Apollo.useMutation<GoogleAuthMutation, GoogleAuthMutationVariables>(GoogleAuthDocument, options);
       }
-export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutation>;
-export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
-export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;
+export type GoogleAuthMutationHookResult = ReturnType<typeof useGoogleAuthMutation>;
+export type GoogleAuthMutationResult = Apollo.MutationResult<GoogleAuthMutation>;
+export type GoogleAuthMutationOptions = Apollo.BaseMutationOptions<GoogleAuthMutation, GoogleAuthMutationVariables>;
+export const IdmeAuthDocument = gql`
+    mutation IdmeAuth($code: String!, $codeVerifier: String!, $redirectUri: String!) {
+  idmeAuth(
+    input: {code: $code, code_verifier: $codeVerifier, redirect_uri: $redirectUri}
+  ) @rest(type: "AuthResponse", path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}", method: "POST", bodyKey: "input") {
+    status_code
+  }
+}
+    `;
+export type IdmeAuthMutationFn = Apollo.MutationFunction<IdmeAuthMutation, IdmeAuthMutationVariables>;
+
+/**
+ * __useIdmeAuthMutation__
+ *
+ * To run a mutation, you first call `useIdmeAuthMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useIdmeAuthMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [idmeAuthMutation, { data, loading, error }] = useIdmeAuthMutation({
+ *   variables: {
+ *      code: // value for 'code'
+ *      codeVerifier: // value for 'codeVerifier'
+ *      redirectUri: // value for 'redirectUri'
+ *   },
+ * });
+ */
+export function useIdmeAuthMutation(baseOptions?: Apollo.MutationHookOptions<IdmeAuthMutation, IdmeAuthMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<IdmeAuthMutation, IdmeAuthMutationVariables>(IdmeAuthDocument, options);
+      }
+export type IdmeAuthMutationHookResult = ReturnType<typeof useIdmeAuthMutation>;
+export type IdmeAuthMutationResult = Apollo.MutationResult<IdmeAuthMutation>;
+export type IdmeAuthMutationOptions = Apollo.BaseMutationOptions<IdmeAuthMutation, IdmeAuthMutationVariables>;
 export const UpdateNoteDocument = gql`
     mutation UpdateNote($data: UpdateNoteInput!) {
   updateNote(data: $data) {
@@ -689,12 +724,16 @@ export const UpdateNoteLocationDocument = gql`
     }
     ... on NoteType {
       id
-      point
-      address {
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
     }
   }

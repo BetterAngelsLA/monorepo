@@ -10,7 +10,6 @@ import notes.enums
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("common", "0004_attachment_attachmentgroupobjectpermission_and_more"),
         ("notes", "0013_add_casemanager_service_request_permissions"),
     ]
 

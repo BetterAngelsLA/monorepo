@@ -1,16 +1,9 @@
-import { useMutation } from '@apollo/client';
 import {
-  CREATE_NOTE_TASK,
-  CreateNoteTaskMutation,
-  CreateNoteTaskMutationVariables,
-  DELETE_TASK,
-  DeleteTaskMutation,
-  DeleteTaskMutationVariables,
   TaskStatusEnum,
   TaskTypeEnum,
-  UPDATE_TASK,
-  UpdateTaskMutation,
-  UpdateTaskMutationVariables,
+  useCreateNoteTaskMutation,
+  useDeleteTaskMutation,
+  useUpdateTaskMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -23,6 +16,7 @@ import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 type TNextStep = {
+  id?: string;
   action: string;
   time?: string | undefined;
   date?: string | undefined;
@@ -33,6 +27,7 @@ interface INextStepProps {
   setNextSteps: (nextSteps: TNextStep[]) => void;
   nextSteps: TNextStep[];
   nextStep: {
+    id?: string;
     action: string;
     time?: string | undefined;
     date?: string | undefined;
@@ -47,19 +42,10 @@ export default function NextStepInput(props: INextStepProps) {
     time: nextStep.time,
     date: nextStep.date,
   });
-  const [id, setId] = useState<string | undefined>(undefined);
-  const [createNoteTask, { error, loading }] = useMutation<
-    CreateNoteTaskMutation,
-    CreateNoteTaskMutationVariables
-  >(CREATE_NOTE_TASK);
-  const [updateTask, { error: updateError }] = useMutation<
-    UpdateTaskMutation,
-    UpdateTaskMutationVariables
-  >(UPDATE_TASK);
-  const [deleteTask, { error: deleteError }] = useMutation<
-    DeleteTaskMutation,
-    DeleteTaskMutationVariables
-  >(DELETE_TASK);
+  const [id, setId] = useState<string | undefined>(nextStep.id || undefined);
+  const [createNoteTask, { error, loading }] = useCreateNoteTaskMutation();
+  const [updateTask, { error: updateError }] = useUpdateTaskMutation();
+  const [deleteTask, { error: deleteError }] = useDeleteTaskMutation();
 
   const createTask = useRef(
     debounce(
@@ -155,7 +141,7 @@ export default function NextStepInput(props: INextStepProps) {
         return {
           ...item,
           id: undefined,
-          value: '',
+          action: '',
         };
       }
       return item;

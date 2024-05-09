@@ -1,13 +1,8 @@
-import { useMutation } from '@apollo/client';
 import {
-  CREATE_NOTE_SERVICE_REQUEST,
-  CreateNoteServiceRequestMutation,
-  CreateNoteServiceRequestMutationVariables,
-  DELETE_SERVICE_REQUEST,
-  DeleteServiceRequestMutation,
-  DeleteServiceRequestMutationVariables,
   ServiceEnum,
   ServiceRequestTypeEnum,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
 } from '@monorepo/expo/betterangels';
 import { IIconProps } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -17,6 +12,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface IProvidedCheckboxProps {
+  id: string | undefined;
   service: {
     title: string;
     enum: ServiceEnum;
@@ -26,12 +22,10 @@ interface IProvidedCheckboxProps {
   idx: number;
   services: {
     id: string | undefined;
-    service: string;
     enum: ServiceEnum;
   }[];
   setServices: (
-    e: {
-      service: string;
+    services: {
       enum: ServiceEnum;
       id: string | undefined;
     }[]
@@ -39,29 +33,26 @@ interface IProvidedCheckboxProps {
 }
 
 export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
-  const { service, idx, noteId, services, setServices } = props;
-  const [isChecked, setIsChecked] = useState(false);
-  const [id, setId] = useState<string | undefined>(undefined);
+  const { service, idx, noteId, services, setServices, id: serviceId } = props;
+  const [isChecked, setIsChecked] = useState(serviceId ? true : false);
+  const [id, setId] = useState<string | undefined>(serviceId);
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const [createNoteServiceRequest, { error }] = useMutation<
-    CreateNoteServiceRequestMutation,
-    CreateNoteServiceRequestMutationVariables
-  >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest, { error: deleteError }] = useMutation<
-    DeleteServiceRequestMutation,
-    DeleteServiceRequestMutationVariables
-  >(DELETE_SERVICE_REQUEST);
+  const [createNoteServiceRequest, { error }] =
+    useCreateNoteServiceRequestMutation();
+  const [deleteServiceRequest, { error: deleteError }] =
+    useDeleteServiceRequestMutation();
 
   const executeMutation = useRef(
-    debounce(async () => {
+    debounce(async (checked, currentId) => {
       if (!noteId) return;
       try {
-        if (isChecked && id) {
+        if (!checked && currentId) {
           const { data } = await deleteServiceRequest({
             variables: {
               data: {
-                id,
+                id: currentId,
               },
             },
           });
@@ -102,20 +93,19 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
   const handleCheck = () => {
     if (isLoading) return;
     setIsLoading(true);
-    setIsChecked((prev) => !prev);
+    setIsChecked(!isChecked);
     const newServices = id
-      ? services.filter((s) => s.service !== service.title)
+      ? services.filter((s) => s.enum !== service.enum)
       : [
           ...services,
           {
             id,
-            service: service.title,
             customService: '',
             enum: service.enum,
           },
         ];
     setServices(newServices);
-    executeMutation();
+    executeMutation(!isChecked, id);
   };
 
   return (

@@ -1,3 +1,4 @@
+import { ViewNoteQuery } from '@monorepo/expo/betterangels';
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -13,33 +14,31 @@ interface IPurposeProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  purposes: ViewNoteQuery['note']['purposes'];
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const { expanded, setExpanded, noteId, purposes: initialPurposes } = props;
 
   const [purposes, setPurposes] = useState<
-    Array<{
-      id: string | undefined;
-      value: string;
-    }>
-  >([
-    {
-      id: undefined,
-      value: '',
-    },
-  ]);
+    | Array<{
+        id: string | undefined;
+        value: string;
+      }>
+    | undefined
+  >(undefined);
   const [hasError, setHasError] = useState({ error: false, check: false });
 
   const isPurpose = expanded === 'Purpose';
-  const isGreaterThanZeroPurpses = purposes.length > 0;
-  const isLessThanElevenPurpses = purposes.length < 11;
-  const hasFirstValidPurpose = purposes[0].value;
-  const lastPurposeHasValue = purposes[purposes.length - 1].value;
-  const hasAnyValidPurpose = purposes.some((purpose) => purpose.value);
+  const isGreaterThanZeroPurpses = purposes && purposes.length > 0;
+  const isLessThanElevenPurpses = purposes && purposes.length < 11;
+  const hasFirstValidPurpose = purposes && purposes[0].value;
+  const lastPurposeHasValue = purposes && purposes[purposes.length - 1].value;
+  const hasAnyValidPurpose =
+    purposes && purposes.some((purpose) => purpose.value);
 
   const deletePurposesWithoutValue = async () => {
-    const remainingPurposes = purposes.filter(
+    const remainingPurposes = purposes?.filter(
       (purpose, index) => index === 0 || purpose.value
     );
 
@@ -49,13 +48,32 @@ export default function Purpose(props: IPurposeProps) {
   useEffect(() => {
     if (!isPurpose) {
       deletePurposesWithoutValue();
-      if (hasError.check && !purposes[0].value) {
+      if (hasError.check && purposes && !purposes[0].value) {
         setHasError({ error: true, check: true });
       }
     } else {
       setHasError({ error: false, check: true });
     }
   }, [expanded]);
+
+  useEffect(() => {
+    if (initialPurposes.length > 0) {
+      const filteredPurposes = initialPurposes.map((item) => ({
+        id: item.id,
+        value: item.title,
+      }));
+      setPurposes(filteredPurposes);
+    } else {
+      setPurposes([
+        {
+          id: undefined,
+          value: '',
+        },
+      ]);
+    }
+  }, [initialPurposes]);
+
+  if (!purposes) return null;
 
   return (
     <FieldCard

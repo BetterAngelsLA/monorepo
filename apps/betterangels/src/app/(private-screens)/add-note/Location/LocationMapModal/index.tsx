@@ -1,9 +1,4 @@
-import { useMutation } from '@apollo/client';
-import {
-  UPDATE_NOTE_LOCATION,
-  UpdateNoteLocationMutation,
-  UpdateNoteLocationMutationVariables,
-} from '@monorepo/expo/betterangels';
+import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -90,10 +85,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
-  const [updateNoteLocation, { error: updateError }] = useMutation<
-    UpdateNoteLocationMutation,
-    UpdateNoteLocationMutationVariables
-  >(UPDATE_NOTE_LOCATION);
+  const [updateNoteLocation, { error: updateError }] =
+    useUpdateNoteLocationMutation();
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
@@ -157,20 +150,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           },
         }
       );
-      const { location } = response.data.result.geometry;
+      const { location: responseLocation } = response.data.result.geometry;
       setIsSearch(false);
       setSuggestions([]);
 
       setCurrentLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
         name: place.description.split(', ')[0],
       });
 
       mapRef.current?.animateToRegion(
         {
-          latitude: location.lat,
-          longitude: location.lng,
+          latitude: responseLocation.lat,
+          longitude: responseLocation.lng,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         },
@@ -178,8 +171,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       );
 
       setInitialLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
       });
 
       setAddress({

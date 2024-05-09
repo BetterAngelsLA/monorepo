@@ -27,6 +27,7 @@ const HEIGHT = {
   sm: 32,
   md: 40,
   lg: 46,
+  xl: 56,
 };
 
 const VARIANTS: TVariants = {
@@ -47,8 +48,8 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.WHITE,
-    color: Colors.PRIMARY_EXTRA_DARK,
-    border: Colors.NEUTRAL,
+    color: Colors.PRIMARY,
+    border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
     bg: Colors.WHITE,
@@ -74,7 +75,7 @@ interface IButtonProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  height?: 'sm' | 'md' | 'lg';
+  height?: 'sm' | 'md' | 'lg' | 'xl';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
   accessibilityLabel?: string;
