@@ -114,6 +114,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
+      // https://github.com/expo/expo/issues/28705
       provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
       initialRegion={{
         longitudeDelta: 0.005,
