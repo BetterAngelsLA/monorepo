@@ -40,7 +40,7 @@ RUN ARCH=$(uname -m) && \
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
-ENV NODE_VERSION 18.17.1
+ENV NODE_VERSION 20.13.11
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && ARCH= && dpkgArch="$(dpkg --print-architecture)" \
