@@ -72,7 +72,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.8.0, @apollo/client@npm:^3.8.8":
+"@apollo/client@npm:^3.10.3, @apollo/client@npm:^3.8.0":
   version: 3.10.3
   resolution: "@apollo/client@npm:3.10.3"
   dependencies:
@@ -4061,7 +4061,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@monorepo/source@workspace:."
   dependencies:
-    "@apollo/client": ^3.8.8
+    "@apollo/client": ^3.10.3
     "@config-plugins/detox": 7.0.0
     "@expo/metro-config": ~0.18.1
     "@expo/metro-runtime": 3.1.3
