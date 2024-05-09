@@ -56,7 +56,8 @@
     "expo-clipboard": "*",
     "apollo-upload-client": "*",
     "expo-image-manipulator": "*",
-    "util": "*"
+    "util": "*",
+    "react-native-reanimated": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
