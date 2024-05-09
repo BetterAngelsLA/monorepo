@@ -9,9 +9,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import 'react-native-reanimated';
 import client from './apollo';
 import Logo from './assets/images/logo.svg';
+
+// https://github.com/expo/expo/issues/28618
+import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
 
