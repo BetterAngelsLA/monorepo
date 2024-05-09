@@ -81,7 +81,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && node --version \
   && npm --version
 
-ENV YARN_VERSION 3.6.3
+ENV YARN_VERSION 4.2.2
 RUN corepack enable && \
     yarn set version $YARN_VERSION && \
     # smoke tests
