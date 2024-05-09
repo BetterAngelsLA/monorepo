@@ -79,7 +79,6 @@ export default function PublicNote(props: IPublicNoteProps) {
           error={hasError}
           value={publicNote}
           onChangeText={(text) => onChange(text)}
-          mb="md"
         />
       ) : (
         publicNote && <TextRegular mb="md">{publicNote}</TextRegular>
