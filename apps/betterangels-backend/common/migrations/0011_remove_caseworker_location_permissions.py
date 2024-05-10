@@ -9,17 +9,27 @@ def update_caseworker_permission_template(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
 
+    Address = apps.get_model("common", "Address")
+    AddressContentType = ContentType.objects.get_for_model(Address)
+    address_perm_map = [
+        perm.split(".")[1]
+        for perm in [
+            "common.add_address",
+            "common.view_address",
+        ]
+    ]
+    permissions = list(Permission.objects.filter(codename__in=address_perm_map, content_type=AddressContentType))
+
     Location = apps.get_model("common", "Location")
     LocationContentType = ContentType.objects.get_for_model(Location)
-
-    perm_map = [
+    location_perm_map = [
         perm.split(".")[1]
         for perm in [
             "common.add_location",
             "common.view_location",
         ]
     ]
-    permissions = list(Permission.objects.filter(codename__in=perm_map, content_type=LocationContentType))
+    permissions.extend(Permission.objects.filter(codename__in=location_perm_map, content_type=LocationContentType))
 
     caseworker_template.permissions.remove(*permissions)
 
