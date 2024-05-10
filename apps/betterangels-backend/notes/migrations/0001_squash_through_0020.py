@@ -89,13 +89,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("accounts", "0005_extendedorganizationinvitation_squashed_0018"),
-        ("auth", "0012_alter_user_first_name_max_length"),
+        # ("accounts", "0001_initial_squashed_0018"),
+        # ("auth", "0012_alter_user_first_name_max_length"),
         ("common", "0001_squashed_0010_location_and_location_permissions"),
-        ("contenttypes", "0002_remove_content_type_name"),
-        ("organizations", "0006_alter_organization_slug"),
-        ("pghistory", "0006_delete_aggregateevent"),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        # ("contenttypes", "0002_remove_content_type_name"),
+        # ("organizations", "0006_alter_organization_slug"),
+        # ("pghistory", "0006_delete_aggregateevent"),
+        # migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
