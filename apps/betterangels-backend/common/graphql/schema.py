@@ -4,7 +4,6 @@ from typing import List, Optional, cast
 import strawberry
 import strawberry_django
 from common.graphql.types import (
-    AddressType,
     FeatureControlData,
     FlagType,
     NoteLocationType,
