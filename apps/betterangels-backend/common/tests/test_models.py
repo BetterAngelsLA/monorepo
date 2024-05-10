@@ -109,13 +109,13 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         json_address_input, _ = self._get_address_inputs(include_point_of_interest=True)
         parsed_address_components = Location.parse_address_components(json_address_input["address_components"])
         expected_parsed_address_components = {
-            'street_number': '106',
-            'route': 'West 1st Street',
-            'locality': 'Los Angeles',
-            'administrative_area_level_1': 'CA',
-            'country': 'United States',
-            'postal_code': '90012',
-            'point_of_interest': 'An Interesting Point (Component)'
+            "street_number": "106",
+            "route": "West 1st Street",
+            "locality": "Los Angeles",
+            "administrative_area_level_1": "CA",
+            "country": "United States",
+            "postal_code": "90012",
+            "point_of_interest": "An Interesting Point (Component)",
         }
 
         self.assertEqual(expected_parsed_address_components, parsed_address_components)

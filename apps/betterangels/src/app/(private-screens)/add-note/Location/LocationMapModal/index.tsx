@@ -290,14 +290,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const { data: locationData } = await updateNoteLocation({
         variables: {
           data: {
-            point: [longitude, latitude],
-            address: {
-              addressComponents: JSON.stringify(
-                data.results[0].address_components
-              ),
-              formattedAddress: googleAddress,
-            },
             id: noteId,
+            location: {
+              point: [longitude, latitude],
+              address: {
+                addressComponents: JSON.stringify(
+                  data.results[0].address_components
+                ),
+                formattedAddress: googleAddress,
+              },
+            },
           },
         },
       });
