@@ -138,9 +138,6 @@ class Location(BaseModel):
 
     objects = models.Manager()
 
-    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
-    locationgroupobjectpermission_set: models.QuerySet["LocationGroupObjectPermission"]
-
     @staticmethod
     def parse_address_components(address_components: str) -> dict:
         address_fields = {
@@ -223,11 +220,3 @@ class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
         Attachment,
         on_delete=models.CASCADE,
     )
-
-
-class LocationUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)
-
-
-class LocationGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(Location, on_delete=models.CASCADE)

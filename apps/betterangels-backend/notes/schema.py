@@ -5,13 +5,9 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import (
-    DeleteDjangoObjectInput,
-    NoteLocationInput,
-    NoteLocationType,
-)
+from common.graphql.types import DeleteDjangoObjectInput
 from common.models import Attachment, Location
-from common.permissions.enums import AttachmentPermissions, LocationPermissions
+from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -154,7 +150,6 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
@@ -181,12 +176,6 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasPerm(LocationPermissions.ADD)])
-    def get_or_create_location(self, info: Info, data: NoteLocationInput) -> NoteLocationType:
-        with transaction.atomic():
-            location = Location.get_or_create_location(strawberry.asdict(data))
-
-            return cast(NoteLocationType, location)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
@@ -655,7 +644,6 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
-            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:

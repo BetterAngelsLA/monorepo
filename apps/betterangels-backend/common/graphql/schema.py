@@ -1,18 +1,9 @@
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import strawberry
-import strawberry_django
-from common.graphql.types import (
-    FeatureControlData,
-    FlagType,
-    NoteLocationType,
-    SampleType,
-    SwitchType,
-)
-from common.permissions.enums import LocationPermissions
+from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 from strawberry.types import Info
-from strawberry_django.permissions import HasPerm
 from waffle import (
     get_waffle_flag_model,
     get_waffle_sample_model,
@@ -22,14 +13,6 @@ from waffle import (
 
 @strawberry.type
 class Query:
-    location: NoteLocationType = strawberry_django.field(
-        extensions=[HasPerm(LocationPermissions.VIEW)],
-    )
-
-    locations: List[NoteLocationType] = strawberry_django.field(
-        extensions=[HasPerm(LocationPermissions.VIEW)],
-    )
-
     @strawberry.field
     def feature_controls(self, info: Info) -> FeatureControlData:
         request = info.context["request"]

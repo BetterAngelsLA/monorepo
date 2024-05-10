@@ -194,7 +194,7 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         self.assertEqual(location.point.coords, self.point)
         self.assertEqual(location.point_of_interest, expected_point_of_interest)
 
-    def test_create_location_missing_components(self) -> None:
+    def test_get_or_create_location_missing_components(self) -> None:
         address_count = Address.objects.count()
         json_address_input, _ = self._get_address_inputs(delete_components=True)
 
