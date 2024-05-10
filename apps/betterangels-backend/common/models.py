@@ -144,13 +144,13 @@ class Location(BaseModel):
     @staticmethod
     def parse_address_components(address_components: str) -> dict:
         address_fields = {
-            "point_of_interest": "long_name",
-            "street_number": "long_name",
-            "route": "long_name",
-            "locality": "long_name",
-            "administrative_area_level_1": "short_name",
+            "street_number": "long_name",  # House/building number
+            "route": "long_name",  # Street name
+            "locality": "long_name",  # City
+            "administrative_area_level_1": "short_name",  # State
             "country": "long_name",
             "postal_code": "long_name",
+            "point_of_interest": "long_name",
         }
 
         components = json.loads(address_components)
