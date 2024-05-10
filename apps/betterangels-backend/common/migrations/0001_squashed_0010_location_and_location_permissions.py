@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("accounts", "0008_permissiongrouptemplate_permissiongroup"),
+        ("accounts", "0005_extendedorganizationinvitation_squashed_0018"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0001_initial"),
         ("contenttypes", "0002_remove_content_type_name"),

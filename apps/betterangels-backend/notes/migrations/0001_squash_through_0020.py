@@ -89,8 +89,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("accounts", "0007_add_caseworker_role"),
-        ("accounts", "0008_permissiongrouptemplate_permissiongroup"),
+        ("accounts", "0005_extendedorganizationinvitation_squashed_0018"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("common", "0001_squashed_0010_location_and_location_permissions"),
         ("contenttypes", "0002_remove_content_type_name"),
