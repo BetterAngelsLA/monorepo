@@ -97,7 +97,6 @@ export default function Purpose(props: IPurposeProps) {
     >
       <View
         style={{
-          paddingBottom: isPurpose ? Spacings.md : 0,
           height: isPurpose ? 'auto' : 0,
           overflow: 'hidden',
         }}

@@ -52,9 +52,9 @@ const VARIANTS: TVariants = {
     border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
-    bg: Colors.WHITE,
-    color: Colors.ERROR,
-    border: Colors.ERROR,
+    bg: Colors.ERROR_EXTRA_LIGHT,
+    color: Colors.ERROR_DARK,
+    border: Colors.ERROR_LIGHT,
   },
 };
 
