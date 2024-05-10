@@ -46,9 +46,7 @@ def update_caseworker_permission_template(apps, schema_editor):
         ]
     ]
 
-    permissions = Permission.objects.filter(
-        codename__in=perm_map, content_type=ClientProfileContentType
-    )
+    permissions = Permission.objects.filter(codename__in=perm_map, content_type=ClientProfileContentType)
     caseworker_template.permissions.add(*permissions)
 
 
@@ -110,9 +108,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "id",
-                    models.BigAutoField(
-                        editable=False, primary_key=True, serialize=False, unique=True
-                    ),
+                    models.BigAutoField(editable=False, primary_key=True, serialize=False, unique=True),
                 ),
                 (
                     "content_type",
@@ -160,9 +156,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "id",
-                    models.BigAutoField(
-                        editable=False, primary_key=True, serialize=False, unique=True
-                    ),
+                    models.BigAutoField(editable=False, primary_key=True, serialize=False, unique=True),
                 ),
                 (
                     "content_type",
@@ -173,9 +167,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "group",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
                 ),
                 (
                     "permission",
@@ -266,9 +258,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="permissiongroup",
             name="group",
-            field=models.OneToOneField(
-                blank=True, on_delete=django.db.models.deletion.CASCADE, to="auth.group"
-            ),
+            field=models.OneToOneField(blank=True, on_delete=django.db.models.deletion.CASCADE, to="auth.group"),
         ),
         migrations.AlterField(
             model_name="permissiongroup",
@@ -288,9 +278,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
                         max_length=150,
-                        validators=[
-                            django.contrib.auth.validators.UnicodeUsernameValidator()
-                        ],
+                        validators=[django.contrib.auth.validators.UnicodeUsernameValidator()],
                         verbose_name="username",
                     ),
                 ),
@@ -438,9 +426,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="clientprofile",
             name="hmis_id",
-            field=models.CharField(
-                blank=True, db_index=True, max_length=50, null=True, unique=True
-            ),
+            field=models.CharField(blank=True, db_index=True, max_length=50, null=True, unique=True),
         ),
         migrations.RunPython(create_permissions_if_not_exist),
         migrations.RunPython(update_caseworker_permission_template),
