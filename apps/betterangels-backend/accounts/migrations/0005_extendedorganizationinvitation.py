@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("organizations", "0006_alter_organization_slug"),
-        ("accounts", "0004_historicaluser"),
+        ("accounts", "0001_initial_squashed_0004_historicaluser"),
     ]
 
     operations = [
