@@ -7,11 +7,6 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-def create_caseworker_permission_template(apps, schema_editor):
-    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
-    PermissionGroupTemplate.objects.create(name="Caseworker")
-
-
 class Migration(migrations.Migration):
     replaces = [
         ("accounts", "0001_initial"),
