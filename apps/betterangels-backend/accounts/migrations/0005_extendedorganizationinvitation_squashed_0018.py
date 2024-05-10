@@ -53,6 +53,23 @@ def update_caseworker_permission_template(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    replaces = [
+        ("accounts", "0005_extendedorganizationinvitation"),
+        ("accounts", "0006_biguserobjectpermission_biggroupobjectpermission"),
+        ("accounts", "0007_add_caseworker_role"),
+        ("accounts", "0008_permissiongrouptemplate_permissiongroup"),
+        ("accounts", "0009_alter_permissiongroup_group_and_more"),
+        ("accounts", "0010_userevent_remove_historicaluser_history_user_and_more"),
+        ("accounts", "0011_client_clientprofile"),
+        ("accounts", "0012_clientprofile_hmis_id"),
+        ("accounts", "0013_clientuserobjectpermission_and_more"),
+        ("accounts", "0014_casemanager_client_permissions"),
+        ("accounts", "0015_alter_clientprofile_hmis_id_alter_user_first_name_and_more"),
+        ("accounts", "0016_alter_clientprofile_hmis_id"),
+        ("accounts", "0017_client_profile_permissions"),
+        ("accounts", "0018_alter_clientgroupobjectpermission_unique_together_and_more"),
+    ]
+
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
         ("accounts", "0001_initial_squashed_0004_historicaluser"),

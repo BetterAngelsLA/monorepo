@@ -13,6 +13,12 @@ def create_caseworker_permission_template(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    replaces = [
+        ("accounts", "0001_initial"),
+        ("accounts", "0002_alter_user_is_active_alter_user_is_staff"),
+        ("accounts", "0003_user_date_joined_user_first_name_user_last_name_and_more"),
+        ("accounts", "0004_historicaluser"),
+    ]
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
     ]
