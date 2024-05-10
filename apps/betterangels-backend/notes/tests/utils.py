@@ -182,6 +182,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                                 zipCode
                             }
                             point
+                            pointOfInterest
                         }
                         moods {
                             descriptor

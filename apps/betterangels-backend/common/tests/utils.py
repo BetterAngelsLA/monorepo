@@ -19,7 +19,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self._setup_groups_and_permissions()
 
         # This is for the address used by most tests
-        self.street = "106 W 1st St"
+        self.street = "106 West 1st Street"
         self.city = "Los Angeles"
         self.state = "CA"
         self.zip_code = "90012"

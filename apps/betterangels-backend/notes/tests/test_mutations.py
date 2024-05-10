@@ -1,4 +1,3 @@
-from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -450,7 +449,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-@skip("")
 class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
     """
     TODO: Write tests for any other models that get associated to Note.
@@ -480,7 +478,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
                 "id": note_id,
                 "title": "Updated Title",
                 "publicDetails": "Updated Body",
-                "point": self.point,
                 "location": self.location.pk,
             }
         )
@@ -489,14 +486,14 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         saved_at = timezone.now()
 
         other_address = baker.make(Address, street="Discarded St")
+        other_location = baker.make(Location, address=other_address)
         # Update - should be discarded
         self._update_note_fixture(
             {
                 "id": note_id,
                 "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
-                "point": [-118.0, 34.0],
-                "address": other_address.pk,
+                "location": other_location.pk,
             }
         )
 
@@ -508,56 +505,69 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
-        self.assertEqual(reverted_note["point"], self.point)
-        self.assertEqual(reverted_note["address"]["street"], "106 W 1st St")
+        self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
-    # @skip("figure this out later")
-    # def test_revert_note_mutation_reverts_updated_address(self) -> None:
-    #     """
-    #     Asserts that when revertNote mutation is called, the Note's
-    #     Address is reverted to its state at the specified moment.
+    def test_revert_note_mutation_reverts_updated_location(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note's
+        Location is reverted to its state at the specified moment.
 
-    #     Test actions:
-    #     1. Add an address
-    #     2. Save now as saved_at
-    #     3. Update the address
-    #     4. Revert to saved_at from Step 2
-    #     5. Assert note has address from Step 1
-    #     """
-    #     note_id = self.note["id"]
-    #     json_address_input, _ = self._get_address_inputs()
+        Test actions:
+        1. Add a location
+        2. Save now as saved_at
+        3. Update the location
+        4. Revert to saved_at from Step 2
+        5. Assert note has location from Step 1
+        """
+        note_id = self.note["id"]
+        json_address_input, _ = self._get_address_inputs()
 
-    #     # Update - should be persisted
-    #     self._update_note_location_fixture(
-    #         {
-    #             "id": note_id,
-    #             "point": self.point,
-    #             "address": json_address_input,
-    #         }
-    #     )
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+        variables = {
+            "id": note_id,
+            "location": location,
+        }
 
-    #     # Select a moment to revert to
-    #     saved_at = timezone.now()
+        # Update - should be persisted
+        self._update_note_location_fixture(variables)
 
-    #     discarded_json_address_input, _ = self._get_address_inputs(street_number_override="201")
-    #     discarded_point = [-118.0, 34.0]
+        # Select a moment to revert to
+        saved_at = timezone.now()
 
-    #     # Update - should be discarded
-    #     self._update_note_location_fixture(
-    #         {
-    #             "id": note_id,
-    #             "point": discarded_point,
-    #             "address": discarded_json_address_input,
-    #         }
-    #     )
-    #     variables = {"id": note_id, "savedAt": saved_at}
+        discarded_json_address_input, discarded_address_input = self._get_address_inputs(street_number_override="104")
+        discarded_point = [-118.0, 34.0]
+        discarded_point_of_interest = "Another interesting point"
 
-    #     expected_query_count = 17
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+        location = {
+            "address": discarded_json_address_input,
+            "point": discarded_point,
+            "pointOfInterest": discarded_point_of_interest,
+        }
+        variables = {
+            "id": note_id,
+            "location": location,
+        }
 
-    #     self.assertEqual("200 Geary Street", reverted_note["address"]["street"])
-    #     self.assertEqual(self.point, reverted_note["point"])
+        # Update - should be discarded
+        note_location_to_discard = self._update_note_location_fixture(variables)["data"]["updateNoteLocation"]
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        # Confirm the note location was updated
+        self.assertEqual("104 West 1st Street", note_location_to_discard["location"]["address"]["street"])
+        self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
+        self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
+
+        expected_query_count = 22
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(self.street, reverted_note["location"]["address"]["street"])
+        self.assertEqual(self.point, reverted_note["location"]["point"])
+        self.assertEqual(self.point_of_interest, reverted_note["location"]["pointOfInterest"])
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
