@@ -11,7 +11,7 @@ from common.graphql.types import (
     SampleType,
     SwitchType,
 )
-from common.permissions.enums import AddressPermissions, LocationPermissions
+from common.permissions.enums import LocationPermissions
 from strawberry.types import Info
 from strawberry_django.permissions import HasPerm
 from waffle import (
@@ -23,14 +23,6 @@ from waffle import (
 
 @strawberry.type
 class Query:
-    address: AddressType = strawberry_django.field(
-        extensions=[HasPerm(AddressPermissions.VIEW)],
-    )
-
-    addresses: List[AddressType] = strawberry_django.field(
-        extensions=[HasPerm(AddressPermissions.VIEW)],
-    )
-
     location: NoteLocationType = strawberry_django.field(
         extensions=[HasPerm(LocationPermissions.VIEW)],
     )

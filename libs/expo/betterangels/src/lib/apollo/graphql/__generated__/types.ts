@@ -573,8 +573,6 @@ export type PermDefinition = {
 
 export type Query = {
   __typename?: 'Query';
-  address: AddressType;
-  addresses: Array<AddressType>;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
@@ -591,11 +589,6 @@ export type Query = {
   shelters: Array<ShelterType>;
   task: TaskType;
   tasks: Array<TaskType>;
-};
-
-
-export type QueryAddressArgs = {
-  pk: Scalars['ID']['input'];
 };
 
 
