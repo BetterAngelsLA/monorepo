@@ -176,7 +176,6 @@ class Mutation:
 
             return cast(NoteType, note)
 
-
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         NOTE_UPDATES = {

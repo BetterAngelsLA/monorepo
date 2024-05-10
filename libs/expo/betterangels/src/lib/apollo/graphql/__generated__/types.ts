@@ -226,8 +226,6 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
-export type GetOrCreateLocationPayload = NoteLocationType | OperationInfo;
-
 export type LocationType = {
   __typename?: 'LocationType';
   address?: Maybe<Scalars['String']['output']>;
@@ -294,7 +292,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
-  getOrCreateLocation: GetOrCreateLocationPayload;
   googleAuth: AuthResponse;
   idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
@@ -381,11 +378,6 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
-};
-
-
-export type MutationGetOrCreateLocationArgs = {
-  data: NoteLocationInput;
 };
 
 
@@ -577,8 +569,6 @@ export type Query = {
   clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
-  location: NoteLocationType;
-  locations: Array<NoteLocationType>;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -600,11 +590,6 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryLocationArgs = {
-  pk: Scalars['ID']['input'];
 };
 
 

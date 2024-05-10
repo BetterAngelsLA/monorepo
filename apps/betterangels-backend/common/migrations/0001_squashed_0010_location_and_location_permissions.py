@@ -16,6 +16,7 @@ class LocationPermissions(models.TextChoices):
     VIEW = "common.view_location", _("Can view location")
     ADD = "common.add_location", _("Can add location")
 
+
 def create_permissions_if_not_exist(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
