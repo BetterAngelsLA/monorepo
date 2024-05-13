@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
-from django.db.models import Q, QuerySet
+from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from strawberry import Info, auto
 from strawberry_django.filters import filter
@@ -31,17 +31,15 @@ class AuthResponse:
 class ClientProfileFilter:
     @strawberry_django.filter_field
     def is_active(
-        self,
-        queryset: QuerySet,
-        info: Info,
-        value: Optional[bool],
-        prefix: str,
+        self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
     ) -> Tuple[QuerySet[ClientProfile], Q]:
         if value:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
-
+            # Filter profiles based on the maximum interacted_at date being within the threshold
             return (
-                queryset.filter(user__client_notes__interacted_at__gte=earliest_interaction_threshold).distinct(),
+                queryset.annotate(last_interacted_at=Max("user__client_notes__interacted_at")).filter(
+                    last_interacted_at__gte=earliest_interaction_threshold
+                ),
                 Q(),
             )
 
