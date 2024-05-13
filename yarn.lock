@@ -2446,7 +2446,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/metro-runtime@npm:3.2.1":
+"@expo/metro-runtime@npm:3.2.1, @expo/metro-runtime@npm:~3.2.1":
   version: 3.2.1
   resolution: "@expo/metro-runtime@npm:3.2.1"
   peerDependencies:
@@ -4092,7 +4092,7 @@ __metadata:
     "@apollo/client": "patch:@apollo/client@npm%3A3.10.3#~/.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch"
     "@config-plugins/detox": "npm:7.0.0"
     "@expo/metro-config": "npm:~0.18.1"
-    "@expo/metro-runtime": "npm:3.2.1"
+    "@expo/metro-runtime": "npm:~3.2.1"
     "@graphql-codegen/cli": "npm:^5.0.2"
     "@graphql-codegen/client-preset": "npm:^4.2.5"
     "@graphql-codegen/near-operation-file-preset": "npm:^3.0.0"
@@ -4148,7 +4148,7 @@ __metadata:
     eslint-plugin-react-native-a11y: "npm:^3.3.0"
     expo: "npm:~51.0.4"
     expo-auth-session: "npm:~5.5.2"
-    expo-camera: "npm:~15.0.5"
+    expo-camera: "npm:~15.0.7"
     expo-clipboard: "npm:~6.0.3"
     expo-constants: "npm:~16.0.1"
     expo-dev-client: "npm:~4.0.13"
@@ -13667,7 +13667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~15.0.5":
+"expo-camera@npm:~15.0.7":
   version: 15.0.7
   resolution: "expo-camera@npm:15.0.7"
   dependencies:

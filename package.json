@@ -20,7 +20,7 @@
     "date-fns": "^3.0.4",
     "expo": "~51.0.4",
     "expo-auth-session": "~5.5.2",
-    "expo-camera": "~15.0.5",
+    "expo-camera": "~15.0.7",
     "expo-clipboard": "~6.0.3",
     "expo-constants": "~16.0.1",
     "expo-image-manipulator": "~12.0.4",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@config-plugins/detox": "7.0.0",
-    "@expo/metro-runtime": "3.2.1",
+    "@expo/metro-runtime": "~3.2.1",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/client-preset": "^4.2.5",
     "@graphql-codegen/near-operation-file-preset": "^3.0.0",
