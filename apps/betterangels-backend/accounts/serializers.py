@@ -8,7 +8,6 @@ References:
 - https://github.com/iMerica/dj-rest-auth/pull/470/files
 """
 
-
 from typing import Any, Dict
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error

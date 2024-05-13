@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.managers import UserManager
@@ -13,6 +13,17 @@ from django.db import models
 from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+
+if TYPE_CHECKING:
+    from common.models import (
+        AttachmentUserObjectPermission,
+        LocationUserObjectPermission,
+    )
+    from notes.models import (
+        NoteUserObjectPermission,
+        ServiceRequestUserObjectPermission,
+        TaskUserObjectPermission,
+    )
 
 
 @pghistory.track(
@@ -55,6 +66,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     organizations_organizationuser: models.QuerySet[OrganizationUser]
+
+    # MyPy hints for Permission Reverses
+    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
+    biguserobjectpermission_set: models.QuerySet["BigUserObjectPermission"]
+    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
+    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
+    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
+    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
         return self.email
