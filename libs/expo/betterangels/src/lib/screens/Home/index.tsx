@@ -27,7 +27,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   );
   const { data, loading } = useClientProfilesQuery({
     variables: {
-      filters: { isActive: false },
+      filters: { isActive: true },
       pagination: { limit: paginationLimit + 1, offset: offset },
     },
   });
