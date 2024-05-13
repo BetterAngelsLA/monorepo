@@ -196,12 +196,12 @@ class Location(BaseModel):
         # https://developers.google.com/maps/documentation/geocoding/requests-geocoding
 
         address = Location.get_or_create_address(location_data["address"])
+        point_of_interest = location_data["point_of_interest"] or cls.get_point_of_interest(location_data["address"])
 
         location, _ = Location.objects.get_or_create(
             address=address,
             point=location_data["point"],
-            point_of_interest=location_data["point_of_interest"]
-            or Location.get_point_of_interest(location_data["address"]),
+            point_of_interest=point_of_interest,
         )
 
         return location
