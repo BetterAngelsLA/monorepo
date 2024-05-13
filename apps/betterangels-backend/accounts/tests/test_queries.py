@@ -170,6 +170,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             organization=self.organization,
             client=self.client_profile_1.user,
         )
+        baker.make(
+            Note,
+            organization=self.organization,
+            client=self.client_profile_1.user,
+        )
 
         query = """
             query ClientProfiles($isActive: Boolean, $search: String) {
@@ -182,6 +187,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         with time_machine.travel(datetime.now(), tick=False) as traveller:
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
+            baker.make(
+                Note,
+                organization=self.organization,
+                client=self.client_profile_2.user,
+            )
             baker.make(
                 Note,
                 organization=self.organization,

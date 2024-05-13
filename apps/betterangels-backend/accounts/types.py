@@ -40,7 +40,9 @@ class ClientProfileFilter:
         if value:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
 
-            return queryset.filter(user__client_notes__interacted_at__gte=earliest_interaction_threshold), Q()
+            return (
+                queryset.filter(user__client_notes__interacted_at__gte=earliest_interaction_threshold).distinct(), Q()
+            )
 
         return queryset, Q()
 
