@@ -153,7 +153,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
-        self.assertEqual(expected_note, note)
+        self.assertCountEqual(expected_note.items(), note.items())
 
     def test_notes_query(self) -> None:
         query = """
@@ -209,7 +209,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
         # TODO: Add more validations once sort is implemented
-        self.assertEqual(self.note, notes[0])
+        self.assertCountEqual(self.note.items(), notes[0].items())
 
     @parametrize(
         (
