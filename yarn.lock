@@ -4146,13 +4146,13 @@ __metadata:
     eslint-plugin-react: "npm:7.32.2"
     eslint-plugin-react-hooks: "npm:4.6.0"
     eslint-plugin-react-native-a11y: "npm:^3.3.0"
-    expo: "npm:~51.0.4"
+    expo: "npm:~51.0.5"
     expo-auth-session: "npm:~5.5.2"
-    expo-camera: "npm:~15.0.7"
+    expo-camera: "npm:~15.0.8"
     expo-clipboard: "npm:~6.0.3"
     expo-constants: "npm:~16.0.1"
     expo-dev-client: "npm:~4.0.13"
-    expo-image-manipulator: "npm:~12.0.4"
+    expo-image-manipulator: "npm:~12.0.5"
     expo-image-picker: "npm:~15.0.4"
     expo-linking: "npm:~6.3.1"
     expo-location: "npm:~17.0.1"
@@ -10273,7 +10273,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-preset-expo@npm:~11.0.0, babel-preset-expo@npm:~11.0.5":
+"babel-preset-expo@npm:~11.0.0":
   version: 11.0.5
   resolution: "babel-preset-expo@npm:11.0.5"
   dependencies:
@@ -10287,6 +10287,23 @@ __metadata:
     babel-plugin-react-native-web: "npm:~0.19.10"
     react-refresh: "npm:^0.14.2"
   checksum: 10/9f9b2bd374fa960414f489f39b69b562b20f2b21e14f922ae7768f25f0d01355b6442a333d566ceeae9f81ed341fb187149d8c073284efc1a202722caa0d0e9d
+  languageName: node
+  linkType: hard
+
+"babel-preset-expo@npm:~11.0.6":
+  version: 11.0.6
+  resolution: "babel-preset-expo@npm:11.0.6"
+  dependencies:
+    "@babel/plugin-proposal-decorators": "npm:^7.12.9"
+    "@babel/plugin-transform-export-namespace-from": "npm:^7.22.11"
+    "@babel/plugin-transform-object-rest-spread": "npm:^7.12.13"
+    "@babel/plugin-transform-parameters": "npm:^7.22.15"
+    "@babel/preset-react": "npm:^7.22.15"
+    "@babel/preset-typescript": "npm:^7.23.0"
+    "@react-native/babel-preset": "npm:~0.74.83"
+    babel-plugin-react-native-web: "npm:~0.19.10"
+    react-refresh: "npm:^0.14.2"
+  checksum: 10/7583829d255bb695cd8adfb8826a0caee5aff8bec1517c0a7724dc35a857eaae3d8c5a49b241d9a0c900ef02d1a24810fd484def77407f5744866eb31efbdfc4
   languageName: node
   linkType: hard
 
@@ -13667,14 +13684,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~15.0.7":
-  version: 15.0.7
-  resolution: "expo-camera@npm:15.0.7"
+"expo-camera@npm:~15.0.8":
+  version: 15.0.8
+  resolution: "expo-camera@npm:15.0.8"
   dependencies:
     invariant: "npm:^2.2.4"
   peerDependencies:
     expo: "*"
-  checksum: 10/ea82fa4515e75f4be616309f666a9441011a2073579cd48107020b0ad794e01c5294c4d89769e44accb9178aff010bae026b5a12a1a9ac1f43248460e9ac0733
+  checksum: 10/14ac78f0cde9d44f958264b23ee84e333f0448874e1865ef19049db437d57b82bd61ae387e1a4e53cda5501e1d7bf81aa599bd3548ce8194107ad5e0f45660fa
   languageName: node
   linkType: hard
 
@@ -13796,14 +13813,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-manipulator@npm:~12.0.4":
-  version: 12.0.4
-  resolution: "expo-image-manipulator@npm:12.0.4"
+"expo-image-manipulator@npm:~12.0.5":
+  version: 12.0.5
+  resolution: "expo-image-manipulator@npm:12.0.5"
   dependencies:
     expo-image-loader: "npm:~4.7.0"
   peerDependencies:
     expo: "*"
-  checksum: 10/f0842abfb6ce40d0c3d5765033c4fe6c498f0f9ed457f4b33312a5dac46fba12c457b42891ca8f7c958be033eba2caf2cd27a60b0382cf825e7857c976354d51
+  checksum: 10/2b853591fa6c71c4b0f770e0aef65febb6e3e7dd1383fbfbca1d426c7cab5eaf984d1630c21d587dfb039e05de051145f5561109b7bf5134f6e437787f2b5348
   languageName: node
   linkType: hard
 
@@ -14001,9 +14018,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~51.0.4":
-  version: 51.0.4
-  resolution: "expo@npm:51.0.4"
+"expo@npm:~51.0.5":
+  version: 51.0.5
+  resolution: "expo@npm:51.0.5"
   dependencies:
     "@babel/runtime": "npm:^7.20.0"
     "@expo/cli": "npm:0.18.11"
@@ -14011,7 +14028,7 @@ __metadata:
     "@expo/config-plugins": "npm:8.0.4"
     "@expo/metro-config": "npm:0.18.3"
     "@expo/vector-icons": "npm:^14.0.0"
-    babel-preset-expo: "npm:~11.0.5"
+    babel-preset-expo: "npm:~11.0.6"
     expo-asset: "npm:~10.0.6"
     expo-file-system: "npm:~17.0.1"
     expo-font: "npm:~12.0.5"
@@ -14022,7 +14039,7 @@ __metadata:
     whatwg-url-without-unicode: "npm:8.0.0-3"
   bin:
     expo: bin/cli
-  checksum: 10/57ef18feea4195d35e11e5f8db8bde49c7ce71bc2092f6d0c73356e66ee2d46a1e8fb87a2932da32d31c946b37ab9fd10042c5778af6d0a545b064e1de07e0ce
+  checksum: 10/e662da8419a939a174c4f8cb3e257a9a9d52d698d704e548b50dc96255b66217dd08302c0f63e1552321805c2db28804d20d5646f2f84eea13eb2342ba762f6b
   languageName: node
   linkType: hard
 
