@@ -4110,7 +4110,7 @@ __metadata:
     "@nx/storybook": "npm:18.2.4"
     "@nx/workspace": "npm:18.2.4"
     "@nxlv/python": "npm:17.0.0"
-    "@react-native-community/datetimepicker": "npm:7.7.0"
+    "@react-native-community/datetimepicker": "npm:8.0.1"
     "@storybook/addon-essentials": "npm:7.6.12"
     "@storybook/addon-react-native-web": "npm:^0.0.21"
     "@storybook/core-server": "npm:7.6.12"
@@ -5842,12 +5842,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/datetimepicker@npm:7.7.0":
-  version: 7.7.0
-  resolution: "@react-native-community/datetimepicker@npm:7.7.0"
+"@react-native-community/datetimepicker@npm:8.0.1":
+  version: 8.0.1
+  resolution: "@react-native-community/datetimepicker@npm:8.0.1"
   dependencies:
     invariant: "npm:^2.2.4"
-  checksum: 10/276bf32b9eb3cdfe1cde2b263f920feb7aad039f2e53a9920a62d0cd221e02b78c55cc2a1d52ceca4ccee557d2c36679d88dc9775549e8e33c7d6c9349617b27
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    react-native-windows:
+      optional: true
+  checksum: 10/d6ec07197ad12ca49188c17b5dc5c62626f55381b20f474a36314ce4b8a3705e366244f8a565f38525730834c48dfe59c5b3b5ae17dafc82618ec2a8c05d1b32
   languageName: node
   linkType: hard
 
