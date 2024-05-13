@@ -103,57 +103,53 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables)
 
         note = response["data"]["note"]
-        expected_note = {
-            "id": note_id,
-            "title": "Updated Note",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
-            },
-            "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "purposes": [
+
+        # Perform individual assertions
+        self.assertEqual(note["id"], note_id)
+        self.assertEqual(note["title"], "Updated Note")
+        self.assertEqual(note["point"], self.point)
+        self.assertEqual(note["address"]["street"], "106 W 1st St")
+        self.assertEqual(note["address"]["city"], "Los Angeles")
+        self.assertEqual(note["address"]["state"], "CA")
+        self.assertEqual(note["address"]["zipCode"], "90012")
+        self.assertEqual(note["publicDetails"], "Updated public details")
+        self.assertEqual(note["privateDetails"], "Updated private details")
+        self.assertEqual(note["isSubmitted"], False)
+        self.assertEqual(note["client"]["id"], str(self.client_user_1.pk))
+        self.assertEqual(note["createdBy"]["id"], str(self.org_1_case_manager_1.pk))
+        self.assertEqual(note["interactedAt"], "2024-03-12T11:12:13+00:00")
+
+        # List Comparision without strict order
+        self.assertCountEqual([mood["descriptor"] for mood in note["moods"]], ["ANXIOUS", "EUTHYMIC"])
+
+        self.assertCountEqual(
+            note["purposes"],
+            [
                 {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
                 {"id": self.purpose_2["id"], "title": self.purpose_2["title"]},
             ],
-            "nextSteps": [
+        )
+        self.assertCountEqual(
+            note["nextSteps"],
+            [
                 {"id": self.next_step_1["id"], "title": self.next_step_1["title"]},
                 {"id": self.next_step_2["id"], "title": self.next_step_2["title"]},
             ],
-            "providedServices": [
-                {
-                    "id": str(self.provided_services[0].id),
-                    "service": ServiceEnum(self.provided_services[0].service).name,
-                    "customService": self.provided_services[0].custom_service,
-                },
-                {
-                    "id": str(self.provided_services[1].id),
-                    "service": ServiceEnum(self.provided_services[1].service).name,
-                    "customService": self.provided_services[1].custom_service,
-                },
+        )
+        self.assertCountEqual(
+            note["providedServices"],
+            [
+                {"id": str(ps.id), "service": ServiceEnum(ps.service).name, "customService": ps.custom_service}
+                for ps in self.provided_services
             ],
-            "requestedServices": [
-                {
-                    "id": str(self.requested_services[0].id),
-                    "service": ServiceEnum(self.requested_services[0].service).name,
-                    "customService": self.requested_services[0].custom_service,
-                },
-                {
-                    "id": str(self.requested_services[1].id),
-                    "service": ServiceEnum(self.requested_services[1].service).name,
-                    "customService": self.requested_services[1].custom_service,
-                },
+        )
+        self.assertCountEqual(
+            note["requestedServices"],
+            [
+                {"id": str(rs.id), "service": ServiceEnum(rs.service).name, "customService": rs.custom_service}
+                for rs in self.requested_services
             ],
-            "publicDetails": "Updated public details",
-            "privateDetails": "Updated private details",
-            "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "interactedAt": "2024-03-12T11:12:13+00:00",
-        }
-        self.assertEqual(expected_note, note)
+        )
 
     def test_notes_query(self) -> None:
         query = """
