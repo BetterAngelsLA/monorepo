@@ -13,13 +13,13 @@ from .models import User
 
 
 class UserCreationForm(BaseUserCreationForm):
-    class Meta(BaseUserCreationForm.Meta):
+    class Meta:
         model = User
         fields = ("email", "username")
 
 
 class UserChangeForm(BaseUserChangeForm):
-    class Meta(BaseUserChangeForm.Meta):
+    class Meta:
         model = User
         fields = ("email",)
 
