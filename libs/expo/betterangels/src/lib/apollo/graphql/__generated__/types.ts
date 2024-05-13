@@ -16,7 +16,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** Decimal (fixed-point) */
   Decimal: { input: any; output: any; }
-  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
