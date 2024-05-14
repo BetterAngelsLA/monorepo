@@ -1,28 +1,45 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
-const paginationLimit = 10;
+const paginationLimit = 500;
 
-function useInteractions() {
+export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
-  const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
-  const [refreshing, setRefreshing] = useState(false);
-
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
     },
   });
+  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
+  const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setOffset(0);
+    try {
+      const response = await refetch({
+        pagination: { limit: paginationLimit + 1, offset: 0 },
+      });
+      const isMoreAvailable =
+        response.data &&
+        'notes' in response.data &&
+        response.data.notes.length > paginationLimit;
+      setHasMore(isMoreAvailable);
+    } catch (err) {
+      console.error(err);
+    }
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     if (!data || !('notes' in data)) return;
@@ -36,59 +53,9 @@ function useInteractions() {
       setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
     }
 
+    // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
   }, [data, offset]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    setOffset(0);
-    try {
-      const response = await refetch({
-        pagination: { limit: paginationLimit + 1, offset: 0 },
-      });
-      const isMoreAvailable =
-        response.data &&
-        'notes' in response.data &&
-        response.data.notes.length > paginationLimit;
-      setHasMore(isMoreAvailable);
-      setNotes(response.data.notes.slice(0, paginationLimit));
-    } catch (err) {
-      console.error(err);
-    }
-    setRefreshing(false);
-  }, [refetch]);
-
-  return {
-    search,
-    setSearch,
-    sort,
-    setSort,
-    notes,
-    loading,
-    hasMore,
-    error,
-    refreshing,
-    onRefresh,
-    setOffset,
-    offset,
-  };
-}
-
-export default function Interactions() {
-  const {
-    search,
-    setSearch,
-    sort,
-    setSort,
-    notes,
-    loading,
-    hasMore,
-    error,
-    refreshing,
-    onRefresh,
-    setOffset,
-    offset,
-  } = useInteractions();
 
   if (error) throw new Error('Something went wrong!');
 
@@ -108,14 +75,14 @@ export default function Interactions() {
             <View style={{ marginTop: 10, alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#0000ff" />
             </View>
-          ) : hasMore ? (
+          ) : !loading && hasMore ? (
             <Button
               mt="lg"
               title="Load More"
               onPress={() => setOffset(offset + paginationLimit)}
               size="auto"
               variant="secondary"
-              accessibilityHint="loads more notes from the server"
+              accessibilityHint={`loads more notes from the server`}
             />
           ) : null
         }
