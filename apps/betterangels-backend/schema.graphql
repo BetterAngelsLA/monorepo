@@ -353,6 +353,10 @@ enum NoteNamespaceEnum {
   REQUESTED_SERVICES
 }
 
+input NoteOrder {
+  interactedAt: Ordering
+}
+
 type NoteType {
   id: ID!
   title: String!
@@ -407,6 +411,15 @@ enum OperationMessageKind {
   VALIDATION
 }
 
+enum Ordering {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
@@ -420,7 +433,7 @@ type Query {
   locations: [NoteLocationType!]! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(filters: NoteFilter, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)

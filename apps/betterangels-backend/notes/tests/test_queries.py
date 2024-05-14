@@ -284,6 +284,43 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if returned_note_label_2:
             self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
 
+    def test_notes_query_order(self) -> None:
+        """
+        Assert that notes are returned in order of interacted_at timestamp, regardless of client
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+
+        older_note = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
+            "createNote"
+        ]
+        self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
+
+        oldest_note = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
+            "createNote"
+        ]
+        self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
+
+        query = """
+            query Notes($order: NoteOrder) {
+                notes(order: $order) {
+                    id
+                }
+            }
+        """
+
+        # Test descending order
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
+
+        self.assertEqual([n["id"] for n in response["data"]["notes"]], [self.note["id"], older_note["id"], oldest_note["id"]])
+
+        # Test ascending order
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
+
+        self.assertEqual([n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]])
+
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):

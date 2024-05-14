@@ -147,7 +147,7 @@ class CreateNoteMoodInput:
 
 @strawberry_django.ordering.order(models.Note)
 class NoteOrder:
-    created_at: auto
+    interacted_at: auto
 
 
 @strawberry_django.filters.filter(models.Note)
@@ -157,7 +157,7 @@ class NoteFilter:
     is_submitted: auto
 
 
-@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter)
+@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: auto
     title: auto
