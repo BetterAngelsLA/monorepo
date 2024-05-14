@@ -7,7 +7,7 @@ import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
-const paginationLimit = 500;
+const paginationLimit = 10;
 
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
