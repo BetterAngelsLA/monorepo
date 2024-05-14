@@ -13,15 +13,17 @@ def move_address_and_point_to_location(apps, schema_editor) -> None:
 
     notes = Note.objects.all()
     for note in notes:
-        location = Location.objects.create(address=note.address, point=note.point)
-        note.location = location
-        note.save()
+        if note.address or note.point:
+            location = Location.objects.get_or_create(address=note.address, point=note.point)
+            note.location = location
+            note.save()
 
     tasks = Task.objects.all()
     for task in tasks:
-        location = Location.objects.create(address=task.address, point=task.point)
-        task.location = location
-        task.save()
+        if task.address or task.point:
+            location = Location.objects.get_or_create(address=task.address, point=task.point)
+            task.location = location
+            task.save()
 
 
 class Migration(migrations.Migration):
