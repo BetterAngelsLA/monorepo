@@ -1,0 +1,15 @@
+query ClientProfile($id: ID!) {
+  clientProfile(pk: $id) {
+    ... on ClientProfileType {
+      id
+      hmisId
+      user {
+        id
+        email
+        firstName
+        lastName
+        username
+      }
+    }
+  }
+}

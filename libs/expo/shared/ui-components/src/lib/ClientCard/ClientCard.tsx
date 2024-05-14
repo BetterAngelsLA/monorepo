@@ -4,6 +4,7 @@ import {
   TentIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Link } from 'expo-router';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import TextBold from '../TextBold';
@@ -26,6 +27,7 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
+  id: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -42,6 +44,7 @@ export function ClientCard(props: IClientCardProps) {
     my,
     mx,
     onPress,
+    id,
   } = props;
 
   return (
@@ -58,17 +61,21 @@ export function ClientCard(props: IClientCardProps) {
         },
       ]}
     >
-      <Avatar
-        accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
-        accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
-        imageUrl={imageUrl}
-        size="lg"
-        mr="sm"
-      />
+      <Link href={`/client/${id}`}>
+        <Avatar
+          accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
+          accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
+          imageUrl={imageUrl}
+          size="lg"
+          mr="sm"
+        />
+      </Link>
       <View style={{ gap: Spacings.xs, flex: 2 }}>
-        <TextBold size="sm">
-          {firstName} {lastName}
-        </TextBold>
+        <Link href={`/client/${id}`}>
+          <TextBold size="sm">
+            {firstName} {lastName}
+          </TextBold>
+        </Link>
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />

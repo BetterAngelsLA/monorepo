@@ -10,7 +10,7 @@ export default function MainScrollContainer({
 }: {
   children: ReactNode;
   bg?: string;
-  pt?: 'sm' | 'md' | 'lg';
+  pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
 }) {
   return (
@@ -24,7 +24,7 @@ export default function MainScrollContainer({
         contentContainerStyle={{
           paddingHorizontal: px && Spacings[px],
           paddingBottom: 80,
-          paddingTop: Spacings[pt],
+          paddingTop: pt && Spacings[pt],
         }}
       >
         {children}
