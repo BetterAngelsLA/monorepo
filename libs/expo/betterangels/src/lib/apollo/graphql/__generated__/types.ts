@@ -226,15 +226,18 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
+export type LocationInput = {
+  address?: InputMaybe<AddressInput>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+  pointOfInterest?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type LocationType = {
   __typename?: 'LocationType';
-  address?: Maybe<Scalars['String']['output']>;
-  city?: Maybe<Scalars['String']['output']>;
-  confidential?: Maybe<Scalars['Boolean']['output']>;
+  address: AddressType;
+  id: Scalars['ID']['output'];
   point?: Maybe<Scalars['Point']['output']>;
-  spa?: Maybe<Scalars['Int']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-  zipCode?: Maybe<Scalars['String']['output']>;
+  pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
 
 export type MagicLinkInput = {
@@ -458,20 +461,6 @@ export type NoteFilter = {
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-export type NoteLocationInput = {
-  address?: InputMaybe<AddressInput>;
-  point?: InputMaybe<Scalars['Point']['input']>;
-  pointOfInterest?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type NoteLocationType = {
-  __typename?: 'NoteLocationType';
-  address: AddressType;
-  id: Scalars['ID']['output'];
-  point?: Maybe<Scalars['Point']['output']>;
-  pointOfInterest?: Maybe<Scalars['String']['output']>;
-};
-
 export enum NoteNamespaceEnum {
   MoodAssessment = 'MOOD_ASSESSMENT',
   ProvidedServices = 'PROVIDED_SERVICES',
@@ -491,7 +480,7 @@ export type NoteType = {
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
-  location?: Maybe<NoteLocationType>;
+  location?: Maybe<LocationType>;
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
@@ -732,6 +721,17 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export type ShelterLocationType = {
+  __typename?: 'ShelterLocationType';
+  address?: Maybe<Scalars['String']['output']>;
+  city?: Maybe<Scalars['String']['output']>;
+  confidential?: Maybe<Scalars['Boolean']['output']>;
+  point?: Maybe<Scalars['Point']['output']>;
+  spa?: Maybe<Scalars['Int']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
+
 export type ShelterType = {
   __typename?: 'ShelterType';
   beds: BedsType;
@@ -741,7 +741,7 @@ export type ShelterType = {
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
-  location: LocationType;
+  location: ShelterLocationType;
   organization: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
@@ -770,7 +770,7 @@ export type TaskType = {
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  location?: Maybe<NoteLocationType>;
+  location?: Maybe<LocationType>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
 };
@@ -792,7 +792,7 @@ export type UpdateNoteInput = {
 
 export type UpdateNoteLocationInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
-  location: NoteLocationInput;
+  location: LocationInput;
 };
 
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
@@ -820,7 +820,7 @@ export type UpdateTaskInput = {
 
 export type UpdateTaskLocationInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
-  location: NoteLocationInput;
+  location: LocationInput;
 };
 
 export type UpdateTaskLocationPayload = OperationInfo | TaskType;

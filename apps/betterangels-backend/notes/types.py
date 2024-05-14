@@ -4,11 +4,7 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from accounts.types import UserType
-from common.graphql.types import (
-    AttachmentInterface,
-    NoteLocationInput,
-    NoteLocationType,
-)
+from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
@@ -80,7 +76,7 @@ class UpdateServiceRequestInput:
 class TaskType:
     id: auto
     title: auto
-    location: Optional[NoteLocationType]
+    location: Optional[LocationType]
     status: auto
     due_by: auto
     client: Optional[UserType]
@@ -163,7 +159,7 @@ class NoteFilter:
 class NoteType:
     id: auto
     title: auto
-    location: Optional[NoteLocationType]
+    location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
     purposes: List[TaskType]
@@ -220,13 +216,13 @@ class UpdateNoteInput:
 @strawberry_django.input(models.Note)
 class UpdateNoteLocationInput:
     id: auto
-    location: NoteLocationInput
+    location: LocationInput
 
 
 @strawberry_django.input(models.Task)
 class UpdateTaskLocationInput:
     id: auto
-    location: NoteLocationInput
+    location: LocationInput
 
 
 @strawberry_django.input(models.Note)

@@ -226,14 +226,17 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
-type LocationType {
+input LocationInput {
+  address: AddressInput
   point: Point
-  spa: Int
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  confidential: Boolean
+  pointOfInterest: String
+}
+
+type LocationType {
+  id: ID!
+  address: AddressType!
+  point: Point
+  pointOfInterest: String
 }
 
 input MagicLinkInput {
@@ -328,19 +331,6 @@ input NoteFilter {
   DISTINCT: Boolean
 }
 
-input NoteLocationInput {
-  address: AddressInput
-  point: Point
-  pointOfInterest: String
-}
-
-type NoteLocationType {
-  id: ID!
-  address: AddressType!
-  point: Point
-  pointOfInterest: String
-}
-
 enum NoteNamespaceEnum {
   MOOD_ASSESSMENT
   PROVIDED_SERVICES
@@ -354,7 +344,7 @@ input NoteOrder {
 type NoteType {
   id: ID!
   title: String!
-  location: NoteLocationType
+  location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
   purposes(pagination: OffsetPaginationInput): [TaskType!]!
@@ -505,6 +495,16 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+type ShelterLocationType {
+  point: Point
+  spa: Int
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  confidential: Boolean
+}
+
 type ShelterType {
   id: ID!
   title: String!
@@ -517,7 +517,7 @@ type ShelterType {
   populations: [String!]!
   requirements: [String!]!
   funders: [String!]!
-  location: LocationType!
+  location: ShelterLocationType!
   organization: String!
   description: DescriptionType!
   beds: BedsType!
@@ -537,7 +537,7 @@ enum TaskStatusEnum {
 type TaskType {
   id: ID!
   title: String!
-  location: NoteLocationType
+  location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
   client: UserType
@@ -562,7 +562,7 @@ input UpdateNoteInput {
 
 input UpdateNoteLocationInput {
   id: ID
-  location: NoteLocationInput!
+  location: LocationInput!
 }
 
 union UpdateNoteLocationPayload = NoteType | OperationInfo
@@ -590,7 +590,7 @@ input UpdateTaskInput {
 
 input UpdateTaskLocationInput {
   id: ID
-  location: NoteLocationInput!
+  location: LocationInput!
 }
 
 union UpdateTaskLocationPayload = TaskType | OperationInfo

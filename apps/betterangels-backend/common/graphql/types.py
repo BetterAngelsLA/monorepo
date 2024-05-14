@@ -28,7 +28,7 @@ class AddressInput:
 
 
 @strawberry_django.type(Location)
-class NoteLocationType:
+class LocationType:
     id: auto
     address: AddressType
     point: auto
@@ -36,7 +36,7 @@ class NoteLocationType:
 
 
 @strawberry_django.input(Location)
-class NoteLocationInput:
+class LocationInput:
     address: Optional[AddressInput]
     point: auto
     point_of_interest: auto
