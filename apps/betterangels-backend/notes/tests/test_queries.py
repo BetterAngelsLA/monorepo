@@ -27,8 +27,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "point": self.point,
-                "address": self.address.pk,
+                "location": self.location.pk,
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
@@ -54,12 +53,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
@@ -106,12 +109,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "title": "Updated Note",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [
@@ -161,12 +168,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 notes {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
@@ -491,8 +502,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             {
                 "id": task_id,
                 "title": "Updated task title",
-                "point": self.point,
-                "address": self.address.pk,
+                "location": self.location.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
                 "client": self.client_user_1.pk,
@@ -504,12 +514,16 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 task(pk: $id) {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     status
                     dueBy
@@ -533,12 +547,16 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": task_id,
             "title": "Updated task title",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
@@ -557,12 +575,16 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 tasks {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     status
                     dueBy

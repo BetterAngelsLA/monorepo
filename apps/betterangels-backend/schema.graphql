@@ -99,8 +99,6 @@ input CreateClientProfileInput {
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
-union CreateLocationPayload = NoteLocationType | OperationInfo
-
 input CreateNoteAttachmentInput {
   note: ID!
   file: Upload!
@@ -223,21 +221,22 @@ type FlagType {
   lastModified: DateTime
 }
 
-union GetOrCreateAddressPayload = AddressType | OperationInfo
-
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
-type LocationType {
+input LocationInput {
+  address: AddressInput
   point: Point
-  spa: Int
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  confidential: Boolean
+  pointOfInterest: String
+}
+
+type LocationType {
+  id: ID!
+  address: AddressType!
+  point: Point
+  pointOfInterest: String
 }
 
 input MagicLinkInput {
@@ -282,15 +281,13 @@ type Mutation {
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
-  getOrCreateAddress(data: AddressInput!): GetOrCreateAddressPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
-  createLocation(data: NoteLocationInput!): CreateLocationPayload! @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
@@ -304,7 +301,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true) @hasPerm(permissions: [{app: "common", permission: "add_location"}], any: true)
+  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
 }
 
 input NoteAttachmentFilter {
@@ -334,19 +331,6 @@ input NoteFilter {
   DISTINCT: Boolean
 }
 
-input NoteLocationInput {
-  address: AddressInput
-  point: Point
-  pointOfInterest: String
-}
-
-type NoteLocationType {
-  id: ID!
-  address: AddressType!
-  point: Point
-  pointOfInterest: String
-}
-
 enum NoteNamespaceEnum {
   MOOD_ASSESSMENT
   PROVIDED_SERVICES
@@ -360,8 +344,7 @@ input NoteOrder {
 type NoteType {
   id: ID!
   title: String!
-  point: Point
-  address: AddressType
+  location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
   purposes(pagination: OffsetPaginationInput): [TaskType!]!
@@ -427,10 +410,6 @@ type Query {
   currentUser: UserType!
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   clientProfiles(filters: ClientProfileFilter, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
-  address(pk: ID!): AddressType! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
-  addresses: [AddressType!]! @hasPerm(permissions: [{app: "common", permission: "view_address"}], any: true)
-  location(pk: ID!): NoteLocationType! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
-  locations: [NoteLocationType!]! @hasPerm(permissions: [{app: "common", permission: "view_location"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
@@ -516,6 +495,16 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+type ShelterLocationType {
+  point: Point
+  spa: Int
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  confidential: Boolean
+}
+
 type ShelterType {
   id: ID!
   title: String!
@@ -528,7 +517,7 @@ type ShelterType {
   populations: [String!]!
   requirements: [String!]!
   funders: [String!]!
-  location: LocationType!
+  location: ShelterLocationType!
   organization: String!
   description: DescriptionType!
   beds: BedsType!
@@ -548,8 +537,7 @@ enum TaskStatusEnum {
 type TaskType {
   id: ID!
   title: String!
-  point: Point
-  address: AddressType
+  location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
   client: UserType
@@ -565,8 +553,7 @@ enum TaskTypeEnum {
 input UpdateNoteInput {
   id: ID
   title: String
-  point: Point
-  address: ID
+  location: ID
   publicDetails: String
   privateDetails: String
   isSubmitted: Boolean
@@ -575,8 +562,7 @@ input UpdateNoteInput {
 
 input UpdateNoteLocationInput {
   id: ID
-  point: Point
-  address: AddressInput!
+  location: LocationInput!
 }
 
 union UpdateNoteLocationPayload = NoteType | OperationInfo
@@ -596,8 +582,7 @@ union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 input UpdateTaskInput {
   id: ID
   title: String
-  point: Point
-  address: ID
+  location: ID
   status: TaskStatusEnum
   dueBy: DateTime
   client: ID
@@ -605,8 +590,7 @@ input UpdateTaskInput {
 
 input UpdateTaskLocationInput {
   id: ID
-  point: Point
-  address: AddressInput!
+  location: LocationInput!
 }
 
 union UpdateTaskLocationPayload = TaskType | OperationInfo

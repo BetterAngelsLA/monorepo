@@ -91,8 +91,8 @@ export default function AddNote() {
           {...props}
         />
         <Location
-          address={data.note.address}
-          point={data.note.point}
+          address={data.note.location?.address}
+          point={data.note.location?.point}
           {...props}
         />
         <Purpose purposes={data.note.purposes} {...props} />
