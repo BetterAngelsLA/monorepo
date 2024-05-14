@@ -1,8 +1,13 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { Platform, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ViewNoteQuery } from '../../apollo';
 
 export default function NoteLocation({
