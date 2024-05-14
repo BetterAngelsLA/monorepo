@@ -1,9 +1,10 @@
 from decimal import Decimal
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
-from strawberry import auto
+from django.db.models import Q, QuerySet
+from strawberry import Info, auto
 from strawberry_django.fields import types
 
 from . import models
@@ -53,6 +54,11 @@ class ShelterType:
     requirements: List[str]
 
     funders: List[str]
+
+    # TODO: Update the Shelter App to use permissions.  Until then we only expose nonsensitive locations
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet[models.Shelter], info: Info, **kwargs: Any) -> QuerySet[models.Shelter]:
+        return queryset.filter(Q(confidential=False) | Q(confidential__isnull=True))
 
     # The following fields are likely in need of restrucutring post MVP.
     @strawberry_django.field
