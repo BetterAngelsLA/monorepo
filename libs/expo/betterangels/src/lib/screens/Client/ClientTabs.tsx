@@ -12,7 +12,13 @@ const TABS = ['Profile', 'Docs', 'Interactions', 'Tasks', 'Services'];
 export default function ClientTabs(props: IClientTabsProps) {
   const { tab, setTab } = props;
   return (
-    <View style={{ backgroundColor: Colors.WHITE }}>
+    <View
+      style={{
+        backgroundColor: Colors.WHITE,
+        borderTopWidth: 1,
+        borderColor: Colors.NEUTRAL_LIGHT,
+      }}
+    >
       <ScrollView
         contentContainerStyle={{ backgroundColor: Colors.WHITE }}
         showsHorizontalScrollIndicator={false}

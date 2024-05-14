@@ -1,4 +1,8 @@
-import { MoreIcon } from '@monorepo/expo/shared/icons';
+import {
+  BirthdayIcon,
+  GenderIcon,
+  GlobeIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
@@ -19,37 +23,40 @@ export default function ClientHeader(props: IClientHeaderProps) {
       style={{
         paddingHorizontal: Spacings.sm,
         backgroundColor: Colors.WHITE,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         paddingVertical: Spacings.md,
       }}
     >
-      <View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: Spacings.sm,
-          }}
-        >
-          <Avatar
-            mr="xs"
-            size="lg"
-            accessibilityLabel={`${firstName} ${lastName} avatar`}
-            accessibilityHint={'clients avatar'}
-          />
-          <TextMedium size="lg">
-            {firstName} {lastName}
-          </TextMedium>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: Spacings.sm,
+        }}
+      >
+        <Avatar
+          mr="xs"
+          size="lg"
+          accessibilityLabel={`${firstName} ${lastName} avatar`}
+          accessibilityHint={'clients avatar'}
+        />
+        <TextMedium size="lg">
+          {firstName} {lastName}
+        </TextMedium>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <GenderIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
+          <TextRegular mr="sm">Male</TextRegular>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TextRegular mr="sm">Male</TextRegular>
+          <GlobeIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
           <TextRegular mr="sm">Spanish</TextRegular>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <BirthdayIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
           <TextRegular>1/1/1970 (53)</TextRegular>
         </View>
       </View>
-      <MoreIcon color={Colors.NEUTRAL_DARK} />
     </View>
   );
 }
