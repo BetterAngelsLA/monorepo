@@ -494,6 +494,10 @@ export enum NoteNamespaceEnum {
   RequestedServices = 'REQUESTED_SERVICES'
 }
 
+export type NoteOrder = {
+  interactedAt?: InputMaybe<Ordering>;
+};
+
 export type NoteType = {
   __typename?: 'NoteType';
   address?: Maybe<AddressType>;
@@ -572,6 +576,15 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export enum Ordering {
+  Asc = 'ASC',
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
+}
+
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
@@ -642,6 +655,7 @@ export type QueryNoteAttachmentsArgs = {
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
+  order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

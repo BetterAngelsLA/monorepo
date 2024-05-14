@@ -1,8 +1,12 @@
 import { gql } from '@apollo/client';
 
 export const GET_NOTES = gql`
-  query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput) {
-    notes(filters: $filters, pagination: $pagination) {
+  query Notes(
+    $filters: NoteFilter
+    $pagination: OffsetPaginationInput
+    $order: NoteOrder
+  ) {
+    notes(filters: $filters, pagination: $pagination, order: $order) {
       id
       title
       point
