@@ -133,10 +133,18 @@ class Address(BaseModel):
 
 class Location(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
-    point = PointField(geography=True, null=True, blank=True)
+    point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
+
+    def __str__(self) -> str:
+        if self.address and self.address.street and self.address.city and self.address.state and self.address.zip_code:
+            return f"{self.address.street}, {self.address.city}, {self.address.state}, {self.address.zip_code}"
+        elif self.point_of_interest:
+            return f"{self.point_of_interest} ({str(self.point.coords)})"
+        else:
+            return str(self.point.coords)
 
     @staticmethod
     def parse_address_components(address_components: str) -> dict:
