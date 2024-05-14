@@ -183,11 +183,9 @@ class Location(BaseModel):
     def get_point_of_interest(cls, address_data: Dict[str, Any]) -> Optional[str]:
         components: list[Dict[str, str]] = json.loads(address_data["address_components"])
 
-        for component in components:
-            if "point_of_interest" in component["types"]:
-                return component["long_name"]
-
-        return None
+        return next(
+            (component["long_name"] for component in components if "point_of_interest" in component["types"]), None
+        )
 
     @classmethod
     def get_or_create_location(cls, location_data: Dict[str, Any]) -> "Location":
