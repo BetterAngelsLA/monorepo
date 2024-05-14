@@ -6,8 +6,8 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from common.graphql.types import DeleteDjangoObjectInput
-from common.models import Address, Attachment
-from common.permissions.enums import AttachmentPermissions, LocationPermissions
+from common.models import Attachment, Location
+from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -150,7 +150,6 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
@@ -166,13 +165,12 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this note.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
+            location = Location.get_or_create_location(location_data["location"])
             note = resolvers.update(
                 info,
                 note,
                 {
-                    "point": data.point,
-                    "address": address,
+                    "location": location,
                 },
             )
 
@@ -645,7 +643,6 @@ class Mutation:
     @strawberry_django.mutation(
         extensions=[
             HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
-            HasPerm(perms=[LocationPermissions.ADD]),
         ]
     )
     def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
@@ -661,13 +658,12 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this task.")
 
             location_data: Dict = strawberry.asdict(data)
-            address = Address.get_or_create_address(location_data["address"])
+            location = Location.get_or_create_location(location_data["location"])
             task = resolvers.update(
                 info,
                 task,
                 {
-                    "point": data.point,
-                    "address": address,
+                    "location": location,
                 },
             )
 

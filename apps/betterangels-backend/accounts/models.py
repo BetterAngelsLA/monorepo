@@ -15,10 +15,7 @@ from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionA
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 if TYPE_CHECKING:
-    from common.models import (
-        AttachmentUserObjectPermission,
-        LocationUserObjectPermission,
-    )
+    from common.models import AttachmentUserObjectPermission
     from notes.models import (
         NoteUserObjectPermission,
         ServiceRequestUserObjectPermission,
@@ -70,7 +67,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     # MyPy hints for Permission Reverses
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
     biguserobjectpermission_set: models.QuerySet["BigUserObjectPermission"]
-    locationuserobjectpermission_set: models.QuerySet["LocationUserObjectPermission"]
     noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
     taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]

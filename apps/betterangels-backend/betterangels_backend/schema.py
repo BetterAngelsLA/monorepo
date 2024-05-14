@@ -1,6 +1,5 @@
 from accounts.schema import Mutation as AccountMutation
 from accounts.schema import Query as AccountQuery
-from common.graphql.schema import Mutation as CommonMutation
 from common.graphql.schema import Query as CommonQuery
 from notes.schema import Mutation as NoteMutation
 from notes.schema import Query as NoteQuery
@@ -14,7 +13,7 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 queries = (AccountQuery, CommonQuery, NoteQuery, ShelterQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountMutation, CommonMutation, NoteMutation)
+mutations = (AccountMutation, NoteMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(
