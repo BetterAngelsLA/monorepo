@@ -313,13 +313,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
 
-        self.assertEqual([n["id"] for n in response["data"]["notes"]], [self.note["id"], older_note["id"], oldest_note["id"]])
+        self.assertEqual(
+            [n["id"] for n in response["data"]["notes"]], [self.note["id"], older_note["id"], oldest_note["id"]]
+        )
 
         # Test ascending order
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
 
-        self.assertEqual([n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]])
+        self.assertEqual(
+            [n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]]
+        )
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
