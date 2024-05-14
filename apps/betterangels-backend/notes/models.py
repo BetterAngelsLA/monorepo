@@ -91,7 +91,7 @@ class Note(BaseModel):
     title = models.CharField(max_length=100)
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
-    interacted_at = models.DateTimeField(auto_now_add=True)
+    interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
     point = PointField(geography=True, null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")

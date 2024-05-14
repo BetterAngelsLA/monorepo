@@ -33,15 +33,19 @@ class ClientProfileFilter:
     def is_active(
         self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
     ) -> Tuple[QuerySet[ClientProfile], Q]:
-        if value:
+        if value is not None:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
             # Filter profiles based on the maximum interacted_at date being within the threshold
-            return (
-                queryset.annotate(last_interacted_at=Max("user__client_notes__interacted_at")).filter(
-                    last_interacted_at__gte=earliest_interaction_threshold
-                ),
-                Q(),
-            )
+            if value:
+                return (
+                    queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+                    Q(**{"last_interacted_at__gte": earliest_interaction_threshold}),
+                )
+            else:
+                return (
+                    queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+                    Q(**{"last_interacted_at__lt": earliest_interaction_threshold}),
+                )
 
         return queryset, Q()
 
