@@ -1,13 +1,9 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import {
-  MapView,
-  Marker,
-  PROVIDER_GOOGLE,
-} from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
 import { Platform } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 interface IMapProps {
   currentLocation:
@@ -37,9 +33,8 @@ interface IMapProps {
 }
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
-console.log(`API_KEY: ${apiKey}`);
 
-const Map = forwardRef<typeof MapView, IMapProps>((props: IMapProps, ref) => {
+const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
   const {
     currentLocation,
     setCurrentLocation,

@@ -1,14 +1,9 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  FieldCard,
-  MapView,
-  Marker,
-  PROVIDER_GOOGLE,
-  TextMedium,
-} from '@monorepo/expo/shared/ui-components';
+import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import LocationMapModal from './LocationMapModal';
 
 interface ILocationProps {

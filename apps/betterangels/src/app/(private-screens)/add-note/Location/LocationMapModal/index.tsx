@@ -4,7 +4,6 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
-  MapView,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
 import Header from './Header';
@@ -24,7 +24,6 @@ import Map from './Map';
 import Selected from './Selected';
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
-console.log(`API_KEY: ${apiKey}`);
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -66,7 +65,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setLocation,
     setError,
   } = props;
-  const mapRef = useRef<typeof MapView>(null);
+  const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
@@ -269,7 +268,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         latitude,
       });
 
-      console.log(`Data ${data}`);
       const googleAddress = data.results[0].formatted_address;
       const shortAddress = googleAddress.split(', ')[0];
 
