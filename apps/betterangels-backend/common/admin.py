@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Union
 
-from common.models import Attachment
+from common.models import Attachment, Location
+from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
@@ -13,7 +14,10 @@ if TYPE_CHECKING:
 
 class AttachmentAdminMixin(object):
     def attachments(self, obj: Union["Note", "Task"]) -> SafeString:
-        attachments = Attachment.objects.filter(content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
+        attachments = Attachment.objects.filter(
+            content_type=ContentType.objects.get_for_model(obj),
+            object_id=obj.id,
+        )
         attachment_links = [
             '<a href="{}">{}</a>'.format(
                 reverse("admin:common_attachment_change", args=(attachment.id,)),
@@ -22,6 +26,36 @@ class AttachmentAdminMixin(object):
             for attachment in attachments
         ]
         return format_html("<br>".join(attachment_links))
+
+
+class LocationNoteAdminMixin(object):
+    def notes(self, obj: Location) -> SafeString:
+        Note = apps.get_model("notes", "Note")
+        notes = list(Note.objects.filter(location=obj))
+
+        note_links = [
+            '<a href="{}">{}</a>'.format(
+                reverse("admin:notes_note_change", args=(note.id,)),
+                f"Note {note.id}: {note}",
+            )
+            for note in notes
+        ]
+        return format_html("<br>".join(note_links))
+
+
+class LocationTaskAdminMixin(object):
+    def tasks(self, obj: Location) -> SafeString:
+        Task = apps.get_model("notes", "Task")
+        tasks = list(Task.objects.filter(location=obj))
+
+        task_links = [
+            '<a href="{}">{}</a>'.format(
+                reverse("admin:notes_task_change", args=(task.id,)),
+                f"Task {task.id}: {task}",
+            )
+            for task in tasks
+        ]
+        return format_html("<br>".join(task_links))
 
 
 class AttachmentAdmin(admin.ModelAdmin):
@@ -47,4 +81,25 @@ class AttachmentAdmin(admin.ModelAdmin):
         return str(obj)
 
 
+class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):
+    list_display = (
+        "address",
+        "point_coords",
+        "point_of_interest",
+    )
+    search_fields = (
+        "address",
+        "point",
+        "point_of_interest",
+    )
+    readonly_fields = (
+        "notes",
+        "tasks",
+    )
+
+    def point_coords(self, obj: Location) -> str:
+        return str(obj.point.coords)
+
+
 admin.site.register(Attachment, AttachmentAdmin)
+admin.site.register(Location, LocationAdmin)

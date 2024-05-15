@@ -128,7 +128,10 @@ class Address(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+        if self.street and self.city and self.state and self.zip_code:
+            return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+        else:
+            return "-"
 
 
 class Location(BaseModel):
