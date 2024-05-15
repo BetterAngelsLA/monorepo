@@ -146,6 +146,7 @@ class Location(BaseModel):
             return f"{self.address.street}, {self.address.city}, {self.address.state}, {self.address.zip_code}"
         elif self.point_of_interest:
             return f"{self.point_of_interest} ({str(self.point.coords)})"
+
         return str(self.point.coords)
 
     @staticmethod
