@@ -127,16 +127,29 @@ class Address(BaseModel):
             )
         ]
 
+    ADDRESS_DEFAULT = "No Address"
+
     def __str__(self) -> str:
-        return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+        if self.street and self.city and self.state and self.zip_code:
+            return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+
+        return self.ADDRESS_DEFAULT
 
 
 class Location(BaseModel):
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
-    point = PointField(geography=True, null=True, blank=True)
+    point = PointField(geography=True)
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
+
+    def __str__(self) -> str:
+        if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
+            return str(self.address)
+        elif self.point_of_interest:
+            return f"{self.point_of_interest} ({str(self.point.coords)})"
+
+        return str(self.point.coords)
 
     @staticmethod
     def parse_address_components(address_components: str) -> dict:
