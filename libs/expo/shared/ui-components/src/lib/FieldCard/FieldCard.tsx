@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, RefObject, useRef } from 'react';
+import { ReactNode, RefObject, useEffect, useState } from 'react';
 import {
   DimensionValue,
   Pressable,
@@ -50,18 +50,34 @@ export function FieldCard(props: IFieldCardProps) {
     childHeight,
     scrollRef,
   } = props;
-
-  const viewRef = useRef<View>(null);
+  const [place, setPlace] = useState<null | number>(null);
 
   const scrollToElement = () => {
-    viewRef.current?.measure((fx, fy, width, height, px, py) => {
-      scrollRef.current?.scrollTo({ x: 0, y: py, animated: true });
+    if (!place) return;
+
+    scrollRef.current?.scrollTo({
+      x: 0,
+      y: place,
+      animated: true,
     });
   };
 
+  useEffect(() => {
+    if (!place) return;
+    scrollToElement();
+  }, [place]);
+
   return (
     <View
-      ref={viewRef}
+      onLayout={(event) => {
+        const layout = event.nativeEvent.layout;
+        expanded === title
+          ? setTimeout(() => {
+              setPlace(layout.y);
+              console.log('timeout: ', layout.y);
+            }, 300)
+          : setPlace(null);
+      }}
       style={[
         styles.container,
         {
@@ -79,7 +95,6 @@ export function FieldCard(props: IFieldCardProps) {
       <Pressable
         onPress={() => {
           setExpanded();
-          expanded !== title && scrollToElement();
         }}
         accessible
         accessibilityRole="button"
