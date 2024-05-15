@@ -162,7 +162,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
         note_differences = DeepDiff(expected_note, note, ignore_order=True)
-        self.assertEqual(note_differences, {})
+        self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
         query = """
@@ -223,7 +223,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(notes), 1)
         # TODO: Add more validations once sort is implemented
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertEqual(note_differences, {})
+        self.assertFalse(note_differences)
 
     @parametrize(
         (
