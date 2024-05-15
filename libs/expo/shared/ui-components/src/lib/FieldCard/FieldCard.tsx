@@ -74,7 +74,6 @@ export function FieldCard(props: IFieldCardProps) {
         expanded === title
           ? setTimeout(() => {
               setPlace(layout.y);
-              console.log('timeout: ', layout.y);
             }, 300)
           : setPlace(null);
       }}
