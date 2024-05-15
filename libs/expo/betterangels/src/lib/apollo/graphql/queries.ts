@@ -5,13 +5,16 @@ export const GET_NOTES = gql`
     notes(filters: $filters, pagination: $pagination) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       moods {
         id
@@ -58,13 +61,16 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       attachments {
         id

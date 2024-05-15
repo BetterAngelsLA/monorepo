@@ -289,12 +289,16 @@ export const UPDATE_NOTE_LOCATION = gql`
       }
       ... on NoteType {
         id
-        point
-        address {
-          street
-          city
-          state
-          zipCode
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
         }
       }
     }

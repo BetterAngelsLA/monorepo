@@ -16,7 +16,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** Decimal (fixed-point) */
   Decimal: { input: any; output: any; }
-  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -81,42 +81,28 @@ export type BedsType = {
   totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
-export type ClientFilter = {
-  AND?: InputMaybe<ClientFilter>;
+export type ClientProfileFilter = {
+  AND?: InputMaybe<ClientProfileFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ClientFilter>;
-  OR?: InputMaybe<ClientFilter>;
+  NOT?: InputMaybe<ClientProfileFilter>;
+  OR?: InputMaybe<ClientProfileFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ClientProfileInput = {
-  hmisId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   hmisId?: Maybe<Scalars['String']['output']>;
-};
-
-export type ClientType = {
-  __typename?: 'ClientType';
-  clientProfile: ClientProfileType;
-  email: Scalars['String']['output'];
-  firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  lastName?: Maybe<Scalars['String']['output']>;
-  username: Scalars['String']['output'];
+  user: UserType;
 };
 
-export type CreateClientInput = {
-  clientProfile?: InputMaybe<ClientProfileInput>;
-  email: Scalars['String']['input'];
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
+export type CreateClientProfileInput = {
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+  user: CreateUserInput;
 };
 
-export type CreateClientPayload = ClientType | OperationInfo;
+export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type CreateNoteAttachmentInput = {
   file: Scalars['Upload']['input'];
@@ -178,6 +164,12 @@ export type CreateTaskInput = {
 
 export type CreateTaskPayload = OperationInfo | TaskType;
 
+export type CreateUserInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -234,17 +226,18 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
-export type GetOrCreateAddressPayload = AddressType | OperationInfo;
+export type LocationInput = {
+  address?: InputMaybe<AddressInput>;
+  point?: InputMaybe<Scalars['Point']['input']>;
+  pointOfInterest?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type LocationType = {
   __typename?: 'LocationType';
-  address?: Maybe<Scalars['String']['output']>;
-  city?: Maybe<Scalars['String']['output']>;
-  confidential?: Maybe<Scalars['Boolean']['output']>;
+  address: AddressType;
+  id: Scalars['ID']['output'];
   point?: Maybe<Scalars['Point']['output']>;
-  spa?: Maybe<Scalars['Int']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-  zipCode?: Maybe<Scalars['String']['output']>;
+  pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
 
 export type MagicLinkInput = {
@@ -288,7 +281,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
-  createClient: CreateClientPayload;
+  createClientProfile: CreateClientProfilePayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -302,7 +295,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
-  getOrCreateAddress: GetOrCreateAddressPayload;
   googleAuth: AuthResponse;
   idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
@@ -322,8 +314,8 @@ export type MutationAddNoteTaskArgs = {
 };
 
 
-export type MutationCreateClientArgs = {
-  data: CreateClientInput;
+export type MutationCreateClientProfileArgs = {
+  data: CreateClientProfileInput;
 };
 
 
@@ -389,11 +381,6 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
-};
-
-
-export type MutationGetOrCreateAddressArgs = {
-  data: AddressInput;
 };
 
 
@@ -480,9 +467,12 @@ export enum NoteNamespaceEnum {
   RequestedServices = 'REQUESTED_SERVICES'
 }
 
+export type NoteOrder = {
+  interactedAt?: InputMaybe<Ordering>;
+};
+
 export type NoteType = {
   __typename?: 'NoteType';
-  address?: Maybe<AddressType>;
   attachments: Array<NoteAttachmentType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
@@ -490,9 +480,9 @@ export type NoteType = {
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
+  location?: Maybe<LocationType>;
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
-  point?: Maybe<Scalars['Point']['output']>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
@@ -558,6 +548,15 @@ export enum OperationMessageKind {
   Warning = 'WARNING'
 }
 
+export enum Ordering {
+  Asc = 'ASC',
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
+}
+
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
@@ -568,10 +567,8 @@ export type PermDefinition = {
 
 export type Query = {
   __typename?: 'Query';
-  address: AddressType;
-  addresses: Array<AddressType>;
-  client: ClientType;
-  clients: Array<ClientType>;
+  clientProfile: ClientProfileType;
+  clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
   note: NoteType;
@@ -587,18 +584,13 @@ export type Query = {
 };
 
 
-export type QueryAddressArgs = {
+export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
-export type QueryClientArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryClientsArgs = {
-  filters?: InputMaybe<ClientFilter>;
+export type QueryClientProfilesArgs = {
+  filters?: InputMaybe<ClientProfileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -621,6 +613,7 @@ export type QueryNoteAttachmentsArgs = {
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
+  order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -728,6 +721,17 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export type ShelterLocationType = {
+  __typename?: 'ShelterLocationType';
+  address?: Maybe<Scalars['String']['output']>;
+  city?: Maybe<Scalars['String']['output']>;
+  confidential?: Maybe<Scalars['Boolean']['output']>;
+  point?: Maybe<Scalars['Point']['output']>;
+  spa?: Maybe<Scalars['Int']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
+
 export type ShelterType = {
   __typename?: 'ShelterType';
   beds: BedsType;
@@ -737,7 +741,7 @@ export type ShelterType = {
   howToEnter: Array<DjangoModelType>;
   id: Scalars['ID']['output'];
   imageUrl?: Maybe<Scalars['String']['output']>;
-  location: LocationType;
+  location: ShelterLocationType;
   organization: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   populations: Array<Scalars['String']['output']>;
@@ -761,13 +765,12 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  address?: Maybe<AddressType>;
   client?: Maybe<UserType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  point?: Maybe<Scalars['Point']['output']>;
+  location?: Maybe<LocationType>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
 };
@@ -778,20 +781,18 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateNoteInput = {
-  address?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
-  address: AddressInput;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location: LocationInput;
 };
 
 export type UpdateNoteLocationPayload = NoteType | OperationInfo;
@@ -809,19 +810,17 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
-  address?: InputMaybe<Scalars['ID']['input']>;
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTaskLocationInput = {
-  address: AddressInput;
   id?: InputMaybe<Scalars['ID']['input']>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  location: LocationInput;
 };
 
 export type UpdateTaskLocationPayload = OperationInfo | TaskType;

@@ -26,7 +26,7 @@ class BedsType:
 
 
 @strawberry.type
-class LocationType:
+class ShelterLocationType:
     point: Optional[types.Point]
     spa: Optional[int]
     address: Optional[str]
@@ -56,7 +56,7 @@ class ShelterType:
 
     # The following fields are likely in need of restrucutring post MVP.
     @strawberry_django.field
-    def location(self) -> LocationType:
+    def location(self) -> ShelterLocationType:
         shelter = cast(models.Shelter, self)
         location = shelter.location
 
@@ -68,7 +68,7 @@ class ShelterType:
             state = location.state
             zip_code = location.zip_code
 
-        return LocationType(
+        return ShelterLocationType(
             point=point,
             spa=shelter.spa,
             address=address,

@@ -56,10 +56,10 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
    brew info nvm
    ```
 
-1. Install node version 18.17.1
+1. Install node version 20.12.2
 
    ```bash
-   nvm install 18.17.1
+   nvm install 20.12.2
    ```
 
 1. Go to the monorepo and run yarn install
@@ -96,7 +96,7 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
    If your current node version is incorrect, run the following and try again.
 
    ```bash
-   nvm use 18.17.1
+   nvm use 20.12.2
    ```
 
 1. Press "w" to open the web version of the application :tada:

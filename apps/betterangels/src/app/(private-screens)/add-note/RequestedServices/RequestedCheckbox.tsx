@@ -12,6 +12,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface IRequestedCheckboxProps {
+  id: string | undefined;
   service: {
     title: string;
     enum: ServiceEnum;
@@ -21,12 +22,10 @@ interface IRequestedCheckboxProps {
   idx: number;
   services: {
     id: string | undefined;
-    service: string;
     enum: ServiceEnum;
   }[];
   setServices: (
-    e: {
-      service: string;
+    services: {
       enum: ServiceEnum;
       id: string | undefined;
     }[]
@@ -34,9 +33,9 @@ interface IRequestedCheckboxProps {
 }
 
 export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
-  const { service, idx, noteId, services, setServices } = props;
-  const [isChecked, setIsChecked] = useState(false);
-  const [id, setId] = useState<string | undefined>(undefined);
+  const { service, idx, noteId, services, setServices, id: serviceId } = props;
+  const [isChecked, setIsChecked] = useState(serviceId ? true : false);
+  const [id, setId] = useState<string | undefined>(serviceId);
   const [isLoading, setIsLoading] = useState(false);
 
   const [createNoteServiceRequest, { error }] =
@@ -45,14 +44,14 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
     useDeleteServiceRequestMutation();
 
   const executeMutation = useRef(
-    debounce(async () => {
+    debounce(async (checked, currentId) => {
       if (!noteId) return;
       try {
-        if (isChecked && id) {
+        if (!checked && currentId) {
           const { data } = await deleteServiceRequest({
             variables: {
               data: {
-                id,
+                id: currentId,
               },
             },
           });
@@ -95,18 +94,17 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
     setIsLoading(true);
     setIsChecked((prev) => !prev);
     const newServices = id
-      ? services.filter((s) => s.service !== service.title)
+      ? services.filter((s) => s.enum !== service.enum)
       : [
           ...services,
           {
             id,
-            service: service.title,
             customService: '',
             enum: service.enum,
           },
         ];
     setServices(newServices);
-    executeMutation();
+    executeMutation(!isChecked, id);
   };
 
   return (

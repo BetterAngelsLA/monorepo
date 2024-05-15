@@ -2,7 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import LocationMapModal from './LocationMapModal';
 
@@ -86,7 +86,7 @@ export default function LocationComponent(props: ILocationProps) {
           <MapView
             zoomEnabled={false}
             scrollEnabled={false}
-            provider={PROVIDER_GOOGLE}
+            provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
             region={{
               longitudeDelta: 0.005,
               latitudeDelta: 0.005,

@@ -110,6 +110,8 @@ jobs:
           EOF
 
       - name: 🔗 Ensure Expo Library Compatibility
+        # Check only branches and PRs as a new Expo version can be released between approval and merge.
+        if: env.BRANCH_NAME != 'main'
         run: |
           docker compose run better-angels bash <<'EOF'
           CI=1 yarn expo install --check

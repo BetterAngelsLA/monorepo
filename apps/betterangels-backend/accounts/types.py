@@ -3,12 +3,12 @@ from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
-from django.db.models import Q, QuerySet
+from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from strawberry import Info, auto
 from strawberry_django.filters import filter
 
-from .models import Client, ClientProfile, User
+from .models import ClientProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -27,20 +27,21 @@ class AuthResponse:
     status_code: str = strawberry.field(name="status_code")
 
 
-@filter(Client)
-class ClientFilter:
+@filter(ClientProfile)
+class ClientProfileFilter:
     @strawberry_django.filter_field
     def is_active(
-        self,
-        queryset: QuerySet,
-        info: Info,
-        value: Optional[bool],
-        prefix: str,
-    ) -> Tuple[QuerySet[Client], Q]:
+        self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
         if value:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
-
-            return queryset.filter(client_notes__interacted_at__gte=earliest_interaction_threshold), Q()
+            # Filter profiles based on the maximum interacted_at date being within the threshold
+            return (
+                queryset.annotate(last_interacted_at=Max("user__client_notes__interacted_at")).filter(
+                    last_interacted_at__gte=earliest_interaction_threshold
+                ),
+                Q(),
+            )
 
         return queryset, Q()
 
@@ -51,13 +52,13 @@ class ClientFilter:
         info: Info,
         value: Optional[str],
         prefix: str,
-    ) -> Tuple[QuerySet[Client], Q]:
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
         if value:
             return (
                 queryset.filter(
-                    Q(first_name__icontains=value)
-                    | Q(last_name__icontains=value)
-                    | Q(client_profile__hmis_id__icontains=value)
+                    Q(user__first_name__icontains=value)
+                    | Q(user__last_name__icontains=value)
+                    | Q(hmis_id__icontains=value)
                 ),
                 Q(),
             )
@@ -74,27 +75,24 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, pagination=True)
 class ClientProfileType:
+    id: auto
     hmis_id: auto
+    user: UserType
 
 
-@strawberry_django.type(Client, pagination=True, filters=ClientFilter)
-class ClientType(UserType):
-    client_profile: ClientProfileType
-
-
-@strawberry_django.input(ClientProfile)
-class ClientProfileInput:
-    hmis_id: auto
-
-
-@strawberry_django.input(Client)
-class CreateClientInput:
+@strawberry_django.input(User)
+class CreateUserInput:
     first_name: auto
     last_name: auto
-    email: auto
-    client_profile: Optional[ClientProfileInput]
+    email: Optional[str]
+
+
+@strawberry_django.input(ClientProfile, partial=True)
+class CreateClientProfileInput:
+    hmis_id: auto
+    user: CreateUserInput
 
 
 @strawberry.input

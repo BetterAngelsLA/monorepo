@@ -150,20 +150,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           },
         }
       );
-      const { location } = response.data.result.geometry;
+      const { location: responseLocation } = response.data.result.geometry;
       setIsSearch(false);
       setSuggestions([]);
 
       setCurrentLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
         name: place.description.split(', ')[0],
       });
 
       mapRef.current?.animateToRegion(
         {
-          latitude: location.lat,
-          longitude: location.lng,
+          latitude: responseLocation.lat,
+          longitude: responseLocation.lng,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         },
@@ -171,8 +171,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       );
 
       setInitialLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
       });
 
       setAddress({
@@ -290,14 +290,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const { data: locationData } = await updateNoteLocation({
         variables: {
           data: {
-            point: [longitude, latitude],
-            address: {
-              addressComponents: JSON.stringify(
-                data.results[0].address_components
-              ),
-              formattedAddress: googleAddress,
-            },
             id: noteId,
+            location: {
+              point: [longitude, latitude],
+              address: {
+                addressComponents: JSON.stringify(
+                  data.results[0].address_components
+                ),
+                formattedAddress: googleAddress,
+              },
+            },
           },
         },
       });

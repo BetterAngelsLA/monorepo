@@ -63,7 +63,7 @@ def revert_caseworker_permission_template(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0013_clientuserobjectpermission_and_more"),
-        ("notes", "0005_alter_note_options_note_organization_and_more"),
+        ("notes", "0001_squash_through_0020"),
     ]
 
     operations = [

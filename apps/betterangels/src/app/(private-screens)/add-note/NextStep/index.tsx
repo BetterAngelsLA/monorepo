@@ -1,3 +1,4 @@
+import { ViewNoteQuery } from '@monorepo/expo/betterangels';
 import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -14,30 +15,53 @@ interface INextStepProps {
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
   scrollRef: RefObject<ScrollView>;
+  nextSteps: ViewNoteQuery['note']['nextSteps'];
 }
 
 type TNextSteps = {
+  id?: string;
   action: string;
   date?: string;
   time?: string;
 }[];
 
 export default function NextStep(props: INextStepProps) {
-  const { expanded, setExpanded, noteId, scrollRef } = props;
-  const [nextSteps, setNextSteps] = useState<TNextSteps>([]);
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    nextSteps: initialSteps,
+    scrollRef,
+  } = props;
+  const [nextSteps, setNextSteps] = useState<TNextSteps | undefined>(undefined);
 
   const isNextStep = expanded === 'Next Step';
+  const isZeroNextSteps = nextSteps && nextSteps.length === 0;
 
-  const isZeroNextSteps = nextSteps.length === 0;
-
-  const hasValidActions = nextSteps.some((item) => item.action);
+  const hasValidActions = nextSteps && nextSteps.some((item) => item.action);
 
   useEffect(() => {
     if (!isNextStep) {
-      const filteredNextSteps = nextSteps.filter((field) => !!field.action);
+      const filteredNextSteps =
+        nextSteps && nextSteps.filter((field) => !!field.action);
       setNextSteps(filteredNextSteps);
     }
   }, [expanded]);
+
+  useEffect(() => {
+    if (initialSteps.length === 0) {
+      setNextSteps([]);
+      return;
+    }
+
+    const filteredNextSteps = initialSteps.map((item) => ({
+      id: item.id,
+      action: item.title,
+    }));
+    setNextSteps(filteredNextSteps);
+  }, [initialSteps]);
+
+  if (!nextSteps) return null;
 
   return (
     <FieldCard
@@ -62,7 +86,6 @@ export default function NextStep(props: INextStepProps) {
     >
       <View
         style={{
-          paddingBottom: isNextStep ? Spacings.md : 0,
           height: isNextStep ? 'auto' : 0,
           overflow: 'hidden',
         }}
@@ -108,9 +131,7 @@ export default function NextStep(props: INextStepProps) {
                 }}
               >
                 <SolidCircleIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-                <TextRegular ml="xs">
-                  {action.action + ' ' + action.date}
-                </TextRegular>
+                <TextRegular ml="xs">{action.action}</TextRegular>
               </View>
             ))}
         </View>
