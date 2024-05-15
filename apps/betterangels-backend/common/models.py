@@ -127,11 +127,13 @@ class Address(BaseModel):
             )
         ]
 
+    ADDRESS_DEFAULT = "No Address"
+
     def __str__(self) -> str:
         if self.street and self.city and self.state and self.zip_code:
             return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
 
-        return "No Address"
+        return self.ADDRESS_DEFAULT
 
 
 class Location(BaseModel):
@@ -142,8 +144,8 @@ class Location(BaseModel):
     objects = models.Manager()
 
     def __str__(self) -> str:
-        if self.address and self.address.street and self.address.city and self.address.state and self.address.zip_code:
-            return f"{self.address.street}, {self.address.city}, {self.address.state}, {self.address.zip_code}"
+        if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
+            return str(self.address)
         elif self.point_of_interest:
             return f"{self.point_of_interest} ({str(self.point.coords)})"
 

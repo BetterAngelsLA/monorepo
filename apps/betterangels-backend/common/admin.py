@@ -95,8 +95,8 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
     # TODO: Making `point` readonly removes the map display in admin. We want to show the map here,
     # but protecting Location objects from accidental modification is more important. The default map
     # display doesn't work well as is, and we'll probably want to replace it with google maps.
+    exclude = ("point",)
     readonly_fields = (
-        "point",
         "point_coords",
         "address",
         "point_of_interest",
