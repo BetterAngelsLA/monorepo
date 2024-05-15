@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
-import { NotesQuery, useNotesQuery } from '../../apollo';
+import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
@@ -14,7 +14,10 @@ export default function Interactions() {
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { data, loading, error, refetch } = useNotesQuery({
-    variables: { pagination: { limit: paginationLimit + 1, offset: offset } },
+    variables: {
+      pagination: { limit: paginationLimit + 1, offset: offset },
+      order: { interactedAt: Ordering.Desc },
+    },
   });
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
@@ -52,7 +55,7 @@ export default function Interactions() {
 
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
-  }, [data]);
+  }, [data, offset]);
 
   if (error) throw new Error('Something went wrong!');
 
