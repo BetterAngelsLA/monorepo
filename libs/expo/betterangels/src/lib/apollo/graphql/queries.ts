@@ -1,17 +1,24 @@
 import { gql } from '@apollo/client';
 
 export const GET_NOTES = gql`
-  query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput) {
-    notes(filters: $filters, pagination: $pagination) {
+  query Notes(
+    $filters: NoteFilter
+    $pagination: OffsetPaginationInput
+    $order: NoteOrder
+  ) {
+    notes(filters: $filters, pagination: $pagination, order: $order) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       moods {
         id
@@ -58,13 +65,16 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       title
-      point
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
       attachments {
         id

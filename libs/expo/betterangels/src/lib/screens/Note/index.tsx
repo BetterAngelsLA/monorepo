@@ -89,7 +89,7 @@ export default function Note({ id }: { id: string }) {
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View style={styles.container}>
         <NoteTitle note={data?.note} />
-        {data?.note.point && <NoteLocation note={data?.note} />}
+        {data?.note.location?.point && <NoteLocation note={data?.note} />}
         {data?.note.purposes && data?.note.purposes.length > 0 && (
           <NotePurpose note={data?.note} />
         )}

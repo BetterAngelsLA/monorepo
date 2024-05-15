@@ -18,6 +18,12 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self._setup_users()
         self._setup_groups_and_permissions()
 
+        # This is for the address used by most tests
+        self.street = "106 West 1st Street"
+        self.city = "Los Angeles"
+        self.state = "CA"
+        self.zip_code = "90012"
+
     def _setup_users(self) -> None:
         self.user_labels = [
             "org_1_case_manager_1",
@@ -57,25 +63,29 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
             "addressComponents": [
-                {"long_name": "200", "short_name": "200", "types": ["street_number"]},
                 {
-                    "long_name": "Geary Street",
-                    "short_name": "Geary St",
+                    "long_name": "106",
+                    "short_name": "106",
+                    "types": ["street_number"],
+                },
+                {
+                    "long_name": "West 1st Street",
+                    "short_name": "W 1st St",
                     "types": ["route"],
                 },
                 {
-                    "long_name": "Union Square",
-                    "short_name": "Union Square",
+                    "long_name": "Downtown Los Angeles",
+                    "short_name": "Downtown Los Angeles",
                     "types": ["neighborhood", "political"],
                 },
                 {
-                    "long_name": "San Francisco",
-                    "short_name": "SF",
+                    "long_name": "Los Angeles",
+                    "short_name": "Los Angeles",
                     "types": ["locality", "political"],
                 },
                 {
-                    "long_name": "San Francisco County",
-                    "short_name": "San Francisco County",
+                    "long_name": "Los Angeles County",
+                    "short_name": "Los Angeles County",
                     "types": ["administrative_area_level_2", "political"],
                 },
                 {
@@ -88,9 +98,9 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
                     "short_name": "US",
                     "types": ["country", "political"],
                 },
-                {"long_name": "94102", "short_name": "94102", "types": ["postal_code"]},
+                {"long_name": "90012", "short_name": "90012", "types": ["postal_code"]},
             ],
-            "formattedAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA",
+            "formattedAddress": "106 West 1st Street, Los Angeles, CA 90012, USA",
         }
 
         if isinstance(address_input["addressComponents"], list):
@@ -134,86 +144,3 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         ContentType.objects.clear_cache()
         Site.objects.clear_cache()
         return self.assertNumQueries(query_count)
-
-
-class AddressGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._setup_address()
-
-    def _setup_address(self) -> None:
-        # Force login to create an address
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        json_address_input, _ = self._get_address_inputs()
-        self.address = self._get_or_create_address_fixture(json_address_input)["data"]["getOrCreateAddress"]
-        # Logout after setting up the address
-        self.graphql_client.logout()
-
-    def _get_or_create_address_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        mutation: str = """
-            mutation GetOrCreateAddress($data: AddressInput!) { # noqa: B950
-                getOrCreateAddress(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on AddressType {
-                        id
-                        street
-                        city
-                        state
-                        zipCode
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
-
-class LocationGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.point = [-118.2437, 34.0522]
-        self._setup_location()
-        self.graphql_client.logout()
-
-    def _setup_location(self) -> None:
-        # Force login to create a location
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        json_address_input, _ = self._get_address_inputs()
-
-        variables = {
-            "address": json_address_input,
-            "point": self.point,
-        }
-        self.location = self._create_location_fixture(variables)["data"]["createLocation"]
-
-    def _create_location_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        mutation: str = """
-            mutation CreateLocation($data: NoteLocationInput!) { # noqa: B950
-                createLocation(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteLocationType {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
