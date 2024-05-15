@@ -6,7 +6,8 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useRef, useState } from 'react';
+import { RefObject, useRef, useState } from 'react';
+import { ScrollView } from 'react-native';
 import InfoModal from './InfoModal';
 
 interface IPublicNoteProps {
@@ -16,10 +17,11 @@ interface IPublicNoteProps {
   setIsPublicNoteEdited: (isPublicNoteEdited: boolean) => void;
   note: string;
   noteId: string;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const { expanded, setExpanded, note, noteId } = props;
+  const { expanded, setExpanded, note, noteId, scrollRef } = props;
   const [publicNote, setPublicNote] = useState<string>(note || '');
   const [hasError, setHasError] = useState(false);
   const [updateNote, { error }] = useUpdateNoteMutation();
@@ -62,6 +64,7 @@ export default function PublicNote(props: IPublicNoteProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       error={hasError ? 'Please enter the public note' : undefined}
       expanded={expanded}
       mb="xs"

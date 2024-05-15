@@ -33,8 +33,8 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ComponentType, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ComponentType, RefObject, useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
 interface Mood {
@@ -49,6 +49,7 @@ interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
   moods: ViewNoteQuery['note']['moods'];
   attachments: ViewNoteQuery['note']['attachments'];
 }
@@ -212,7 +213,9 @@ export default function Mood(props: IMoodProps) {
     noteId,
     moods: initialMoods,
     attachments,
+    scrollRef,
   } = props;
+
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }> | undefined
   >(undefined);
@@ -290,6 +293,7 @@ export default function Mood(props: IMoodProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isMood ? 'auto' : 0}
       mb="xs"
       actionName={
