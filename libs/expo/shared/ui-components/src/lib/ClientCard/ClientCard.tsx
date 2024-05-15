@@ -61,13 +61,12 @@ export function ClientCard(props: IClientCardProps) {
         },
       ]}
     >
-      <Link href={`/client/${id}`}>
+      <Link style={{ marginRight: Spacings.sm }} href={`/client/${id}`}>
         <Avatar
           accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
           accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
           imageUrl={imageUrl}
           size="lg"
-          mr="sm"
         />
       </Link>
       <View style={{ gap: Spacings.xs, flex: 2 }}>
