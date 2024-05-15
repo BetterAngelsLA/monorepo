@@ -23,21 +23,21 @@ export default function NoteLocation({
         region={{
           longitudeDelta: 0.005,
           latitudeDelta: 0.005,
-          latitude: note?.point[1],
-          longitude: note?.point[0],
+          latitude: note?.location?.point[1],
+          longitude: note?.location?.point[0],
         }}
         style={styles.map}
       >
         <Marker
           coordinate={{
-            latitude: note?.point[1],
-            longitude: note?.point[0],
+            latitude: note?.location?.point[1],
+            longitude: note?.location?.point[0],
           }}
         >
           <LocationPinIcon size="2xl" />
         </Marker>
       </MapView>
-      <TextRegular mt="xs">{note?.address?.street}</TextRegular>
+      <TextRegular mt="xs">{note?.location?.address?.street}</TextRegular>
     </View>
   );
 }
