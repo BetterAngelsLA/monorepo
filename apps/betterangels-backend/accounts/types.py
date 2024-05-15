@@ -33,17 +33,17 @@ class ClientProfileFilter:
     def is_active(
         self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
     ) -> Tuple[QuerySet[ClientProfile], Q]:
-        if value:
-            earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
-            # Filter profiles based on the maximum interacted_at date being within the threshold
-            return (
-                queryset.annotate(last_interacted_at=Max("user__client_notes__interacted_at")).filter(
-                    last_interacted_at__gte=earliest_interaction_threshold
-                ),
-                Q(),
-            )
+        if value is None:
+            return queryset, Q()
 
-        return queryset, Q()
+        earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
+        # Filter profiles based on the maximum interacted_at date being within the threshold
+        comparison = "gte" if value else "lt"
+
+        return (
+            queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+            Q(**{f"last_interacted_at__{comparison}": earliest_interaction_threshold}),
+        )
 
     @strawberry_django.filter_field
     def search(
