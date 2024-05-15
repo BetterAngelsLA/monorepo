@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("notes", "0002_remove_note_note_add_insert_and_more"),
+        ("notes", "0003_remove_note_note_add_insert_and_more"),
     ]
 
     operations = [
