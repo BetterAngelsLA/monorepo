@@ -36,16 +36,12 @@ class ClientProfileFilter:
         if value is not None:
             earliest_interaction_threshold = timezone.now().date() - timedelta(**MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS)
             # Filter profiles based on the maximum interacted_at date being within the threshold
-            if value:
-                return (
-                    queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
-                    Q(**{"last_interacted_at__gte": earliest_interaction_threshold}),
-                )
-            else:
-                return (
-                    queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
-                    Q(**{"last_interacted_at__lt": earliest_interaction_threshold}),
-                )
+            comparison = "gte" if value else "lt"
+           
+            return (
+                queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+                Q(**{f"last_interacted_at__{comparison}": earliest_interaction_threshold}),
+            )
 
         return queryset, Q()
 
