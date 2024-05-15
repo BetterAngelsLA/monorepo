@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 import time_machine
+from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from notes.enums import NoteNamespaceEnum, ServiceEnum
@@ -160,7 +161,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
-        self.assertCountEqual(expected_note.items(), note.items())
+        note_differences = DeepDiff(expected_note, note, ignore_order=True)
+        self.assertEqual(note_differences, {})
 
     def test_notes_query(self) -> None:
         query = """
@@ -220,7 +222,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
         # TODO: Add more validations once sort is implemented
-        self.assertCountEqual(self.note.items(), notes[0].items())
+        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
+        self.assertEqual(note_differences, {})
 
     @parametrize(
         (
