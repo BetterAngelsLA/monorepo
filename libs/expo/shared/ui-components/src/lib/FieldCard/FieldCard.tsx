@@ -28,7 +28,7 @@ interface IFieldCardProps {
   setExpanded: () => void;
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef?: RefObject<ScrollView>;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -53,7 +53,7 @@ export function FieldCard(props: IFieldCardProps) {
   const [place, setPlace] = useState<null | number>(null);
 
   const scrollToElement = () => {
-    if (!place) return;
+    if (!place || !scrollRef) return;
 
     scrollRef.current?.scrollTo({
       x: 0,
@@ -71,7 +71,7 @@ export function FieldCard(props: IFieldCardProps) {
     <View
       onLayout={(event) => {
         const layout = event.nativeEvent.layout;
-        expanded === title
+        expanded === title && scrollRef
           ? setTimeout(() => {
               setPlace(layout.y);
             }, 300)
