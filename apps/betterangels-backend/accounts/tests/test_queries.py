@@ -141,20 +141,23 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
         [
-            (None, False, 2),  # no filter parameters
-            (None, True, 1),  # active filter
-            ("tod", False, 1),  # first_name search matching inactive client
-            ("tod", True, 0),  # first_name search matching inactive client + active filter
-            ("pea", False, 1),  # last_name search matching active client
-            ("pea", True, 1),  # last_name search matching active client + active filter
-            ("tod pea", False, 0),  # no match first_name, last_name search
-            ("tod pea", True, 0),  # no match first_name, last_name search + active filter
-            ("A1B", False, 2),  # hmis_id search matching both clients
-            ("A1B", True, 1),  # hmis_id search matching both clients + active filter
+            (None, None, 2),  # no filters
+            (None, False, 1),  # active filter false
+            (None, True, 1),  # active filter true
+            ("tod", None, 1),  # first_name search matching inactive client
+            ("tod", False, 1),  # first_name search matching inactive client + active filter false
+            ("tod", True, 0),  # first_name search matching inactive client + active filter true
+            ("pea", None, 1),  # last_name search matching active client
+            ("pea", False, 0),  # last_name search matching active client + active filter false
+            ("pea", True, 1),  # last_name search matching active client + active filter true
+            ("tod pea", None, 0),  # no match first_name, last_name search + active filter false
+            ("A1B", None, 2),  # hmis_id search matching both clients
+            ("A1B", False, 1),  # hmis_id search matching both clients + active filter false
+            ("A1B", True, 1),  # hmis_id search matching both clients + active filter true
             ("A1B2", False, 1),  # hmis_id search matching inactive client
-            ("A1B2", True, 0),  # hmis_id search matching inactive client + active filter
-            ("A1B3", False, 1),  # hmis_id search matching active client
-            ("A1B3", True, 1),  # hmis_id search matching active client + active filter
+            ("A1B2", True, 0),  # hmis_id search matching inactive client + active filter true
+            ("A1B3", False, 0),  # hmis_id search matching active client + active filter false
+            ("A1B3", True, 1),  # hmis_id search matching active client + active filter true
         ],
     )
     def test_client_profiles_query_search(
@@ -165,16 +168,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.organization = organization_recipe.make()
         self.client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
         self.client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
-        baker.make(
-            Note,
-            organization=self.organization,
-            client=self.client_profile_1.user,
-        )
-        baker.make(
-            Note,
-            organization=self.organization,
-            client=self.client_profile_1.user,
-        )
+        # Make two notes for Client 1 (Chavez, inactive)
+        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
+        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
 
         query = """
             query ClientProfiles($isActive: Boolean, $search: String) {
@@ -184,14 +180,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
+        # Advance time 91 days (active client threshold)
         with time_machine.travel(datetime.now(), tick=False) as traveller:
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
-            baker.make(
-                Note,
-                organization=self.organization,
-                client=self.client_profile_2.user,
-            )
+            # Make two notes for Client 2 (Peanutbutter, active)
+            baker.make(Note, organization=self.organization, client=self.client_profile_2.user)
             baker.make(
                 Note,
                 organization=self.organization,

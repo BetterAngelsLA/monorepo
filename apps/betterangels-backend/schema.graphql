@@ -228,14 +228,14 @@ scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads
 
 input LocationInput {
   address: AddressInput
-  point: Point
+  point: Point!
   pointOfInterest: String
 }
 
 type LocationType {
   id: ID!
   address: AddressType!
-  point: Point
+  point: Point!
   pointOfInterest: String
 }
 
