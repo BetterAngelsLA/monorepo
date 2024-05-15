@@ -55,7 +55,7 @@ class ShelterType:
 
     funders: List[str]
 
-    # TODO: Update the Shelter App to use permissions.  Until then we only expose nonsensitive locations
+    # TODO: Update the Shelter App to use permissions.  Until then we only expose nonconfidential locations
     @classmethod
     def get_queryset(cls, queryset: QuerySet[models.Shelter], info: Info, **kwargs: Any) -> QuerySet[models.Shelter]:
         return queryset.filter(Q(confidential=False) | Q(confidential__isnull=True))
