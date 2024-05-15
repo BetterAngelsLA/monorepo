@@ -6,8 +6,8 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { RefObject, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import PurposeInput from './PurposeInput';
 
 interface IPurposeProps {
@@ -15,10 +15,17 @@ interface IPurposeProps {
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
   purposes: ViewNoteQuery['note']['purposes'];
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const { expanded, setExpanded, noteId, purposes: initialPurposes } = props;
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    purposes: initialPurposes,
+    scrollRef,
+  } = props;
 
   const [purposes, setPurposes] = useState<
     | Array<{
@@ -77,8 +84,11 @@ export default function Purpose(props: IPurposeProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
-      setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
+      setExpanded={() => {
+        setExpanded(isPurpose ? null : 'Purpose');
+      }}
       error={
         hasError.check && hasError.error && !isPurpose
           ? `Please enter the purpose(s) of today's interaction`
