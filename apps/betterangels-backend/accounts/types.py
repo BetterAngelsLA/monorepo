@@ -79,7 +79,23 @@ class UserType:
 class ClientProfileType:
     id: auto
     hmis_id: auto
+    date_of_birth: auto
+    preferred_language: auto
+    gender: auto
     user: UserType
+
+    @strawberry.field
+    def age(self) -> Optional[int]:
+        if not self.date_of_birth:
+            return None
+
+        today = timezone.now().date()
+
+        return int(
+            today.year
+            - self.date_of_birth.year
+            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+        )
 
 
 @strawberry_django.input(User)
@@ -92,6 +108,9 @@ class CreateUserInput:
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput:
     hmis_id: auto
+    date_of_birth: auto
+    preferred_language: auto
+    gender: auto
     user: CreateUserInput
 
 
