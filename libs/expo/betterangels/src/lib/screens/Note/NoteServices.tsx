@@ -13,7 +13,6 @@ import {
   FaceFrownIcon,
   FaceGrinTongueWinkIcon,
   FaceGrinWinkIcon,
-  FaceLaughBeamIcon,
   FaceLaughIcon,
   FaceMehBlankIcon,
   FaceMehIcon,
@@ -53,7 +52,7 @@ const ICONS = [
   { Icon: PawIcon, title: 'Pet Care', enum: ServiceEnum.PetCare },
   { Icon: FaceGrinWinkIcon, title: 'Agreeable', enum: MoodEnum.Agreeable },
   { Icon: FaceCalmIcon, title: 'Euthymic', enum: MoodEnum.Euthymic },
-  { Icon: FaceLaughBeamIcon, title: 'Happy', enum: MoodEnum.Happy },
+  { Icon: FaceLaughIcon, title: 'Happy', enum: MoodEnum.Happy },
   { Icon: FaceLaughIcon, title: 'Motivated', enum: MoodEnum.Motivated },
   { Icon: FaceSmileIcon, title: 'Optimistic', enum: MoodEnum.Optimistic },
   {
