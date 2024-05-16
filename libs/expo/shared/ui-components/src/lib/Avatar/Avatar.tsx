@@ -63,8 +63,7 @@ export function Avatar(props: IAvatarProps) {
         height: SIZE[size],
         width: SIZE[size],
         borderRadius: 100,
-
-        backgroundColor: Colors.NEUTRAL_LIGHT,
+        backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
         marginBottom: mb && Spacings[mb],
         marginTop: mt && Spacings[mt],
         marginLeft: ml && Spacings[ml],

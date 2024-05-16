@@ -5,7 +5,10 @@ import { IIconProps } from './types';
 import { extractSize } from './utils';
 
 // Higher Order Component to create SVG icons
-const createSvgIcon = (SvgComponent: React.ComponentType<SvgProps>) => {
+const createSvgIcon = (
+  SvgComponent: React.ComponentType<SvgProps>,
+  useStroke = false
+) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
     color = '#ffffff',
@@ -31,7 +34,7 @@ const createSvgIcon = (SvgComponent: React.ComponentType<SvgProps>) => {
         }}
         width={w}
         height={h}
-        fill={color}
+        {...(useStroke ? { stroke: color } : { fill: color })}
       />
     );
   };

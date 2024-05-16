@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 interface IMainScrollContainerProps {
   children: ReactNode;
   bg?: string;
-  pt?: 'sm' | 'md' | 'lg';
+  pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
 }
 
@@ -22,7 +22,7 @@ const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
         contentContainerStyle={{
           paddingHorizontal: px ? Spacings[px] : undefined,
           paddingBottom: 80,
-          paddingTop: pt ? Spacings[pt] : undefined,
+          paddingTop: pt && Spacings[pt],
         }}
       >
         {children}
