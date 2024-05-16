@@ -7,7 +7,7 @@ import {
   BurgerSodaIcon,
   CarIcon,
   FaceAngryIcon,
-  FaceAnxiousSweatIcon,
+  FaceGrimmaceIcon,
   FaceCalmIcon,
   FaceEyesXmarksIcon,
   FaceFrownIcon,
@@ -75,7 +75,7 @@ const ICONS = [
     enum: MoodEnum.Indifferent,
   },
   { Icon: FaceFrownIcon, title: 'Restless', enum: MoodEnum.Restless },
-  { Icon: FaceAnxiousSweatIcon, title: 'Anxious', enum: MoodEnum.Anxious },
+  { Icon: FaceGrimmaceIcon, title: 'Anxious', enum: MoodEnum.Anxious },
   { Icon: FaceFrownIcon, title: 'Depressed', enum: MoodEnum.Depressed },
   { Icon: FaceMehIcon, title: 'Detached', enum: MoodEnum.Detached },
   {
