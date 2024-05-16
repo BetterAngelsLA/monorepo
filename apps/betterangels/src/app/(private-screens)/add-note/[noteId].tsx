@@ -11,8 +11,8 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
@@ -39,6 +39,8 @@ export default function AddNote() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
 
+  const scrollRef = useRef<ScrollView>(null);
+
   async function deleteNoteFunction() {
     try {
       await deleteNote({
@@ -56,6 +58,7 @@ export default function AddNote() {
     expanded,
     setExpanded,
     noteId,
+    scrollRef,
   };
 
   async function submitNote() {
@@ -84,7 +87,11 @@ export default function AddNote() {
 
   return (
     <View style={{ flex: 1 }}>
-      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
+      <MainScrollContainer
+        ref={scrollRef}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        pt="sm"
+      >
         <Title
           noteTitle={data.note.title}
           noteDate={data.note.interactedAt}

@@ -33,14 +33,15 @@ import {
   TextBold,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { RefObject, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import RequestedCheckbox from './RequestedCheckbox';
 
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
   services: ViewNoteQuery['note']['requestedServices'];
   attachments: ViewNoteQuery['note']['attachments'];
 }
@@ -134,6 +135,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     noteId,
     services: initialServices,
     attachments,
+    scrollRef,
   } = props;
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }> | undefined
@@ -216,6 +218,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isRequestedServices ? 'auto' : 0}
       actionName={
         isRequestedServices &&

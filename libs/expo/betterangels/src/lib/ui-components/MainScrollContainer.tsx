@@ -1,28 +1,26 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import { ReactNode, forwardRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
-export default function MainScrollContainer({
-  children,
-  bg,
-  pt = 'md',
-  px = 'sm',
-}: {
+interface IMainScrollContainerProps {
   children: ReactNode;
   bg?: string;
   pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
-}) {
-  return (
+}
+
+const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
+  ({ children, bg = Colors.WHITE, pt = 'md', px = 'sm' }, ref) => (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
       <ScrollView
+        ref={ref}
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1, backgroundColor: bg || Colors.WHITE }}
+        style={{ flex: 1, backgroundColor: bg }}
         contentContainerStyle={{
-          paddingHorizontal: px && Spacings[px],
+          paddingHorizontal: px ? Spacings[px] : undefined,
           paddingBottom: 80,
           paddingTop: pt && Spacings[pt],
         }}
@@ -30,5 +28,7 @@ export default function MainScrollContainer({
         {children}
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-}
+  )
+);
+
+export default MainScrollContainer;
