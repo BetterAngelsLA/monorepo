@@ -5,11 +5,11 @@ import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
   HouseIcon,
+  HouseSolidIcon,
   MapIcon,
   PlusIcon,
   SitemapIcon,
   SolidCalendarIcon,
-  SolidHouseIcon,
   SolidMapIcon,
   SolidSitemapIcon,
   SolidUsersIcon,
@@ -72,7 +72,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidHouseIcon color={color} />
+                  <HouseSolidIcon color={color} />
                 ) : (
                   <HouseIcon color={color} />
                 )}
