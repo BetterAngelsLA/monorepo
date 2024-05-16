@@ -58,7 +58,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     firstName: string | undefined | null
   ) {
     try {
-      const { data } = await createNote({
+      const response = await createNote({
         variables: {
           data: {
             title: `Session with ${firstName || 'Client'}`,
@@ -66,8 +66,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           },
         },
       });
-      if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data?.createNote.id}`);
+      if (response.data?.createNote && 'id' in response.data.createNote) {
+        router.navigate(`/add-note/${response.data?.createNote.id}`);
       }
     } catch (err) {
       console.log(err);

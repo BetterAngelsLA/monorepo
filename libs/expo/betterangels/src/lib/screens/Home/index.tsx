@@ -137,7 +137,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             />
           ) : null
         }
-        keyExtractor={(clientProfile) => clientProfile.user.id}
+        keyExtractor={(clientProfile) => clientProfile.id}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
