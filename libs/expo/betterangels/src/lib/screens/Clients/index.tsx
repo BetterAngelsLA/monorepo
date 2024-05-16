@@ -4,12 +4,13 @@ import {
   BasicInput,
   Button,
   ClientCard,
+  Loading,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, SectionList, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -39,6 +40,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         search: filterSearch,
       },
     },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>();
 
@@ -74,7 +77,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <Loading size="small" color={Colors.PRIMARY} />
       </View>
     ) : null;
   };
@@ -121,11 +124,21 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       },
       {}
     );
-    if (offset === 0) {
-      setClients(groupedContacts);
-    } else {
-      setClients((prevClients) => ({ ...prevClients, ...groupedContacts }));
-    }
+
+    setClients((prevClients) => {
+      const updatedClients = { ...prevClients };
+      for (const [key, value] of Object.entries(groupedContacts)) {
+        if (updatedClients[key]) {
+          updatedClients[key].data = [
+            ...updatedClients[key].data,
+            ...value.data,
+          ];
+        } else {
+          updatedClients[key] = value;
+        }
+      }
+      return updatedClients;
+    });
 
     setHasMore(isMoreAvailable);
   }, [data, offset]);
@@ -160,8 +173,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           }}
           sections={sections}
           renderItem={({ item: clientProfile }) =>
-            data ? (
+            clients ? (
               <ClientCard
+                id={clientProfile.id}
                 onPress={() =>
                   createNoteFunction(
                     clientProfile.user.id,
@@ -179,9 +193,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               {title}
             </TextBold>
           )}
-          keyExtractor={(clientProfile) => clientProfile.user.id}
+          keyExtractor={(clientProfile) => clientProfile.id}
           onEndReached={loadMoreClients}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.05}
           ListFooterComponent={renderFooter}
         />
         <Button
