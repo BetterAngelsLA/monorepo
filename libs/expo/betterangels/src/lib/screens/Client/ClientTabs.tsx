@@ -7,7 +7,15 @@ interface IClientTabsProps {
   setTab: (tab: string) => void;
 }
 
-const TABS = ['Profile', 'Docs', 'Interactions', 'Tasks', 'Services'];
+const TABS = [
+  'Profile',
+  'Docs',
+  'Interactions',
+  'Tasks',
+  'Services',
+  'Schedule',
+  'Locations',
+];
 
 export default function ClientTabs(props: IClientTabsProps) {
   const { tab, setTab } = props;
@@ -25,18 +33,33 @@ export default function ClientTabs(props: IClientTabsProps) {
         horizontal
       >
         {TABS.map((t) => (
-          <TextButton
-            onPress={() => setTab(t)}
+          <View
             style={{
-              padding: Spacings.sm,
+              position: 'relative',
+              alignItems: 'center',
+              justifyContent: 'center',
               borderBottomWidth: t === tab ? 3 : 0,
               borderColor: Colors.PRIMARY,
             }}
-            regular={t !== tab}
-            title={t}
             key={t}
-            accessibilityHint={`select ${t} tab`}
-          />
+          >
+            <TextButton
+              onPress={() => setTab(t)}
+              style={{
+                position: 'absolute',
+                zIndex: 100,
+                padding: Spacings.sm,
+              }}
+              regular={t !== tab}
+              title={t}
+              accessibilityHint={`select ${t} tab`}
+            />
+            <TextButton
+              style={{ opacity: 0, padding: Spacings.sm }}
+              title={t}
+              accessibilityHint={`select ${t} tab`}
+            />
+          </View>
         ))}
       </ScrollView>
     </View>

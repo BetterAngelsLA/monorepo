@@ -133,7 +133,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             lastName={clientProfile.user.lastName}
           />
         )}
-        keyExtractor={(clientProfile) => clientProfile.user.id}
+        keyExtractor={(clientProfile) => clientProfile.id}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}

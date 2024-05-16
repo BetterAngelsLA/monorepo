@@ -6,7 +6,9 @@ import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
+import Locations from './Locations';
 import Profile from './Profile';
+import Schedule from './Schedule';
 import Services from './Services';
 import Tasks from './Tasks';
 import { useClientProfileQuery } from './__generated__/Client.generated';
@@ -19,6 +21,8 @@ const getTabComponent = (key: string, id: string): ReactElement => {
       Tasks,
       Services,
       Docs,
+      Schedule,
+      Locations,
     };
 
   const Component = components[key];
