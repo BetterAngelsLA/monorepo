@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-import time_machine
 from accounts.enums import GenderEnum, LanguageEnum
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta

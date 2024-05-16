@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
 
 import pghistory
 from accounts.enums import GenderEnum, LanguageEnum
@@ -85,9 +85,9 @@ class ClientProfile(models.Model):
     gender = TextChoicesField(choices_enum=GenderEnum)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum)
 
-    def age(self) -> Union[str, int]:
+    def age(self) -> Optional[int]:
         if not self.date_of_birth:
-            return "Unknown"
+            return None
 
         today = timezone.now().date()
 
