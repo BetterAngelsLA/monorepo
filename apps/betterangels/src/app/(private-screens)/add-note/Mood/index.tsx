@@ -2,6 +2,7 @@ import {
   Attachments,
   MoodEnum,
   NoteNamespaceEnum,
+  ViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import {
   FaceGrimmaceIcon,
@@ -27,9 +28,13 @@ import {
   PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, FieldCard, H5 } from '@monorepo/expo/shared/ui-components';
-import { ComponentType, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import {
+  FieldCard,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { ComponentType, RefObject, useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
 interface Mood {
@@ -44,6 +49,9 @@ interface IMoodProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
+  moods: ViewNoteQuery['note']['moods'];
+  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const MOOD_DATA: Mood[] = [
@@ -176,48 +184,57 @@ const TABS: ['pleasant', 'neutral', 'unpleasant'] = [
 ];
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  Agreeable: FaceGrinWinkIcon,
-  Euthymic: FaceCalmIcon,
-  Happy: FaceLaughIcon,
-  Motivated: FaceGrinStarsIcon,
-  Optimistic: FaceSmileIcon,
-  Personable: FaceGrinTongueWinkIcon,
-  Pleasant: FaceSmileBeamIcon,
-  Anxious: FaceGrimmaceIcon,
-  Depressed: FaceDisappointedIcon,
-  Detached: FaceMehIcon,
-  Disoriented: FaceMeltingIcon,
-  Escalated: FaceSpiralEyesIcon,
-  Hopeless: FaceWearyIcon,
-  Manic: FaceSwearIcon,
-  Suicidal: FaceCloudsIcon,
-  Agitated: FacePoutingIcon,
-  'Disorganized Thought': FaceSpiralEyesIcon,
-  'Flat/blunted': FaceMehBlankIcon,
-  Indifferent: FaceRollingEyesIcon,
-  Restless: FaceFrownIcon,
+  AGREEABLE: FaceGrinWinkIcon,
+  EUTHYMIC: FaceCalmIcon,
+  HAPPY: FaceLaughIcon,
+  MOTIVATED: FaceGrinStarsIcon,
+  OPTIMISTIC: FaceSmileIcon,
+  PERSONABLE: FaceGrinTongueWinkIcon,
+  PLEASANT: FaceSmileBeamIcon,
+  ANXIOUS: FaceGrimmaceIcon,
+  DEPRESSED: FaceDisappointedIcon,
+  DETACHED: FaceMehIcon,
+  DISORIENTED: FaceMeltingIcon,
+  ESCALATED: FaceSpiralEyesIcon,
+  HOPELESS: FaceWearyIcon,
+  MANIC: FaceSwearIcon,
+  SUICIDAL: FaceCloudsIcon,
+  AGITATED: FacePoutingIcon,
+  DISORGANIZED_THOUGHT: FaceSpiralEyesIcon,
+  FLAT_BLUNTED: FaceMehBlankIcon,
+  INDIFFERENT: FaceRollingEyesIcon,
+  RESTLESS: FaceFrownIcon,
 };
 
 export default function Mood(props: IMoodProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    moods: initialMoods,
+    attachments,
+    scrollRef,
+  } = props;
+
   const [images, setImages] = useState<
-    Array<{ id: string | undefined; uri: string }>
-  >([]);
+    Array<{ id: string | undefined; uri: string }> | undefined
+  >(undefined);
   const [moods, setMoods] = useState<
-    {
-      enum: MoodEnum;
-      title: string;
-    }[]
-  >([]);
+    | {
+        id: string | undefined;
+        enum: MoodEnum;
+      }[]
+    | undefined
+  >(undefined);
   const [tab, setTab] = useState<'pleasant' | 'neutral' | 'unpleasant'>(
     'pleasant'
   );
 
   const isMood = expanded === 'Mood';
-  const isLessThanOneMood = moods.length < 1;
-  const isLessThanOneMoodImages = images.length < 1;
-  const isGreaterThanZeroMoodImages = images?.length > 0;
-  const isGreaterThanOneMood = moods.length > 0;
+  const isLessThanOneMood = moods && moods.length < 1;
+  const isLessThanOneMoodImages = images && images.length < 1;
+  const isGreaterThanZeroMoodImages = images && images?.length > 0;
+  const isGreaterThanOneMood = moods && moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
   const isNeutralTab = tab === 'neutral';
@@ -247,8 +264,36 @@ export default function Mood(props: IMoodProps) {
     }
   };
 
+  useEffect(() => {
+    if (initialMoods.length === 0) {
+      setMoods([]);
+      return;
+    }
+
+    const filteredMoods = initialMoods.map((item) => ({
+      enum: item.descriptor,
+      id: item.id,
+    }));
+    setMoods(filteredMoods);
+  }, [initialMoods]);
+
+  useEffect(() => {
+    if (attachments.length === 0) {
+      setImages([]);
+      return;
+    }
+    const newImages = attachments.map((attachment) => ({
+      id: attachment.id,
+      uri: attachment.file.url,
+    }));
+    setImages(newImages);
+  }, [attachments]);
+
+  if (!moods || !images) return null;
+
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isMood ? 'auto' : 0}
       mb="xs"
       actionName={
@@ -261,12 +306,12 @@ export default function Mood(props: IMoodProps) {
               flexWrap: 'wrap',
             }}
           >
-            {moods.map((mood: { title: string; enum: MoodEnum }) => {
-              const IconComponent = ICONS[mood.title];
+            {moods.map((mood: { enum: MoodEnum }) => {
+              const IconComponent = ICONS[mood.enum];
               return (
                 <IconComponent
                   mr="xs"
-                  key={mood.title}
+                  key={mood.enum}
                   size="md"
                   color={Colors.PRIMARY_EXTRA_DARK}
                 />
@@ -277,18 +322,14 @@ export default function Mood(props: IMoodProps) {
             )}
           </View>
         ) : (
-          <H5 size="sm">Add Mood</H5>
+          <TextMedium size="sm">Add Mood</TextMedium>
         )
       }
       title="Mood"
       expanded={expanded}
       setExpanded={() => setExpanded(isMood ? null : 'Mood')}
     >
-      <View
-        style={{
-          paddingBottom: Spacings.md,
-        }}
-      >
+      <View>
         <View style={styles.tabContainer}>
           {TABS.map((tabName) => (
             <Pressable
@@ -304,9 +345,9 @@ export default function Mood(props: IMoodProps) {
                 },
               ]}
             >
-              <BodyText size="xs">
+              <TextRegular size="xs">
                 {tabName.charAt(0).toUpperCase() + tabName.slice(1)}
-              </BodyText>
+              </TextRegular>
             </Pressable>
           ))}
         </View>

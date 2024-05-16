@@ -4,7 +4,7 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from accounts.types import UserType
-from common.graphql.types import AddressInput, AddressType, AttachmentInterface
+from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
@@ -76,8 +76,7 @@ class UpdateServiceRequestInput:
 class TaskType:
     id: auto
     title: auto
-    point: auto
-    address: Optional[AddressType]
+    location: Optional[LocationType]
     status: auto
     due_by: auto
     client: Optional[UserType]
@@ -105,8 +104,7 @@ class CreateNoteTaskInput:
 class UpdateTaskInput:
     id: auto
     title: auto
-    point: auto
-    address: Optional[ID]
+    location: Optional[ID]
     status: auto
     due_by: auto
     client: Optional[ID]
@@ -147,7 +145,7 @@ class CreateNoteMoodInput:
 
 @strawberry_django.ordering.order(models.Note)
 class NoteOrder:
-    created_at: auto
+    interacted_at: auto
 
 
 @strawberry_django.filters.filter(models.Note)
@@ -157,12 +155,11 @@ class NoteFilter:
     is_submitted: auto
 
 
-@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter)
+@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: auto
     title: auto
-    point: auto
-    address: Optional[AddressType]
+    location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
     purposes: List[TaskType]
@@ -209,8 +206,7 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: auto
     title: auto
-    point: auto
-    address: Optional[ID]
+    location: Optional[ID]
     public_details: auto
     private_details: auto
     is_submitted: auto
@@ -220,15 +216,13 @@ class UpdateNoteInput:
 @strawberry_django.input(models.Note)
 class UpdateNoteLocationInput:
     id: auto
-    point: auto
-    address: AddressInput
+    location: LocationInput
 
 
 @strawberry_django.input(models.Task)
 class UpdateTaskLocationInput:
     id: auto
-    point: auto
-    address: AddressInput
+    location: LocationInput
 
 
 @strawberry_django.input(models.Note)

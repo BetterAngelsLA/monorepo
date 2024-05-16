@@ -1,3 +1,4 @@
+import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -18,6 +19,13 @@ class UserManager(BaseUserManager["User"]):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+    def create_client(self, email: str, **extra_fields: Any) -> "User":
+        random_id = uuid.uuid4()
+        email = email or self.normalize_email(f"client_{random_id}@example.com")
+        client = self.create_user(email, **extra_fields)
+        client.set_unusable_password()
+        return client
 
     def create_superuser(self, email: str, password: str = "", **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", True)

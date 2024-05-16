@@ -1,25 +1,18 @@
-import { useMutation, useQuery } from '@apollo/client';
 import {
-  DELETE_NOTE,
-  GET_NOTE,
   MainScrollContainer,
-  UPDATE_NOTE,
-  UpdateNoteMutation,
-  UpdateNoteMutationVariables,
-  ViewNoteQuery,
-  ViewNoteQueryVariables,
+  useDeleteNoteMutation,
+  useUpdateNoteMutation,
+  useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
-  CancelModal,
+  DeleteModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
@@ -30,66 +23,34 @@ import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import Title from './Title';
 
-interface INote {
-  id: string;
-  title: string;
-  purposes: { value: string }[];
-  nextStepActions: {
-    action: string;
-    date?: Date | undefined;
-    location?: string;
-    time?: Date | undefined;
-  }[];
-  publicDetails: string;
-  noteDate: string;
-  noteTime: string;
-  moods: string[];
-  providedServices: string[];
-  requestedServices: string[];
-  privateDetails: string;
-}
-
 export default function AddNote() {
   const router = useRouter();
   const { noteId } = useLocalSearchParams<{ noteId: string }>();
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
-  const { data, loading: isLoading } = useQuery<
-    ViewNoteQuery,
-    ViewNoteQueryVariables
-  >(GET_NOTE, {
+  const { data, loading: isLoading } = useViewNoteQuery({
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
-  const [updateNote] = useMutation<
-    UpdateNoteMutation,
-    UpdateNoteMutationVariables
-  >(UPDATE_NOTE);
-  const [deleteNote] = useMutation(DELETE_NOTE);
+  const [updateNote, { error: updateError }] = useUpdateNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
-  const methods = useForm<INote>({
-    defaultValues: {
-      title: '',
-      nextStepActions: [{ action: '' }],
-      publicDetails: 'G -\nI -\nR -\nP - ',
-      noteDate: format(new Date(), 'MM/dd/yyyy'),
-      noteTime: format(new Date(), 'HH:mm'),
-      privateDetails: '',
-    },
-  });
+
+  const scrollRef = useRef<ScrollView>(null);
 
   async function deleteNoteFunction() {
     try {
       await deleteNote({
         variables: {
-          data: { id: noteId },
+          data: { id: noteId || '' },
         },
       });
       router.back();
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -97,26 +58,26 @@ export default function AddNote() {
     expanded,
     setExpanded,
     noteId,
+    scrollRef,
   };
 
-  async function updateNoteFunction(values: INote, isSubmitted: boolean) {
+  async function submitNote() {
     try {
-      await updateNote({
+      const result = await updateNote({
         variables: {
           data: {
             id: noteId,
-            title: values.title,
-            publicDetails: values.publicDetails,
-            privateDetails: values.privateDetails,
-            isSubmitted: isSubmitted,
+            isSubmitted: true,
           },
         },
       });
-      if (isSubmitted === true) {
-        router.back();
+      if (!result.data) {
+        console.error(`Failed to update note: ${updateError}`);
+        return;
       }
+      router.replace('/');
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -125,49 +86,79 @@ export default function AddNote() {
   }
 
   return (
-    <FormProvider {...methods}>
-      <View style={{ flex: 1 }}>
-        <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} pt="sm">
-          <Title
-            noteTitle={data.note.title}
-            noteDate={data.note.interactedAt}
-            {...props}
-          />
-          <Location {...props} />
-          <Purpose {...props} />
-          <Mood {...props} />
-          <ProvidedServices {...props} />
-          <RequestedServices {...props} />
-          <NextStep {...props} />
-          <PublicNote
-            isPublicNoteEdited={isPublicNoteEdited}
-            setIsPublicNoteEdited={setIsPublicNoteEdited}
-            {...props}
-          />
-          <PrivateNote {...props} />
-        </MainScrollContainer>
-        <BottomActions
-          cancel={
-            <CancelModal
-              body="All data associated with this note will be deleted"
-              title="Delete note?"
-              onDelete={deleteNoteFunction}
-            />
-          }
-          optionalAction={
-            <TextButton
-              mr="sm"
-              fontSize="sm"
-              onPress={router.back}
-              accessibilityHint="saves the note for later"
-              title="Save for later"
-            />
-          }
-          onSubmit={methods.handleSubmit((values) =>
-            updateNoteFunction(values, true)
-          )}
+    <View style={{ flex: 1 }}>
+      <MainScrollContainer
+        ref={scrollRef}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        pt="sm"
+      >
+        <Title
+          noteTitle={data.note.title}
+          noteDate={data.note.interactedAt}
+          {...props}
         />
-      </View>
-    </FormProvider>
+        <Location
+          address={data.note.location?.address}
+          point={data.note.location?.point}
+          {...props}
+        />
+        <Purpose purposes={data.note.purposes} {...props} />
+        <Mood
+          attachments={data.note.attachments.filter(
+            (item) => item.namespace === 'MOOD_ASSESSMENT'
+          )}
+          moods={data.note.moods}
+          {...props}
+        />
+        <ProvidedServices
+          attachments={data.note.attachments.filter(
+            (item) => item.namespace === 'PROVIDED_SERVICES'
+          )}
+          services={data.note.providedServices}
+          {...props}
+        />
+        <RequestedServices
+          attachments={data.note.attachments.filter(
+            (item) => item.namespace === 'REQUESTED_SERVICES'
+          )}
+          services={data.note.requestedServices}
+          {...props}
+        />
+        <NextStep nextSteps={data.note.nextSteps} {...props} />
+        <PublicNote
+          note={data.note.publicDetails}
+          isPublicNoteEdited={isPublicNoteEdited}
+          setIsPublicNoteEdited={setIsPublicNoteEdited}
+          {...props}
+        />
+        <PrivateNote {...props} />
+      </MainScrollContainer>
+      <BottomActions
+        cancel={
+          <DeleteModal
+            body="All data associated with this note will be deleted"
+            title="Delete note?"
+            onDelete={deleteNoteFunction}
+            button={
+              <TextButton
+                fontSize="sm"
+                accessibilityHint="deletes creation"
+                title="Cancel"
+              />
+            }
+          />
+        }
+        optionalAction={
+          <TextButton
+            mr="sm"
+            fontSize="sm"
+            onPress={router.back}
+            accessibilityHint="saves the note for later"
+            title="Save for later"
+          />
+        }
+        onSubmit={submitNote}
+      />
+    </View>
   );
 }

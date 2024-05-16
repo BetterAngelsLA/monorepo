@@ -1,39 +1,44 @@
 import {
-  BodyText,
+  BasicTextarea,
   FieldCard,
-  H5,
-  Textarea,
+  TextMedium,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { RefObject, useState } from 'react';
+import { ScrollView } from 'react-native';
 
 interface IPrivateNoteProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function PrivateNote(props: IPrivateNoteProps) {
-  const { expanded, setExpanded } = props;
-  const { control, watch } = useFormContext();
-
-  const privateNote = watch('privateNote');
+  const { expanded, setExpanded, scrollRef } = props;
+  const [value, setValue] = useState<string>('');
   const isPrivateNote = expanded === 'Private Note';
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       mb="xs"
       setExpanded={() => setExpanded(isPrivateNote ? null : 'Private Note')}
       title="Private Note (Optional)"
       actionName={
-        !privateNote && !isPrivateNote ? (
-          <H5 size="sm">Add private note</H5>
+        !value && !isPrivateNote ? (
+          <TextMedium size="sm">Add private note</TextMedium>
         ) : null
       }
     >
       {isPrivateNote ? (
-        <Textarea mb="md" name="privateNote" control={control} />
+        <BasicTextarea
+          mb="md"
+          value={value}
+          onChangeText={(e) => setValue(e)}
+        />
       ) : (
-        privateNote && <BodyText mb="md">{privateNote}</BodyText>
+        value && <TextRegular mb="md">{value}</TextRegular>
       )}
     </FieldCard>
   );

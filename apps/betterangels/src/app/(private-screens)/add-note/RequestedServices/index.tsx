@@ -4,6 +4,7 @@ import {
   OtherCategory,
   ServiceEnum,
   ServiceRequestTypeEnum,
+  ViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import {
   ArrowTrendUpIcon,
@@ -27,35 +28,42 @@ import {
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, H3, H5 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { View } from 'react-native';
+import {
+  FieldCard,
+  TextBold,
+  TextMedium,
+} from '@monorepo/expo/shared/ui-components';
+import { RefObject, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import RequestedCheckbox from './RequestedCheckbox';
 
 interface IRequestedServicesProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
+  scrollRef: RefObject<ScrollView>;
+  services: ViewNoteQuery['note']['requestedServices'];
+  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  Food: BurgerSodaIcon,
-  Water: BottleWaterIcon,
-  Blanket: BlanketIcon,
-  Book: BookOpenIcon,
-  Clothes: ShirtIcon,
-  'Hygiene Kit': ToothbrushIcon,
-  'Pet Food': PawIcon,
-  Shoes: ShoePrintsIcon,
-  Shower: ShowerIcon,
-  Shelter: PeopleRoofIcon,
-  Storage: WarehouseIcon,
-  Transport: CarIcon,
-  Dental: ToothIcon,
-  'Harm Reduction': SyringeIcon,
-  Medical: BriefcaseMedicalIcon,
-  'Pet Care': PawIcon,
-  Stabilize: ArrowTrendUpIcon,
+  FOOD: BurgerSodaIcon,
+  WATER: BottleWaterIcon,
+  BLANKET: BlanketIcon,
+  BOOK: BookOpenIcon,
+  CLOTHES: ShirtIcon,
+  HYGIENE_KIT: ToothbrushIcon,
+  PET_FOOD: PawIcon,
+  SHOES: ShoePrintsIcon,
+  SHOWER: ShowerIcon,
+  SHELTER: PeopleRoofIcon,
+  STORAGE: WarehouseIcon,
+  TRANSPORT: CarIcon,
+  DENTAL: ToothIcon,
+  HARM_REDUCTION: SyringeIcon,
+  MEDICAL: BriefcaseMedicalIcon,
+  PET_CARE: PawIcon,
+  STABILIZE: ArrowTrendUpIcon,
   Other: PlusIcon,
 };
 
@@ -121,31 +129,96 @@ const SERVICES = [
 ];
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { expanded, setExpanded, noteId } = props;
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    services: initialServices,
+    attachments,
+    scrollRef,
+  } = props;
   const [images, setImages] = useState<
-    Array<{ id: string | undefined; uri: string }>
-  >([]);
+    Array<{ id: string | undefined; uri: string }> | undefined
+  >(undefined);
   const [services, setServices] = useState<
-    Array<{
-      id: string | undefined;
-      service: string;
-      enum: ServiceEnum;
-    }>
-  >([]);
+    | Array<{
+        id: string | undefined;
+        enum: ServiceEnum;
+      }>
+    | undefined
+  >(undefined);
   const [customServices, setCustomServices] = useState<
-    { title: string; id: string | undefined }[]
-  >([]);
+    { title: string; id: string | undefined }[] | undefined
+  >(undefined);
 
   const isRequestedServices = expanded === 'Requested Services';
   const isLessThanOneRequestedService =
-    services.length < 1 && customServices.length < 1;
-  const isLessThanOneRequestedServiceImages = images.length < 1;
+    services &&
+    services.length < 1 &&
+    customServices &&
+    customServices.length < 1;
+  const isLessThanOneRequestedServiceImages = images && images.length < 1;
   const isGreaterThanZeroRequestedService =
-    services.length > 0 || customServices.length > 0;
-  const isGreaterThanZeroRequestedServiceImages = images?.length > 0;
+    (services && services.length > 0) ||
+    (customServices && customServices.length > 0);
+  const isGreaterThanZeroRequestedServiceImages = images && images?.length > 0;
+
+  useEffect(() => {
+    if (initialServices.length === 0) {
+      setServices([]);
+      setCustomServices([]);
+      return;
+    }
+    const newServices:
+      | { id: string | undefined; enum: ServiceEnum }[]
+      | undefined = [];
+    const newCustomServices:
+      | { title: string; id: string | undefined }[]
+      | undefined = [];
+
+    initialServices.forEach((service) => {
+      if (service.service === 'OTHER') {
+        newCustomServices.push({
+          id: service.id,
+          title: service.customService || '',
+        });
+      } else {
+        newServices.push({
+          id: service.id,
+          enum: service.service,
+        });
+      }
+    });
+
+    if (newServices.length > 0 || services?.length !== newServices.length) {
+      setServices(newServices);
+    }
+
+    if (
+      newCustomServices.length > 0 ||
+      customServices?.length !== newCustomServices.length
+    ) {
+      setCustomServices(newCustomServices);
+    }
+  }, [initialServices]);
+
+  useEffect(() => {
+    if (attachments.length === 0) {
+      setImages([]);
+      return;
+    }
+    const newImages = attachments.map((attachment) => ({
+      id: attachment.id,
+      uri: attachment.file.url,
+    }));
+    setImages(newImages);
+  }, [attachments]);
+
+  if (!services || !customServices || !images) return null;
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       childHeight={isRequestedServices ? 'auto' : 0}
       actionName={
         isRequestedServices &&
@@ -156,7 +229,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
           isGreaterThanZeroRequestedServiceImages ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {services.map((item, index) => {
-              const IconComponent = ICONS[item.service];
+              const IconComponent = ICONS[item.enum];
               return (
                 <IconComponent
                   mr="xs"
@@ -180,7 +253,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
             )}
           </View>
         ) : (
-          <H5 size="sm">Add Services</H5>
+          <TextMedium size="sm">Add Services</TextMedium>
         )
       }
       mb="xs"
@@ -190,23 +263,27 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         setExpanded(isRequestedServices ? null : 'Requested Services')
       }
     >
-      <View style={{ paddingBottom: Spacings.md }}>
+      <View>
         {SERVICES.map((service, idx) => (
           <View
             style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
             key={service.title}
           >
-            <H3 mb="xs">{service.title}</H3>
-            {service.items.map((item, idx) => (
-              <RequestedCheckbox
-                key={item.enum}
-                services={services}
-                setServices={setServices}
-                noteId={noteId}
-                service={item}
-                idx={idx}
-              />
-            ))}
+            <TextBold mb="xs">{service.title}</TextBold>
+            {service.items.map((item, idx) => {
+              const serviceId = services.find((s) => s.enum === item.enum)?.id;
+              return (
+                <RequestedCheckbox
+                  key={item.enum}
+                  services={services}
+                  setServices={setServices}
+                  id={serviceId}
+                  noteId={noteId}
+                  service={item}
+                  idx={idx}
+                />
+              );
+            })}
           </View>
         ))}
         <OtherCategory

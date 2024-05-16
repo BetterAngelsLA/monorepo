@@ -1,19 +1,24 @@
-import { LocationDotIcon, PlusIcon } from '@monorepo/expo/shared/icons';
+import {
+  LocationDotIcon,
+  PawIcon,
+  TentIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
-import BodyText from '../BodyText';
-import H4 from '../H4';
-import IconButton from '../IconButton';
+import TextBold from '../TextBold';
+import TextButton from '../TextButton';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IClientCardProps {
-  imageUrl: string;
-  firstName: string;
-  lastName: string;
-  address: string;
-  progress: DimensionValue;
+  imageUrl?: string;
+  firstName?: string | null | undefined;
+  lastName?: string | null | undefined;
+  address?: string;
+  progress?: DimensionValue;
+  daysActive?: number;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -29,7 +34,7 @@ export function ClientCard(props: IClientCardProps) {
     firstName,
     lastName,
     address,
-    progress = '0%',
+    daysActive,
     mb,
     mt,
     mr,
@@ -38,6 +43,7 @@ export function ClientCard(props: IClientCardProps) {
     mx,
     onPress,
   } = props;
+
   return (
     <View
       style={[
@@ -52,49 +58,39 @@ export function ClientCard(props: IClientCardProps) {
         },
       ]}
     >
-      <View style={{ alignItems: 'center', paddingHorizontal: Spacings.xs }}>
-        <Avatar
-          accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
-          accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
-          imageUrl={imageUrl}
-          mb="xs"
-          size="lg"
-        />
-        <H4>
+      <Avatar
+        accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
+        accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
+        imageUrl={imageUrl}
+        size="lg"
+        mr="sm"
+      />
+      <View style={{ gap: Spacings.xs, flex: 2 }}>
+        <TextBold size="sm">
           {firstName} {lastName}
-        </H4>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: Spacings.xs,
-          }}
-        >
-          <LocationDotIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-          <BodyText size="sm"> {address}</BodyText>
+        </TextBold>
+        {daysActive && (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
+            <TextRegular size="xs"> {daysActive} Days</TextRegular>
+          </View>
+        )}
+        {address && (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
+            <TextRegular size="xs"> {address}</TextRegular>
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
         </View>
-        <IconButton
-          accessibilityHint={`goes to create a note page for  ${firstName} ${lastName}`}
-          accessibilityLabel={`Create a note for ${firstName} ${lastName}`}
-          onPress={onPress}
-          mb="xs"
-          variant="secondary"
-          borderColor={Colors.PRIMARY}
-          height="sm"
-          width="full"
-        >
-          <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        </IconButton>
       </View>
-      <View style={styles.progress}>
-        <View
-          style={{
-            backgroundColor: Colors.SUCCESS,
-            height: 5,
-            width: progress,
-            position: 'absolute',
-            left: 0,
-          }}
+      <View style={{ justifyContent: 'center', position: 'relative' }}>
+        <TextButton
+          fontSize="sm"
+          title="Add Note"
+          onPress={onPress}
+          accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
         />
       </View>
     </View>
@@ -103,20 +99,21 @@ export function ClientCard(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
     borderRadius: 8,
-    paddingTop: Spacings.sm,
-    width: 160,
+    padding: Spacings.xs,
     backgroundColor: Colors.WHITE,
-    overflow: 'hidden',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   progress: {
     backgroundColor: Colors.NEUTRAL_LIGHT,
     height: 5,
     width: '100%',
     position: 'relative',
+  },
+  moreButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacings.xs,
   },
 });

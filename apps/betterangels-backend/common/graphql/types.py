@@ -3,7 +3,7 @@ from typing import Optional
 
 import strawberry
 import strawberry_django
-from common.models import Address, Attachment
+from common.models import Address, Attachment, Location
 from strawberry import auto
 
 
@@ -25,6 +25,21 @@ class AddressType:
 class AddressInput:
     address_components: auto
     formatted_address: auto
+
+
+@strawberry_django.type(Location)
+class LocationType:
+    id: auto
+    address: AddressType
+    point: auto
+    point_of_interest: auto
+
+
+@strawberry_django.input(Location)
+class LocationInput:
+    address: Optional[AddressInput]
+    point: auto
+    point_of_interest: auto
 
 
 @strawberry_django.type(Attachment, is_interface=True)

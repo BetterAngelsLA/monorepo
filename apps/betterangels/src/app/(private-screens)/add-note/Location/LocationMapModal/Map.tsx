@@ -2,7 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 interface IMapProps {
@@ -22,7 +22,11 @@ interface IMapProps {
   initialLocation: { longitude: number; latitude: number };
   setPin: (pin: boolean) => void;
   setSelected: (selected: boolean) => void;
-  setAddress: (address: { full: string; short: string } | undefined) => void;
+  setAddress: (
+    address:
+      | { full: string; short: string; addressComponents: any[] }
+      | undefined
+  ) => void;
   setChooseDirections: (chooseDirections: boolean) => void;
   chooseDirections: boolean;
   userLocation: Location.LocationObject | null;
@@ -44,9 +48,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
     chooseDirections,
     userLocation,
   } = props;
-  const { watch, setValue } = useFormContext();
-
-  const location = watch('location');
 
   async function placePin(e: any, isId: boolean) {
     if (chooseDirections) {
@@ -60,11 +61,11 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_component&key=${apiKey}`
+        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
         : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
         const { data } = await axios.get(url);
-        setValue('location', undefined);
+
         setCurrentLocation({
           longitude,
           latitude,
@@ -79,11 +80,16 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         const googleAddress = isId
           ? data.result.formatted_address
           : data.results[0].formatted_address;
+        const addressComponents = isId
+          ? data.result.address_components
+          : data.results[0].address_components;
+
         const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
         setAddress({
           short: shortAddress,
           full: googleAddress,
+          addressComponents,
         });
         setPin(true);
         setSelected(true);
@@ -95,7 +101,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       setCurrentLocation(undefined);
       setPin(false);
       setSelected(false);
-      setValue('location', undefined);
     }
   }
 
@@ -105,11 +110,12 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       showsUserLocation={userLocation ? true : false}
       showsMyLocationButton={false}
       mapType="standard"
-      onPoiClick={(e) => placePin(e, true)}
+      onPoiClick={(e) => console.log(e.nativeEvent.name)}
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
-      provider={PROVIDER_GOOGLE}
+      // https://github.com/expo/expo/issues/28705
+      provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
       initialRegion={{
         longitudeDelta: 0.005,
         latitudeDelta: 0.005,
@@ -129,13 +135,11 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         width: '100%',
       }}
     >
-      {(currentLocation || (location && location.address)) && (
+      {currentLocation && (
         <Marker
           coordinate={{
-            latitude: location ? location.latitude : currentLocation?.latitude,
-            longitude: location
-              ? location.longitude
-              : currentLocation?.longitude,
+            latitude: currentLocation.latitude,
+            longitude: currentLocation?.longitude,
           }}
         >
           <LocationPinIcon size="2xl" />

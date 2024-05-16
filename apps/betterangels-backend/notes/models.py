@@ -2,10 +2,9 @@ from typing import Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
-from common.models import Address, Attachment, BaseModel
+from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.utils import timezone
 from django_choices_field import TextChoicesField
@@ -37,8 +36,8 @@ class ServiceRequest(BaseModel):
 
     objects = models.Manager()
 
-    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequest"]
-    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequest"]
+    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
+    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequestGroupObjectPermission"]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.status == ServiceRequestStatusEnum.COMPLETED:
@@ -60,8 +59,7 @@ class ServiceRequest(BaseModel):
 )
 class Task(BaseModel):
     title = models.CharField(max_length=100, blank=False)
-    point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     client = models.ForeignKey(
@@ -73,8 +71,8 @@ class Task(BaseModel):
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
-    taskuserobjectpermission_set: models.QuerySet["Task"]
-    taskgroupobjectpermission_set: models.QuerySet["Task"]
+    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
+    taskgroupobjectpermission_set: models.QuerySet["TaskGroupObjectPermission"]
 
     def __str__(self) -> str:
         return self.title
@@ -90,9 +88,8 @@ class Note(BaseModel):
     title = models.CharField(max_length=100)
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
-    interacted_at = models.DateTimeField(auto_now_add=True)
-    point = PointField(geography=True, null=True, blank=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
@@ -107,8 +104,8 @@ class Note(BaseModel):
 
     objects = models.Manager()
 
-    noteuserobjectpermission_set: models.QuerySet["Note"]
-    notegroupobjectpermission_set: models.QuerySet["Note"]
+    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
+    notegroupobjectpermission_set: models.QuerySet["NoteGroupObjectPermission"]
 
     # Type hints for permission annotations
     _private_details: Optional[str]

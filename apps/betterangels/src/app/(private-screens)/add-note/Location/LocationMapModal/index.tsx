@@ -1,14 +1,14 @@
+import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  BodyText,
   IconButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import {
   FlatList,
   Modal,
@@ -36,15 +36,35 @@ type locationLongLat = {
   name: string | undefined;
 };
 
+type TLocation =
+  | {
+      address: string | null | undefined;
+      latitude: number | null | undefined;
+      longitude: number | null | undefined;
+      name: string | null | undefined;
+    }
+  | undefined;
+
 interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
+  noteId: string | undefined;
+  setLocation: (location: TLocation) => void;
+  location: TLocation;
+  setError: (error: boolean) => void;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { isModalVisible, toggleModal, setExpanded } = props;
-  const { trigger, setValue } = useFormContext();
+  const {
+    isModalVisible,
+    toggleModal,
+    setExpanded,
+    noteId,
+    location,
+    setLocation,
+    setError,
+  } = props;
   const mapRef = useRef<MapView>(null);
   const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,20 +76,27 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
-    { short: string; full: string } | undefined
+    { short: string; full: string; addressComponents: any[] } | undefined
   >({
     short: '',
     full: '',
+    addressComponents: [],
   });
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
+  const [updateNoteLocation, { error: updateError }] =
+    useUpdateNoteLocationMutation();
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
-  const closeModal = () => {
-    trigger('location.address');
+  const closeModal = (hasLocation: boolean) => {
+    if (!location?.address && !hasLocation) {
+      setError(true);
+    } else {
+      setError(false);
+    }
     toggleModal(false);
     setExpanded(undefined);
   };
@@ -112,7 +139,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       if (chooseDirections) {
         setChooseDirections(false);
       }
-      setValue('location', undefined);
+      setLocation(undefined);
       const response = await axios.get(
         'https://maps.googleapis.com/maps/api/place/details/json',
         {
@@ -123,20 +150,20 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           },
         }
       );
-      const { location } = response.data.result.geometry;
+      const { location: responseLocation } = response.data.result.geometry;
       setIsSearch(false);
       setSuggestions([]);
 
       setCurrentLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
         name: place.description.split(', ')[0],
       });
 
       mapRef.current?.animateToRegion(
         {
-          latitude: location.lat,
-          longitude: location.lng,
+          latitude: responseLocation.lat,
+          longitude: responseLocation.lng,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         },
@@ -144,18 +171,19 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       );
 
       setInitialLocation({
-        longitude: location.lng,
-        latitude: location.lat,
+        longitude: responseLocation.lng,
+        latitude: responseLocation.lat,
       });
 
       setAddress({
         short: place.description,
         full: place.description,
+        addressComponents: response.data.result.address_components,
       });
       setPin(true);
       setSelected(true);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -163,6 +191,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress({
       full: query,
       short: query,
+      addressComponents: [],
     });
     setSearchQuery(query);
   };
@@ -184,7 +213,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const onSearchDelete = () => {
     setAddress(undefined);
     setCurrentLocation(undefined);
-    setValue('location', undefined);
+    setLocation(undefined);
     setPin(false);
     setSearchQuery('');
     setIsSearch(false);
@@ -220,13 +249,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const { latitude, longitude } = userCurrentLocation.coords;
 
     setUserLocation(userCurrentLocation);
+    if (location?.latitude && location?.longitude) return;
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
     try {
       const { data } = await axios.get(url);
 
-      setValue('location', undefined);
+      setLocation(undefined);
       setCurrentLocation({
         longitude,
         latitude,
@@ -244,18 +274,40 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setAddress({
         short: shortAddress,
         full: googleAddress,
+        addressComponents: data.results[0].address_components,
       });
+
       setPin(true);
 
-      setValue('location', {
+      setLocation({
         longitude: longitude,
         latitude: latitude,
         address: googleAddress,
         name: undefined,
       });
       setSelected(true);
+
+      const { data: locationData } = await updateNoteLocation({
+        variables: {
+          data: {
+            id: noteId,
+            location: {
+              point: [longitude, latitude],
+              address: {
+                addressComponents: JSON.stringify(
+                  data.results[0].address_components
+                ),
+                formattedAddress: googleAddress,
+              },
+            },
+          },
+        },
+      });
+      if (!locationData) {
+        console.error('Error updating note location', updateError);
+      }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -263,7 +315,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (!selected) return;
     setAddress(undefined);
     setCurrentLocation(undefined);
-    setValue('location', undefined);
+    setLocation(undefined);
     setPin(false);
     setSearchQuery('');
     setIsSearch(false);
@@ -280,7 +332,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       animationType="slide"
       transparent={true}
       visible={isModalVisible}
-      onRequestClose={closeModal}
+      onRequestClose={() => closeModal(false)}
     >
       <View
         style={{
@@ -352,11 +404,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
                   accessibilityRole="button"
                   onPress={() => onSuggestionsSelect(item)}
                 >
-                  <BodyText>{item.description.split(', ')[0]}</BodyText>
-                  <BodyText color={Colors.NEUTRAL_DARK} size="xxs">
+                  <TextRegular>{item.description.split(', ')[0]}</TextRegular>
+                  <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
                     {item.description.split(', ')[1]},{' '}
                     {item.description.split(', ')[2]}
-                  </BodyText>
+                  </TextRegular>
                 </TouchableOpacity>
               )}
             />
@@ -397,6 +449,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             )}
             {selected && currentLocation && (
               <Selected
+                noteId={noteId}
+                setLocation={setLocation}
                 currentLocation={currentLocation}
                 address={address}
                 setChooseDirections={setChooseDirections}

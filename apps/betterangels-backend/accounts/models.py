@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.managers import UserManager
@@ -13,6 +13,14 @@ from django.db import models
 from django.forms import ValidationError
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+
+if TYPE_CHECKING:
+    from common.models import AttachmentUserObjectPermission
+    from notes.models import (
+        NoteUserObjectPermission,
+        ServiceRequestUserObjectPermission,
+        TaskUserObjectPermission,
+    )
 
 
 @pghistory.track(
@@ -29,8 +37,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
     )
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=30, blank=True)
+    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -56,8 +64,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     organizations_organizationuser: models.QuerySet[OrganizationUser]
 
+    # MyPy hints for Permission Reverses
+    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
+    biguserobjectpermission_set: models.QuerySet["BigUserObjectPermission"]
+    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
+    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
+    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
+
     def __str__(self: "User") -> str:
         return self.email
+
+
+class ClientProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

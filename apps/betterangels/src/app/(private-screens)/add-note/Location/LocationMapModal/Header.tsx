@@ -1,9 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText, H4 } from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Pressable, View } from 'react-native';
 
 interface IHeaderProps {
-  closeModal: () => void;
+  closeModal: (hasLocation: boolean) => void;
 }
 
 export default function Header(props: IHeaderProps) {
@@ -25,19 +25,19 @@ export default function Header(props: IHeaderProps) {
       <Pressable
         style={{ marginRight: Spacings.xs, flex: 1 }}
         accessibilityRole="button"
-        onPress={closeModal}
+        onPress={() => closeModal(false)}
         accessibilityHint="close map modal"
       >
-        <BodyText size="sm">Back</BodyText>
+        <TextRegular size="sm">Back</TextRegular>
       </Pressable>
-      <H4
-        align="center"
+      <TextBold
         style={{
           flex: 2,
+          textAlign: 'center',
         }}
       >
         Type or Pin Location
-      </H4>
+      </TextBold>
       <View style={{ flex: 1 }} />
     </View>
   );

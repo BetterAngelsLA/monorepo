@@ -16,7 +16,7 @@ import {
   UsersIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -65,6 +65,9 @@ export default function TabLayout() {
           name="index"
           options={{
             title: '',
+            headerStyle: {
+              backgroundColor: Colors.BRAND_DARK_BLUE,
+            },
             headerShadowVisible: false,
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
@@ -74,17 +77,10 @@ export default function TabLayout() {
                   <HouseIcon color={color} />
                 )}
 
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Home
-                </BodyText>
+                </TextRegular>
               </View>
-              // options={{
-              //   title: '',
-              //   tabBarIcon: () => (
-              //     <View style={styles.wrapper}>
-              //       <View style={styles.middleButton}>
-              //         <PlusIcon color={Colors.WHITE} />
-              //       </View>
             ),
           }}
         />
@@ -100,9 +96,9 @@ export default function TabLayout() {
                 ) : (
                   <CalendarIcon color={color} />
                 )}
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Appointment
-                </BodyText>
+                </TextRegular>
               </View>
             ),
           }}
@@ -110,7 +106,11 @@ export default function TabLayout() {
         <Tabs.Screen
           name="clients"
           options={{
-            title: 'Clients',
+            headerShadowVisible: false,
+            headerStyle: {
+              backgroundColor: Colors.BRAND_DARK_BLUE,
+            },
+            title: '',
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
@@ -118,9 +118,9 @@ export default function TabLayout() {
                 ) : (
                   <UsersIcon color={color} />
                 )}
-                <BodyText color={color} size="xs">
-                  Clients
-                </BodyText>
+                <TextRegular color={color} size="xs">
+                  All Clients
+                </TextRegular>
               </View>
             ),
           }}
@@ -138,7 +138,7 @@ export default function TabLayout() {
             tabBarIcon: () => (
               <View style={styles.wrapper}>
                 <View style={styles.middleButton}>
-                  <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} />
+                  <PlusIcon color={Colors.WHITE} />
                 </View>
               </View>
             ),
@@ -155,9 +155,9 @@ export default function TabLayout() {
                 ) : (
                   <MapIcon color={color} />
                 )}
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Map
-                </BodyText>
+                </TextRegular>
               </View>
             ),
           }}
@@ -174,9 +174,9 @@ export default function TabLayout() {
                 ) : (
                   <SitemapIcon color={color} />
                 )}
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Teams
-                </BodyText>
+                </TextRegular>
               </View>
             ),
           }}
@@ -192,9 +192,9 @@ export default function TabLayout() {
                 ) : (
                   <CalendarIcon color={color} />
                 )}
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Calendar
-                </BodyText>
+                </TextRegular>
               </View>
             ),
           }}
@@ -211,9 +211,9 @@ export default function TabLayout() {
                     {user.username?.slice(0, 2)}
                   </Text>
                 </View>
-                <BodyText color={color} size="xs">
+                <TextRegular color={color} size="xs">
                   Profile
-                </BodyText>
+                </TextRegular>
               </View>
             ),
           }}

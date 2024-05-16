@@ -1,8 +1,14 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
-import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import BodyText from '../BodyText';
-import H2 from '../H2';
+import { ReactNode, RefObject, useEffect, useState } from 'react';
+import {
+  DimensionValue,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import TextMedium from '../TextMedium';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -22,6 +28,7 @@ interface IFieldCardProps {
   setExpanded: () => void;
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
+  scrollRef?: RefObject<ScrollView>;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -41,10 +48,35 @@ export function FieldCard(props: IFieldCardProps) {
     setExpanded,
     info,
     childHeight,
+    scrollRef,
   } = props;
+  const [place, setPlace] = useState<null | number>(null);
+
+  const scrollToElement = () => {
+    if (!place || !scrollRef) return;
+
+    scrollRef.current?.scrollTo({
+      x: 0,
+      y: place,
+      animated: true,
+    });
+  };
+
+  useEffect(() => {
+    if (!place) return;
+    scrollToElement();
+  }, [place]);
 
   return (
     <View
+      onLayout={(event) => {
+        const layout = event.nativeEvent.layout;
+        expanded === title && scrollRef
+          ? setTimeout(() => {
+              setPlace(layout.y);
+            }, 300)
+          : setPlace(null);
+      }}
       style={[
         styles.container,
         {
@@ -60,7 +92,9 @@ export function FieldCard(props: IFieldCardProps) {
       ]}
     >
       <Pressable
-        onPress={setExpanded}
+        onPress={() => {
+          setExpanded();
+        }}
         accessible
         accessibilityRole="button"
         accessibilityHint={`expands ${title} field`}
@@ -68,25 +102,27 @@ export function FieldCard(props: IFieldCardProps) {
         <View style={[styles.header]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {expanded === title ? (
-              <H2>{title}</H2>
+              <TextMedium size="lg">{title}</TextMedium>
             ) : (
-              <BodyText size="sm">{title}</BodyText>
+              <TextRegular size="sm">{title}</TextRegular>
             )}
-            {required && <BodyText color={Colors.ERROR}>*</BodyText>}
+            {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
             {info && info}
           </View>
           {actionName}
         </View>
         {error && (
-          <BodyText mt="xs" color={Colors.ERROR}>
+          <TextRegular mt="xs" color={Colors.ERROR}>
             {error}
-          </BodyText>
+          </TextRegular>
         )}
         <View
+          onStartShouldSetResponder={() => true}
           style={{
             height: childHeight,
             overflow: 'hidden',
             marginTop: expanded === title ? Spacings.sm : Spacings.md,
+            marginBottom: expanded === title ? Spacings.md : 0,
           }}
         >
           {children}

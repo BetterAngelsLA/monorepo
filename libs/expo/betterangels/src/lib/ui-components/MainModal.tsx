@@ -1,9 +1,10 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { hexToRGBA } from '../helpers';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface IMainModalProps {
   isModalVisible: boolean;
@@ -13,61 +14,109 @@ interface IMainModalProps {
     route: string;
     Icon: React.ElementType;
   }[];
+  bottomSection?: React.ReactNode;
+  topSection?: React.ReactNode;
+  closeButton?: boolean;
+  transparent?: boolean;
 }
 
 export default function MainModal(props: IMainModalProps) {
-  const { isModalVisible, closeModal, actions } = props;
+  const {
+    isModalVisible,
+    closeModal,
+    actions,
+    bottomSection,
+    topSection,
+    closeButton,
+    transparent = false,
+  } = props;
+
+  const router = useRouter();
+
+  const insets = useSafeAreaInsets();
+  const bottomOffset = insets.bottom;
   return (
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent={transparent}
       visible={isModalVisible}
       onRequestClose={closeModal}
     >
-      <View style={styles.modalOverlay}>
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-          style={styles.closeIcon}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+        }}
+      >
+        <View
+          style={{
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            paddingTop: Spacings.md,
+            paddingHorizontal: Spacings.md,
+            paddingBottom: 35 + bottomOffset,
+            backgroundColor: Colors.WHITE,
+          }}
         >
-          <XmarkIcon color={Colors.WHITE} />
-        </Pressable>
-        <View style={styles.content}>
-          {actions.map((action, idx: number) => (
+          {closeButton && (
             <Pressable
+              style={{ marginLeft: 'auto' }}
+              accessible
+              accessibilityHint="closes the modal"
               accessibilityRole="button"
-              key={idx}
-              style={styles.container}
+              accessibilityLabel="close"
+              onPress={closeModal}
             >
-              {({ pressed }) => (
-                <>
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      {
-                        backgroundColor: pressed
-                          ? Colors.PRIMARY
-                          : Colors.WHITE,
-                      },
-                    ]}
-                  >
-                    <action.Icon
-                      color={pressed ? Colors.WHITE : Colors.PRIMARY_EXTRA_DARK}
-                    />
-                  </View>
-                  <BodyText
-                    ml="xs"
-                    color={pressed ? Colors.PRIMARY : Colors.WHITE}
-                  >
-                    {action.title}
-                  </BodyText>
-                </>
-              )}
+              <XmarkIcon size="md" color={Colors.BLACK} />
             </Pressable>
-          ))}
+          )}
+          <View style={styles.modalOverlay}>
+            {topSection}
+            {actions.map((action, idx: number) => (
+              <Pressable
+                onPress={() => {
+                  closeModal();
+                  router.navigate(action.route);
+                }}
+                accessibilityRole="button"
+                key={idx}
+                style={styles.container}
+              >
+                {({ pressed }) => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      flex: 1,
+                      backgroundColor: pressed
+                        ? Colors.NEUTRAL_EXTRA_LIGHT
+                        : Colors.WHITE,
+                      borderRadius: 8,
+                      paddingHorizontal: Spacings.sm,
+                      paddingVertical: Spacings.sm,
+                    }}
+                  >
+                    <View
+                      style={{
+                        marginRight: Spacings.sm,
+                        height: 40,
+                        width: 40,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <action.Icon color={Colors.PRIMARY_EXTRA_DARK} />
+                    </View>
+
+                    <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
+                      {action.title}
+                    </TextRegular>
+                  </View>
+                )}
+              </Pressable>
+            ))}
+            {bottomSection}
+          </View>
         </View>
       </View>
     </Modal>
@@ -76,37 +125,16 @@ export default function MainModal(props: IMainModalProps) {
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    backgroundColor: hexToRGBA(Colors.SECONDARY_EXTRA_DARK, 0.97),
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: Colors.WHITE,
     position: 'relative',
-  },
-  content: {
     width: '100%',
-    maxWidth: 214,
     marginLeft: 'auto',
     marginRight: 'auto',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  closeIcon: {
-    position: 'absolute',
-    right: 20,
-    top: '10%',
-    zIndex: 1000,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 100,
-    height: 56,
-    width: 56,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacings.sm,
-    maxWidth: 214,
   },
 });

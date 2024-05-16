@@ -1,10 +1,13 @@
+import { useUpdateNoteMutation } from '@monorepo/expo/betterangels';
 import {
-  BodyText,
+  BasicTextarea,
   FieldCard,
-  H5,
-  Textarea,
+  TextMedium,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { RefObject, useRef, useState } from 'react';
+import { ScrollView } from 'react-native';
 import InfoModal from './InfoModal';
 
 interface IPublicNoteProps {
@@ -12,40 +15,76 @@ interface IPublicNoteProps {
   setExpanded: (expanded: string | undefined | null) => void;
   isPublicNoteEdited: boolean;
   setIsPublicNoteEdited: (isPublicNoteEdited: boolean) => void;
+  note: string;
+  noteId: string;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const { expanded, setExpanded, setIsPublicNoteEdited, isPublicNoteEdited } =
-    props;
-  const { control, watch } = useFormContext();
+  const { expanded, setExpanded, note, noteId, scrollRef } = props;
+  const [publicNote, setPublicNote] = useState<string>(note || '');
+  const [hasError, setHasError] = useState(false);
+  const [updateNote, { error }] = useUpdateNoteMutation();
 
-  const hmisNote = watch('hmisNote');
-  const isEmptyOrTemplate = !hmisNote || hmisNote === 'G -\nI -\nR -\nP - ';
   const isPublicNote = expanded === 'Public Note';
+
+  const updateNoteFunction = useRef(
+    debounce(async (value: string) => {
+      if (!noteId || !value) return;
+
+      try {
+        const { data } = await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              publicDetails: value,
+            },
+          },
+        });
+
+        if (!data) {
+          console.error(`Failed to update note: ${error}`);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }, 500)
+  ).current;
+
+  const onChange = (value: string) => {
+    if (!value) {
+      setHasError(true);
+    } else {
+      setHasError(false);
+    }
+
+    setPublicNote(value);
+    updateNoteFunction(value);
+  };
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
+      error={hasError ? 'Please enter the public note' : undefined}
       expanded={expanded}
       mb="xs"
       setExpanded={() => setExpanded(isPublicNote ? null : 'Public Note')}
       title="Public Note"
       info={<InfoModal />}
       actionName={
-        isEmptyOrTemplate && !isPublicNote ? (
-          <H5 size="sm">Add HMIS note</H5>
+        !isPublicNote && !publicNote ? (
+          <TextMedium size="sm">Add HMIS note</TextMedium>
         ) : null
       }
     >
       {isPublicNote ? (
-        <Textarea
-          textAreaChanged={isPublicNoteEdited}
-          setTextAreaChanged={setIsPublicNoteEdited}
-          mb="md"
-          name="hmisNote"
-          control={control}
+        <BasicTextarea
+          error={hasError}
+          value={publicNote}
+          onChangeText={(text) => onChange(text)}
         />
       ) : (
-        !isEmptyOrTemplate && <BodyText mb="md">{hmisNote}</BodyText>
+        publicNote && <TextRegular mb="md">{publicNote}</TextRegular>
       )}
     </FieldCard>
   );

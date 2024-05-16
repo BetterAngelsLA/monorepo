@@ -1,30 +1,14 @@
-import {
-  CalendarIcon,
-  LocationDotIcon,
-  MoreIcon,
-} from '@monorepo/expo/shared/icons';
+import { CalendarIcon, ListIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
-import Avatar from '../Avatar';
-import BodyText from '../BodyText';
-import H4 from '../H4';
-import IconButton from '../IconButton';
-
-// TODO: User type should be actual user type
-type User = {
-  firstName: string;
-  lastName: string;
-  id: string;
-  image: string;
-};
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IEventCardProps {
-  title: string;
-  time: string;
-  address: string;
-  participants: User[];
+  tasks: string[];
+  type: 'event' | 'task';
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -34,10 +18,8 @@ interface IEventCardProps {
 }
 
 export function EventCard(props: IEventCardProps) {
-  const { time, address, participants, title, mb, mt, mr, ml, my, mx } = props;
+  const { type = 'event', tasks, mb, mt, mr, ml, my, mx } = props;
 
-  const maxVisibleAvatars = 8;
-  const additionalParticipants = participants.length > maxVisibleAvatars;
   return (
     <View
       style={[
@@ -52,57 +34,38 @@ export function EventCard(props: IEventCardProps) {
         },
       ]}
     >
-      <H4 mb="xs" style={{ flex: 1 }}>
-        {title}
-      </H4>
-      <View style={styles.flexRow}>
-        <CalendarIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-        <BodyText> {time}</BodyText>
-      </View>
-      <View style={styles.flexRow}>
-        <LocationDotIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-        <BodyText> {address}</BodyText>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-          {participants.slice(0, maxVisibleAvatars).map((participant, idx) => (
-            <View
-              key={idx}
-              style={{
-                marginLeft: idx > 0 ? -8 : 0,
-              }}
-            >
-              <Avatar
-                accessibilityHint={`shows avatar of ${participant.firstName} ${participant.lastName} if available`}
-                accessibilityLabel={`${participant.firstName} ${participant.lastName} avatar`}
-                size="sm"
-                imageUrl={participant.image}
-              />
-            </View>
-          ))}
-          {additionalParticipants && (
-            <BodyText size="sm">
-              {' '}
-              + {participants.length - maxVisibleAvatars}
-            </BodyText>
-          )}
+      <View style={{ flex: 1 }}>
+        {type === 'event' ? (
+          <CalendarIcon mb="lg" color={Colors.NEUTRAL_DARK} />
+        ) : (
+          <ListIcon mb="lg" color={Colors.NEUTRAL_DARK} />
+        )}
+
+        <View>
+          <TextBold size="2xl">{tasks?.length || 0}</TextBold>
+          <TextRegular textTransform="capitalize" size="xs">
+            {type + (tasks.length > 1 ? 's' : '')}
+          </TextRegular>
         </View>
-        <IconButton
-          accessibilityHint={`opens ${title} event participants details popup`}
-          accessibilityLabel={`${title} event participants details`}
-          style={{ position: 'relative', left: 10 }}
-          width="xs"
-          height="xs"
-          variant="transparent"
-        >
-          <MoreIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-        </IconButton>
+      </View>
+      <View style={{ flex: 3 }}>
+        {tasks.slice(0, 4).map((item, index) => (
+          <View key={index} style={styles.itemContainer}>
+            <TextRegular mr="xs">{'\u2022'}</TextRegular>
+            <TextRegular
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.item}
+            >
+              {item}
+            </TextRegular>
+          </View>
+        ))}
+        {tasks.length > 4 && (
+          <TextBold color={Colors.PRIMARY} size="xs" mt="xs">
+            {tasks.length - 4} more
+          </TextBold>
+        )}
       </View>
     </View>
   );
@@ -115,11 +78,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
     backgroundColor: Colors.WHITE,
-    width: 216,
-  },
-  flexRow: {
+    width: 272,
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacings.xs,
+    alignItems: 'flex-start',
+    shadowColor: Colors.NEUTRAL,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  item: {
+    flex: 1,
   },
 });

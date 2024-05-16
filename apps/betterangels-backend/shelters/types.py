@@ -1,9 +1,10 @@
 from decimal import Decimal
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import strawberry
 import strawberry_django
-from strawberry import auto
+from django.db.models import Q, QuerySet
+from strawberry import Info, auto
 from strawberry_django.fields import types
 
 from . import models
@@ -26,7 +27,7 @@ class BedsType:
 
 
 @strawberry.type
-class LocationType:
+class ShelterLocationType:
     point: Optional[types.Point]
     spa: Optional[int]
     address: Optional[str]
@@ -52,9 +53,16 @@ class ShelterType:
     populations: List[str]
     requirements: List[str]
 
+    funders: List[str]
+
+    # TODO: Update the Shelter App to use permissions.  Until then we only expose nonconfidential locations
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet[models.Shelter], info: Info, **kwargs: Any) -> QuerySet[models.Shelter]:
+        return queryset.filter(Q(confidential=False) | Q(confidential__isnull=True))
+
     # The following fields are likely in need of restrucutring post MVP.
     @strawberry_django.field
-    def location(self) -> LocationType:
+    def location(self) -> ShelterLocationType:
         shelter = cast(models.Shelter, self)
         location = shelter.location
 
@@ -66,7 +74,7 @@ class ShelterType:
             state = location.state
             zip_code = location.zip_code
 
-        return LocationType(
+        return ShelterLocationType(
             point=point,
             spa=shelter.spa,
             address=address,
@@ -75,6 +83,11 @@ class ShelterType:
             zip_code=zip_code,
             confidential=shelter.confidential,
         )
+
+    @strawberry_django.field
+    def organization(self) -> str:
+        shelter = cast(models.Shelter, self)
+        return str(shelter.organization.name) if shelter.organization else ""
 
     @strawberry_django.field
     def description(self) -> DescriptionType:

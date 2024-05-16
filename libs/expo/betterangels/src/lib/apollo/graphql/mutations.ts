@@ -9,27 +9,50 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
   }
 `;
 
-export const CREATE_NOTE = gql`
-  mutation CreateNote($data: CreateNoteInput!) {
-    createNote(data: $data) {
-      ... on NoteType {
-        id
-        title
-        publicDetails
-        client {
-          id
-          username
-          firstName
-          lastName
-          email
-        }
-        createdAt
-        createdBy {
-          id
-          username
-          email
-        }
+export const GOOGLE_AUTH_MUTATION = gql`
+  mutation GoogleAuth(
+    $code: String!
+    $codeVerifier: String!
+    $redirectUri: String!
+  ) {
+    googleAuth(
+      input: {
+        code: $code
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
       }
+    )
+      @rest(
+        type: "AuthResponse"
+        path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+      status_code
+    }
+  }
+`;
+
+export const IDME_AUTH_MUTATION = gql`
+  mutation IdmeAuth(
+    $code: String!
+    $codeVerifier: String!
+    $redirectUri: String!
+  ) {
+    idmeAuth(
+      input: {
+        code: $code
+        code_verifier: $codeVerifier
+        redirect_uri: $redirectUri
+      }
+    )
+      @rest(
+        type: "AuthResponse"
+        path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+      status_code
     }
   }
 `;
@@ -249,6 +272,34 @@ export const DELETE_NOTE_ATTACHMENT = gql`
       }
       ... on NoteAttachmentType {
         id
+      }
+    }
+  }
+`;
+
+export const UPDATE_NOTE_LOCATION = gql`
+  mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
+    updateNoteLocation(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteType {
+        id
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
+        }
       }
     }
   }

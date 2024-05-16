@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 import time_machine
+from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from notes.enums import NoteNamespaceEnum, ServiceEnum
@@ -27,8 +28,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "title": "Updated Note",
-                "point": self.point,
-                "address": self.address.pk,
+                "location": self.location.pk,
                 "publicDetails": "Updated public details",
                 "privateDetails": "Updated private details",
                 "isSubmitted": False,
@@ -54,12 +54,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
@@ -106,12 +110,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "title": "Updated Note",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
             "purposes": [
@@ -149,11 +157,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
         }
-        self.assertEqual(expected_note, note)
+        note_differences = DeepDiff(expected_note, note, ignore_order=True)
+        self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
         query = """
@@ -161,12 +170,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 notes {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     moods {
                         descriptor
@@ -209,7 +222,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
         # TODO: Add more validations once sort is implemented
-        self.assertEqual(self.note, notes[0])
+        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
+        self.assertFalse(note_differences)
 
     @parametrize(
         (
@@ -222,12 +236,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             # case manager, client, and/or is_submitted
             ("org_1_case_manager_1", None, None, 1, "note", None),
             ("org_1_case_manager_2", None, None, 2, "note_2", "note_3"),
-            ("org_1_case_manager_1", "client_1", None, 1, "note", None),
-            ("org_1_case_manager_1", "client_2", None, 0, None, None),
-            ("org_1_case_manager_2", "client_1", None, 1, "note_2", None),
-            ("org_1_case_manager_2", "client_2", None, 1, "note_3", None),
-            ("org_1_case_manager_2", "client_1", True, 0, None, None),
-            ("org_1_case_manager_2", "client_1", False, 1, "note_2", None),
+            ("org_1_case_manager_1", "client_user_1", None, 1, "note", None),
+            ("org_1_case_manager_1", "client_user_2", None, 0, None, None),
+            ("org_1_case_manager_2", "client_user_1", None, 1, "note_2", None),
+            ("org_1_case_manager_2", "client_user_2", None, 1, "note_3", None),
+            ("org_1_case_manager_2", "client_user_1", True, 0, None, None),
+            ("org_1_case_manager_2", "client_user_1", False, 1, "note_2", None),
             ("org_1_case_manager_2", None, False, 2, "note_2", "note_3"),
             (None, None, True, 0, None, None),
             (None, None, None, 3, None, None),
@@ -244,11 +258,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_1.pk})["data"][
+        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
             "createNote"
         ]
 
-        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_2.pk})["data"][
+        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
             "createNote"
         ]
 
@@ -283,6 +297,47 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         if returned_note_label_2:
             self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
+
+    def test_notes_query_order(self) -> None:
+        """
+        Assert that notes are returned in order of interacted_at timestamp, regardless of client
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+
+        older_note = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
+            "createNote"
+        ]
+        self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
+
+        oldest_note = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
+            "createNote"
+        ]
+        self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
+
+        query = """
+            query Notes($order: NoteOrder) {
+                notes(order: $order) {
+                    id
+                }
+            }
+        """
+
+        # Test descending order
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
+
+        self.assertEqual(
+            [n["id"] for n in response["data"]["notes"]], [self.note["id"], older_note["id"], oldest_note["id"]]
+        )
+
+        # Test ascending order
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
+
+        self.assertEqual(
+            [n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]]
+        )
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
@@ -363,7 +418,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_1.pk,
+                "client": self.client_user_1.pk,
             }
         )
 
@@ -400,7 +455,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
-            "client": {"id": str(self.client_1.pk)},
+            "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -450,11 +505,10 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             {
                 "id": task_id,
                 "title": "Updated task title",
-                "point": self.point,
-                "address": self.address.pk,
+                "location": self.location.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
-                "client": self.client_1.pk,
+                "client": self.client_user_1.pk,
             }
         )
 
@@ -463,12 +517,16 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 task(pk: $id) {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     status
                     dueBy
@@ -492,17 +550,21 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         expected_task = {
             "id": task_id,
             "title": "Updated task title",
-            "point": self.point,
-            "address": {
-                "street": "106 W 1st St",
-                "city": "Los Angeles",
-                "state": "CA",
-                "zipCode": "90012",
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
             "client": {
-                "id": str(self.client_1.pk),
+                "id": str(self.client_user_1.pk),
             },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
@@ -516,12 +578,16 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 tasks {
                     id
                     title
-                    point
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
+                    location {
+                        id
+                        address {
+                            street
+                            city
+                            state
+                            zipCode
+                        }
+                        point
+                        pointOfInterest
                     }
                     status
                     dueBy

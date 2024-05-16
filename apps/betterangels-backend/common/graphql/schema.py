@@ -1,21 +1,9 @@
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import strawberry
-import strawberry_django
-from common.graphql.types import (
-    AddressInput,
-    AddressType,
-    FeatureControlData,
-    FlagType,
-    SampleType,
-    SwitchType,
-)
-from common.models import Address
-from common.permissions.enums import AddressPermissions
-from django.db import transaction
+from common.graphql.types import FeatureControlData, FlagType, SampleType, SwitchType
 from strawberry.types import Info
-from strawberry_django.permissions import HasPerm
 from waffle import (
     get_waffle_flag_model,
     get_waffle_sample_model,
@@ -25,14 +13,6 @@ from waffle import (
 
 @strawberry.type
 class Query:
-    address: AddressType = strawberry_django.field(
-        extensions=[HasPerm(AddressPermissions.VIEW)],
-    )
-
-    addresses: List[AddressType] = strawberry_django.field(
-        extensions=[HasPerm(AddressPermissions.VIEW)],
-    )
-
     @strawberry.field
     def feature_controls(self, info: Info) -> FeatureControlData:
         request = info.context["request"]
@@ -75,13 +55,3 @@ class Query:
             switches=switch_data,
             samples=sample_data,
         )
-
-
-@strawberry.type
-class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(AddressPermissions.ADD)])
-    def get_or_create_address(self, info: Info, data: AddressInput) -> AddressType:
-        with transaction.atomic():
-            address = Address.get_or_create_address(strawberry.asdict(data))
-
-            return cast(AddressType, address)

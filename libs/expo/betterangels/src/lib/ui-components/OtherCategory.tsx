@@ -1,19 +1,20 @@
-import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { BodyText, Checkbox, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  Checkbox,
+  Input,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import {
-  CREATE_NOTE_SERVICE_REQUEST,
-  CreateNoteServiceRequestMutation,
-  CreateNoteServiceRequestMutationVariables,
-  DELETE_SERVICE_REQUEST,
-  DeleteServiceRequestMutation,
-  DeleteServiceRequestMutationVariables,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
+} from '../apollo/graphql/__generated__/mutations.generated';
+import {
   ServiceEnum,
   ServiceRequestTypeEnum,
-} from '../apollo';
+} from '../apollo/graphql/__generated__/types';
 
 interface IOtherCategoryProps {
   noteId: string | undefined;
@@ -26,14 +27,10 @@ interface IOtherCategoryProps {
 
 export default function OtherCategory(props: IOtherCategoryProps) {
   const { services, serviceType, setServices, noteId } = props;
-  const [createNoteServiceRequest, { error }] = useMutation<
-    CreateNoteServiceRequestMutation,
-    CreateNoteServiceRequestMutationVariables
-  >(CREATE_NOTE_SERVICE_REQUEST);
-  const [deleteServiceRequest, { error: deleteError }] = useMutation<
-    DeleteServiceRequestMutation,
-    DeleteServiceRequestMutationVariables
-  >(DELETE_SERVICE_REQUEST);
+  const [createNoteServiceRequest, { error }] =
+    useCreateNoteServiceRequestMutation();
+  const [deleteServiceRequest, { error: deleteError }] =
+    useDeleteServiceRequestMutation();
   const { control, setValue } = useForm();
 
   const toggleServices = async (service: string) => {
@@ -111,7 +108,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           label={
             <View style={styles.labelContainer}>
               <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
-              <BodyText ml="xs">{service.title}</BodyText>
+              <TextRegular ml="xs">{service.title}</TextRegular>
             </View>
           }
         />

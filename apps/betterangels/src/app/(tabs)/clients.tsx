@@ -1,10 +1,6 @@
-import { MainScrollContainer } from '@monorepo/expo/betterangels';
-import { BodyText } from '@monorepo/expo/shared/ui-components';
+import { Clients } from '@monorepo/expo/betterangels';
+import Logo from '../assets/images/logo.svg';
 
 export default function ClientsScreen() {
-  return (
-    <MainScrollContainer>
-      <BodyText>Clients</BodyText>
-    </MainScrollContainer>
-  );
+  return <Clients Logo={Logo} />;
 }

@@ -1,6 +1,6 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
-import BodyText from '../BodyText';
+import TextRegular from '../TextRegular';
 import { FieldCard } from './FieldCard';
 
 const FieldCardMeta: ComponentMeta<typeof FieldCard> = {
@@ -8,7 +8,7 @@ const FieldCardMeta: ComponentMeta<typeof FieldCard> = {
   component: FieldCard,
   args: {
     title: 'title',
-    children: <BodyText>children</BodyText>,
+    children: <TextRegular>children</TextRegular>,
   },
   decorators: [
     (Story) => (
