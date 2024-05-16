@@ -1,4 +1,4 @@
-import SolidPencilIconSVG from '../../assets/pencil-solid.svg';
+import SolidPencilIconSVG from '../../assets/solid-pencil.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SolidPencilIcon = createSvgIcon(SolidPencilIconSVG);

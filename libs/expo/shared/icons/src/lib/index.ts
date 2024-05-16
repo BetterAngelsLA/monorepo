@@ -32,10 +32,10 @@ export { default as FaceCalmIcon } from './components/FaceCalmIcon';
 export { default as FaceEyesXmarksIcon } from './components/FaceEyesXmarksIcon';
 export { default as FaceFrownIcon } from './components/FaceFrownIcon';
 export { default as FaceGrimmaceIcon } from './components/FaceGrimmaceIcon';
+export { default as FaceGrinBeamIcon } from './components/FaceGrinBeamIcon';
 export { default as FaceGrinStarsIcon } from './components/FaceGrinStarsIcon';
 export { default as FaceGrinTongueWinkIcon } from './components/FaceGrinTongueWinkIcon';
 export { default as FaceGrinWinkIcon } from './components/FaceGrinWinkIcon';
-export { default as FaceLaughBeamIcon } from './components/FaceLaughBeamIcon';
 export { default as FaceLaughIcon } from './components/FaceLaughIcon';
 export { default as FaceMehBlankIcon } from './components/FaceMehBlankIcon';
 export { default as FaceMehIcon } from './components/FaceMehIcon';
@@ -54,8 +54,10 @@ export { default as GoogleIcon } from './components/GoogleIcon';
 export { default as HandsHeart } from './components/HandsHeartIcon';
 export { default as HeadSideBrainIcon } from './components/HeadSideBrainIcon';
 export { default as HouseBlankIcon } from './components/HouseBlankIcon';
-export { default as HouseIcon } from './components/HouseIcon';
-export { default as HouseSolidIcon } from './components/HouseSolidIcon';
+export {
+  default as HouseSolidIcon,
+  default as HouseSolidIcon,
+} from './components/HouseSolidIcon';
 export { default as IdMeIcon } from './components/IdMeIcon';
 export { default as ImageIcon } from './components/ImageIcon';
 export { default as ImagesIcon } from './components/ImagesIcon';
