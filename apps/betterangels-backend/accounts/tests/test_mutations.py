@@ -1,12 +1,9 @@
 from unittest.mock import ANY
 
-import time_machine
 from accounts.enums import GenderEnum, LanguageEnum
 from accounts.models import User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
-from dateutil.relativedelta import relativedelta
 from django.test import TestCase, ignore_warnings
-from django.utils import timezone
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
 
@@ -31,7 +28,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         mutation {
             logout
         }
-    """
+        """
         response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
@@ -47,34 +44,29 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "email": "firsty_lasty@example.com",
         }
 
-        date_of_birth = timezone.now().date()
-        EXPECTED_CLIENT_AGE = 20
-        target_date = date_of_birth + relativedelta(years=EXPECTED_CLIENT_AGE)
-
         variables = {
             "hmisId": "12345678",
-            "dateOfBirth": date_of_birth,
+            "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "user": client_profile_user,
         }
 
-        with time_machine.travel(target_date):
-            response = self._create_client_profile_fixture(variables)
-            client = response["data"]["createClientProfile"]
-            expected_client_profile = {
-                "id": ANY,
-                "dateOfBirth": date_of_birth.strftime("%Y-%m-%d"),
-                "age": EXPECTED_CLIENT_AGE,
-                "gender": GenderEnum.FEMALE.name,
-                "preferredLanguage": LanguageEnum.ENGLISH.name,
-                "hmisId": "12345678",
-                "user": {
-                    "username": ANY,
-                    "firstName": "Firsty",
-                    "lastName": "Lasty",
-                    "email": "firsty_lasty@example.com",
-                },
-            }
+        response = self._create_client_profile_fixture(variables)
+        client = response["data"]["createClientProfile"]
+        expected_client_profile = {
+            "id": ANY,
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "age": self.EXPECTED_CLIENT_AGE,
+            "gender": GenderEnum.FEMALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "hmisId": "12345678",
+            "user": {
+                "username": ANY,
+                "firstName": "Firsty",
+                "lastName": "Lasty",
+                "email": "firsty_lasty@example.com",
+            },
+        }
 
         self.assertEqual(client, expected_client_profile)

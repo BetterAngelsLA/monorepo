@@ -1,11 +1,17 @@
 from typing import Any, Dict
 
+import time_machine
+from accounts.enums import GenderEnum, LanguageEnum
 from common.tests.utils import GraphQLBaseTestCase
+from dateutil.relativedelta import relativedelta
+from django.utils import timezone
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.EXPECTED_CLIENT_AGE = 20
+        self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
         self._setup_clients()
 
     def _setup_clients(self) -> None:
@@ -21,11 +27,24 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "lastName": "Peanutbutter",
             "email": "mister@pblivin.com",
         }
+
         self.client_profile_1 = self._create_client_profile_fixture(
-            {"user": self.client_profile_1_user, "hmisId": "A1B2C3"}
+            {
+                "user": self.client_profile_1_user,
+                "hmisId": "A1B2C3",
+                "dateOfBirth": self.date_of_birth,
+                "gender": GenderEnum.MALE.name,
+                "preferredLanguage": LanguageEnum.ENGLISH.name,
+            }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(
-            {"user": self.client_profile_2_user, "hmisId": "A1B3C4"}
+            {
+                "user": self.client_profile_2_user,
+                "hmisId": "A1B3C4",
+                "dateOfBirth": self.date_of_birth,
+                "gender": GenderEnum.MALE.name,
+                "preferredLanguage": LanguageEnum.ENGLISH.name,
+            }
         )["data"]["createClientProfile"]
         # Logout after setting up the clients
         self.graphql_client.logout()
