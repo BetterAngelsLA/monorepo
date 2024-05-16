@@ -4,12 +4,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
+  CalendarSolidIcon,
   HouseIcon,
   HouseSolidIcon,
   MapIcon,
   PlusIcon,
   SitemapIcon,
-  SolidCalendarIcon,
   SolidMapIcon,
   SolidSitemapIcon,
   SolidUsersIcon,
@@ -92,7 +92,7 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidCalendarIcon color={color} />
+                  <CalendarSolidIcon color={color} />
                 ) : (
                   <CalendarIcon color={color} />
                 )}
@@ -188,7 +188,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidCalendarIcon color={color} />
+                  <CalendarSolidIcon color={color} />
                 ) : (
                   <CalendarIcon color={color} />
                 )}
