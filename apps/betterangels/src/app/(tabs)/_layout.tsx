@@ -8,9 +8,9 @@ import {
   HouseIcon,
   HouseSolidIcon,
   MapIcon,
+  MapSolidIcon,
   PlusIcon,
   SitemapIcon,
-  SolidMapIcon,
   SolidSitemapIcon,
   SolidUsersIcon,
   UsersIcon,
@@ -151,7 +151,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidMapIcon color={color} />
+                  <MapSolidIcon color={color} />
                 ) : (
                   <MapIcon color={color} />
                 )}

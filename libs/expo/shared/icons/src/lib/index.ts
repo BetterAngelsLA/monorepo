@@ -67,6 +67,7 @@ export { default as LocationDotSolidIcon } from './components/LocationDotSolidIc
 export { default as LocationPinIcon } from './components/LocationPinIcon';
 export { default as MagnifyingGlassIcon } from './components/MagnifyingGlassIcon';
 export { default as MapIcon } from './components/MapIcon';
+export { default as MapSolidIcon } from './components/MapSolidIcon';
 export { default as MicrophoneIcon } from './components/MicrophoneIcon';
 export { default as MoreIcon } from './components/MoreIcon';
 export { default as NoteIcon } from './components/NoteIcon';
@@ -84,7 +85,6 @@ export { default as SirenIcon } from './components/SirenIcon';
 export { default as SitemapIcon } from './components/SitemapIcon';
 export { default as SneakerIcon } from './components/SneakerIcon';
 export { default as SolidCircleIcon } from './components/SolidCircleIcon';
-export { default as SolidMapIcon } from './components/SolidMapIcon';
 export { default as SolidPeincilIcon } from './components/SolidPencilIcon';
 export { default as SolidSitemapIcon } from './components/SolidSitemapIcon';
 export { default as SolidSortIcon } from './components/SolidSortIcon';
