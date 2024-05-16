@@ -1,6 +1,6 @@
 import {
   ListIcon,
-  SolidLocationDotIcon,
+  LocationDotSolidIcon,
   SolidSortIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -60,7 +60,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
           accessibilityHint="sets sorting to location"
           accessibilityRole="button"
         >
-          <SolidLocationDotIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          <LocationDotSolidIcon color={Colors.PRIMARY_EXTRA_DARK} />
         </Pressable>
         <Pressable
           onPress={() => onSort('sort')}

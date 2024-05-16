@@ -9,8 +9,8 @@ import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   DatePicker,
-  TextMedium,
   IconButton,
+  TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
