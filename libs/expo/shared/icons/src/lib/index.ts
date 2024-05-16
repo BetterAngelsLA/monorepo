@@ -42,11 +42,6 @@ export { default as FaceRollingEyesIcon } from './components/FaceRollingEyesIcon
 export { default as FaceSmileBeamIcon } from './components/FaceSmileBeamIcon';
 export { default as FaceSmileIcon } from './components/FaceSmileIcon';
 export { default as FaceTiredIcon } from './components/FaceTiredIcon';
-export { default as FaceTongueSweatIcon } from './components/FaceTongueSweatIcon';
-export { default as FaceUnamusedIcon } from './components/FaceUnamusedIcon';
-export { default as FaceVomitIcon } from './components/FaceVomitIcon';
-export { default as FaceWearyIcon } from './components/FaceWearyIcon';
-export { default as FaceZipperIcon } from './components/FaceZipperIcon';
 export { default as FileArrowDownIcon } from './components/FileArrowDownIcon';
 export { default as FileAudioIcon } from './components/FileAudioIcon';
 export { default as FileIcon } from './components/FileIcon';

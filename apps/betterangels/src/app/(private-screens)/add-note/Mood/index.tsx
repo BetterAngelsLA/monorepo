@@ -20,7 +20,6 @@ import {
   FaceSmileBeamIcon,
   FaceSmileIcon,
   FaceTiredIcon,
-  FaceWearyIcon,
   IIconProps,
   PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
@@ -155,7 +154,7 @@ const MOOD_DATA: Mood[] = [
     enum: MoodEnum.Escalated,
   },
   {
-    Icon: FaceWearyIcon,
+    Icon: FaceTiredIcon,
     title: 'Hopeless',
     tab: 'unpleasant',
     enum: MoodEnum.Hopeless,
@@ -193,7 +192,7 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
   DETACHED: FaceMehIcon,
   DISORIENTED: FaceEyesXmarksIcon,
   ESCALATED: FaceAngryIcon,
-  HOPELESS: FaceWearyIcon,
+  HOPELESS: FaceTiredIcon,
   MANIC: FaceAngryIcon,
   SUICIDAL: FaceEyesXmarksIcon,
   AGITATED: FaceAngryIcon,
