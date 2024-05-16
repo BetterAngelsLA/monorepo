@@ -74,7 +74,7 @@ const ICONS = [
     title: 'Indifferent',
     enum: MoodEnum.Indifferent,
   },
-  { Icon: FaceFrownIcon, title: 'Restless', enum: MoodEnum.Restless },
+  { Icon: FaceTiredIcon, title: 'Restless', enum: MoodEnum.Restless },
   { Icon: FaceGrimmaceIcon, title: 'Anxious', enum: MoodEnum.Anxious },
   { Icon: FaceFrownIcon, title: 'Depressed', enum: MoodEnum.Depressed },
   { Icon: FaceMehIcon, title: 'Detached', enum: MoodEnum.Detached },
