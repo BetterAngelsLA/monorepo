@@ -7,7 +7,6 @@ import {
 import {
   FaceAngryIcon,
   FaceCalmIcon,
-  FaceDisappointedIcon,
   FaceEyesXmarksIcon,
   FaceFrownIcon,
   FaceGrimmaceIcon,
@@ -17,10 +16,10 @@ import {
   FaceLaughIcon,
   FaceMehBlankIcon,
   FaceMehIcon,
-  FacePoutingIcon,
   FaceRollingEyesIcon,
   FaceSmileBeamIcon,
   FaceSmileIcon,
+  FaceTiredIcon,
   FaceWearyIcon,
   IIconProps,
   PaperclipIcon,
@@ -96,7 +95,7 @@ const MOOD_DATA: Mood[] = [
     enum: MoodEnum.Pleasant,
   },
   {
-    Icon: FacePoutingIcon,
+    Icon: FaceAngryIcon,
     title: 'Agitated',
     tab: 'neutral',
     enum: MoodEnum.Agitated,
@@ -120,7 +119,7 @@ const MOOD_DATA: Mood[] = [
     tab: 'neutral',
   },
   {
-    Icon: FaceFrownIcon,
+    Icon: FaceTiredIcon,
     title: 'Restless',
     enum: MoodEnum.Restless,
     tab: 'neutral',
@@ -132,7 +131,7 @@ const MOOD_DATA: Mood[] = [
     enum: MoodEnum.Anxious,
   },
   {
-    Icon: FaceDisappointedIcon,
+    Icon: FaceFrownIcon,
     title: 'Depressed',
     enum: MoodEnum.Depressed,
     tab: 'unpleasant',
@@ -190,18 +189,18 @@ const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
   PERSONABLE: FaceGrinTongueWinkIcon,
   PLEASANT: FaceSmileBeamIcon,
   ANXIOUS: FaceGrimmaceIcon,
-  DEPRESSED: FaceDisappointedIcon,
+  DEPRESSED: FaceFrownIcon,
   DETACHED: FaceMehIcon,
   DISORIENTED: FaceEyesXmarksIcon,
   ESCALATED: FaceAngryIcon,
   HOPELESS: FaceWearyIcon,
   MANIC: FaceAngryIcon,
   SUICIDAL: FaceEyesXmarksIcon,
-  AGITATED: FacePoutingIcon,
+  AGITATED: FaceAngryIcon,
   DISORGANIZED_THOUGHT: FaceEyesXmarksIcon,
   FLAT_BLUNTED: FaceMehBlankIcon,
   INDIFFERENT: FaceRollingEyesIcon,
-  RESTLESS: FaceFrownIcon,
+  RESTLESS: FaceTiredIcon,
 };
 
 export default function Mood(props: IMoodProps) {
