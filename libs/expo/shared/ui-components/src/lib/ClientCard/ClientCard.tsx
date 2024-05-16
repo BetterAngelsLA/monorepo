@@ -4,6 +4,7 @@ import {
   TentIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Link } from 'expo-router';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import TextBold from '../TextBold';
@@ -26,6 +27,7 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
+  id: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -42,64 +44,69 @@ export function ClientCard(props: IClientCardProps) {
     my,
     mx,
     onPress,
+    id,
   } = props;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        },
-      ]}
-    >
-      <Avatar
-        accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
-        accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
-        imageUrl={imageUrl}
-        size="lg"
-        mr="sm"
-      />
-      <View style={{ gap: Spacings.xs, flex: 2 }}>
-        <TextBold size="sm">
-          {firstName} {lastName}
-        </TextBold>
-        {daysActive && (
+    <Link href={`/client/${id}`}>
+      <View
+        style={[
+          styles.container,
+          {
+            marginBottom: mb && Spacings[mb],
+            marginTop: mt && Spacings[mt],
+            marginLeft: ml && Spacings[ml],
+            marginRight: mr && Spacings[mr],
+            marginHorizontal: mx && Spacings[mx],
+            marginVertical: my && Spacings[my],
+          },
+        ]}
+      >
+        <Avatar
+          accessibilityHint={`shows avatar of ${firstName} ${lastName} if available`}
+          accessibilityLabel={`Avatar of ${firstName} ${lastName} client`}
+          imageUrl={imageUrl}
+          size="lg"
+          mr="xs"
+        />
+
+        <View style={{ gap: Spacings.xs, flex: 2 }}>
+          <TextBold size="sm">
+            {firstName} {lastName}
+          </TextBold>
+          {daysActive && (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
+              <TextRegular size="xs"> {daysActive} Days</TextRegular>
+            </View>
+          )}
+          {address && (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
+              <TextRegular size="xs"> {address}</TextRegular>
+            </View>
+          )}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs"> {daysActive} Days</TextRegular>
+            <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
           </View>
-        )}
-        {address && (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <LocationDotIcon size="sm" color={Colors.NEUTRAL_DARK} />
-            <TextRegular size="xs"> {address}</TextRegular>
-          </View>
-        )}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
+        </View>
+        <View style={{ justifyContent: 'center', position: 'relative' }}>
+          <TextButton
+            fontSize="sm"
+            title="Add Note"
+            onPress={onPress}
+            accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
+          />
         </View>
       </View>
-      <View style={{ justifyContent: 'center', position: 'relative' }}>
-        <TextButton
-          fontSize="sm"
-          title="Add Note"
-          onPress={onPress}
-          accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
-        />
-      </View>
-    </View>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     borderRadius: 8,
+    width: '100%',
     padding: Spacings.xs,
     backgroundColor: Colors.WHITE,
     flexDirection: 'row',
