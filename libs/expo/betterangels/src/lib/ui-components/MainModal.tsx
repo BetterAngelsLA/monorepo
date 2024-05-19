@@ -13,6 +13,10 @@ interface IMainModalProps {
     title: string;
     route: string;
     Icon: React.ElementType;
+    params?: {
+      title: string;
+      select: 'true' | 'false';
+    };
   }[];
   bottomSection?: React.ReactNode;
   topSection?: React.ReactNode;
@@ -76,7 +80,10 @@ export default function MainModal(props: IMainModalProps) {
               <Pressable
                 onPress={() => {
                   closeModal();
-                  router.navigate(action.route);
+                  router.navigate({
+                    pathname: action.route,
+                    params: action.params,
+                  });
                 }}
                 accessibilityRole="button"
                 key={idx}

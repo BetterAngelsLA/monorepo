@@ -28,6 +28,7 @@ interface IClientCardProps {
   mr?: TSpacing;
   onPress?: () => void;
   id: string;
+  select?: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -45,6 +46,7 @@ export function ClientCard(props: IClientCardProps) {
     mx,
     onPress,
     id,
+    select = 'false',
   } = props;
 
   return (
@@ -93,7 +95,7 @@ export function ClientCard(props: IClientCardProps) {
         <View style={{ justifyContent: 'center', position: 'relative' }}>
           <TextButton
             fontSize="sm"
-            title="Add Note"
+            title={select === 'true' ? 'Select' : 'Add Note'}
             onPress={onPress}
             accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
           />
