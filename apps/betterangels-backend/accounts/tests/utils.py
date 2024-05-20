@@ -74,7 +74,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         gender
                         preferredLanguage
                         user {{
-                            username
+                            id
                             firstName
                             lastName
                             email

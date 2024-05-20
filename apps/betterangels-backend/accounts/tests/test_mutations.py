@@ -62,7 +62,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "hmisId": "12345678",
             "user": {
-                "username": ANY,
+                "id": ANY,
                 "firstName": "Firsty",
                 "lastName": "Lasty",
                 "email": "firsty_lasty@example.com",

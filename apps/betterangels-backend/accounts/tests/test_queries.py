@@ -92,6 +92,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     age
                     preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email
@@ -109,6 +110,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         returned_client = response["data"]["clientProfile"]
 
         expected_user = {
+            "id": str(self.client_profile_1["user"]["id"]),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
             "email": self.client_profile_1_user["email"],
@@ -136,6 +138,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     age
                     preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email
