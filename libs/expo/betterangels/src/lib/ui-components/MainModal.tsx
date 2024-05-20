@@ -15,7 +15,7 @@ interface IMainModalProps {
     Icon: React.ElementType;
     params?: {
       title: string;
-      select: 'true' | 'false';
+      select: string;
     };
   }[];
   bottomSection?: React.ReactNode;
