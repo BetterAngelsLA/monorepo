@@ -19,7 +19,7 @@ const ACTIONS = [
     Icon: FilePlusIcon,
     route: '/clients',
     params: {
-      title: 'Who is this interaction For?',
+      title: 'Who is this interaction for?',
       select: 'true',
     },
   },
