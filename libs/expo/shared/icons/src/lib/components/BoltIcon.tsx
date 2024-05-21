@@ -1,4 +1,4 @@
-import BoltIconSVG from '../../assets/bolt.svg';
+import BoltIconSVG from '../../assets/third_party_icons/fa/svg/bolt.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const BoltIcon = createSvgIcon(BoltIconSVG);

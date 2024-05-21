@@ -1,4 +1,4 @@
-import SignOutIconSVG from '../../assets/sign-out.svg';
+import SignOutIconSVG from '../../assets/third_party_icons/fa/svg/sign-out.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SignOutIcon = createSvgIcon(SignOutIconSVG);

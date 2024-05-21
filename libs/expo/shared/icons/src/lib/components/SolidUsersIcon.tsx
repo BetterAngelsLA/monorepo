@@ -1,4 +1,4 @@
-import SolidUsersIconSVG from '../../assets/solid-users.svg';
+import SolidUsersIconSVG from '../../assets/third_party_icons/fa/svg/solid-users.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SolidUsersIcon = createSvgIcon(SolidUsersIconSVG);

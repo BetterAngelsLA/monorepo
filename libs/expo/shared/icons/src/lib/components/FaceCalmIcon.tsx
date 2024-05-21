@@ -1,4 +1,4 @@
-import FaceCalmIconSVG from '../../assets/face-calm.svg';
+import FaceCalmIconSVG from '../../assets/third_party_icons/fa/svg/face-calm.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const FaceCalmIcon = createSvgIcon(FaceCalmIconSVG);

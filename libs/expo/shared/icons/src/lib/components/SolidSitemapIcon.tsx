@@ -1,4 +1,4 @@
-import SolidSitemapIconSVG from '../../assets/solid-sitemap.svg';
+import SolidSitemapIconSVG from '../../assets/third_party_icons/fa/svg/solid-sitemap.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SolidSitemapIcon = createSvgIcon(SolidSitemapIconSVG);

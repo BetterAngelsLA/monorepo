@@ -1,4 +1,4 @@
-import WarehouseIconSVG from '../../assets/warehouse.svg';
+import WarehouseIconSVG from '../../assets/third_party_icons/fa/svg/warehouse.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const WarehouseIcon = createSvgIcon(WarehouseIconSVG);
