@@ -1,6 +1,8 @@
 import json
 from urllib.parse import unquote
 
+from django.http import HttpResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,3 +33,12 @@ class AuthRedirectView(APIView):
         response = Response(status=302)  # 302 is for temporary redirect
         response["Location"] = redirect_uri
         return response
+
+
+@ensure_csrf_cookie
+def ensure_csrf_cookie_view(request: Request) -> HttpResponse:
+    """
+    A view to ensure that the CSRF cookie is set.
+    The view returns a simple 200 OK response.
+    """
+    return HttpResponse(status=200)

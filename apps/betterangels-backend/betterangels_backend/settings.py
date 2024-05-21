@@ -92,13 +92,13 @@ INSTALLED_APPS = [
     "django_extensions",
     # 3rd Party
     "corsheaders",
-    "social_django",
-    "rest_social_auth",
     "django_structlog",
     "guardian",
     "post_office",
     "rest_framework",
     "organizations",
+    "social_django",
+    "rest_social_auth",
     "strawberry_django",
     "pghistory",
     "pgtrigger",
@@ -125,17 +125,10 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
-    # 3rd Party
-    "social_django.context_processors.backends",
-    "social_django.context_processors.login_redirect",
 ]
 
 
 # Provider specific settings
-
-AUTH_USER_MODEL = "accounts.User"
-SOCIAL_AUTH_USER_MODEL = "accounts.User"
-
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_REQUIRE_POST = True
 SOCIAL_AUTH_PIPELINE = (
@@ -150,6 +143,7 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.user.user_details",
     # "social_core.pipeline.user.associate_by_email",
 )
+SOCIAL_AUTH_USER_MODEL = "accounts.User"
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_PKCE_KEY = env("SOCIALACCOUNT_GOOGLE_CLIENT_ID")
 SOCIAL_AUTH_GOOGLE_OAUTH2_PKCE_SECRET = env("SOCIALACCOUNT_GOOGLE_SECRET")
@@ -172,6 +166,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.request",
+                # 3rd Party
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     }
@@ -180,8 +177,7 @@ TEMPLATES = [
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "guardian.backends.ObjectPermissionBackend",
-    # `allauth` specific authentication methods, such as login by email
-    "allauth.account.auth_backends.AuthenticationBackend",
+    "accounts.social.google.GoogleOAuth2PKCE",
     "sesame.backends.ModelBackend",
 ]
 

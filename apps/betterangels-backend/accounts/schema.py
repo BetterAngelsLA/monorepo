@@ -46,7 +46,7 @@ class Mutation:
     @strawberry.mutation
     def social_login(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
+        return AuthResponse(email="", username="")
 
     @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
