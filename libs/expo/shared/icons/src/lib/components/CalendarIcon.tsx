@@ -1,4 +1,4 @@
-import CalendarIconSVG from '../../assets/third_party_icons/fa/svg/calendar.svg';
+import CalendarIconSVG from '../../assets/third_party_icons/google/svg/material-symbols:calendar-today.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const CalendarIcon = createSvgIcon(CalendarIconSVG);
