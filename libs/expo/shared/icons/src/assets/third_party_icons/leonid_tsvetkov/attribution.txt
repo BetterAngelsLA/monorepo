@@ -1,0 +1,4 @@
+The icons listed below, by Leonid Tsvetkov (https://www.figma.com/community/file/886554014393250663/free-icon-pack-1800-icons), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Title: lets-icons:user-add.svg
+Source: https://icon-sets.iconify.design/lets-icons/user-add/

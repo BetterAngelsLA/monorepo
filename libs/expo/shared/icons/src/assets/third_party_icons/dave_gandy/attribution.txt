@@ -1,0 +1,62 @@
+The icons listed below, by Dave Gandy (https://github.com/FortAwesome/Font-Awesome), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Title: fa-solid:sort.svg
+Source: https://icon-sets.iconify.design/fa-solid/sort/
+
+Title: fa6-regular:face-angry.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-angry/
+
+Title: fa6-regular:face-dizzy.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-dizzy/
+
+Title: fa6-regular:face-frown.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-frown/
+
+Title: fa6-regular:face-grimace.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-grimace/
+
+Title: fa6-regular:face-grin-beam.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-grin-beam/
+
+Title: fa6-regular:face-grin-stars.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-grin-stars/
+
+Title: fa6-regular:face-grin-tongue-wink.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-grin-tongue-wink/
+
+Title: fa6-regular:face-grin-wink.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-grin-wink/
+
+Title: fa6-regular:face-laugh.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-laugh/
+
+Title: fa6-regular:face-meh-blank.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-meh-blank/
+
+Title: fa6-regular:face-meh.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-meh/
+
+Title: fa6-regular:face-rolling-eyes.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-rolling-eyes/
+
+Title: fa6-regular:face-smile-beam.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-smile-beam/
+
+Title: fa6-regular:face-smile.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-smile/
+
+Title: fa6-regular:face-tired.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-tired/
+
+Title: fa6-solid:chevron-left.svg
+Source: https://icon-sets.iconify.design/fa6-solid/chevron-left/
+
+Title: fa6-solid:paperclip.svg
+Source: https://icon-sets.iconify.design/fa6-solid/paperclip/
+
+Title: fa6-solid:plus.svg
+Source: https://icon-sets.iconify.design/fa6-solid/plus/
+
+Title: fa6-solid:flag.svg
+Source: https://icon-sets.iconify.design/fa6-solid/flag/
+
