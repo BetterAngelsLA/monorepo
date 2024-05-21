@@ -1,4 +1,4 @@
-import ImagesIconSVG from '../../assets/third_party_icons/phosphor/svg/ph:sneaker-fill.svg';
+import ImagesIconSVG from '../../assets/third_party_icons/phosphor/svg/ph:images.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const ImagesIcon = createSvgIcon(ImagesIconSVG);
