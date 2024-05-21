@@ -1,4 +1,4 @@
-import LocationDotSolidIconSVG from '../../assets/third_party_icons/fa/svg/location-dot-solid.svg';
+import LocationDotSolidIconSVG from '../../assets/third_party_icons/microsoft_corporation/svg/fluent:location-28-filled.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const LocationDotSolidIcon = createSvgIcon(LocationDotSolidIconSVG);

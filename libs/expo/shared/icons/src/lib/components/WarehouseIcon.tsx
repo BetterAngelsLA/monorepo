@@ -1,4 +1,4 @@
-import WarehouseIconSVG from '../../assets/third_party_icons/fa/svg/warehouse.svg';
+import WarehouseIconSVG from '../../assets/third_party_icons/microsoft_corporation/svg/fluent:home-garage-24-regular.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const WarehouseIcon = createSvgIcon(WarehouseIconSVG);
