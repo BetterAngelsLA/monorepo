@@ -228,7 +228,7 @@ export type FlagType = {
 
 export type LocationInput = {
   address?: InputMaybe<AddressInput>;
-  point?: InputMaybe<Scalars['Point']['input']>;
+  point: Scalars['Point']['input'];
   pointOfInterest?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -236,7 +236,7 @@ export type LocationType = {
   __typename?: 'LocationType';
   address: AddressType;
   id: Scalars['ID']['output'];
-  point?: Maybe<Scalars['Point']['output']>;
+  point: Scalars['Point']['output'];
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
 

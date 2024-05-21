@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
-export default function MainScrollContainer({
+export default function MainContainer({
   children,
   bg,
   pt = 'md',
