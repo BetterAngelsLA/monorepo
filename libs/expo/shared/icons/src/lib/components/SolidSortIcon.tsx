@@ -1,4 +1,4 @@
-import SolidSortIconSVG from '../../assets/third_party_icons/fa/svg/dave_gandy/fa-solid:sort.svg';
+import SolidSortIconSVG from '../../assets/third_party_icons/dave_gandy/svg/fa-solid:sort.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SolidSortIcon = createSvgIcon(SolidSortIconSVG);
