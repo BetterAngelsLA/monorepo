@@ -59,9 +59,6 @@ env = environ.Env(
     SECURE_HSTS_SECONDS=(int, 0),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_CLIENT_ID=(str, ""),
-    SOCIALACCOUNT_IDME_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_BASE_URL=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
     SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
@@ -94,14 +91,9 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django_extensions",
     # 3rd Party
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
-    "accounts.providers.idme",
     "corsheaders",
-    "dj_rest_auth",
-    "dj_rest_auth.registration",
+    "social_django",
+    "rest_social_auth",
     "django_structlog",
     "guardian",
     "post_office",
@@ -133,38 +125,37 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
+    # 3rd Party
+    "social_django.context_processors.backends",
+    "social_django.context_processors.login_redirect",
 ]
 
 
 # Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": ["profile", "email"],
-        "EMAIL_AUTHENTICATION": True,
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_GOOGLE_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_GOOGLE_SECRET"),
-            "key": "",
-        },
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "OAUTH_PKCE_ENABLED": True,
-    },
-    "idme": {
-        "SCOPE": ["fortified_identity"],
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_IDME_SECRET"),
-            "key": "",
-        },
-    },
-}
 
-SOCIALACCOUNT_IDME_BASE_URL = env("SOCIALACCOUNT_IDME_BASE_URL")
+AUTH_USER_MODEL = "accounts.User"
+SOCIAL_AUTH_USER_MODEL = "accounts.User"
+
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+SOCIAL_AUTH_REQUIRE_POST = True
+SOCIAL_AUTH_PIPELINE = (
+    "social_core.pipeline.social_auth.social_details",
+    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.social_auth.associate_by_email",
+    "social_core.pipeline.user.create_user",
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
+    # "social_core.pipeline.user.associate_by_email",
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_PKCE_KEY = env("SOCIALACCOUNT_GOOGLE_CLIENT_ID")
+SOCIAL_AUTH_GOOGLE_OAUTH2_PKCE_SECRET = env("SOCIALACCOUNT_GOOGLE_SECRET")
+SOCIAL_AUTH_GOOGLE_OAUTH2_PKCE_EXTRA_ARGUMENTS = {"access_type: online"}
+
+
 ROOT_URLCONF = "betterangels_backend.urls"
 
 TEMPLATES = [

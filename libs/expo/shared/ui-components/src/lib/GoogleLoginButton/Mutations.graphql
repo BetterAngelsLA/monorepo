@@ -1,0 +1,11 @@
+mutation LoginWithGoogle($input: AuthInput!) {
+  socialLogin(input: $input)
+    @rest(
+      type: "LoginPayload"
+      path: "/login/social/session/"
+      method: "POST"
+    ) {
+    username
+    email
+  }
+}

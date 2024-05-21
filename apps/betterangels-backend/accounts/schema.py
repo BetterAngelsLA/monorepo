@@ -44,12 +44,7 @@ class Mutation:
     logout = auth.logout()
 
     @strawberry.mutation
-    def idme_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
+    def social_login(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 

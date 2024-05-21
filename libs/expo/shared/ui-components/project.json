@@ -5,6 +5,16 @@
   "projectType": "library",
   "tags": [],
   "targets": {
+    "generate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/shared/ui-components/",
+        "command": "graphql-codegen --config codegen.ts"
+      },
+      "outputs": [
+        "{workspaceRoot}/libs/expo/expo/shared/ui-components/src/lib/**/__generated__/"
+      ]
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
