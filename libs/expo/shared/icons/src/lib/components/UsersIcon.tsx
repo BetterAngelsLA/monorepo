@@ -1,4 +1,4 @@
-import UsersIconSVG from '../../assets/third_party_icons/fa/svg/users.svg';
+import UsersIconSVG from '../../assets/third_party_icons/pictogrammers/svg/mdi:users-outline.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const UsersIcon = createSvgIcon(UsersIconSVG);
