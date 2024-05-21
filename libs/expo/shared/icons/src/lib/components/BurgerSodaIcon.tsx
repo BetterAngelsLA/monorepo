@@ -1,4 +1,4 @@
-import BurgerSodaIconSVG from '../../assets/third_party_icons/fa/svg/burger-soda.svg';
+import BurgerSodaIconSVG from '../../assets/third_party_icons/material_design_authors/svg/ic:outline-fastfood.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const BurgerSodaIcon = createSvgIcon(BurgerSodaIconSVG);
