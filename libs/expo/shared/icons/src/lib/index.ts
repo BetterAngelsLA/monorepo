@@ -1,5 +1,6 @@
 export { default as ArrowLeftIcon } from './components/ArrowLeftIcon';
 export { default as ArrowRotateReverseIcon } from './components/ArrowRotateReverseIcon';
+export { default as ArrowTrendUpIcon } from './components/ArrowTrendUpIcon';
 export { default as ArrowUpIcon } from './components/ArrowUpIcon';
 export { default as BarsIcon } from './components/BarsIcon';
 export { default as BellIcon } from './components/BellIcon';
@@ -60,7 +61,7 @@ export { default as SirenIcon } from './components/SirenIcon';
 export { default as SitemapIcon } from './components/SitemapIcon';
 export { default as SneakerIcon } from './components/SneakerIcon';
 export { default as SolidCircleIcon } from './components/SolidCircleIcon';
-export { default as SolidPeincilIcon } from './components/SolidPencilIcon';
+export { default as SolidPencilIcon } from './components/SolidPencilIcon';
 export { default as SolidSitemapIcon } from './components/SolidSitemapIcon';
 export { default as SolidSortIcon } from './components/SolidSortIcon';
 export { default as SolidUsersIcon } from './components/SolidUsersIcon';

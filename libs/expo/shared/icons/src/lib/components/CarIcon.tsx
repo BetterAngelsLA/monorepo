@@ -1,4 +1,4 @@
-import CarIconSVG from '../../assets/third_party_icons/fa/svg/car.svg';
+import CarIconSVG from '../../assets/third_party_icons/ben_sperry/svg/ion:car-outline.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const CarIcon = createSvgIcon(CarIconSVG);
