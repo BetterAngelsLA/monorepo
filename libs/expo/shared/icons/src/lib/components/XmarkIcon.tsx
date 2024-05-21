@@ -1,4 +1,4 @@
-import XmarkIconSVG from '../../assets/third_party_icons/fa/svg/xmark.svg';
+import XmarkIconSVG from '../../assets/third_party_icons/mingcute/svg/mingcute:close-fill.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const XmarkIcon = createSvgIcon(XmarkIconSVG);
