@@ -1,26 +1,39 @@
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
   /** Date with time (isoformat) */
-  DateTime: { input: any; output: any; }
+  DateTime: { input: any; output: any };
   /** Decimal (fixed-point) */
-  Decimal: { input: any; output: any; }
+  Decimal: { input: any; output: any };
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
-  JSON: { input: any; output: any; }
+  JSON: { input: any; output: any };
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
-  Point: { input: any; output: any; }
-  Upload: { input: any; output: any; }
+  Point: { input: any; output: any };
+  Upload: { input: any; output: any };
 };
 
 export type AddNoteTaskInput = {
@@ -57,7 +70,7 @@ export enum AttachmentType {
   Document = 'DOCUMENT',
   Image = 'IMAGE',
   Unknown = 'UNKNOWN',
-  Video = 'VIDEO'
+  Video = 'VIDEO',
 }
 
 export type AuthInput = {
@@ -137,7 +150,9 @@ export type CreateNoteServiceRequestInput = {
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
-export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+export type CreateNoteServiceRequestPayload =
+  | OperationInfo
+  | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
   noteId: Scalars['ID']['input'];
@@ -271,7 +286,7 @@ export enum MoodEnum {
   Personable = 'PERSONABLE',
   Pleasant = 'PLEASANT',
   Restless = 'RESTLESS',
-  Suicidal = 'SUICIDAL'
+  Suicidal = 'SUICIDAL',
 }
 
 export type MoodType = {
@@ -309,121 +324,97 @@ export type Mutation = {
   updateTaskLocation: UpdateTaskLocationPayload;
 };
 
-
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
 };
-
 
 export type MutationCreateClientProfileArgs = {
   data: CreateClientProfileInput;
 };
 
-
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
-
 
 export type MutationCreateNoteAttachmentArgs = {
   data: CreateNoteAttachmentInput;
 };
 
-
 export type MutationCreateNoteMoodArgs = {
   data: CreateNoteMoodInput;
 };
-
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
 
-
 export type MutationCreateNoteTaskArgs = {
   data: CreateNoteTaskInput;
 };
-
 
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
 
-
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
-
 
 export type MutationDeleteMoodArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationDeleteNoteArgs = {
   data: DeleteDjangoObjectInput;
 };
-
 
 export type MutationDeleteNoteAttachmentArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
-
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
 };
-
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
 
-
 export type MutationRemoveNoteTaskArgs = {
   data: RemoveNoteTaskInput;
 };
-
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
 
-
 export type MutationSocialLoginArgs = {
   input: AuthInput;
 };
-
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
 
-
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
 };
-
 
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
 };
 
-
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
-
 
 export type MutationUpdateTaskLocationArgs = {
   data: UpdateTaskLocationInput;
@@ -460,7 +451,7 @@ export type NoteFilter = {
 export enum NoteNamespaceEnum {
   MoodAssessment = 'MOOD_ASSESSMENT',
   ProvidedServices = 'PROVIDED_SERVICES',
-  RequestedServices = 'REQUESTED_SERVICES'
+  RequestedServices = 'REQUESTED_SERVICES',
 }
 
 export type NoteOrder = {
@@ -487,27 +478,22 @@ export type NoteType = {
   title: Scalars['String']['output'];
 };
 
-
 export type NoteTypeAttachmentsArgs = {
   filters?: InputMaybe<NoteAttachmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type NoteTypeNextStepsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type NoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type NoteTypePurposesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -541,7 +527,7 @@ export enum OperationMessageKind {
   Info = 'INFO',
   Permission = 'PERMISSION',
   Validation = 'VALIDATION',
-  Warning = 'WARNING'
+  Warning = 'WARNING',
 }
 
 export enum Ordering {
@@ -550,7 +536,7 @@ export enum Ordering {
   AscNullsLast = 'ASC_NULLS_LAST',
   Desc = 'DESC',
   DescNullsFirst = 'DESC_NULLS_FIRST',
-  DescNullsLast = 'DESC_NULLS_LAST'
+  DescNullsLast = 'DESC_NULLS_LAST',
 }
 
 /** Permission definition for schema directives. */
@@ -579,33 +565,27 @@ export type Query = {
   tasks: Array<TaskType>;
 };
 
-
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryNoteAttachmentArgs = {
   pk: Scalars['ID']['input'];
 };
 
-
 export type QueryNoteAttachmentsArgs = {
   filters?: InputMaybe<NoteAttachmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
@@ -613,31 +593,25 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryServiceRequestArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryServiceRequestsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryShelterArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QuerySheltersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -691,12 +665,12 @@ export enum ServiceEnum {
   Stabilize = 'STABILIZE',
   Storage = 'STORAGE',
   Transport = 'TRANSPORT',
-  Water = 'WATER'
+  Water = 'WATER',
 }
 
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
-  ToDo = 'TO_DO'
+  ToDo = 'TO_DO',
 }
 
 export type ServiceRequestType = {
@@ -714,7 +688,7 @@ export type ServiceRequestType = {
 
 export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
-  Requested = 'REQUESTED'
+  Requested = 'REQUESTED',
 }
 
 export type ShelterLocationType = {
@@ -756,7 +730,7 @@ export type SwitchType = {
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
-  ToDo = 'TO_DO'
+  ToDo = 'TO_DO',
 }
 
 export type TaskType = {
@@ -773,7 +747,7 @@ export type TaskType = {
 
 export enum TaskTypeEnum {
   NextStep = 'NEXT_STEP',
-  Purpose = 'PURPOSE'
+  Purpose = 'PURPOSE',
 }
 
 export type UpdateNoteInput = {

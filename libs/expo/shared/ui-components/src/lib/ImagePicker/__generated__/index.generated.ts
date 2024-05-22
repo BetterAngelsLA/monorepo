@@ -1,7 +1,7 @@
 import * as Types from '../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 const defaultOptions = {} as const;
 export type CreateNoteAttachmentMutationVariables = Types.Exact<{
   noteId: Types.Scalars['ID']['input'];
@@ -9,33 +9,60 @@ export type CreateNoteAttachmentMutationVariables = Types.Exact<{
   file: Types.Scalars['Upload']['input'];
 }>;
 
-
-export type CreateNoteAttachmentMutation = { __typename?: 'Mutation', createNoteAttachment: { __typename?: 'NoteAttachmentType', id: string, attachmentType: Types.AttachmentType, originalFilename?: string | null, namespace: Types.NoteNamespaceEnum, file: { __typename?: 'DjangoFileType', name: string } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
-
+export type CreateNoteAttachmentMutation = {
+  __typename?: 'Mutation';
+  createNoteAttachment:
+    | {
+        __typename?: 'NoteAttachmentType';
+        id: string;
+        attachmentType: Types.AttachmentType;
+        originalFilename?: string | null;
+        namespace: Types.NoteNamespaceEnum;
+        file: { __typename?: 'DjangoFileType'; name: string };
+      }
+    | {
+        __typename?: 'OperationInfo';
+        messages: Array<{
+          __typename?: 'OperationMessage';
+          kind: Types.OperationMessageKind;
+          field?: string | null;
+          message: string;
+        }>;
+      };
+};
 
 export const CreateNoteAttachmentDocument = gql`
-    mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {
-  createNoteAttachment(data: {note: $noteId, namespace: $namespace, file: $file}) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
+  mutation CreateNoteAttachment(
+    $noteId: ID!
+    $namespace: NoteNamespaceEnum!
+    $file: Upload!
+  ) {
+    createNoteAttachment(
+      data: { note: $noteId, namespace: $namespace, file: $file }
+    ) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
       }
-    }
-    ... on NoteAttachmentType {
-      id
-      attachmentType
-      file {
-        name
+      ... on NoteAttachmentType {
+        id
+        attachmentType
+        file {
+          name
+        }
+        originalFilename
+        namespace
       }
-      originalFilename
-      namespace
     }
   }
-}
-    `;
-export type CreateNoteAttachmentMutationFn = Apollo.MutationFunction<CreateNoteAttachmentMutation, CreateNoteAttachmentMutationVariables>;
+`;
+export type CreateNoteAttachmentMutationFn = Apollo.MutationFunction<
+  CreateNoteAttachmentMutation,
+  CreateNoteAttachmentMutationVariables
+>;
 
 /**
  * __useCreateNoteAttachmentMutation__
@@ -56,10 +83,24 @@ export type CreateNoteAttachmentMutationFn = Apollo.MutationFunction<CreateNoteA
  *   },
  * });
  */
-export function useCreateNoteAttachmentMutation(baseOptions?: Apollo.MutationHookOptions<CreateNoteAttachmentMutation, CreateNoteAttachmentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateNoteAttachmentMutation, CreateNoteAttachmentMutationVariables>(CreateNoteAttachmentDocument, options);
-      }
-export type CreateNoteAttachmentMutationHookResult = ReturnType<typeof useCreateNoteAttachmentMutation>;
-export type CreateNoteAttachmentMutationResult = Apollo.MutationResult<CreateNoteAttachmentMutation>;
-export type CreateNoteAttachmentMutationOptions = Apollo.BaseMutationOptions<CreateNoteAttachmentMutation, CreateNoteAttachmentMutationVariables>;
+export function useCreateNoteAttachmentMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateNoteAttachmentMutation,
+    CreateNoteAttachmentMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    CreateNoteAttachmentMutation,
+    CreateNoteAttachmentMutationVariables
+  >(CreateNoteAttachmentDocument, options);
+}
+export type CreateNoteAttachmentMutationHookResult = ReturnType<
+  typeof useCreateNoteAttachmentMutation
+>;
+export type CreateNoteAttachmentMutationResult =
+  Apollo.MutationResult<CreateNoteAttachmentMutation>;
+export type CreateNoteAttachmentMutationOptions = Apollo.BaseMutationOptions<
+  CreateNoteAttachmentMutation,
+  CreateNoteAttachmentMutationVariables
+>;
