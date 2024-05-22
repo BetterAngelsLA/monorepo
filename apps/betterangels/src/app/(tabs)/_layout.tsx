@@ -10,7 +10,7 @@ import {
   MapIcon,
   MapSolidIcon,
   PlusIcon,
-  SitemapIcon,
+  SitemapLineIcon,
   SitemapSolidIcon,
   UsersIcon,
   UsersSolidIcon,
@@ -172,7 +172,7 @@ export default function TabLayout() {
                 {focused ? (
                   <SitemapSolidIcon color={color} />
                 ) : (
-                  <SitemapIcon color={color} />
+                  <SitemapLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Teams

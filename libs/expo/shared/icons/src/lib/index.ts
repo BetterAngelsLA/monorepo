@@ -63,7 +63,7 @@ export { default as ShowerIcon } from './components/ShowerIcon';
 export { default as SignOutIcon } from './components/SignOutIcon';
 export { default as SignUpIcon } from './components/SignUpIcon';
 export { default as SirenIcon } from './components/SirenIcon';
-export { default as SitemapIcon } from './components/SitemapIcon';
+export { default as SitemapLineIcon } from './components/SitemapLineIcon';
 export { default as SitemapSolidIcon } from './components/SitemapSolidIcon';
 export { default as SneakerIcon } from './components/SneakerIcon';
 export { default as SortSolidIcon } from './components/SortSolidIcon';
