@@ -13,7 +13,6 @@ export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as EventCard } from './EventCard';
 export { default as FieldCard } from './FieldCard';
-export { default as GoogleLoginButton } from './GoogleLoginButton';
 export { default as IconButton } from './IconButton';
 export { default as ImagePicker } from './ImagePicker';
 export { default as Input } from './Input';

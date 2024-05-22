@@ -63,14 +63,12 @@ export enum AttachmentType {
 export type AuthInput = {
   code: Scalars['String']['input'];
   code_verifier: Scalars['String']['input'];
-  provider: Scalars['String']['input'];
   redirect_uri: Scalars['String']['input'];
 };
 
 export type AuthResponse = {
   __typename?: 'AuthResponse';
-  email: Scalars['String']['output'];
-  username: Scalars['String']['output'];
+  status_code: Scalars['String']['output'];
 };
 
 export type BedsType = {
@@ -297,11 +295,11 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
+  googleAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
-  socialLogin: AuthResponse;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -385,6 +383,11 @@ export type MutationGenerateMagicLinkArgs = {
 };
 
 
+export type MutationGoogleAuthArgs = {
+  input: AuthInput;
+};
+
+
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
@@ -397,11 +400,6 @@ export type MutationRemoveNoteTaskArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
-};
-
-
-export type MutationSocialLoginArgs = {
-  input: AuthInput;
 };
 
 
