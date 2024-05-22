@@ -1,0 +1,4 @@
+The icons listed below, by Streamline (https://github.com/webalys-hq/streamline-vectors), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Title: streamline:blank-calendar-solid.svg
+Source: https://icon-sets.iconify.design/streamline/blank-calendar-solid/
