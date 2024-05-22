@@ -296,7 +296,6 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
-  idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
@@ -385,11 +384,6 @@ export type MutationGenerateMagicLinkArgs = {
 
 
 export type MutationGoogleAuthArgs = {
-  input: AuthInput;
-};
-
-
-export type MutationIdmeAuthArgs = {
   input: AuthInput;
 };
 
