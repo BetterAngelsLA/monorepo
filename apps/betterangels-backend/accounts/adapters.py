@@ -9,10 +9,6 @@ from django.http import HttpRequest
 # https://github.com/pennersr/django-allauth/issues/418#issuecomment-137259550
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request: HttpRequest, sociallogin: SocialLogin) -> None:
-        # Social account already exists, so this is just a login
-        if sociallogin.is_existing:
-            return
-
         # Some social logins don't have an email address
         if not sociallogin.email_addresses:
             return
