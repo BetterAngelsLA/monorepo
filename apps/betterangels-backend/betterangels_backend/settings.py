@@ -59,9 +59,6 @@ env = environ.Env(
     SECURE_HSTS_SECONDS=(int, 0),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_CLIENT_ID=(str, ""),
-    SOCIALACCOUNT_IDME_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_BASE_URL=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
     SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
@@ -98,7 +95,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "accounts.providers.idme",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -154,17 +150,9 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "OAUTH_PKCE_ENABLED": True,
     },
-    "idme": {
-        "SCOPE": ["fortified_identity"],
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_IDME_SECRET"),
-            "key": "",
-        },
-    },
 }
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 
-SOCIALACCOUNT_IDME_BASE_URL = env("SOCIALACCOUNT_IDME_BASE_URL")
 ROOT_URLCONF = "betterangels_backend.urls"
 
 TEMPLATES = [

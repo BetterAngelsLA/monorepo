@@ -277,7 +277,6 @@ type MoodType {
 
 type Mutation {
   logout: Boolean!
-  idmeAuth(input: AuthInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
