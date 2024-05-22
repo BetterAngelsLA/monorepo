@@ -1,4 +1,3 @@
-# accounts/adapters.py
 from typing import Optional
 
 from allauth.account.models import EmailAddress
