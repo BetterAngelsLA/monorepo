@@ -1,7 +1,7 @@
 import {
   BurgerSodaIcon,
   CalendarIcon,
-  HouseBlankIcon,
+  HouseLineIcon,
   ListIcon,
   MapIcon,
   NoteIcon,
@@ -18,7 +18,7 @@ import MainModal from './MainModal';
 const ACTIONS = [
   {
     title: 'Home',
-    Icon: HouseBlankIcon,
+    Icon: HouseLineIcon,
     route: '#',
   },
   {
