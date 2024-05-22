@@ -322,7 +322,6 @@ type NoteAttachmentType implements AttachmentInterface {
 }
 
 input NoteFilter {
-  client: DjangoModelFilterInput
   publicDetails: String
   privateDetails: String
   createdBy: DjangoModelFilterInput
@@ -331,6 +330,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  client: String
 }
 
 enum NoteNamespaceEnum {
