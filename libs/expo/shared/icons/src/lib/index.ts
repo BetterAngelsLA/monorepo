@@ -66,7 +66,7 @@ export { default as SitemapIcon } from './components/SitemapIcon';
 export { default as SitemapSolidIcon } from './components/SitemapSolidIcon';
 export { default as SneakerIcon } from './components/SneakerIcon';
 export { default as SolidPencilIcon } from './components/SolidPencilIcon';
-export { default as SolidSortIcon } from './components/SolidSortIcon';
+export { default as SortSolidIcon } from './components/SortSolidIcon';
 export { default as SyringeIcon } from './components/SyringeIcon';
 export { default as TargetIcon } from './components/TargetIcon';
 export { default as TentIcon } from './components/TentIcon';
