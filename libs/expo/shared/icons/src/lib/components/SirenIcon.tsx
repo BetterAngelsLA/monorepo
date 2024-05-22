@@ -1,4 +1,4 @@
-import SirenIconSVG from '../../assets/third_party_icons/fa/svg/siren.svg';
+import SirenIconSVG from '../../assets/third_party_icons/google/svg/material-symbols:e911-emergency-rounded.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const SirenIcon = createSvgIcon(SirenIconSVG);
