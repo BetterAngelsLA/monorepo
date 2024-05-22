@@ -74,7 +74,7 @@ export { default as ToothIcon } from './components/ToothIcon';
 export { default as ToothbrushIcon } from './components/ToothbrushIcon';
 export { default as UserAddIcon } from './components/UserAddIcon';
 export { default as UserIcon } from './components/UserIcon';
-export { default as UsersIcon } from './components/UsersIcon';
+export { default as UsersLineIcon } from './components/UsersLineIcon';
 export { default as UsersSolidIcon } from './components/UsersSolidIcon';
 export { default as WarehouseIcon } from './components/WarehouseIcon';
 export { default as WarningIcon } from './components/WarningIcon';

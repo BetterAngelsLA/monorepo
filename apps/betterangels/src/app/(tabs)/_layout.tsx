@@ -12,7 +12,7 @@ import {
   PlusIcon,
   SitemapLineIcon,
   SitemapSolidIcon,
-  UsersIcon,
+  UsersLineIcon,
   UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
@@ -116,7 +116,7 @@ export default function TabLayout() {
                 {focused ? (
                   <UsersSolidIcon color={color} />
                 ) : (
-                  <UsersIcon color={color} />
+                  <UsersLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   All Clients

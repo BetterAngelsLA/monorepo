@@ -6,7 +6,7 @@ import {
   MapLineIcon,
   NoteIcon,
   SignOutIcon,
-  UsersIcon,
+  UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -23,7 +23,7 @@ const ACTIONS = [
   },
   {
     title: 'Clients',
-    Icon: UsersIcon,
+    Icon: UsersLineIcon,
     route: '#',
   },
   {
