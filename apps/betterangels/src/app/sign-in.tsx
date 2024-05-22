@@ -138,13 +138,7 @@ export default function SignIn() {
           return;
         }
       }
-      await signIn({
-        variables: {
-          code: code,
-          codeVerifier: request?.codeVerifier,
-          redirectUri: redirectUri,
-        },
-      });
+      await signIn(code, request?.codeVerifier, redirectUri);
     },
     [request?.codeVerifier, request?.state, response, signIn]
   );
