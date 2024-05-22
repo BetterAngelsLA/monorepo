@@ -11,8 +11,8 @@ import {
   PlusIcon,
   SitemapIcon,
   SitemapSolidIcon,
-  SolidUsersIcon,
   UsersIcon,
+  UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -113,7 +113,7 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidUsersIcon color={color} />
+                  <UsersSolidIcon color={color} />
                 ) : (
                   <UsersIcon color={color} />
                 )}
