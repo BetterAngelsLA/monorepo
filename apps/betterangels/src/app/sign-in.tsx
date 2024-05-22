@@ -1,7 +1,8 @@
 import {
   AuthContainer,
+  GOOGLE_AUTH_MUTATION,
   useGenerateMagicLinkMutation,
-  useGoogleAuthMutation,
+  useSignIn,
 } from '@monorepo/expo/betterangels';
 import { GoogleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -76,7 +77,7 @@ export default function SignIn() {
     generateMagicLink,
     { data: magicLinkData, loading: magicLinkLoading, error: magicLinkError },
   ] = useGenerateMagicLinkMutation();
-  const [signIn] = useGoogleAuthMutation();
+  const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const { type } = useLocalSearchParams();
   useEffect(() => {
