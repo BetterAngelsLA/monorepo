@@ -7,7 +7,7 @@ import {
   CalendarSolidIcon,
   HouseLineIcon,
   HouseSolidIcon,
-  MapIcon,
+  MapLineIcon,
   MapSolidIcon,
   PlusIcon,
   SitemapLineIcon,
@@ -153,7 +153,7 @@ export default function TabLayout() {
                 {focused ? (
                   <MapSolidIcon color={color} />
                 ) : (
-                  <MapIcon color={color} />
+                  <MapLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Map

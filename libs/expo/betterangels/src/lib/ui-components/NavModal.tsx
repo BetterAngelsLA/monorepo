@@ -3,7 +3,7 @@ import {
   CalendarIcon,
   HouseLineIcon,
   ListIcon,
-  MapIcon,
+  MapLineIcon,
   NoteIcon,
   SignOutIcon,
   UsersIcon,
@@ -28,7 +28,7 @@ const ACTIONS = [
   },
   {
     title: 'Map',
-    Icon: MapIcon,
+    Icon: MapLineIcon,
     route: '#',
   },
   {
