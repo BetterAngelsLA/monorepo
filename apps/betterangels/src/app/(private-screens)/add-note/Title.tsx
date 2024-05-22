@@ -4,7 +4,7 @@ import {
   UpdateNoteMutation,
   UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
-import { SolidPencilIcon } from '@monorepo/expo/shared/icons';
+import { PencilSolidIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -125,7 +125,7 @@ export default function Title(props: ITitleProps) {
             accessibilityHint="edits note title"
             variant="transparent"
           >
-            <SolidPencilIcon
+            <PencilSolidIcon
               size="lg"
               color={error.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
             />
