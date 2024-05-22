@@ -95,7 +95,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "accounts.providers.idme",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -151,17 +150,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "OAUTH_PKCE_ENABLED": True,
     },
-    "idme": {
-        "SCOPE": ["fortified_identity"],
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_IDME_SECRET"),
-            "key": "",
-        },
-    },
 }
 
-SOCIALACCOUNT_IDME_BASE_URL = env("SOCIALACCOUNT_IDME_BASE_URL")
 ROOT_URLCONF = "betterangels_backend.urls"
 
 TEMPLATES = [

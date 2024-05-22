@@ -1,8 +1,0 @@
-{% extends "admin/login.html" %}
-{% block content %}
-    {{ block.super }}
-    <link href="https://apis.google.com/css/platform.css" rel="stylesheet">
-    <p>
-        <a href="{% url "social:begin" "google-oauth2" %}">Login with Google</a>
-    </p>
-{% endblock %}
