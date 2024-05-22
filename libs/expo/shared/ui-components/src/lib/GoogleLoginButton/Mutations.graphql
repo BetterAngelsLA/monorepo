@@ -2,7 +2,7 @@ mutation LoginWithGoogle($input: AuthInput!) {
   socialLogin(input: $input)
     @rest(
       type: "LoginPayload"
-      path: "/login/social/session/"
+      path: "/api/login/social/session/"
       method: "POST"
     ) {
     username

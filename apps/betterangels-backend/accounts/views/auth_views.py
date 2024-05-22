@@ -1,13 +1,45 @@
 import json
+from typing import Any, List, TypeVar, cast
 from urllib.parse import unquote
 
-from django.http import HttpResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from accounts.providers.idme.views import IdMeOAuth2Adapter
+from accounts.serializers import SocialLoginSerializer
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .utils import base64url_decode
+
+T = TypeVar("T")
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
+    authentication_classes: List[Any] = []
+
+    def post(self, request: Request, *args: T, **kwargs: Any) -> Response:
+        # Get callback_url from the POST data or URL parameters,
+        # if not provided use a default
+        self.callback_url = request.query_params.get("redirect_uri")
+        return cast(Response, super().post(request, *args, **kwargs))
+
+
+class IdMeLogin(SocialLoginView):
+    adapter_class = IdMeOAuth2Adapter
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
+    authentication_classes: List[Any] = []
+
+    def post(self, request: Request, *args: T, **kwargs: Any) -> Response:
+        # Get callback_url from the POST data or URL parameters,
+        # if not provided use a default
+        self.callback_url = request.query_params.get("redirect_uri")
+        return cast(Response, super().post(request, *args, **kwargs))
 
 
 class AuthRedirectView(APIView):
@@ -33,12 +65,3 @@ class AuthRedirectView(APIView):
         response = Response(status=302)  # 302 is for temporary redirect
         response["Location"] = redirect_uri
         return response
-
-
-@ensure_csrf_cookie
-def ensure_csrf_cookie_view(request: Request) -> HttpResponse:
-    """
-    A view to ensure that the CSRF cookie is set.
-    The view returns a simple 200 OK response.
-    """
-    return HttpResponse(status=200)

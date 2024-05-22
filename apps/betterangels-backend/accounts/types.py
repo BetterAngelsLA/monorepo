@@ -15,8 +15,7 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 @strawberry.input
 class AuthInput:
-    provider: str = strawberry.field()
-    code: str = strawberry.field()
+    code: str = strawberry.field(name="code")
     code_verifier: str = strawberry.field(name="code_verifier")
     redirect_uri: str = strawberry.field(name="redirect_uri")
 
@@ -25,8 +24,7 @@ class AuthInput:
 # The code and code verifier is passed in
 @strawberry.type
 class AuthResponse:
-    email: str = strawberry.field()
-    username: str = strawberry.field()
+    status_code: str = strawberry.field(name="status_code")
 
 
 @filter(ClientProfile)
