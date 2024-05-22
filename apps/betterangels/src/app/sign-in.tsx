@@ -91,7 +91,7 @@ export default function SignIn() {
     {
       clientId,
       redirectUri,
-      scopes: ['fortified_identity'],
+      scopes: ['profile', 'email'],
       usePKCE: true,
       state: generatedState,
       prompt: AuthSession.Prompt.SelectAccount,
