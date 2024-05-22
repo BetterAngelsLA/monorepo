@@ -259,13 +259,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture(
-            {"title": "Client 1's Note", "client": self.client_user_1.pk}
-        )["data"]["createNote"]
+        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
+            "createNote"
+        ]
 
-        self.note_3 = self._create_note_fixture(
-            {"title": "Client 2's Note", "client": self.client_user_2.pk}
-        )["data"]["createNote"]
+        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
+            "createNote"
+        ]
 
         query = """
             query Notes($filters: NoteFilter) {

@@ -162,11 +162,9 @@ class NoteFilter:
             return queryset, Q()
 
         return (
-            queryset.filter(
-                Q(client__first_name__icontains=value)
-                | Q(client__last_name__icontains=value)
-            ),
-        Q())
+            queryset.filter(Q(client__first_name__icontains=value) | Q(client__last_name__icontains=value)),
+            Q(),
+        )
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
