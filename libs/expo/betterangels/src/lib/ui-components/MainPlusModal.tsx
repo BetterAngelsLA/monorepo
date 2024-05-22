@@ -17,7 +17,11 @@ const ACTIONS = [
   {
     title: 'Add interaction',
     Icon: FilePlusIcon,
-    route: '#',
+    route: '/clients',
+    params: {
+      title: 'Who is this interaction for?',
+      select: 'true',
+    },
   },
   {
     title: 'Add event',

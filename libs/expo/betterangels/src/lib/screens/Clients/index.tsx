@@ -7,7 +7,7 @@ import {
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, View } from 'react-native';
 import { Header } from '../../ui-components';
@@ -27,6 +27,7 @@ interface IGroupedClients {
 }
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
+  const { title, select } = useLocalSearchParams();
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
@@ -144,6 +145,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           paddingTop: Spacings.sm,
         }}
       >
+        {title && (
+          <TextBold mb="sm" size="lg">
+            {title}
+          </TextBold>
+        )}
         <BasicInput
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
@@ -162,6 +168,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             data ? (
               <ClientCard
+                select={select as string}
                 id={clientProfile.id}
                 onPress={() =>
                   createNoteFunction(
