@@ -5,6 +5,7 @@ import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
   CalendarIcon,
   CalendarSolidIcon,
+  HouseBlankIcon,
   HouseSolidIcon,
   MapIcon,
   MapSolidIcon,
@@ -73,7 +74,7 @@ export default function TabLayout() {
                 {focused ? (
                   <HouseSolidIcon color={color} />
                 ) : (
-                  <HouseSolidIcon color={color} />
+                  <HouseBlankIcon color={color} />
                 )}
 
                 <TextRegular color={color} size="xs">
