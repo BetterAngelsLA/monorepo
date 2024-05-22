@@ -10,7 +10,7 @@ import {
   MapSolidIcon,
   PlusIcon,
   SitemapIcon,
-  SolidSitemapIcon,
+  SitemapSolidIcon,
   SolidUsersIcon,
   UsersIcon,
 } from '@monorepo/expo/shared/icons';
@@ -169,7 +169,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidSitemapIcon color={color} />
+                  <SitemapSolidIcon color={color} />
                 ) : (
                   <SitemapIcon color={color} />
                 )}
