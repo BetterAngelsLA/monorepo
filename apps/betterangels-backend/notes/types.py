@@ -1,3 +1,4 @@
+from ast import Tuple
 from datetime import datetime
 from typing import List, Optional
 
@@ -6,10 +7,10 @@ import strawberry_django
 from accounts.types import UserType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
-from django.db.models import Case, Exists, F, Value, When
+from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
-from strawberry import ID, auto
+from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
 from strawberry_django.utils.query import filter_for_user
 
@@ -150,9 +151,18 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    client: auto
+    # client: auto
+    public_details: auto
+    private_details: auto
     created_by: auto
     is_submitted: auto
+
+    @strawberry_django.filter_field
+    def client(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Tuple[QuerySet[models.Note], Q]:
+        if value is None:
+            return queryset, Q()
+
+        return (queryset.filter(client__first_name=value), Q())
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]

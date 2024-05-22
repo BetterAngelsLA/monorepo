@@ -323,6 +323,8 @@ type NoteAttachmentType implements AttachmentInterface {
 
 input NoteFilter {
   client: DjangoModelFilterInput
+  publicDetails: String
+  privateDetails: String
   createdBy: DjangoModelFilterInput
   isSubmitted: Boolean
   AND: NoteFilter
