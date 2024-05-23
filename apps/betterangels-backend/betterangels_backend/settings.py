@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -149,6 +150,24 @@ SOCIALACCOUNT_PROVIDERS = {
             "access_type": "online",
         },
         "OAUTH_PKCE_ENABLED": True,
+    },
+    "apple": {
+        "APPS": [
+            {
+                # Your service identifier.
+                "client_id": env("SOCIALACCOUNT_APPLE_CLIENT_ID"),
+                # The Key ID (visible in the "View Key Details" page).
+                "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
+                # Member ID/App ID Prefix -- you can find it below your name
+                # at the top right corner of the page, or it’s your App ID
+                # Prefix in your App ID.
+                "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
+                "settings": {
+                    # The certificate you downloaded when generating the key.
+                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_PREFIX")
+                },
+            }
+        ]
     },
 }
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
