@@ -236,6 +236,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             # created_by, client name, public details, and/or is_submitted
             ("org_1_case_manager_1", None, None, None, 1, "note", None),  # CM 1 created one note
             ("org_1_case_manager_2", None, None, None, 2, "note_2", "note_3"),  # CM 2 created 2 notes
+            ("org_1_case_manager_1", None, "deets", None, 0, None, None),
+            ("org_1_case_manager_2", None, "more", None, 1, "note_3", None),
+            ("org_1_case_manager_2", None, "deets", None, 2, "note_2", "note_3"),
             ("org_1_case_manager_1", "al", None, None, 1, "note", None),  # CM 1 created one note for client "Dale"
             (None, "al", None, None, 2, "note", "note_2"),  # CM 1 and CM 2 each created one note for client "Dale"
             ("org_1_case_manager_1", "an", None, None, 0, None, None),  # CM 1 created no notes for client "Truman"
@@ -259,13 +262,21 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
-            "createNote"
-        ]
+        self.note_2 = self._create_note_fixture(
+            {
+                "title": "Client 1's Note",
+                "publicDetails": "deets",
+                "client": self.client_user_1.pk,
+            }
+        )["data"]["createNote"]
 
-        self.note_3 = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
-            "createNote"
-        ]
+        self.note_3 = self._create_note_fixture(
+            {
+                "title": "Client 2's Note",
+                "publicDetails": "more deets",
+                "client": self.client_user_2.pk,
+            }
+        )["data"]["createNote"]
 
         query = """
             query Notes($filters: NoteFilter) {

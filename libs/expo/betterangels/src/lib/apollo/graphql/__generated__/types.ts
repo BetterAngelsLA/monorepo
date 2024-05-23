@@ -450,9 +450,10 @@ export type NoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
-  client?: InputMaybe<DjangoModelFilterInput>;
+  client?: InputMaybe<Scalars['String']['input']>;
   createdBy?: InputMaybe<DjangoModelFilterInput>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  publicDetails?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum NoteNamespaceEnum {

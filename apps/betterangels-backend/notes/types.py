@@ -150,7 +150,6 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    public_details: auto
     created_by: auto
     is_submitted: auto
 
@@ -165,6 +164,15 @@ class NoteFilter:
             queryset.filter(Q(client__first_name__icontains=value) | Q(client__last_name__icontains=value)),
             Q(),
         )
+
+    @strawberry_django.filter_field
+    def public_details(
+        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if value is None:
+            return queryset, Q()
+
+        return (queryset.filter(public_details__icontains=value), Q())
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
