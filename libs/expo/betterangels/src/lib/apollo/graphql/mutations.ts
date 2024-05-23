@@ -33,30 +33,6 @@ export const GOOGLE_AUTH_MUTATION = gql`
   }
 `;
 
-export const IDME_AUTH_MUTATION = gql`
-  mutation IdmeAuth(
-    $code: String!
-    $codeVerifier: String!
-    $redirectUri: String!
-  ) {
-    idmeAuth(
-      input: {
-        code: $code
-        code_verifier: $codeVerifier
-        redirect_uri: $redirectUri
-      }
-    )
-      @rest(
-        type: "AuthResponse"
-        path: "/rest-auth/idme/?redirect_uri={args.input.redirect_uri}"
-        method: "POST"
-        bodyKey: "input"
-      ) {
-      status_code
-    }
-  }
-`;
-
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {
