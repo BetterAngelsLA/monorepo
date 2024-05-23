@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
+from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from strawberry import Info, auto
@@ -90,12 +91,8 @@ class ClientProfileType:
             return None
 
         today = timezone.now().date()
-
-        return int(
-            today.year
-            - self.date_of_birth.year
-            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
-        )
+        age = relativedelta(today, self.date_of_birth).years
+        return age
 
 
 @strawberry_django.input(User)

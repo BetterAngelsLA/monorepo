@@ -85,18 +85,6 @@ class ClientProfile(models.Model):
     gender = TextChoicesField(choices_enum=GenderEnum)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum)
 
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
-
-        today = timezone.now().date()
-
-        return (
-            today.year
-            - self.date_of_birth.year
-            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
-        )
-
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)
