@@ -7,6 +7,7 @@ import {
 import { GoogleIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  AppleSignIn,
   Button,
   TextBold,
   TextRegular,
@@ -213,6 +214,7 @@ export default function SignIn() {
             onPress={() => promptAsync({ showInRecents: false })}
             disabled={!generatedState && !request}
           />
+          <AppleSignIn></AppleSignIn>
           <Button
             accessibilityHint="send magic link for forgotten password"
             mb="xs"
