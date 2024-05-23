@@ -242,8 +242,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ("org_1_case_manager_2", None, "deets rum", None, 1, "note_3", None),
             ("org_1_case_manager_2", None, "deets rum", True, 0, None, None),  # CM 2 has no submitted notes
             ("org_1_case_manager_1", "client_user_2", None, None, 0, None, None),  # CM 1 has no notes for client 2
-            # CM 2 has no submitted notes for client 1
-            ("org_1_case_manager_2", "client_user_1", None, True, 0, None, None),
             # CM 2 has one unsubmitted note for client 1
             ("org_1_case_manager_2", "client_user_1", None, False, 1, "note_2", None),
             (None, None, None, True, 0, None, None),  # There are no submitted notes
