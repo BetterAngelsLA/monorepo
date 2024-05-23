@@ -80,7 +80,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-    def test_get_client_profile_query(self) -> None:
+    def test_client_profile_query(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         query = """
             query ViewClientProfile($id: ID!) {
@@ -127,7 +127,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(returned_client, expected_client)
 
-    def test_get_client_profiles_query(self) -> None:
+    def test_client_profiles_query(self) -> None:
         query = """
             query ViewClientProfiles {
                 clientProfiles{
@@ -152,6 +152,34 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         client_profiles = response["data"]["clientProfiles"]
         client_profile_count = ClientProfile.objects.count()
+        self.assertEqual(client_profile_count, len(client_profiles))
+
+    @parametrize(
+        ("sort_order, client_profile_label"),
+        [("ASC", "client_profile_2_user"), ("DESC", "client_profile_1_user")],
+    )
+    def test_client_profiles_query_order(
+        self,
+        sort_order: Optional[str],
+        client_profile_label: str,
+    ) -> None:
+        query = """
+            query ViewClientProfiles($order: ClientProfileOrder) {
+                clientProfiles(order: $order) {
+                    id
+                    user {
+                        firstName
+                    }
+                }
+            }
+        """
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"user_FirstName": sort_order}})
+
+        client_profile_count = ClientProfile.objects.count()
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(client_profiles[0]["user"]["firstName"], getattr(self, client_profile_label)["firstName"])
         self.assertEqual(client_profile_count, len(client_profiles))
 
     @parametrize(
