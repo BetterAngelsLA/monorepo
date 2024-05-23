@@ -17,6 +17,7 @@ export default function Interactions() {
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
+      filters: {},
     },
   });
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
