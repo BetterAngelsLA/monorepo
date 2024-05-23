@@ -1,5 +1,6 @@
 from unittest.mock import ANY
 
+from accounts.enums import GenderEnum, LanguageEnum
 from accounts.models import User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
@@ -27,7 +28,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         mutation {
             logout
         }
-    """
+        """
         response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
@@ -36,23 +37,36 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_create_client_profile_mutation(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
+
         client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "email": "firsty_lasty@example.com",
         }
-        variables = {"hmisId": "12345678", "user": client_profile_user}
+
+        variables = {
+            "hmisId": "12345678",
+            "dateOfBirth": self.date_of_birth,
+            "gender": GenderEnum.FEMALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "user": client_profile_user,
+        }
 
         response = self._create_client_profile_fixture(variables)
         client = response["data"]["createClientProfile"]
         expected_client_profile = {
             "id": ANY,
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "age": self.EXPECTED_CLIENT_AGE,
+            "gender": GenderEnum.FEMALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "hmisId": "12345678",
             "user": {
-                "username": ANY,
+                "id": ANY,
                 "firstName": "Firsty",
                 "lastName": "Lasty",
                 "email": "firsty_lasty@example.com",
             },
-            "hmisId": "12345678",
         }
+
         self.assertEqual(client, expected_client_profile)
