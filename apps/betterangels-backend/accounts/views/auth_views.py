@@ -36,11 +36,6 @@ class AppleLogin(SocialLoginView):
     serializer_class = SocialLoginSerializer
     authentication_classes: List[Any] = []
 
-    def post(self, request: Request, *args: T, **kwargs: Any) -> Response:
-        # Get callback_url from the POST data or URL parameters,
-        # if not provided use a default
-        return cast(Response, super().post(request, *args, **kwargs))
-
 
 class AuthRedirectView(APIView):
     def get(self, request: Request) -> Response:
