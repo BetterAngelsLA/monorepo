@@ -57,6 +57,10 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
+    SOCIALACCOUNT_APPLE_SECRET=(str, ""),
+    SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
+    SOCIALACCOUNT_APPLE_CERTIFICATE_KEY=(str, ""),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
@@ -94,8 +98,8 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.apple",
+    "allauth.socialaccount.providers.google",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -164,7 +168,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
                 "settings": {
                     # The certificate you downloaded when generating the key.
-                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_PREFIX")
+                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_KEY")
                 },
             }
         ]

@@ -49,15 +49,18 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
         # More info on code vs access_token
         # http://stackoverflow.com/questions/8666316/facebook-oauth-2-0-code-and-token
 
+        # Access Token Flow
         access_token = attrs.get("access_token")
+        id_token = attrs.get("id_token")  # For sign in with apple
+
+        # Code Flow
         code = attrs.get("code")
         code_verifier = attrs.get("code_verifier")
+
         # Case 1: We received the access_token
-        if access_token:
+        if access_token or id_token:
             tokens_to_parse = {"access_token": access_token}
             token = access_token
-            # For sign in with apple
-            id_token = attrs.get("id_token")
             if id_token:
                 tokens_to_parse["id_token"] = id_token
 
