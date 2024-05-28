@@ -453,6 +453,7 @@ export type NoteFilter = {
   client?: InputMaybe<DjangoModelFilterInput>;
   createdBy?: InputMaybe<DjangoModelFilterInput>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum NoteNamespaceEnum {
