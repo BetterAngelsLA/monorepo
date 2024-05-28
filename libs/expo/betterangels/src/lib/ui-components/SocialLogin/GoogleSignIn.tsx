@@ -160,7 +160,7 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
       accessibilityHint="authorizes with Google"
       mb="xs"
       size="full"
-      title={`Sign-in with Google`} // TODO: make this work with flow
+      title="Continue with Google" // TODO: make this work with flow
       align="center"
       icon={<GoogleIcon size="lg" />}
       variant="dark"

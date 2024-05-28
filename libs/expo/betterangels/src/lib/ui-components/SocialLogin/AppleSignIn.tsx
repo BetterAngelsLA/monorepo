@@ -22,7 +22,7 @@ export function AppleSignIn() {
 
   return (
     <AppleAuthentication.AppleAuthenticationButton
-      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+      buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
       buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
       cornerRadius={5}
       style={styles.button}
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    width: 200,
+    width: '100%', // Adjust width to be flexible and consistent
     height: 44,
   },
 });
