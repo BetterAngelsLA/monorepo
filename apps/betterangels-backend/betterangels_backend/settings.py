@@ -57,6 +57,10 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
+    SOCIALACCOUNT_APPLE_SECRET=(str, ""),
+    SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
+    SOCIALACCOUNT_APPLE_CERTIFICATE_KEY=(str, ""),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
@@ -94,6 +98,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
     "corsheaders",
     "dj_rest_auth",
@@ -149,6 +154,24 @@ SOCIALACCOUNT_PROVIDERS = {
             "access_type": "online",
         },
         "OAUTH_PKCE_ENABLED": True,
+    },
+    "apple": {
+        "APPS": [
+            {
+                # Your service identifier.
+                "client_id": env("SOCIALACCOUNT_APPLE_CLIENT_ID"),
+                # The Key ID (visible in the "View Key Details" page).
+                "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
+                # Member ID/App ID Prefix -- you can find it below your name
+                # at the top right corner of the page, or it’s your App ID
+                # Prefix in your App ID.
+                "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
+                "settings": {
+                    # The certificate you downloaded when generating the key.
+                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_KEY")
+                },
+            }
+        ]
     },
 }
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
