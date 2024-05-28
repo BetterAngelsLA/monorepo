@@ -296,7 +296,6 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
-  idmeAuth: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
@@ -389,11 +388,6 @@ export type MutationGoogleAuthArgs = {
 };
 
 
-export type MutationIdmeAuthArgs = {
-  input: AuthInput;
-};
-
-
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
@@ -459,6 +453,7 @@ export type NoteFilter = {
   client?: InputMaybe<DjangoModelFilterInput>;
   createdBy?: InputMaybe<DjangoModelFilterInput>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum NoteNamespaceEnum {

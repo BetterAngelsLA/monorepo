@@ -1,4 +1,4 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
 
   const { user, isLoading } = useUser();
 
@@ -105,6 +106,18 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="clients"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              router.navigate({
+                pathname: 'clients',
+                params: {
+                  title: '',
+                  select: 'false',
+                },
+              });
+            },
+          }}
           options={{
             headerShadowVisible: false,
             headerStyle: {

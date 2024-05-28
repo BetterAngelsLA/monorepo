@@ -89,11 +89,18 @@ input ClientProfileFilter {
 type ClientProfileType {
   id: ID!
   hmisId: String
+  dateOfBirth: Date
+  preferredLanguage: LanguageEnum!
+  gender: GenderEnum!
   user: UserType!
+  age: Int
 }
 
 input CreateClientProfileInput {
   hmisId: String
+  dateOfBirth: Date
+  preferredLanguage: LanguageEnum
+  gender: GenderEnum
   user: CreateUserInput!
 }
 
@@ -165,6 +172,9 @@ input CreateUserInput {
   email: String
 }
 
+"""Date (isoformat)"""
+scalar Date
+
 """Date with time (isoformat)"""
 scalar DateTime
 
@@ -221,10 +231,21 @@ type FlagType {
   lastModified: DateTime
 }
 
+enum GenderEnum {
+  MALE
+  FEMALE
+  NONBINARY
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+enum LanguageEnum {
+  ENGLISH
+  SPANISH
+}
 
 input LocationInput {
   address: AddressInput
@@ -277,7 +298,6 @@ type MoodType {
 
 type Mutation {
   logout: Boolean!
-  idmeAuth(input: AuthInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
@@ -329,6 +349,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  search: String
 }
 
 enum NoteNamespaceEnum {

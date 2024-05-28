@@ -41,7 +41,7 @@ export { default as GlobeIcon } from './components/GlobeIcon';
 export { default as GoogleIcon } from './components/GoogleIcon';
 export { default as HouseLineIcon } from './components/HouseLineIcon';
 export { default as HouseSolidIcon } from './components/HouseSolidIcon';
-export { default as IdMeIcon } from './components/IdMeIcon';
+export { default as ImageIcon } from './components/ImageIcon';
 export { default as ImagesIcon } from './components/ImagesIcon';
 export { default as InfoIcon } from './components/InfoIcon';
 export { default as ListIcon } from './components/ListIcon';
