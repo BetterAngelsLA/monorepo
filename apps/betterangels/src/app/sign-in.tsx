@@ -10,6 +10,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { Platform } from 'react-native';
 
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -93,7 +94,7 @@ export default function SignIn() {
             clientId={clientId}
             redirectUri={redirectUri}
           ></GoogleSignIn>
-          <AppleSignIn></AppleSignIn>
+          {Platform.OS === 'ios' && <AppleSignIn />}
           <Button
             accessibilityHint="send magic link for forgotten password"
             mb="xs"
