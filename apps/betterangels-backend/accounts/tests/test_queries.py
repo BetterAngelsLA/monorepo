@@ -155,14 +155,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile_count, len(client_profiles))
 
     @parametrize(
-        ("sort_order, client_profile_label"),
-        [("ASC", "client_profile_2_user"), ("DESC", "client_profile_1_user")],
+        ("sort_order, expected_first_name"),
+        [("ASC", "Mister"), ("DESC", "Todd")],
     )
-    def test_client_profiles_query_order(
-        self,
-        sort_order: Optional[str],
-        client_profile_label: str,
-    ) -> None:
+    def test_client_profiles_query_order(self, sort_order: Optional[str], expected_first_name: str) -> None:
         query = """
             query ViewClientProfiles($order: ClientProfileOrder) {
                 clientProfiles(order: $order) {
@@ -179,7 +175,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         client_profile_count = ClientProfile.objects.count()
         client_profiles = response["data"]["clientProfiles"]
-        self.assertEqual(client_profiles[0]["user"]["firstName"], getattr(self, client_profile_label)["firstName"])
+        self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
         self.assertEqual(client_profile_count, len(client_profiles))
 
     @parametrize(
