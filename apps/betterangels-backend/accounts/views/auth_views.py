@@ -23,11 +23,6 @@ class AppleLogin(SocialLoginView):
     serializer_class = SocialLoginSerializer
     authentication_classes: List[Any] = []
 
-    def post(self, request: Request, *args: T, **kwargs: Any) -> Response:
-        # Get callback_url URL parameters
-        self.callback_url = request.query_params.get("redirect_uri")
-        return cast(Response, super().post(request, *args, **kwargs))
-
 
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
