@@ -100,8 +100,8 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
 
       // If code is still not set (meaning it wasn't in the URL), and there's a successful response, get the code from the response.
       if (!code && response && response.type === 'success') {
-        code = response.params?.code;
-        state = response.params?.state;
+        code = response.params?.['code'];
+        state = response.params?.['state'];
       }
 
       // If we still don't have a code or codeVerifier, then we can't proceed.
@@ -145,6 +145,7 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
         subscription.remove();
       };
     }
+    return;
   }, [handleDeepLinking]);
 
   useEffect(() => {

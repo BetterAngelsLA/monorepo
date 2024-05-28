@@ -22,8 +22,6 @@ class AuthInput:
     redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
 
 
-# TODO: I don't think this is the right response
-# The code and code verifier is passed in
 @strawberry.type
 class AuthResponse:
     status_code: str = strawberry.field(name="status_code")

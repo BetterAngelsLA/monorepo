@@ -38,10 +38,9 @@ export function AppleSignIn() {
           if (credential?.identityToken != null) {
             await signIn({ idToken: credential?.identityToken });
           }
-        } catch (e: any) {
-          if ('code' in e) {
+        } catch (e: unknown) {
+          if (e instanceof Error && 'code' in e) {
             if (e.code === 'ERR_REQUEST_CANCELED') {
-              // handle that the user canceled the sign-in flow
               console.log('User canceled the sign-in process.');
             } else {
               console.error('An error occurred during sign-in:', e.message);
