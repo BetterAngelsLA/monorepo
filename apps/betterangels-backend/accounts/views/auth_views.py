@@ -36,13 +36,6 @@ class GoogleLogin(SocialLoginView):
         return cast(Response, super().post(request, *args, **kwargs))
 
 
-class AppleLogin(SocialLoginView):
-    adapter_class = AppleOAuth2Adapter
-    client_class = AppleOAuth2Client
-    serializer_class = SocialLoginSerializer
-    authentication_classes: List[Any] = []
-
-
 class AuthRedirectView(APIView):
     def get(self, request: Request) -> Response:
         state_param = request.query_params.get("state")
