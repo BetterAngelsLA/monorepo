@@ -9,7 +9,7 @@ import { Platform } from 'react-native';
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { googleClientId, redirectUri } from '../../config'; // TODO: We need to rename the cliendId and redirecturi
+import { googleClientId, redirectUri } from '../../config';
 
 const FLOW = {
   title: 'Log In',
