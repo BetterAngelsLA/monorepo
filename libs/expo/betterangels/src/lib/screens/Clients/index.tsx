@@ -39,6 +39,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       filters: {
         search: filterSearch,
       },
+      order: {
+        user_FirstName: 'ASC',
+      },
     },
   });
   const [clients, setClients] = useState<IGroupedClients>();
@@ -99,11 +102,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;
 
-    const clientsToShow = data.clientProfiles
-      .slice(0, paginationLimit)
-      .sort(
-        (a, b) => a.user.firstName?.localeCompare(b.user.firstName || '') || 0
-      );
+    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
     const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
 
     const groupedContacts = clientsToShow.reduce(
