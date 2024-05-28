@@ -1,6 +1,5 @@
 export { default as ArrowLeftIcon } from './components/ArrowLeftIcon';
 export { default as ArrowTrendUpIcon } from './components/ArrowTrendUpIcon';
-export { default as ArrowUpIcon } from './components/ArrowUpIcon';
 export { default as BarsIcon } from './components/BarsIcon';
 export { default as BellIcon } from './components/BellIcon';
 export { default as BirthdayIcon } from './components/BirthdayIcon';

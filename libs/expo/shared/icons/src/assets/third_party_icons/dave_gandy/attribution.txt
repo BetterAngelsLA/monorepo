@@ -15,9 +15,6 @@ Source: https://icon-sets.iconify.design/fa6-regular/face-frown/
 Title: fa6-regular:face-grimace.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-grimace/
 
-Title: fa6-regular:face-grin-beam.svg
-Source: https://icon-sets.iconify.design/fa6-regular/face-grin-beam/
-
 Title: fa6-regular:face-grin-stars.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-grin-stars/
 
