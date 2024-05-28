@@ -89,11 +89,11 @@ export default function SignIn() {
           </TextRegular>
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
-          <AppleSignIn></AppleSignIn>
           <GoogleSignIn
             clientId={clientId}
             redirectUri={redirectUri}
           ></GoogleSignIn>
+          <AppleSignIn></AppleSignIn>
           <Button
             accessibilityHint="send magic link for forgotten password"
             mb="xs"
