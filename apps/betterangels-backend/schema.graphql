@@ -59,9 +59,10 @@ enum AttachmentType {
 }
 
 input AuthInput {
-  code: String!
-  code_verifier: String!
-  redirect_uri: String!
+  code: String
+  code_verifier: String
+  id_token: String
+  redirect_uri: String
 }
 
 type AuthResponse {
@@ -299,6 +300,7 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   googleAuth(input: AuthInput!): AuthResponse!
+  appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)

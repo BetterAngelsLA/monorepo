@@ -49,6 +49,11 @@ class Mutation:
         return AuthResponse(status_code="")
 
     @strawberry.mutation
+    def apple_auth(self, input: AuthInput) -> AuthResponse:
+        # The is a stub and logic is handled client-side by Apollo
+        return AuthResponse(status_code="")
+
+    @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
         request = get_request(info)
         base_url = request.build_absolute_uri()
