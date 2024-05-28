@@ -25,6 +25,7 @@ export default function useSignIn(mutation: DocumentNode) {
     [socialAuth, refetchUser]
   );
 
+  // NOTE: We may want to consider putting this routing elsewhere.
   useEffect(() => {
     if (user) {
       router.replace(user.hasOrganization ? '/' : '/welcome');

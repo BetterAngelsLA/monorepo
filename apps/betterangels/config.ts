@@ -18,6 +18,7 @@ function loadConfig() {
   return { apiUrl, clientId, redirectUri };
 }
 
+// TODO: We need to rename the cliendId and redirecturi to google namespace
 const { apiUrl, clientId, redirectUri } = loadConfig();
 
 export { apiUrl, clientId, redirectUri };
