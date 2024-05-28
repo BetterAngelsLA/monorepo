@@ -14,7 +14,6 @@ import { googleClientId, redirectUri } from '../../config';
 const FLOW = {
   title: 'Log In',
   message: null,
-  question: "Don't have an account?",
   link: 'Sign up',
 };
 
