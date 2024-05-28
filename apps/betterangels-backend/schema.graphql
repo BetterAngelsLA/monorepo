@@ -349,6 +349,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  search: String
 }
 
 enum NoteNamespaceEnum {
