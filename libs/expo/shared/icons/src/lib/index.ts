@@ -12,7 +12,7 @@ export { default as BookOpenIcon } from './components/BookOpenIcon';
 export { default as BottleWaterIcon } from './components/BottleWaterIcon';
 export { default as BriefcaseMedicalIcon } from './components/BriefcaseMedicalIcon';
 export { default as BurgerSodaIcon } from './components/BurgerSodaIcon';
-export { default as CalendarIcon } from './components/CalendarIcon';
+export { default as CalendarLineIcon } from './components/CalendarLineIcon';
 export { default as CalendarPlusIcon } from './components/CalendarPlusIcon';
 export { default as CalendarSolidIcon } from './components/CalendarSolidIcon';
 export { default as CameraIcon } from './components/CameraIcon';

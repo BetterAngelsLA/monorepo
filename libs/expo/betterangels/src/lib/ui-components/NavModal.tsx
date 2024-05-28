@@ -1,6 +1,6 @@
 import {
   BurgerSodaIcon,
-  CalendarIcon,
+  CalendarLineIcon,
   HouseLineIcon,
   ListIcon,
   MapLineIcon,
@@ -48,7 +48,7 @@ const ACTIONS = [
   },
   {
     title: 'Schedule',
-    Icon: CalendarIcon,
+    Icon: CalendarLineIcon,
     route: '#',
   },
 ];

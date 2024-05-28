@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
-  CalendarIcon,
+  CalendarLineIcon,
   CalendarSolidIcon,
   HouseLineIcon,
   HouseSolidIcon,
@@ -94,7 +94,7 @@ export default function TabLayout() {
                 {focused ? (
                   <CalendarSolidIcon color={color} />
                 ) : (
-                  <CalendarIcon color={color} />
+                  <CalendarLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Appointment
@@ -190,7 +190,7 @@ export default function TabLayout() {
                 {focused ? (
                   <CalendarSolidIcon color={color} />
                 ) : (
-                  <CalendarIcon color={color} />
+                  <CalendarLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Calendar
