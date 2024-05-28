@@ -1,4 +1,4 @@
-import BarsIconSVG from '../../assets/third_party_icons/jay_newey/svg/charm:menu-hamburger.svg';
+import BarsIconSVG from '../../assets/third_party_icons/dave_gandy/svg/fa6-solid:bars.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const BarsIcon = createSvgIcon(BarsIconSVG);
