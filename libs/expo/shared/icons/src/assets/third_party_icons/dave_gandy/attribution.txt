@@ -1,5 +1,8 @@
 The icons listed below, by Dave Gandy (https://github.com/FortAwesome/Font-Awesome), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 
+Title: fa6-brands:google.svg
+Source: https://icon-sets.iconify.design/fa6-brands/google/
+
 Title: fa-solid:sort.svg
 Source: https://icon-sets.iconify.design/fa-solid/sort/
 
