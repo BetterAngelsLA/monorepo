@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
+from accounts.enums import GenderEnum, LanguageEnum
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -86,7 +87,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 clientProfile(pk: $id) {
                     id
                     hmisId
+                    gender
+                    dateOfBirth
+                    age
+                    preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email
@@ -104,6 +110,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         returned_client = response["data"]["clientProfile"]
 
         expected_user = {
+            "id": str(self.client_profile_1["user"]["id"]),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
             "email": self.client_profile_1_user["email"],
@@ -111,6 +118,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         expected_client = {
             "id": str(client_profile_id),
             "hmisId": self.client_profile_1["hmisId"],
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "age": self.EXPECTED_CLIENT_AGE,
+            "gender": GenderEnum.MALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
             "user": expected_user,
         }
 
@@ -122,7 +133,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 clientProfiles{
                     id
                     hmisId
+                    gender
+                    dateOfBirth
+                    age
+                    preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email

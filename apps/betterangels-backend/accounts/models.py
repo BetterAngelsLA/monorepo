@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
+from accounts.enums import GenderEnum, LanguageEnum
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -11,6 +12,7 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
+from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
@@ -78,6 +80,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = TextChoicesField(choices_enum=GenderEnum)
+    preferred_language = TextChoicesField(choices_enum=LanguageEnum)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
