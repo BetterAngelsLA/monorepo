@@ -27,20 +27,20 @@ Source: https://icon-sets.iconify.design/fa6-regular/face-grin-wink/
 Title: fa6-regular:face-laugh.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-laugh/
 
-Title: fa6-regular:face-meh-blank.svg
-Source: https://icon-sets.iconify.design/fa6-regular/face-meh-blank/
-
 Title: fa6-regular:face-meh.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-meh/
+
+Title: fa6-regular:face-meh-blank.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-meh-blank/
 
 Title: fa6-regular:face-rolling-eyes.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-rolling-eyes/
 
-Title: fa6-regular:face-smile-beam.svg
-Source: https://icon-sets.iconify.design/fa6-regular/face-smile-beam/
-
 Title: fa6-regular:face-smile.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-smile/
+
+Title: fa6-regular:face-smile-beam.svg
+Source: https://icon-sets.iconify.design/fa6-regular/face-smile-beam/
 
 Title: fa6-regular:face-tired.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-tired/
@@ -51,6 +51,9 @@ Source: https://icon-sets.iconify.design/fa6-solid/bars/
 Title: fa6-solid:chevron-left.svg
 Source: https://icon-sets.iconify.design/fa6-solid/chevron-left/
 
+Title: fa6-solid:flag.svg
+Source: https://icon-sets.iconify.design/fa6-solid/flag/
+
 Title: fa6-solid:location-arrow.svg
 Source: https://icon-sets.iconify.design/fa6-solid/location-arrow/
 
@@ -59,7 +62,3 @@ Source: https://icon-sets.iconify.design/fa6-solid/paperclip/
 
 Title: fa6-solid:plus.svg
 Source: https://icon-sets.iconify.design/fa6-solid/plus/
-
-Title: fa6-solid:flag.svg
-Source: https://icon-sets.iconify.design/fa6-solid/flag/
-
