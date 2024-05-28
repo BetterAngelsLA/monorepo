@@ -1,5 +1,4 @@
 export { default as ArrowLeftIcon } from './components/ArrowLeftIcon';
-export { default as ArrowRotateReverseIcon } from './components/ArrowRotateReverseIcon';
 export { default as ArrowTrendUpIcon } from './components/ArrowTrendUpIcon';
 export { default as ArrowUpIcon } from './components/ArrowUpIcon';
 export { default as BarsIcon } from './components/BarsIcon';
@@ -16,6 +15,7 @@ export { default as CalendarLineIcon } from './components/CalendarLineIcon';
 export { default as CalendarPlusIcon } from './components/CalendarPlusIcon';
 export { default as CalendarSolidIcon } from './components/CalendarSolidIcon';
 export { default as CameraIcon } from './components/CameraIcon';
+export { default as CameraRotateIcon } from './components/CameraRotateIcon';
 export { default as CarIcon } from './components/CarIcon';
 export { default as CheckIcon } from './components/CheckIcon';
 export { default as ChevronLeftIcon } from './components/ChevronLeftIcon';

@@ -9,7 +9,6 @@ Source: https://icon-sets.iconify.design/fa6-regular/face-angry/
 Title: fa6-regular:face-dizzy.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-dizzy/
 
-
 Title: fa6-regular:face-frown.svg
 Source: https://icon-sets.iconify.design/fa6-regular/face-frown/
 
@@ -54,6 +53,9 @@ Source: https://icon-sets.iconify.design/fa6-solid/bars/
 
 Title: fa6-solid:chevron-left.svg
 Source: https://icon-sets.iconify.design/fa6-solid/chevron-left/
+
+Title: fa6-solid:location-arrow.svg
+Source: https://icon-sets.iconify.design/fa6-solid/location-arrow/
 
 Title: fa6-solid:paperclip.svg
 Source: https://icon-sets.iconify.design/fa6-solid/paperclip/
