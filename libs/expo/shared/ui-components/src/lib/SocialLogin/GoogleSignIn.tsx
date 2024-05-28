@@ -1,13 +1,12 @@
 import { gql } from '@apollo/client';
 import { GoogleIcon } from '@monorepo/expo/shared/icons';
-import { Button } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, Linking, Text } from 'react-native';
-import useSignIn from '../../hooks/user/useSignIn';
+import Button from '../Button';
 
 export const GOOGLE_AUTH_MUTATION = gql`
   mutation GoogleAuth(
@@ -119,11 +118,7 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
           return;
         }
       }
-      await signIn({
-        code,
-        codeVerifier: request?.codeVerifier,
-        redirectUri,
-      });
+      await signIn(code, request?.codeVerifier, redirectUri);
     },
     [redirectUri, request?.codeVerifier, request?.state, response, signIn]
   );

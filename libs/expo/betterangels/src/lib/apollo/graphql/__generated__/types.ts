@@ -12,6 +12,8 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** Date (isoformat) */
+  Date: { input: any; output: any; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
   /** Decimal (fixed-point) */
@@ -61,9 +63,10 @@ export enum AttachmentType {
 }
 
 export type AuthInput = {
-  code: Scalars['String']['input'];
-  code_verifier: Scalars['String']['input'];
-  redirect_uri: Scalars['String']['input'];
+  code?: InputMaybe<Scalars['String']['input']>;
+  code_verifier?: InputMaybe<Scalars['String']['input']>;
+  id_token?: InputMaybe<Scalars['String']['input']>;
+  redirect_uri?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AuthResponse = {
@@ -92,13 +95,20 @@ export type ClientProfileFilter = {
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
+  age?: Maybe<Scalars['Int']['output']>;
+  dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  gender: GenderEnum;
   hmisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  preferredLanguage: LanguageEnum;
   user: UserType;
 };
 
 export type CreateClientProfileInput = {
+  dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
+  preferredLanguage?: InputMaybe<LanguageEnum>;
   user: CreateUserInput;
 };
 
@@ -226,6 +236,17 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
+export enum GenderEnum {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  Nonbinary = 'NONBINARY'
+}
+
+export enum LanguageEnum {
+  English = 'ENGLISH',
+  Spanish = 'SPANISH'
+}
+
 export type LocationInput = {
   address?: InputMaybe<AddressInput>;
   point: Scalars['Point']['input'];
@@ -281,6 +302,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
+  appleAuth: AuthResponse;
   createClientProfile: CreateClientProfilePayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
@@ -310,6 +332,11 @@ export type Mutation = {
 
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
+};
+
+
+export type MutationAppleAuthArgs = {
+  input: AuthInput;
 };
 
 

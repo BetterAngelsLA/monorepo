@@ -3,18 +3,28 @@ import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import useUser from './useUser';
 
+interface SignInParams {
+  code?: string;
+  codeVerifier?: string;
+  idToken?: string;
+  redirectUri?: string;
+}
+
 export default function useSignIn(mutation: DocumentNode) {
   const { user, refetchUser } = useUser();
   const [socialAuth, { loading, error }] = useMutation(mutation);
 
   const signIn = useCallback(
-    async (code: string, codeVerifier: string, redirectUri: string) => {
+    async ({ code, codeVerifier, redirectUri, idToken }: SignInParams) => {
       try {
         await socialAuth({
           variables: {
             code,
             codeVerifier,
-            redirectUri: encodeURIComponent(redirectUri),
+            idToken: idToken,
+            redirectUri: redirectUri
+              ? encodeURIComponent(redirectUri)
+              : undefined,
           },
         });
         refetchUser();
