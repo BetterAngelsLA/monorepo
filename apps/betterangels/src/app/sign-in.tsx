@@ -14,7 +14,6 @@ import { googleClientId, redirectUri } from '../../config';
 const FLOW = {
   title: 'Log In',
   message: null,
-  link: 'Sign up',
 };
 
 export default function SignIn() {
