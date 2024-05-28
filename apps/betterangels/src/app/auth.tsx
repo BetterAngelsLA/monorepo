@@ -31,21 +31,7 @@ export default function Auth() {
                 },
               })
             }
-            title="SIGN IN"
-            size="full"
-            variant="sky"
-          />
-          <Button
-            accessibilityHint="goes to sign up screen"
-            onPress={() =>
-              router.navigate({
-                pathname: '/sign-in',
-                params: {
-                  type: 'sign-up',
-                },
-              })
-            }
-            title="SIGN UP"
+            title="Get Started"
             size="full"
             variant="sky"
           />

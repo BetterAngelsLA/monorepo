@@ -3,7 +3,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 
 function loadConfig() {
-  const clientId = process.env.EXPO_PUBLIC_CLIENT_ID;
+  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const redirectUri =
     Platform.OS === 'web'
@@ -11,13 +11,13 @@ function loadConfig() {
       : process.env.EXPO_PUBLIC_REDIRECT_URL;
 
   // Check if any of the environment variables are undefined
-  if (!clientId || !apiUrl || !redirectUri) {
+  if (!googleClientId || !apiUrl || !redirectUri) {
     throw new Error('One or more environment variables are undefined.');
   }
 
-  return { apiUrl, clientId, redirectUri };
+  return { apiUrl, googleClientId, redirectUri };
 }
 
-const { apiUrl, clientId, redirectUri } = loadConfig();
+const { apiUrl, googleClientId, redirectUri } = loadConfig();
 
-export { apiUrl, clientId, redirectUri };
+export { apiUrl, googleClientId, redirectUri };
