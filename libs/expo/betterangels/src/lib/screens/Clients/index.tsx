@@ -41,7 +41,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         search: filterSearch,
       },
       order: {
-        user_FirstName: Ordering.Asc,
+        user_FirstName: Ordering.AscNullsFirst,
       },
     },
   });
