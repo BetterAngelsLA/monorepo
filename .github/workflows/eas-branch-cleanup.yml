@@ -42,7 +42,7 @@ jobs:
         id: set-matrix
         run: |
           # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+          affected_projects=$(yarn nx show projects --affected  --exclude=shelter --withTarget eas-update)
           # Convert the list to a JSON matrix
           MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
             split("\n") |
