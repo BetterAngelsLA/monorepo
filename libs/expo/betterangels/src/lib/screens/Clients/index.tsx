@@ -10,6 +10,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, View } from 'react-native';
+import { Ordering } from '../../apollo';
 import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -40,7 +41,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         search: filterSearch,
       },
       order: {
-        user_FirstName: 'ASC',
+        user_FirstName: Ordering.Asc,
       },
     },
   });
