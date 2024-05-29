@@ -27,6 +27,12 @@ class AuthResponse:
     status_code: str = strawberry.field(name="status_code")
 
 
+@strawberry_django.ordering.order(ClientProfile)
+class ClientProfileOrder:
+    user__first_name: auto
+    user__last_name: auto
+
+
 @filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
@@ -75,7 +81,7 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, pagination=True)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType:
     id: auto
     hmis_id: auto

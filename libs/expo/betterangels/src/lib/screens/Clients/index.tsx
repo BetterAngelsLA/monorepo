@@ -10,6 +10,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, View } from 'react-native';
+import { Ordering } from '../../apollo';
 import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -38,6 +39,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       pagination: { limit: paginationLimit + 1, offset },
       filters: {
         search: filterSearch,
+      },
+      order: {
+        user_FirstName: Ordering.AscNullsFirst,
       },
     },
   });
@@ -99,11 +103,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;
 
-    const clientsToShow = data.clientProfiles
-      .slice(0, paginationLimit)
-      .sort(
-        (a, b) => a.user.firstName?.localeCompare(b.user.firstName || '') || 0
-      );
+    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
     const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
 
     const groupedContacts = clientsToShow.reduce(

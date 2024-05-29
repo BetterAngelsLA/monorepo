@@ -32,8 +32,9 @@ mutation CreateNote($data: CreateNoteInput!) {
 query ClientProfiles(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
+  $order: ClientProfileOrder
 ) {
-  clientProfiles(filters: $filters, pagination: $pagination) {
+  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
       hmisId

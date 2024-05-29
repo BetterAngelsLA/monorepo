@@ -13,6 +13,7 @@ export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __type
 export type ClientProfilesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientProfileFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
+  order?: Types.InputMaybe<Types.ClientProfileOrder>;
 }>;
 
 
@@ -77,8 +78,8 @@ export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutati
 export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
 export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;
 export const ClientProfilesDocument = gql`
-    query ClientProfiles($filters: ClientProfileFilter, $pagination: OffsetPaginationInput) {
-  clientProfiles(filters: $filters, pagination: $pagination) {
+    query ClientProfiles($filters: ClientProfileFilter, $pagination: OffsetPaginationInput, $order: ClientProfileOrder) {
+  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
       hmisId
@@ -108,6 +109,7 @@ export const ClientProfilesDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
  *   },
  * });
  */
