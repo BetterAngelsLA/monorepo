@@ -10,7 +10,8 @@
         "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
       },
       "channel": "development",
-      "node": "20.12.2"
+      "node": "20.12.2",
+      "yarn": "4.2.2"
     },
     "preview": {
       "distribution": "internal",
@@ -20,7 +21,8 @@
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
         "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
       },
-      "node": "20.12.2"
+      "node": "20.12.2",
+      "yarn": "4.2.2"
     },
     "production": {
       "android": {
@@ -32,7 +34,8 @@
         "EXPO_PUBLIC_REDIRECT_URL": "<FILL_FOR_PRODUCTION>"
       },
       "channel": "production",
-      "node": "20.12.2"
+      "node": "20.12.2",
+      "yarn": "4.2.2"
     }
   },
   "submit": {
