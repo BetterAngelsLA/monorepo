@@ -67,6 +67,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
+    concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
@@ -119,11 +120,18 @@ jobs:
           cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
-      - name: 🚀 Create preview
-        uses: expo/expo-github-action/preview@v8
-        id: expo_preview
+      - name: Continuously Deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          command: eas update --auto
-          comment: true
+          profile: ${{ github.event_name != 'pull_request' && 'production' || 'preview' }}
+          branch: ${{ github.event_name != 'pull_request' && 'production' || 'preview' }}
           working-directory: apps/${{ matrix.project }}
-          qr-target: expo-go
+
+      # - name: 🚀 Create preview
+      #   uses: expo/expo-github-action/preview@v8
+      #   id: expo_preview
+      #   with:
+      #     command: eas update --auto
+      #     comment: true
+      #     working-directory: apps/${{ matrix.project }}
+      #     qr-target: expo-go
