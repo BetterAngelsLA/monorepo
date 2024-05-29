@@ -144,10 +144,12 @@ class Location(BaseModel):
     objects = models.Manager()
 
     def __str__(self) -> str:
-        if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
-            return str(self.address)
-        elif self.point_of_interest:
+        if self.point_of_interest:
             return f"{self.point_of_interest} ({str(self.point.coords)})"
+        elif self.address and self.address.formatted_address:
+            return self.address.formatted_address
+        elif self.address and str(self.address) != Address.ADDRESS_DEFAULT:
+            return str(self.address)
 
         return str(self.point.coords)
 
