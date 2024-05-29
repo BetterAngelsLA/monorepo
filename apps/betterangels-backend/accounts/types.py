@@ -16,16 +16,21 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 @strawberry.input
 class AuthInput:
-    code: str = strawberry.field(name="code")
-    code_verifier: str = strawberry.field(name="code_verifier")
-    redirect_uri: str = strawberry.field(name="redirect_uri")
+    code: Optional[str] = strawberry.field(name="code")
+    code_verifier: Optional[str] = strawberry.field(name="code_verifier")
+    id_token: Optional[str] = strawberry.field(name="id_token")
+    redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
 
 
-# TODO: I don't think this is the right response
-# The code and code verifier is passed in
 @strawberry.type
 class AuthResponse:
     status_code: str = strawberry.field(name="status_code")
+
+
+@strawberry_django.ordering.order(ClientProfile)
+class ClientProfileOrder:
+    user__first_name: auto
+    user__last_name: auto
 
 
 @filter(ClientProfile)
@@ -76,7 +81,7 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, pagination=True)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType:
     id: auto
     hmis_id: auto

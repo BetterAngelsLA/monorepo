@@ -9,30 +9,6 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
   }
 `;
 
-export const GOOGLE_AUTH_MUTATION = gql`
-  mutation GoogleAuth(
-    $code: String!
-    $codeVerifier: String!
-    $redirectUri: String!
-  ) {
-    googleAuth(
-      input: {
-        code: $code
-        code_verifier: $codeVerifier
-        redirect_uri: $redirectUri
-      }
-    )
-      @rest(
-        type: "AuthResponse"
-        path: "/rest-auth/google/?redirect_uri={args.input.redirect_uri}"
-        method: "POST"
-        bodyKey: "input"
-      ) {
-      status_code
-    }
-  }
-`;
-
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {
