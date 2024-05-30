@@ -43,7 +43,7 @@
     "@nx/webpack": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter",
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter && corepack enable && corepack install",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/shelter"
   },
   "devDependencies": {
