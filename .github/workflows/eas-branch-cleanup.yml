@@ -27,9 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.12.2
-      - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -72,9 +69,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.12.2
-      - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
