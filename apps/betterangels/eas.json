@@ -7,7 +7,8 @@
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
-        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
+        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk",
+        "SKIP_YARN_COREPACK_CHECK": 0
       },
       "channel": "development",
       "node": "20.12.2"
@@ -18,7 +19,8 @@
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
-        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
+        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk",
+        "SKIP_YARN_COREPACK_CHECK": 0
       },
       "node": "20.12.2"
     },
@@ -29,7 +31,8 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "<FILL_FOR_PRODUCTION>",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<FILL_FOR_PRODUCTION>",
-        "EXPO_PUBLIC_REDIRECT_URL": "<FILL_FOR_PRODUCTION>"
+        "EXPO_PUBLIC_REDIRECT_URL": "<FILL_FOR_PRODUCTION>",
+        "SKIP_YARN_COREPACK_CHECK": 0
       },
       "channel": "production",
       "node": "20.12.2"
