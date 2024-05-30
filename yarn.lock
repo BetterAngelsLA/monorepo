@@ -109,6 +109,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/client@patch:@apollo/client@npm%3A3.10.3#.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch::locator=%40monorepo%2Fsource%40workspace%3A.":
+  version: 3.10.3
+  resolution: "@apollo/client@patch:@apollo/client@npm%3A3.10.3#.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch::version=3.10.3&hash=959a0b&locator=%40monorepo%2Fsource%40workspace%3A."
+  dependencies:
+    "@graphql-typed-document-node/core": "npm:^3.1.1"
+    "@wry/caches": "npm:^1.0.0"
+    "@wry/equality": "npm:^0.5.6"
+    "@wry/trie": "npm:^0.5.0"
+    graphql-tag: "npm:^2.12.6"
+    hoist-non-react-statics: "npm:^3.3.2"
+    optimism: "npm:^0.18.0"
+    prop-types: "npm:^15.7.2"
+    rehackt: "npm:^0.1.0"
+    response-iterator: "npm:^0.2.6"
+    symbol-observable: "npm:^4.0.0"
+    ts-invariant: "npm:^0.10.3"
+    tslib: "npm:^2.3.0"
+    zen-observable-ts: "npm:^1.2.5"
+  peerDependencies:
+    graphql: ^15.0.0 || ^16.0.0
+    graphql-ws: ^5.5.5
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+  peerDependenciesMeta:
+    graphql-ws:
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    subscriptions-transport-ws:
+      optional: true
+  checksum: 10/3f1253052d72d0bcd9feeba1d8c89c0925f427141c394d4cca27d514781f7114320e38c2c5a23d1f208c21c21ba4c7e33e351ab58da5368014bc1052d73319f1
+  languageName: node
+  linkType: hard
+
 "@apollo/client@patch:@apollo/client@npm%3A3.10.3#~/.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch":
   version: 3.10.3
   resolution: "@apollo/client@patch:@apollo/client@npm%3A3.10.3#~/.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch::version=3.10.3&hash=959a0b"

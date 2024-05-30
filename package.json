@@ -122,6 +122,6 @@
   },
   "packageManager": "yarn@4.2.2",
   "resolutions": {
-    "@apollo/client@npm:^3.8.0": "patch:@apollo/client@npm%3A3.10.3#~/.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch"
+    "@apollo/client@npm:^3.8.0": "patch:@apollo/client@npm%3A3.10.3#.yarn/patches/@apollo-client-npm-3.10.3-793436d507.patch"
   }
 }
