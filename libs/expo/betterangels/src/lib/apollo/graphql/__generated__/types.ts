@@ -185,6 +185,8 @@ export type CreateUserInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -316,6 +318,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientProfile: DeleteClientProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
@@ -382,6 +385,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteClientProfileArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 
