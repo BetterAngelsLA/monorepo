@@ -93,6 +93,11 @@ export type ClientProfileFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ClientProfileOrder = {
+  user_FirstName?: InputMaybe<Ordering>;
+  user_LastName?: InputMaybe<Ordering>;
+};
+
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   age?: Maybe<Scalars['Int']['output']>;
@@ -613,6 +618,7 @@ export type QueryClientProfileArgs = {
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
+  order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

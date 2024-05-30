@@ -87,6 +87,11 @@ input ClientProfileFilter {
   search: String
 }
 
+input ClientProfileOrder {
+  user_FirstName: Ordering
+  user_LastName: Ordering
+}
+
 type ClientProfileType {
   id: ID!
   hmisId: String
@@ -432,7 +437,7 @@ scalar Point
 type Query {
   currentUser: UserType!
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
-  clientProfiles(filters: ClientProfileFilter, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
