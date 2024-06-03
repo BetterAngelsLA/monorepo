@@ -1,12 +1,12 @@
 import {
   BurgerSodaIcon,
-  CalendarIcon,
-  HouseBlankIcon,
+  CalendarLineIcon,
+  HouseLineIcon,
   ListIcon,
-  MapIcon,
+  MapLineIcon,
   NoteIcon,
   SignOutIcon,
-  UsersIcon,
+  UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -18,17 +18,17 @@ import MainModal from './MainModal';
 const ACTIONS = [
   {
     title: 'Home',
-    Icon: HouseBlankIcon,
+    Icon: HouseLineIcon,
     route: '#',
   },
   {
     title: 'Clients',
-    Icon: UsersIcon,
+    Icon: UsersLineIcon,
     route: '#',
   },
   {
     title: 'Map',
-    Icon: MapIcon,
+    Icon: MapLineIcon,
     route: '#',
   },
   {
@@ -48,7 +48,7 @@ const ACTIONS = [
   },
   {
     title: 'Schedule',
-    Icon: CalendarIcon,
+    Icon: CalendarLineIcon,
     route: '#',
   },
 ];

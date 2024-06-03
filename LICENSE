@@ -1,0 +1,15 @@
+## Better Angels Licensing Details
+
+All of the source code to this product is released as free (https://www.gnu.org/philosophy/free-sw.html) and open source (https://www.opensource.org/docs/definition.php), licensed under the GNU Affero General Public License (AGPL). This license ensures that our code remains free and open, encouraging others to contribute and share improvements while also ensuring that any modifications are made available to the community.
+
+This repository includes several different types of files, including open-source assets from various creators, each provided under their respective license. You can freely use, copy, modify, and distribute the app's source code and data files, as long as you include attribution to Better Angels United, Inc and let anyone freely modify and distribute any of your own modifications to the app's files. You must also keep any third-party copyright and license notices present in the source code.
+
+If you have any questions about the licensing details or can provide information regarding any missing or incorrect licenses, please contact Better Angels United, Inc at <EMAIL>.
+
+Below is a summary of the third-party assets used herein. For additional information regarding licensing and attribution requirements and contribution guidelines, please refer to the README in the respective directory.
+
+svg
+
+    libs/expo/shared/icons/src/assets/
+
+We are grateful to the open-source community for their invaluable contributions. By integrating these assets, we not only enhance our application but also contribute to a broader ecosystem of shared resources and innovation. Thank you for supporting open source!
