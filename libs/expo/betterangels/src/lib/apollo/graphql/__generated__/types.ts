@@ -102,10 +102,10 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   age?: Maybe<Scalars['Int']['output']>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
-  gender: GenderEnum;
+  gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  preferredLanguage: LanguageEnum;
+  preferredLanguage?: Maybe<LanguageEnum>;
   user: UserType;
 };
 

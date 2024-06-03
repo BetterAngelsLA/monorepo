@@ -96,8 +96,8 @@ type ClientProfileType {
   id: ID!
   hmisId: String
   dateOfBirth: Date
-  preferredLanguage: LanguageEnum!
-  gender: GenderEnum!
+  preferredLanguage: LanguageEnum
+  gender: GenderEnum
   user: UserType!
   age: Int
 }

@@ -95,21 +95,22 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        user = get_current_user(info)
+        with transaction.atomic():
+            user = get_current_user(info)
 
-        try:
-            client_profile = filter_for_user(
-                ClientProfile.objects.all(),
-                user,
-                [ClientProfilePermissions.DELETE],
-            ).get(id=data.id)
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.DELETE],
+                ).get(id=data.id)
 
-            client_profile_id = client_profile.pk
+                client_profile_id = client_profile.pk
 
-            # Deleting the underlying user will cascade and delete the client profile
-            client_profile.user.delete()
+                # Deleting the underlying user will cascade and delete the client profile
+                client_profile.user.delete()
 
-        except ClientProfile.DoesNotExist:
-            raise PermissionError("User lacks proper organization or permissions")
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("User lacks proper organization or permissions")
 
-        return DeletedObjectType(id=client_profile_id)
+            return DeletedObjectType(id=client_profile_id)
