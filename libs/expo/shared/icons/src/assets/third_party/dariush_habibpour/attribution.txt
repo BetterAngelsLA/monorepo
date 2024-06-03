@@ -1,0 +1,8 @@
+The icons listed below, by Dariush Habibpour (https://github.com/dariushhpg1/IconaMoon), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Title: iconamoon:check-bold.svg
+Source: https://icon-sets.iconify.design/iconamoon/check-bold/
+
+Title: iconamoon:trend-up.svg
+Source: https://icon-sets.iconify.design/iconamoon/trend-up/
+

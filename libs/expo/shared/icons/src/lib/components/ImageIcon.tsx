@@ -1,6 +1,6 @@
-import ImageIconSVG from '../../assets/image.svg';
+import ImagesIconSVG from '../../assets/third_party/phosphor/svg/ph:image.svg';
 import createSvgIcon from '../createSvgIcon';
 
-const ImageIcon = createSvgIcon(ImageIconSVG);
+const ImagesIcon = createSvgIcon(ImagesIconSVG);
 
-export default ImageIcon;
+export default ImagesIcon;

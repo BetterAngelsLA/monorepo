@@ -1,10 +1,10 @@
 import { gql, useMutation } from '@apollo/client';
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import {
-  ArrowRotateReverseIcon,
   BoltIcon,
   BoltSlashIcon,
   CameraIcon,
+  CameraRotateIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
@@ -248,7 +248,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
                   accessibilityHint="toggles front/back camera"
                   variant="transparent"
                 >
-                  <ArrowRotateReverseIcon color={Colors.WHITE} />
+                  <CameraRotateIcon color={Colors.WHITE} />
                 </IconButton>
               </View>
             </View>

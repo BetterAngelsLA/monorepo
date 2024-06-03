@@ -1,4 +1,4 @@
-import { CalendarIcon, ClockIcon } from '@monorepo/expo/shared/icons';
+import { CalendarLineIcon, ClockIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
@@ -153,7 +153,7 @@ export function DatePicker(props: IDatePickerProps) {
           {mode === 'time' ? (
             <ClockIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
           ) : (
-            <CalendarIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+            <CalendarLineIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
           )}
         </Pressable>
       </View>
