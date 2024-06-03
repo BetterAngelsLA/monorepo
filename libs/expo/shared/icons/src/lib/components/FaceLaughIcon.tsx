@@ -1,4 +1,4 @@
-import FaceLaughSVG from '../../assets/third_party_icons/dave_gandy/svg/fa6-regular:face-laugh.svg';
+import FaceLaughSVG from '../../assets/third_party/dave_gandy/svg/fa6-regular:face-laugh.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const FaceLaugh = createSvgIcon(FaceLaughSVG);

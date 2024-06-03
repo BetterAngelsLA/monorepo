@@ -1,4 +1,4 @@
-import SolidCircle from '../../assets/third_party_icons/pictogrammers/svg/mdi:circle.svg';
+import SolidCircle from '../../assets/third_party/pictogrammers/svg/mdi:circle.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const CircleSolidIcon = createSvgIcon(SolidCircle);
