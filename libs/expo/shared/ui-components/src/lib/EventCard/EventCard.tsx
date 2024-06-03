@@ -1,4 +1,4 @@
-import { CalendarIcon, ListIcon } from '@monorepo/expo/shared/icons';
+import { CalendarLineIcon, ListIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import TextBold from '../TextBold';
@@ -36,7 +36,7 @@ export function EventCard(props: IEventCardProps) {
     >
       <View style={{ flex: 1 }}>
         {type === 'event' ? (
-          <CalendarIcon mb="lg" color={Colors.NEUTRAL_DARK} />
+          <CalendarLineIcon mb="lg" color={Colors.NEUTRAL_DARK} />
         ) : (
           <ListIcon mb="lg" color={Colors.NEUTRAL_DARK} />
         )}

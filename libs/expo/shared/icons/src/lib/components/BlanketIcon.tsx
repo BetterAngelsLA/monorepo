@@ -1,4 +1,4 @@
-import BlanketIconSVG from '../../assets/blanket.svg';
+import BlanketIconSVG from '../../assets/third_party/atisa/svg/bx:blanket.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const BlanketIcon = createSvgIcon(BlanketIconSVG);
