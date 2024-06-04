@@ -146,9 +146,7 @@ class Location(BaseModel):
     objects = models.Manager()
 
     def __str__(self) -> str:
-        if self.point_of_interest:
-            return f"{self.point_of_interest} ({str(self.point.coords)})"
-        elif self.address and str(self.address) != Address.ADDRESS_DEFAULT:
+        if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
             return str(self.address)
 
         return str(self.point.coords)
