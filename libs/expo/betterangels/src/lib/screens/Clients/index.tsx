@@ -9,7 +9,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
+import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { Header } from '../../ui-components';
@@ -48,7 +48,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [clients, setClients] = useState<IGroupedClients>();
+  const [clients, setClients] = useState<IGroupedClients>({});
 
   const router = useRouter();
 
@@ -87,7 +87,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     ) : null;
   };
 
-  const debounceSearch = useMemo(
+  const debounceFetch = useMemo(
     () =>
       debounce((text) => {
         setFilterSearch(text);
@@ -95,13 +95,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const onChange = useCallback(
-    (e: string) => {
-      setSearch(e);
-      debounceSearch(e);
-    },
-    [debounceSearch]
-  );
+  const onChange = (e: string) => {
+    setSearch(e);
+    setOffset(0);
+    setClients({});
+    debounceFetch(e);
+  };
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;
@@ -114,19 +113,39 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         const firstLetter =
           client.user.firstName?.charAt(0).toUpperCase() || '#';
 
-        if (firstLetter && !acc[firstLetter]) {
+        if (!acc[firstLetter]) {
           acc[firstLetter] = {
             title: firstLetter,
             data: [],
           };
         }
-        firstLetter && acc[firstLetter].data.push(client);
+        acc[firstLetter].data.push(client);
         return acc;
       },
       {}
     );
 
-    setClients(groupedContacts);
+    setClients((prevClients) => {
+      if (offset === 0) {
+        return groupedContacts;
+      }
+
+      const mergedClients = { ...prevClients };
+
+      Object.keys(groupedContacts).forEach((key) => {
+        if (mergedClients[key]) {
+          mergedClients[key].data = [
+            ...mergedClients[key].data,
+            ...groupedContacts[key].data,
+          ];
+        } else {
+          mergedClients[key] = groupedContacts[key];
+        }
+      });
+
+      return mergedClients;
+    });
+
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
@@ -157,6 +176,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           onDelete={() => {
             setSearch('');
             setFilterSearch('');
+            setOffset(0);
+            setClients({});
           }}
         />
         <SectionList
