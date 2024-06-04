@@ -15,6 +15,13 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 
 export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email: string } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email: string } } | { __typename?: 'OperationInfo' } };
 
+export type RevertNoteMutationVariables = Types.Exact<{
+  data: Types.RevertNoteInput;
+}>;
+
+
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, privateDetails?: string | null, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } }>, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, purposes: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, createdAt: any, createdBy: { __typename?: 'UserType', id: string, email: string, username: string } }>, nextSteps: Array<{ __typename?: 'TaskType', id: string, title: string }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
+
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
 }>;
@@ -177,6 +184,102 @@ export function useUpdateNoteMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNoteMutationHookResult = ReturnType<typeof useUpdateNoteMutation>;
 export type UpdateNoteMutationResult = Apollo.MutationResult<UpdateNoteMutation>;
 export type UpdateNoteMutationOptions = Apollo.BaseMutationOptions<UpdateNoteMutation, UpdateNoteMutationVariables>;
+export const RevertNoteDocument = gql`
+    mutation RevertNote($data: RevertNoteInput!) {
+  revertNote(data: $data) {
+    ... on NoteType {
+      id
+      title
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      attachments {
+        id
+        namespace
+        attachmentType
+        file {
+          url
+          name
+        }
+      }
+      moods {
+        id
+        descriptor
+      }
+      purposes {
+        id
+        title
+        status
+        createdAt
+        createdBy {
+          id
+          email
+          username
+        }
+      }
+      nextSteps {
+        id
+        title
+      }
+      providedServices {
+        id
+        service
+        customService
+      }
+      requestedServices {
+        id
+        service
+        customService
+      }
+      publicDetails
+      privateDetails
+      isSubmitted
+      client {
+        id
+      }
+      createdBy {
+        id
+      }
+      interactedAt
+      createdAt
+    }
+  }
+}
+    `;
+export type RevertNoteMutationFn = Apollo.MutationFunction<RevertNoteMutation, RevertNoteMutationVariables>;
+
+/**
+ * __useRevertNoteMutation__
+ *
+ * To run a mutation, you first call `useRevertNoteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevertNoteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [revertNoteMutation, { data, loading, error }] = useRevertNoteMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useRevertNoteMutation(baseOptions?: Apollo.MutationHookOptions<RevertNoteMutation, RevertNoteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RevertNoteMutation, RevertNoteMutationVariables>(RevertNoteDocument, options);
+      }
+export type RevertNoteMutationHookResult = ReturnType<typeof useRevertNoteMutation>;
+export type RevertNoteMutationResult = Apollo.MutationResult<RevertNoteMutation>;
+export type RevertNoteMutationOptions = Apollo.BaseMutationOptions<RevertNoteMutation, RevertNoteMutationVariables>;
 export const DeleteNoteDocument = gql`
     mutation DeleteNote($data: DeleteDjangoObjectInput!) {
   deleteNote(data: $data) {
