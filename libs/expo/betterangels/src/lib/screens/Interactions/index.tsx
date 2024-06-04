@@ -23,6 +23,12 @@ export default function Interactions() {
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
+  function loadMoreInteractions() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
+  }
+
   const onRefresh = async () => {
     setRefreshing(true);
     setOffset(0);
@@ -75,17 +81,10 @@ export default function Interactions() {
             <View style={{ marginTop: 10, alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#0000ff" />
             </View>
-          ) : !loading && hasMore ? (
-            <Button
-              mt="lg"
-              title="Load More"
-              onPress={() => setOffset(offset + paginationLimit)}
-              size="auto"
-              variant="secondary"
-              accessibilityHint={`loads more notes from the server`}
-            />
           ) : null
         }
+        onEndReached={loadMoreInteractions}
+        onEndReachedThreshold={0.5}
       />
     </MainContainer>
   );
