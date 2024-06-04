@@ -11,6 +11,7 @@ from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
+from strawberry_django.auth.utils import get_current_user
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
@@ -177,6 +178,17 @@ class NoteFilter:
             queryset.filter(query),
             Q(),
         )
+
+    @strawberry_django.filter_field
+    def user_created(
+        self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if value:
+            user = get_current_user(info)
+
+            return (queryset.filter(created_by=user), Q())
+
+        return queryset, Q()
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]

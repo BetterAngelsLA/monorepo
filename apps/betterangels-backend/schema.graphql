@@ -357,6 +357,7 @@ input NoteFilter {
   NOT: NoteFilter
   DISTINCT: Boolean
   search: String
+  userCreated: Boolean
 }
 
 enum NoteNamespaceEnum {
