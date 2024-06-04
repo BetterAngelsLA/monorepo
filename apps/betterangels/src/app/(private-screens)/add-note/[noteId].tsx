@@ -149,13 +149,15 @@ export default function AddNote() {
           />
         }
         optionalAction={
-          <TextButton
-            mr="sm"
-            fontSize="sm"
-            onPress={router.back}
-            accessibilityHint="saves the note for later"
-            title="Save for later"
-          />
+          !data.note.isSubmitted && (
+            <TextButton
+              mr="sm"
+              fontSize="sm"
+              onPress={router.back}
+              accessibilityHint="saves the note for later"
+              title="Save for later"
+            />
+          )
         }
         onSubmit={submitNote}
       />
