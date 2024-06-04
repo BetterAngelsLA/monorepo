@@ -19,7 +19,7 @@ import {
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
-const paginationLimit = 20;
+const paginationLimit = 5;
 
 interface IGroupedClients {
   [key: string]: {
@@ -95,10 +95,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const onChange = (e: string) => {
-    setSearch(e);
+  useEffect(() => {
     setOffset(0);
     setClients({});
+  }, [filterSearch]);
+
+  const onChange = (e: string) => {
+    setSearch(e);
+
     debounceFetch(e);
   };
 
