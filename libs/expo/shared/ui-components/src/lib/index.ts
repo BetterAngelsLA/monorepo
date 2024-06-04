@@ -17,6 +17,7 @@ export { default as IconButton } from './IconButton';
 export { default as ImagePicker } from './ImagePicker';
 export { default as Input } from './Input';
 export { default as Radio } from './Radio';
+export { default as RevertModal } from './RevertModal';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
 export { default as StatusBadge } from './StatusBadge';

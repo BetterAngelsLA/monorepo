@@ -33,6 +33,36 @@ export const UPDATE_NOTE = gql`
     }
   }
 `;
+export const REVERT_NOTE = gql`
+  mutation RevertNote($data: RevertNoteInput!) {
+    revertNote(data: $data) {
+      ... on NoteType {
+        id
+        title
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
+        }
+        isSubmitted
+        client {
+          id
+        }
+        createdBy {
+          id
+        }
+        interactedAt
+        createdAt
+      }
+    }
+  }
+`;
 export const DELETE_NOTE = gql`
   mutation DeleteNote($data: DeleteDjangoObjectInput!) {
     deleteNote(data: $data) {
