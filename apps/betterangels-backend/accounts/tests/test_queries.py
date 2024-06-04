@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
+from accounts.enums import GenderEnum, LanguageEnum
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -79,14 +80,19 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-    def test_get_client_profile_query(self) -> None:
+    def test_client_profile_query(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         query = """
             query ViewClientProfile($id: ID!) {
                 clientProfile(pk: $id) {
                     id
                     hmisId
+                    gender
+                    dateOfBirth
+                    age
+                    preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email
@@ -104,6 +110,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         returned_client = response["data"]["clientProfile"]
 
         expected_user = {
+            "id": str(self.client_profile_1["user"]["id"]),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
             "email": self.client_profile_1_user["email"],
@@ -111,18 +118,27 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         expected_client = {
             "id": str(client_profile_id),
             "hmisId": self.client_profile_1["hmisId"],
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "age": self.EXPECTED_CLIENT_AGE,
+            "gender": GenderEnum.MALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
             "user": expected_user,
         }
 
         self.assertEqual(returned_client, expected_client)
 
-    def test_get_client_profiles_query(self) -> None:
+    def test_client_profiles_query(self) -> None:
         query = """
             query ViewClientProfiles {
                 clientProfiles{
                     id
                     hmisId
+                    gender
+                    dateOfBirth
+                    age
+                    preferredLanguage
                     user {
+                        id
                         firstName
                         lastName
                         email
@@ -136,6 +152,30 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         client_profiles = response["data"]["clientProfiles"]
         client_profile_count = ClientProfile.objects.count()
+        self.assertEqual(client_profile_count, len(client_profiles))
+
+    @parametrize(
+        ("sort_order, expected_first_name"),
+        [("ASC", "Mister"), ("DESC", "Todd")],
+    )
+    def test_client_profiles_query_order(self, sort_order: Optional[str], expected_first_name: str) -> None:
+        query = """
+            query ViewClientProfiles($order: ClientProfileOrder) {
+                clientProfiles(order: $order) {
+                    id
+                    user {
+                        firstName
+                    }
+                }
+            }
+        """
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"order": {"user_FirstName": sort_order}})
+
+        client_profile_count = ClientProfile.objects.count()
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
         self.assertEqual(client_profile_count, len(client_profiles))
 
     @parametrize(

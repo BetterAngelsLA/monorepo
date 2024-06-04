@@ -1,3 +1,4 @@
+from accounts.enums import GenderEnum, LanguageEnum
 from accounts.models import ClientProfile
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from unittest_parametrize import parametrize
@@ -20,7 +21,13 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             "lastName": "Lasty",
             "email": "firsty_lasty@example.com",
         }
-        variables = {"hmisId": "12345678", "user": client_profile_user}
+        variables = {
+            "hmisId": "12345678",
+            "dateOfBirth": self.date_of_birth,
+            "gender": GenderEnum.FEMALE.name,
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "user": client_profile_user,
+        }
         response = self._create_client_profile_fixture(variables)
 
         if should_succeed:

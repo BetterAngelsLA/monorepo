@@ -8,9 +8,10 @@ import {
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
+import { Ordering } from '../../apollo';
 import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -28,6 +29,7 @@ interface IGroupedClients {
 }
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
+  const { title, select } = useLocalSearchParams();
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
@@ -38,6 +40,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       pagination: { limit: paginationLimit + 1, offset },
       filters: {
         search: filterSearch,
+      },
+      order: {
+        user_FirstName: Ordering.AscNullsFirst,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -101,11 +106,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;
 
-    const clientsToShow = data.clientProfiles
-      .slice(0, paginationLimit)
-      .sort(
-        (a, b) => a.user.firstName?.localeCompare(b.user.firstName || '') || 0
-      );
+    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
     const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
 
     const groupedContacts = clientsToShow.reduce(
@@ -157,6 +158,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           paddingTop: Spacings.sm,
         }}
       >
+        {title && (
+          <TextBold mb="sm" size="lg">
+            {title}
+          </TextBold>
+        )}
         <BasicInput
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
@@ -175,6 +181,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
+                select={select as string}
                 id={clientProfile.id}
                 onPress={() =>
                   createNoteFunction(

@@ -57,11 +57,12 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
+    SOCIALACCOUNT_APPLE_SECRET=(str, ""),
+    SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
+    SOCIALACCOUNT_APPLE_CERTIFICATE_KEY=(str, ""),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_CLIENT_ID=(str, ""),
-    SOCIALACCOUNT_IDME_SECRET=(str, ""),
-    SOCIALACCOUNT_IDME_BASE_URL=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
     SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
@@ -97,8 +98,8 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
-    "accounts.providers.idme",
     "corsheaders",
     "dj_rest_auth",
     "dj_rest_auth.registration",
@@ -154,17 +155,27 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "OAUTH_PKCE_ENABLED": True,
     },
-    "idme": {
-        "SCOPE": ["fortified_identity"],
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_IDME_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_IDME_SECRET"),
-            "key": "",
-        },
+    "apple": {
+        "APPS": [
+            {
+                # Your service identifier.
+                "client_id": env("SOCIALACCOUNT_APPLE_CLIENT_ID"),
+                # The Key ID (visible in the "View Key Details" page).
+                "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
+                # Member ID/App ID Prefix -- you can find it below your name
+                # at the top right corner of the page, or it’s your App ID
+                # Prefix in your App ID.
+                "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
+                "settings": {
+                    # The certificate you downloaded when generating the key.
+                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_KEY")
+                },
+            }
+        ]
     },
 }
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 
-SOCIALACCOUNT_IDME_BASE_URL = env("SOCIALACCOUNT_IDME_BASE_URL")
 ROOT_URLCONF = "betterangels_backend.urls"
 
 TEMPLATES = [

@@ -19,7 +19,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "la.betterangels.app",
-      "associatedDomains": ["applinks:app.dev.betterangels.la"]
+      "associatedDomains": ["applinks:app.dev.betterangels.la"],
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -47,6 +48,7 @@
       "bundler": "metro"
     },
     "plugins": [
+      "expo-apple-authentication",
       [
         "@config-plugins/detox",
         {

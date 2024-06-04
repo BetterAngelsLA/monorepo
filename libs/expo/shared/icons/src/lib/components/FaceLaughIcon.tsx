@@ -1,6 +1,6 @@
-import FaceLaughIconSVG from '../../assets/face-laugh.svg';
+import FaceLaughSVG from '../../assets/third_party/dave_gandy/svg/fa6-regular:face-laugh.svg';
 import createSvgIcon from '../createSvgIcon';
 
-const FaceLaughIcon = createSvgIcon(FaceLaughIconSVG);
+const FaceLaugh = createSvgIcon(FaceLaughSVG);
 
-export default FaceLaughIcon;
+export default FaceLaugh;

@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
+from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from strawberry import Info, auto
@@ -15,16 +16,21 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 @strawberry.input
 class AuthInput:
-    code: str = strawberry.field(name="code")
-    code_verifier: str = strawberry.field(name="code_verifier")
-    redirect_uri: str = strawberry.field(name="redirect_uri")
+    code: Optional[str] = strawberry.field(name="code")
+    code_verifier: Optional[str] = strawberry.field(name="code_verifier")
+    id_token: Optional[str] = strawberry.field(name="id_token")
+    redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
 
 
-# TODO: I don't think this is the right response
-# The code and code verifier is passed in
 @strawberry.type
 class AuthResponse:
     status_code: str = strawberry.field(name="status_code")
+
+
+@strawberry_django.ordering.order(ClientProfile)
+class ClientProfileOrder:
+    user__first_name: auto
+    user__last_name: auto
 
 
 @filter(ClientProfile)
@@ -75,11 +81,23 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, pagination=True)
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType:
     id: auto
     hmis_id: auto
+    date_of_birth: auto
+    preferred_language: auto
+    gender: auto
     user: UserType
+
+    @strawberry.field
+    def age(self) -> Optional[int]:
+        if not self.date_of_birth:
+            return None
+
+        today = timezone.now().date()
+        age = relativedelta(today, self.date_of_birth).years
+        return age
 
 
 @strawberry_django.input(User)
@@ -92,6 +110,9 @@ class CreateUserInput:
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput:
     hmis_id: auto
+    date_of_birth: auto
+    preferred_language: auto
+    gender: auto
     user: CreateUserInput
 
 
