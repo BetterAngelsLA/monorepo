@@ -48,6 +48,7 @@ export const GET_NOTES = gql`
       client {
         id
         email
+        username
         firstName
         lastName
       }
