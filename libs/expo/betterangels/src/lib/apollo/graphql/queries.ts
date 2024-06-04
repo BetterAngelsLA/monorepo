@@ -48,7 +48,8 @@ export const GET_NOTES = gql`
       client {
         id
         email
-        username
+        firstName
+        lastName
       }
       createdBy {
         id
@@ -119,6 +120,9 @@ export const GET_NOTE = gql`
       isSubmitted
       client {
         id
+        email
+        firstName
+        lastName
       }
       createdBy {
         id
