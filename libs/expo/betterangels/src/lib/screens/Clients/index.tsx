@@ -126,25 +126,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       {}
     );
 
-    setClients((prevClients) => {
-      const updatedClients = { ...prevClients };
-      for (const [key, value] of Object.entries(groupedContacts)) {
-        if (updatedClients[key]) {
-          updatedClients[key].data = [
-            ...updatedClients[key].data,
-            ...value.data,
-          ];
-        } else {
-          updatedClients[key] = value;
-        }
-      }
-      return updatedClients;
-    });
-
+    setClients(groupedContacts);
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
-  const sections = Object.values(clients || {});
+  const sections = useMemo(() => Object.values(clients || {}), [clients]);
 
   return (
     <View style={{ flex: 1 }}>
