@@ -115,7 +115,6 @@ INSTALLED_APPS = [
     # Our Apps
     "accounts",
     "common",
-    "dwelling",
     "notes",
     "shelters",
 ]
