@@ -18,7 +18,7 @@
     "apollo-upload-client": "^18.0.1",
     "axios": "^1.6.7",
     "date-fns": "^3.0.4",
-    "expo": "~51.0.9",
+    "expo": "~51.0.10",
     "expo-apple-authentication": "~6.4.1",
     "expo-auth-session": "~5.5.2",
     "expo-camera": "~15.0.10",
