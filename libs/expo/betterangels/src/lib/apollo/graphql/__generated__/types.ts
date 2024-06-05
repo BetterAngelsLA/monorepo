@@ -693,7 +693,7 @@ export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
-  savedAt: Scalars['DateTime']['input'];
+  lastOpenedAt: Scalars['DateTime']['input'];
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;

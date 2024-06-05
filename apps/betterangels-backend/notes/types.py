@@ -252,7 +252,7 @@ class UpdateTaskLocationInput:
 @strawberry_django.input(models.Note)
 class RevertNoteInput:
     id: auto
-    saved_at: datetime
+    last_opened_at: datetime
 
 
 @strawberry.type

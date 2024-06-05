@@ -26,9 +26,9 @@ import RequestedServices from './RequestedServices';
 import Title from './Title';
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, isNewNote } = useLocalSearchParams<{
+  const { noteId, lastOpenedAt } = useLocalSearchParams<{
     noteId: string;
-    isNewNote: string;
+    lastOpenedAt: string;
   }>();
 
   if (!noteId) {
@@ -46,9 +46,7 @@ export default function AddNote() {
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
-  const savedAt = new Date().toISOString();
-  console.log('~~~~~~~~~~savedAt ', savedAt);
-
+  console.log('lastOpenedAt', lastOpenedAt);
   async function deleteNoteFunction() {
     try {
       await deleteNote({
@@ -66,7 +64,7 @@ export default function AddNote() {
     try {
       await revertNote({
         variables: {
-          data: { id: noteId, savedAt: savedAt || '' },
+          data: { id: noteId, lastOpenedAt: lastOpenedAt || '' },
         },
       });
       router.back();
@@ -156,20 +154,7 @@ export default function AddNote() {
       </MainScrollContainer>
       <BottomActions
         cancel={
-          isNewNote === 'yes' ? (
-            <DeleteModal
-              body="All data associated with this note will be deleted"
-              title="Delete note?"
-              onDelete={deleteNoteFunction}
-              button={
-                <TextButton
-                  fontSize="sm"
-                  accessibilityHint="deletes creation"
-                  title="Cancel"
-                />
-              }
-            />
-          ) : (
+          lastOpenedAt ? (
             <RevertModal
               body="All changes you made since last save will be discarded"
               title="Revert note?"
@@ -178,6 +163,19 @@ export default function AddNote() {
                 <TextButton
                   fontSize="sm"
                   accessibilityHint="reverts note"
+                  title="Cancel"
+                />
+              }
+            />
+          ) : (
+            <DeleteModal
+              body="All data associated with this note will be deleted"
+              title="Delete note?"
+              onDelete={deleteNoteFunction}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="deletes creation"
                   title="Cancel"
                 />
               }
