@@ -465,9 +465,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Update note title, public details, point, and address
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Update note title, public details, point, and address
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has details from Step 1
         """
         note_id = self.note["id"]
@@ -483,7 +483,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         other_address = baker.make(Address, street="Discarded St")
         other_location = baker.make(Location, address=other_address)
@@ -497,7 +497,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -514,9 +514,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add a location
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Update the location
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has location from Step 1
         """
         note_id = self.note["id"]
@@ -536,7 +536,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._update_note_location_fixture(variables)
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         discarded_json_address_input, discarded_address_input = self._get_address_inputs(street_number_override="104")
         discarded_point = [-118.0, 34.0]
@@ -554,7 +554,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         # Update - should be discarded
         note_location_to_discard = self._update_note_location_fixture(variables)["data"]["updateNoteLocation"]
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         # Confirm the note location was updated
         self.assertEqual("104 West 1st Street", note_location_to_discard["location"]["address"]["street"])
@@ -576,9 +576,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 1 mood
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Add another mood
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has only mood from Step 1
         """
         note_id = self.note["id"]
@@ -587,12 +587,12 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Update - should be discarded
         self._create_note_mood_fixture({"descriptor": "EUTHYMIC", "noteId": note_id})
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -607,9 +607,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 2 moods
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Delete 1 mood
-        4. Revert to savedAt from Step 3
+        4. Revert to lastOpenedAt from Step 3
         5. Assert note has 2 moods from Step 1
         """
         note_id = self.note["id"]
@@ -622,11 +622,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         self._delete_mood_fixture(mood_id=mood_to_delete_id)
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 29
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -641,9 +641,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 1 purpose and 1 next step
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Add another purpose and next step
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has only the associations from Step 2
         """
         note_id = self.note["id"]
@@ -665,7 +665,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Add associations that will be discarded
         self._add_note_task_fixture(
@@ -683,8 +683,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        # Revert to saved_at state
-        variables = {"id": note_id, "savedAt": saved_at}
+        # Revert to last_opened_at state
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 25
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -705,9 +705,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 1 requested service and 1 provided service
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Add another requested service and provided service
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has only the associations from Step 2
         """
         note_id = self.note["id"]
@@ -731,7 +731,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Add associations that will be discarded
         discarded_requested_service_id = self._create_note_service_request_fixture(
@@ -752,8 +752,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )["data"]["createNoteServiceRequest"]["id"]
 
-        # Revert to saved_at state
-        variables = {"id": note_id, "savedAt": saved_at}
+        # Revert to last_opened_at state
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 39
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -775,9 +775,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 2 purposes and 2 next steps
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Remove 1 purpose and 1 next step
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has only the associations from Step 1
         """
         note_id = self.note["id"]
@@ -817,7 +817,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Remove task - should be discarded
         self._remove_note_task_fixture(
@@ -836,7 +836,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 25
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -852,9 +852,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         Test actions:
         1. Add 2 requested service and 2 provided service
-        2. Save now as saved_at
+        2. Save now as last_opened_at
         3. Remove 1 requested service and 1 provided service
-        4. Revert to saved_at from Step 2
+        4. Revert to last_opened_at from Step 2
         5. Assert note has only the associations from Step 1
         """
         note_id = self.note["id"]
@@ -897,7 +897,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         )["data"]["createNoteServiceRequest"]
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Remove service requests - should be discarded
         self._remove_note_service_request_fixture(
@@ -916,7 +916,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         expected_query_count = 25
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -934,13 +934,13 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self._update_note_fixture({"id": note_id, "title": "Updated Title"})
 
         # Select a moment to revert to
-        saved_at = timezone.now()
+        last_opened_at = timezone.now()
 
         # Update - should be persisted because revert fails
         self._update_note_fixture({"id": note_id, "title": "Discarded Title"})
         self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
-        variables = {"id": note_id, "savedAt": saved_at}
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
         with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
             not_reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]

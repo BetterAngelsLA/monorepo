@@ -193,27 +193,27 @@ class Mutation:
 
         try:
             with transaction.atomic():
-                saved_at = data.saved_at.isoformat()
+                last_opened_at = data.last_opened_at.isoformat()
 
-                # Find context for most recent Note update before saved_at time
+                # Find context for most recent Note update before last_opened_at time
                 revert_to_note_context_id: uuid.UUID | None = None
                 if revert_to_note_context := (
                     Context.objects.filter(
                         metadata__note_id=data.id,
                         metadata__label="updateNote",
-                        metadata__timestamp__lte=saved_at,
+                        metadata__timestamp__lte=last_opened_at,
                     )
                     .order_by("-metadata__timestamp")
                     .first()
                 ):
                     revert_to_note_context_id = revert_to_note_context.id
 
-                # Find contexts that occurred AFTER saved_at time
+                # Find contexts that occurred AFTER last_opened_at time
                 contexts_to_revert: list[uuid.UUID] = list(
                     Context.objects.filter(
                         metadata__note_id=data.id,
                         metadata__label__in=NOTE_UPDATES,
-                        metadata__timestamp__gt=saved_at,
+                        metadata__timestamp__gt=last_opened_at,
                     ).values_list("id", flat=True)
                 )
 
@@ -251,6 +251,8 @@ class Mutation:
 
                 note.refresh_from_db()
 
+                note._private_details = note.private_details
+                print("last_opened_at", last_opened_at)
                 return cast(NoteType, note)
 
         except Exception:
