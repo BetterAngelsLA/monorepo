@@ -561,7 +561,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -594,7 +594,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -628,7 +628,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 29
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -686,7 +686,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to last_opened_at state
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -755,7 +755,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to last_opened_at state
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 39
+        expected_query_count = 40
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -838,7 +838,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -918,7 +918,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 25
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 

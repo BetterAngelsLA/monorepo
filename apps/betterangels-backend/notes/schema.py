@@ -203,8 +203,8 @@ class Mutation:
                         metadata__label="updateNote",
                         metadata__timestamp__lte=last_opened_at,
                     )
-                    .order_by("-metadata__timestamp")
-                    .first()
+                    .order_by("metadata__timestamp")
+                    .last()
                 ):
                     revert_to_note_context_id = revert_to_note_context.id
 
@@ -248,11 +248,13 @@ class Mutation:
                     apps.get_model(event.pgh_model).objects.get(
                         pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                     ).revert()
+                # If all updates occurred after last_opened_at, revert to note creation event
+                elif Context.objects.filter(metadata__note_id=data.id, metadata__label="updateNote").exists():
+                    Note.objects.get(id=data.id).events.get(pgh_label="note.add").revert()
 
                 note.refresh_from_db()
-
                 note._private_details = note.private_details
-                print("last_opened_at", last_opened_at)
+
                 return cast(NoteType, note)
 
         except Exception:
