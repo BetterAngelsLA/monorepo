@@ -86,7 +86,7 @@
     },
     "owner": "better-angels",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     }
   }
 }
