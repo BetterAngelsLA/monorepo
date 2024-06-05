@@ -18,6 +18,8 @@ export default function Interactions() {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
     },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
