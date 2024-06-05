@@ -92,7 +92,7 @@ jobs:
           cache: 'yarn'
 
       - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@main
         with:
           eas-version: 9.0.0
           token: ${{ secrets.EXPO_TOKEN }}
@@ -121,8 +121,8 @@ jobs:
       - name: Continuously Deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          profile: ${{ github.event_name != 'pull_request' && 'production' || 'preview' }}
-          branch: ${{ github.event_name != 'pull_request' && 'production' || 'preview' }}
+          profile: ${{  env.CHANNEL_CONFIG }}
+          branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
       # - name: 🚀 Create preview
