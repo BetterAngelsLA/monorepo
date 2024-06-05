@@ -19,7 +19,7 @@ import {
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
-const paginationLimit = 5;
+const paginationLimit = 20;
 
 interface IGroupedClients {
   [key: string]: {
