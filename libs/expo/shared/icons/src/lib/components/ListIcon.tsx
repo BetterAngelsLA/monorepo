@@ -1,4 +1,4 @@
-import ListIconSVG from '../../assets/list.svg';
+import ListIconSVG from '../../assets/third_party/pictogrammers/svg/mdi:format-list-bulleted.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const ListIcon = createSvgIcon(ListIconSVG);

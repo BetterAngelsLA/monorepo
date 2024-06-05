@@ -1,4 +1,4 @@
-import ArrowTrendUpIconSVG from '../../assets/arrow-trend-up.svg';
+import ArrowTrendUpIconSVG from '../../assets/third_party/dariush_habibpour/svg/iconamoon:trend-up.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const ArrowTrendUpIcon = createSvgIcon(ArrowTrendUpIconSVG);

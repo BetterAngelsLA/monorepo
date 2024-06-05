@@ -132,6 +132,8 @@ class Address(BaseModel):
     def __str__(self) -> str:
         if self.street and self.city and self.state and self.zip_code:
             return f"{self.street}, {self.city}, {self.state}, {self.zip_code}"
+        elif self.formatted_address:
+            return self.formatted_address
 
         return self.ADDRESS_DEFAULT
 
@@ -146,8 +148,6 @@ class Location(BaseModel):
     def __str__(self) -> str:
         if self.address and str(self.address) != Address.ADDRESS_DEFAULT:
             return str(self.address)
-        elif self.point_of_interest:
-            return f"{self.point_of_interest} ({str(self.point.coords)})"
 
         return str(self.point.coords)
 
