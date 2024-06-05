@@ -1,5 +1,4 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
