@@ -1,13 +1,13 @@
-import { useUpdateNoteMutation } from '@monorepo/expo/betterangels';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicTextarea,
   FieldCard,
+  TextBold,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { debounce } from '@monorepo/expo/shared/utils';
-import { RefObject, useRef, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { RefObject, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import InfoModal from './InfoModal';
 
 interface IPublicNoteProps {
@@ -21,46 +21,9 @@ interface IPublicNoteProps {
 }
 
 export default function PublicNote(props: IPublicNoteProps) {
-  const { expanded, setExpanded, note, noteId, scrollRef } = props;
-  const [publicNote, setPublicNote] = useState<string>(note || '');
+  const { expanded, note, noteId, scrollRef } = props;
   const [hasError, setHasError] = useState(false);
-  const [updateNote, { error }] = useUpdateNoteMutation();
-
-  const isPublicNote = expanded === 'Public Note';
-
-  const updateNoteFunction = useRef(
-    debounce(async (value: string) => {
-      if (!noteId || !value) return;
-
-      try {
-        const { data } = await updateNote({
-          variables: {
-            data: {
-              id: noteId,
-              publicDetails: value,
-            },
-          },
-        });
-
-        if (!data) {
-          console.error(`Failed to update note: ${error}`);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    }, 500)
-  ).current;
-
-  const onChange = (value: string) => {
-    if (!value) {
-      setHasError(true);
-    } else {
-      setHasError(false);
-    }
-
-    setPublicNote(value);
-    updateNoteFunction(value);
-  };
+  const router = useRouter();
 
   return (
     <FieldCard
@@ -68,24 +31,33 @@ export default function PublicNote(props: IPublicNoteProps) {
       error={hasError ? 'Please enter the public note' : undefined}
       expanded={expanded}
       mb="xs"
-      setExpanded={() => setExpanded(isPublicNote ? null : 'Public Note')}
+      setExpanded={() =>
+        router.navigate({
+          pathname: '/public-note',
+          params: {
+            id: noteId,
+          },
+        })
+      }
       title="Public Note"
       info={<InfoModal />}
       actionName={
-        !isPublicNote && !publicNote ? (
+        !note ? (
           <TextMedium size="sm">Add HMIS note</TextMedium>
-        ) : null
+        ) : (
+          <View
+            style={{
+              backgroundColor: Colors.WARNING_EXTRA_LIGHT,
+              borderRadius: 8,
+              padding: Spacings.xs,
+            }}
+          >
+            <TextBold color={Colors.WARNING_DARK}>Review HMIS Note</TextBold>
+          </View>
+        )
       }
     >
-      {isPublicNote ? (
-        <BasicTextarea
-          error={hasError}
-          value={publicNote}
-          onChangeText={(text) => onChange(text)}
-        />
-      ) : (
-        publicNote && <TextRegular mb="md">{publicNote}</TextRegular>
-      )}
+      {note && <TextRegular mb="md">{note}</TextRegular>}
     </FieldCard>
   );
 }
