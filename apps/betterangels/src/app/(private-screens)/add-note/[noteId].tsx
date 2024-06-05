@@ -44,9 +44,8 @@ export default function AddNote() {
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
-
   const scrollRef = useRef<ScrollView>(null);
-  console.log('lastOpenedAt', lastOpenedAt);
+
   async function deleteNoteFunction() {
     try {
       await deleteNote({
