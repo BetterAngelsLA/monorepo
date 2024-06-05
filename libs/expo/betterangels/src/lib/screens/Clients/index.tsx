@@ -72,7 +72,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         router.navigate({
           pathname: `/add-note/${response.data?.createNote.id}`,
           params: {
-            lastOpenedAt: new Date().toISOString(),
+            revertBeforeTimestamp: new Date().toISOString(),
           },
         });
       }
