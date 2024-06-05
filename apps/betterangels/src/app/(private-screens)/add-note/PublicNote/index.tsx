@@ -6,7 +6,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { RefObject, useState } from 'react';
+import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import InfoModal from './InfoModal';
 
@@ -22,13 +22,11 @@ interface IPublicNoteProps {
 
 export default function PublicNote(props: IPublicNoteProps) {
   const { expanded, note, noteId, scrollRef } = props;
-  const [hasError, setHasError] = useState(false);
   const router = useRouter();
 
   return (
     <FieldCard
       scrollRef={scrollRef}
-      error={hasError ? 'Please enter the public note' : undefined}
       expanded={expanded}
       mb="xs"
       setExpanded={() =>
