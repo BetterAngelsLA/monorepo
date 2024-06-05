@@ -112,14 +112,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "title": f"New note for: {self.org_1_case_manager_1.pk}",
+            "title": f"New note for: {self.client_user_1.pk}",
             "location": None,
             "moods": [],
             "purposes": [],
             "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
-            "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details",
+            "publicDetails": f"{self.client_user_1.pk}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
             "client": {"id": str(self.client_user_1.pk)},
@@ -458,6 +458,45 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
+    def test_revert_note_mutation_restores_note_details_to_creation(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note
+        is reverted to their state at the specified moment.
+
+        Test actions:
+        1. Setup creates a note
+        2. Save now as last_opened_at
+        3. Update note title, public details, point, and address
+        4. Revert to last_opened_at from Step 2
+        5. Assert note has details from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Select a moment to revert to
+        last_opened_at = timezone.now()
+
+        other_address = baker.make(Address, street="Discarded St")
+        other_location = baker.make(Location, address=other_address)
+        # Update - should be discarded
+        self._update_note_fixture(
+            {
+                "id": note_id,
+                "title": "Discarded Title",
+                "publicDetails": "Discarded Body",
+                "location": other_location.pk,
+            }
+        )
+
+        variables = {"id": note_id, "lastOpenedAt": last_opened_at}
+
+        expected_query_count = 26
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(reverted_note["title"], f"New note for: {self.note["client"]["id"]}")
+        self.assertEqual(reverted_note["publicDetails"], f"{self.note["client"]["id"]}'s public details")
+        self.assertIsNone(reverted_note["location"])
+
     def test_revert_note_mutation_restores_note_details(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note
@@ -499,7 +538,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "lastOpenedAt": last_opened_at}
 
-        expected_query_count = 27
+        expected_query_count = 28
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
