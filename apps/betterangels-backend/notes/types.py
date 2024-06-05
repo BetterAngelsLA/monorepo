@@ -179,17 +179,6 @@ class NoteFilter:
             Q(),
         )
 
-    @strawberry_django.filter_field
-    def user_created(
-        self, queryset: QuerySet, info: Info, value: Optional[bool], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
-        if value:
-            user = get_current_user(info)
-
-            return (queryset.filter(created_by=user), Q())
-
-        return queryset, Q()
-
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
