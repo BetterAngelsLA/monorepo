@@ -151,8 +151,8 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    client: auto
-    created_by: auto
+    client: Optional[ID]
+    created_by: Optional[ID]
     is_submitted: auto
 
     @strawberry_django.filter_field

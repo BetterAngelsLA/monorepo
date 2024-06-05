@@ -218,10 +218,6 @@ export type DjangoFileType = {
   url: Scalars['String']['output'];
 };
 
-export type DjangoModelFilterInput = {
-  pk: Scalars['ID']['input'];
-};
-
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
@@ -482,8 +478,8 @@ export type NoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
-  client?: InputMaybe<DjangoModelFilterInput>;
-  createdBy?: InputMaybe<DjangoModelFilterInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   userCreated?: InputMaybe<Scalars['Boolean']['input']>;

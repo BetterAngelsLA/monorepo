@@ -1,9 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
-import UserContext from '../../providers/user/UserContext';
+import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
@@ -14,19 +14,13 @@ export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const userContext = useContext(UserContext);
-  const { user, isLoading, refetchUser } = userContext;
-  console.log('userContext', userContext);
-  console.log('user', user);
-  console.log('isLoading', isLoading);
-  console.log('refetchUser', refetchUser);
-  // console.log('user_id', user.id);
+  const { user } = useUser();
 
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      // filters: { createdBy: user.id },
+      filters: { createdBy: user?.id },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

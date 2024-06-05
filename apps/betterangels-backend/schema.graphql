@@ -217,10 +217,6 @@ type DjangoFileType {
   url: String!
 }
 
-input DjangoModelFilterInput {
-  pk: ID!
-}
-
 type DjangoModelType {
   pk: ID!
 }
@@ -349,8 +345,8 @@ type NoteAttachmentType implements AttachmentInterface {
 }
 
 input NoteFilter {
-  client: DjangoModelFilterInput
-  createdBy: DjangoModelFilterInput
+  client: ID
+  createdBy: ID
   isSubmitted: Boolean
   AND: NoteFilter
   OR: NoteFilter
