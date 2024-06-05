@@ -63,7 +63,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="gray" />
+        <ActivityIndicator size="large" color="#747A82" />
       </View>
     ) : null;
   };

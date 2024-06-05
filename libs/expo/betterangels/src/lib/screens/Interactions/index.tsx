@@ -73,7 +73,7 @@ export default function Interactions() {
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="gray" />
+              <ActivityIndicator size="large" color="#747A82" />
             </View>
           ) : !loading && hasMore ? (
             <Button
