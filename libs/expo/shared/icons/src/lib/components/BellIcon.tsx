@@ -1,4 +1,4 @@
-import BellIconSVG from '../../assets/bell.svg';
+import BellIconSVG from '../../assets/third_party/pictogrammers/svg/mdi:notifications-none.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const BellIcon = createSvgIcon(BellIconSVG);

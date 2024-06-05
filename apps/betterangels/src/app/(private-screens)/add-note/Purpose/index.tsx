@@ -1,5 +1,5 @@
 import { ViewNoteQuery } from '@monorepo/expo/betterangels';
-import { SolidCircleIcon } from '@monorepo/expo/shared/icons';
+import { CircleSolidIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
@@ -156,7 +156,7 @@ export default function Purpose(props: IPurposeProps) {
                 marginTop: index === 0 ? 0 : Spacings.xs,
               }}
             >
-              <SolidCircleIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+              <CircleSolidIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
               <TextRegular ml="xs">{purpose.value}</TextRegular>
             </View>
           ))}

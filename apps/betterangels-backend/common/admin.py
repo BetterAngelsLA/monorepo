@@ -83,6 +83,7 @@ class AttachmentAdmin(admin.ModelAdmin):
 
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):
     list_display = (
+        "formatted_address",
         "address",
         "point_coords",
         "point_of_interest",
@@ -106,6 +107,9 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
 
     def point_coords(self, obj: Location) -> str:
         return str(obj.point.coords)
+
+    def formatted_address(self, obj: Location) -> str:
+        return str(obj.address.formatted_address) if obj.address else ""
 
 
 admin.site.register(Attachment, AttachmentAdmin)

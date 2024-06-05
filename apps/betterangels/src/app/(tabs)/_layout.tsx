@@ -3,17 +3,17 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
-  CalendarIcon,
-  HouseIcon,
-  MapIcon,
+  CalendarLineIcon,
+  CalendarSolidIcon,
+  HouseLineIcon,
+  HouseSolidIcon,
+  MapLineIcon,
+  MapSolidIcon,
   PlusIcon,
-  SitemapIcon,
-  SolidCalendarIcon,
-  SolidHouseIcon,
-  SolidMapIcon,
-  SolidSitemapIcon,
-  SolidUsersIcon,
-  UsersIcon,
+  SitemapLineIcon,
+  SitemapSolidIcon,
+  UsersLineIcon,
+  UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -73,9 +73,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidHouseIcon color={color} />
+                  <HouseSolidIcon color={color} />
                 ) : (
-                  <HouseIcon color={color} />
+                  <HouseLineIcon color={color} />
                 )}
 
                 <TextRegular color={color} size="xs">
@@ -93,9 +93,9 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidCalendarIcon color={color} />
+                  <CalendarSolidIcon color={color} />
                 ) : (
-                  <CalendarIcon color={color} />
+                  <CalendarLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Appointment
@@ -127,9 +127,9 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidUsersIcon color={color} />
+                  <UsersSolidIcon color={color} />
                 ) : (
-                  <UsersIcon color={color} />
+                  <UsersLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   All Clients
@@ -164,9 +164,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidMapIcon color={color} />
+                  <MapSolidIcon color={color} />
                 ) : (
-                  <MapIcon color={color} />
+                  <MapLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Map
@@ -183,9 +183,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidSitemapIcon color={color} />
+                  <SitemapSolidIcon color={color} />
                 ) : (
-                  <SitemapIcon color={color} />
+                  <SitemapLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Teams
@@ -201,9 +201,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
-                  <SolidCalendarIcon color={color} />
+                  <CalendarSolidIcon color={color} />
                 ) : (
-                  <CalendarIcon color={color} />
+                  <CalendarLineIcon color={color} />
                 )}
                 <TextRegular color={color} size="xs">
                   Calendar
