@@ -105,12 +105,11 @@ jobs:
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
-          # if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          #   echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          # else
-          #   echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          # fi
-          echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
+          else
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          fi
 
       - name: 🧹 Clear All .env files and load eas.json
         run: |
@@ -124,12 +123,3 @@ jobs:
           profile: ${{  env.CHANNEL_CONFIG }}
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
-
-      # - name: 🚀 Create preview
-      #   uses: expo/expo-github-action/preview@v8
-      #   id: expo_preview
-      #   with:
-      #     command: eas update --auto
-      #     comment: true
-      #     working-directory: apps/${{ matrix.project }}
-      #     qr-target: expo-go
