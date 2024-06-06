@@ -110,8 +110,6 @@ export default function NavModal(props: INavModalProps) {
                   <Avatar
                     imageUrl={image}
                     size="md"
-                    hasBorder
-                    borderColor={Colors.BLACK}
                     accessibilityHint="my avatar"
                     accessibilityLabel="My Avatar"
                   />
