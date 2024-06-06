@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, Loading } from '@monorepo/expo/shared/ui-components';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
@@ -24,6 +24,12 @@ export default function Interactions() {
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
+
+  function loadMoreInteractions() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -82,17 +88,10 @@ export default function Interactions() {
             <View style={{ marginTop: 10, alignItems: 'center' }}>
               <Loading size="large" color={Colors.NEUTRAL_DARK} />
             </View>
-          ) : !loading && hasMore ? (
-            <Button
-              mt="lg"
-              title="Load More"
-              onPress={() => setOffset(offset + paginationLimit)}
-              size="auto"
-              variant="secondary"
-              accessibilityHint={`loads more notes from the server`}
-            />
           ) : null
         }
+        onEndReached={loadMoreInteractions}
+        onEndReachedThreshold={0.5}
       />
     </MainContainer>
   );
