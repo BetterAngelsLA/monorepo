@@ -228,7 +228,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
           ''
         ) : isGreaterThanZeroProvidedService ||
           isGreaterThanZeroProvidedServiceImages ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
             {services &&
               services.map((item, index) => {
                 const IconComponent = ICONS[item.enum];

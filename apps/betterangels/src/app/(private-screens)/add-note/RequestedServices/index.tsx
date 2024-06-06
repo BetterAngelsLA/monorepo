@@ -227,7 +227,7 @@ export default function RequestedServices(props: IRequestedServicesProps) {
           ''
         ) : isGreaterThanZeroRequestedService ||
           isGreaterThanZeroRequestedServiceImages ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
             {services.map((item, index) => {
               const IconComponent = ICONS[item.enum];
               return (
