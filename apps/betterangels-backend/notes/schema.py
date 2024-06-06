@@ -194,18 +194,20 @@ class Mutation:
             with transaction.atomic():
                 saved_at = data.saved_at.isoformat()
 
-                # Find context for most recent Note update before saved_at time
                 revert_to_note_context_id: uuid.UUID | None = None
-                if revert_to_note_context := (
-                    Context.objects.filter(
-                        metadata__note_id=data.id,
-                        metadata__label="updateNote",
-                        metadata__timestamp__lte=saved_at,
-                    )
-                    .order_by("-metadata__timestamp")
-                    .first()
-                ):
-                    revert_to_note_context_id = revert_to_note_context.id
+
+                update_note_contexts = Context.objects.filter(metadata__note_id=data.id, metadata__label="updateNote")
+
+                if update_note_contexts.exists():
+                    # Find context for most recent Note update before saved_at time
+                    if revert_to_note_context := (
+                        update_note_contexts.filter(
+                            metadata__timestamp__lte=saved_at,
+                        )
+                        .order_by("metadata__timestamp")
+                        .last()
+                    ):
+                        revert_to_note_context_id = revert_to_note_context.id
 
                 # Find contexts that occurred AFTER saved_at time
                 contexts_to_revert: list[uuid.UUID] = list(
@@ -247,8 +249,12 @@ class Mutation:
                     apps.get_model(event.pgh_model).objects.get(
                         pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                     ).revert()
+                # If all updates occurred after saved_at, revert to note creation event
+                elif update_note_contexts.exists():
+                    Note.objects.get(id=data.id).events.get(pgh_label="note.add").revert()
 
                 note.refresh_from_db()
+                note._private_details = note.private_details
 
                 return cast(NoteType, note)
 
