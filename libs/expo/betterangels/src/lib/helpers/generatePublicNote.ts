@@ -39,7 +39,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
         '.'
       : '';
 
-  const providedArray = providedServices.map((item) => {
+  const providedServicesArray = providedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
       return item.customService;
     }
@@ -47,24 +47,24 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   });
 
   const serviceIText =
-    providedArray.length > 0
+    providedServicesArray.length > 0
       ? 'Case Manager provided ' +
-        providedArray.slice(0, -1).join(', ').toLowerCase() +
-        (providedArray.length > 1 ? ', and ' : '') +
-        providedArray[providedArray.length - 1]?.toLowerCase() +
+        providedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (providedServicesArray.length > 1 ? ', and ' : '') +
+        providedServicesArray[providedServicesArray.length - 1]?.toLowerCase() +
         '.'
       : '';
 
   const serviceRText =
-    providedArray.length > 0
+    providedServicesArray.length > 0
       ? 'Client accepted ' +
-        providedArray.slice(0, -1).join(', ').toLowerCase() +
-        (providedArray.length > 1 ? ', and ' : '') +
-        providedArray[providedArray.length - 1]?.toLowerCase() +
+        providedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (providedServicesArray.length > 1 ? ', and ' : '') +
+        providedServicesArray[providedServicesArray.length - 1]?.toLowerCase() +
         '.'
       : '';
 
-  const requestedArray = requestedServices.map((item) => {
+  const requestedServicesArray = requestedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
       return item.customService;
     }
@@ -72,11 +72,13 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   });
 
   const requestedText =
-    requestedArray.length > 0
+    requestedServicesArray.length > 0
       ? 'Client requested ' +
-        requestedArray.slice(0, -1).join(', ').toLowerCase() +
-        (requestedArray.length > 1 ? ', and ' : '') +
-        requestedArray[requestedArray.length - 1]?.toLowerCase() +
+        requestedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (requestedServicesArray.length > 1 ? ', and ' : '') +
+        requestedServicesArray[
+          requestedServicesArray.length - 1
+        ]?.toLowerCase() +
         '.'
       : '';
 
