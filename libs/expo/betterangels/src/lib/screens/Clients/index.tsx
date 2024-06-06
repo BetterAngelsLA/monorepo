@@ -4,12 +4,13 @@ import {
   BasicInput,
   Button,
   ClientCard,
+  Loading,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ElementType, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, SectionList, View } from 'react-native';
+import { ElementType, useEffect, useMemo, useState } from 'react';
+import { SectionList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { Header } from '../../ui-components';
 import {
@@ -44,8 +45,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         user_FirstName: Ordering.AscNullsFirst,
       },
     },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
-  const [clients, setClients] = useState<IGroupedClients>();
+  const [clients, setClients] = useState<IGroupedClients>({});
 
   const router = useRouter();
 
@@ -79,12 +82,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <Loading size="large" color={Colors.NEUTRAL_DARK} />
       </View>
     ) : null;
   };
 
-  const debounceSearch = useMemo(
+  const debounceFetch = useMemo(
     () =>
       debounce((text) => {
         setFilterSearch(text);
@@ -92,13 +95,16 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     []
   );
 
-  const onChange = useCallback(
-    (e: string) => {
-      setSearch(e);
-      debounceSearch(e);
-    },
-    [debounceSearch]
-  );
+  useEffect(() => {
+    setOffset(0);
+    setClients({});
+  }, [filterSearch]);
+
+  const onChange = (e: string) => {
+    setSearch(e);
+
+    debounceFetch(e);
+  };
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;
@@ -111,27 +117,43 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         const firstLetter =
           client.user.firstName?.charAt(0).toUpperCase() || '#';
 
-        if (firstLetter && !acc[firstLetter]) {
+        if (!acc[firstLetter]) {
           acc[firstLetter] = {
             title: firstLetter,
             data: [],
           };
         }
-        firstLetter && acc[firstLetter].data.push(client);
+        acc[firstLetter].data.push(client);
         return acc;
       },
       {}
     );
-    if (offset === 0) {
-      setClients(groupedContacts);
-    } else {
-      setClients((prevClients) => ({ ...prevClients, ...groupedContacts }));
-    }
+
+    setClients((prevClients) => {
+      if (offset === 0) {
+        return groupedContacts;
+      }
+
+      const mergedClients = { ...prevClients };
+
+      Object.keys(groupedContacts).forEach((key) => {
+        if (mergedClients[key]) {
+          mergedClients[key].data = [
+            ...mergedClients[key].data,
+            ...groupedContacts[key].data,
+          ];
+        } else {
+          mergedClients[key] = groupedContacts[key];
+        }
+      });
+
+      return mergedClients;
+    });
 
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
-  const sections = Object.values(clients || {});
+  const sections = useMemo(() => Object.values(clients || {}), [clients]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -158,6 +180,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           onDelete={() => {
             setSearch('');
             setFilterSearch('');
+            setOffset(0);
+            setClients({});
           }}
         />
         <SectionList
@@ -166,7 +190,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           }}
           sections={sections}
           renderItem={({ item: clientProfile }) =>
-            data ? (
+            clients ? (
               <ClientCard
                 select={select as string}
                 id={clientProfile.id}
@@ -187,9 +211,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               {title}
             </TextBold>
           )}
-          keyExtractor={(clientProfile) => clientProfile.user.id}
+          keyExtractor={(clientProfile) => clientProfile.id}
           onEndReached={loadMoreClients}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.05}
           ListFooterComponent={renderFooter}
         />
         <Button
