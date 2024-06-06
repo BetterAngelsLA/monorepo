@@ -111,6 +111,7 @@ export default function Note({ id }: { id: string }) {
             title="Delete Note"
             variant="negative"
             size="full"
+            mt="sm"
           />
         }
       />
@@ -126,13 +127,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacings.md,
     gap: Spacings.sm,
     borderRadius: 8,
-    shadowColor: Colors.BLACK,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    borderWidth: 1,
   },
 });
