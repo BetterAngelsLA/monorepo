@@ -16,6 +16,7 @@ export { default as FieldCard } from './FieldCard';
 export { default as IconButton } from './IconButton';
 export { default as ImagePicker } from './ImagePicker';
 export { default as Input } from './Input';
+export { default as Loading } from './Loading';
 export { default as Radio } from './Radio';
 export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
