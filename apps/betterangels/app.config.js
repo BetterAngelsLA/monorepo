@@ -8,8 +8,8 @@ const BUNDLE_IDENTIFIER = HOSTNAME.split('.').reverse().join('.');
 export default {
   expo: {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
-    slug: 'betterangels',
-    scheme: 'betterangels',
+    slug: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
+    scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
     version: '1.0.14',
     orientation: 'portrait',
     icon: './src/app/assets/images/icon.png',
