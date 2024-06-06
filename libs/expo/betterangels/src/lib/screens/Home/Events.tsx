@@ -28,7 +28,7 @@ export default function Events() {
   return (
     <>
       <TextMedium size="lg" mb="sm">
-        Today
+        Today T
       </TextMedium>
       <ScrollView style={{ paddingBottom: Spacings.lg }} horizontal>
         {EVENTS.map((event, idx) => (
