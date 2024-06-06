@@ -32,7 +32,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
     >
       <TextMedium size="lg">
         {notes?.length} interaction
-        {(notes?.length && notes.length > 1) || !notes?.length ? 's' : ''}
+        {notes?.length === 1 ? '' : 's'}
       </TextMedium>
       <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
         <Pressable
