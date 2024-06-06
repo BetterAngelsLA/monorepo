@@ -117,7 +117,7 @@ jobs:
           cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
-      - name: Continuously Deploy
+      - name: 🚀 Continuously Deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: ${{  env.CHANNEL_CONFIG }}
