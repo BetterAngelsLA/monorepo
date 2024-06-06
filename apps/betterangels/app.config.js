@@ -7,7 +7,7 @@ const BUNDLE_IDENTIFIER = HOSTNAME.split('.').reverse().join('.');
 
 export default {
   expo: {
-    name: 'BetterAngels',
+    name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: 'betterangels',
     version: '1.0.14',
