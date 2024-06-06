@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button } from '@monorepo/expo/shared/ui-components';
+import { Button, Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
@@ -66,8 +66,13 @@ export default function Interactions() {
       <InteractionsHeader search={search} setSearch={setSearch} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       <FlatList
-        refreshing={refreshing}
-        onRefresh={onRefresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.PRIMARY}
+          />
+        }
         ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
         data={notes}
         renderItem={({ item: note }) => <NoteCard note={note} />}
@@ -75,7 +80,7 @@ export default function Interactions() {
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#0000ff" />
+              <Loading size="small" color={Colors.PRIMARY} />
             </View>
           ) : !loading && hasMore ? (
             <Button
