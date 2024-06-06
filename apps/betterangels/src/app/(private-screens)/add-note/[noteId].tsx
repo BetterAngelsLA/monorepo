@@ -158,13 +158,13 @@ export default function AddNote() {
         cancel={
           revertBeforeTimestamp ? (
             <RevertModal
-              body="All changes you made since last save will be discarded"
-              title="Revert note?"
+              body="All changes you made since the last save will be discarded"
+              title="Discard changes?"
               onRevert={revertNoteFunction}
               button={
                 <TextButton
                   fontSize="sm"
-                  accessibilityHint="reverts note"
+                  accessibilityHint="discards changes and reverts note to previous state"
                   title="Cancel"
                 />
               }
