@@ -80,7 +80,7 @@ export default function Interactions() {
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <Loading size="small" color={Colors.PRIMARY} />
+              <Loading size="large" color={Colors.NEUTRAL_DARK} />
             </View>
           ) : !loading && hasMore ? (
             <Button
