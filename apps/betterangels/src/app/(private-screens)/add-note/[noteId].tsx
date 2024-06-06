@@ -26,9 +26,9 @@ import RequestedServices from './RequestedServices';
 import Title from './Title';
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
+  const { noteId, savedAt } = useLocalSearchParams<{
     noteId: string;
-    revertBeforeTimestamp: string;
+    savedAt: string;
   }>();
 
   if (!noteId) {
@@ -65,7 +65,7 @@ export default function AddNote() {
         variables: {
           data: {
             id: noteId,
-            revertBeforeTimestamp: revertBeforeTimestamp || '',
+            savedAt: savedAt || '',
           },
         },
       });
@@ -156,7 +156,7 @@ export default function AddNote() {
       </MainScrollContainer>
       <BottomActions
         cancel={
-          revertBeforeTimestamp ? (
+          savedAt ? (
             <RevertModal
               body="All changes you made since the last save will be discarded"
               title="Discard changes?"
