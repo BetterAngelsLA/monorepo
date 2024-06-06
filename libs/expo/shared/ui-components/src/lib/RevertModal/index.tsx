@@ -64,7 +64,7 @@ export default function RevertModal({
                 setVisible(false);
               }}
               variant="primary"
-              title="Revert"
+              title="Discard"
             />
           </View>
         </View>
