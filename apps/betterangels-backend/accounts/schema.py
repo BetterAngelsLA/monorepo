@@ -111,6 +111,6 @@ class Mutation:
                 client_profile.user.delete()
 
             except ClientProfile.DoesNotExist:
-                raise PermissionError("User lacks proper organization or permissions")
+                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
