@@ -71,9 +71,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       if (response.data?.createNote && 'id' in response.data.createNote) {
         router.navigate({
           pathname: `/add-note/${response.data?.createNote.id}`,
-          params: {
-            revertBeforeTimestamp: new Date().toISOString(),
-          },
         });
       }
     } catch (err) {
