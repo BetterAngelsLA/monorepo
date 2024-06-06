@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 import django_stubs_ext
 import environ
@@ -61,6 +61,7 @@ env = environ.Env(
     SOCIALACCOUNT_APPLE_SECRET=(str, ""),
     SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
     SOCIALACCOUNT_APPLE_CERTIFICATE_KEY=(str, ""),
+    SOCIALACCOUNT_APPLE_ENABLE_EXPO_GO_CLIENT_ID=(bool, False),
     SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
@@ -137,7 +138,7 @@ MIDDLEWARE = [
 
 
 # Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
+SOCIALACCOUNT_PROVIDERS: Dict[str, Any] = {
     "google": {
         "SCOPE": ["profile", "email"],
         "EMAIL_AUTHENTICATION": True,
@@ -173,6 +174,18 @@ SOCIALACCOUNT_PROVIDERS = {
         ]
     },
 }
+
+if env("SOCIALACCOUNT_APPLE_ENABLE_EXPO_GO_CLIENT_ID"):
+    expo_go_apple_id = {
+        "client_id": "host.exp.Exponent",
+        # TODO: Check if we need these
+        "secret": "dummy_value",
+        "key": "dummy_value",
+        "settings": {"certificate_key": "dummy_value"},
+    }
+    SOCIALACCOUNT_PROVIDERS["apple"]["APPS"].append(expo_go_apple_id)
+
+
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 
 ROOT_URLCONF = "betterangels_backend.urls"

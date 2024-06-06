@@ -16,6 +16,7 @@ export default function UserProvider({ children }: UserProviderProps) {
     fetchPolicy: 'network-only',
   });
 
+  console.log('flll');
   const refetchUser = useCallback(async () => {
     try {
       const response = await refetch();
