@@ -69,9 +69,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         },
       });
       if (response.data?.createNote && 'id' in response.data.createNote) {
-        router.navigate({
-          pathname: `/add-note/${response.data?.createNote.id}`,
-        });
+        router.navigate(`/add-note/${id}`);
       }
     } catch (err) {
       console.log(err);
