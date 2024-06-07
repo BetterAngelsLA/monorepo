@@ -88,6 +88,43 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
+    def test_delete_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            mutation DeleteClientProfile($id: ID!) {
+                deleteClientProfile(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": self.client_profile_1["id"]}
+        response = self.execute_graphql(mutation, variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
     def test_view_client_profiles_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         client_count = ClientProfile.objects.count()

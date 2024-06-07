@@ -47,6 +47,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other org CM should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
@@ -78,6 +79,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -109,16 +111,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "has_note_permissions, has_task_permissions, should_succeed",
         [
             (True, True, True),  # Has both Note and Task permissions; should succeed
-            (
-                True,
-                False,
-                False,
-            ),  # Has Note but not Task permissions; should not succeed
-            (
-                False,
-                True,
-                False,
-            ),  # Has Task but not Note permissions; should not succeed
+            (True, False, False),  # Has Note but not Task permissions; should not succeed
+            (False, True, False),  # Has Task but not Note permissions; should not succeed
         ],
     )
     def test_add_note_task_permission(
@@ -182,16 +176,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "has_note_permissions, has_task_permissions, should_succeed",
         [
             (True, True, True),  # Has both Note and Task permissions; should succeed
-            (
-                True,
-                False,
-                False,
-            ),  # Has Note but not Task permissions; should not succeed
-            (
-                False,
-                True,
-                False,
-            ),  # Has Task but not Note permissions; should not succeed
+            (True, False, False),  # Has Note but not Task permissions; should not succeed
+            (False, True, False),  # Has Task but not Note permissions; should not succeed
         ],
     )
     def test_remove_note_task_permission(
@@ -257,7 +243,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other case manager should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", True),  # Other case manager should succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -285,6 +272,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # Other case manager should succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
@@ -310,10 +298,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Note owner should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other org case manager should not succeed
+            ("org_2_case_manager_1", False),  # Other org case manager should not succeed
         ],
     )
     def test_view_note_private_details_permission(self, user_label: str, should_succeed: bool) -> None:
@@ -338,14 +323,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, expected_private_details_count",
         [
-            (
-                "org_1_case_manager_1",
-                1,
-            ),  # Owner should see private details of their own note
-            (
-                "org_2_case_manager_1",
-                0,
-            ),  # Other org case manager should not succeed
+            ("org_1_case_manager_1", 1),  # Owner should see private details of their own note
+            ("org_2_case_manager_1", 0),  # Other org case manager should not succeed
         ],
     )
     def test_view_notes_private_details_permission(self, user_label: str, expected_private_details_count: int) -> None:
@@ -387,14 +366,8 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Client modifying note should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -417,14 +390,8 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # CM in a different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # CM in a different org should not succeed
             ("client_user_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -447,14 +414,8 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in the same org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # CM from a different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            ("org_2_case_manager_1", False),  # CM from a different org should not succeed
             ("client_user_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -486,14 +447,8 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in the same org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # CM from a different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
+            ("org_2_case_manager_1", False),  # CM from a different org should not succeed
             ("client_user_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -530,14 +485,8 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -569,14 +518,8 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -593,14 +536,8 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -641,14 +578,8 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -719,10 +650,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -749,10 +677,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -783,10 +708,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -815,10 +737,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -873,14 +792,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -906,14 +819,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -944,14 +851,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -979,14 +880,8 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Owner should succeed
-            (
-                "org_1_case_manager_2",
-                True,
-            ),  # Other CM in owner's org should succeed
-            (
-                "org_2_case_manager_1",
-                False,
-            ),  # Other CM in different org should not succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
