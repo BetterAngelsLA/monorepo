@@ -232,7 +232,7 @@ class Mutation:
                         apps.get_model(event.pgh_model).objects.get(
                             id=event.pgh_obj_id,
                             pgh_context_id__in=contexts_to_revert,
-                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
+                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff, obj_id=event.pgh_obj_id)
 
                     except ObjectDoesNotExist:
                         # If object has already been deleted, restore it
@@ -262,7 +262,7 @@ class Mutation:
                 return cast(NoteType, note)
 
         except Exception:
-            # TODO: add error handling/logging
+            # TODO: add error handling/logging            raise e
 
             return cast(NoteType, note)
 
