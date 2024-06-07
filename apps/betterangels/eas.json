@@ -17,7 +17,6 @@
     },
     "preview": {
       "distribution": "internal",
-      "developmentClient": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
