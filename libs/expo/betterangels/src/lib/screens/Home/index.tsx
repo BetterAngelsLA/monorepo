@@ -1,12 +1,13 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
+  Loading,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Link, useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import Events from './Events';
 
 import { Header } from '../../ui-components';
@@ -30,6 +31,8 @@ export default function Home({ Logo }: { Logo: ElementType }) {
       filters: { isActive: true },
       pagination: { limit: paginationLimit + 1, offset: offset },
     },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
   const router = useRouter();
 
@@ -63,7 +66,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <Loading size="large" color={Colors.NEUTRAL_DARK} />
       </View>
     ) : null;
   };
@@ -83,7 +86,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
-  if (!data?.clientProfiles) return null;
   return (
     <View style={{ flex: 1 }}>
       <Header title="Home" Logo={Logo} />
@@ -119,23 +121,25 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             </View>
           </>
         }
-        renderItem={({ item: clientProfile }) => (
-          <ClientCard
-            id={clientProfile.id}
-            onPress={() =>
-              createNoteFunction(
-                clientProfile.user.id,
-                clientProfile.user.firstName
-              )
-            }
-            mb="sm"
-            firstName={clientProfile.user.firstName}
-            lastName={clientProfile.user.lastName}
-          />
-        )}
+        renderItem={({ item: clientProfile }) =>
+          clients ? (
+            <ClientCard
+              id={clientProfile.id}
+              onPress={() =>
+                createNoteFunction(
+                  clientProfile.user.id,
+                  clientProfile.user.firstName
+                )
+              }
+              mb="sm"
+              firstName={clientProfile.user.firstName}
+              lastName={clientProfile.user.lastName}
+            />
+          ) : null
+        }
         keyExtractor={(clientProfile) => clientProfile.id}
         onEndReached={loadMoreClients}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
       />
     </View>
