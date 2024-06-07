@@ -80,6 +80,11 @@ class Task(BaseModel):
     def __str__(self) -> str:
         return self.title
 
+    @staticmethod
+    def revert_action(action: str, obj_id: str, *args: Any, **kwargs: Any) -> None:
+        if action == "add":
+            Task.objects.get(id=obj_id).delete()
+
 
 @pghistory.track(
     pghistory.InsertEvent("note.add"),
