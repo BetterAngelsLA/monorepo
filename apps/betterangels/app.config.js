@@ -66,7 +66,7 @@ export default {
       [
         'expo-dev-launcher',
         {
-          launchMode: 'most-recent',
+          launchMode: 'launcher',
         },
       ],
       'expo-router',
