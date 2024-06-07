@@ -55,18 +55,18 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      [
+        'expo-dev-launcher',
+        {
+          launchMode: 'launcher',
+        },
+      ],
       'expo-apple-authentication',
       [
         '@config-plugins/detox',
         {
           skipProguard: false,
           subdomains: ['10.0.2.2', 'localhost'],
-        },
-      ],
-      [
-        'expo-dev-launcher',
-        {
-          launchMode: 'launcher',
         },
       ],
       'expo-router',

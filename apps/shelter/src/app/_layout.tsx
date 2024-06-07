@@ -9,8 +9,8 @@ import { Link, SplashScreen, Stack } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Pressable, useColorScheme } from 'react-native';
 // import Themes from '../constants/themes';
+import 'expo-dev-client';
 import { DataProvider } from '../../providers/DataProvider';
-
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
