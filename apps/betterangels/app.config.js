@@ -63,6 +63,12 @@ export default {
           subdomains: ['10.0.2.2', 'localhost'],
         },
       ],
+      [
+        'expo-dev-launcher',
+        {
+          launchMode: 'most-recent',
+        },
+      ],
       'expo-router',
       [
         'expo-image-picker',
