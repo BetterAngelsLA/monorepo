@@ -705,7 +705,80 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(reverted_note["moods"]), 2)
 
-    def test_revert_note_mutation_removes_added_tasks(self) -> None:
+    def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Tasks are reverted to their state at the specified moment.
+
+        Test actions:
+        0. Setup creates a note
+        1. Create 1 new purpose and 1 new next step
+        2. Save now as saved_at
+        3. Create another purpose and 1 new next step
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        note = Note.objects.get(id=note_id)
+        self.assertEqual(note.purposes.count(), 0)
+        self.assertEqual(note.next_steps.count(), 0)
+        total_task_count = Task.objects.count()
+
+        # Add associations that will be persisted
+        self._create_note_task_fixture(
+            {
+                "title": "New Note Purpose",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._create_note_task_fixture(
+            {
+                "title": "New Note Next Step",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Add associations that will be discarded
+        self._create_note_task_fixture(
+            {
+                "title": "Discarded Purpose",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._create_note_task_fixture(
+            {
+                "title": "Discarded Next Step",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 43
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["purposes"]), 1)
+        self.assertEqual(len(reverted_note["nextSteps"]), 1)
+        # Assert that discarded tasks were deleted
+        self.assertEqual(Task.objects.count(), total_task_count + 2)
+
+    def test_revert_note_mutation_removes_added_existing_tasks(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
@@ -841,7 +914,78 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             0,
         )
 
-    def test_revert_note_mutation_returns_removed_tasks(self) -> None:
+    def test_revert_note_mutation_returns_removed_new_tasks(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Tasks are reverted to their state at the specified moment.
+
+        Test actions:
+        0. Setup creates a note
+        1. Create 2 new purposes and 2 new next steps
+        2. Save now as saved_at
+        3. Remove 1 purpose and 1 next step
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        note = Note.objects.get(id=note_id)
+        self.assertEqual(note.purposes.count(), 0)
+        self.assertEqual(note.next_steps.count(), 0)
+        total_task_count = Task.objects.count()
+
+        # Add associations that will be persisted
+        for i in [1, 2]:
+            purpose_response = self._create_note_task_fixture(
+                {
+                    "title": f"New Note Purpose {i}",
+                    "noteId": note_id,
+                    "status": "TO_DO",
+                    "taskType": "PURPOSE",
+                }
+            )
+
+            next_step_response = self._create_note_task_fixture(
+                {
+                    "title": f"New Note Next Step {i}",
+                    "noteId": note_id,
+                    "status": "TO_DO",
+                    "taskType": "NEXT_STEP",
+                }
+            )
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Remove task - should be discarded
+        self._remove_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": purpose_response["data"]["createNoteTask"]["id"],
+                "taskType": "PURPOSE",
+            }
+        )
+
+        self._remove_note_task_fixture(
+            {
+                "noteId": note_id,
+                "taskId": next_step_response["data"]["createNoteTask"]["id"],
+                "taskType": "NEXT_STEP",
+            }
+        )
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 27
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["purposes"]), 2)
+        self.assertEqual(len(reverted_note["nextSteps"]), 2)
+        self.assertEqual(Task.objects.count(), total_task_count + 4)
+
+    def test_revert_note_mutation_returns_removed_existing_tasks(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
