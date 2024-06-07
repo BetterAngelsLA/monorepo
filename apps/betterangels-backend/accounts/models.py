@@ -76,6 +76,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
+    @property
+    def full_name(self: "User") -> str:
+        return f"{self.first_name} {self.last_name}"
+
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
