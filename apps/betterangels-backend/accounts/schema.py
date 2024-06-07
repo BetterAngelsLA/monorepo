@@ -5,6 +5,8 @@ import strawberry_django
 from accounts.models import ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.utils import get_user_permission_group
@@ -13,6 +15,7 @@ from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.utils.query import filter_for_user
 from strawberry_django.utils.requests import get_request
 
 from .types import (
@@ -89,3 +92,25 @@ class Mutation:
                 assign_perm(perm, permission_group.group, client_profile)
 
             return cast(ClientProfileType, client_profile)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.DELETE],
+                ).get(id=data.id)
+
+                client_profile_id = client_profile.pk
+
+                # Deleting the underlying user will cascade and delete the client profile
+                client_profile.user.delete()
+
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
+
+            return DeletedObjectType(id=client_profile_id)

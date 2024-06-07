@@ -102,10 +102,10 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   age?: Maybe<Scalars['Int']['output']>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
-  gender: GenderEnum;
+  gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  preferredLanguage: LanguageEnum;
+  preferredLanguage?: Maybe<LanguageEnum>;
   user: UserType;
 };
 
@@ -184,6 +184,8 @@ export type CreateUserInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
@@ -316,6 +318,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientProfile: DeleteClientProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
@@ -382,6 +385,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteClientProfileArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 

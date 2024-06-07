@@ -5,7 +5,7 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import DeleteDjangoObjectInput
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
@@ -43,7 +43,6 @@ from .types import (
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
-    DeletedObjectType,
     MoodType,
     NoteAttachmentType,
     NoteFilter,
