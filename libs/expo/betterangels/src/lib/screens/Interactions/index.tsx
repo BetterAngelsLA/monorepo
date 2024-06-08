@@ -3,6 +3,7 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
@@ -13,10 +14,13 @@ export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const { user } = useUser();
+
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
+      filters: { createdBy: user?.id },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
