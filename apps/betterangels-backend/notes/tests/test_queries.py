@@ -287,10 +287,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         filters: dict[str, Any] = {}
 
         if case_manager_label:
-            filters["createdBy"] = {"pk": getattr(self, case_manager_label).pk}
+            filters["createdBy"] = getattr(self, case_manager_label).pk
 
         if client_label:
-            filters["client"] = {"pk": getattr(self, client_label).pk}
+            filters["client"] = getattr(self, client_label).pk
 
         if search_terms:
             filters["search"] = search_terms
