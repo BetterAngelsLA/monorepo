@@ -253,8 +253,3 @@ class UpdateTaskLocationInput:
 class RevertNoteInput:
     id: auto
     saved_at: datetime
-
-
-@strawberry.type
-class DeletedObjectType:
-    id: int
