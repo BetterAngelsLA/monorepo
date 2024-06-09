@@ -3,6 +3,9 @@ query ClientProfile($id: ID!) {
     ... on ClientProfileType {
       id
       hmisId
+      gender
+      dateOfBirth
+      preferredLanguage
       user {
         id
         email
