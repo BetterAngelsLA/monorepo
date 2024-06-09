@@ -21,12 +21,13 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [updateNote, { error }] = useUpdateNoteMutation();
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
+  const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
 
   const updateNoteFunction = useRef(
     debounce(async (value: string) => {
-      if (!noteId || !value) return;
+      if (!noteId) return;
 
       try {
         const { data } = await updateNote({
@@ -42,18 +43,19 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           console.error(`Failed to update note: ${error}`);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }, 500)
   ).current;
 
   const onChange = (value: string) => {
+    setUserChange(true);
     setPublicNote(value);
     updateNoteFunction(value);
   };
 
   useEffect(() => {
-    if (!data || !('note' in data)) return;
+    if (!data || !('note' in data) || userChange) return;
     const autoNote = generatePublicNote({
       purposes: data.note.purposes,
       nextSteps: data.note.nextSteps,
@@ -66,9 +68,9 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     if (data.note.publicDetails) {
       setPublicNote(data.note.publicDetails);
     } else {
-      setPublicNote(autoNote);
+      onChange(autoNote);
     }
-  }, [data]);
+  }, [data, userChange]);
 
   if (isLoading) {
     return (
@@ -143,7 +145,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
                 if (autoNote !== publicNote) {
                   return setPublicNote(autoNote);
                 }
-                setPublicNote('');
+                onChange('');
               }}
               height="xl"
               accessibilityHint="clears HMIS input"
