@@ -37,8 +37,6 @@ export default function Client({ id }: { id: string }) {
 
   if (error) throw new Error('Something went wrong. Please try again.');
 
-  console.log(data);
-
   return (
     <MainScrollContainer pt={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
