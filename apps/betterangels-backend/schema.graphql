@@ -96,8 +96,8 @@ type ClientProfileType {
   id: ID!
   hmisId: String
   dateOfBirth: Date
-  preferredLanguage: LanguageEnum!
-  gender: GenderEnum!
+  preferredLanguage: LanguageEnum
+  gender: GenderEnum
   user: UserType!
   age: Int
 }
@@ -187,6 +187,8 @@ scalar DateTime
 """Decimal (fixed-point)"""
 scalar Decimal
 
+union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
+
 input DeleteDjangoObjectInput {
   id: ID!
 }
@@ -215,10 +217,6 @@ type DjangoFileType {
   path: String!
   size: Int!
   url: String!
-}
-
-input DjangoModelFilterInput {
-  pk: ID!
 }
 
 type DjangoModelType {
@@ -308,6 +306,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
@@ -349,8 +348,8 @@ type NoteAttachmentType implements AttachmentInterface {
 }
 
 input NoteFilter {
-  client: DjangoModelFilterInput
-  createdBy: DjangoModelFilterInput
+  client: ID
+  createdBy: ID
   isSubmitted: Boolean
   AND: NoteFilter
   OR: NoteFilter
