@@ -176,6 +176,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
+          placeholder="Search Client Name"
           onChangeText={onChange}
           onDelete={() => {
             setSearch('');
