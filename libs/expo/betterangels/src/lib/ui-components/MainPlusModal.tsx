@@ -1,7 +1,6 @@
 import {
-  CalendarPlusIcon,
   FilePlusIcon,
-  SignUpIcon,
+  UserAddIcon,
   XmarkIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -9,11 +8,6 @@ import { Pressable, StyleSheet } from 'react-native';
 import MainModal from './MainModal';
 
 const ACTIONS = [
-  {
-    title: 'Sign Up Process',
-    Icon: SignUpIcon,
-    route: '#',
-  },
   {
     title: 'Add interaction',
     Icon: FilePlusIcon,
@@ -24,14 +18,9 @@ const ACTIONS = [
     },
   },
   {
-    title: 'Add event',
-    Icon: CalendarPlusIcon,
-    route: '#',
-  },
-  {
-    title: 'Add task',
-    Icon: CalendarPlusIcon,
-    route: '#',
+    title: 'Add client',
+    Icon: UserAddIcon,
+    route: '/clients', // TODO: update path once add client screen is created
   },
 ];
 

@@ -66,7 +66,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <Loading size="small" color={Colors.PRIMARY} />
+        <Loading size="large" color={Colors.NEUTRAL_DARK} />
       </View>
     ) : null;
   };

@@ -5,7 +5,7 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from common.graphql.types import DeleteDjangoObjectInput
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
@@ -43,7 +43,6 @@ from .types import (
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
-    DeletedObjectType,
     MoodType,
     NoteAttachmentType,
     NoteFilter,
@@ -178,7 +177,7 @@ class Mutation:
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        NOTE_UPDATES = {
+        NOTE_RELATED_MODEL_UPDATES = {
             "createNoteMood",
             "addNoteTask",
             "createNoteTask",
@@ -187,7 +186,7 @@ class Mutation:
             "removeNoteTask",
             "removeNoteServiceRequest",
             "updateNoteLocation",
-            # TODO: add note update mutations
+            # TODO: add mutations that affect models that are related to Note
         }
         note = Note.objects.get(id=data.id)
 
@@ -200,7 +199,7 @@ class Mutation:
                 update_note_contexts = Context.objects.filter(metadata__note_id=data.id, metadata__label="updateNote")
 
                 if update_note_contexts.exists():
-                    # Find context for most recent Note update before saved_at time
+                    # Find context for most recent Note instance update BEFORE saved_at time
                     if revert_to_note_context := (
                         update_note_contexts.filter(
                             metadata__timestamp__lte=saved_at,
@@ -210,22 +209,22 @@ class Mutation:
                     ):
                         revert_to_note_context_id = revert_to_note_context.id
 
-                # Find contexts that occurred AFTER saved_at time
+                # Find contexts affecting Note-related models that were created AFTER saved_at time
                 contexts_to_revert: list[uuid.UUID] = list(
                     Context.objects.filter(
                         metadata__note_id=data.id,
-                        metadata__label__in=NOTE_UPDATES,
+                        metadata__label__in=NOTE_RELATED_MODEL_UPDATES,
                         metadata__timestamp__gt=saved_at,
                     ).values_list("id", flat=True)
                 )
 
-                # Revert changes made to PROXY model instances (no pgh_obj_id)
+                # Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
                 for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
                     action = event.pgh_label.split(".")[1]
 
                     apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
-                # Revert changes made to REAL model instances (have pgh_obj_id)
+                # Revert changes made to Note-related REAL model instances (have pgh_obj_id, i.e., Locations, Moods)
                 for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False):
                     action = event.pgh_label.split(".")[1]
 
@@ -233,7 +232,7 @@ class Mutation:
                         apps.get_model(event.pgh_model).objects.get(
                             id=event.pgh_obj_id,
                             pgh_context_id__in=contexts_to_revert,
-                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
+                        ).pgh_obj.revert_action(action=action, diff=event.pgh_diff, obj_id=event.pgh_obj_id)
 
                     except ObjectDoesNotExist:
                         # If object has already been deleted, restore it
@@ -250,17 +249,20 @@ class Mutation:
                     apps.get_model(event.pgh_model).objects.get(
                         pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                     ).revert()
-                # If all updates occurred after saved_at, revert to note creation event
+
+                # If all updates occurred after saved_at, revert to Note instance's creation event
                 elif update_note_contexts.exists():
                     Note.objects.get(id=data.id).events.get(pgh_label="note.add").revert()
 
+                # Discard contexts that were created after saved_at time
+                update_note_contexts.filter(metadata__timestamp__gt=saved_at).delete()
+
                 note.refresh_from_db()
-                note._private_details = note.private_details
 
                 return cast(NoteType, note)
 
         except Exception:
-            # TODO: add error handling/logging
+            # TODO: add error handling/logging            raise e
 
             return cast(NoteType, note)
 
