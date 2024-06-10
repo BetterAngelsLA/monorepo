@@ -54,7 +54,6 @@ export default function MainModal(props: IMainModalProps) {
         marginLeft: ml,
         flex: 1,
         justifyContent: 'flex-end',
-        // backgroundColor: Colors.WHITE,
       }}
       animationIn={vertical ? 'slideInUp' : 'slideInRight'}
       animationOut={vertical ? 'slideOutDown' : 'slideOutRight'}
