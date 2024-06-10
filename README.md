@@ -62,6 +62,12 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
    nvm install 20.12.2
    ```
 
+1. Install yarn
+
+   ```
+   brew install yarn
+   ```
+
 1. Go to the monorepo and run yarn install
 
    ```bash
