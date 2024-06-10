@@ -33,9 +33,11 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
   return (
     <MainModal
+      vertical
       actions={ACTIONS}
       isModalVisible={isModalVisible}
       closeModal={closeModal}
+      opacity={0.5}
       bottomSection={
         <Pressable
           onPress={closeModal}
