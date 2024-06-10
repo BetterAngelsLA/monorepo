@@ -69,9 +69,7 @@ export default function Interactions() {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
-  if (error) {
-    throw new Error('Something went wrong!');
-  }
+  if (error) throw new Error('Something went wrong!');
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
