@@ -1,6 +1,6 @@
 {
   "build": {
-    "development": {
+    "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
@@ -13,6 +13,7 @@
       "ios": {
         "simulator": true
       },
+      "android": null,
       "node": "20.12.2"
     },
     "preview": {
