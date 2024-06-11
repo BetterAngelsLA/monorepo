@@ -166,6 +166,23 @@ export const UPDATE_TASK = gql`
     }
   }
 `;
+export const REMOVE_NOTE_TASK = gql`
+  mutation RemoveNoteTask($data: RemoveNoteTaskInput!) {
+    removeNoteTask(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on NoteType {
+        id
+      }
+    }
+  }
+`;
+
 export const DELETE_TASK = gql`
   mutation DeleteTask($id: ID!) {
     deleteTask(data: { id: $id }) {

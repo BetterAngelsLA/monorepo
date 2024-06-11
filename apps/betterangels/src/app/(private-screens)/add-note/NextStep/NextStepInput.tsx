@@ -2,7 +2,7 @@ import {
   TaskStatusEnum,
   TaskTypeEnum,
   useCreateNoteTaskMutation,
-  useDeleteTaskMutation,
+  useRemoveNoteTaskMutation,
   useUpdateTaskMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
@@ -45,7 +45,7 @@ export default function NextStepInput(props: INextStepProps) {
   const [id, setId] = useState<string | undefined>(nextStep.id || undefined);
   const [createNoteTask, { error, loading }] = useCreateNoteTaskMutation();
   const [updateTask, { error: updateError }] = useUpdateTaskMutation();
-  const [deleteTask, { error: deleteError }] = useDeleteTaskMutation();
+  const [removeNoteTask, { error: deleteError }] = useRemoveNoteTaskMutation();
 
   const createTask = useRef(
     debounce(
@@ -83,8 +83,12 @@ export default function NextStepInput(props: INextStepProps) {
               console.log('Error updating task', updateError);
             }
           } else if (id && !obj.action) {
-            const { data } = await deleteTask({
-              variables: { id },
+            const { data } = await removeNoteTask({
+              variables: {
+                noteId: noteId,
+                taskId: id,
+                taskType: TaskTypeEnum.NextStep,
+              },
             });
             setId(undefined);
             if (!data) {
@@ -149,7 +153,7 @@ export default function NextStepInput(props: INextStepProps) {
     setNextSteps(newNextSteps);
     try {
       if (id) {
-        await deleteTask({
+        await removeNoteTask({
           variables: { id },
         });
         setId(undefined);

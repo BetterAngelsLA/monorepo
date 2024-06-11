@@ -64,6 +64,13 @@ export type UpdateTaskMutationVariables = Types.Exact<{
 
 export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, createdAt: any, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
+export type RemoveNoteTaskMutationVariables = Types.Exact<{
+  data: Types.RemoveNoteTaskInput;
+}>;
+
+
+export type RemoveNoteTaskMutation = { __typename?: 'Mutation', removeNoteTask: { __typename?: 'NoteType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
 export type DeleteTaskMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
@@ -486,6 +493,48 @@ export function useUpdateTaskMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateTaskMutationHookResult = ReturnType<typeof useUpdateTaskMutation>;
 export type UpdateTaskMutationResult = Apollo.MutationResult<UpdateTaskMutation>;
 export type UpdateTaskMutationOptions = Apollo.BaseMutationOptions<UpdateTaskMutation, UpdateTaskMutationVariables>;
+export const RemoveNoteTaskDocument = gql`
+    mutation RemoveNoteTask($data: RemoveNoteTaskInput!) {
+  removeNoteTask(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on NoteType {
+      id
+    }
+  }
+}
+    `;
+export type RemoveNoteTaskMutationFn = Apollo.MutationFunction<RemoveNoteTaskMutation, RemoveNoteTaskMutationVariables>;
+
+/**
+ * __useRemoveNoteTaskMutation__
+ *
+ * To run a mutation, you first call `useRemoveNoteTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveNoteTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeNoteTaskMutation, { data, loading, error }] = useRemoveNoteTaskMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useRemoveNoteTaskMutation(baseOptions?: Apollo.MutationHookOptions<RemoveNoteTaskMutation, RemoveNoteTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveNoteTaskMutation, RemoveNoteTaskMutationVariables>(RemoveNoteTaskDocument, options);
+      }
+export type RemoveNoteTaskMutationHookResult = ReturnType<typeof useRemoveNoteTaskMutation>;
+export type RemoveNoteTaskMutationResult = Apollo.MutationResult<RemoveNoteTaskMutation>;
+export type RemoveNoteTaskMutationOptions = Apollo.BaseMutationOptions<RemoveNoteTaskMutation, RemoveNoteTaskMutationVariables>;
 export const DeleteTaskDocument = gql`
     mutation DeleteTask($id: ID!) {
   deleteTask(data: {id: $id}) {

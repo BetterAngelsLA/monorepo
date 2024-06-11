@@ -2,7 +2,7 @@ import {
   TaskStatusEnum,
   TaskTypeEnum,
   useCreateNoteTaskMutation,
-  useDeleteTaskMutation,
+  useRemoveNoteTaskMutation,
   useUpdateTaskMutation,
 } from '@monorepo/expo/betterangels';
 import { BasicInput } from '@monorepo/expo/shared/ui-components';
@@ -26,7 +26,8 @@ export default function PurposeInput(props: IPurposeProps) {
   );
   const [createNoteTask, { error, loading }] = useCreateNoteTaskMutation();
   const [updateTask, { error: updateError }] = useUpdateTaskMutation();
-  const [deleteTask, { error: deleteError }] = useDeleteTaskMutation();
+  const [removeNoteTask, { error: removeNoteTaskError }] =
+    useRemoveNoteTaskMutation();
 
   const createTask = useRef(
     debounce(async (title: string, id: string | undefined) => {
@@ -45,12 +46,16 @@ export default function PurposeInput(props: IPurposeProps) {
             console.log('Error updating task', updateError);
           }
         } else if (id && !title) {
-          const { data } = await deleteTask({
-            variables: { id },
+          const { data } = await removeNoteTask({
+            variables: {
+              noteId: noteId,
+              taskId: id,
+              taskType: TaskTypeEnum.Purpose,
+            },
           });
           setLocalId(undefined);
           if (!data) {
-            console.log('Error deleting task', deleteError);
+            console.log('Error removing task', removeNoteTaskError);
           }
         } else {
           const { data } = await createNoteTask({
@@ -102,13 +107,13 @@ export default function PurposeInput(props: IPurposeProps) {
     setPurposes(newPurposes);
     try {
       if (localId) {
-        const { data } = await deleteTask({
+        const { data } = await removeNoteTask({
           variables: { id: localId },
         });
         setLocalId(undefined);
 
         if (!data) {
-          console.log('Error deleting task', deleteError);
+          console.log('Error deleting task', removeNoteTaskError);
         }
       }
     } catch (err) {
