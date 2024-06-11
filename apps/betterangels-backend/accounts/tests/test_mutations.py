@@ -70,6 +70,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_client_profile = {
             "id": ANY,
             "age": self.EXPECTED_CLIENT_AGE,
+            "address": "1234 Main St",
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
@@ -86,6 +87,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 "email": "firsty_lasty@example.com",
             },
         }
+
         self.assertEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:
