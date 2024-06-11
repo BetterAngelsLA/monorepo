@@ -150,8 +150,8 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    client: auto
-    created_by: auto
+    client: Optional[ID]
+    created_by: Optional[ID]
     is_submitted: auto
 
     @strawberry_django.filter_field
@@ -253,8 +253,3 @@ class UpdateTaskLocationInput:
 class RevertNoteInput:
     id: auto
     saved_at: datetime
-
-
-@strawberry.type
-class DeletedObjectType:
-    id: int

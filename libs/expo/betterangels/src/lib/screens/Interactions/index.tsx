@@ -1,8 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Button, Loading } from '@monorepo/expo/shared/ui-components';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
@@ -13,10 +14,13 @@ export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const { user } = useUser();
+
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
+      filters: { createdBy: user?.id },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -24,6 +28,12 @@ export default function Interactions() {
   const [notes, setNotes] = useState<NotesQuery['notes']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
+
+  function loadMoreInteractions() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -80,19 +90,12 @@ export default function Interactions() {
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <Loading size="small" color={Colors.PRIMARY} />
+              <Loading size="large" color={Colors.NEUTRAL_DARK} />
             </View>
-          ) : !loading && hasMore ? (
-            <Button
-              mt="lg"
-              title="Load More"
-              onPress={() => setOffset(offset + paginationLimit)}
-              size="auto"
-              variant="secondary"
-              accessibilityHint={`loads more notes from the server`}
-            />
           ) : null
         }
+        onEndReached={loadMoreInteractions}
+        onEndReachedThreshold={0.5}
       />
     </MainContainer>
   );

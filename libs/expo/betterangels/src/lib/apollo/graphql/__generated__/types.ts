@@ -102,10 +102,10 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   age?: Maybe<Scalars['Int']['output']>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
-  gender: GenderEnum;
+  gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  preferredLanguage: LanguageEnum;
+  preferredLanguage?: Maybe<LanguageEnum>;
   user: UserType;
 };
 
@@ -185,6 +185,8 @@ export type CreateUserInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -216,10 +218,6 @@ export type DjangoFileType = {
   path: Scalars['String']['output'];
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
-};
-
-export type DjangoModelFilterInput = {
-  pk: Scalars['ID']['input'];
 };
 
 export type DjangoModelType = {
@@ -316,6 +314,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientProfile: DeleteClientProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
@@ -382,6 +381,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteClientProfileArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 
@@ -482,8 +486,8 @@ export type NoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
-  client?: InputMaybe<DjangoModelFilterInput>;
-  createdBy?: InputMaybe<DjangoModelFilterInput>;
+  client?: InputMaybe<Scalars['ID']['input']>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
