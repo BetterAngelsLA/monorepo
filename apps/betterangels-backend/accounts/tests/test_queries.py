@@ -2,7 +2,12 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import GenderEnum, LanguageEnum
+from accounts.enums import (
+    GenderEnum,
+    LanguageEnum,
+    StrawberryLanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -86,11 +91,18 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             query ViewClientProfile($id: ID!) {
                 clientProfile(pk: $id) {
                     id
-                    hmisId
-                    gender
-                    dateOfBirth
+                    address
                     age
+                    dateOfBirth
+                    gender
+                    hmisId
+                    nickname
+                    phoneNumber
                     preferredLanguage
+                    pronouns
+                    socialSecurityNumber
+                    spokenLanguages
+                    veteranStatus
                     user {
                         id
                         firstName
@@ -117,11 +129,18 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         }
         expected_client = {
             "id": str(client_profile_id),
-            "hmisId": self.client_profile_1["hmisId"],
-            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.MALE.name,
+            "hmisId": self.client_profile_1["hmisId"],
+            "nickname": self.client_profile_1["nickname"],
+            "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "pronouns": self.client_profile_1["pronouns"],
+            "socialSecurityNumber": self.client_profile_1["socialSecurityNumber"],
+            "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": expected_user,
         }
 
@@ -132,11 +151,17 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             query ViewClientProfiles {
                 clientProfiles{
                     id
-                    hmisId
-                    gender
-                    dateOfBirth
+                    address
                     age
+                    dateOfBirth
+                    gender
+                    hmisId
+                    phoneNumber
                     preferredLanguage
+                    pronouns
+                    socialSecurityNumber
+                    spokenLanguages
+                    veteranStatus
                     user {
                         id
                         firstName

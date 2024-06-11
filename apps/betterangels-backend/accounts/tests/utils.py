@@ -1,6 +1,11 @@
 from typing import Any, Dict
 
-from accounts.enums import GenderEnum, LanguageEnum
+from accounts.enums import (
+    GenderEnum,
+    LanguageEnum,
+    StrawberryLanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -30,19 +35,34 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
-                "hmisId": "A1B2C3",
+                "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
+                "hmisId": "A1B2C3",
+                "nickname": "Toad",
+                "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
+                "pronouns": "he/him",
+                "socialSecurityNumber": "123456789",
+                "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+                "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
+
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_2_user,
+                "address": None,
+                "dateOfBirth": None,
+                "gender": None,
                 "hmisId": "A1B3C4",
-                "dateOfBirth": self.date_of_birth,
-                "gender": GenderEnum.MALE.name,
-                "preferredLanguage": LanguageEnum.ENGLISH.name,
+                "nickname": None,
+                "phoneNumber": None,
+                "preferredLanguage": None,
+                "pronouns": None,
+                "socialSecurityNumber": None,
+                "spokenLanguages": [],
+                "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
         # Logout after setting up the clients
@@ -68,11 +88,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                     ... on ClientProfileType {{
                         id
-                        hmisId
-                        dateOfBirth
+                        address
                         age
+                        dateOfBirth
                         gender
+                        hmisId
+                        nickname
+                        phoneNumber
                         preferredLanguage
+                        pronouns
+                        socialSecurityNumber
+                        spokenLanguages
+                        veteranStatus
                         user {{
                             id
                             firstName

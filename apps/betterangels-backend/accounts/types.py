@@ -1,8 +1,9 @@
 from datetime import timedelta
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.enums import StrawberryLanguageEnum
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
@@ -84,11 +85,18 @@ class UserType:
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType:
     id: auto
-    hmis_id: auto
-    date_of_birth: auto
-    preferred_language: auto
-    gender: auto
     user: UserType
+    address: auto
+    date_of_birth: auto
+    gender: auto
+    hmis_id: auto
+    nickname: auto
+    phone_number: auto
+    spoken_languages: List[Optional[StrawberryLanguageEnum]]
+    preferred_language: auto
+    pronouns: auto
+    social_security_number: auto
+    veteran_status: auto
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -109,11 +117,18 @@ class CreateUserInput:
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput:
-    hmis_id: auto
+    address: auto
     date_of_birth: auto
-    preferred_language: auto
     gender: auto
+    hmis_id: auto
+    nickname: auto
+    phone_number: auto
+    preferred_language: auto
+    pronouns: auto
+    social_security_number: auto
+    spoken_languages: Optional[List[Optional[StrawberryLanguageEnum]]]
     user: CreateUserInput
+    veteran_status: auto
 
 
 @strawberry.input
