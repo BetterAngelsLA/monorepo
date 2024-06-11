@@ -1,2 +1,2 @@
+from .note_reverter_util import NoteReverter
 from .permission_utils import get_user_permission_group
-from .revert_note_utils import NoteReverter
