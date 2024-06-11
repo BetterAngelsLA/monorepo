@@ -490,6 +490,8 @@ class Mutation:
             note_id = note.id
         elif note := service_request.requested_notes.first():
             note_id = note.id
+        else:
+            note_id = None
 
         with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
             service_request.delete()
@@ -636,6 +638,8 @@ class Mutation:
             note_id = note.id
         elif note := task.next_step_notes.first():
             note_id = note.id
+        else:
+            note_id = None
 
         with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
             task.delete()

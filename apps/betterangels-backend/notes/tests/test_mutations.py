@@ -1515,7 +1515,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on ServiceRequestType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
@@ -1523,7 +1523,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         """
         variables = {"id": self.service_request["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -1672,7 +1672,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on TaskType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
@@ -1680,7 +1680,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         """
         variables = {"id": self.task["id"]}
 
-        expected_query_count = 16
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
