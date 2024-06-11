@@ -25,7 +25,7 @@ export default function NoteCard(props: INoteCardProps) {
       <NoteCardHeader title={note.title} interactedAt={note.interactedAt} />
       <NoteCardClient client={note.client} isSubmitted={note.isSubmitted} />
       <TextRegular numberOfLines={2} ellipsizeMode="tail" size="sm">
-        What Text should be here
+        {note.publicDetails}
       </TextRegular>
       {(note.moods.length > 0 ||
         note.providedServices.length > 0 ||
