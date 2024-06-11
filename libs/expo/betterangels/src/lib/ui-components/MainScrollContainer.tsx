@@ -7,10 +7,11 @@ interface IMainScrollContainerProps {
   bg?: string;
   pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
+  pb?: number;
 }
 
 const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
-  ({ children, bg = Colors.WHITE, pt = 'md', px = 'sm' }, ref) => (
+  ({ children, bg = Colors.WHITE, pt = 'md', px = 'sm', pb = 80 }, ref) => (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
@@ -21,8 +22,9 @@ const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
         style={{ flex: 1, backgroundColor: bg }}
         contentContainerStyle={{
           paddingHorizontal: px ? Spacings[px] : undefined,
-          paddingBottom: 80,
+          paddingBottom: pb,
           paddingTop: pt && Spacings[pt],
+          flexGrow: 1,
         }}
       >
         {children}

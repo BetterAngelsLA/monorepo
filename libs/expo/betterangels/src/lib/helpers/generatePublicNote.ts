@@ -1,26 +1,18 @@
+import { ServiceEnum, ViewNoteQuery } from '../apollo';
+
 interface IWatchedValue {
-  purposes: { value: string }[];
-  nextStepActions: {
-    action: string;
-    date?: Date | undefined;
-    location?: string;
-    time?: Date | undefined;
-  }[];
-  moods: string[];
-  providedServices: string[];
-  requestedServices: string[];
+  purposes: ViewNoteQuery['note']['purposes'];
+  nextSteps: ViewNoteQuery['note']['nextSteps'];
+  moods: ViewNoteQuery['note']['moods'];
+  providedServices: ViewNoteQuery['note']['providedServices'];
+  requestedServices: ViewNoteQuery['note']['requestedServices'];
 }
 
-export default function generatedPublicNote(watchedValues: IWatchedValue) {
-  const {
-    purposes,
-    moods,
-    providedServices,
-    nextStepActions,
-    requestedServices,
-  } = watchedValues;
+export default function generatePublicNote(watchedValues: IWatchedValue) {
+  const { purposes, moods, providedServices, nextSteps, requestedServices } =
+    watchedValues;
   const changedG = purposes
-    .map((purpose) => purpose.value.toLowerCase())
+    .map((purpose) => purpose.title.toLowerCase())
     .filter(Boolean);
 
   const purposeText =
@@ -29,49 +21,64 @@ export default function generatedPublicNote(watchedValues: IWatchedValue) {
         ? 'The goal for this session was to'
         : 'The goals for this session were to'
       : '';
-  const changedP = nextStepActions
-    .filter((item) => !!item.action)
-    .map(
-      (filtered) =>
-        `${filtered.action} ${filtered.date || ''} ${filtered.time || ''}`
-    );
+  const changedP = nextSteps
+    .filter((item) => !!item.title)
+    .map((filtered) => `${filtered.title}`);
 
   const moodIText =
     moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
 
+  const moodsArray = moods.map((item) => item.descriptor);
+
   const moodRText =
-    moods.length > 0
+    moodsArray.length > 0
       ? 'Client responded that he was ' +
-        moods.slice(0, -1).join(', ').toLowerCase() +
-        (moods.length > 1 ? ', and ' : '') +
-        moods[moods.length - 1].toLowerCase() +
+        moodsArray.slice(0, -1).join(', ').toLowerCase() +
+        (moodsArray.length > 1 ? ', and ' : '') +
+        moodsArray[moodsArray.length - 1].toLowerCase() +
         '.'
       : '';
 
+  const providedServicesArray = providedServices.map((item) => {
+    if (item.service === ServiceEnum.Other) {
+      return item.customService;
+    }
+    return item.service;
+  });
+
   const serviceIText =
-    providedServices.length > 0
+    providedServicesArray.length > 0
       ? 'Case Manager provided ' +
-        providedServices.slice(0, -1).join(', ').toLowerCase() +
-        (providedServices.length > 1 ? ', and ' : '') +
-        providedServices[providedServices.length - 1].toLowerCase() +
+        providedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (providedServicesArray.length > 1 ? ', and ' : '') +
+        providedServicesArray[providedServicesArray.length - 1]?.toLowerCase() +
         '.'
       : '';
 
   const serviceRText =
-    providedServices.length > 0
+    providedServicesArray.length > 0
       ? 'Client accepted ' +
-        providedServices.slice(0, -1).join(', ').toLowerCase() +
-        (providedServices.length > 1 ? ', and ' : '') +
-        providedServices[providedServices.length - 1].toLowerCase() +
+        providedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (providedServicesArray.length > 1 ? ', and ' : '') +
+        providedServicesArray[providedServicesArray.length - 1]?.toLowerCase() +
         '.'
       : '';
 
+  const requestedServicesArray = requestedServices.map((item) => {
+    if (item.service === ServiceEnum.Other) {
+      return item.customService;
+    }
+    return item.service;
+  });
+
   const requestedText =
-    requestedServices.length > 0
+    requestedServicesArray.length > 0
       ? 'Client requested ' +
-        requestedServices.slice(0, -1).join(', ').toLowerCase() +
-        (requestedServices.length > 1 ? ', and ' : '') +
-        requestedServices[requestedServices.length - 1].toLowerCase() +
+        requestedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (requestedServicesArray.length > 1 ? ', and ' : '') +
+        requestedServicesArray[
+          requestedServicesArray.length - 1
+        ]?.toLowerCase() +
         '.'
       : '';
 

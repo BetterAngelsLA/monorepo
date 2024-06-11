@@ -103,7 +103,7 @@ export const DELETE_SERVICE_REQUEST = gql`
           message
         }
       }
-      ... on ServiceRequestType {
+      ... on DeletedObjectType {
         id
       }
     }
@@ -208,7 +208,7 @@ export const DELETE_TASK = gql`
           message
         }
       }
-      ... on TaskType {
+      ... on DeletedObjectType {
         id
       }
     }

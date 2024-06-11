@@ -42,6 +42,10 @@ export default function Client({ id }: { id: string }) {
       <ClientHeader
         firstName={data?.clientProfile.user.firstName}
         lastName={data?.clientProfile.user.lastName}
+        gender={data?.clientProfile.gender}
+        dateOfBirth={data?.clientProfile.dateOfBirth}
+        preferredLanguage={data?.clientProfile.preferredLanguage}
+        age={data?.clientProfile.age}
       />
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, id)}
