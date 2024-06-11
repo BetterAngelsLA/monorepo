@@ -15,8 +15,7 @@ import { MainScrollContainer } from '../../ui-components';
 export default function PublicNote({ noteId }: { noteId: string }) {
   const { data, loading: isLoading } = useViewNoteQuery({
     variables: { id: noteId },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
   });
   const [updateNote, { error }] = useUpdateNoteMutation();
   const [autoNote, setAutoNote] = useState<string>('');
@@ -65,6 +64,10 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     });
 
     setAutoNote(autoNote);
+
+    console.log('public: ', data.note.publicDetails);
+    console.log('auto: ', autoNote);
+    console.log(data);
     if (data.note.publicDetails) {
       setPublicNote(data.note.publicDetails);
     } else {
