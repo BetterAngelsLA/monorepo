@@ -124,6 +124,7 @@ jobs:
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
+      # Only build the Simulator on branches
       - name: 🍏 Apple Simulator Build
         if: github.ref != 'refs/heads/main'
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
