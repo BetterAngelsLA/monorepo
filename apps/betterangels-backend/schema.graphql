@@ -93,19 +93,19 @@ input ClientProfileOrder {
 }
 
 type ClientProfileType {
-  id: ID!
-  user: UserType!
   address: String
   dateOfBirth: Date
   gender: GenderEnum
   hmisId: String
   nickname: String
   phoneNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]!
   preferredLanguage: LanguageEnum
   pronouns: String
   socialSecurityNumber: String
+  spokenLanguages: [StrawberryLanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
+  id: ID!
+  user: UserType!
   age: Int
 }
 
@@ -120,8 +120,8 @@ input CreateClientProfileInput {
   pronouns: String
   socialSecurityNumber: String
   spokenLanguages: [StrawberryLanguageEnum]
-  user: CreateUserInput!
   veteranStatus: YesNoPreferNotToSayEnum
+  user: CreateUserInput!
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -324,6 +324,7 @@ type MoodType {
 }
 
 type Mutation {
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   logout: Boolean!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
@@ -613,6 +614,23 @@ enum TaskTypeEnum {
   PURPOSE
   NEXT_STEP
 }
+
+input UpdateClientProfileInput {
+  address: String
+  dateOfBirth: Date
+  gender: GenderEnum
+  hmisId: String
+  nickname: String
+  phoneNumber: String
+  preferredLanguage: LanguageEnum
+  pronouns: String
+  socialSecurityNumber: String
+  spokenLanguages: [StrawberryLanguageEnum]
+  veteranStatus: YesNoPreferNotToSayEnum
+  id: ID!
+}
+
+union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 input UpdateNoteInput {
   id: ID

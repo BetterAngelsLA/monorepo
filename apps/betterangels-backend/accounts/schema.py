@@ -11,7 +11,7 @@ from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.utils import get_user_permission_group
 from strawberry.types import Info
-from strawberry_django import auth
+from strawberry_django import auth, mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
@@ -25,6 +25,7 @@ from .types import (
     CreateClientProfileInput,
     MagicLinkInput,
     MagicLinkResponse,
+    UpdateClientProfileInput,
     UserType,
 )
 
@@ -92,6 +93,41 @@ class Mutation:
                 assign_perm(perm, permission_group.group, client_profile)
 
             return cast(ClientProfileType, client_profile)
+
+    # @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
+    update_client_profile: ClientProfileType = mutations.update(
+        UpdateClientProfileInput,
+        extensions=[
+            HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE]),
+        ],
+    )
+    # def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
+    #     with transaction.atomic():
+    #         client_profile_data: dict = strawberry.asdict(data)
+    #         user_data = client_profile_data.pop("user") or {}
+
+    #         user = get_current_user(info)
+    #     permission_group = get_user_permission_group(user)
+
+    #         client_profile = ClientProfile.objects.get(id=data.id)
+
+    #         client_profile = resolvers.update(
+    #             info,
+    #             client_profile,
+    #             {
+    #                 **client_profile_data,
+    #             },
+    #         )
+
+    #         permissions = [
+    #             ClientProfilePermissions.VIEW,
+    #             ClientProfilePermissions.CHANGE,
+    #             ClientProfilePermissions.DELETE,
+    #         ]
+    #         for perm in permissions:
+    #             assign_perm(perm, permission_group.group, client_profile)
+
+    #         return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:

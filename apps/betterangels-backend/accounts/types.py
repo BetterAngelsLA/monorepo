@@ -7,7 +7,7 @@ from accounts.enums import StrawberryLanguageEnum
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
-from strawberry import Info, auto
+from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
 from .models import ClientProfile, User
@@ -82,21 +82,32 @@ class UserType:
     email: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
-class ClientProfileType:
-    id: auto
-    user: UserType
+@strawberry_django.input(User)
+class CreateUserInput:
+    first_name: auto
+    last_name: auto
+    email: Optional[str]
+
+
+@strawberry_django.type(ClientProfile)
+class ClientProfileBaseType:
     address: auto
     date_of_birth: auto
     gender: auto
     hmis_id: auto
     nickname: auto
     phone_number: auto
-    spoken_languages: List[Optional[StrawberryLanguageEnum]]
     preferred_language: auto
     pronouns: auto
     social_security_number: auto
+    spoken_languages: Optional[List[Optional[StrawberryLanguageEnum]]]
     veteran_status: auto
+
+
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
+class ClientProfileType(ClientProfileBaseType):
+    id: auto
+    user: UserType
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -108,27 +119,14 @@ class ClientProfileType:
         return age
 
 
-@strawberry_django.input(User)
-class CreateUserInput:
-    first_name: auto
-    last_name: auto
-    email: Optional[str]
+@strawberry_django.input(ClientProfile, partial=True)
+class UpdateClientProfileInput(ClientProfileBaseType):
+    id: ID
 
 
 @strawberry_django.input(ClientProfile, partial=True)
-class CreateClientProfileInput:
-    address: auto
-    date_of_birth: auto
-    gender: auto
-    hmis_id: auto
-    nickname: auto
-    phone_number: auto
-    preferred_language: auto
-    pronouns: auto
-    social_security_number: auto
-    spoken_languages: Optional[List[Optional[StrawberryLanguageEnum]]]
+class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
-    veteran_status: auto
 
 
 @strawberry.input

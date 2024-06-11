@@ -92,6 +92,48 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(client, expected_client_profile)
 
+    def test_update_client_profile_mutation(self) -> None:
+        variables = {
+            "id": self.client_profile_1["id"],
+            "address": "1234 Main St",
+            "dateOfBirth": self.date_of_birth,
+            "gender": GenderEnum.FEMALE.name,
+            "hmisId": "12345678",
+            "nickname": "Fasty",
+            "phoneNumber": "2125551212",
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "pronouns": "she/her",
+            "socialSecurityNumber": "123456789",
+            "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+        }
+
+        response = self._update_client_profile_fixture(variables)
+        client = response["data"]["updateClientProfile"]
+        expected_client_profile = {
+            "id": self.client_profile_1["id"],
+            "age": self.EXPECTED_CLIENT_AGE,
+            "address": "1234 Main St",
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "gender": GenderEnum.FEMALE.name,
+            "hmisId": "12345678",
+            "nickname": "Fasty",
+            "phoneNumber": "2125551212",
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "pronouns": "she/her",
+            "socialSecurityNumber": "123456789",
+            "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "user": {
+                "id": ANY,
+                "firstName": self.client_profile_1_user["firstName"],
+                "lastName": self.client_profile_1_user["lastName"],
+                "email": self.client_profile_1_user["email"],
+            },
+        }
+
+        self.assertEqual(client, expected_client_profile)
+
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
