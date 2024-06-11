@@ -183,6 +183,8 @@ class Mutation:
             "createNoteTask",
             "createNoteServiceRequest",
             "deleteMood",
+            "deleteTask",
+            "deleteServiceRequest",
             "removeNoteTask",
             "removeNoteServiceRequest",
             "updateNoteLocation",
@@ -218,12 +220,6 @@ class Mutation:
                     ).values_list("id", flat=True)
                 )
 
-                # Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
-                for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
-                    action = event.pgh_label.split(".")[1]
-
-                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
-
                 # Revert changes made to Note-related REAL model instances (have pgh_obj_id, i.e., Locations, Moods)
                 for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False):
                     action = event.pgh_label.split(".")[1]
@@ -239,6 +235,12 @@ class Mutation:
                         apps.get_model(event.pgh_model).objects.get(
                             pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                         ).revert()
+
+                # Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
+                for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
+                    action = event.pgh_label.split(".")[1]
+
+                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
                 # Revert just the Note instance
                 if revert_to_note_context_id:
@@ -420,18 +422,13 @@ class Mutation:
                     ).values("id")
                 ),
             )
-
-            mood_id = mood.id
-
-            with pghistory.context(
-                note_id=str(mood.note_id),
-                timestamp=timezone.now(),
-                label=info.field_name,
-            ):
-                mood.delete()
-
         except Note.DoesNotExist:
             raise PermissionError("User lacks proper organization or permissions")
+
+        mood_id = mood.id
+
+        with pghistory.context(note_id=str(mood.note_id), timestamp=timezone.now(), label=info.field_name):
+            mood.delete()
 
         return DeletedObjectType(id=mood_id)
 
@@ -678,9 +675,31 @@ class Mutation:
 
             return cast(TaskType, task)
 
-    delete_task: TaskType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=TaskPermissions.DELETE),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
+        """
+        NOTE: this function will need to change once Task instances are able to be associated with more than one Note
+        """
+        user = get_current_user(info)
+
+        try:
+            task = filter_for_user(
+                Task.objects.all(),
+                user,
+                [TaskPermissions.DELETE],
+            ).get(id=data.id)
+
+        except Task.DoesNotExist:
+            raise PermissionError("You do not have permission to modify this task.")
+
+        task_id = task.id
+
+        if note := task.purpose_notes.first():
+            note_id = note.id
+        elif note := task.next_step_notes.first():
+            note_id = note.id
+
+        with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+            task.delete()
+
+        return DeletedObjectType(id=task_id)

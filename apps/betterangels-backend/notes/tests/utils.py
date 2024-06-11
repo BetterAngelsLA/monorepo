@@ -368,7 +368,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on TaskType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
@@ -444,7 +444,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             message
                         }
                     }
-                    ... on ServiceRequestType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
