@@ -122,6 +122,26 @@ export default function PrivateLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="public-note"
+        options={{
+          title: 'Public Note',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 }
