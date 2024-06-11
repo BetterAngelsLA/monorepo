@@ -1,6 +1,6 @@
 import { SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { BasicInput, TextButton } from '@monorepo/expo/shared/ui-components';
+import { BasicInput } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 
 interface IInteractionsHeaderProps {
@@ -31,12 +31,6 @@ export default function InteractionsHeader(props: IInteractionsHeaderProps) {
           onChangeText={setSearch}
         />
       </View>
-      <TextButton
-        regular
-        ml="sm"
-        title="Filter"
-        accessibilityHint={'opens interactions filter'}
-      />
     </View>
   );
 }
