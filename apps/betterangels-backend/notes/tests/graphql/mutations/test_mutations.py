@@ -4,6 +4,9 @@ import time_machine
 from common.models import Address, Attachment, Location
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+import time_machine
+from common.models import Attachment, Location
+from django.test import ignore_warnings, override_settings
 from model_bakery import baker
 from notes.enums import NoteNamespaceEnum
 from notes.models import Mood, Note, ServiceRequest, Task
@@ -462,7 +465,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note
         is reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Save now as saved_at
@@ -516,7 +518,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note
         is reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Update note title, public details, point, and address
@@ -579,7 +580,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note's
         Location is reverted to its state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add a location
@@ -642,7 +642,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note and its
         Moods are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add 1 mood
@@ -670,46 +669,10 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(reverted_note["moods"]), 1)
 
-    def test_revert_note_mutation_returns_removed_moods(self) -> None:
-        """
-        Asserts that when revertNote mutation is called, the Note and its
-        Moods are reverted to their state at the specified moment.
-
-        Test actions:
-        0. Setup creates a note
-        1. Add 2 moods
-        2. Save now as saved_at
-        3. Delete 1 mood
-        4. Revert to savedAt from Step 3
-        5. Assert note has 2 moods from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
-        self._create_note_mood_fixture(persisted_mood_variables_1)
-
-        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
-        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        self._delete_mood_fixture(mood_id=mood_to_delete_id)
-
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 31
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 2)
-
     def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Create 1 new purpose and 1 new next step
@@ -782,7 +745,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add 1 purpose and 1 next step
@@ -847,7 +809,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note and its
         ServiceRequests are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add 1 requested service and 1 provided service
@@ -914,11 +875,44 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             0,
         )
 
+    def test_revert_note_mutation_returns_removed_moods(self) -> None:
+        """
+        Asserts that when revertNote mutation is called, the Note and its
+        Moods are reverted to their state at the specified moment.
+        Test actions:
+        0. Setup creates a note
+        1. Add 2 moods
+        2. Save now as saved_at
+        3. Delete 1 mood
+        4. Revert to savedAt from Step 3
+        5. Assert note has 2 moods from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
+        self._create_note_mood_fixture(persisted_mood_variables_1)
+
+        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
+        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        self._delete_mood_fixture(mood_id=mood_to_delete_id)
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 31
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["moods"]), 2)
+
     def test_revert_note_mutation_returns_removed_new_tasks(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Create 2 new purposes and 2 new next steps
@@ -957,22 +951,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Select a moment to revert to
         saved_at = timezone.now()
 
-        # Remove task - should be discarded
-        self._remove_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": purpose_response["data"]["createNoteTask"]["id"],
-                "taskType": "PURPOSE",
-            }
-        )
-
-        self._remove_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": next_step_response["data"]["createNoteTask"]["id"],
-                "taskType": "NEXT_STEP",
-            }
-        )
+        # Delete tasks - should be discarded
+        self._delete_task_fixture({"taskId": purpose_response["data"]["createNoteTask"]["id"]})
+        self._delete_task_fixture({"taskId": next_step_response["data"]["createNoteTask"]["id"]})
 
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
@@ -989,7 +970,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note and its
         Tasks are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add 2 purposes and 2 next steps
@@ -1037,22 +1017,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Select a moment to revert to
         saved_at = timezone.now()
 
-        # Remove task - should be discarded
-        self._remove_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.purpose_2["id"],
-                "taskType": "PURPOSE",
-            }
-        )
-
-        self._remove_note_task_fixture(
-            {
-                "noteId": note_id,
-                "taskId": self.next_step_2["id"],
-                "taskType": "NEXT_STEP",
-            }
-        )
+        # Delete tasks - should be discarded
+        self._delete_task_fixture({"taskId": self.purpose_2["id"]})
+        self._delete_task_fixture({"taskId": self.next_step_2["id"]})
 
         variables = {"id": note_id, "savedAt": saved_at}
 
@@ -1067,7 +1034,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         """
         Asserts that when revertNote mutation is called, the Note and its
         ServiceRequests are reverted to their state at the specified moment.
-
         Test actions:
         0. Setup creates a note
         1. Add 2 requested service and 2 provided service
@@ -1118,22 +1084,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Select a moment to revert to
         saved_at = timezone.now()
 
-        # Remove service requests - should be discarded
-        self._remove_note_service_request_fixture(
-            {
-                "serviceRequestId": reverted_provided_service["id"],
-                "noteId": self.note["id"],
-                "serviceRequestType": "PROVIDED",
-            }
-        )
-
-        self._remove_note_service_request_fixture(
-            {
-                "serviceRequestId": reverted_requested_service["id"],
-                "noteId": self.note["id"],
-                "serviceRequestType": "REQUESTED",
-            }
-        )
+        # Delete service requests - should be discarded
+        self._delete_service_request_fixture({"serviceRequestId": reverted_provided_service["id"]})
+        self._delete_service_request_fixture({"serviceRequestId": reverted_requested_service["id"]})
 
         variables = {"id": note_id, "savedAt": saved_at}
 
@@ -1166,7 +1119,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["title"], "Discarded Title")
-
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):

@@ -357,6 +357,26 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteTask($id: ID!) {
+                deleteTask(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on TaskType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": task_id})
+
     def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
@@ -412,6 +432,26 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _delete_service_request_fixture(self, service_request_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": service_request_id})
 
     def _create_note_attachment_fixture(
         self,
