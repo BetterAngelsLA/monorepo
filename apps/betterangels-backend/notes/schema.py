@@ -21,7 +21,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
-from notes.utils import get_user_permission_group, NoteReverter
+from notes.utils import NoteReverter, get_user_permission_group
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -180,7 +180,7 @@ class Mutation:
             note.refresh_from_db()
 
         except Exception as e:
-            # TODO: add error handling/logging
+            # TODO: add error handling/logging, for now it either fully succeeds or fails silently
             print(e)
 
         return cast(NoteType, note)
@@ -470,7 +470,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
-        NOTE: this function will need to change once ServiceRequest instances are able to be associated with more than one Note
+        NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
         """
         user = get_current_user(info)
 
@@ -482,7 +482,7 @@ class Mutation:
             ).get(id=data.id)
 
         except ServiceRequest.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this task.")
+            raise PermissionError("You do not have permission to modify this service request.")
 
         service_request_id = service_request.id
 
@@ -616,7 +616,7 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
-        NOTE: this function will need to change once Task instances are able to be associated with more than one Note
+        NOTE: this function will need to change once Tasks are able to be associated with zero or more than one Note
         """
         user = get_current_user(info)
 

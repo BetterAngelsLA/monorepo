@@ -31,7 +31,7 @@ class NoteReverter:
                     pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                 ).revert()
 
-        return None
+        return
 
     @staticmethod
     def _revert_changes_to_related_proxy_models(context_ids: list[UUID]) -> None:
@@ -43,10 +43,9 @@ class NoteReverter:
 
             apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
-        return None
+        return
 
-    @classmethod
-    def _revert_changes_to_all_related_models(cls, note_id: str, saved_at: str) -> None:
+    def _revert_changes_to_all_related_models(self, saved_at: str) -> None:
         NOTE_RELATED_MODEL_UPDATES = {
             "createNoteMood",
             "addNoteTask",
@@ -58,13 +57,12 @@ class NoteReverter:
             "removeNoteTask",
             "removeNoteServiceRequest",
             "updateNoteLocation",
-            # TODO: add mutations that affect models that are related to Note
         }
 
         # Find contexts affecting Note-related models that were created AFTER saved_at time
         contexts_to_revert: list[UUID] = list(
             Context.objects.filter(
-                metadata__note_id=note_id,
+                metadata__note_id=self.note_id,
                 metadata__label__in=NOTE_RELATED_MODEL_UPDATES,
                 metadata__timestamp__gt=saved_at,
             ).values_list("id", flat=True)
@@ -75,20 +73,24 @@ class NoteReverter:
         try_again_after_real_models_revert: bool = False
 
         try:
-            cls._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
+            self._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
 
         except ObjectDoesNotExist:
             try_again_after_real_models_revert = True
 
-        cls._revert_changes_to_related_real_models(context_ids=contexts_to_revert)
+        self._revert_changes_to_related_real_models(context_ids=contexts_to_revert)
 
         if try_again_after_real_models_revert:
-            cls._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
+            self._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
 
         return
 
     @transaction.atomic
-    def revert_to_saved_at(self, saved_at: str):
+    def revert_to_saved_at(self, saved_at: str) -> None:
+        """
+        This is the public entrypoint.
+        This function will revert the Note back to it's state at the saved_at timestamp.
+        """
         revert_to_note_context_id: UUID | None = None
 
         update_note_contexts = Context.objects.filter(metadata__note_id=self.note_id, metadata__label="updateNote")
@@ -104,7 +106,7 @@ class NoteReverter:
             ):
                 revert_to_note_context_id = revert_to_note_context.id
 
-        self._revert_changes_to_all_related_models(note_id=self.note_id, saved_at=saved_at)
+        self._revert_changes_to_all_related_models(saved_at=saved_at)
 
         # Revert just the Note instance
         if revert_to_note_context_id:
@@ -122,3 +124,5 @@ class NoteReverter:
 
         # Discard contexts that were created after saved_at time
         update_note_contexts.filter(metadata__timestamp__gt=saved_at).delete()
+
+        return

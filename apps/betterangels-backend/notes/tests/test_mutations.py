@@ -707,6 +707,38 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(reverted_note["moods"]), 1)
 
+    def test_revert_note_mutation_returns_removed_moods(self) -> None:
+        """
+        Test Actions:
+        0. Setup creates a note
+        1. Add 2 moods
+        2. Save now as saved_at
+        3. Delete 1 mood
+        4. Revert to savedAt from Step 3
+        5. Assert note has 2 moods from Step 1
+        """
+        note_id = self.note["id"]
+
+        # Update - should be persisted
+        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
+        self._create_note_mood_fixture(persisted_mood_variables_1)
+
+        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
+        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        self._delete_mood_fixture(mood_id=mood_to_delete_id)
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 31
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(len(reverted_note["moods"]), 2)
+
     def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
         """
         Test Actions:
@@ -1009,38 +1041,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             ).count(),
             0,
         )
-
-    def test_revert_note_mutation_returns_removed_moods(self) -> None:
-        """
-        Test Actions:
-        0. Setup creates a note
-        1. Add 2 moods
-        2. Save now as saved_at
-        3. Delete 1 mood
-        4. Revert to savedAt from Step 3
-        5. Assert note has 2 moods from Step 1
-        """
-        note_id = self.note["id"]
-
-        # Update - should be persisted
-        persisted_mood_variables_1 = {"descriptor": "ANXIOUS", "noteId": note_id}
-        self._create_note_mood_fixture(persisted_mood_variables_1)
-
-        persisted_mood_variables_2 = {"descriptor": "EUTHYMIC", "noteId": note_id}
-        mood_to_delete_id = self._create_note_mood_fixture(persisted_mood_variables_2)["data"]["createNoteMood"]["id"]
-
-        # Select a moment to revert to
-        saved_at = timezone.now()
-
-        self._delete_mood_fixture(mood_id=mood_to_delete_id)
-
-        variables = {"id": note_id, "savedAt": saved_at}
-
-        expected_query_count = 31
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
-
-        self.assertEqual(len(reverted_note["moods"]), 2)
 
     def test_revert_note_mutation_returns_removed_new_tasks(self) -> None:
         """
