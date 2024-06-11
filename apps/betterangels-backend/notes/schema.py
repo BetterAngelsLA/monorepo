@@ -10,6 +10,7 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
@@ -486,9 +487,9 @@ class Mutation:
 
         service_request_id = service_request.id
 
-        if note := service_request.provided_notes.first():
-            note_id = note.id
-        elif note := service_request.requested_notes.first():
+        if note := Note.objects.filter(
+            Q(provided_services__id=service_request_id) | Q(requested_services__id=service_request_id)
+        ).first():
             note_id = note.id
         else:
             note_id = None
@@ -634,9 +635,7 @@ class Mutation:
 
         task_id = task.id
 
-        if note := task.purpose_notes.first():
-            note_id = note.id
-        elif note := task.next_step_notes.first():
+        if note := Note.objects.filter(Q(purposes__id=task_id) | Q(next_steps__id=task_id)).first():
             note_id = note.id
         else:
             note_id = None
