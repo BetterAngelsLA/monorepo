@@ -68,11 +68,16 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                     ... on ClientProfileType {{
                         id
-                        hmisId
-                        dateOfBirth
                         age
+                        dateOfBirth
                         gender
+                        hmisId
+                        phoneNumber
                         preferredLanguage
+                        pronouns
+                        socialSecurityNumber
+                        spokenLanguages
+                        veteranStatus
                         user {{
                             id
                             firstName
