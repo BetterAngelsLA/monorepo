@@ -9,25 +9,20 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { differenceInYears, parseISO } from 'date-fns';
 import { View } from 'react-native';
 
 interface IClientHeaderProps {
   firstName: string | null | undefined;
   lastName: string | null | undefined;
   gender: string | null | undefined;
-  language: string | null | undefined;
+  preferredLanguage: string | null | undefined;
   dateOfBirth: string | null | undefined;
+  age: number | null | undefined;
 }
 
-const calculateAge = (birthDate: string) => {
-  const currentDate = new Date();
-  const birthDateObj = parseISO(birthDate);
-  return differenceInYears(currentDate, birthDateObj);
-};
-
 export default function ClientHeader(props: IClientHeaderProps) {
-  const { firstName, lastName, gender, language, dateOfBirth } = props;
+  const { firstName, lastName, gender, preferredLanguage, dateOfBirth, age } =
+    props;
   return (
     <View
       style={{
@@ -62,17 +57,19 @@ export default function ClientHeader(props: IClientHeaderProps) {
             <TextRegular textTransform="capitalize">{gender}</TextRegular>
           </View>
         )}
-        {language && (
+        {preferredLanguage && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <GlobeIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-            <TextRegular textTransform="capitalize">{language}</TextRegular>
+            <TextRegular textTransform="capitalize">
+              {preferredLanguage}
+            </TextRegular>
           </View>
         )}
         {dateOfBirth && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <BirthdayIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
             <TextRegular>
-              {dateOfBirth} ({calculateAge(dateOfBirth)})
+              {dateOfBirth} ({age})
             </TextRegular>
           </View>
         )}
