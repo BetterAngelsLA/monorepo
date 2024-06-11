@@ -84,6 +84,7 @@ class ClientProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = models.CharField(max_length=50, blank=True, null=True)

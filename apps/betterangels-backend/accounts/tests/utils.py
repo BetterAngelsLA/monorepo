@@ -39,6 +39,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
                 "hmisId": "A1B2C3",
+                "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": "he/him",
@@ -47,9 +48,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
-        # from IPython import embed
 
-        # embed()
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_2_user,
@@ -57,6 +56,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": None,
                 "gender": None,
                 "hmisId": "A1B3C4",
+                "nickname": None,
                 "phoneNumber": None,
                 "preferredLanguage": None,
                 "pronouns": None,
@@ -93,6 +93,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dateOfBirth
                         gender
                         hmisId
+                        nickname
                         phoneNumber
                         preferredLanguage
                         pronouns

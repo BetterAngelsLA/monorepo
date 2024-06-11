@@ -90,6 +90,7 @@ class ClientProfileType:
     date_of_birth: auto
     gender: auto
     hmis_id: auto
+    nickname: auto
     phone_number: auto
     spoken_languages: List[Optional[StrawberryLanguageEnum]]
     preferred_language: auto
@@ -120,6 +121,7 @@ class CreateClientProfileInput:
     date_of_birth: auto
     gender: auto
     hmis_id: auto
+    nickname: auto
     phone_number: auto
     preferred_language: auto
     pronouns: auto

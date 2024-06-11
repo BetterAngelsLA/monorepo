@@ -96,6 +96,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     dateOfBirth
                     gender
                     hmisId
+                    nickname
                     phoneNumber
                     preferredLanguage
                     pronouns
@@ -133,6 +134,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.MALE.name,
             "hmisId": self.client_profile_1["hmisId"],
+            "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": self.client_profile_1["pronouns"],
