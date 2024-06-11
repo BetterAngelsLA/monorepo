@@ -954,6 +954,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
                 }
             )
 
+        self.assertEqual(note.purposes.count(), 2)
+        self.assertEqual(note.next_steps.count(), 2)
         # Select a moment to revert to
         saved_at = timezone.now()
 
@@ -974,6 +976,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
+        self.assertEqual(note.purposes.count(), 1)
+        self.assertEqual(note.next_steps.count(), 1)
+
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
@@ -983,6 +988,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(len(reverted_note["purposes"]), 2)
         self.assertEqual(len(reverted_note["nextSteps"]), 2)
+        self.assertEqual(note.purposes.count(), 2)
+        self.assertEqual(note.next_steps.count(), 2)
         self.assertEqual(Task.objects.count(), total_task_count + 4)
 
     def test_revert_note_mutation_returns_removed_existing_tasks(self) -> None:

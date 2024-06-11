@@ -45,6 +45,8 @@ export default function AddNote() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  console.log('saved_at = ');
+  console.log(savedAt);
 
   async function deleteNoteFunction() {
     try {

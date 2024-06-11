@@ -20,7 +20,7 @@ export type RevertNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, privateDetails?: string | null, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
@@ -202,7 +202,6 @@ export const RevertNoteDocument = gql`
         pointOfInterest
       }
       publicDetails
-      privateDetails
       isSubmitted
       client {
         id

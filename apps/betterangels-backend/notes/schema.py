@@ -261,8 +261,9 @@ class Mutation:
 
                 return cast(NoteType, note)
 
-        except Exception:
+        except Exception as e:
             # TODO: add error handling/logging            raise e
+            raise e
 
             return cast(NoteType, note)
 
