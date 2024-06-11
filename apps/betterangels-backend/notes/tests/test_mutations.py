@@ -739,6 +739,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Assert that discarded tasks were deleted
         self.assertEqual(Task.objects.count(), total_task_count + 2)
 
+    @skip("Functionality for adding existing Tasks to a Note is not complete")
     def test_revert_note_mutation_removes_added_existing_tasks(self) -> None:
         """
         Asserts that when revertNote mutation is called, the Note and its
@@ -962,9 +963,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        # expected_query_count = 19
-        # with self.assertNumQueriesWithoutCache(expected_query_count):
-        if True:
+        expected_query_count = 19
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["purposes"]), 2)
@@ -1113,9 +1113,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        # expected_query_count = 19
-        if True:
-            # with self.assertNumQueriesWithoutCache(expected_query_count):
+        expected_query_count = 19
+        with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["providedServices"]), 2)

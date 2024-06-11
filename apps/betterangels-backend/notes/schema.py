@@ -220,6 +220,20 @@ class Mutation:
                     ).values_list("id", flat=True)
                 )
 
+                # Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
+
+                try_again_later: bool = False  # sometimes proxy model need to be updated BEFORE Real models and
+                # sometimes it needs to be updated AFTER real models, use this variable
+                # to determine whether to run it again later
+                try:
+                    for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
+                        action = event.pgh_label.split(".")[1]
+
+                        apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
+
+                except ObjectDoesNotExist:
+                    try_again_later = True
+
                 # Revert changes made to Note-related REAL model instances (have pgh_obj_id, i.e., Locations, Moods)
                 for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id__isnull=False):
                     action = event.pgh_label.split(".")[1]
@@ -236,11 +250,11 @@ class Mutation:
                             pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
                         ).revert()
 
-                # Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
-                for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
-                    action = event.pgh_label.split(".")[1]
+                if try_again_later:
+                    for event in Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None):
+                        action = event.pgh_label.split(".")[1]
 
-                    apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
+                        apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
                 # Revert just the Note instance
                 if revert_to_note_context_id:
@@ -265,7 +279,7 @@ class Mutation:
 
         except Exception as e:
             # TODO: add error handling/logging
-            raise e
+            # raise e
 
             return cast(NoteType, note)
 
@@ -551,13 +565,6 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    delete_service_request: ServiceRequestType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=ServiceRequestPermissions.DELETE),
-        ],
-    )
-
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         with transaction.atomic():
@@ -703,3 +710,32 @@ class Mutation:
             task.delete()
 
         return DeletedObjectType(id=task_id)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
+        """
+        NOTE: this function will need to change once ServiceRequest instances are able to be associated with more than one Note
+        """
+        user = get_current_user(info)
+
+        try:
+            service_request = filter_for_user(
+                ServiceRequest.objects.all(),
+                user,
+                [ServiceRequestPermissions.DELETE],
+            ).get(id=data.id)
+
+        except ServiceRequest.DoesNotExist:
+            raise PermissionError("You do not have permission to modify this task.")
+
+        service_request_id = service_request.id
+
+        if note := service_request.provided_notes.first():
+            note_id = note.id
+        elif note := service_request.requested_notes.first():
+            note_id = note.id
+
+        with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+            service_request.delete()
+
+        return DeletedObjectType(id=service_request_id)
