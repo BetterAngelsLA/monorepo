@@ -1,193 +1,193 @@
-# name: 👷 Monorepo Pipeline
+name: 👷 Monorepo Pipeline
 
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-# env:
-#   AWS_REGION: us-west-2
-#   AWS_ACCOUNT_ID: 174477281453
-#   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
-#   ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
-#   COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
+env:
+  AWS_REGION: us-west-2
+  AWS_ACCOUNT_ID: 174477281453
+  ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
+  COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
 
-# jobs:
-#   BuildTestDeploy:
-#     runs-on: ubuntu-latest
-#     permissions:
-#       actions: read # Required to find the last successful workflow run
-#       contents: read # Required for actions/checkout
-#       id-token: write # Required for requesting the JWT
-#       pull-requests: read
-#       checks: write # Required for graphql inspector
+jobs:
+  BuildTestDeploy:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+      id-token: write # Required for requesting the JWT
+      pull-requests: read
+      checks: write # Required for graphql inspector
 
-#     steps:
-#       - name: 🚦 Turnstyle
-#         uses: softprops/turnstyle@master
-#         if: github.ref == 'refs/heads/main'
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: 🚦 Turnstyle
+        uses: softprops/turnstyle@master
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: 🏗 Check out repo
-#         uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-#       # This line is needed for nx affected to work when CI is running on a PR
-#       - name: 🔀 Track main if PR
-#         if: github.ref != 'refs/heads/main'
-#         run: git branch --track main origin/main
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🔀 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
 
-#       - name: 🔧 Configure NX SHAs
-#         uses: nrwl/nx-set-shas@v4
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
 
-#       - name: 🔧 Set Environment Variables
-#         run: |
-#           RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-#           SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+      - name: 🔧 Set Environment Variables
+        run: |
+          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
 
-#           # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
-#           BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
+          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
 
-#           if [ "$BRANCH_NAME" == "main" ]; then
-#             IMAGE_TAG_PREFIX="main"
-#           else
-#             IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
-#           fi
+          if [ "$BRANCH_NAME" == "main" ]; then
+            IMAGE_TAG_PREFIX="main"
+          else
+            IMAGE_TAG_PREFIX="dev-$BRANCH_NAME"
+          fi
 
-#           DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
+          DOCKER_TAG="$IMAGE_TAG_PREFIX-$SHORT_SHA"
 
-#           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-#           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
-#           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
-#           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-#           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
 
-#       - name: 🐳 Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v3
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-#       - name: 🐳 Configure AWS credentials
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           role-to-assume: ${{ env.ASSUMED_ROLE }}
-#           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-#           aws-region: ${{ env.AWS_REGION }}
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
 
-#       - name: 🐳 Login to Amazon ECR
-#         uses: aws-actions/amazon-ecr-login@v2
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-#       # Build and Push Monorepo Image for each commit
-#       - name: 🏗️ Build Monorepo Docker image
-#         uses: docker/build-push-action@v5
-#         with:
-#           file: Dockerfile
-#           push: true
-#           platforms: linux/amd64
-#           cache-from: |
-#             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
-#             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
-#           cache-to: |
-#             type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }},image-manifest=true,mode=max
-#           tags: |
-#             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+      # Build and Push Monorepo Image for each commit
+      - name: 🏗️ Build Monorepo Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64
+          cache-from: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
+          cache-to: |
+            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }},image-manifest=true,mode=max
+          tags: |
+            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-#       - name: 🔑 Prep Container Permissions
-#         run: |
-#           sudo chown -R 1000:1000 .git
-#           sudo setfacl --modify user:1000:rw /var/run/docker.sock
-#           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+      - name: 🔑 Prep Container Permissions
+        run: |
+          sudo chown -R 1000:1000 .git
+          sudo setfacl --modify user:1000:rw /var/run/docker.sock
+          sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
-#       - name: 🔄 Spin up monorepo environment
-#         run: |
-#           docker compose up -d
+      - name: 🔄 Spin up monorepo environment
+        run: |
+          docker compose up -d
 
-#       - name: 🧹 Lint
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           yarn nx affected -t lint
-#           EOF
+      - name: 🧹 Lint
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t lint
+          EOF
 
-#       - name: 🕵️ Check for missing Django migrations
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           yarn nx affected -t check-migrations
-#           STATUS=$?
-#           if [ $STATUS -ne 0 ]; then
-#             echo "Error: Missing Django migrations! Make sure you have run 'python manage.py makemigrations <app_name>' locally and committed the changes."
-#             exit 1
-#           else
-#             echo "Success: No missing Django migrations!"
-#           fi
-#           EOF
+      - name: 🕵️ Check for missing Django migrations
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t check-migrations
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: Missing Django migrations! Make sure you have run 'python manage.py makemigrations <app_name>' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: No missing Django migrations!"
+          fi
+          EOF
 
-#       - name: 📝 Make sure GraphQL Schema is up to date
-#         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           yarn nx affected -t validate-graphql-schema
-#           STATUS=$?
-#           if [ $STATUS -ne 0 ]; then
-#             echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx affected -t generate-graphql-schema' locally and committed the changes."
-#             exit 1
-#           else
-#             echo "Success: The GraphQL schemas match!"
-#           fi
+      - name: 📝 Make sure GraphQL Schema is up to date
+        # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t validate-graphql-schema
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx affected -t generate-graphql-schema' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL schemas match!"
+          fi
 
-#           yarn nx affected -t generate-graphql-types
-#           TYPE_GEN_STATUS=$?
-#           git diff --exit-code '**/gql-types/*';
-#           DIFF_STATUS=$?
-#           if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
-#             echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
-#             exit 1
-#           else
-#             echo "Success: The GraphQL types match!"
-#           fi
-#           EOF
+          yarn nx affected -t generate-graphql-types
+          TYPE_GEN_STATUS=$?
+          git diff --exit-code '**/gql-types/*';
+          DIFF_STATUS=$?
+          if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
+            echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
+            exit 1
+          else
+            echo "Success: The GraphQL types match!"
+          fi
+          EOF
 
-#       - name: 🕵🏻‍♂️ GraphQL Inspector
-#         uses: kamilkisiela/graphql-inspector@master
-#         with:
-#           github-token: ${{ secrets.GITHUB_TOKEN }}
-#           schema: main:apps/betterangels-backend/schema.graphql
-#           fail-on-breaking: true
-#           approve-label: graphql-inspector:approved-breaking-change
+      - name: 🕵🏻‍♂️ GraphQL Inspector
+        uses: kamilkisiela/graphql-inspector@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          schema: main:apps/betterangels-backend/schema.graphql
+          fail-on-breaking: true
+          approve-label: graphql-inspector:approved-breaking-change
 
-#       - name: 🔬 Typecheck
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           yarn nx affected -t typecheck
-#           EOF
+      - name: 🔬 Typecheck
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t typecheck
+          EOF
 
-#       - name: 🧪 Test
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           # Exclude Betterangels Frontend Given its CI is not setup yet
-#           yarn nx affected -t test
-#           EOF
+      - name: 🧪 Test
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t test
+          EOF
 
-#       - name: 🛠️ Build and Push Artifacts
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           # Exclude Betterangels Frontend Given its CI is not setup yet
-#           yarn nx affected -t build --exclude=betterangels,shelter
-#           EOF
-#         env:
-#           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-#           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🛠️ Build and Push Artifacts
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t build --exclude=betterangels,shelter
+          EOF
+        env:
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: 🚀 Deploy Changes
-#         if: env.BRANCH_NAME == 'main'
-#         run: |
-#           docker compose run better-angels bash <<'EOF'
-#           # Exclude Betterangels Frontend Given its CI is not setup yet
-#           yarn nx affected -t deploy --exclude=betterangels,shelter
-#           EOF
+      - name: 🚀 Deploy Changes
+        if: env.BRANCH_NAME == 'main'
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          # Exclude Betterangels Frontend Given its CI is not setup yet
+          yarn nx affected -t deploy --exclude=betterangels,shelter
+          EOF
 
-#       - name: ⏹️ Spin down monorepo environment
-#         if: always()
-#         run: |
-#           docker compose down
-#           sudo chown -R 1001:1001 .git
+      - name: ⏹️ Spin down monorepo environment
+        if: always()
+        run: |
+          docker compose down
+          sudo chown -R 1001:1001 .git
