@@ -31,8 +31,7 @@ jobs:
         with:
           node-version: 20.12.2
       - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
+          corepack enable
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -45,7 +44,7 @@ jobs:
         id: set-matrix
         run: |
           # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
           # Convert the list to a JSON matrix
           MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
             split("\n") |
@@ -67,12 +66,17 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
+    concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
-      actions: write # Allow updating fingerprint in acton caches
-      contents: read # Required for actions/checkout
+      # REQUIRED: Allow comments of PRs
       pull-requests: write # Allow comments on PRs
+      # REQUIRED: Allow updating fingerprint in acton caches
+      actions: write
+      # Following permissions are required for private repos
+      contents: read
+      packages: write
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
@@ -85,8 +89,7 @@ jobs:
         with:
           node-version: 20.12.2
       - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
+          corepack enable
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -95,7 +98,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: 9.0.0
+          eas-version: 9.2.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
@@ -106,12 +109,11 @@ jobs:
         # This will not necessarily map to the actual deployed channel.
         id: set-env
         run: |
-          # if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          #   echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          # else
-          #   echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          # fi
-          echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
+          else
+            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
+          fi
 
       - name: 🧹 Clear All .env files and load eas.json
         run: |
@@ -119,11 +121,21 @@ jobs:
           cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
-      - name: 🚀 Create preview
-        uses: expo/expo-github-action/preview@v8
-        id: expo_preview
+      - name: 🚀 Continuously Deploy
+        id: continuos_deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          command: eas update --auto
-          comment: true
+          profile: ${{  env.CHANNEL_CONFIG }}
+          branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
-          qr-target: expo-go
+
+      - name: 🍏 Apple Simulator Build
+        if: github.ref != 'refs/heads/main'
+        working-directory: apps/${{ matrix.project }}
+        run: |
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          if [ "${build_list_output}" == "[]" ]; then
+            eas build --profile development-simulator --platform ios
+          else
+            echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
+          fi
