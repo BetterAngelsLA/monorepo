@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
@@ -12,6 +13,7 @@ const paginationLimit = 10;
 
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
+  const [filterSearch, setFilterSearch] = useState('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
@@ -20,7 +22,7 @@ export default function Interactions() {
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      filters: { createdBy: user?.id },
+      filters: { createdBy: user?.id, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -34,6 +36,20 @@ export default function Interactions() {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
   }
+
+  const debounceFetch = useMemo(
+    () =>
+      debounce((text) => {
+        setFilterSearch(text);
+      }, 500),
+    []
+  );
+
+  const onChange = (e: string) => {
+    setSearch(e);
+
+    debounceFetch(e);
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -73,7 +89,7 @@ export default function Interactions() {
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={setSearch} />
+      <InteractionsHeader search={search} setSearch={onChange} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       <FlatList
         refreshControl={

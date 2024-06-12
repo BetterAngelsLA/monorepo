@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
@@ -15,6 +16,7 @@ export default function Interactions({
   userId: string | undefined;
 }) {
   const [search, setSearch] = useState<string>('');
+  const [filterSearch, setFilterSearch] = useState('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -22,7 +24,7 @@ export default function Interactions({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      filters: { client: userId },
+      filters: { client: userId, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -36,6 +38,14 @@ export default function Interactions({
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
   }
+
+  const debounceFetch = useMemo(
+    () =>
+      debounce((text) => {
+        setFilterSearch(text);
+      }, 500),
+    []
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -53,6 +63,12 @@ export default function Interactions({
       console.error(err);
     }
     setRefreshing(false);
+  };
+
+  const onChange = (e: string) => {
+    setSearch(e);
+
+    debounceFetch(e);
   };
 
   useEffect(() => {
@@ -77,7 +93,7 @@ export default function Interactions({
       <FlatList
         ListHeaderComponent={
           <>
-            <InteractionsHeader search={search} setSearch={setSearch} />
+            <InteractionsHeader search={search} setSearch={onChange} />
             <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
           </>
         }
