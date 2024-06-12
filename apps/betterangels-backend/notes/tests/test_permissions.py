@@ -661,7 +661,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         mutation = """
             mutation DeleteServiceRequest($id: ID!) {
                 deleteServiceRequest(data: { id: $id }) {
-                    ... on ServiceRequestType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }
@@ -804,7 +804,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
         mutation = """
             mutation DeleteTask($id: ID!) {
                 deleteTask(data: { id: $id }) {
-                    ... on TaskType {
+                    ... on DeletedObjectType {
                         id
                     }
                 }

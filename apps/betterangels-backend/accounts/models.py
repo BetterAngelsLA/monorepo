@@ -77,6 +77,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
+    @property
+    def full_name(self: "User") -> str:
+        return f"{self.first_name} {self.last_name}"
+
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
@@ -88,7 +92,6 @@ class ClientProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = models.CharField(max_length=50, blank=True, null=True)
-    social_security_number = models.CharField(max_length=9, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, default=list)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 

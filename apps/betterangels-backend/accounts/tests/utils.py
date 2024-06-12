@@ -1,11 +1,6 @@
 from typing import Any, Dict
 
-from accounts.enums import (
-    GenderEnum,
-    LanguageEnum,
-    StrawberryLanguageEnum,
-    YesNoPreferNotToSayEnum,
-)
+from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -43,8 +38,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": "he/him",
-                "socialSecurityNumber": "123456789",
-                "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+                "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -60,7 +54,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": None,
                 "preferredLanguage": None,
                 "pronouns": None,
-                "socialSecurityNumber": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }
@@ -97,7 +90,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         phoneNumber
                         preferredLanguage
                         pronouns
-                        socialSecurityNumber
                         spokenLanguages
                         veteranStatus
                         user {{

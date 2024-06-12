@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import StrawberryLanguageEnum
+from accounts.enums import LanguageEnum
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
@@ -99,8 +99,7 @@ class ClientProfileBaseType:
     phone_number: auto
     preferred_language: auto
     pronouns: auto
-    social_security_number: auto
-    spoken_languages: Optional[List[Optional[StrawberryLanguageEnum]]]
+    spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
 
@@ -108,6 +107,16 @@ class ClientProfileBaseType:
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
+    address: auto
+    date_of_birth: auto
+    gender: auto
+    hmis_id: auto
+    nickname: auto
+    phone_number: auto
+    spoken_languages: List[Optional[LanguageEnum]]
+    preferred_language: auto
+    pronouns: auto
+    veteran_status: auto
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -127,6 +136,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    veteran_status: auto
 
 
 @strawberry.input

@@ -9,33 +9,22 @@ class GenderEnum(models.TextChoices):
     NONBINARY = "nonbinary", _("Non-binary")
 
 
-class LanguageEnum(models.TextChoices):
-    ENGLISH = "english", _("English")
-    RUSSIAN = "russian", _("Russian")
-    JAPANESE = "japanese", _("Japanese")
-    ARABIC = "arabic", _("Arabic")
-    PERSIAN = "persian", _("Persian")
-    ARMENIAN = "armenian", _("Armenian")
-    KOREAN = "korean", _("Korean")
-    VIETNAMESE = "vietnamese", _("Vietnamese")
-    TAGALOG = "tagalog", _("Tagalog")
-    CHINESE = "chinese", _("Chinese")
-    SPANISH = "spanish", _("Spanish")
-
-
 @strawberry.enum
-class StrawberryLanguageEnum(models.TextChoices):
-    ENGLISH = "english", "English"
-    RUSSIAN = "russian", "Russian"
-    JAPANESE = "japanese", "Japanese"
-    ARABIC = "arabic", "Arabic"
-    PERSIAN = "persian", "Persian"
-    ARMENIAN = "armenian", "Armenian"
-    KOREAN = "korean", "Korean"
-    VIETNAMESE = "vietnamese", "Vietnamese"
-    TAGALOG = "tagalog", "Tagalog"
-    CHINESE = "chinese", "Chinese"
-    SPANISH = "spanish", "Spanish"
+class LanguageEnum(models.TextChoices):
+    ARABIC = "arabic", _("Arabic")
+    ARMENIAN = "armenian", _("Armenian")
+    ENGLISH = "english", _("English")
+    FARSI = "farsi", _("Farsi")
+    INDONESIAN = "indonesian", _("Indonesian")
+    JAPANESE = "japanese", _("Japanese")
+    KHMER = "khmer", _("Khmer")
+    KOREAN = "korean", _("Korean")
+    RUSSIAN = "russian", _("Russian")
+    SIMPLIFIED_CHINESE = "simplified_chinese", _("Simplified Chinese")
+    SPANISH = "spanish", _("Spanish")
+    TAGALOG = "tagalog", _("Tagalog")
+    TRADITIONAL_CHINESE = "traditional_chinese", _("Traditional Chinese")
+    VIETNAMESE = "vietnamese", _("Vietnamese")
 
 
 class YesNoPreferNotToSayEnum(models.TextChoices):

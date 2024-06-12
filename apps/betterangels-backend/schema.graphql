@@ -101,8 +101,7 @@ type ClientProfileType {
   phoneNumber: String
   preferredLanguage: LanguageEnum
   pronouns: String
-  socialSecurityNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]
+  spokenLanguages: [LanguageEnum]!
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
@@ -118,8 +117,7 @@ input CreateClientProfileInput {
   phoneNumber: String
   preferredLanguage: LanguageEnum
   pronouns: String
-  socialSecurityNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]
+  spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
 }
@@ -213,9 +211,9 @@ union DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
 
-union DeleteServiceRequestPayload = ServiceRequestType | OperationInfo
+union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
-union DeleteTaskPayload = TaskType | OperationInfo
+union DeleteTaskPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -261,17 +259,20 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 enum LanguageEnum {
-  ENGLISH
-  RUSSIAN
-  JAPANESE
   ARABIC
-  PERSIAN
   ARMENIAN
+  ENGLISH
+  FARSI
+  INDONESIAN
+  JAPANESE
+  KHMER
   KOREAN
-  VIETNAMESE
-  TAGALOG
-  CHINESE
+  RUSSIAN
+  SIMPLIFIED_CHINESE
   SPANISH
+  TAGALOG
+  TRADITIONAL_CHINESE
+  VIETNAMESE
 }
 
 input LocationInput {
@@ -333,8 +334,6 @@ type Mutation {
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
-  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_task"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -348,10 +347,12 @@ type Mutation {
   createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
   removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
+  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
 input NoteAttachmentFilter {
@@ -574,20 +575,6 @@ type ShelterType {
   beds: BedsType!
 }
 
-enum StrawberryLanguageEnum {
-  ENGLISH
-  RUSSIAN
-  JAPANESE
-  ARABIC
-  PERSIAN
-  ARMENIAN
-  KOREAN
-  VIETNAMESE
-  TAGALOG
-  CHINESE
-  SPANISH
-}
-
 type SwitchType {
   name: String!
   isActive: Boolean!
@@ -624,8 +611,7 @@ input UpdateClientProfileInput {
   phoneNumber: String
   preferredLanguage: LanguageEnum
   pronouns: String
-  socialSecurityNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]
+  spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
 }
