@@ -7,8 +7,8 @@
       - If the PR is a straightforward implementation of ticket Acceptance Criteria (AC), you only need to include the ticket ID - e.g., "DEV-142"
       - If there was anything special to note, it should be included in the description. e.g.:
         - [PR that's part of a series of related PRs](https://github.com/BetterAngelsLA/monorepo/pull/305)
-        - [Explanation of complex feature](https://github.com/BetterAngelsLA/monorepo/pull/347)
-        - [Explanation of a bugfix](https://github.com/BetterAngelsLA/monorepo/pull/298)
+        - [PR with a complex feature](https://github.com/BetterAngelsLA/monorepo/pull/347)
+        - [Bugfix](https://github.com/BetterAngelsLA/monorepo/pull/298)
    1. Assign the PR to yourself
 1. :hammer_and_wrench: For engineering reviews (required for all PRs):
    1. For the PR author:
