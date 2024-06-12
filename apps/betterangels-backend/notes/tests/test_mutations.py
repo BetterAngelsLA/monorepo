@@ -12,6 +12,7 @@ from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
+    TaskGraphQLUtilsMixin,
 )
 from unittest_parametrize import parametrize
 
@@ -497,7 +498,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.
@@ -1346,6 +1347,54 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase):
 
         self.assertEqual(ServiceRequest.objects.count(), total_service_request_count + 4)
 
+    def test_revert_note_mutation_restores_updated_tasks(self) -> None:
+        """
+        Test Actions:
+        0. Setup creates a note
+        1. Create 1 new purpose and 1 new next step
+        2. Save now as saved_at
+        3. Update the purpose and next step titles
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        purpose = self._create_note_task_fixture(
+            {
+                "title": "Purpose Title",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "PURPOSE",
+            }
+        )["data"]["createNoteTask"]
+
+        next_step = self._create_note_task_fixture(
+            {
+                "title": "Next Step Title",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "NEXT_STEP",
+            }
+        )["data"]["createNoteTask"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Make updates that will be discarded
+        self._update_task_fixture({"id": purpose["id"], "title": "Discarded Purpose Title"})
+        self._update_task_fixture({"id": next_step["id"], "title": "Discarded Next Step Title"})
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 27
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
+        self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
+
     def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
         """
         Asserts that when revertNote mutation fails, the Note instance is not partially updated.
@@ -1662,27 +1711,9 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         self.assertEqual(task, location.tasks.first())
 
     def test_delete_task_mutation(self) -> None:
-        mutation = """
-            mutation DeleteTask($id: ID!) {
-                deleteTask(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.task["id"]}
-
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
+            response = self._delete_task_fixture(self.task["id"])
 
         self.assertIsNotNone(response["data"]["deleteTask"])
         with self.assertRaises(Task.DoesNotExist):

@@ -31,6 +31,9 @@ class NoteReverter:
         "removeNoteServiceRequest",
         "removeNoteTask",
         "updateNoteLocation",
+        "updateServiceRequest",
+        "updateTask",
+        "updateTaskLocation",
     }
 
     def __init__(self, note_id: str):
@@ -91,7 +94,7 @@ class NoteReverter:
         contexts_to_revert: list[UUID] = list(
             Context.objects.filter(
                 metadata__note_id=self.note_id,
-                metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
+                # metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
                 metadata__timestamp__gt=saved_at,
             ).values_list("id", flat=True)
         )

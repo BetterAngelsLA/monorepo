@@ -183,6 +183,7 @@ class Mutation:
         except Exception as e:
             # TODO: add error handling/logging, for now it either fully succeeds or fails silently
             print(e)
+            raise e
 
         return cast(NoteType, note)
 
@@ -432,13 +433,16 @@ class Mutation:
         with transaction.atomic():
             service_request_data = asdict(data)
             service_request = ServiceRequest.objects.get(id=data.id)
-            service_request = resolvers.update(
-                info,
-                service_request,
-                {
-                    **service_request_data,
-                },
-            )
+            note_id = service_request.get_note_id()
+
+            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+                service_request = resolvers.update(
+                    info,
+                    service_request,
+                    {
+                        **service_request_data,
+                    },
+                )
 
             return cast(ServiceRequestType, service_request)
 
@@ -486,13 +490,7 @@ class Mutation:
             raise PermissionError("You do not have permission to modify this service request.")
 
         service_request_id = service_request.id
-
-        if note := Note.objects.filter(
-            Q(provided_services__id=service_request_id) | Q(requested_services__id=service_request_id)
-        ).first():
-            note_id = note.id
-        else:
-            note_id = None
+        note_id = service_request.get_note_id()
 
         with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
             service_request.delete()
@@ -577,13 +575,16 @@ class Mutation:
         with transaction.atomic():
             task_data = asdict(data)
             task = Task.objects.get(id=data.id)
-            task = resolvers.update(
-                info,
-                task,
-                {
-                    **task_data,
-                },
-            )
+            note_id = task.get_note_id()
+
+            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+                task = resolvers.update(
+                    info,
+                    task,
+                    {
+                        **task_data,
+                    },
+                )
 
             return cast(TaskType, task)
 
@@ -604,15 +605,18 @@ class Mutation:
             except Task.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this task.")
 
-            location_data: Dict = strawberry.asdict(data)
-            location = Location.get_or_create_location(location_data["location"])
-            task = resolvers.update(
-                info,
-                task,
-                {
-                    "location": location,
-                },
-            )
+            note_id = task.get_note_id()
+
+            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+                location_data: Dict = strawberry.asdict(data)
+                location = Location.get_or_create_location(location_data["location"])
+                task = resolvers.update(
+                    info,
+                    task,
+                    {
+                        "location": location,
+                    },
+                )
 
             return cast(TaskType, task)
 
@@ -634,11 +638,7 @@ class Mutation:
             raise PermissionError("You do not have permission to modify this task.")
 
         task_id = task.id
-
-        if note := Note.objects.filter(Q(purposes__id=task_id) | Q(next_steps__id=task_id)).first():
-            note_id = note.id
-        else:
-            note_id = None
+        note_id = task.get_note_id()
 
         with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
             task.delete()

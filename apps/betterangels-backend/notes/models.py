@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
+from django.db.models import Q
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
 
 @pghistory.track(
     pghistory.InsertEvent("service_request.add"),
+    pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
@@ -55,9 +57,18 @@ class ServiceRequest(BaseModel):
         if action == "add":
             self.delete()
 
+    def get_note_id(self) -> int | None:
+        """
+        NOTE: this function will have to change once ServiceRequests can be associated with multiple Notes
+        """
+        if note := Note.objects.filter(Q(provided_services__id=self.id) | Q(requested_services__id=self.id)).first():
+            return note.id
+        return None
+
 
 @pghistory.track(
     pghistory.InsertEvent("task.add"),
+    pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
 class Task(BaseModel):
@@ -81,9 +92,20 @@ class Task(BaseModel):
         return self.title
 
     @staticmethod
-    def revert_action(action: str, obj_id: str, *args: Any, **kwargs: Any) -> None:
+    def revert_action(action: str, obj_id: str, diff: dict, *args: Any, **kwargs: Any) -> None:
         if action == "add":
             Task.objects.get(id=obj_id).delete()
+        elif action == "update":
+            Task.objects.filter(id=obj_id).update(**{field: values[0] for field, values in diff.items()})
+
+    def get_note_id(self) -> int | None:
+        """
+        NOTE: this function will have to change once Tasks can be associated with multiple Notes
+        """
+        if note := Note.objects.filter(Q(purposes__id=self.id) | Q(next_steps__id=self.id)).first():
+            return note.id
+
+        return None
 
 
 @pghistory.track(
