@@ -1,5 +1,5 @@
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 
-export default function Services({ id }: { id: string }) {
+export default function Services({ userId }: { userId: string | undefined }) {
   return <TextRegular>Services</TextRegular>;
 }

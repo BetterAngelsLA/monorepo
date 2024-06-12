@@ -9,7 +9,11 @@ import InteractionsSorting from './InteractionsSorting';
 
 const paginationLimit = 10;
 
-export default function Interactions({ id }: { id: string }) {
+export default function Interactions({
+  userId,
+}: {
+  userId: string | undefined;
+}) {
   const [search, setSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -18,7 +22,7 @@ export default function Interactions({ id }: { id: string }) {
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      filters: { client: id },
+      filters: { client: userId },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
