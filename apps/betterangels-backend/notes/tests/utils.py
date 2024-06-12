@@ -195,6 +195,16 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         nextSteps {
                             id
                             title
+                            location {
+                                address {
+                                    street
+                                    city
+                                    state
+                                    zipCode
+                                }
+                                point
+                                pointOfInterest
+                            }
                         }
                         providedServices {
                             id

@@ -50,9 +50,7 @@ class NoteReverter:
                 apps.get_model(event.pgh_model).objects.get(
                     id=event.pgh_obj_id,
                     pgh_context_id__in=context_ids,
-                ).pgh_obj.revert_action(
-                    action=action, diff=event.pgh_diff
-                )  # , obj_id=event.pgh_obj_id)
+                ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
 
             except ObjectDoesNotExist:
                 # If object has already been deleted, restore it
@@ -96,7 +94,7 @@ class NoteReverter:
         contexts_to_revert: list[UUID] = list(
             Context.objects.filter(
                 metadata__note_id=self.note_id,
-                # metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
+                metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
                 metadata__timestamp__gt=saved_at,
             ).values_list("id", flat=True)
         )
