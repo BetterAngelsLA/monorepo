@@ -131,7 +131,16 @@ jobs:
       # Only build the Simulator on branches
       - name: 🍏 Apple Simulator Build
         if: github.ref != 'refs/heads/main'
-        uses: expo/expo-github-action/preview-build@main
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          command: eas build --profile development-simulator --platform ios
+          profile: development-simulator
+          branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
+
+      # # Only build the Simulator on branches
+      # - name: 🍏 Apple Simulator Build
+      #   if: github.ref != 'refs/heads/main'
+      #   uses: expo/expo-github-action/preview-build@main
+      #   with:
+      #     command: eas build --profile development-simulator --platform ios
+      #     working-directory: apps/${{ matrix.project }}
