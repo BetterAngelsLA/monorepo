@@ -45,10 +45,13 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 1. Follow the instructions in the terminal to configure NVM in your shell profile. It should look similar to:
 
-   e.g. ~/.profile or ~/.zshrc:
+   e.g. `~/.profile` or `~/.zshrc`:
+
+   ```
    export NVM_DIR="$HOME/.nvm"
    [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
    [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+   ```
 
    If these instructions don't appear, run the following:
 
@@ -60,6 +63,12 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
    ```bash
    nvm install 20.12.2
+   ```
+
+1. Install yarn
+
+   ```
+   brew install yarn
    ```
 
 1. Go to the monorepo and run yarn install
