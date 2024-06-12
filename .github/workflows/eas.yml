@@ -134,9 +134,8 @@ jobs:
         working-directory: apps/${{ matrix.project }}
         run: |
           build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
-          if [ -z "$build_list_output" ]; then
+          if [ "${build_list_output}" == "[]" ]; then
             eas build --profile development-simulator --platform ios
-          fi
           else
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
