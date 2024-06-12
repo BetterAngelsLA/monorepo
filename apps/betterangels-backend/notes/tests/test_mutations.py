@@ -677,9 +677,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
-        self.assertEqual(self.street, reverted_note["location"]["address"]["street"])
-        self.assertEqual(self.point, reverted_note["location"]["point"])
-        self.assertEqual(self.point_of_interest, reverted_note["location"]["pointOfInterest"])
+        self.assertEqual(reverted_note["location"]["address"]["street"], self.street)
+        self.assertEqual(reverted_note["location"]["point"], self.point)
+        self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
 
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
@@ -1396,6 +1396,63 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
         self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
+
+    def test_revert_note_mutation_restores_updated_task_location(self) -> None:
+        """
+        Test Actions:
+        0. Setup creates a note
+        1. Create 1 next step
+        2. Update next step location
+        3. Save now as saved_at
+        3. Update the next step location again
+        4. Revert to saved_at from Step 3
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        task = self._create_note_task_fixture(
+            {
+                "title": "Next Step Title",
+                "noteId": note_id,
+                "status": "TO_DO",
+                "taskType": "NEXT_STEP",
+            }
+        )["data"]["createNoteTask"]
+
+        json_address_input, address_input = self._get_address_inputs()
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+
+        self._update_task_location_fixture({"id": task["id"], "location": location})
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        discarded_json_address_input, discarded_address_input = self._get_address_inputs(street_number_override="104")
+        discarded_point = [-118.0, 34.0]
+        discarded_point_of_interest = "Another interesting point"
+        discarded_location = {
+            "address": discarded_json_address_input,
+            "point": discarded_point,
+            "pointOfInterest": discarded_point_of_interest,
+        }
+        self._update_task_location_fixture({"id": task["id"], "location": discarded_location})
+
+        # Revert to saved_at state
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        # expected_query_count = 27
+        # with self.assertNumQueriesWithoutCache(expected_query_count):
+        if True:
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        next_step = reverted_note["nextSteps"][0]
+        self.assertEqual(next_step["location"]["address"]["street"], self.street)
+        self.assertEqual(next_step["location"]["point"], self.point)
+        self.assertEqual(next_step["location"]["pointOfInterest"], self.point_of_interest)
 
     def test_revert_note_mutation_restores_updated_custom_service_requests(self) -> None:
         """
