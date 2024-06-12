@@ -1,12 +1,14 @@
 ### Development workflow
 
 1. Check out a new branch from main with the name format <ticket_id>/<description> - e.g., DEV-60/revert-note-on-cancel
-1. When ready, open PR
+1. When ready, open a Pull Request (PR)
    1. Title: brief description + ticket ID - e.g. Revert saved note on cancel (DEV-142)
-   1. Description: if the PR is a straightforward implementation of ticket AC, you only need to include the ticket ID. If there was anything special to note, it should be included in the description. e.g.:
-      - https://github.com/BetterAngelsLA/monorepo/pull/322
-      - https://github.com/BetterAngelsLA/monorepo/pull/329
-      - https://github.com/BetterAngelsLA/monorepo/pull/337
+   1. Description:
+      - If the PR is a straightforward implementation of ticket Acceptance Criteria (AC), you only need to include the ticket ID
+      - If there was anything special to note, it should be included in the description. e.g.:
+        - https://github.com/BetterAngelsLA/monorepo/pull/322
+        - https://github.com/BetterAngelsLA/monorepo/pull/329
+        - https://github.com/BetterAngelsLA/monorepo/pull/337
 1. Assign the PR to yourself
    1. :hammer_and_wrench: For engineering reviews (required for all PRs):
       1. For the PR author:
@@ -35,6 +37,7 @@
          1. All PR comments/responses should be in the PR comments
          1. All updates re: the status of the PR should be in the slack thread for that PR
          1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
+         1. If the product review requires major revisions to the code, another engineering review may be required.
 
 ### Additional guidelines:
 

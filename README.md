@@ -23,16 +23,16 @@
 
 ## Frontend Development Guide (Mac)
 
-https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md
+<a href="https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md">README</a>
 
 ## Backend Development Guide
 
-https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md
+<a href="https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md">README</a>
 
 ## Feature Development Workflow
 
-https://github.com/BetterAngelsLA/monorepo/blob/main/docs/development_workflow.md
+<a href="https://github.com/BetterAngelsLA/monorepo/blob/main/docs/development_workflow.md">Development Workflow</a>
 
 ## License Information
 
-https://github.com/BetterAngelsLA/monorepo/blob/main/LICENSE
+<a href="https://github.com/BetterAngelsLA/monorepo/blob/main/LICENSE">LICENSE</a>
