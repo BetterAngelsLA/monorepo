@@ -11,17 +11,17 @@ class GenderEnum(models.TextChoices):
 
 @strawberry.enum
 class LanguageEnum(models.TextChoices):
-    ENGLISH = "english", "English"
-    RUSSIAN = "russian", "Russian"
-    JAPANESE = "japanese", "Japanese"
-    ARABIC = "arabic", "Arabic"
-    PERSIAN = "persian", "Persian"
-    ARMENIAN = "armenian", "Armenian"
-    KOREAN = "korean", "Korean"
-    VIETNAMESE = "vietnamese", "Vietnamese"
-    TAGALOG = "tagalog", "Tagalog"
-    CHINESE = "chinese", "Chinese"
-    SPANISH = "spanish", "Spanish"
+    ENGLISH = "english", _("English")
+    RUSSIAN = "russian", _("Russian")
+    JAPANESE = "japanese", _("Japanese")
+    ARABIC = "arabic", _("Arabic")
+    PERSIAN = "persian", _("Persian")
+    ARMENIAN = "armenian", _("Armenian")
+    KOREAN = "korean", _("Korean")
+    VIETNAMESE = "vietnamese", _("Vietnamese")
+    TAGALOG = "tagalog", _("Tagalog")
+    CHINESE = "chinese", _("Chinese")
+    SPANISH = "spanish", _("Spanish")
 
 
 class YesNoPreferNotToSayEnum(models.TextChoices):
