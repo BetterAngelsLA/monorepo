@@ -81,11 +81,8 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && node --version \
   && npm --version
 
-ENV YARN_VERSION 4.2.2
-RUN corepack enable && \
-    yarn set version $YARN_VERSION && \
-    # smoke tests
-    yarn --version
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 # Python
 RUN pip install poetry==1.8.2

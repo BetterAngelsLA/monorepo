@@ -33,7 +33,7 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 - [Xcode](https://developer.apple.com/xcode/resources/)
 - [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
-- [Expo Go](https://expo.dev/signup) with project access
+- [Expo Dev Client](https://expo.dev/accounts/better-angels/projects/betterangels/builds/ce732740-c558-4189-a7d0-fca56877dc43)
 
 **Setup:**
 

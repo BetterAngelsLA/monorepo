@@ -8,8 +8,7 @@
       "executor": "@nx/expo:start",
       "dependsOn": ["sync-deps"],
       "options": {
-        "port": 8081,
-        "go": true
+        "port": 8081
       }
     },
     "serve": {
