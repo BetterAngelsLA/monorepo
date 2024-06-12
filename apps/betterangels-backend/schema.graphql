@@ -94,20 +94,32 @@ input ClientProfileOrder {
 
 type ClientProfileType {
   id: ID!
-  hmisId: String
-  dateOfBirth: Date
-  preferredLanguage: LanguageEnum
-  gender: GenderEnum
   user: UserType!
+  address: String
+  dateOfBirth: Date
+  gender: GenderEnum
+  hmisId: String
+  nickname: String
+  phoneNumber: String
+  spokenLanguages: [LanguageEnum]!
+  preferredLanguage: LanguageEnum
+  pronouns: String
+  veteranStatus: YesNoPreferNotToSayEnum
   age: Int
 }
 
 input CreateClientProfileInput {
-  hmisId: String
+  address: String
   dateOfBirth: Date
-  preferredLanguage: LanguageEnum
   gender: GenderEnum
+  hmisId: String
+  nickname: String
+  phoneNumber: String
+  preferredLanguage: LanguageEnum
+  pronouns: String
+  spokenLanguages: [LanguageEnum]
   user: CreateUserInput!
+  veteranStatus: YesNoPreferNotToSayEnum
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -247,8 +259,20 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 enum LanguageEnum {
+  ARABIC
+  ARMENIAN
   ENGLISH
+  FARSI
+  INDONESIAN
+  JAPANESE
+  KHMER
+  KOREAN
+  RUSSIAN
+  SIMPLIFIED_CHINESE
   SPANISH
+  TAGALOG
+  TRADITIONAL_CHINESE
+  VIETNAMESE
 }
 
 input LocationInput {
@@ -632,6 +656,12 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
+}
+
+enum YesNoPreferNotToSayEnum {
+  YES
+  NO
+  PREFER_NOT_TO_SAY
 }
 
 """Permission definition for schema directives."""

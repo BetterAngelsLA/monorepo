@@ -1,3 +1,5 @@
+import 'expo-dev-client';
+
 import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
@@ -11,9 +13,6 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import client from './apollo';
 import Logo from './assets/images/logo.svg';
-
-// https://github.com/expo/expo/issues/28618
-import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
 
