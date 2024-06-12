@@ -122,16 +122,25 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
+        id: continuos_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: ${{  env.CHANNEL_CONFIG }}
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
-      # Only build the Simulator on branches
+      # # Only build the Simulator on branches
+      # - name: 🍏 Apple Simulator Build
+      #   if: github.ref != 'refs/heads/main' && steps.continuos_deploy.outputs.ios-build-id != ''
+      #   uses: expo/expo-github-action/preview-build@main
+      #   with:
+      #     command: eas build --profile development-simulator --platform ios
+      #     working-directory: apps/${{ matrix.project }}
+
       - name: 🍏 Apple Simulator Build
         if: github.ref != 'refs/heads/main'
-        uses: expo/expo-github-action/preview-build@main
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          command: eas build --profile development-simulator --platform ios
+          profile: development-simulator
+          branch: development
           working-directory: apps/${{ matrix.project }}
