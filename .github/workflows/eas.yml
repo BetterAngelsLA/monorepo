@@ -6,6 +6,10 @@ on:
   push:
     branches:
       - main
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
