@@ -1,7 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, useState } from 'react';
-import { MainScrollContainer } from '../../ui-components';
+import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
@@ -38,7 +38,7 @@ export default function Client({ id }: { id: string }) {
   if (error) throw new Error('Something went wrong. Please try again.');
 
   return (
-    <MainScrollContainer pt={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+    <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
         firstName={data?.clientProfile.user.firstName}
         lastName={data?.clientProfile.user.lastName}
@@ -49,6 +49,6 @@ export default function Client({ id }: { id: string }) {
       />
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, id)}
-    </MainScrollContainer>
+    </MainContainer>
   );
 }

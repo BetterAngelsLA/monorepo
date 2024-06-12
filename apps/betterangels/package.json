@@ -58,7 +58,8 @@
     "expo-image-manipulator": "*",
     "util": "*",
     "react-native-reanimated": "*",
-    "expo-apple-authentication": "*"
+    "expo-apple-authentication": "*",
+    "react-native-modal": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
