@@ -9,35 +9,38 @@
         - https://github.com/BetterAngelsLA/monorepo/pull/322
         - https://github.com/BetterAngelsLA/monorepo/pull/329
         - https://github.com/BetterAngelsLA/monorepo/pull/337
-1. Assign the PR to yourself
-   1. :hammer_and_wrench: For engineering reviews (required for all PRs):
-      1. For the PR author:
-         1. in Jira, move ticket to "Review"
-         1. in `#tech-team-engineering`, paste a link to the PR and tag someone from eng - e.g., <span style="color:#1c9bd1">@mike Revert saved note on cancel (DEV-142)</span>
-            1. if the PR is for something simple that needs to go out quickly (e.g., bumping expo dependencies), you can tag the whole team. - i.e., <span style="color:#1c9bd1">@engineering</span>
-         1. request a review from that person in the PR
-            1. if you tagged the team, whoever responds should self-request a review
-      1. For the reviewer:
-         1. For PRs that add or modify FE behavior or design, do a quick QC pass in the app/simulator to ensure AC was satisfied and no regressions were introduced.
-         1. Post any questions, comments, change requests, etc.
-         1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
-      1. revision -> re-review process continues until PR is approved.
-         1. All PR comments/responses should be in the PR comments
-         1. All updates re: the status of the PR should be in the slack thread for that PR
-         1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
-   1. :iphone: For product reviews (required only for PRs that add or modify FE behavior or design):
-      1. For the PR author:
-         1. in Jira, move ticket to "Product Acceptance"
-         1. in `#tech-qc-testing`, paste a link to the PR and tag product - e.g.,
-            <span style="color:#1c9bd1">@product Revert saved note on cancel (DEV-142)</span>
-      1. For the reviewer:
-         1. Post any questions, comments, change requests, etc. in PR comments
-         1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
-      1. revision -> re-review process continues until PR is approved.
-         1. All PR comments/responses should be in the PR comments
-         1. All updates re: the status of the PR should be in the slack thread for that PR
-         1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
-         1. If the product review requires major revisions to the code, another engineering review may be required.
+   1. Assign the PR to yourself
+1. :hammer_and_wrench: For engineering reviews (required for all PRs):
+   1. For the PR author:
+      1. in Jira, move ticket to "Review"
+      1. in `#tech-team-engineering`, paste a link to the PR and tag someone from eng - e.g., <span style="color:#1c9bd1">@mike Revert saved note on cancel (DEV-142)</span>
+         1. if the PR is for something simple that needs to go out quickly (e.g., bumping expo dependencies), you can tag the whole team. - i.e., <span style="color:#1c9bd1">@engineering</span>
+      1. request a review from that person in the PR
+         1. if you tagged the team, whoever responds should self-request a review
+   1. For the reviewer:
+      1. For PRs that add or modify FE behavior or design, do a quick QC pass in the app/simulator to ensure AC was satisfied and no regressions were introduced.
+      1. Post any questions, comments, change requests, etc.
+      1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
+   1. revision -> re-review process continues until PR is approved.
+      1. All PR comments/responses should be in the PR comments
+      1. All updates re: the status of the PR should be in the slack thread for that PR
+      1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
+1. :iphone: For product reviews (required only for PRs that add or modify FE behavior or design):
+   1. For the PR author:
+      1. in Jira, move ticket to "Product Acceptance"
+      1. in `#tech-qc-testing`, paste a link to the PR and tag product - e.g.,
+         <span style="color:#1c9bd1">@product Revert saved note on cancel (DEV-142)</span>
+   1. For the reviewer:
+      1. Post any questions, comments, change requests, etc. in PR comments
+      1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
+   1. revision -> re-review process continues until PR is approved.
+      1. All PR comments/responses should be in the PR comments
+      1. All updates re: the status of the PR should be in the slack thread for that PR
+      1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
+      1. If the product review requires major revisions to the code, another engineering review may be required.
+1. Once you have the necessary approvals:
+   1. Squash merge the PR. Before confirming the merge, clear the autogenerated "optional extended description". You can add comments or a description if you want, but we don't want to commit the list of squashed commits.
+   1. Once the PR has been merged, move the corresponding ticket to "Done"
 
 ### Additional guidelines:
 
