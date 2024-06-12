@@ -499,7 +499,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
+class NoteRevertMutationTestCase(
+    NoteGraphQLBaseTestCase,
+    TaskGraphQLUtilsMixin[NoteGraphQLBaseTestCase],
+    ServiceRequestGraphQLUtilMixin[NoteGraphQLBaseTestCase],
+):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.

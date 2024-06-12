@@ -10,7 +10,6 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.db.models import Q
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
@@ -183,7 +182,6 @@ class Mutation:
         except Exception as e:
             # TODO: add error handling/logging, for now it either fully succeeds or fails silently
             print(e)
-            raise e
 
         return cast(NoteType, note)
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Generic
 
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
@@ -6,6 +6,8 @@ from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
+
+# T = TypeVar("T", bound="GraphQLBaseTestCase")
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -505,14 +507,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         return response
 
 
-class ServiceRequestGraphQLUtilMixin:
-    def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+class ServiceRequestGraphQLUtilMixin(Generic[T]):
+    def _create_service_request_fixture(self: T, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("create", variables)
 
-    def _update_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_service_request_fixture(self: T, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("update", variables)
 
-    def _create_or_update_service_request_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_or_update_service_request_fixture(self: T, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
@@ -546,7 +548,7 @@ class ServiceRequestGraphQLUtilMixin:
         return self.execute_graphql(mutation, {"data": variables})
 
 
-class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
+class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin[GraphQLBaseTestCase]):
     def setUp(self) -> None:
         super().setUp()
         self._setup_service_request()
@@ -564,14 +566,14 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraph
         self.graphql_client.logout()
 
 
-class TaskGraphQLUtilsMixin:
-    def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+class TaskGraphQLUtilsMixin(Generic[T]):
+    def _create_task_fixture(self: T, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
 
-    def _update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_task_fixture(self: T, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(self: T, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
@@ -664,7 +666,7 @@ class TaskGraphQLUtilsMixin:
         return self.execute_graphql(mutation, {"data": variables})
 
 
-class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin[GraphQLBaseTestCase]):
     def setUp(self) -> None:
         super().setUp()
         self._setup_task()
