@@ -7,6 +7,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
+  Button,
   DeleteModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
@@ -132,6 +133,20 @@ export default function AddNote() {
           {...props}
         />
         <PrivateNote {...props} />
+        <DeleteModal
+          body="All data associated with this note will be deleted"
+          title="Delete note?"
+          onDelete={deleteNoteFunction}
+          button={
+            <Button
+              accessibilityHint="deletes creation"
+              title="Delete Note"
+              variant="negative"
+              size="full"
+              mt="sm"
+            />
+          }
+        />
       </MainScrollContainer>
       <BottomActions
         cancel={
