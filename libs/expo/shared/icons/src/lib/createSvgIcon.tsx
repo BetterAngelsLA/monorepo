@@ -34,6 +34,7 @@ const createSvgIcon = (
         }}
         width={w}
         height={h}
+        color={color}
         {...(useStroke ? { stroke: color } : { fill: color })}
       />
     );
