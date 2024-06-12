@@ -800,18 +800,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     )
     def test_delete_task_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
-
-        mutation = """
-            mutation DeleteTask($id: ID!) {
-                deleteTask(data: { id: $id }) {
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": self.task["id"]}
-        self.execute_graphql(mutation, variables)
+        self._delete_task_fixture(self.task["id"])
 
         self.assertTrue(Task.objects.filter(id=self.task["id"]).exists() != should_succeed)
 
