@@ -8,6 +8,31 @@ from pghistory.models import Context, Events
 
 
 class NoteReverter:
+    """
+    This class will revert the specified Note, and all of it's related models back to their state at the saved_at timestamp.
+
+    The only exception is NoteAttachments which rely on s3 storage and will not be affected by version control.
+    See NOTE_RELATED_MODEL_UPDATES for revertable actions.
+
+    Example usage:
+
+        NoteReverter(note_id="100").revert_to_saved_at(saved_at="2024-03-11T10:11:12+00:00")
+
+    """
+
+    NOTE_RELATED_MODEL_UPDATES = {
+        "addNoteTask",
+        "createNoteMood",
+        "createNoteServiceRequest",
+        "createNoteTask",
+        "deleteMood",
+        "deleteServiceRequest",
+        "deleteTask",
+        "removeNoteServiceRequest",
+        "removeNoteTask",
+        "updateNoteLocation",
+    }
+
     def __init__(self, note_id: str):
         self.note_id = note_id
 
@@ -18,7 +43,6 @@ class NoteReverter:
         """
         for event in Events.objects.filter(pgh_context_id__in=context_ids, pgh_obj_id__isnull=False):
             action = event.pgh_label.split(".")[1]
-
             try:
                 apps.get_model(event.pgh_model).objects.get(
                     id=event.pgh_obj_id,
@@ -34,63 +58,64 @@ class NoteReverter:
         return
 
     @staticmethod
-    def _revert_changes_to_related_proxy_models(context_ids: list[UUID]) -> None:
+    def _revert_changes_to_related_proxy_models(events: list[Events]) -> list[Events]:
         """
         Revert changes made to Note-related PROXY model instances (no pgh_obj_id, i.e., Tasks, Services)
+        Returns list of failed revert events that need to be retried after the real models are reverted.
+
+        NOTE: When reverting changes to RETURN REMOVED Proxy Models, e.g., put back a deleted NotePurpose (Task instance),
+        the first time we try to revert the "delete" NotePurpose action it will fail because the related Task has been deleted and
+        the NotePurpose relationship can only be brought back AFTER the REAL model changes have been reverted.
+
+        Similarly, when reverting changes to REMOVE ADDED Proxy Models, e.g., discard an added NotePurpose (Task instance),
+        if we try to revert the "create" Task action, before reverting the "create" NotePurpose action, it will fail because
+        the NotePurpose tied to the Task will block deletion.
+
+        To satisfy both cases, we save the failed revert events and try them again after the _revert_changes_to_related_real_models
+        fn has been called.
         """
-        for event in Events.objects.filter(pgh_context_id__in=context_ids, pgh_obj_id=None):
-            action = event.pgh_label.split(".")[1]
 
-            apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
+        failed_revert_events = []
+        for event in events:
+            try:
+                action = event.pgh_label.split(".")[1]
+                apps.get_model(event.pgh_model).pgh_tracked_model.revert_action(action=action, **event.pgh_data)
 
-        return
+            except ObjectDoesNotExist:
+                failed_revert_events.append(event)
+
+        return failed_revert_events
 
     def _revert_changes_to_all_related_models(self, saved_at: str) -> None:
-        NOTE_RELATED_MODEL_UPDATES = {
-            "createNoteMood",
-            "addNoteTask",
-            "createNoteTask",
-            "createNoteServiceRequest",
-            "deleteMood",
-            "deleteTask",
-            "deleteServiceRequest",
-            "removeNoteTask",
-            "removeNoteServiceRequest",
-            "updateNoteLocation",
-        }
-
         # Find contexts affecting Note-related models that were created AFTER saved_at time
         contexts_to_revert: list[UUID] = list(
             Context.objects.filter(
                 metadata__note_id=self.note_id,
-                metadata__label__in=NOTE_RELATED_MODEL_UPDATES,
+                metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
                 metadata__timestamp__gt=saved_at,
             ).values_list("id", flat=True)
         )
 
-        # NOTE: sometimes PROXY models need to be updated BEFORE the REAL models and sometimes they need to be updated
-        # AFTER the REAL models. Use this variable to determine whether to run the proxy model revert fn again later
-        try_again_after_real_models_revert: bool = False
+        proxy_events_to_revert = list(Events.objects.filter(pgh_context_id__in=contexts_to_revert, pgh_obj_id=None))
 
-        try:
-            self._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
-
-        except ObjectDoesNotExist:
-            try_again_after_real_models_revert = True
+        # See fn notes for details
+        failed_revert_events = self._revert_changes_to_related_proxy_models(events=proxy_events_to_revert)
 
         self._revert_changes_to_related_real_models(context_ids=contexts_to_revert)
 
-        if try_again_after_real_models_revert:
-            self._revert_changes_to_related_proxy_models(context_ids=contexts_to_revert)
+        failed_revert_events = self._revert_changes_to_related_proxy_models(events=failed_revert_events)
+
+        if failed_revert_events:
+            raise Exception("The revert action could not revert all associated Note models")
 
         return
 
     @transaction.atomic
     def revert_to_saved_at(self, saved_at: str) -> None:
         """
-        This is the public entrypoint.
         This function will revert the Note back to it's state at the saved_at timestamp.
         """
+
         revert_to_note_context_id: UUID | None = None
 
         update_note_contexts = Context.objects.filter(metadata__note_id=self.note_id, metadata__label="updateNote")

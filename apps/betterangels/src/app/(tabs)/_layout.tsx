@@ -105,6 +105,25 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="drawerPlaceholder"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openModal();
+            },
+          }}
+          options={{
+            title: '',
+            tabBarIcon: () => (
+              <View style={styles.wrapper}>
+                <View style={styles.middleButton}>
+                  <PlusIcon color={Colors.WHITE} />
+                </View>
+              </View>
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="clients"
           listeners={{
             tabPress: (e) => {
@@ -139,28 +158,10 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              openModal();
-            },
-          }}
-          options={{
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.wrapper}>
-                <View style={styles.middleButton}>
-                  <PlusIcon color={Colors.WHITE} />
-                </View>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
           name="map"
           options={{
             title: 'Map',
+            href: null,
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
@@ -198,6 +199,7 @@ export default function TabLayout() {
           name="calendar"
           options={{
             title: 'Calendar',
+            href: null,
             tabBarIcon: ({ color, focused }) => (
               <View style={{ alignItems: 'center' }}>
                 {focused ? (
