@@ -137,3 +137,6 @@ jobs:
           if [ -z "$build_list_output" ]; then
             eas build --profile development-simulator --platform ios
           fi
+          else
+            echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
+          fi
