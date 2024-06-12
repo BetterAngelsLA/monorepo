@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
@@ -13,6 +13,9 @@ from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
+
+if TYPE_CHECKING:
+    from pghistory.models import Events
 
 
 @pghistory.track(
@@ -77,6 +80,11 @@ class Task(BaseModel):
     def __str__(self) -> str:
         return self.title
 
+    @staticmethod
+    def revert_action(action: str, obj_id: str, *args: Any, **kwargs: Any) -> None:
+        if action == "add":
+            Task.objects.get(id=obj_id).delete()
+
 
 @pghistory.track(
     pghistory.InsertEvent("note.add"),
@@ -106,6 +114,8 @@ class Note(BaseModel):
 
     noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
     notegroupobjectpermission_set: models.QuerySet["NoteGroupObjectPermission"]
+
+    events: models.QuerySet["Events"]
 
     # Type hints for permission annotations
     _private_details: Optional[str]

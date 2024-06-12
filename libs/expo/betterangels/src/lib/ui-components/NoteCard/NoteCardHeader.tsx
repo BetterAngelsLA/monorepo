@@ -1,5 +1,5 @@
 import { NoteIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
@@ -7,11 +7,10 @@ import { View } from 'react-native';
 interface INoteCardHeaderProps {
   title: string;
   interactedAt: string;
-  isSubmitted: boolean;
 }
 
 export default function NoteCardHeader(props: INoteCardHeaderProps) {
-  const { isSubmitted, title, interactedAt } = props;
+  const { title, interactedAt } = props;
   return (
     <View
       style={{
@@ -34,20 +33,6 @@ export default function NoteCardHeader(props: INoteCardHeaderProps) {
         <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
           {format(new Date(interactedAt), 'MM/dd/yyyy')}
         </TextRegular>
-        {!isSubmitted && (
-          <View
-            style={{
-              marginTop: Spacings.xs,
-              backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-              paddingHorizontal: 4,
-              borderRadius: 20,
-            }}
-          >
-            <TextRegular size="sm" color={Colors.NEUTRAL_EXTRA_DARK}>
-              Draft
-            </TextRegular>
-          </View>
-        )}
       </View>
     </View>
   );
