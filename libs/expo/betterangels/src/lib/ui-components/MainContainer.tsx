@@ -18,7 +18,7 @@ export default function MainContainer({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: 'red' }}
+      style={{ flex: 1 }}
     >
       <View
         style={{
