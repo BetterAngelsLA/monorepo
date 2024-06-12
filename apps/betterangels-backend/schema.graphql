@@ -261,17 +261,20 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 enum LanguageEnum {
-  ENGLISH
-  RUSSIAN
-  JAPANESE
   ARABIC
-  PERSIAN
   ARMENIAN
+  ENGLISH
+  FARSI
+  INDONESIAN
+  JAPANESE
+  KHMER
   KOREAN
-  VIETNAMESE
-  TAGALOG
-  CHINESE
+  RUSSIAN
+  SIMPLIFIED_CHINESE
   SPANISH
+  TAGALOG
+  TRADITIONAL_CHINESE
+  VIETNAMESE
 }
 
 input LocationInput {
