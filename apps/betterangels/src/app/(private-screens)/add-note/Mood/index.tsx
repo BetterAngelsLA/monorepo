@@ -300,7 +300,7 @@ export default function Mood(props: IMoodProps) {
             style={{
               flexDirection: 'row',
               flexWrap: 'wrap',
-              gap: 4,
+              gap: Spacings.xxs,
             }}
           >
             {moods.map((mood: { enum: MoodEnum }) => {
