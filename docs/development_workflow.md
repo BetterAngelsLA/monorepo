@@ -4,8 +4,8 @@
 1. When ready, open a Pull Request (PR)
    1. Title: brief description + ticket ID - e.g. Revert saved note on cancel (DEV-142)
    1. Description:
-      - If the PR is a straightforward implementation of ticket Acceptance Criteria (AC), you only need to include the ticket ID
-      - If there was anything special to note, it should be included in the description. e.g.:
+      - If the PR is a straightforward implementation of ticket Acceptance Criteria (AC), you only need to include the ticket ID - e.g., "DEV-142"
+      - If there was anything special to note, it should be included in the description. e.g., see linked PRs:
         - https://github.com/BetterAngelsLA/monorepo/pull/322
         - https://github.com/BetterAngelsLA/monorepo/pull/329
         - https://github.com/BetterAngelsLA/monorepo/pull/337
