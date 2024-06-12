@@ -45,7 +45,7 @@
    1. When you begin your review, reply with a :eyes:
    1. If you don't think you'll be able to provide a review within time suggested below, please let the PR author know.
       1. Small: 1 hour - e.g.:
-         1. Bug fixes,
+         1. Bug fixes
          1. Minor feature enhancements
          1. Small refactoring tasks
          1. Updating documentation
