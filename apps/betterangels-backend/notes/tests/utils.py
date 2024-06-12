@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic
+from typing import Any, Dict
 
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
@@ -7,8 +7,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
-
-# T = TypeVar("T", bound="GraphQLBaseTestCase")
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -508,16 +506,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         return response
 
 
-class ServiceRequestGraphQLUtilMixin:
-    def _create_service_request_fixture(self: HasGraphQLProtocol, variables: Dict[str, Any]) -> Dict[str, Any]:
+class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
+    def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("create", variables)
 
-    def _update_service_request_fixture(self: HasGraphQLProtocol, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("update", variables)
 
-    def _create_or_update_service_request_fixture(
-        self: HasGraphQLProtocol, operation: str, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_or_update_service_request_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
@@ -569,16 +565,14 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraph
         self.graphql_client.logout()
 
 
-class TaskGraphQLUtilsMixin:
-    def _create_task_fixture(self: HasGraphQLProtocol, variables: Dict[str, Any]) -> Dict[str, Any]:
+class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
+    def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
 
-    def _update_task_fixture(self: HasGraphQLProtocol, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(
-        self: HasGraphQLProtocol, operation: str, variables: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
@@ -620,7 +614,7 @@ class TaskGraphQLUtilsMixin:
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _delete_task_fixture(self: HasGraphQLProtocol, task_id: int) -> Dict[str, Any]:
+    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
         mutation: str = """
             mutation DeleteTask($id: ID!) {
                 deleteTask(data: { id: $id }) {
@@ -640,7 +634,7 @@ class TaskGraphQLUtilsMixin:
 
         return self.execute_graphql(mutation, {"id": task_id})
 
-    def _update_task_location_fixture(self: HasGraphQLProtocol, variables: Dict) -> Dict[str, Any]:
+    def _update_task_location_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
                 updateTaskLocation(data: $data) {
