@@ -55,7 +55,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": "she/her",
-            "socialSecurityNumber": "123456789",
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
@@ -74,7 +73,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": "she/her",
-            "socialSecurityNumber": "123456789",
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {

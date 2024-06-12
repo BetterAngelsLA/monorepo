@@ -38,7 +38,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": "he/him",
-                "socialSecurityNumber": "123456789",
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
@@ -55,7 +54,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": None,
                 "preferredLanguage": None,
                 "pronouns": None,
-                "socialSecurityNumber": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }
@@ -92,7 +90,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         phoneNumber
                         preferredLanguage
                         pronouns
-                        socialSecurityNumber
                         spokenLanguages
                         veteranStatus
                         user {{

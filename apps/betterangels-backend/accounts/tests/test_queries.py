@@ -95,7 +95,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     phoneNumber
                     preferredLanguage
                     pronouns
-                    socialSecurityNumber
                     spokenLanguages
                     veteranStatus
                     user {
@@ -133,7 +132,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": self.client_profile_1["pronouns"],
-            "socialSecurityNumber": self.client_profile_1["socialSecurityNumber"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": expected_user,
@@ -154,7 +152,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     phoneNumber
                     preferredLanguage
                     pronouns
-                    socialSecurityNumber
                     spokenLanguages
                     veteranStatus
                     user {

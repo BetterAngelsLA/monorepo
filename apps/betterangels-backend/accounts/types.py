@@ -95,7 +95,6 @@ class ClientProfileType:
     spoken_languages: List[Optional[LanguageEnum]]
     preferred_language: auto
     pronouns: auto
-    social_security_number: auto
     veteran_status: auto
 
     @strawberry.field
@@ -125,7 +124,6 @@ class CreateClientProfileInput:
     phone_number: auto
     preferred_language: auto
     pronouns: auto
-    social_security_number: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     user: CreateUserInput
     veteran_status: auto

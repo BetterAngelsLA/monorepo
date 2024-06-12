@@ -88,7 +88,6 @@ class ClientProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = models.CharField(max_length=50, blank=True, null=True)
-    social_security_number = models.CharField(max_length=9, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, default=list)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 

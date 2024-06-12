@@ -104,7 +104,6 @@ type ClientProfileType {
   spokenLanguages: [LanguageEnum]!
   preferredLanguage: LanguageEnum
   pronouns: String
-  socialSecurityNumber: String
   veteranStatus: YesNoPreferNotToSayEnum
   age: Int
 }
@@ -118,7 +117,6 @@ input CreateClientProfileInput {
   phoneNumber: String
   preferredLanguage: LanguageEnum
   pronouns: String
-  socialSecurityNumber: String
   spokenLanguages: [LanguageEnum]
   user: CreateUserInput!
   veteranStatus: YesNoPreferNotToSayEnum
