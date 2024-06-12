@@ -1,0 +1,61 @@
+### Development workflow
+
+1. Check out a new branch from main with the name format <ticket_id>/<description> - e.g., DEV-60/revert-note-on-cancel
+1. When ready, open PR
+   1. Title: brief description + ticket ID - e.g. Revert saved note on cancel (DEV-142)
+   1. Description: if the PR is a straightforward implementation of ticket AC, you only need to include the ticket ID. If there was anything special to note, it should be included in the description. e.g.:
+      - https://github.com/BetterAngelsLA/monorepo/pull/322
+      - https://github.com/BetterAngelsLA/monorepo/pull/329
+      - https://github.com/BetterAngelsLA/monorepo/pull/337
+1. Assign the PR to yourself
+   1. :hammer_and_wrench: For engineering reviews (required for all PRs):
+      1. For the PR author:
+         1. in Jira, move ticket to "Review"
+         1. in #tech-team-engineering, paste a link to the PR and tag someone from eng - e.g., @mike Revert saved note on cancel (DEV-142)
+            1. if the PR is for something simple that needs to go out quickly (e.g., bumping expo dependencies), you can tag the whole team. - i.e., @engineering
+         1. request a review from that person in the PR
+            1. if you tagged the team, whoever responds should self-request a review
+      1. For the reviewer:
+         1. For PRs that add or modify FE behavior or design, do a quick QC pass in the app/simulator to ensure AC was satisfied and no regressions were introduced.
+         1. Post any questions, comments, change requests, etc.
+         1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
+      1. revision -> re-review process continues until PR is approved.
+         1. All PR comments/responses should be in the PR comments
+         1. All updates re: the status of the PR should be in the slack thread for that PR
+         1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
+   1. :iphone: For product reviews (required only for PRs that add or modify FE behavior or design):
+      1. For the PR author:
+         1. in Jira, move ticket to "Product Acceptance"
+         1. in #tech-qc-testing, paste a link to the PR and tag product - e.g., @product Revert saved note on cancel (DEV-142)
+      1. For the reviewer:
+         1. Post any questions, comments, change requests, etc. in PR comments
+         1. In slack, "reply in thread", letting the PR author know whether you approved the PR or had comments/questions/changes.
+      1. revision -> re-review process continues until PR is approved.
+         1. All PR comments/responses should be in the PR comments
+         1. All updates re: the status of the PR should be in the slack thread for that PR
+         1. For major revisions (anything that won't be ready for re-review within a day), the ticket should be moved back to "In progress"
+
+### Additional guidelines:
+
+1. The PR author is responsible for advancing the PR to completion. At standup:
+   1. list the PRs you're waiting for reviews on (tag the reviewer in your standup notes)
+   1. mention any blockers - e.g., another PR/ticket is blocking yours, you ran into a bug you need help with, unclear requirements, etc.
+1. The reviewer is responsible for providing timely reviews.
+   1. Acknowledge that you saw the post by replying with a :+1:
+   1. When you begin your review, reply with a :eyes:
+   1. If you don't think you'll be able to provide a review within time suggested below, please let the PR author know.
+      1. Small: 1 hour - e.g.:
+         1. Bug fixes,
+         1. Minor feature enhancements
+         1. Small refactoring tasks
+         1. Updating documentation
+      1. Medium: 5 hours - e.g.:
+         1. Adding a new feature
+         1. Significant refactoring of a module
+         1. Updating multiple parts of the application
+      1. Large: next day, end of day - e.g.:
+         1. Major feature implementation
+         1. Large-scale refactoring
+         1. Rewriting a substantial part of the application
+         1. Merging long-lived branches
+      1. For very large PRs, consider asking the author if the PR can be broken up into smaller pieces. Generally, if a PR is large because it includes AC from multiple tickets, it should be broken into smaller PRs aligned with the ticket requirements.
