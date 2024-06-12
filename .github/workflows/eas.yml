@@ -6,10 +6,6 @@ on:
   push:
     branches:
       - main
-
-env:
-  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -74,9 +70,13 @@ jobs:
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
-      actions: write # Allow updating fingerprint in acton caches
-      contents: read # Required for actions/checkout
+      # REQUIRED: Allow comments of PRs
       pull-requests: write # Allow comments on PRs
+      # REQUIRED: Allow updating fingerprint in acton caches
+      actions: write
+      # Following permissions are required for private repos
+      contents: read
+      packages: write
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
           cache: 'yarn'
 
       - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@main
+        uses: expo/expo-github-action@8
         with:
           eas-version: 9.2.0
           token: ${{ secrets.EXPO_TOKEN }}
@@ -131,8 +131,7 @@ jobs:
       # Only build the Simulator on branches
       - name: 🍏 Apple Simulator Build
         if: github.ref != 'refs/heads/main'
-        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        uses: expo/expo-github-action/preview-build@main
         with:
-          profile: development-simulator
-          branch: ${{ github.event.pull_request.head.ref }}
+          command: eas build --profile development-simulator --platform ios
           working-directory: apps/${{ matrix.project }}
