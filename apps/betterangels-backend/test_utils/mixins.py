@@ -4,12 +4,9 @@ from typing import Any, Dict, Optional, Protocol
 from django.test import Client, TestCase
 
 
-class HasExecuteGraphQLProtocol(Protocol):
+class HasGraphQLProtocol(Protocol):
     def execute_graphql(
-        self,
-        query: str,
-        variables: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
+        self, query: str, variables: Optional[Dict[str, Any]] = None, files: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]: ...
 
 

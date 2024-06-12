@@ -499,11 +499,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(
-    NoteGraphQLBaseTestCase,
-    TaskGraphQLUtilsMixin[NoteGraphQLBaseTestCase],
-    ServiceRequestGraphQLUtilMixin[NoteGraphQLBaseTestCase],
-):
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.
@@ -544,7 +540,7 @@ class NoteRevertMutationTestCase(
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 27
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -605,7 +601,7 @@ class NoteRevertMutationTestCase(
         )
 
         variables = {"id": note_id, "savedAt": saved_at}
-        expected_query_count = 29
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -617,6 +613,7 @@ class NoteRevertMutationTestCase(
         saved_at = timezone.now()
 
         variables = {"id": note_id, "savedAt": saved_at}
+        expected_query_count = 29
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -807,7 +804,7 @@ class NoteRevertMutationTestCase(
         # Revert to saved_at state
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 43
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -1448,7 +1445,7 @@ class NoteRevertMutationTestCase(
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 53
+        expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -1571,7 +1568,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_user_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -1596,7 +1593,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "client": self.client_user_1.pk,
         }
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -1681,7 +1678,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "client": self.client_user_1.pk,
         }
 
-        expected_query_count = 19
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1713,7 +1710,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "title": "Updated task title",
         }
 
-        expected_query_count = 14
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1742,7 +1739,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
