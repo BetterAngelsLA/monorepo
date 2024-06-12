@@ -107,16 +107,6 @@ class ClientProfileBaseType:
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
-    address: auto
-    date_of_birth: auto
-    gender: auto
-    hmis_id: auto
-    nickname: auto
-    phone_number: auto
-    spoken_languages: List[Optional[LanguageEnum]]
-    preferred_language: auto
-    pronouns: auto
-    veteran_status: auto
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -129,14 +119,13 @@ class ClientProfileType(ClientProfileBaseType):
 
 
 @strawberry_django.input(ClientProfile, partial=True)
-class UpdateClientProfileInput(ClientProfileBaseType):
-    id: ID
+class CreateClientProfileInput(ClientProfileBaseType):
+    user: CreateUserInput
 
 
 @strawberry_django.input(ClientProfile, partial=True)
-class CreateClientProfileInput(ClientProfileBaseType):
-    user: CreateUserInput
-    veteran_status: auto
+class UpdateClientProfileInput(ClientProfileBaseType):
+    id: ID
 
 
 @strawberry.input

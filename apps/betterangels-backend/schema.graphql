@@ -101,7 +101,7 @@ type ClientProfileType {
   phoneNumber: String
   preferredLanguage: LanguageEnum
   pronouns: String
-  spokenLanguages: [LanguageEnum]!
+  spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!

@@ -110,7 +110,7 @@ export type ClientProfileType = {
   phoneNumber?: Maybe<Scalars['String']['output']>;
   preferredLanguage?: Maybe<LanguageEnum>;
   pronouns?: Maybe<Scalars['String']['output']>;
-  spokenLanguages: Array<Maybe<LanguageEnum>>;
+  spokenLanguages?: Maybe<Array<Maybe<LanguageEnum>>>;
   user: UserType;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
