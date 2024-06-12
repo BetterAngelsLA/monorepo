@@ -4129,13 +4129,13 @@ __metadata:
     eslint-plugin-react: "npm:7.32.2"
     eslint-plugin-react-hooks: "npm:4.6.0"
     eslint-plugin-react-native-a11y: "npm:^3.3.0"
-    expo: "npm:~51.0.12"
+    expo: "npm:~51.0.13"
     expo-apple-authentication: "npm:~6.4.1"
     expo-auth-session: "npm:~5.5.2"
     expo-camera: "npm:~15.0.10"
     expo-clipboard: "npm:~6.0.3"
     expo-constants: "npm:~16.0.2"
-    expo-dev-client: "npm:~4.0.16"
+    expo-dev-client: "npm:~4.0.17"
     expo-image-manipulator: "npm:~12.0.5"
     expo-image-picker: "npm:~15.0.5"
     expo-linking: "npm:~6.3.1"
@@ -13688,7 +13688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-dev-client@npm:~4.0.16":
+"expo-dev-client@npm:~4.0.17":
   version: 4.0.17
   resolution: "expo-dev-client@npm:4.0.17"
   dependencies:
@@ -13980,7 +13980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo@npm:~51.0.12":
+"expo@npm:~51.0.13":
   version: 51.0.13
   resolution: "expo@npm:51.0.13"
   dependencies:
@@ -14497,12 +14497,12 @@ __metadata:
   linkType: hard
 
 "foreground-child@npm:^3.1.0":
-  version: 3.1.1
-  resolution: "foreground-child@npm:3.1.1"
+  version: 3.2.0
+  resolution: "foreground-child@npm:3.2.0"
   dependencies:
     cross-spawn: "npm:^7.0.0"
     signal-exit: "npm:^4.0.1"
-  checksum: 10/087edd44857d258c4f73ad84cb8df980826569656f2550c341b27adf5335354393eec24ea2fabd43a253233fb27cee177ebe46bd0b7ea129c77e87cb1e9936fb
+  checksum: 10/27ce41b692e006f525b6a7146d0b4190979d2f382c20014a966b47ca549ab16f93dffbd2f95a32e83172d24bc374c38b7760023e1af74f8652bf34c42270fd28
   languageName: node
   linkType: hard
 
