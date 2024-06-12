@@ -2,12 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import (
-    GenderEnum,
-    LanguageEnum,
-    StrawberryLanguageEnum,
-    YesNoPreferNotToSayEnum,
-)
+from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -139,7 +134,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": self.client_profile_1["pronouns"],
             "socialSecurityNumber": self.client_profile_1["socialSecurityNumber"],
-            "spokenLanguages": [StrawberryLanguageEnum.ENGLISH.name, StrawberryLanguageEnum.SPANISH.name],
+            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": expected_user,
         }

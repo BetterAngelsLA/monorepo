@@ -9,22 +9,8 @@ class GenderEnum(models.TextChoices):
     NONBINARY = "nonbinary", _("Non-binary")
 
 
-class LanguageEnum(models.TextChoices):
-    ENGLISH = "english", _("English")
-    RUSSIAN = "russian", _("Russian")
-    JAPANESE = "japanese", _("Japanese")
-    ARABIC = "arabic", _("Arabic")
-    PERSIAN = "persian", _("Persian")
-    ARMENIAN = "armenian", _("Armenian")
-    KOREAN = "korean", _("Korean")
-    VIETNAMESE = "vietnamese", _("Vietnamese")
-    TAGALOG = "tagalog", _("Tagalog")
-    CHINESE = "chinese", _("Chinese")
-    SPANISH = "spanish", _("Spanish")
-
-
 @strawberry.enum
-class StrawberryLanguageEnum(models.TextChoices):
+class LanguageEnum(models.TextChoices):
     ENGLISH = "english", "English"
     RUSSIAN = "russian", "Russian"
     JAPANESE = "japanese", "Japanese"

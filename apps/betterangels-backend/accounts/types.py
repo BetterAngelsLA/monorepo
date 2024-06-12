@@ -1,9 +1,9 @@
 from datetime import timedelta
 from typing import List, Optional, Tuple
 
+from accounts.enums import LanguageEnum
 import strawberry
 import strawberry_django
-from accounts.enums import StrawberryLanguageEnum
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
@@ -92,7 +92,7 @@ class ClientProfileType:
     hmis_id: auto
     nickname: auto
     phone_number: auto
-    spoken_languages: List[Optional[StrawberryLanguageEnum]]
+    spoken_languages: List[Optional[LanguageEnum]]
     preferred_language: auto
     pronouns: auto
     social_security_number: auto
@@ -126,7 +126,7 @@ class CreateClientProfileInput:
     preferred_language: auto
     pronouns: auto
     social_security_number: auto
-    spoken_languages: Optional[List[Optional[StrawberryLanguageEnum]]]
+    spoken_languages: Optional[List[Optional[LanguageEnum]]]
     user: CreateUserInput
     veteran_status: auto
 

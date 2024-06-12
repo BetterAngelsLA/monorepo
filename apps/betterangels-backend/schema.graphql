@@ -101,7 +101,7 @@ type ClientProfileType {
   hmisId: String
   nickname: String
   phoneNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]!
+  spokenLanguages: [LanguageEnum]!
   preferredLanguage: LanguageEnum
   pronouns: String
   socialSecurityNumber: String
@@ -119,7 +119,7 @@ input CreateClientProfileInput {
   preferredLanguage: LanguageEnum
   pronouns: String
   socialSecurityNumber: String
-  spokenLanguages: [StrawberryLanguageEnum]
+  spokenLanguages: [LanguageEnum]
   user: CreateUserInput!
   veteranStatus: YesNoPreferNotToSayEnum
 }
@@ -571,20 +571,6 @@ type ShelterType {
   organization: String!
   description: DescriptionType!
   beds: BedsType!
-}
-
-enum StrawberryLanguageEnum {
-  ENGLISH
-  RUSSIAN
-  JAPANESE
-  ARABIC
-  PERSIAN
-  ARMENIAN
-  KOREAN
-  VIETNAMESE
-  TAGALOG
-  CHINESE
-  SPANISH
 }
 
 type SwitchType {
