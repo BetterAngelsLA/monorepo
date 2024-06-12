@@ -79,7 +79,7 @@ export default function TabLayout() {
                 )}
 
                 <TextRegular color={color} size="xs">
-                  Home
+                  Home T
                 </TextRegular>
               </View>
             ),
