@@ -134,3 +134,4 @@ jobs:
         uses: expo/expo-github-action/preview-build@main
         with:
           command: eas build --profile development-simulator --platform ios
+          working-directory: apps/${{ matrix.project }}
