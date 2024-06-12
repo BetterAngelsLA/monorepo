@@ -22,8 +22,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note = self._create_note_fixture(
             {
-                "title": f"New note for: {self.org_1_case_manager_1.pk}",
-                "publicDetails": f"{self.org_1_case_manager_1.pk}'s public details",
+                "title": f"Session with {self.client_user_1.full_name}",
+                "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
             },
         )["data"]["createNote"]
@@ -357,6 +357,26 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteTask($id: ID!) {
+                deleteTask(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": task_id})
+
     def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
@@ -412,6 +432,26 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _delete_service_request_fixture(self, service_request_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteServiceRequest($id: ID!) {
+                deleteServiceRequest(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": service_request_id})
 
     def _create_note_attachment_fixture(
         self,

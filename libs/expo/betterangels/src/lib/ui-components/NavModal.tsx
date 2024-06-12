@@ -85,11 +85,13 @@ export default function NavModal(props: INavModalProps) {
         />
       </Pressable>
       <MainModal
-        transparent
+        ml={Spacings.xl}
+        opacity={0.5}
         closeButton
         actions={ACTIONS}
         isModalVisible={isModalVisible}
         closeModal={closeModal}
+        height="100%"
         topSection={
           <Pressable accessibilityRole="button" style={styles.container}>
             {({ pressed }) => (
@@ -110,8 +112,6 @@ export default function NavModal(props: INavModalProps) {
                   <Avatar
                     imageUrl={image}
                     size="md"
-                    hasBorder
-                    borderColor={Colors.BLACK}
                     accessibilityHint="my avatar"
                     accessibilityLabel="My Avatar"
                   />

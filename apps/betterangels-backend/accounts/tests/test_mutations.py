@@ -1,7 +1,7 @@
 from unittest.mock import ANY
 
-from accounts.enums import GenderEnum, LanguageEnum
-from accounts.models import User
+from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -35,9 +35,11 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
-    def test_create_client_profile_mutation(self) -> None:
+    def setUp(self) -> None:
+        super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
+    def test_create_client_profile_mutation(self) -> None:
         client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
@@ -45,10 +47,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
 
         variables = {
-            "hmisId": "12345678",
+            "address": "1234 Main St",
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
+            "hmisId": "12345678",
+            "nickname": "Fasty",
+            "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "pronouns": "she/her",
+            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
         }
 
@@ -56,11 +64,17 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client = response["data"]["createClientProfile"]
         expected_client_profile = {
             "id": ANY,
-            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "age": self.EXPECTED_CLIENT_AGE,
+            "address": "1234 Main St",
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
-            "preferredLanguage": LanguageEnum.ENGLISH.name,
             "hmisId": "12345678",
+            "nickname": "Fasty",
+            "phoneNumber": "2125551212",
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "pronouns": "she/her",
+            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {
                 "id": ANY,
                 "firstName": "Firsty",
@@ -70,3 +84,38 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
 
         self.assertEqual(client, expected_client_profile)
+
+    def test_delete_client_profile_mutation(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        user = client_profile.user
+
+        mutation = """
+            mutation DeleteClientProfile($id: ID!) {
+                deleteClientProfile(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": client_profile_id}
+
+        expected_query_count = 31
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNotNone(response["data"]["deleteClientProfile"])
+
+        with self.assertRaises(ClientProfile.DoesNotExist):
+            ClientProfile.objects.get(id=client_profile_id)
+
+        with self.assertRaises(User.DoesNotExist):
+            User.objects.get(id=user.pk)

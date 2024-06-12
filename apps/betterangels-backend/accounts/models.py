@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.enums import GenderEnum, LanguageEnum
+from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -10,6 +10,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
 from django_choices_field import TextChoicesField
@@ -76,13 +77,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
+    @property
+    def full_name(self: "User") -> str:
+        return f"{self.first_name} {self.last_name}"
+
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
-    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    address = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    gender = TextChoicesField(choices_enum=GenderEnum)
-    preferred_language = TextChoicesField(choices_enum=LanguageEnum)
+    gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    nickname = models.CharField(max_length=50, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
+    pronouns = models.CharField(max_length=50, blank=True, null=True)
+    spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, default=list)
+    veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
