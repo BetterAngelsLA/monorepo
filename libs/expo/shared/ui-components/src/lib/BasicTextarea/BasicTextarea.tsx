@@ -1,6 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
+  DimensionValue,
   Platform,
   StyleProp,
   StyleSheet,
@@ -15,7 +16,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IBasicTextareaProps extends TextInputProps {
   label?: string;
-  height?: 200;
+  height?: DimensionValue | undefined;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -79,13 +80,12 @@ export function BasicTextarea(props: IBasicTextareaProps) {
           },
         ]}
       >
-        {icon && icon}
         <TextInput
+          textAlignVertical="top"
           multiline
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: icon ? Spacings.xs : Spacings.sm,
-            paddingRight: 38,
+            padding: Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
             fontSize: 16,
@@ -134,15 +134,5 @@ const styles = StyleSheet.create({
   required: {
     marginLeft: 2,
     color: 'red',
-  },
-  icon: {
-    position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
-    backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
