@@ -11,6 +11,7 @@ from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
+    ServiceRequestGraphQLUtilMixin,
     TaskGraphQLBaseTestCase,
     TaskGraphQLUtilsMixin,
 )
@@ -498,7 +499,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.
@@ -1351,7 +1352,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         """
         Test Actions:
         0. Setup creates a note
-        1. Create 1 new purpose and 1 new next step
+        1. Create 1 purpose and 1 next step
         2. Save now as saved_at
         3. Update the purpose and next step titles
         4. Revert to saved_at from Step 2
@@ -1394,6 +1395,62 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
         self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
+
+    def test_revert_note_mutation_restores_updated_custom_service_requests(self) -> None:
+        """
+        Test Actions:
+        0. Setup creates a note
+        1. Create 1 custom service request and 1 custom provided service
+        2. Save now as saved_at
+        3. Update the service request and provided service titles
+        4. Revert to saved_at from Step 2
+        5. Assert note has only the associations from Step 2
+        """
+        note_id = self.note["id"]
+
+        # Add associations that will be persisted
+        provided_service = self._create_note_service_request_fixture(
+            {
+                "service": "OTHER",
+                "customService": "Other Provided Service",
+                "noteId": note_id,
+                "serviceRequestType": "PROVIDED",
+            }
+        )["data"]["createNoteServiceRequest"]
+
+        requested_service = self._create_note_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "customService": None,
+                "noteId": note_id,
+                "serviceRequestType": "REQUESTED",
+            }
+        )["data"]["createNoteServiceRequest"]
+
+        # Select a moment to revert to
+        saved_at = timezone.now()
+
+        # Make updates that will be discarded
+        self._update_service_request_fixture(
+            {"id": provided_service["id"], "customService": "Discarded Provided Service Title"}
+        )
+        self._update_service_request_fixture(
+            {
+                "id": requested_service["id"],
+                "dueBy": "2024-03-11T11:12:13+00:00",
+                "status": "COMPLETED",
+            }
+        )
+
+        variables = {"id": note_id, "savedAt": saved_at}
+
+        expected_query_count = 53
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+
+        self.assertEqual(reverted_note["providedServices"][0]["customService"], "Other Provided Service")
+        self.assertEqual(reverted_note["requestedServices"][0]["status"], "TO_DO")
+        self.assertEqual(reverted_note["requestedServices"][0]["dueBy"], None)
 
     def test_revert_note_mutation_fails_in_atomic_transaction(self) -> None:
         """

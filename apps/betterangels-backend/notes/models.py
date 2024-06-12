@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
-from django.db.models import Q
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -53,9 +53,17 @@ class ServiceRequest(BaseModel):
     def __str__(self) -> str:
         return str(self.service if not self.custom_service else self.custom_service)
 
-    def revert_action(self, action: str, *args: Any, **kwargs: Any) -> None:
-        if action == "add":
-            self.delete()
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "add":
+                self.delete()
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
 
     def get_note_id(self) -> int | None:
         """
@@ -91,12 +99,17 @@ class Task(BaseModel):
     def __str__(self) -> str:
         return self.title
 
-    @staticmethod
-    def revert_action(action: str, obj_id: str, diff: dict, *args: Any, **kwargs: Any) -> None:
-        if action == "add":
-            Task.objects.get(id=obj_id).delete()
-        elif action == "update":
-            Task.objects.filter(id=obj_id).update(**{field: values[0] for field, values in diff.items()})
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "add":
+                self.delete()
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
 
     def get_note_id(self) -> int | None:
         """
@@ -146,11 +159,14 @@ class Note(BaseModel):
         return self.title
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
-        if action == "update":
-            for field, changes in diff.items():
-                setattr(self, field, changes[0])
+        match action:
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
 
-            self.save()
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
 
     class Meta:
         permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)

@@ -197,9 +197,17 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }
                         providedServices {
                             id
+                            service
+                            customService
+                            dueBy
+                            status
                         }
                         requestedServices {
                             id
+                            service
+                            customService
+                            dueBy
+                            status
                         }
                     }
                 }
@@ -497,23 +505,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         return response
 
 
-class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._setup_service_request()
-
-    def _setup_service_request(self) -> None:
-        # Force login the case manager to create a service_request
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
-            {
-                "service": "BLANKET",
-                "status": "TO_DO",
-            },
-        )["data"]["createServiceRequest"]
-        # Logout after setting up the service request
-        self.graphql_client.logout()
-
+class ServiceRequestGraphQLUtilMixin:
     def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("create", variables)
 
@@ -552,6 +544,24 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+
+class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_service_request()
+
+    def _setup_service_request(self) -> None:
+        # Force login the case manager to create a service_request
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
+            {
+                "service": "BLANKET",
+                "status": "TO_DO",
+            },
+        )["data"]["createServiceRequest"]
+        # Logout after setting up the service request
+        self.graphql_client.logout()
 
 
 class TaskGraphQLUtilsMixin:
