@@ -83,3 +83,8 @@ class FeatureControlData:
     flags: list[FlagType]
     switches: list[SwitchType]
     samples: list[SampleType]
+
+
+@strawberry.type
+class DeletedObjectType:
+    id: int
