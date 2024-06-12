@@ -95,6 +95,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@main
         with:
+          eas-version: 9.0.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
