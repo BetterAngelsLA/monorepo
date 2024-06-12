@@ -95,7 +95,6 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@main
         with:
-          eas-version: 9.2.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
@@ -125,11 +124,11 @@ jobs:
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
-      # # Only build the Simulator on branches
-      # - name: 🍏 Apple Simulator Build
-      #   if: github.ref != 'refs/heads/main'
-      #   uses: expo/expo-github-action/continuous-deploy-fingerprint@main
-      #   with:
-      #     profile: development-simulator
-      #     branch: ${{ github.event.pull_request.head.ref }}
-      #     working-directory: apps/${{ matrix.project }}
+      # Only build the Simulator on branches
+      - name: 🍏 Apple Simulator Build
+        if: github.ref != 'refs/heads/main'
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: development-simulator
+          branch: ${{ github.event.pull_request.head.ref }}
+          working-directory: apps/${{ matrix.project }}
