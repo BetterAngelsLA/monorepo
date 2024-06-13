@@ -83,6 +83,26 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
+        name="tasks"
+        options={{
+          title: 'Tasks',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="note/[id]"
         options={{
           title: 'Note',

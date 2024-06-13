@@ -1,5 +1,14 @@
 import { gql } from '@apollo/client';
 
+export const GET_TASKS = gql`
+  query Tasks {
+    tasks {
+      id
+      title
+    }
+  }
+`;
+
 export const GET_NOTES = gql`
   query Notes(
     $filters: NoteFilter
