@@ -50,9 +50,7 @@ class NoteReverter:
                 apps.get_model(event.pgh_model).objects.get(
                     id=event.pgh_obj_id,
                     pgh_context_id__in=context_ids,
-                ).pgh_obj.revert_action(
-                    action=action, diff=event.pgh_diff
-                )  # , obj_id=event.pgh_obj_id)
+                ).pgh_obj.revert_action(action=action, diff=event.pgh_diff)
 
             except ObjectDoesNotExist:
                 # If object has already been deleted, restore it
