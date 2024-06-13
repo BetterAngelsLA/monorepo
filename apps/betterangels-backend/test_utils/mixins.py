@@ -1,7 +1,16 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Protocol
 
 from django.test import Client, TestCase
+
+
+class HasGraphQLProtocol(Protocol):
+    # fmt:off
+    def execute_graphql(
+        self, query: str, variables: Optional[Dict[str, Any]] = None, files: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        ...
+    # fmt:on
 
 
 class GraphQLTestCaseMixin:
