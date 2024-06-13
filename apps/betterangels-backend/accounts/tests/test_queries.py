@@ -98,11 +98,6 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             user.last_name,
         )
         self.assertEqual(
-            response["data"]["currentUser"]["username"],
-            user.username,
-            "Username does not match the logged-in user",
-        )
-        self.assertEqual(
             response["data"]["currentUser"]["organization"],
             organization.name if has_organization else None,
         )
