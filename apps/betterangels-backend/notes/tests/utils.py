@@ -6,6 +6,7 @@ from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
+from test_utils.mixins import HasGraphQLProtocol
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -189,15 +190,35 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }
                         purposes {
                             id
+                            title
                         }
                         nextSteps {
                             id
+                            title
+                            location {
+                                address {
+                                    street
+                                    city
+                                    state
+                                    zipCode
+                                }
+                                point
+                                pointOfInterest
+                            }
                         }
                         providedServices {
                             id
+                            service
+                            customService
+                            dueBy
+                            status
                         }
                         requestedServices {
                             id
+                            service
+                            customService
+                            dueBy
+                            status
                         }
                     }
                 }
@@ -357,26 +378,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
-        mutation: str = """
-            mutation DeleteTask($id: ID!) {
-                deleteTask(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-
-        return self.execute_graphql(mutation, {"id": task_id})
-
     def _create_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation CreateNoteServiceRequest($data: CreateNoteServiceRequestInput!) {
@@ -515,23 +516,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         return response
 
 
-class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._setup_service_request()
-
-    def _setup_service_request(self) -> None:
-        # Force login the case manager to create a service_request
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
-            {
-                "service": "BLANKET",
-                "status": "TO_DO",
-            },
-        )["data"]["createServiceRequest"]
-        # Logout after setting up the service request
-        self.graphql_client.logout()
-
+class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
     def _create_service_request_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_service_request_fixture("create", variables)
 
@@ -572,41 +557,25 @@ class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase):
         return self.execute_graphql(mutation, {"data": variables})
 
 
-class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
+class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
-        self._setup_task()
-        self._setup_location()
+        self._setup_service_request()
 
-    def _setup_task(self) -> None:
-        # Force login the case manager to create a task
+    def _setup_service_request(self) -> None:
+        # Force login the case manager to create a service_request
         self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.task: Dict[str, Any] = self._create_task_fixture(
+        self.service_request: Dict[str, Any] = self._create_service_request_fixture(
             {
-                "title": f"New task for: {self.org_1_case_manager_1.pk}",
+                "service": "BLANKET",
                 "status": "TO_DO",
             },
-        )["data"]["createTask"]
-        # Logout after setting up the task
+        )["data"]["createServiceRequest"]
+        # Logout after setting up the service request
         self.graphql_client.logout()
 
-    def _setup_location(self) -> None:
-        self.address = baker.make(
-            Address,
-            street=self.street,
-            city=self.city,
-            state=self.state,
-            zip_code=self.zip_code,
-        )
-        self.point = [-118.2437207, 34.0521723]
-        self.point_of_interest = "An Interesting Point"
-        self.location = baker.make(
-            Location,
-            address=self.address,
-            point=Point(self.point),
-            point_of_interest=self.point_of_interest,
-        )
 
+class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
     def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
 
@@ -655,6 +624,26 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
+    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation DeleteTask($id: ID!) {
+                deleteTask(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": task_id})
+
     def _update_task_location_fixture(self, variables: Dict) -> Dict[str, Any]:
         mutation: str = """
             mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
@@ -684,3 +673,39 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+
+class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setup_task()
+        self._setup_location()
+
+    def _setup_task(self) -> None:
+        # Force login the case manager to create a task
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.task: Dict[str, Any] = self._create_task_fixture(
+            {
+                "title": f"New task for: {self.org_1_case_manager_1.pk}",
+                "status": "TO_DO",
+            },
+        )["data"]["createTask"]
+        # Logout after setting up the task
+        self.graphql_client.logout()
+
+    def _setup_location(self) -> None:
+        self.address = baker.make(
+            Address,
+            street=self.street,
+            city=self.city,
+            state=self.state,
+            zip_code=self.zip_code,
+        )
+        self.point = [-118.2437207, 34.0521723]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
+        )
