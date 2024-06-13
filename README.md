@@ -20,19 +20,46 @@
 
 <br>
 <br>
+# BetterAngels Monorepo
 
-## Frontend Development Guide (Mac)
+Welcome to the BetterAngels Monorepo! This repository contains the codebases for both the frontend and backend components of the BetterAngels project. Our goal is to address homelessness through innovative technology solutions.
 
-[README]("https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md")
+## Table of Contents
 
-## Backend Development Guide
+1. [Project Overview](#project-overview)
+2. [Frontend Development](#frontend-development)
+3. [Backend Development](#backend-development)
+4. [Development Workflow](#development-workflow)
+5. [License](#license)
 
-[README]("https://github.com/BetterAngelsLA/monorepo/blob/main/apps/betterangels-backend/README.md")
+## Project Overview
 
-## Feature Development Workflow
+BetterAngels is a nonprofit organization focused on addressing the homelessness crisis in Los Angeles and across the nation. This monorepo contains the core applications that power our platform, including mobile apps, web apps, and backend services.
 
-[Development Workflow]("https://github.com/BetterAngelsLA/monorepo/blob/main/docs/development_workflow.md")
+## Frontend Development
 
-## License Information
+The frontend is built with [React Native](https://reactnative.dev/) and uses [Expo](https://docs.expo.dev/) for development across multiple platforms.
 
-[LICENSE]("https://github.com/BetterAngelsLA/monorepo/blob/main/LICENSE")
+- **[Frontend Development Guide](apps/betterangels/README.md)**: This guide covers setting up the development environment, running the application, and testing.
+
+## Backend Development
+
+The backend is built with [Django](https://www.djangoproject.com/), a high-level Python web framework, and uses [Celery](https://docs.celeryproject.org/en/stable/) for distributed task processing.
+
+- **[Backend Development Guide](apps/betterangels-backend/README.md)**: This guide covers setting up the development environment, running the backend server, and integrating Celery for task processing.
+
+## Development Workflow
+
+To maintain a consistent and efficient development process, we have established a workflow that includes branch management, pull requests, and code reviews.
+
+- **[Development Workflow Guide](docs/development_workflow.md)**: This document outlines our development practices, including how to create branches, submit pull requests, and conduct code reviews.
+
+## License
+
+This project is licensed under the AGPL.
+
+- **[License](LICENSE)**: View the full license text.
+
+---
+
+Feel free to explore the individual guides linked above for more detailed instructions on setting up and contributing to the BetterAngels project. If you have any questions, please refer to the respective README files or reach out to our team.
