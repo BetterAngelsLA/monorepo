@@ -83,6 +83,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self: "User") -> str:
         return f"{self.first_name} {self.last_name}"
 
+    # WARNING: Temporary workaround for organization selection
+    # TODO: Update once organization selection is implemented. Currently selects
+    # the first organization with a default Caseworker role for the user.
     @model_property
     def organization(self: "User") -> Optional[str]:
         if organization := self.organizations_organization.first():
