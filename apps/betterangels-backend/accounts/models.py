@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
 
 import pghistory
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
@@ -83,13 +83,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self: "User") -> str:
         return f"{self.first_name} {self.last_name}"
 
-    # WARNING: Temporary workaround for organization selection
-    # TODO: Update once organization selection is implemented. Currently selects
-    # the first organization with a default Caseworker role for the user.
     @model_property
-    def organization(self: "User") -> Optional[str]:
-        if organization := self.organizations_organization.first():
-            return str(organization.name)
+    def organizations(self: "User") -> Optional[List[str]]:
+        if organizations := self.organizations_organization.all():
+            return [str(o.name) for o in organizations]
 
         return None
 

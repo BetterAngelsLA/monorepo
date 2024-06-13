@@ -80,7 +80,7 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
-    organization: auto
+    organizations: Optional[List[str]]
 
 
 @strawberry_django.input(User)

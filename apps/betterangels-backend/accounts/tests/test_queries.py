@@ -40,10 +40,10 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.assertIsNone(response["data"])
 
     @parametrize(
-        ("has_organization"),
-        [(True,), (False,)],
+        ("organization_count"),
+        [(0,), (1,), (2,)],
     )
-    def test_logged_in_user_query(self, has_organization: bool) -> None:
+    def test_logged_in_user_query(self, organization_count: bool) -> None:
         """
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
@@ -51,13 +51,12 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
 
-        if has_organization:
+        org_names = []
+
+        for _ in range(organization_count):
             organization = organization_recipe.make()
-            baker.make(
-                OrganizationUser,
-                user=user,
-                organization=organization,
-            )
+            baker.make(OrganizationUser, user=user, organization=organization)
+            org_names.append(organization.name)
 
         query = """
         query {
@@ -66,7 +65,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                 username
                 firstName
                 lastName
-                organization
+                organizations
             }
         }
         """
@@ -97,10 +96,12 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             response["data"]["currentUser"]["lastName"],
             user.last_name,
         )
-        self.assertEqual(
-            response["data"]["currentUser"]["organization"],
-            organization.name if has_organization else None,
-        )
+        if organization_count:
+            self.assertEqual(
+                len(response["data"]["currentUser"]["organizations"]),
+                organization_count,
+            )
+            self.assertCountEqual(response["data"]["currentUser"]["organizations"], org_names)
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):

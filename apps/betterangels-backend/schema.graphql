@@ -673,7 +673,7 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
-  organization: String
+  organizations: [String!]
 }
 
 enum YesNoPreferNotToSayEnum {
