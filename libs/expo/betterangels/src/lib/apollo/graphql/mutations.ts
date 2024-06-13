@@ -51,7 +51,6 @@ export const REVERT_NOTE = gql`
           pointOfInterest
         }
         publicDetails
-        privateDetails
         isSubmitted
         client {
           id
