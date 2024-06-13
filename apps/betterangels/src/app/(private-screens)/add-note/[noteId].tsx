@@ -1,6 +1,7 @@
 import {
   MainScrollContainer,
   useDeleteNoteMutation,
+  useRevertNoteMutation,
   useUpdateNoteMutation,
   useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
@@ -9,6 +10,7 @@ import {
   BottomActions,
   Button,
   DeleteModal,
+  RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,10 +25,13 @@ import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import Title from './Title';
-
 export default function AddNote() {
   const router = useRouter();
-  const { noteId } = useLocalSearchParams<{ noteId: string }>();
+  const { noteId, savedAt } = useLocalSearchParams<{
+    noteId: string;
+    savedAt: string;
+  }>();
+
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
@@ -37,9 +42,9 @@ export default function AddNote() {
   });
   const [updateNote, { error: updateError }] = useUpdateNoteMutation();
   const [deleteNote] = useDeleteNoteMutation();
+  const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
-
   const scrollRef = useRef<ScrollView>(null);
 
   async function deleteNoteFunction() {
@@ -47,6 +52,22 @@ export default function AddNote() {
       await deleteNote({
         variables: {
           data: { id: noteId || '' },
+        },
+      });
+      router.back();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function revertNoteFunction() {
+    try {
+      await revertNote({
+        variables: {
+          data: {
+            id: noteId,
+            savedAt: savedAt || '',
+          },
         },
       });
       router.back();
@@ -150,18 +171,33 @@ export default function AddNote() {
       </MainScrollContainer>
       <BottomActions
         cancel={
-          <DeleteModal
-            body="All data associated with this note will be deleted"
-            title="Delete note?"
-            onDelete={deleteNoteFunction}
-            button={
-              <TextButton
-                fontSize="sm"
-                accessibilityHint="deletes creation"
-                title="Cancel"
-              />
-            }
-          />
+          savedAt ? (
+            <RevertModal
+              body="All changes you made since the last save will be discarded"
+              title="Discard changes?"
+              onRevert={revertNoteFunction}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="discards changes and reverts note to previous state"
+                  title="Cancel"
+                />
+              }
+            />
+          ) : (
+            <DeleteModal
+              body="All data associated with this note will be deleted"
+              title="Delete note?"
+              onDelete={deleteNoteFunction}
+              button={
+                <TextButton
+                  fontSize="sm"
+                  accessibilityHint="deletes creation"
+                  title="Cancel"
+                />
+              }
+            />
+          )
         }
         optionalAction={
           !data.note.isSubmitted && (

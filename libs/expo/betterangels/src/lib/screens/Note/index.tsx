@@ -37,7 +37,14 @@ export default function Note({ id }: { id: string }) {
         <TextButton
           color={Colors.WHITE}
           regular
-          onPress={() => router.navigate(`/add-note/${id}`)}
+          onPress={() =>
+            router.navigate({
+              pathname: `/add-note/${id}`,
+              params: {
+                savedAt: new Date().toISOString(),
+              },
+            })
+          }
           title="Edit"
           accessibilityHint="takes to edit the note"
         />
