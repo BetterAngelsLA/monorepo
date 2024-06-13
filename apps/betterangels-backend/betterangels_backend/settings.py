@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     "common",
     "notes",
     "shelters",
+    "legal",
 ]
 
 MIDDLEWARE = [

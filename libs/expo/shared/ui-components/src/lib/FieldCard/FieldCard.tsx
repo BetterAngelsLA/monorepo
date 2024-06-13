@@ -145,5 +145,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
+    rowGap: Spacings.sm,
   },
 });
