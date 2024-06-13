@@ -1,5 +1,6 @@
 {
   "name": "@monorepo/betterangels",
+  "main": "index.ts",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
@@ -58,10 +59,12 @@
     "expo-image-manipulator": "*",
     "util": "*",
     "react-native-reanimated": "*",
-    "expo-apple-authentication": "*"
+    "expo-apple-authentication": "*",
+    "expo-dev-client": "*",
+    "react-native-modal": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels",
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
@@ -117,7 +120,6 @@
     "ts-node": "*",
     "typescript": "*",
     "metro": "*",
-    "expo-dev-client": "*",
     "@types/apollo-upload-client": "*",
     "@swc-node/register": "*",
     "@swc/core": "*",
