@@ -51,7 +51,7 @@ export default {
       ],
       config: {
         googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+          apiKey: 'AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk',
         },
       },
     },
