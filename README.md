@@ -40,13 +40,13 @@ BetterAngels is a nonprofit organization focused on addressing the homelessness 
 
 The frontend is built with [React Native](https://reactnative.dev/) and uses [Expo](https://docs.expo.dev/) for development across multiple platforms.
 
-- **[Frontend Development Guide](apps/betterangels/README.md)**: This guide covers setting up the development environment, running the application, and testing.
+- **[Frontend Development Guide](docs/frontend_readme.md)**: This guide covers setting up the development environment, running the application, and testing.
 
 ## Backend Development
 
 The backend is built with [Django](https://www.djangoproject.com/), a high-level Python web framework, and uses [Celery](https://docs.celeryproject.org/en/stable/) for distributed task processing.
 
-- **[Backend Development Guide](apps/betterangels-backend/README.md)**: This guide covers setting up the development environment, running the backend server, and integrating Celery for task processing.
+- **[Backend Development Guide](docs/backend_readme.md)**: This guide covers setting up the development environment, running the backend server, and integrating Celery for task processing.
 
 ## Development Workflow
 
