@@ -11,7 +11,7 @@ from django.db import transaction
 from guardian.shortcuts import assign_perm
 from notes.utils import get_user_permission_group
 from strawberry.types import Info
-from strawberry_django import auth
+from strawberry_django import auth, mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
@@ -25,6 +25,7 @@ from .types import (
     CreateClientProfileInput,
     MagicLinkInput,
     MagicLinkResponse,
+    UpdateClientProfileInput,
     UserType,
 )
 
@@ -92,6 +93,13 @@ class Mutation:
                 assign_perm(perm, permission_group.group, client_profile)
 
             return cast(ClientProfileType, client_profile)
+
+    update_client_profile: ClientProfileType = mutations.update(
+        UpdateClientProfileInput,
+        extensions=[
+            HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE]),
+        ],
+    )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:

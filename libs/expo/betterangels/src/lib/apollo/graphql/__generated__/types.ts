@@ -100,21 +100,33 @@ export type ClientProfileOrder = {
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
+  address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  nickname?: Maybe<Scalars['String']['output']>;
+  phoneNumber?: Maybe<Scalars['String']['output']>;
   preferredLanguage?: Maybe<LanguageEnum>;
+  pronouns?: Maybe<Scalars['String']['output']>;
+  spokenLanguages?: Maybe<Array<Maybe<LanguageEnum>>>;
   user: UserType;
+  veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
 
 export type CreateClientProfileInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
+  pronouns?: InputMaybe<Scalars['String']['input']>;
+  spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
   user: CreateUserInput;
+  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
@@ -197,9 +209,9 @@ export type DeleteNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
 
-export type DeleteServiceRequestPayload = OperationInfo | ServiceRequestType;
+export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
-export type DeleteTaskPayload = OperationInfo | TaskType;
+export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -246,8 +258,20 @@ export enum GenderEnum {
 }
 
 export enum LanguageEnum {
+  Arabic = 'ARABIC',
+  Armenian = 'ARMENIAN',
   English = 'ENGLISH',
-  Spanish = 'SPANISH'
+  Farsi = 'FARSI',
+  Indonesian = 'INDONESIAN',
+  Japanese = 'JAPANESE',
+  Khmer = 'KHMER',
+  Korean = 'KOREAN',
+  Russian = 'RUSSIAN',
+  SimplifiedChinese = 'SIMPLIFIED_CHINESE',
+  Spanish = 'SPANISH',
+  Tagalog = 'TAGALOG',
+  TraditionalChinese = 'TRADITIONAL_CHINESE',
+  Vietnamese = 'VIETNAMESE'
 }
 
 export type LocationInput = {
@@ -326,6 +350,7 @@ export type Mutation = {
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
+  updateClientProfile: UpdateClientProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -436,6 +461,11 @@ export type MutationRemoveNoteTaskArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
+};
+
+
+export type MutationUpdateClientProfileArgs = {
+  data: UpdateClientProfileInput;
 };
 
 
@@ -812,6 +842,22 @@ export enum TaskTypeEnum {
   Purpose = 'PURPOSE'
 }
 
+export type UpdateClientProfileInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  gender?: InputMaybe<GenderEnum>;
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+  preferredLanguage?: InputMaybe<LanguageEnum>;
+  pronouns?: InputMaybe<Scalars['String']['input']>;
+  spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
+  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+};
+
+export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
+
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
@@ -867,3 +913,9 @@ export type UserType = {
   lastName?: Maybe<Scalars['String']['output']>;
   username: Scalars['String']['output'];
 };
+
+export enum YesNoPreferNotToSayEnum {
+  No = 'NO',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  Yes = 'YES'
+}
