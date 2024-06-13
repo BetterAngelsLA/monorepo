@@ -94,7 +94,6 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    # @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
     update_client_profile: ClientProfileType = mutations.update(
         UpdateClientProfileInput,
         extensions=[
