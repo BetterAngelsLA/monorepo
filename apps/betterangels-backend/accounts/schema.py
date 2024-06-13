@@ -9,7 +9,7 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.utils import get_user_permission_group
+from accounts.utils import get_user_permission_group
 from strawberry.types import Info
 from strawberry_django import auth, mutations
 from strawberry_django.auth.utils import get_current_user
