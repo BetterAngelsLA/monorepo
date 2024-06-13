@@ -10,7 +10,7 @@
         - [PR with a complex feature](https://github.com/BetterAngelsLA/monorepo/pull/347)
         - [Bugfix](https://github.com/BetterAngelsLA/monorepo/pull/298)
    1. Assign the PR to yourself
-1. :hammer*and_wrench: For **engineering** reviews (required for \*\*\_all*\*\* PRs):
+1. :hammer_and_wrench: For **engineering** reviews (required for **all** PRs):
 
    1. For the PR author:
 
