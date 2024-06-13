@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
 
 import pghistory
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
@@ -16,6 +16,7 @@ from django.forms import ValidationError
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
     from common.models import AttachmentUserObjectPermission
@@ -66,6 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     organizations_organizationuser: models.QuerySet[OrganizationUser]
+    organizations_organization: models.QuerySet[Organization]
 
     # MyPy hints for Permission Reverses
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
@@ -77,9 +79,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
-    @property
+    @model_property
     def full_name(self: "User") -> str:
         return f"{self.first_name} {self.last_name}"
+
+    @model_property
+    def organization(self: "User") -> Optional[str]:
+        if organization := self.organizations_organization.first():
+            return str(organization.name)
+
+        return None
 
 
 class ClientProfile(models.Model):

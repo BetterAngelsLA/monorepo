@@ -9,14 +9,15 @@ from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from notes.models import Note
+from organizations.models import OrganizationUser
 from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import parametrize
+from unittest_parametrize import ParametrizedTestCase, parametrize
 
 from .baker_recipes import organization_recipe
 
 
 @ignore_warnings(category=UserWarning)
-class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
+class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def test_anonymous_user_query(self) -> None:
         """
         Test querying the currentUser with an anonymous user.
@@ -38,7 +39,11 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(response["errors"][0]["message"], "User is not logged in.")
         self.assertIsNone(response["data"])
 
-    def test_logged_in_user_query(self) -> None:
+    @parametrize(
+        ("has_organization"),
+        [(True,), (False,)],
+    )
+    def test_logged_in_user_query(self, has_organization: bool) -> None:
         """
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
@@ -46,11 +51,22 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
 
+        if has_organization:
+            organization = organization_recipe.make()
+            baker.make(
+                OrganizationUser,
+                user=user,
+                organization=organization,
+            )
+
         query = """
         query {
             currentUser {
                 email
                 username
+                firstName
+                lastName
+                organization
             }
         }
         """
@@ -72,6 +88,23 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             response["data"]["currentUser"]["username"],
             user.username,
             "Username does not match the logged-in user",
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["firstName"],
+            user.first_name,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["lastName"],
+            user.last_name,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["username"],
+            user.username,
+            "Username does not match the logged-in user",
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["organization"],
+            organization.name if has_organization else None,
         )
 
 
