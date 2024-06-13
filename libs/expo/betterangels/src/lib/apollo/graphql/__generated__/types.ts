@@ -110,7 +110,7 @@ export type ClientProfileType = {
   phoneNumber?: Maybe<Scalars['String']['output']>;
   preferredLanguage?: Maybe<LanguageEnum>;
   pronouns?: Maybe<Scalars['String']['output']>;
-  spokenLanguages: Array<Maybe<LanguageEnum>>;
+  spokenLanguages?: Maybe<Array<Maybe<LanguageEnum>>>;
   user: UserType;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
@@ -350,6 +350,7 @@ export type Mutation = {
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
+  updateClientProfile: UpdateClientProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -460,6 +461,11 @@ export type MutationRemoveNoteTaskArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
+};
+
+
+export type MutationUpdateClientProfileArgs = {
+  data: UpdateClientProfileInput;
 };
 
 
@@ -835,6 +841,22 @@ export enum TaskTypeEnum {
   NextStep = 'NEXT_STEP',
   Purpose = 'PURPOSE'
 }
+
+export type UpdateClientProfileInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  gender?: InputMaybe<GenderEnum>;
+  hmisId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+  preferredLanguage?: InputMaybe<LanguageEnum>;
+  pronouns?: InputMaybe<Scalars['String']['input']>;
+  spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
+  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+};
+
+export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
 export type UpdateNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
