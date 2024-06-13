@@ -6,6 +6,7 @@ from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enum_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
 
 @pghistory.track(
     pghistory.InsertEvent("service_request.add"),
+    pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
@@ -51,13 +53,30 @@ class ServiceRequest(BaseModel):
     def __str__(self) -> str:
         return str(self.service if not self.custom_service else self.custom_service)
 
-    def revert_action(self, action: str, *args: Any, **kwargs: Any) -> None:
-        if action == "add":
-            self.delete()
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "add":
+                self.delete()
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
+
+    def get_note_id(self) -> int | None:
+        """
+        NOTE: this function will have to change once ServiceRequests can be associated with multiple Notes
+        """
+        if note := Note.objects.filter(Q(provided_services__id=self.id) | Q(requested_services__id=self.id)).first():
+            return note.id
+        return None
 
 
 @pghistory.track(
     pghistory.InsertEvent("task.add"),
+    pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
 class Task(BaseModel):
@@ -80,10 +99,26 @@ class Task(BaseModel):
     def __str__(self) -> str:
         return self.title
 
-    @staticmethod
-    def revert_action(action: str, obj_id: str, *args: Any, **kwargs: Any) -> None:
-        if action == "add":
-            Task.objects.get(id=obj_id).delete()
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "add":
+                self.delete()
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
+
+    def get_note_id(self) -> int | None:
+        """
+        NOTE: this function will have to change once Tasks can be associated with multiple Notes
+        """
+        if note := Note.objects.filter(Q(purposes__id=self.id) | Q(next_steps__id=self.id)).first():
+            return note.id
+
+        return None
 
 
 @pghistory.track(
@@ -124,11 +159,14 @@ class Note(BaseModel):
         return self.title
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
-        if action == "update":
-            for field, changes in diff.items():
-                setattr(self, field, changes[0])
+        match action:
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
 
-            self.save()
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
 
     class Meta:
         permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)

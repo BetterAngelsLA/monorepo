@@ -28,8 +28,7 @@ jobs:
         with:
           node-version: 20.12.2
       - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
+          corepack enable
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -42,9 +41,9 @@ jobs:
         id: set-matrix
         run: |
           # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --withTarget eas-update)
+          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
           # Convert the list to a JSON matrix
-          MATRIX_JSON=$(echo $affected_projects | jq -Rcs '
+          MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
             split("\n") |
             map(select(. != "")) |
             if length == 0 then
@@ -53,7 +52,7 @@ jobs:
                 {include: map({project: .})}
             end'
           )
-          IS_MATRIX_EMPTY=$(echo $MATRIX_JSON | jq 'if type == "object" and length == 0 then true else false end')
+          IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
     outputs:
@@ -73,8 +72,7 @@ jobs:
         with:
           node-version: 20.12.2
       - run: |
-          corepack enable &&
-          corepack install # use the in-repo yarn version
+          corepack enable
       - name: Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -83,7 +81,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: 9.0.0
+          eas-version: 9.2.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
