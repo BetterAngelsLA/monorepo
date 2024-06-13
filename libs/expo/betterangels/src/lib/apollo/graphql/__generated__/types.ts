@@ -266,7 +266,7 @@ export type FlagType = {
 export enum GenderEnum {
   Female = 'FEMALE',
   Male = 'MALE',
-  Nonbinary = 'NONBINARY'
+  Other = 'OTHER'
 }
 
 export enum LanguageEnum {
