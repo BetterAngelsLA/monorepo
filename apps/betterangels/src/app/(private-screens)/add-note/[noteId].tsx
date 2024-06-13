@@ -143,7 +143,7 @@ export default function AddNote() {
               title="Delete Note"
               variant="negative"
               size="full"
-              mt="sm"
+              mt="xs"
             />
           }
         />
