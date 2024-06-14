@@ -21,7 +21,7 @@ interface IProvidedCheckboxProps {
   noteId: string | undefined;
   idx: number;
   services: {
-    id: string | undefined;
+    id: string | undefinedç;
     enum: ServiceEnum;
   }[];
   setServices: (

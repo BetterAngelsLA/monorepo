@@ -1,7 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { View } from 'react-native';
 import { TasksQuery, useTasksQuery } from '../../apollo';
 import { MainContainer, TaskCard } from '../../ui-components';
 import TasksSorting from './TasksSorting';
@@ -72,7 +71,18 @@ export default function Tasks() {
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       {/* <TasksHeader search={search} setSearch={setSearch} /> */}
       <TasksSorting tasks={tasks} />
-      <FlatList
+      <View>
+        {tasks.map((task, idx) => (
+          <View
+            style={{ marginTop: idx !== 0 ? Spacings.xs : 0 }}
+            key={task.title}
+          >
+            <TaskCard key={idx} task={task} />
+          </View>
+        ))}
+      </View>
+
+      {/* <FlatList
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -93,7 +103,7 @@ export default function Tasks() {
         }
         onEndReached={loadMoreTasks}
         onEndReachedThreshold={0.5}
-      />
+      /> */}
     </MainContainer>
   );
 }

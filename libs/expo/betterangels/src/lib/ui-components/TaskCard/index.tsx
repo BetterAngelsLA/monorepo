@@ -1,30 +1,84 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { TasksQuery, useUpdateTaskMutation } from '../../apollo';
-
+import {
+  TaskStatusEnum,
+  TasksQuery,
+  useUpdateTaskMutation,
+} from '../../apollo';
 interface ITaskCardProps {
   task: TasksQuery['tasks'][0];
 }
 export default function TaskCard(props: ITaskCardProps) {
   const { task } = props;
   const router = useRouter();
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [isChecked, setIsChecked] = useState(
+    task.status === TaskStatusEnum.Completed ? true : false
+  );
+  console.log(task.id, 'isChecked', isChecked);
   const [updateTask, { error: updateError }] = useUpdateTaskMutation();
 
-  // const handleCheck = () => {
-  //   if (isLoading) return;
-  //   setIsLoading(true);
-  //   setIsChecked(!isChecked);
-  //   const newMoods = moodId
-  //     ? moods.filter((m) => m.enum !== mood.enum)
-  //     : [...moods, { enum: mood.enum, id: undefined }];
+  const executeMutation = useRef(
+    debounce(async (id, checked) => {
+      if (!id) return;
+      console.log('ID', id);
+      try {
+        if (id && checked) {
+          console.log('ON', checked);
+          const { data } = await updateTask({
+            variables: {
+              data: {
+                id,
+                status: TaskStatusEnum.Completed,
+              },
+            },
+          });
+          if (!data) {
+            console.log('Error updating task', updateError);
+          }
+        } else if (id && !checked) {
+          console.log('OFF', checked);
+          const { data } = await updateTask({
+            variables: {
+              data: {
+                id,
+                status: TaskStatusEnum.ToDo,
+              },
+            },
+          });
+          if (!data) {
+            console.log('Error updating task', updateError);
+          }
+        }
+      } catch (err) {
+        setIsLoading(false);
+        console.log('Error creating task', err);
+      }
+    }, 300)
+  ).current;
 
-  //   setMoods(newMoods);
-  //   executeMutation(!isChecked, moodId);
-  // };
+  const handleCheck = () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setIsChecked(!isChecked);
+    console.log('handleCheck', task.id, 'isChecked', isChecked);
+    executeMutation(task.id, !isChecked);
+  };
 
+  // if (isLoading) return;
+  // setIsLoading(true);
+  // setIsChecked(!isChecked);
+  // const newMoods = moodId
+  //   ? moods.filter((m) => m.enum !== mood.enum)
+  //   : [...moods, { enum: mood.enum, id: undefined }];
+
+  // setMoods(newMoods);
+  // executeMutation(!isChecked, moodId);
+  console.log(task.title);
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,8 +87,9 @@ export default function TaskCard(props: ITaskCardProps) {
     >
       <View style={{ flexDirection: 'row', flex: 2 }}>
         <Checkbox
-          isChecked={task.status === 'COMPLETED' ? true : false}
-          // onCheck={handleCheck}
+          accessibilityHint={task.title}
+          isChecked={isChecked}
+          onCheck={handleCheck}
           mr="xs"
         />
         <TextRegular>{task.title}</TextRegular>
