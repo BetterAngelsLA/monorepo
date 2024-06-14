@@ -8,6 +8,7 @@ import {
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
+  Button,
   DeleteModal,
   RevertModal,
   TextButton,
@@ -150,6 +151,20 @@ export default function AddNote() {
           isPublicNoteEdited={isPublicNoteEdited}
           setIsPublicNoteEdited={setIsPublicNoteEdited}
           {...props}
+        />
+        <DeleteModal
+          body="All data associated with this note will be deleted"
+          title="Delete note?"
+          onDelete={deleteNoteFunction}
+          button={
+            <Button
+              accessibilityHint="deletes creation"
+              title="Delete Note"
+              variant="negative"
+              size="full"
+              mt="xs"
+            />
+          }
         />
       </MainScrollContainer>
       <BottomActions
