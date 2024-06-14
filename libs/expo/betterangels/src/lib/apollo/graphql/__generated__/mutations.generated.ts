@@ -34,7 +34,7 @@ export type DeleteServiceRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string } };
+export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type CreateNoteMoodMutationVariables = Types.Exact<{
   data: Types.CreateNoteMoodInput;
@@ -69,7 +69,7 @@ export type DeleteTaskMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string } };
+export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type CreateNoteAttachmentMutationVariables = Types.Exact<{
   noteId: Types.Scalars['ID']['input'];
@@ -265,7 +265,7 @@ export const DeleteServiceRequestDocument = gql`
         message
       }
     }
-    ... on ServiceRequestType {
+    ... on DeletedObjectType {
       id
     }
   }
@@ -496,7 +496,7 @@ export const DeleteTaskDocument = gql`
         message
       }
     }
-    ... on TaskType {
+    ... on DeletedObjectType {
       id
     }
   }

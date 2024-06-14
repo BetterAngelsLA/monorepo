@@ -16,6 +16,12 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
 
 @strawberry.input
+class LoginInput:
+    username: str
+    password: str
+
+
+@strawberry.input
 class AuthInput:
     code: Optional[str] = strawberry.field(name="code")
     code_verifier: Optional[str] = strawberry.field(name="code_verifier")
