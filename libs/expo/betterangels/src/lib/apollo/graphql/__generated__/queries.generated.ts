@@ -8,7 +8,7 @@ export type TasksQueryVariables = Types.Exact<{
 }>;
 
 
-export type TasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string }> };
+export type TasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum }> };
 
 export type NotesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.NoteFilter>;
@@ -32,6 +32,7 @@ export const TasksDocument = gql`
   tasks(pagination: $pagination) {
     id
     title
+    status
   }
 }
     `;

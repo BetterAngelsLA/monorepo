@@ -5,6 +5,7 @@ export const GET_TASKS = gql`
     tasks(pagination: $pagination) {
       id
       title
+      status
     }
   }
 `;
