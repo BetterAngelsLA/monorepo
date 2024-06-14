@@ -19,7 +19,6 @@ import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
 import NextStep from './NextStep';
-import PrivateNote from './PrivateNote';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
@@ -153,7 +152,6 @@ export default function AddNote() {
           setIsPublicNoteEdited={setIsPublicNoteEdited}
           {...props}
         />
-        <PrivateNote {...props} />
         <DeleteModal
           body="All data associated with this note will be deleted"
           title="Delete note?"
