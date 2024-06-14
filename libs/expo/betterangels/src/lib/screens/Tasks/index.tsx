@@ -13,7 +13,8 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { useTasksQuery } from '../../apollo';
-import { TaskCard } from '../../ui-components';
+import { MainContainer, TaskCard } from '../../ui-components';
+import TasksSorting from './TasksSorting';
 
 export default function Tasks() {
   const { data, loading, error, refetch } = useTasksQuery({
@@ -36,23 +37,24 @@ export default function Tasks() {
 
   return (
     // <TaskCard />
-    // <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-    //   <TasksHeader search={search} setSearch={setSearch} />
-    <FlatList
-      ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
-      data={tasks}
-      renderItem={({ item: task }) => <TaskCard task={task} />}
-      keyExtractor={(task) => task.id}
-      ListFooterComponent={() =>
-        loading ? (
-          <View style={{ marginTop: 10, alignItems: 'center' }}>
-            <Loading size="large" color={Colors.NEUTRAL_DARK} />
-          </View>
-        ) : null
-      }
-      // onEndReached={loadMoreTasks}
-      onEndReachedThreshold={0.5}
-    />
-    // </MainContainer>
+    <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      {/* <TasksHeader search={search} setSearch={setSearch} /> */}
+      <TasksSorting tasks={tasks} />
+      <FlatList
+        ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
+        data={tasks}
+        renderItem={({ item: task }) => <TaskCard task={task} />}
+        keyExtractor={(task) => task.id}
+        ListFooterComponent={() =>
+          loading ? (
+            <View style={{ marginTop: 10, alignItems: 'center' }}>
+              <Loading size="large" color={Colors.NEUTRAL_DARK} />
+            </View>
+          ) : null
+        }
+        // onEndReached={loadMoreTasks}
+        onEndReachedThreshold={0.5}
+      />
+    </MainContainer>
   );
 }
