@@ -1,8 +1,8 @@
 import { gql } from '@apollo/client';
 
 export const GET_TASKS = gql`
-  query Tasks {
-    tasks {
+  query Tasks($pagination: OffsetPaginationInput) {
+    tasks(pagination: $pagination) {
       id
       title
     }

@@ -3,7 +3,9 @@ import * as Types from './types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type TasksQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type TasksQueryVariables = Types.Exact<{
+  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
+}>;
 
 
 export type TasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string }> };
@@ -26,8 +28,8 @@ export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteTy
 
 
 export const TasksDocument = gql`
-    query Tasks {
-  tasks {
+    query Tasks($pagination: OffsetPaginationInput) {
+  tasks(pagination: $pagination) {
     id
     title
   }
@@ -46,6 +48,7 @@ export const TasksDocument = gql`
  * @example
  * const { data, loading, error } = useTasksQuery({
  *   variables: {
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
