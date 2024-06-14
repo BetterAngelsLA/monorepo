@@ -18,7 +18,8 @@ export default function TaskCard(props: ITaskCardProps) {
     >
       <View>
         <Text>I'm a task card</Text>
-        {/* <Text>{task.title}</Text> */}
+        <Text>{task.id}</Text>
+        <Text>{task.title}</Text>
       </View>
     </Pressable>
   );

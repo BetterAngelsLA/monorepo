@@ -8,7 +8,10 @@
 // import { MainContainer, TaskCard } from '../../ui-components';
 // import TasksHeader from './TasksHeader';
 
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
+import { FlatList, View } from 'react-native';
 import { useTasksQuery } from '../../apollo';
 import { TaskCard } from '../../ui-components';
 
@@ -32,31 +35,24 @@ export default function Tasks() {
   }
 
   return (
-    <TaskCard />
+    // <TaskCard />
     // <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
     //   <TasksHeader search={search} setSearch={setSearch} />
-    //   <FlatList
-    //     refreshControl={
-    //       <RefreshControl
-    //         refreshing={refreshing}
-    //         onRefresh={onRefresh}
-    //         tintColor={Colors.PRIMARY}
-    //       />
-    //     }
-    //     ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
-    //     data={tasks}
-    //     renderItem={({ item: task }) => <TaskCard task={task} />}
-    //     keyExtractor={(task) => task.id}
-    //     ListFooterComponent={() =>
-    //       loading ? (
-    //         <View style={{ marginTop: 10, alignItems: 'center' }}>
-    //           <Loading size="large" color={Colors.NEUTRAL_DARK} />
-    //         </View>
-    //       ) : null
-    //     }
-    //     onEndReached={loadMoreTasks}
-    //     onEndReachedThreshold={0.5}
-    //   />
+    <FlatList
+      ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
+      data={tasks}
+      renderItem={({ item: task }) => <TaskCard task={task} />}
+      keyExtractor={(task) => task.id}
+      ListFooterComponent={() =>
+        loading ? (
+          <View style={{ marginTop: 10, alignItems: 'center' }}>
+            <Loading size="large" color={Colors.NEUTRAL_DARK} />
+          </View>
+        ) : null
+      }
+      // onEndReached={loadMoreTasks}
+      onEndReachedThreshold={0.5}
+    />
     // </MainContainer>
   );
 }
