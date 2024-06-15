@@ -592,6 +592,7 @@ type TaskType {
   location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
+  isOverdue: Boolean!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!

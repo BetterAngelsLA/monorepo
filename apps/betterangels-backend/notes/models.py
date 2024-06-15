@@ -12,6 +12,7 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
+from strawberry_django.descriptors import model_property
 
 from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
 
@@ -119,6 +120,10 @@ class Task(BaseModel):
             return note.id
 
         return None
+
+    @model_property
+    def is_overdue(self) -> bool:
+        return self.due_by is not None and self.due_by < timezone.now()
 
 
 @pghistory.track(

@@ -79,6 +79,7 @@ class TaskType:
     location: Optional[LocationType]
     status: auto
     due_by: auto
+    is_overdue: auto
     client: Optional[UserType]
     created_at: auto
     created_by: UserType

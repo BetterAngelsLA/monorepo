@@ -832,6 +832,7 @@ export type TaskType = {
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  isOverdue: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
