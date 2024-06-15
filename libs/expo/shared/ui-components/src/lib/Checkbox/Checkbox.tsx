@@ -15,7 +15,7 @@ interface ICheckboxProps {
   onCheck: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   hasBorder?: boolean;
   labelFirst?: boolean;
   justifyContent?: 'flex-start' | 'space-between';
@@ -32,6 +32,7 @@ interface ICheckboxProps {
 const SIZES = {
   sm: 16,
   md: 24,
+  lg: 32,
 } as const;
 
 export function Checkbox(props: ICheckboxProps) {

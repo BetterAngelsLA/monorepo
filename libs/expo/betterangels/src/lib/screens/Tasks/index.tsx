@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 import { Ordering, TasksQuery, useTasksQuery } from '../../apollo';
 import { MainContainer, TaskCard } from '../../ui-components';
 import TasksHeader from './TasksHeader';
@@ -102,9 +102,11 @@ export default function Tasks() {
           tasks ? <TaskCard task={task} /> : null
         }
         renderSectionHeader={({ section: { title } }) => (
-          <TextBold mt="xs" size="lg">
-            {title}
-          </TextBold>
+          <View style={styles.header}>
+            <TextBold mt="sm" size="lg">
+              {title}
+            </TextBold>
+          </View>
         )}
         keyExtractor={(task) => task.id}
         onEndReached={loadMoreTasks}
@@ -115,7 +117,17 @@ export default function Tasks() {
         SectionSeparatorComponent={() => (
           <View style={{ height: Spacings.xs }} />
         )}
+        contentContainerStyle={styles.contentContainer}
       />
     </MainContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    paddingBottom: Spacings.lg,
+  },
+  header: {
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+});
