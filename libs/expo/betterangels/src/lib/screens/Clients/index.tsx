@@ -79,8 +79,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     }
   }
 
-  // maybe add later vvvvvvvvvvvvvvv
-
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
@@ -107,8 +105,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
     debounceFetch(e);
   };
-
-  // maybe add later ^^^^^^^^^^^^^^^
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) return;

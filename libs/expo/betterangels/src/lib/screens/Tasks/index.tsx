@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
 import { Ordering, TasksQuery, useTasksQuery } from '../../apollo';
 import { MainContainer, TaskCard } from '../../ui-components';
+import TasksHeader from './TasksHeader';
 const paginationLimit = 10;
 
 interface IGroupedTasks {
@@ -15,6 +16,8 @@ interface IGroupedTasks {
 }
 
 export default function Tasks() {
+  const [search, setSearch] = useState<string>('');
+  const [filterSearch, setFilterSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -89,6 +92,7 @@ export default function Tasks() {
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <TasksHeader search={search} setSearch={setSearch} />
       <SectionList
         style={{
           flex: 1,
