@@ -37,7 +37,7 @@ export default function TaskCard(props: ITaskCardProps) {
           isChecked={isChecked}
           onCheck={handleCheck}
           mr="sm"
-          size="lg"
+          size="md"
         />
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={styles.flagIcon}>
