@@ -77,7 +77,12 @@ class UpdateServiceRequestInput:
     client: Optional[ID]
 
 
-@strawberry_django.type(models.Task, pagination=True)
+@strawberry_django.ordering.order(models.Task)
+class TaskOrder:
+    due_by: auto
+
+
+@strawberry_django.type(models.Task, pagination=True, order=TaskOrder)  # type: ignore[literal-required]
 class TaskType:
     id: auto
     title: auto

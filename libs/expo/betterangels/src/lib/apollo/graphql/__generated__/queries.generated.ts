@@ -5,6 +5,7 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type TasksQueryVariables = Types.Exact<{
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
+  order?: Types.InputMaybe<Types.TaskOrder>;
 }>;
 
 
@@ -28,8 +29,8 @@ export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteTy
 
 
 export const TasksDocument = gql`
-    query Tasks($pagination: OffsetPaginationInput) {
-  tasks(pagination: $pagination) {
+    query Tasks($pagination: OffsetPaginationInput, $order: TaskOrder) {
+  tasks(pagination: $pagination, order: $order) {
     id
     title
     status
@@ -51,6 +52,7 @@ export const TasksDocument = gql`
  * const { data, loading, error } = useTasksQuery({
  *   variables: {
  *      pagination: // value for 'pagination'
+ *      order: // value for 'order'
  *   },
  * });
  */

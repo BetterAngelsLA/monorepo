@@ -560,6 +560,7 @@ export type NoteTypeAttachmentsArgs = {
 
 
 export type NoteTypeNextStepsArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -570,6 +571,7 @@ export type NoteTypeProvidedServicesArgs = {
 
 
 export type NoteTypePurposesArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -706,6 +708,7 @@ export type QueryTaskArgs = {
 
 
 export type QueryTasksArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -827,6 +830,10 @@ export enum TaskDueWithinEnum {
   NoDueDate = 'NO_DUE_DATE',
   Overdue = 'OVERDUE'
 }
+
+export type TaskOrder = {
+  dueBy?: InputMaybe<Ordering>;
+};
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',

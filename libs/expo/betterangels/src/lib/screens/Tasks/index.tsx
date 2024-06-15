@@ -3,7 +3,7 @@ import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
-import { TasksQuery, useTasksQuery } from '../../apollo';
+import { Ordering, TasksQuery, useTasksQuery } from '../../apollo';
 import { MainContainer, TaskCard } from '../../ui-components';
 const paginationLimit = 10;
 
@@ -21,6 +21,9 @@ export default function Tasks() {
   const { data, loading } = useTasksQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset },
+      order: {
+        dueBy: Ordering.AscNullsLast,
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
