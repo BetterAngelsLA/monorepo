@@ -581,6 +581,14 @@ type SwitchType {
   lastModified: DateTime
 }
 
+enum TaskDueWithinEnum {
+  OVERDUE
+  DUE_TODAY
+  DUE_WITHIN_A_WEEK
+  FUTURE_TASK
+  NO_DUE_DATE
+}
+
 enum TaskStatusEnum {
   COMPLETED
   TO_DO
@@ -592,7 +600,7 @@ type TaskType {
   location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
-  isOverdue: Boolean!
+  dueWithin: TaskDueWithinEnum!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!

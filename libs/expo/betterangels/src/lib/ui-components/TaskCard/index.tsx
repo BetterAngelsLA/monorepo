@@ -1,3 +1,4 @@
+import { ChevronRightIcon, FlagIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
@@ -85,14 +86,28 @@ export default function TaskCard(props: ITaskCardProps) {
       onPress={() => router.navigate(`/task/${task.id}`)}
       style={styles.container}
     >
-      <View style={{ flexDirection: 'row', flex: 2 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          // justifyContent: 'space-between',
+        }}
+      >
         <Checkbox
           accessibilityHint={task.title}
           isChecked={isChecked}
           onCheck={handleCheck}
           mr="xs"
         />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.flagIcon}>
+            <FlagIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          </View>
+        </View>
         <TextRegular>{task.title}</TextRegular>
+        <View style={styles.chevronIcon}>
+          <ChevronRightIcon color={Colors.PRIMARY_EXTRA_DARK} />
+        </View>
       </View>
     </Pressable>
   );
@@ -100,9 +115,16 @@ export default function TaskCard(props: ITaskCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: Spacings.sm,
+    padding: Spacings.xs,
     gap: Spacings.xs,
     borderRadius: 8,
     backgroundColor: Colors.WHITE,
+  },
+  chevronIcon: {
+    position: 'absolute',
+    right: 0,
+  },
+  flagIcon: {
+    marginRight: Spacings.xs,
   },
 });

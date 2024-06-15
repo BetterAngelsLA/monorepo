@@ -1,11 +1,10 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { SectionList } from 'react-native';
+import { SectionList, View } from 'react-native';
 import { TasksQuery, useTasksQuery } from '../../apollo';
 import { MainContainer, TaskCard } from '../../ui-components';
-
 const paginationLimit = 10;
 
 interface IGroupedTasks {
@@ -42,34 +41,38 @@ export default function Tasks() {
     const tasksToShow = data.tasks.slice(0, paginationLimit);
     const isMoreAvailable = data.tasks.length > tasksToShow.length;
 
-    const groupedContacts = tasksToShow.reduce((acc: IGroupedTasks, task) => {
-      const firstLetter = task.title.charAt(0).toUpperCase() || '#';
-
-      if (!acc[firstLetter]) {
-        acc[firstLetter] = {
-          title: firstLetter,
+    const groupedTasks = tasksToShow.reduce((acc: IGroupedTasks, task) => {
+      const dueWithin = task.dueWithin;
+      console.log('dueWithin', dueWithin);
+      if (!acc[dueWithin]) {
+        acc[dueWithin] = {
+          title: dueWithin
+            .toLowerCase()
+            .split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' '),
           data: [],
         };
       }
-      acc[firstLetter].data.push(task);
+      acc[dueWithin].data.push(task);
       return acc;
     }, {});
 
     setTasks((prevTasks) => {
       if (offset === 0) {
-        return groupedContacts;
+        return groupedTasks;
       }
 
       const mergedTasks = { ...prevTasks };
 
-      Object.keys(groupedContacts).forEach((key) => {
+      Object.keys(groupedTasks).forEach((key) => {
         if (mergedTasks[key]) {
           mergedTasks[key].data = [
             ...mergedTasks[key].data,
-            ...groupedContacts[key].data,
+            ...groupedTasks[key].data,
           ];
         } else {
-          mergedTasks[key] = groupedContacts[key];
+          mergedTasks[key] = groupedTasks[key];
         }
       });
 
@@ -92,13 +95,19 @@ export default function Tasks() {
           tasks ? <TaskCard task={task} /> : null
         }
         renderSectionHeader={({ section: { title } }) => (
-          <TextBold mb="xs" size="sm">
+          <TextBold mt="xs" size="lg">
             {title}
           </TextBold>
         )}
         keyExtractor={(task) => task.id}
         onEndReached={loadMoreTasks}
         onEndReachedThreshold={0.05}
+        ItemSeparatorComponent={() => (
+          <View style={{ marginBottom: -Spacings.xs }} />
+        )}
+        SectionSeparatorComponent={() => (
+          <View style={{ height: Spacings.xs }} />
+        )}
       />
     </MainContainer>
   );

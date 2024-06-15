@@ -7,7 +7,12 @@ from accounts.types import UserType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
-from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import (
+    NoteNamespaceEnum,
+    ServiceRequestTypeEnum,
+    TaskDueWithinEnum,
+    TaskTypeEnum,
+)
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
@@ -79,7 +84,7 @@ class TaskType:
     location: Optional[LocationType]
     status: auto
     due_by: auto
-    is_overdue: auto
+    due_within: TaskDueWithinEnum
     client: Optional[UserType]
     created_at: auto
     created_by: UserType

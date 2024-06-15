@@ -820,6 +820,14 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export enum TaskDueWithinEnum {
+  DueToday = 'DUE_TODAY',
+  DueWithinAWeek = 'DUE_WITHIN_A_WEEK',
+  FutureTask = 'FUTURE_TASK',
+  NoDueDate = 'NO_DUE_DATE',
+  Overdue = 'OVERDUE'
+}
+
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -831,8 +839,8 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
+  dueWithin: TaskDueWithinEnum;
   id: Scalars['ID']['output'];
-  isOverdue: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
