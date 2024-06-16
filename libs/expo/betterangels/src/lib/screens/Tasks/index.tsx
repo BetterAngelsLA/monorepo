@@ -108,7 +108,7 @@ export default function Tasks() {
         onEndReached={loadMoreTasks}
         onEndReachedThreshold={0.05}
         ItemSeparatorComponent={() => (
-          <View style={{ marginBottom: -Spacings.xs }} />
+          <View style={{ marginBottom: -Spacings.sm }} />
         )}
         SectionSeparatorComponent={() => (
           <View style={{ height: Spacings.xs }} />
