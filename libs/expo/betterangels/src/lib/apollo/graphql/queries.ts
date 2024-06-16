@@ -6,7 +6,7 @@ export const GET_TASKS = gql`
       id
       title
       status
-      dueWithin
+      dueByGroup
     }
   }
 `;
