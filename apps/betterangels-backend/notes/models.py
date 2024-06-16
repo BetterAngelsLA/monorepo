@@ -128,9 +128,10 @@ class Task(BaseModel):
 
         return None
 
-    # TODO: Add tests for this
     @model_property
     def due_within(self) -> Optional[str]:
+        DAYS_IN_A_WEEK = 7
+
         if self.due_by is None:
             return TaskDueWithinEnum.NO_DUE_DATE
 
@@ -140,7 +141,7 @@ class Task(BaseModel):
         if self.due_by.date() == timezone.now().date():
             return TaskDueWithinEnum.TODAY
 
-        if self.due_by.date() + timedelta(days=1) <= timezone.now().date() + timedelta(days=7):
+        if self.due_by.date() <= timezone.now().date() + timedelta(days=DAYS_IN_A_WEEK):
             return TaskDueWithinEnum.IN_THE_NEXT_WEEK
 
         return TaskDueWithinEnum.FUTURE_TASKS

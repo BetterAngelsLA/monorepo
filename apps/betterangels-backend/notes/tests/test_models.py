@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import time_machine
 from accounts.models import User
 from django.test import TestCase
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestStatusEnum
-from notes.models import ServiceRequest
+from notes.enums import ServiceEnum, ServiceRequestStatusEnum, TaskDueWithinEnum
+from notes.models import ServiceRequest, Task
 
 
 class ServiceRequestModelTest(TestCase):
@@ -42,3 +42,37 @@ class ServiceRequestModelTest(TestCase):
             service_request_to_do.completed_on,
             datetime(2024, 3, 11, 10, 11, 12, tzinfo=timezone.utc),
         )
+
+
+class TaskModelTest(TestCase):
+    @time_machine.travel("06-16-2024 10:11:12", tick=False)
+    def test_due_within(self) -> None:
+        """Verify that due_within is populated correctly."""
+
+        # On 6/16/2024, create Task due on 6/24/2024
+        self.task = baker.make(Task, due_by=datetime(2024, 6, 24, 10, 11, 12, tzinfo=timezone.utc))
+        self.assertEqual(self.task.due_within, TaskDueWithinEnum.FUTURE_TASKS)
+
+        # Advance time to 6/17/2024. Task should be due "in the next week"
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=1))
+
+            self.assertEqual(self.task.due_within, TaskDueWithinEnum.IN_THE_NEXT_WEEK)
+
+        # Advance time to 6/23/2024. Task should be due "in the next week"
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=7))
+
+            self.assertEqual(self.task.due_within, TaskDueWithinEnum.IN_THE_NEXT_WEEK)
+
+        # Advance time to 6/24/2024. Task should be due "today"
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=8))
+
+            self.assertEqual(self.task.due_within, TaskDueWithinEnum.TODAY)
+
+        # Advance time to 6/25/2024. Task should be "overdue"
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=9))
+
+            self.assertEqual(self.task.due_within, TaskDueWithinEnum.OVERDUE)
