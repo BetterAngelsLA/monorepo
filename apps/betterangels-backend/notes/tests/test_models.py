@@ -50,26 +50,26 @@ class TaskModelTest(TestCase):
         """Verify that due_by_group is populated correctly."""
 
         # On 06/01/2024, create Task due on 06/09/2024
-        self.task = baker.make(Task, due_by=datetime(2024, 6, 9, 10, 11, 12, tzinfo=timezone.utc))
-        self.assertEqual(self.task.due_by_group, DueByGroupEnum.FUTURE_TASKS)
+        task = baker.make(Task, due_by=datetime(2024, 6, 9, 10, 11, 12, tzinfo=timezone.utc))
+        self.assertEqual(task.due_by_group, DueByGroupEnum.FUTURE_TASKS)
 
         with time_machine.travel(datetime.now(), tick=False) as traveller:
             # Advance time to 06/02/2024
             traveller.shift(timedelta(days=1))
-            self.assertEqual(self.task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
+            self.assertEqual(task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
 
             # Advance time to 06/07/2024
             traveller.shift(timedelta(days=5))
-            self.assertEqual(self.task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
+            self.assertEqual(task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
 
             # Advance time to 06/08/2024
             traveller.shift(timedelta(days=1))
-            self.assertEqual(self.task.due_by_group, DueByGroupEnum.TOMORROW)
+            self.assertEqual(task.due_by_group, DueByGroupEnum.TOMORROW)
 
             # Advance time to 06/09/2024
             traveller.shift(timedelta(days=1))
-            self.assertEqual(self.task.due_by_group, DueByGroupEnum.TODAY)
+            self.assertEqual(task.due_by_group, DueByGroupEnum.TODAY)
 
             # Advance time to 06/10/2024
             traveller.shift(timedelta(days=1))
-            self.assertEqual(self.task.due_by_group, DueByGroupEnum.OVERDUE)
+            self.assertEqual(task.due_by_group, DueByGroupEnum.OVERDUE)
