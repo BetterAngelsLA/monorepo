@@ -77,9 +77,10 @@ class ServiceRequestTypeEnum(models.TextChoices):
 
 
 @strawberry.enum
-class TaskDueWithinEnum(models.TextChoices):
+class DueByGroupEnum(models.TextChoices):
     OVERDUE = "overdue", _("Overdue")
     TODAY = "today", _("Today")
+    TOMORROW = "tomorrow", _("Tomorrow")
     IN_THE_NEXT_WEEK = "in_the_next_week", _("In the next week")
     FUTURE_TASKS = "future_tasks", _("Future tasks")
     NO_DUE_DATE = "no_due_date", _("No due date")

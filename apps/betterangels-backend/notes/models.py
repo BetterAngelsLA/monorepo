@@ -16,10 +16,10 @@ from organizations.models import Organization
 from strawberry_django.descriptors import model_property
 
 from .enums import (
+    DueByGroupEnum,
     MoodEnum,
     ServiceEnum,
     ServiceRequestStatusEnum,
-    TaskDueWithinEnum,
     TaskStatusEnum,
 )
 
@@ -129,22 +129,28 @@ class Task(BaseModel):
         return None
 
     @model_property
-    def due_within(self) -> Optional[str]:
+    def due_by_group(self) -> Optional[str]:
         DAYS_IN_A_WEEK = 7
 
         if self.due_by is None:
-            return TaskDueWithinEnum.NO_DUE_DATE
+            return DueByGroupEnum.NO_DUE_DATE
 
         if self.due_by.date() < timezone.now().date():
-            return TaskDueWithinEnum.OVERDUE
+            return DueByGroupEnum.OVERDUE
 
         if self.due_by.date() == timezone.now().date():
-            return TaskDueWithinEnum.TODAY
+            return DueByGroupEnum.TODAY
+
+        if self.due_by.date() == timezone.now().date():
+            return DueByGroupEnum.TODAY
+
+        if self.due_by.date() == timezone.now().date() + timedelta(days=1):
+            return DueByGroupEnum.TOMORROW
 
         if self.due_by.date() <= timezone.now().date() + timedelta(days=DAYS_IN_A_WEEK):
-            return TaskDueWithinEnum.IN_THE_NEXT_WEEK
+            return DueByGroupEnum.IN_THE_NEXT_WEEK
 
-        return TaskDueWithinEnum.FUTURE_TASKS
+        return DueByGroupEnum.FUTURE_TASKS
 
 
 @pghistory.track(

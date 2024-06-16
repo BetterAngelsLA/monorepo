@@ -4,7 +4,7 @@ import time_machine
 from accounts.models import User
 from django.test import TestCase
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestStatusEnum, TaskDueWithinEnum
+from notes.enums import DueByGroupEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import ServiceRequest, Task
 
 
@@ -45,34 +45,31 @@ class ServiceRequestModelTest(TestCase):
 
 
 class TaskModelTest(TestCase):
-    @time_machine.travel("06-16-2024 10:11:12", tick=False)
-    def test_due_within(self) -> None:
-        """Verify that due_within is populated correctly."""
+    @time_machine.travel("06-01-2024 10:11:12", tick=False)
+    def test_due_by_group(self) -> None:
+        """Verify that due_by_group is populated correctly."""
 
-        # On 6/16/2024, create Task due on 6/24/2024
-        self.task = baker.make(Task, due_by=datetime(2024, 6, 24, 10, 11, 12, tzinfo=timezone.utc))
-        self.assertEqual(self.task.due_within, TaskDueWithinEnum.FUTURE_TASKS)
+        # On 06/01/2024, create Task due on 06/09/2024
+        self.task = baker.make(Task, due_by=datetime(2024, 6, 9, 10, 11, 12, tzinfo=timezone.utc))
+        self.assertEqual(self.task.due_by_group, DueByGroupEnum.FUTURE_TASKS)
 
-        # Advance time to 6/17/2024. Task should be due "in the next week"
         with time_machine.travel(datetime.now(), tick=False) as traveller:
+            # Advance time to 06/02/2024
             traveller.shift(timedelta(days=1))
+            self.assertEqual(self.task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
 
-            self.assertEqual(self.task.due_within, TaskDueWithinEnum.IN_THE_NEXT_WEEK)
+            # Advance time to 06/07/2024
+            traveller.shift(timedelta(days=5))
+            self.assertEqual(self.task.due_by_group, DueByGroupEnum.IN_THE_NEXT_WEEK)
 
-        # Advance time to 6/23/2024. Task should be due "in the next week"
-        with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(days=7))
+            # Advance time to 06/08/2024
+            traveller.shift(timedelta(days=1))
+            self.assertEqual(self.task.due_by_group, DueByGroupEnum.TOMORROW)
 
-            self.assertEqual(self.task.due_within, TaskDueWithinEnum.IN_THE_NEXT_WEEK)
+            # Advance time to 06/09/2024
+            traveller.shift(timedelta(days=1))
+            self.assertEqual(self.task.due_by_group, DueByGroupEnum.TODAY)
 
-        # Advance time to 6/24/2024. Task should be due "today"
-        with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(days=8))
-
-            self.assertEqual(self.task.due_within, TaskDueWithinEnum.TODAY)
-
-        # Advance time to 6/25/2024. Task should be "overdue"
-        with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(days=9))
-
-            self.assertEqual(self.task.due_within, TaskDueWithinEnum.OVERDUE)
+            # Advance time to 06/10/2024
+            traveller.shift(timedelta(days=1))
+            self.assertEqual(self.task.due_by_group, DueByGroupEnum.OVERDUE)

@@ -8,9 +8,9 @@ from common.graphql.types import AttachmentInterface, LocationInput, LocationTyp
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
+    DueByGroupEnum,
     NoteNamespaceEnum,
     ServiceRequestTypeEnum,
-    TaskDueWithinEnum,
     TaskTypeEnum,
 )
 from notes.permissions import PrivateDetailsPermissions
@@ -89,7 +89,7 @@ class TaskType:
     location: Optional[LocationType]
     status: auto
     due_by: auto
-    due_within: TaskDueWithinEnum
+    due_by_group: DueByGroupEnum
     client: Optional[UserType]
     created_at: auto
     created_by: UserType

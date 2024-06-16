@@ -236,6 +236,15 @@ type DjangoModelType {
   pk: ID!
 }
 
+enum DueByGroupEnum {
+  OVERDUE
+  TODAY
+  TOMORROW
+  IN_THE_NEXT_WEEK
+  FUTURE_TASKS
+  NO_DUE_DATE
+}
+
 type FeatureControlData {
   flags: [FlagType!]!
   switches: [SwitchType!]!
@@ -582,14 +591,6 @@ type SwitchType {
   lastModified: DateTime
 }
 
-enum TaskDueWithinEnum {
-  OVERDUE
-  TODAY
-  IN_THE_NEXT_WEEK
-  FUTURE_TASKS
-  NO_DUE_DATE
-}
-
 input TaskOrder {
   dueBy: Ordering
 }
@@ -605,7 +606,7 @@ type TaskType {
   location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
-  dueWithin: TaskDueWithinEnum!
+  dueByGroup: DueByGroupEnum!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
