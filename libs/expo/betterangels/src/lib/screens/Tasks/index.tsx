@@ -1,6 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { Ordering, TasksQuery, useTasksQuery } from '../../apollo';
@@ -17,7 +16,6 @@ interface IGroupedTasks {
 
 export default function Tasks() {
   const [search, setSearch] = useState<string>('');
-  const [filterSearch, setFilterSearch] = useState<string>('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -32,8 +30,6 @@ export default function Tasks() {
     nextFetchPolicy: 'cache-first',
   });
   const [tasks, setTasks] = useState<IGroupedTasks>({});
-
-  const router = useRouter();
 
   function loadMoreTasks() {
     if (hasMore && !loading) {
