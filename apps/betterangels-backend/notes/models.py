@@ -135,19 +135,19 @@ class Task(BaseModel):
         if self.due_by is None:
             return DueByGroupEnum.NO_DUE_DATE
 
-        due_by = self.due_by.date()
-        now = timezone.now().date()
+        due_by_date = self.due_by.date()
+        today = timezone.now().date()
 
-        if due_by < now:
+        if due_by_date < today:
             return DueByGroupEnum.OVERDUE
 
-        if due_by == now:
+        if due_by_date == today:
             return DueByGroupEnum.TODAY
 
-        if due_by == now + timedelta(days=1):
+        if due_by_date == today + timedelta(days=1):
             return DueByGroupEnum.TOMORROW
 
-        if due_by <= now + timedelta(days=DAYS_IN_A_WEEK):
+        if due_by_date <= today + timedelta(days=DAYS_IN_A_WEEK):
             return DueByGroupEnum.IN_THE_NEXT_WEEK
 
         return DueByGroupEnum.FUTURE_TASKS
