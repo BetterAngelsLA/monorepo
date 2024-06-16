@@ -14,7 +14,6 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
-
 type TNextStep = {
   id?: string;
   action: string;
@@ -55,20 +54,20 @@ export default function NextStepInput(props: INextStepProps) {
       ) => {
         if (!noteId) return;
         // TODO: for future design
-        //   let combinedDateTime;
-        //   let isoDateTime = '';
+        // let combinedDateTime;
+        // let dueByIso = new Date().toISOString();
 
-        //   if (obj.date) {
-        //     const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
-        //     combinedDateTime = parsedDate;
+        // if (obj.date) {
+        //   const parsedDate = parse(obj.date, 'dd/MM/yyyy', new Date());
+        //   combinedDateTime = parsedDate;
 
-        //     if (obj.time) {
-        //       const [hours, minutes] = obj.time.split(':').map(Number);
-        //       combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
-        //     }
-
-        //     isoDateTime = combinedDateTime.toISOString();
+        //   if (obj.time) {
+        //     const [hours, minutes] = obj.time.split(':').map(Number);
+        //     combinedDateTime = setMinutes(setHours(parsedDate, hours), minutes);
         //   }
+
+        //   dueByIso = combinedDateTime.toISOString();
+        // }
         try {
           if (id && obj.action) {
             const { data } = await updateTask({

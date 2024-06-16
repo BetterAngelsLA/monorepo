@@ -160,6 +160,7 @@ union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 input CreateNoteTaskInput {
   title: String!
   status: TaskStatusEnum!
+  dueBy: DateTime
   noteId: ID!
   taskType: TaskTypeEnum!
 }

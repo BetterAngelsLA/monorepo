@@ -107,6 +107,7 @@ class CreateTaskInput:
 class CreateNoteTaskInput:
     title: auto
     status: auto
+    due_by: auto
     note_id: ID
     task_type: TaskTypeEnum
 

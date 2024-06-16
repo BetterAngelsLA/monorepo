@@ -165,6 +165,7 @@ export type CreateNoteServiceRequestInput = {
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   noteId: Scalars['ID']['input'];
   status: TaskStatusEnum;
   taskType: TaskTypeEnum;
