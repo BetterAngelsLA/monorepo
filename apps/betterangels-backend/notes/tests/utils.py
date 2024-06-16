@@ -365,6 +365,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         title
                         status
                         dueBy
+                        dueByGroup
                         client {
                             id
                         }
@@ -611,6 +612,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         }}
                         status
                         dueBy
+                        dueByGroup
                         client {{
                             id
                         }}
