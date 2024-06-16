@@ -55,10 +55,10 @@ export default function TaskCard(props: ITaskCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: Spacings.sm,
-    gap: Spacings.xs,
-    borderRadius: 8,
     backgroundColor: Colors.WHITE,
+    padding: Spacings.sm,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
   },
   chevronIcon: {
     position: 'absolute',

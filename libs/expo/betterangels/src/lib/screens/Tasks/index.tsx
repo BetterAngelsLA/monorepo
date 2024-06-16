@@ -98,32 +98,36 @@ export default function Tasks() {
           tasks ? <TaskCard task={task} /> : null
         }
         renderSectionHeader={({ section: { title } }) => (
-          <View style={styles.header}>
-            <TextBold mt="sm" size="lg">
+          <View style={styles.sectionHeader}>
+            <TextBold mt="sm" size="xl">
               {title}
             </TextBold>
+            {/* <Text>{title}</Text> */}
           </View>
         )}
         keyExtractor={(task) => task.id}
         onEndReached={loadMoreTasks}
         onEndReachedThreshold={0.05}
-        ItemSeparatorComponent={() => (
-          <View style={{ marginBottom: -Spacings.sm }} />
-        )}
         SectionSeparatorComponent={() => (
-          <View style={{ height: Spacings.xs }} />
+          <View style={styles.sectionSeparator} />
         )}
-        contentContainerStyle={styles.contentContainer}
+        ItemSeparatorComponent={() => (
+          <View style={{ marginBottom: -Spacings.xs }} />
+        )}
       />
     </MainContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    paddingBottom: Spacings.lg,
+  sectionHeader: {
+    paddingLeft: Spacings.sm,
+    marginBottom: -Spacings.xs,
+    backgroundColor: Colors.WHITE,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
-  header: {
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  sectionSeparator: {
+    marginBottom: Spacings.xs,
   },
 });
