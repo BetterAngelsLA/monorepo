@@ -1,12 +1,7 @@
+import { CheckIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  DimensionValue,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -15,7 +10,7 @@ interface ICheckboxProps {
   onCheck: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   hasBorder?: boolean;
   labelFirst?: boolean;
   justifyContent?: 'flex-start' | 'space-between';
@@ -32,6 +27,7 @@ interface ICheckboxProps {
 const SIZES = {
   sm: 16,
   md: 24,
+  lg: 32,
 } as const;
 
 export function Checkbox(props: ICheckboxProps) {
@@ -94,7 +90,7 @@ export function Checkbox(props: ICheckboxProps) {
               },
             ]}
           >
-            {isChecked && <Text style={styles.checkboxLabel}>✓</Text>}
+            {isChecked && <CheckIcon />}
           </View>
         </>
       ) : (
@@ -109,7 +105,7 @@ export function Checkbox(props: ICheckboxProps) {
               },
             ]}
           >
-            {isChecked && <Text style={styles.checkboxLabel}>✓</Text>}
+            {isChecked && <CheckIcon />}
           </View>
           {label}
         </>
@@ -126,8 +122,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   checkbox: {
-    width: 24,
-    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -136,9 +130,6 @@ const styles = StyleSheet.create({
   },
   checked: {
     backgroundColor: Colors.PRIMARY_EXTRA_DARK,
-  },
-  checkboxLabel: {
-    color: Colors.WHITE,
   },
   label: {
     fontSize: 16,
