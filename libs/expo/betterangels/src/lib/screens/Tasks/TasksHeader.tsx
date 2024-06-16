@@ -24,7 +24,7 @@ export default function InteractionsHeader(props: IInteractionsHeaderProps) {
     >
       <View style={{ flex: 1 }}>
         <BasicInput
-          placeholder="Search Tasks"
+          placeholder="Search tasks"
           onDelete={onDelete}
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
