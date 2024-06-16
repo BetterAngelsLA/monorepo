@@ -4,7 +4,7 @@ import time_machine
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from notes.enums import NoteNamespaceEnum, ServiceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -543,6 +543,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     }
                     status
                     dueBy
+                    dueByGroup
                     client {
                         id
                     }
@@ -576,6 +577,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             },
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
+            "dueByGroup": DueByGroupEnum.TODAY.name,
             "client": {
                 "id": str(self.client_user_1.pk),
             },
@@ -604,6 +606,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                     }
                     status
                     dueBy
+                    dueByGroup
                     client {
                         id
                     }

@@ -160,6 +160,7 @@ union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 input CreateNoteTaskInput {
   title: String!
   status: TaskStatusEnum!
+  dueBy: DateTime
   noteId: ID!
   taskType: TaskTypeEnum!
 }
@@ -233,6 +234,15 @@ type DjangoFileType {
 
 type DjangoModelType {
   pk: ID!
+}
+
+enum DueByGroupEnum {
+  OVERDUE
+  TODAY
+  TOMORROW
+  IN_THE_NEXT_WEEK
+  FUTURE_TASKS
+  NO_DUE_DATE
 }
 
 type FeatureControlData {
@@ -399,8 +409,8 @@ type NoteType {
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
-  purposes(pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -470,7 +480,7 @@ type Query {
   serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput): [ShelterType!]!
 }
@@ -581,6 +591,10 @@ type SwitchType {
   lastModified: DateTime
 }
 
+input TaskOrder {
+  dueBy: Ordering
+}
+
 enum TaskStatusEnum {
   COMPLETED
   TO_DO
@@ -592,6 +606,7 @@ type TaskType {
   location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
+  dueByGroup: DueByGroupEnum!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
