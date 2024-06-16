@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { Ordering, TasksQuery, useTasksQuery } from '../../apollo';
@@ -99,10 +99,9 @@ export default function Tasks() {
         }
         renderSectionHeader={({ section: { title } }) => (
           <View style={styles.sectionHeader}>
-            <TextBold mt="sm" size="xl">
+            <TextMedium mt="sm" size="xl">
               {title}
-            </TextBold>
-            {/* <Text>{title}</Text> */}
+            </TextMedium>
           </View>
         )}
         keyExtractor={(task) => task.id}
