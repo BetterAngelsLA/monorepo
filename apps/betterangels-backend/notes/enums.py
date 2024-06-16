@@ -74,3 +74,12 @@ class TaskTypeEnum(models.TextChoices):
 class ServiceRequestTypeEnum(models.TextChoices):
     PROVIDED = "provided", "Provided"
     REQUESTED = "requested", "Requested"
+
+
+@strawberry.enum
+class TaskDueWithinEnum(models.TextChoices):
+    OVERDUE = "overdue", _("Overdue")
+    TODAY = "today", _("Today")
+    IN_THE_NEXT_WEEK = "in_the_next_week", _("In the next week")
+    FUTURE_TASKS = "future_tasks", _("Future tasks")
+    NO_DUE_DATE = "no_due_date", _("No due date")

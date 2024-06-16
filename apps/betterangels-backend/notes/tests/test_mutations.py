@@ -6,7 +6,7 @@ from common.models import Address, Attachment, Location
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import NoteNamespaceEnum
+from notes.enums import NoteNamespaceEnum, TaskDueWithinEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -201,6 +201,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note Task",
             "status": "TO_DO",
             "dueBy": None,
+            "dueWithin": TaskDueWithinEnum.NO_DUE_DATE.name,
             "client": self.note["client"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -1719,6 +1720,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
+            "dueWithin": TaskDueWithinEnum.NO_DUE_DATE.name,
             "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1754,6 +1756,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             },
             "status": "COMPLETED",
             "dueBy": None,
+            "dueWithin": TaskDueWithinEnum.NO_DUE_DATE.name,
             "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1776,6 +1779,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
+            "dueWithin": TaskDueWithinEnum.NO_DUE_DATE.name,
             "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
