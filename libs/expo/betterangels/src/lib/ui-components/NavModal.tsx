@@ -39,7 +39,7 @@ const ACTIONS = [
   {
     title: 'Tasks',
     Icon: ListIcon,
-    route: '#',
+    route: '/tasks',
   },
   {
     title: 'Services',
