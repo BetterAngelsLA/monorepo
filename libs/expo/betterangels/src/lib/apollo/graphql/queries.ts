@@ -1,5 +1,16 @@
 import { gql } from '@apollo/client';
 
+export const GET_TASKS = gql`
+  query Tasks($pagination: OffsetPaginationInput, $order: TaskOrder) {
+    tasks(pagination: $pagination, order: $order) {
+      id
+      title
+      status
+      dueWithin
+    }
+  }
+`;
+
 export const GET_NOTES = gql`
   query Notes(
     $filters: NoteFilter
