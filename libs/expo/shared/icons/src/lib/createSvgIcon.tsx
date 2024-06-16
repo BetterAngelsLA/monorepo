@@ -1,16 +1,16 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
 import { SvgProps } from 'react-native-svg';
-import { IIconProps } from './types';
+import { IIconProps, TIconSizes } from './types';
 import { extractSize } from './utils';
 
 // Higher Order Component to create SVG icons
 const createSvgIcon = (
   SvgComponent: React.ComponentType<SvgProps>,
-  useStroke = false
+  useStroke = false,
+  size: TIconSizes = 'md'
 ) => {
   const IconComponent: React.FC<IIconProps> = ({
-    size = 'md',
     color = '#ffffff',
     rotate = '0deg',
     mb,
