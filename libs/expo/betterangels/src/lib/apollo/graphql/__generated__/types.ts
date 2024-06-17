@@ -169,7 +169,7 @@ export type CreateNoteTaskInput = {
   noteId: Scalars['ID']['input'];
   status: TaskStatusEnum;
   taskType: TaskTypeEnum;
-  title: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateNoteTaskPayload = OperationInfo | TaskType;
@@ -187,7 +187,7 @@ export type CreateTaskInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
-  title: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;

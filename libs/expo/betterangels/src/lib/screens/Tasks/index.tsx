@@ -45,7 +45,6 @@ export default function Tasks() {
 
     const groupedTasks = tasksToShow.reduce((acc: IGroupedTasks, task) => {
       const dueByGroup = task.dueByGroup;
-      console.log('dueByGroup', dueByGroup);
       if (!acc[dueByGroup]) {
         acc[dueByGroup] = {
           title: dueByGroup

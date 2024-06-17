@@ -88,7 +88,7 @@ class ServiceRequest(BaseModel):
     pghistory.DeleteEvent("task.remove"),
 )
 class Task(BaseModel):
-    title = models.CharField(max_length=100, blank=False)
+    title = models.CharField(max_length=100, blank=True, null=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
@@ -105,7 +105,7 @@ class Task(BaseModel):
     taskgroupobjectpermission_set: models.QuerySet["TaskGroupObjectPermission"]
 
     def __str__(self) -> str:
-        return self.title
+        return self.title if self.title else f"{self.created_by.first_name}'s task ({self.pk})"
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

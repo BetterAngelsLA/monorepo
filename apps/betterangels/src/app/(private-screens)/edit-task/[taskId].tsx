@@ -6,6 +6,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
 import Location from './Location';
+import Title from './Title';
 
 export default function EditTask() {
   const { taskId } = useLocalSearchParams<{
@@ -38,6 +39,8 @@ export default function EditTask() {
   return (
     <View style={{ flex: 1 }}>
       <MainScrollContainer>
+        {/* <PublicNote title={data.task.title} {...props} /> */}
+        <Title title={data.task.title} {...props} />
         <Location
           address={data.task.location?.address}
           point={data.task.location?.point}

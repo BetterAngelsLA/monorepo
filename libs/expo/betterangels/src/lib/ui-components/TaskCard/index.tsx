@@ -14,7 +14,6 @@ export default function TaskCard(props: ITaskCardProps) {
   const [isChecked, setIsChecked] = useState(
     task.status === TaskStatusEnum.Completed ? true : false
   );
-  console.log(task.id, 'isChecked', isChecked);
 
   const handleCheck = () => {
     setIsChecked(!isChecked);
