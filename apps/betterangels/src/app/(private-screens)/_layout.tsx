@@ -45,6 +45,26 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
+        name="edit-task/[taskId]"
+        options={{
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          title: 'Edit task',
+          headerTitleAlign: 'center',
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="form/index"
         options={{
           headerStyle: {

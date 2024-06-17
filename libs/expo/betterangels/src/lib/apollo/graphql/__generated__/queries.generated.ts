@@ -9,7 +9,14 @@ export type TasksQueryVariables = Types.Exact<{
 }>;
 
 
-export type TasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueByGroup: Types.DueByGroupEnum }> };
+export type TasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, dueByGroup: Types.DueByGroupEnum, createdAt: any, location?: { __typename?: 'LocationType', id: string, point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }> };
+
+export type ViewTaskQueryVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+}>;
+
+
+export type ViewTaskQuery = { __typename?: 'Query', task: { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, dueByGroup: Types.DueByGroupEnum, createdAt: any, location?: { __typename?: 'LocationType', id: string, point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
 export type NotesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.NoteFilter>;
@@ -33,8 +40,27 @@ export const TasksDocument = gql`
   tasks(pagination: $pagination, order: $order) {
     id
     title
+    location {
+      id
+      address {
+        street
+        city
+        state
+        zipCode
+      }
+      point
+      pointOfInterest
+    }
     status
+    dueBy
     dueByGroup
+    client {
+      id
+    }
+    createdBy {
+      id
+    }
+    createdAt
   }
 }
     `;
@@ -72,6 +98,68 @@ export type TasksQueryHookResult = ReturnType<typeof useTasksQuery>;
 export type TasksLazyQueryHookResult = ReturnType<typeof useTasksLazyQuery>;
 export type TasksSuspenseQueryHookResult = ReturnType<typeof useTasksSuspenseQuery>;
 export type TasksQueryResult = Apollo.QueryResult<TasksQuery, TasksQueryVariables>;
+export const ViewTaskDocument = gql`
+    query ViewTask($id: ID!) {
+  task(pk: $id) {
+    id
+    title
+    location {
+      id
+      address {
+        street
+        city
+        state
+        zipCode
+      }
+      point
+      pointOfInterest
+    }
+    status
+    dueBy
+    dueByGroup
+    client {
+      id
+    }
+    createdBy {
+      id
+    }
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useViewTaskQuery__
+ *
+ * To run a query within a React component, call `useViewTaskQuery` and pass it any options that fit your needs.
+ * When your component renders, `useViewTaskQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useViewTaskQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useViewTaskQuery(baseOptions: Apollo.QueryHookOptions<ViewTaskQuery, ViewTaskQueryVariables> & ({ variables: ViewTaskQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ViewTaskQuery, ViewTaskQueryVariables>(ViewTaskDocument, options);
+      }
+export function useViewTaskLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ViewTaskQuery, ViewTaskQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ViewTaskQuery, ViewTaskQueryVariables>(ViewTaskDocument, options);
+        }
+export function useViewTaskSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ViewTaskQuery, ViewTaskQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ViewTaskQuery, ViewTaskQueryVariables>(ViewTaskDocument, options);
+        }
+export type ViewTaskQueryHookResult = ReturnType<typeof useViewTaskQuery>;
+export type ViewTaskLazyQueryHookResult = ReturnType<typeof useViewTaskLazyQuery>;
+export type ViewTaskSuspenseQueryHookResult = ReturnType<typeof useViewTaskSuspenseQuery>;
+export type ViewTaskQueryResult = Apollo.QueryResult<ViewTaskQuery, ViewTaskQueryVariables>;
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
   notes(filters: $filters, pagination: $pagination, order: $order) {

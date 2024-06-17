@@ -5,8 +5,57 @@ export const GET_TASKS = gql`
     tasks(pagination: $pagination, order: $order) {
       id
       title
+      location {
+        id
+        address {
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
       status
+      dueBy
       dueByGroup
+      client {
+        id
+      }
+      createdBy {
+        id
+      }
+      createdAt
+    }
+  }
+`;
+
+export const GET_TASK = gql`
+  query ViewTask($id: ID!) {
+    task(pk: $id) {
+      id
+      title
+      location {
+        id
+        address {
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      status
+      dueBy
+      dueByGroup
+      client {
+        id
+      }
+      createdBy {
+        id
+      }
+      createdAt
     }
   }
 `;
