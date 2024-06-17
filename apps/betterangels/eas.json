@@ -27,6 +27,7 @@
       "node": "20.12.2"
     },
     "production": {
+      "distribution": "internal",
       "android": {
         "buildType": "app-bundle"
       },
