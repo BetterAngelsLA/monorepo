@@ -28,7 +28,7 @@ export default function UserProvider({ children }: UserProviderProps) {
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           email,
-          hasOrganization: false,
+          organizations: null,
         });
       }
     } catch (err) {
@@ -45,7 +45,7 @@ export default function UserProvider({ children }: UserProviderProps) {
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         email,
-        hasOrganization: false,
+        organizations: null,
       });
     }
   }, [data, isLoading]);
