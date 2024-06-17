@@ -35,6 +35,7 @@
         "buildType": "app-bundle"
       },
       "env": {
+        "APP_VARIANT": "production",
         "EXPO_PUBLIC_API_URL": "https://api.betterangels.la",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.betterangels.la/auth-redirect",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<FILL_FOR_PRODUCTION>",
