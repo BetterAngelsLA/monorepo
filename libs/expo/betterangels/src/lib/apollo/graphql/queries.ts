@@ -43,7 +43,6 @@ export const GET_NOTES = gql`
         customService
       }
       publicDetails
-      privateDetails
       isSubmitted
       client {
         id
@@ -117,7 +116,6 @@ export const GET_NOTE = gql`
         customService
       }
       publicDetails
-      privateDetails
       isSubmitted
       client {
         id

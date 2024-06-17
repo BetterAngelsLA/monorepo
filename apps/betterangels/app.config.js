@@ -49,6 +49,11 @@ export default {
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
+      config: {
+        googleMaps: {
+          apiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+        },
+      },
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',

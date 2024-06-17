@@ -6,7 +6,7 @@ from common.models import Address, Attachment, Location
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import NoteNamespaceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -201,6 +201,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New Note Task",
             "status": "TO_DO",
             "dueBy": None,
+            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": self.note["client"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -540,7 +541,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "savedAt": saved_at}
 
-        expected_query_count = 27
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -601,7 +602,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
 
         variables = {"id": note_id, "savedAt": saved_at}
-        expected_query_count = 29
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -613,6 +614,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         saved_at = timezone.now()
 
         variables = {"id": note_id, "savedAt": saved_at}
+        expected_query_count = 29
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -1718,6 +1720,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
+            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1753,6 +1756,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             },
             "status": "COMPLETED",
             "dueBy": None,
+            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": {"id": str(self.client_user_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1775,6 +1779,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
+            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
