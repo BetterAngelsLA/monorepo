@@ -85,12 +85,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}"
 
     @model_property
-    def organizations(self: "User") -> models.QuerySet[Organization]:
-        user_organizations: models.QuerySet[Organization] = self.organizations_organization.all()
-
-        return user_organizations
-
-    @model_property
     def is_outreach_authorized(self: "User") -> bool:
         user_organizations = self.organizations_organization.all()
 

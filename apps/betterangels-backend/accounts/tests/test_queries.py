@@ -3,7 +3,6 @@ from typing import Optional
 
 import time_machine
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
-from accounts.groups import GroupTemplateNames
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -77,7 +76,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
                 firstName
                 lastName
                 isOutreachAuthorized
-                organizations {
+                organizations: organizationsOrganization {
                     id
                     name
                 }
