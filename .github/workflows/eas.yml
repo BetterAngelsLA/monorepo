@@ -134,7 +134,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
         run: |
-          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile production --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
           if [ "${build_list_output}" == "[]" ]; then
             eas build --profile production --platform ios
           else
