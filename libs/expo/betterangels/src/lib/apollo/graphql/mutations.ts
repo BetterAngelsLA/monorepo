@@ -260,6 +260,33 @@ export const DELETE_NOTE_ATTACHMENT = gql`
   }
 `;
 
+export const UPDATE_TASK_LOCATION = gql`
+  mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
+    updateTaskLocation(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on TaskType {
+        id
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
+        }
+      }
+    }
+  }
+`;
 export const UPDATE_NOTE_LOCATION = gql`
   mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
     updateNoteLocation(data: $data) {

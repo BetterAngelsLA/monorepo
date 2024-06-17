@@ -94,6 +94,13 @@ export type DeleteNoteAttachmentMutationVariables = Types.Exact<{
 
 export type DeleteNoteAttachmentMutation = { __typename?: 'Mutation', deleteNoteAttachment: { __typename?: 'NoteAttachmentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
+export type UpdateTaskLocationMutationVariables = Types.Exact<{
+  data: Types.UpdateTaskLocationInput;
+}>;
+
+
+export type UpdateTaskLocationMutation = { __typename?: 'Mutation', updateTaskLocation: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null } };
+
 export type UpdateNoteLocationMutationVariables = Types.Exact<{
   data: Types.UpdateNoteLocationInput;
 }>;
@@ -684,6 +691,59 @@ export function useDeleteNoteAttachmentMutation(baseOptions?: Apollo.MutationHoo
 export type DeleteNoteAttachmentMutationHookResult = ReturnType<typeof useDeleteNoteAttachmentMutation>;
 export type DeleteNoteAttachmentMutationResult = Apollo.MutationResult<DeleteNoteAttachmentMutation>;
 export type DeleteNoteAttachmentMutationOptions = Apollo.BaseMutationOptions<DeleteNoteAttachmentMutation, DeleteNoteAttachmentMutationVariables>;
+export const UpdateTaskLocationDocument = gql`
+    mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
+  updateTaskLocation(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on TaskType {
+      id
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+    }
+  }
+}
+    `;
+export type UpdateTaskLocationMutationFn = Apollo.MutationFunction<UpdateTaskLocationMutation, UpdateTaskLocationMutationVariables>;
+
+/**
+ * __useUpdateTaskLocationMutation__
+ *
+ * To run a mutation, you first call `useUpdateTaskLocationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTaskLocationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTaskLocationMutation, { data, loading, error }] = useUpdateTaskLocationMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateTaskLocationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTaskLocationMutation, UpdateTaskLocationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTaskLocationMutation, UpdateTaskLocationMutationVariables>(UpdateTaskLocationDocument, options);
+      }
+export type UpdateTaskLocationMutationHookResult = ReturnType<typeof useUpdateTaskLocationMutation>;
+export type UpdateTaskLocationMutationResult = Apollo.MutationResult<UpdateTaskLocationMutation>;
+export type UpdateTaskLocationMutationOptions = Apollo.BaseMutationOptions<UpdateTaskLocationMutation, UpdateTaskLocationMutationVariables>;
 export const UpdateNoteLocationDocument = gql`
     mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
   updateNoteLocation(data: $data) {
