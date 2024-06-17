@@ -122,13 +122,13 @@ jobs:
           cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
         working-directory: apps/${{ matrix.project }}
 
-      # - name: 🚀 Continuously Deploy
-      #   id: continuos_deploy
-      #   uses: expo/expo-github-action/continuous-deploy-fingerprint@main
-      #   with:
-      #     profile: ${{  env.CHANNEL_CONFIG }}
-      #     branch: ${{ github.event.pull_request.head.ref }}
-      #     working-directory: apps/${{ matrix.project }}
+      - name: 🚀 Continuously Deploy
+        id: continuos_deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: ${{  env.CHANNEL_CONFIG }}
+          branch: ${{ github.event.pull_request.head.ref }}
+          working-directory: apps/${{ matrix.project }}
 
       - name: 🍏 Apple Simulator Build
         if: github.ref != 'refs/heads/main'
