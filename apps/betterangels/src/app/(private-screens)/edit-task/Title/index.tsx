@@ -42,7 +42,11 @@ export default function Title(props: ITitleProps) {
       required
       mb="xs"
       actionName={
-        !title && !isTitle ? <TextMedium size="sm">Add Title</TextMedium> : ''
+        !title && !isTitle ? (
+          <TextMedium size="sm">Add Title</TextMedium>
+        ) : (
+          <TextMedium size="sm">{title}</TextMedium>
+        )
       }
       title="Title"
     >

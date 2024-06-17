@@ -158,7 +158,7 @@ input CreateNoteServiceRequestInput {
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input CreateNoteTaskInput {
-  title: String
+  title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
   noteId: ID!
@@ -177,7 +177,7 @@ input CreateServiceRequestInput {
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input CreateTaskInput {
-  title: String
+  title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
   client: ID

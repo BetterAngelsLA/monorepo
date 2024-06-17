@@ -4,7 +4,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
 
 interface ITitleProps {
-  initialTitle: string | undefined;
+  initialTitle: string;
   hasError: boolean;
   taskId: string | undefined;
 }
@@ -44,7 +44,7 @@ export default function TitleInput(props: ITitleProps) {
   const onDelete = () => {
     if (loading) return;
     setTitle('');
-    updateTaskFunction('');
+    // updateTaskFunction('');
   };
 
   return (

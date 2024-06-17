@@ -88,7 +88,7 @@ class ServiceRequest(BaseModel):
     pghistory.DeleteEvent("task.remove"),
 )
 class Task(BaseModel):
-    title = models.CharField(max_length=100, blank=True, null=True)
+    title = models.CharField(max_length=100)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
