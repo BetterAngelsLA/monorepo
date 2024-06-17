@@ -87,7 +87,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🗑️ Delete EAS Branch & Channel for Each Project
+      - name: 🗑️ Delete EAS Branch For Each Project
         run: |
           BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           MATRIX_JSON='${{ needs.prepare.outputs.matrix }}'
@@ -96,7 +96,6 @@ jobs:
             # Change to the project directory
             cd apps/$project
             # Run the EAS command in the project directory
-            eas channel:delete --non-interactive $BRANCH_NAME
             eas branch:delete --non-interactive $BRANCH_NAME
             # Change back to the original directory
             cd -

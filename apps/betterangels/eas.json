@@ -28,6 +28,9 @@
     },
     "production": {
       "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
       "android": {
         "buildType": "app-bundle"
       },

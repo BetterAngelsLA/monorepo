@@ -26,7 +26,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      associatedDomains: [`applinks:${BUNDLE_IDENTIFIER}`],
+      associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
     },
     android: {
@@ -42,7 +42,7 @@ export default {
           data: [
             {
               scheme: 'https',
-              host: BUNDLE_IDENTIFIER,
+              host: HOSTNAME,
               pathPrefix: '/',
             },
           ],
