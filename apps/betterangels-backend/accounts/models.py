@@ -91,16 +91,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         if not user_organizations:
             return False
 
-        authorized_groups = [template.value for template in GroupTemplateNames]
+        # TODO: This is a temporary approach while we have just one permission group.
+        # Once this list grows, we'll need to create an actual list of authorized groups.
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
-        return (
-            PermissionGroup.objects.select_related("template")
-            .filter(
-                organization__in=user_organizations,
-                name__in=authorized_groups,
-            )
-            .exists()
-        )
+        return PermissionGroup.objects.filter(
+            organization__in=user_organizations, template__name__in=authorized_permission_groups
+        ).exists()
 
 
 class ClientProfile(models.Model):
