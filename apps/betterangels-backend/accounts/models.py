@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -84,11 +85,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}"
 
     @model_property
-    def organizations(self: "User") -> Optional[List[str]]:
-        if organizations := self.organizations_organization.all():
-            return [str(o.name) for o in organizations]
+    def organizations(self: "User") -> models.QuerySet[Organization]:
+        user_organizations: models.QuerySet[Organization] = self.organizations_organization.all()
 
-        return None
+        return user_organizations
+
+    @model_property
+    def is_outreach_authorized(self: "User") -> bool:
+        user_organizations = self.organizations_organization.all()
+
+        if not user_organizations:
+            return False
+
+        authorized_groups = [template.value for template in GroupTemplateNames]
+
+        return (
+            PermissionGroup.objects.select_related("template")
+            .filter(
+                organization__in=user_organizations,
+                name__in=authorized_groups,
+            )
+            .exists()
+        )
 
 
 class ClientProfile(models.Model):

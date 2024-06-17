@@ -465,6 +465,11 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+type OrganizationType {
+  id: ID!
+  name: String!
+}
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
@@ -688,7 +693,8 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
-  organizations: [String!]
+  isOutreachAuthorized: Boolean!
+  organizations: [OrganizationType!]
 }
 
 enum YesNoPreferNotToSayEnum {

@@ -3,21 +3,22 @@ from typing import Optional
 
 import time_machine
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.groups import GroupTemplateNames
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
+from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import OrganizationUser
-from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from .baker_recipes import organization_recipe
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 @ignore_warnings(category=UserWarning)
-class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
     def test_anonymous_user_query(self) -> None:
         """
         Test querying the currentUser with an anonymous user.
@@ -40,10 +41,19 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         self.assertIsNone(response["data"])
 
     @parametrize(
-        ("organization_count"),
-        [(0,), (1,), (2,)],
+        ("organization_count, is_outreach_authorized, expected_query_count"),
+        [
+            (0, False, 3),
+            (1, True, 4),
+            (2, True, 4),
+        ],
     )
-    def test_logged_in_user_query(self, organization_count: bool) -> None:
+    def test_logged_in_user_query(
+        self,
+        organization_count: int,
+        is_outreach_authorized: bool,
+        expected_query_count: int,
+    ) -> None:
         """
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
@@ -51,12 +61,13 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
 
-        org_names = []
+        expected_organizations = []
 
         for _ in range(organization_count):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
-            org_names.append(organization.name)
+            permission_group_recipe.make(organization=organization)
+            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
 
         query = """
         query {
@@ -65,11 +76,17 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
                 username
                 firstName
                 lastName
-                organizations
+                isOutreachAuthorized
+                organizations {
+                    id
+                    name
+                }
             }
         }
         """
-        response = self.execute_graphql(query)
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
 
         self.assertIsNone(response.get("errors"), "Expected no errors in the response")
         self.assertIn(
@@ -96,12 +113,17 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, ParametrizedTestCase, TestCa
             response["data"]["currentUser"]["lastName"],
             user.last_name,
         )
+        self.assertEqual(
+            response["data"]["currentUser"]["isOutreachAuthorized"],
+            is_outreach_authorized,
+        )
+
         if organization_count:
             self.assertEqual(
                 len(response["data"]["currentUser"]["organizations"]),
                 organization_count,
             )
-            self.assertCountEqual(response["data"]["currentUser"]["organizations"], org_names)
+            self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
