@@ -2,9 +2,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, Button, TextBold } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { useUser } from '../../hooks';
-import InfoCard from './infoCard';
+import InfoCard from './InfoCard';
 
-export default function Profile() {
+export default function UserProfile() {
   const { user } = useUser();
 
   if (!user) throw new Error('Something went wrong');
@@ -13,7 +13,10 @@ export default function Profile() {
     { title: 'Email', value: user.email },
     {
       title: 'Organization',
-      value: user.hasOrganization ? 'Organization' : 'None',
+      value:
+        user.organizations && user.organizations.length > 0
+          ? user.organizations.join(', ')
+          : 'None',
     },
   ];
 

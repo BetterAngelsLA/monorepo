@@ -1,5 +1,5 @@
-import { Profile } from '@monorepo/expo/betterangels';
+import { UserProfile } from '@monorepo/expo/betterangels';
 
-export default function ProfileScreen() {
-  return <Profile />;
+export default function UserProfileScreen() {
+  return <UserProfile />;
 }
