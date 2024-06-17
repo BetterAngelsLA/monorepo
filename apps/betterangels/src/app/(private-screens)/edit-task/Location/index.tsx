@@ -52,7 +52,6 @@ export default function LocationComponent(props: ILocationProps) {
   return (
     <FieldCard
       scrollRef={scrollRef}
-      required
       expanded={expanded}
       mb="xs"
       error={error ? 'Please enter a location' : undefined}
@@ -66,7 +65,7 @@ export default function LocationComponent(props: ILocationProps) {
           setExpanded('Location');
         }
       }}
-      title="Location "
+      title="Location"
       actionName={
         (!location || (location && !location.address)) && !isLocation ? (
           <TextMedium size="sm">Add Location</TextMedium>

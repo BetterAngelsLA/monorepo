@@ -12,7 +12,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   const { purposes, moods, providedServices, nextSteps, requestedServices } =
     watchedValues;
   const changedG = purposes
-    .map((purpose) => purpose.title.toLowerCase())
+    .map((purpose) => purpose.title?.toLowerCase())
     .filter(Boolean);
 
   const purposeText =

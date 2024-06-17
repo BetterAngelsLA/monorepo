@@ -5,6 +5,7 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
+import DueBy from './DueBy';
 import Location from './Location';
 import Title from './Title';
 
@@ -46,6 +47,7 @@ export default function EditTask() {
           point={data.task.location?.point}
           {...props}
         />
+        <DueBy dueBy={data.task.dueBy} {...props} />
       </MainScrollContainer>
     </View>
   );

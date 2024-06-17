@@ -66,7 +66,7 @@ export default function LocationComponent(props: ILocationProps) {
           setExpanded('Location');
         }
       }}
-      title="Location "
+      title="Location"
       actionName={
         (!location || (location && !location.address)) && !isLocation ? (
           <TextMedium size="sm">Add Location</TextMedium>
