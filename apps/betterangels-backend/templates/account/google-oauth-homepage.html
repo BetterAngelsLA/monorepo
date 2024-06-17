@@ -46,7 +46,7 @@
                 <h2 id="app-identity">Accurately Represents the App's Identity</h2>
                 <p>
                     Better Angels United Inc. is a nonprofit organization focused on ending the homelessness crisis in Los Angeles. The Better Angels platform is designed to empower stakeholders—unhoused clients, case managers, and service providers—by leveraging world-class technology to improve efficiency and effectiveness in addressing homelessness. The platform is hosted with managed services through AWS and is available on app stores for mobile access. Additionally, online portals are provided for administrative functions for internal Better Angels staff. The Better Angels cloud platform is accessible at
-                    <a href="https://betterangels.la">https://betterangels.la</a> - from here, users can sign in to the Better Angels platform.
+                    <a href="{{ request.scheme }}://{{ request.get_host }}">{{ request.get_host }}</a> - from here, users can sign in to the Better Angels platform.
                 </p>
             </section>
             <section aria-labelledby="google-user-data">
@@ -69,13 +69,13 @@
                     <li>Match people with available services and shelters.</li>
                 </ul>
                 <p>
-                    Service providers benefit from reporting tools that ensure their data is up-to-date and accurately reflects the impact they are making for their clients and within their community. The app uses role-based access control (RBAC) to protect any entered user data.
+                    Service providers benefit from reporting tools that ensure their data is up-to-date and accurately reflects the impact they are making for their clients and within their community. The app uses role-based access control (RBAC) and encryption to protect any entered user data.
                 </p>
             </section>
             <section aria-labelledby="privacy-policy">
                 <h2 id="privacy-policy">Better Angels Privacy Policy</h2>
                 <p>
-                    <a href="https://betterangels.la/privacy">Privacy Policy</a>
+                    <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
                 </p>
             </section>
         </div>
