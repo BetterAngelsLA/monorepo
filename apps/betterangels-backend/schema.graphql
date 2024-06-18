@@ -506,7 +506,6 @@ union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
   id: ID
-  savedAt: DateTime
   revertBeforeTimestamp: DateTime!
 }
 

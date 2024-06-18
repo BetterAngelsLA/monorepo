@@ -176,10 +176,8 @@ class Mutation:
         note = Note.objects.get(id=data.id)
 
         try:
-            # TODO: update this after the swap
-            revert_to = data.saved_at or data.revert_before_timestamp
             NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
-                revert_before_timestamp=revert_to.isoformat()
+                revert_before_timestamp=data.revert_before_timestamp.isoformat()
             )
             note.refresh_from_db()
 

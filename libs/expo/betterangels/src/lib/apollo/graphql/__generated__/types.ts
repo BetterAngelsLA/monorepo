@@ -741,7 +741,6 @@ export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 export type RevertNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
   revertBeforeTimestamp: Scalars['DateTime']['input'];
-  savedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;
