@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -16,6 +17,7 @@ from django.forms import ValidationError
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
     from common.models import AttachmentUserObjectPermission
@@ -65,6 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
+    organizations_organization: models.QuerySet[Organization]
     organizations_organizationuser: models.QuerySet[OrganizationUser]
 
     # MyPy hints for Permission Reverses
@@ -77,9 +80,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self: "User") -> str:
         return self.email
 
-    @property
+    @model_property
     def full_name(self: "User") -> str:
         return f"{self.first_name} {self.last_name}"
+
+    @model_property
+    def is_outreach_authorized(self: "User") -> bool:
+        user_organizations = self.organizations_organization.all()
+
+        if not user_organizations:
+            return False
+
+        # TODO: This is a temporary approach while we have just one permission group.
+        # Once this list grows, we'll need to create an actual list of authorized groups.
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+
+        return PermissionGroup.objects.filter(
+            organization__in=user_organizations, template__name__in=authorized_permission_groups
+        ).exists()
 
 
 class ClientProfile(models.Model):
