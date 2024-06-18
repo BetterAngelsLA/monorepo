@@ -39,7 +39,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
         });
 
         if (!data) {
-          console.error(`Failed to update note: ${error}`);
+          console.error(`Failed to update interaction: ${error}`);
         }
       } catch (err) {
         console.error(err);

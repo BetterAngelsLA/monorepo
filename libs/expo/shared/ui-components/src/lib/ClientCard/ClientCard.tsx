@@ -98,9 +98,9 @@ export function ClientCard(props: IClientCardProps) {
       <View style={{ justifyContent: 'center', position: 'relative' }}>
         <TextButton
           fontSize="sm"
-          title={select === 'true' ? 'Select' : 'Add Note'}
+          title={select === 'true' ? 'Select' : 'Add Interaction'}
           onPress={onPress}
-          accessibilityHint={`Add a note for client ${firstName} ${lastName}`}
+          accessibilityHint={`Add a interaction for client ${firstName} ${lastName}`}
         />
       </View>
     </Pressable>

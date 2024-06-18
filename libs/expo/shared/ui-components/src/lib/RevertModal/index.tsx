@@ -51,14 +51,14 @@ export default function RevertModal({
               fontSize="sm"
               onPress={() => setVisible(false)}
               color={Colors.PRIMARY}
-              accessibilityHint="continue to work on the note"
+              accessibilityHint="continue to work on the interaction"
               title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               size="full"
-              accessibilityHint="reverts note to earlier state"
+              accessibilityHint="reverts interaction to earlier state"
               onPress={async () => {
                 onRevert();
                 setVisible(false);

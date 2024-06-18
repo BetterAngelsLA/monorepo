@@ -51,14 +51,14 @@ export default function DeleteModal({
               fontSize="sm"
               onPress={() => setVisible(false)}
               color={Colors.PRIMARY}
-              accessibilityHint="continue to work on the note"
+              accessibilityHint="continue to work on the interaction"
               title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               size="full"
-              accessibilityHint="deletes the note"
+              accessibilityHint="deletes the interaction"
               onPress={async () => {
                 onDelete();
                 setVisible(false);
