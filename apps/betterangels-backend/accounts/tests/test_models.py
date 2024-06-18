@@ -16,16 +16,16 @@ class UserModelTest(TestCase):
         unauthorized_org = organization_recipe.make(name="unauthorized org")
 
         (
-            authorized_user_1,
-            authorized_user_2,
-            unauthorized_user_1,
-            unauthorized_user_2,
+            user_in_auth_org,
+            user_in_unauth_org,
+            user_in_both_orgs,
+            user_in_no_orgs,
         ) = baker.make(User, _quantity=4)
 
-        authorized_org.add_user(authorized_user_1)
-        authorized_org.add_user(authorized_user_2)
-        unauthorized_org.add_user(unauthorized_user_1)
-        unauthorized_org.add_user(authorized_user_2)
+        authorized_org.add_user(user_in_auth_org)
+        authorized_org.add_user(user_in_both_orgs)
+        unauthorized_org.add_user(user_in_unauth_org)
+        unauthorized_org.add_user(user_in_both_orgs)
 
         remove_organization_permission_group(unauthorized_org)
 
@@ -34,7 +34,7 @@ class UserModelTest(TestCase):
             organization=unauthorized_org,
         )
 
-        self.assertTrue(authorized_user_1.is_outreach_authorized)
-        self.assertTrue(authorized_user_2.is_outreach_authorized)
-        self.assertFalse(unauthorized_user_1.is_outreach_authorized)
-        self.assertFalse(unauthorized_user_2.is_outreach_authorized)
+        self.assertTrue(user_in_auth_org.is_outreach_authorized)
+        self.assertTrue(user_in_both_orgs.is_outreach_authorized)
+        self.assertFalse(user_in_unauth_org.is_outreach_authorized)
+        self.assertFalse(user_in_no_orgs.is_outreach_authorized)
