@@ -67,8 +67,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    organizations_organizationuser: models.QuerySet[OrganizationUser]
     organizations_organization: models.QuerySet[Organization]
+    organizations_organizationuser: models.QuerySet[OrganizationUser]
 
     # MyPy hints for Permission Reverses
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
