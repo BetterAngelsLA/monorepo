@@ -6,17 +6,18 @@ from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
-from django.test import TestCase, ignore_warnings
+from common.tests.utils import GraphQLBaseTestCase
+from django.test import ignore_warnings
 from model_bakery import baker
 from notes.models import Note
-from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import parametrize
+from organizations.models import OrganizationUser
+from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from .baker_recipes import organization_recipe
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 @ignore_warnings(category=UserWarning)
-class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
+class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_anonymous_user_query(self) -> None:
         """
         Test querying the currentUser with an anonymous user.
@@ -38,7 +39,20 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertEqual(response["errors"][0]["message"], "User is not logged in.")
         self.assertIsNone(response["data"])
 
-    def test_logged_in_user_query(self) -> None:
+    @parametrize(
+        ("organization_count, is_outreach_authorized, expected_query_count"),
+        [
+            (0, False, 3),
+            (1, True, 4),
+            (2, True, 4),
+        ],
+    )
+    def test_logged_in_user_query(
+        self,
+        organization_count: int,
+        is_outreach_authorized: bool,
+        expected_query_count: int,
+    ) -> None:
         """
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
@@ -46,15 +60,32 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         user = baker.make(User, email="test@example.com", username="testuser")
         self.graphql_client.force_login(user)
 
+        expected_organizations = []
+
+        for _ in range(organization_count):
+            organization = organization_recipe.make()
+            baker.make(OrganizationUser, user=user, organization=organization)
+            permission_group_recipe.make(organization=organization)
+            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
+
         query = """
         query {
             currentUser {
                 email
                 username
+                firstName
+                lastName
+                isOutreachAuthorized
+                organizations: organizationsOrganization {
+                    id
+                    name
+                }
             }
         }
         """
-        response = self.execute_graphql(query)
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
 
         self.assertIsNone(response.get("errors"), "Expected no errors in the response")
         self.assertIn(
@@ -73,6 +104,23 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
             user.username,
             "Username does not match the logged-in user",
         )
+        self.assertEqual(
+            response["data"]["currentUser"]["firstName"],
+            user.first_name,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["lastName"],
+            user.last_name,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["isOutreachAuthorized"],
+            is_outreach_authorized,
+        )
+        self.assertEqual(
+            len(response["data"]["currentUser"]["organizations"]),
+            organization_count,
+        )
+        self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
