@@ -9,6 +9,7 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    environment: Development
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
@@ -42,7 +43,6 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Use filtered secrets
-        environment: Development
         run: |
           echo "Using filtered secrets:"
           env | grep ^EXPO_PUBLIC
