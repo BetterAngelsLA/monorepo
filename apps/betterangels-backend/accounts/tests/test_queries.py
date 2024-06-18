@@ -7,7 +7,7 @@ from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import TestCase, ignore_warnings
+from django.test import ignore_warnings
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import OrganizationUser
