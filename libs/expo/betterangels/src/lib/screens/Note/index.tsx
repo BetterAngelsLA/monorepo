@@ -46,7 +46,7 @@ export default function Note({ id }: { id: string }) {
             })
           }
           title="Edit"
-          accessibilityHint="takes to edit the note"
+          accessibilityHint="goes to the edit interaction screen"
         />
       ),
     });

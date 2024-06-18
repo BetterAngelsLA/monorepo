@@ -304,7 +304,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         },
       });
       if (!locationData) {
-        console.error('Error updating note location', updateError);
+        console.error('Error updating interaction location', updateError);
       }
     } catch (err) {
       console.error(err);
