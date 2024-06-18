@@ -3,7 +3,11 @@ from accounts.utils import remove_organization_permission_group
 from django.test import TestCase
 from model_bakery import baker
 
-from .baker_recipes import organization_recipe
+from .baker_recipes import (
+    organization_recipe,
+    permission_group_recipe,
+    permission_group_template_recipe,
+)
 
 
 class UserModelTest(TestCase):
@@ -23,6 +27,11 @@ class UserModelTest(TestCase):
         unauthorized_org.add_user(unauthorized_user_1)
 
         remove_organization_permission_group(unauthorized_org)
+
+        permission_group_recipe.make(
+            name="unauthorized permission group",
+            organization=unauthorized_org,
+        )
 
         self.assertTrue(authorized_user_1.is_outreach_authorized)
         self.assertTrue(authorized_user_2.is_outreach_authorized)
