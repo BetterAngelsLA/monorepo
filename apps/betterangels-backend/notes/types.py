@@ -265,3 +265,4 @@ class UpdateTaskLocationInput:
 class RevertNoteInput:
     id: auto
     saved_at: datetime
+    revert_before_timestamp: Optional[datetime]
