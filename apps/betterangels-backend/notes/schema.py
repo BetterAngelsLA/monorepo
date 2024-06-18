@@ -4,6 +4,7 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
+from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
@@ -21,7 +22,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
-from notes.utils import NoteReverter, get_user_permission_group
+from notes.utils import NoteReverter
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django import mutations
