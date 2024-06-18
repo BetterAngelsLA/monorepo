@@ -21,6 +21,7 @@ class UserModelTest(TestCase):
         authorized_org.add_user(authorized_user_1)
         authorized_org.add_user(authorized_user_2)
         unauthorized_org.add_user(unauthorized_user_1)
+        unauthorized_org.add_user(authorized_user_2)
 
         remove_organization_permission_group(unauthorized_org)
 
