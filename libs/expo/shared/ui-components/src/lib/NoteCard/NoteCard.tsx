@@ -39,7 +39,7 @@ export function NoteCard(props: INoteCardProps) {
       <View style={{ alignItems: 'center', paddingHorizontal: Spacings.xs }}>
         <Avatar
           accessibilityHint={`shows avatar of ${title} if available`}
-          accessibilityLabel={`Avatar of ${title} Note`}
+          accessibilityLabel={`Avatar of ${title} Interaction`}
           mb="xs"
           size="lg"
         />
@@ -55,8 +55,8 @@ export function NoteCard(props: INoteCardProps) {
           <TextRegular size="sm">update {title}</TextRegular>
         </View>
         <IconButton
-          accessibilityHint={`goes to edit ${title} note`}
-          accessibilityLabel={`Update ${title} note`}
+          accessibilityHint={`goes to edit ${title} interaction`}
+          accessibilityLabel={`Update ${title} interaction`}
           onPress={onPress}
           mb="xs"
           variant="secondary"

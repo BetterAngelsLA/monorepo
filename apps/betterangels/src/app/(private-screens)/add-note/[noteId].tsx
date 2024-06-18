@@ -93,7 +93,7 @@ export default function AddNote() {
         },
       });
       if (!result.data) {
-        console.error(`Failed to update note: ${updateError}`);
+        console.error(`Failed to update interaction: ${updateError}`);
         return;
       }
       router.replace('/');
@@ -153,13 +153,13 @@ export default function AddNote() {
           {...props}
         />
         <DeleteModal
-          body="All data associated with this note will be deleted"
-          title="Delete note?"
+          body="All data associated with this interaction will be deleted"
+          title="Delete interaction?"
           onDelete={deleteNoteFunction}
           button={
             <Button
               accessibilityHint="deletes creation"
-              title="Delete Note"
+              title="Delete Interaction"
               variant="negative"
               size="full"
               mt="xs"
@@ -177,15 +177,15 @@ export default function AddNote() {
               button={
                 <TextButton
                   fontSize="sm"
-                  accessibilityHint="discards changes and reverts note to previous state"
+                  accessibilityHint="discards changes and reverts interaction to previous state"
                   title="Cancel"
                 />
               }
             />
           ) : (
             <DeleteModal
-              body="All data associated with this note will be deleted"
-              title="Delete note?"
+              body="All data associated with this interaction will be deleted"
+              title="Delete interaction?"
               onDelete={deleteNoteFunction}
               button={
                 <TextButton
@@ -203,7 +203,7 @@ export default function AddNote() {
               mr="sm"
               fontSize="sm"
               onPress={router.back}
-              accessibilityHint="saves the note for later"
+              accessibilityHint="saves the interaction for later"
               title="Save for later"
             />
           )

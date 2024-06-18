@@ -122,7 +122,7 @@ export default function Title(props: ITitleProps) {
           <IconButton
             onPress={() => setExpanded('Title')}
             accessibilityLabel="edit"
-            accessibilityHint="edits note title"
+            accessibilityHint="edits interaction title"
             variant="transparent"
           >
             <PencilSolidIcon
