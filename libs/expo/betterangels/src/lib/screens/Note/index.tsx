@@ -41,7 +41,7 @@ export default function Note({ id }: { id: string }) {
             router.navigate({
               pathname: `/add-note/${id}`,
               params: {
-                savedAt: new Date().toISOString(),
+                revertBeforeTimestamp: new Date().toISOString(),
               },
             })
           }
