@@ -122,3 +122,12 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_current_user(self, info: Info) -> DeletedObjectType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            user_id = user.pk
+            user.delete()
+
+            return DeletedObjectType(id=user_id)

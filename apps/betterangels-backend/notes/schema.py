@@ -177,7 +177,9 @@ class Mutation:
         note = Note.objects.get(id=data.id)
 
         try:
-            NoteReverter(note_id=data.id).revert_to_saved_at(saved_at=data.saved_at.isoformat())
+            NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
+                revert_before_timestamp=data.revert_before_timestamp.isoformat()
+            )
             note.refresh_from_db()
 
         except Exception as e:
