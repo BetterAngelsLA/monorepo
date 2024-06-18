@@ -17,7 +17,7 @@ from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 @ignore_warnings(category=UserWarning)
-class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase, TestCase):
+class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_anonymous_user_query(self) -> None:
         """
         Test querying the currentUser with an anonymous user.
