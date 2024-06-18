@@ -88,7 +88,7 @@ class UserType:
     last_name: auto
     email: auto
     is_outreach_authorized: auto
-    organizations_organization: Optional[List[OrganizationType]]
+    organizations_organization: List[OrganizationType]
 
 
 @strawberry_django.input(User)

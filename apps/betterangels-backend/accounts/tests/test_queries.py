@@ -116,13 +116,11 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase, TestCas
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
         )
-
-        if organization_count:
-            self.assertEqual(
-                len(response["data"]["currentUser"]["organizations"]),
-                organization_count,
-            )
-            self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
+        self.assertEqual(
+            len(response["data"]["currentUser"]["organizations"]),
+            organization_count,
+        )
+        self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
 class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
