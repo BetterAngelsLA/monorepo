@@ -3,11 +3,7 @@ from accounts.utils import remove_organization_permission_group
 from django.test import TestCase
 from model_bakery import baker
 
-from .baker_recipes import (
-    organization_recipe,
-    permission_group_recipe,
-    permission_group_template_recipe,
-)
+from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class UserModelTest(TestCase):
