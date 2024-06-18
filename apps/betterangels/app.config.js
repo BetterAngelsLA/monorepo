@@ -28,6 +28,9 @@ export default {
       bundleIdentifier: BUNDLE_IDENTIFIER,
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
+      config: {
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+      },
     },
     android: {
       adaptiveIcon: {
