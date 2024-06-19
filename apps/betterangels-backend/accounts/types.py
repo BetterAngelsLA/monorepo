@@ -87,8 +87,9 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
-    is_outreach_authorized: auto
-    organizations_organization: List[OrganizationType]
+    # TODO: Optional because clients are users. We may want to consider breaking out a "CaseManagerProfile"
+    organizations_organization: Optional[List[OrganizationType]]
+    is_outreach_authorized: Optional[bool]
 
 
 @strawberry_django.input(User)
