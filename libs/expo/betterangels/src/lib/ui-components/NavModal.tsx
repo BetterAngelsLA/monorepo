@@ -1,9 +1,5 @@
 import {
-  BurgerSodaIcon,
-  CalendarLineIcon,
   HouseLineIcon,
-  ListIcon,
-  MapLineIcon,
   NoteIcon,
   SignOutIcon,
   UsersLineIcon,
@@ -19,37 +15,17 @@ const ACTIONS = [
   {
     title: 'Home',
     Icon: HouseLineIcon,
-    route: '#',
+    route: '/',
   },
   {
     title: 'Clients',
     Icon: UsersLineIcon,
-    route: '#',
-  },
-  {
-    title: 'Map',
-    Icon: MapLineIcon,
-    route: '#',
+    route: '/clients',
   },
   {
     title: 'Interactions',
     Icon: NoteIcon,
     route: '/interactions',
-  },
-  {
-    title: 'Tasks',
-    Icon: ListIcon,
-    route: '#',
-  },
-  {
-    title: 'Services',
-    Icon: BurgerSodaIcon,
-    route: '#',
-  },
-  {
-    title: 'Schedule',
-    Icon: CalendarLineIcon,
-    route: '#',
   },
 ];
 
