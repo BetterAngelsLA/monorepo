@@ -1,5 +1,5 @@
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 
-export default function Tasks({ id }: { id: string }) {
+export default function Tasks({ userId }: { userId: string | undefined }) {
   return <TextRegular>Tasks</TextRegular>;
 }
