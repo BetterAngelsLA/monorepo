@@ -8,8 +8,10 @@ def update_caseworker_permission_template(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     caseworker_template = PermissionGroupTemplate.objects.get(name="Caseworker")
 
-    permission_to_add = Permission.objects.filter(codename="add_servicerequest")
-    permission_to_remove = Permission.objects.filter(codename="add_service_request")
+    permission_to_add = Permission.objects.get(codename="add_servicerequest")
+    # This migration is fixing a typo left in by a bad squash. Using .filter() here
+    # because this permission only exists in the live db, not in local dev
+    permission_to_remove = Permission.objects.filter(codename="add_service_request").first()
 
     caseworker_template.permissions.add(permission_to_add)
     caseworker_template.permissions.remove(permission_to_remove)
