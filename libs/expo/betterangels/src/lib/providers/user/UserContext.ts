@@ -6,7 +6,7 @@ export type TUser = {
   firstName?: string;
   lastName?: string;
   email?: string;
-  hasOrganization: boolean;
+  organizations: string[] | null;
 };
 
 export interface IUserProviderValue {
