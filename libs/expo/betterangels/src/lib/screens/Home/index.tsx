@@ -8,7 +8,6 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
-import Events from './Events';
 
 import { Header } from '../../ui-components';
 import {
@@ -99,27 +98,24 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         }}
         data={clients}
         ListHeaderComponent={
-          <>
-            <Events />
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: Spacings.sm,
-              }}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: Spacings.sm,
+            }}
+          >
+            <TextMedium size="lg">Active Clients</TextMedium>
+            <Link
+              accessible
+              accessibilityHint="goes to all active clients list"
+              accessibilityRole="button"
+              href="/clients"
             >
-              <TextMedium size="lg">Active Clients</TextMedium>
-              <Link
-                accessible
-                accessibilityHint="goes to all active clients list"
-                accessibilityRole="button"
-                href="/clients"
-              >
-                <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
-              </Link>
-            </View>
-          </>
+              <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
+            </Link>
+          </View>
         }
         renderItem={({ item: clientProfile }) =>
           clients ? (

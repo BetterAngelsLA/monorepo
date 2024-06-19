@@ -33,6 +33,34 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertIsNone(response.get("errors"))
         self.assertEqual(response["data"]["logout"], True)
 
+    def test_delete_current_user(self) -> None:
+        initial_user_count = User.objects.count()
+        user = baker.make(User)
+        self.assertEqual(initial_user_count + 1, User.objects.count())
+
+        self.graphql_client.force_login(user)
+
+        mutation: str = """
+            mutation DeleteCurrentUser {
+                deleteCurrentUser {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        response = self.execute_graphql(mutation)["data"]["deleteCurrentUser"]
+        self.assertEqual(response["id"], user.pk)
+        self.assertEqual(initial_user_count, User.objects.count())
+
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:

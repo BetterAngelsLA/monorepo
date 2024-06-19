@@ -30,7 +30,7 @@ export default function PrivateLayout() {
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
-          title: 'Add note',
+          title: 'Add interaction',
           headerTitleAlign: 'center',
           headerLeft: () => (
             <Pressable
@@ -85,7 +85,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="note/[id]"
         options={{
-          title: 'Note',
+          title: 'Interaction',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
