@@ -3,26 +3,28 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
-import useUser from '../../hooks/user/useUser';
-import { MainContainer, NoteCard } from '../../ui-components';
+import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
+import { MainContainer, NoteCard } from '../../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
 const paginationLimit = 10;
 
-export default function Interactions() {
+export default function Interactions({
+  userId,
+}: {
+  userId: string | undefined;
+}) {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useUser();
 
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      filters: { createdBy: user?.id, search: filterSearch },
+      filters: { client: userId, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -45,12 +47,6 @@ export default function Interactions() {
     []
   );
 
-  const onChange = (e: string) => {
-    setSearch(e);
-
-    debounceFetch(e);
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
     setOffset(0);
@@ -69,6 +65,12 @@ export default function Interactions() {
     setRefreshing(false);
   };
 
+  const onChange = (e: string) => {
+    setSearch(e);
+
+    debounceFetch(e);
+  };
+
   useEffect(() => {
     if (!data || !('notes' in data)) return;
 
@@ -81,7 +83,6 @@ export default function Interactions() {
       setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
     }
 
-    // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
@@ -89,9 +90,13 @@ export default function Interactions() {
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={onChange} />
-      <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       <FlatList
+        ListHeaderComponent={
+          <>
+            <InteractionsHeader search={search} setSearch={onChange} />
+            <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
+          </>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
