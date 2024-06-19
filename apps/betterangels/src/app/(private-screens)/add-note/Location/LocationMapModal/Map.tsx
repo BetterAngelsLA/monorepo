@@ -1,8 +1,11 @@
+import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/apollo';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { getItem } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:
@@ -60,10 +63,17 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
       const placeId = e.nativeEvent.placeId || undefined;
       const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-        : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+        ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
+        : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
       try {
-        const { data } = await axios.get(url);
+        const { data } = await axios.get(url, {
+          params: {
+            withCredentials: true,
+            headers: {
+              CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
+            },
+          },
+        });
 
         setCurrentLocation({
           longitude,

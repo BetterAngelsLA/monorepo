@@ -61,7 +61,8 @@
     "react-native-reanimated": "*",
     "expo-apple-authentication": "*",
     "expo-dev-client": "*",
-    "react-native-modal": "*"
+    "react-native-modal": "*",
+    "react-native-google-places-autocomplete": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
