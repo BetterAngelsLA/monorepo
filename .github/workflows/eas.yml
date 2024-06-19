@@ -130,9 +130,8 @@ jobs:
         run: |
           echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
           secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
-          echo "$secrets"
 
-          # Set the filtered secrets as environment variables
+          # Set the filtered secrets as environment variables # Write to disk?
           while IFS= read -r line; do
             echo "$line" >> $GITHUB_ENV
           done <<< "$secrets"

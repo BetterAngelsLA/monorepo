@@ -4162,6 +4162,7 @@ __metadata:
     react-hook-form: "npm:^7.47.0"
     react-native: "npm:0.74.2"
     react-native-gesture-handler: "npm:~2.16.1"
+    react-native-google-places-autocomplete: "npm:^2.5.6"
     react-native-maps: "npm:1.14.0"
     react-native-modal: "npm:^13.0.1"
     react-native-open-maps: "npm:^0.4.3"
@@ -20834,6 +20835,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"qs@npm:~6.9.1":
+  version: 6.9.7
+  resolution: "qs@npm:6.9.7"
+  checksum: 10/fb364b54bf4f092a095554968f5abf06036cfe359c9aba258a81b0c0366f625a46098fe1224b2a71ee2f88642470af391c7a8a1496508eca29c37093293f91a9
+  languageName: node
+  linkType: hard
+
 "query-string@npm:^7.1.0, query-string@npm:^7.1.3":
   version: 7.1.3
   resolution: "query-string@npm:7.1.3"
@@ -21080,6 +21088,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/227799f5e16f9725d81db524fc06c1fbef226835a5ee989642d132748832f7543ebc750d4309e49bcaa0fb6d1e7dd6b74028785e4b755978ab7f66f05b414c18
+  languageName: node
+  linkType: hard
+
+"react-native-google-places-autocomplete@npm:^2.5.6":
+  version: 2.5.6
+  resolution: "react-native-google-places-autocomplete@npm:2.5.6"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+    prop-types: "npm:^15.7.2"
+    qs: "npm:~6.9.1"
+  peerDependencies:
+    react-native: ">= 0.59"
+  checksum: 10/f8a0e85225c3e13c086b29e92c5cd93bfb8515c0d7ef6483f78e6215cfa0ebaa7e4ea8db9a2e65971d2ff45912d9386c1e9ba52bdc31e1739c44a8762e4c3ee2
   languageName: node
   linkType: hard
 

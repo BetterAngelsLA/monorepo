@@ -12,6 +12,7 @@ function loadConfig() {
 
   // Check if any of the environment variables are undefined
   if (!googleClientId || !apiUrl || !redirectUri) {
+    console.log(googleClientId, apiUrl, redirectUri);
     throw new Error('One or more environment variables are undefined.');
   }
 

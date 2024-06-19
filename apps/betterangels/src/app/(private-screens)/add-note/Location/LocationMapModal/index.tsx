@@ -1,8 +1,8 @@
 import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
-import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import { LocationArrowIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
+  GooglePlacesInput,
   IconButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -370,23 +370,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               flex: 1,
             }}
           >
-            <BasicInput
-              onKeyPress={({ nativeEvent }) => {
-                nativeEvent.key === 'Backspace' && onDelete();
-              }}
-              onFocus={() => {
-                if (chooseDirections) {
-                  setChooseDirections(false);
-                  setSelected(true);
-                }
-              }}
-              onDelete={onSearchDelete}
-              mt="sm"
-              placeholder="Type location"
-              icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-              value={address?.short}
-              onChangeText={onSearchChange}
-            />
+            <GooglePlacesInput proxyUrl="http://localhost:8000/proxy/maps/"></GooglePlacesInput>
             <FlatList
               style={{
                 backgroundColor: Colors.WHITE,
