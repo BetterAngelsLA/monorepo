@@ -7,7 +7,12 @@ from accounts.types import UserType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
-from notes.enums import NoteNamespaceEnum, ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import (
+    DueByGroupEnum,
+    NoteNamespaceEnum,
+    ServiceRequestTypeEnum,
+    TaskTypeEnum,
+)
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
@@ -72,13 +77,19 @@ class UpdateServiceRequestInput:
     client: Optional[ID]
 
 
-@strawberry_django.type(models.Task, pagination=True)
+@strawberry_django.ordering.order(models.Task)
+class TaskOrder:
+    due_by: auto
+
+
+@strawberry_django.type(models.Task, pagination=True, order=TaskOrder)  # type: ignore[literal-required]
 class TaskType:
     id: auto
     title: auto
     location: Optional[LocationType]
     status: auto
     due_by: auto
+    due_by_group: DueByGroupEnum
     client: Optional[UserType]
     created_at: auto
     created_by: UserType
@@ -96,6 +107,7 @@ class CreateTaskInput:
 class CreateNoteTaskInput:
     title: auto
     status: auto
+    due_by: auto
     note_id: ID
     task_type: TaskTypeEnum
 
@@ -252,4 +264,4 @@ class UpdateTaskLocationInput:
 @strawberry_django.input(models.Note)
 class RevertNoteInput:
     id: auto
-    saved_at: datetime
+    revert_before_timestamp: datetime

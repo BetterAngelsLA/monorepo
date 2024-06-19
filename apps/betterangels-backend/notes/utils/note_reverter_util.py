@@ -9,14 +9,16 @@ from pghistory.models import Context, Events
 
 class NoteReverter:
     """
-    This class will revert the specified Note, and all of it's related models back to their state at the saved_at timestamp.
+    This class will revert the specified Note, and all of it's related models
+    back to their state at the revert_before_timestamp timestamp.
 
     The only exception is NoteAttachments which rely on s3 storage and will not be affected by version control.
     See NOTE_RELATED_MODEL_UPDATES for revertable actions.
 
     Example usage:
 
-        NoteReverter(note_id="100").revert_to_saved_at(saved_at="2024-03-11T10:11:12+00:00")
+        NoteReverter(note_id="100")
+        .revert_to_revert_before_timestamp(revert_before_timestamp="2024-03-11T10:11:12+00:00")
 
     """
 
@@ -89,13 +91,13 @@ class NoteReverter:
 
         return failed_revert_events
 
-    def _revert_changes_to_all_related_models(self, saved_at: str) -> None:
-        # Find contexts affecting Note-related models that were created AFTER saved_at time
+    def _revert_changes_to_all_related_models(self, revert_before_timestamp: str) -> None:
+        # Find contexts affecting Note-related models that were created AFTER revert_before_timestamp time
         contexts_to_revert: list[UUID] = list(
             Context.objects.filter(
                 metadata__note_id=self.note_id,
                 # metadata__label__in=self.NOTE_RELATED_MODEL_UPDATES,
-                metadata__timestamp__gt=saved_at,
+                metadata__timestamp__gt=revert_before_timestamp,
             ).values_list("id", flat=True)
         )
 
@@ -114,9 +116,9 @@ class NoteReverter:
         return
 
     @transaction.atomic
-    def revert_to_saved_at(self, saved_at: str) -> None:
+    def revert_to_revert_before_timestamp(self, revert_before_timestamp: str) -> None:
         """
-        This function will revert the Note back to it's state at the saved_at timestamp.
+        This function will revert the Note back to it's state at the revert_before_timestamp timestamp.
         """
 
         revert_to_note_context_id: UUID | None = None
@@ -124,17 +126,17 @@ class NoteReverter:
         update_note_contexts = Context.objects.filter(metadata__note_id=self.note_id, metadata__label="updateNote")
 
         if update_note_contexts.exists():
-            # Find context for most recent Note instance update BEFORE saved_at time
+            # Find context for most recent Note instance update BEFORE revert_before_timestamp time
             if revert_to_note_context := (
                 update_note_contexts.filter(
-                    metadata__timestamp__lte=saved_at,
+                    metadata__timestamp__lte=revert_before_timestamp,
                 )
                 .order_by("metadata__timestamp")
                 .last()
             ):
                 revert_to_note_context_id = revert_to_note_context.id
 
-        self._revert_changes_to_all_related_models(saved_at=saved_at)
+        self._revert_changes_to_all_related_models(revert_before_timestamp=revert_before_timestamp)
 
         # Revert just the Note instance
         if revert_to_note_context_id:
@@ -146,11 +148,11 @@ class NoteReverter:
                 pgh_context_id=event.pgh_context_id, id=event.pgh_obj_id
             ).revert()
 
-        # If all updates occurred after saved_at, revert to Note instance's creation event
+        # If all updates occurred after revert_before_timestamp, revert to Note instance's creation event
         elif update_note_contexts.exists():
             Note.objects.get(id=self.note_id).events.get(pgh_label="note.add").revert()
 
-        # Discard contexts that were created after saved_at time
-        update_note_contexts.filter(metadata__timestamp__gt=saved_at).delete()
+        # Discard contexts that were created after revert_before_timestamp time
+        update_note_contexts.filter(metadata__timestamp__gt=revert_before_timestamp).delete()
 
         return

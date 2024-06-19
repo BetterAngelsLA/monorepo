@@ -7,11 +7,13 @@ export default function MainContainer({
   bg,
   pt = 'md',
   px = 'sm',
+  pb = 80,
 }: {
   children: ReactNode;
   bg?: string;
-  pt?: 'sm' | 'md' | 'lg';
+  pt?: 'sm' | 'md' | 'lg' | 0;
   px?: 'sm' | 'md' | 0;
+  pb?: 0 | 80;
 }) {
   return (
     <KeyboardAvoidingView
@@ -23,8 +25,8 @@ export default function MainContainer({
           flex: 1,
           backgroundColor: bg || Colors.WHITE,
           paddingHorizontal: px && Spacings[px],
-          paddingBottom: 80,
-          paddingTop: Spacings[pt],
+          paddingBottom: pb,
+          paddingTop: pt && Spacings[pt],
         }}
       >
         {children}

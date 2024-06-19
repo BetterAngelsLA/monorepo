@@ -165,6 +165,7 @@ export type CreateNoteServiceRequestInput = {
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
+  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   noteId: Scalars['ID']['input'];
   status: TaskStatusEnum;
   taskType: TaskTypeEnum;
@@ -236,6 +237,15 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
+
+export enum DueByGroupEnum {
+  FutureTasks = 'FUTURE_TASKS',
+  InTheNextWeek = 'IN_THE_NEXT_WEEK',
+  NoDueDate = 'NO_DUE_DATE',
+  Overdue = 'OVERDUE',
+  Today = 'TODAY',
+  Tomorrow = 'TOMORROW'
+}
 
 export type FeatureControlData = {
   __typename?: 'FeatureControlData';
@@ -560,6 +570,7 @@ export type NoteTypeAttachmentsArgs = {
 
 
 export type NoteTypeNextStepsArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -570,6 +581,7 @@ export type NoteTypeProvidedServicesArgs = {
 
 
 export type NoteTypePurposesArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -706,6 +718,7 @@ export type QueryTaskArgs = {
 
 
 export type QueryTasksArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -727,7 +740,7 @@ export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id?: InputMaybe<Scalars['ID']['input']>;
-  savedAt: Scalars['DateTime']['input'];
+  revertBeforeTimestamp: Scalars['DateTime']['input'];
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;
@@ -820,6 +833,10 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export type TaskOrder = {
+  dueBy?: InputMaybe<Ordering>;
+};
+
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
   ToDo = 'TO_DO'
@@ -831,6 +848,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
+  dueByGroup: DueByGroupEnum;
   id: Scalars['ID']['output'];
   location?: Maybe<LocationType>;
   status: TaskStatusEnum;

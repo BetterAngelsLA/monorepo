@@ -160,6 +160,7 @@ union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 input CreateNoteTaskInput {
   title: String!
   status: TaskStatusEnum!
+  dueBy: DateTime
   noteId: ID!
   taskType: TaskTypeEnum!
 }
@@ -201,6 +202,8 @@ scalar Decimal
 
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
+union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
+
 input DeleteDjangoObjectInput {
   id: ID!
 }
@@ -233,6 +236,15 @@ type DjangoFileType {
 
 type DjangoModelType {
   pk: ID!
+}
+
+enum DueByGroupEnum {
+  OVERDUE
+  TODAY
+  TOMORROW
+  IN_THE_NEXT_WEEK
+  FUTURE_TASKS
+  NO_DUE_DATE
 }
 
 type FeatureControlData {
@@ -332,6 +344,7 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  deleteCurrentUser: DeleteCurrentUserPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -399,8 +412,8 @@ type NoteType {
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
-  purposes(pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(pagination: OffsetPaginationInput): [TaskType!]!
+  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -455,6 +468,11 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+type OrganizationType {
+  id: ID!
+  name: String!
+}
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
@@ -470,7 +488,7 @@ type Query {
   serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  tasks(pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput): [ShelterType!]!
 }
@@ -493,7 +511,7 @@ union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
   id: ID
-  savedAt: DateTime!
+  revertBeforeTimestamp: DateTime!
 }
 
 union RevertNotePayload = NoteType | OperationInfo
@@ -581,6 +599,10 @@ type SwitchType {
   lastModified: DateTime
 }
 
+input TaskOrder {
+  dueBy: Ordering
+}
+
 enum TaskStatusEnum {
   COMPLETED
   TO_DO
@@ -592,6 +614,7 @@ type TaskType {
   location: LocationType
   status: TaskStatusEnum!
   dueBy: DateTime
+  dueByGroup: DueByGroupEnum!
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
@@ -673,6 +696,8 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
+  isOutreachAuthorized: Boolean!
+  organizationsOrganization: [OrganizationType!]!
 }
 
 enum YesNoPreferNotToSayEnum {

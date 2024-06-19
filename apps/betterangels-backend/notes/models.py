@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
@@ -12,8 +13,15 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
+from strawberry_django.descriptors import model_property
 
-from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum, TaskStatusEnum
+from .enums import (
+    DueByGroupEnum,
+    MoodEnum,
+    ServiceEnum,
+    ServiceRequestStatusEnum,
+    TaskStatusEnum,
+)
 
 if TYPE_CHECKING:
     from pghistory.models import Events
@@ -119,6 +127,30 @@ class Task(BaseModel):
             return note.id
 
         return None
+
+    @model_property
+    def due_by_group(self) -> Optional[str]:
+        DAYS_IN_A_WEEK = 7
+
+        if self.due_by is None:
+            return DueByGroupEnum.NO_DUE_DATE
+
+        due_by_date = self.due_by.date()
+        today = timezone.now().date()
+
+        if due_by_date < today:
+            return DueByGroupEnum.OVERDUE
+
+        if due_by_date == today:
+            return DueByGroupEnum.TODAY
+
+        if due_by_date == today + timedelta(days=1):
+            return DueByGroupEnum.TOMORROW
+
+        if due_by_date <= today + timedelta(days=DAYS_IN_A_WEEK):
+            return DueByGroupEnum.IN_THE_NEXT_WEEK
+
+        return DueByGroupEnum.FUTURE_TASKS
 
 
 @pghistory.track(
