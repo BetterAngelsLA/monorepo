@@ -102,6 +102,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+    middle_name = models.CharField(max_length=30, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)

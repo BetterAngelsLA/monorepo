@@ -110,6 +110,7 @@ class ClientProfileBaseType:
     date_of_birth: auto
     gender: auto
     hmis_id: auto
+    middle_name: auto
     nickname: auto
     phone_number: auto
     preferred_language: auto

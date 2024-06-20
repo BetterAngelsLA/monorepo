@@ -97,6 +97,7 @@ type ClientProfileType {
   dateOfBirth: Date
   gender: GenderEnum
   hmisId: String
+  middleName: String
   nickname: String
   phoneNumber: String
   preferredLanguage: LanguageEnum
@@ -113,6 +114,7 @@ input CreateClientProfileInput {
   dateOfBirth: Date
   gender: GenderEnum
   hmisId: String
+  middleName: String
   nickname: String
   phoneNumber: String
   preferredLanguage: LanguageEnum
@@ -636,6 +638,7 @@ input UpdateClientProfileInput {
   dateOfBirth: Date
   gender: GenderEnum
   hmisId: String
+  middleName: String
   nickname: String
   phoneNumber: String
   preferredLanguage: LanguageEnum
