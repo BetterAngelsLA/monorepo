@@ -1,6 +1,4 @@
-import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/apollo';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { getItem } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
@@ -68,9 +66,6 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       const { data } = await axios.get(url, {
         params: {
           withCredentials: true,
-          headers: {
-            CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
-          },
         },
       });
 

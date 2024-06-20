@@ -1,5 +1,4 @@
 import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
-import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/apollo';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -9,7 +8,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
-import { getItem } from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -125,9 +123,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           components: 'country:us',
           strictBounds: true,
           withCredentials: true,
-          headers: {
-            CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
-          },
         },
       });
 
@@ -154,9 +149,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             place_id: place.place_id,
             fields: 'geometry,address_component',
             withCredentials: true,
-            headers: {
-              CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
-            },
           },
         }
       );
@@ -268,9 +260,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const { data } = await axios.get(url, {
         params: {
           withCredentials: true,
-          headers: {
-            CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
-          },
         },
       });
 
