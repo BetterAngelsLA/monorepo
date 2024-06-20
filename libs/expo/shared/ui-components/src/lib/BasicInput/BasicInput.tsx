@@ -101,7 +101,7 @@ export function BasicInput(props: IBasicInputProps) {
           {...rest}
           value={value}
         />
-        {value && (
+        {value && onDelete && (
           <Pressable
             accessible
             accessibilityRole="button"
