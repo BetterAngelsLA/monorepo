@@ -4,19 +4,17 @@ import {
   UpdateNoteMutation,
   UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
-import { PencilSolidIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
+import { Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   DatePicker,
-  IconButton,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { format, parse, setHours, setMinutes } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 interface ITitleProps {
   expanded: string | undefined | null;
@@ -112,25 +110,17 @@ export default function Title(props: ITitleProps) {
           overflow: 'hidden',
         }}
       >
-        <View
+        <Pressable
+          onPress={() => setExpanded('Title')}
+          accessibilityRole="button"
+          accessibilityHint="opens title edit"
           style={{
             flexDirection: 'row',
             alignItems: 'center',
           }}
         >
           <TextMedium mr="sm">{note.title}</TextMedium>
-          <IconButton
-            onPress={() => setExpanded('Title')}
-            accessibilityLabel="edit"
-            accessibilityHint="edits interaction title"
-            variant="transparent"
-          >
-            <PencilSolidIcon
-              size="lg"
-              color={error.title ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
-            />
-          </IconButton>
-        </View>
+        </Pressable>
         <TextRegular size="xs" mb="md">
           {note.date} {note?.time || ''}
         </TextRegular>
