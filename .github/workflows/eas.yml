@@ -63,12 +63,11 @@ jobs:
       - name: 🔍 Determine Channel Config
         id: set-channel
         run: |
-          echo "channel_name=preview" >> $GITHUB_OUTPUT
-          # if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          #   echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          # else
-          #   echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          # fi
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "channel_name=production" >> $GITHUB_OUTPUT
+          else
+            echo "channel_name=preview" >> $GITHUB_OUTPUT
+          fi
 
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
