@@ -74,6 +74,12 @@ class ClientProfileFilter:
         return queryset, Q()
 
 
+@strawberry.input
+class LoginInput:
+    username: str
+    password: str
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
     id: auto
@@ -87,8 +93,8 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
-    is_outreach_authorized: auto
-    organizations_organization: List[OrganizationType]
+    is_outreach_authorized: Optional[bool]
+    organizations_organization: Optional[List[OrganizationType]]
 
 
 @strawberry_django.input(User)
