@@ -15,7 +15,7 @@ interface IRadioProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  value: string | number;
+  value: string | undefined | null;
 }
 
 export function Radio(props: IRadioProps) {
