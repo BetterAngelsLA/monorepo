@@ -12,10 +12,10 @@ export default function UserProfile() {
   const userInfo = [
     { title: 'Email', value: user.email },
     {
-      title: 'Organization',
+      title: 'Organizations',
       value:
         user.organizations && user.organizations.length > 0
-          ? user.organizations.join(', ')
+          ? user.organizations?.map((org) => org.name).join(', ')
           : 'None',
     },
   ];

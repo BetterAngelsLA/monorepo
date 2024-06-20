@@ -1,12 +1,18 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
 
+export type TOrganization = {
+  id: string;
+  name: string;
+};
+
 export type TUser = {
   id: string;
   username?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
-  organizations: string[] | null;
+  organizations: TOrganization[] | null;
+  isOutreachAuthorized: boolean;
 };
 
 export interface IUserProviderValue {
