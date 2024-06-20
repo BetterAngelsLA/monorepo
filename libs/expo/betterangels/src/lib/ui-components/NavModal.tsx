@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSignOut } from '../hooks';
@@ -36,6 +37,7 @@ interface INavModalProps {
 export default function NavModal(props: INavModalProps) {
   const { image } = props;
   const [isModalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
   const openModal = () => {
     setModalVisible(true);
   };
@@ -69,7 +71,14 @@ export default function NavModal(props: INavModalProps) {
         closeModal={closeModal}
         height="100%"
         topSection={
-          <Pressable accessibilityRole="button" style={styles.container}>
+          <Pressable
+            onPress={() => {
+              closeModal();
+              router.navigate('/profile');
+            }}
+            accessibilityRole="button"
+            style={styles.container}
+          >
             {({ pressed }) => (
               <View
                 style={{
