@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -58,21 +59,33 @@ jobs:
           IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+
+      - name: 🔍 Determine Channel Config
+        id: set-channel
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "channel_name=production" >> $GITHUB_OUTPUT
+          else
+            echo "channel_name=preview" >> $GITHUB_OUTPUT
+          fi
+
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+      channel_name: ${{ steps.set-channel.outputs.channel_name }}
 
   preview:
     needs: prepare
+    environment: ${{ needs.prepare.outputs.channel_name }}
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
-      # REQUIRED: Allow comments of PRs
+      # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
-      # REQUIRED: Allow updating fingerprint in acton caches
+      # REQUIRED: Allow updating fingerprint in action caches
       actions: write
       # Following permissions are required for private repos
       contents: read
@@ -104,28 +117,35 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: 🔍 Determine Channel Config
-        # When not in production we use the preview eas.json config.
-        # This will not necessarily map to the actual deployed channel.
-        id: set-env
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "CHANNEL_CONFIG=production" >> $GITHUB_ENV
-          else
-            echo "CHANNEL_CONFIG=preview" >> $GITHUB_ENV
-          fi
-
       - name: 🧹 Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.${{ env.CHANNEL_CONFIG }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          cat eas.json | jq -r '.build.${{ needs.prepare.outputs.channel_name }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+        working-directory: apps/${{ matrix.project }}
+
+      - name: Load Application Secrets
+        id: filter-secrets
+        shell: bash
+        run: |
+          echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+          # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+          # but include items such as API keys and configurations (e.g., Google API keys)
+          # that we prefer not to commit directly into our GitHub repository.
+          secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+
+          # Write the filtered secrets to the .env file
+          while IFS= read -r line; do
+            echo "$line" >> .env
+          done <<< "$secrets"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
         id: continuos_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          profile: ${{  env.CHANNEL_CONFIG }}
+          profile: ${{ needs.prepare.outputs.channel_name }}
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
@@ -135,7 +155,13 @@ jobs:
         run: |
           build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
           if [ "${build_list_output}" == "[]" ]; then
-            eas build --profile development-simulator --platform ios
+            eas build --profile development-simulator --platform ios --non-interactive --no-wait
           else
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
+
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}

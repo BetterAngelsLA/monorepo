@@ -22,8 +22,8 @@ import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-
-const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
+// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
+import { apiUrl } from '../../../../../../config';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -66,7 +66,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setError,
   } = props;
   const mapRef = useRef<MapView>(null);
-  const [pin, setPin] = useState(false);
+  const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
@@ -102,7 +102,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
+    const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
     // geocode for approx center of LA COUNTY
@@ -115,13 +115,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     };
 
     try {
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(url, {
         params: {
           bounds: defaultBounds,
           input: query,
-          key: apiKey,
           components: 'country:us',
           strictBounds: true,
+          withCredentials: true,
         },
       });
 
@@ -140,13 +141,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         setChooseDirections(false);
       }
       setLocation(undefined);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(
-        'https://maps.googleapis.com/maps/api/place/details/json',
+        `${apiUrl}/proxy/maps/api/place/details/json`,
         {
           params: {
             place_id: place.place_id,
             fields: 'geometry,address_component',
-            key: apiKey,
+            withCredentials: true,
           },
         }
       );
@@ -180,7 +182,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         full: place.description,
         addressComponents: response.data.result.address_components,
       });
-      setPin(true);
+      setMinimizeModal(false);
       setSelected(true);
     } catch (err) {
       console.error(err);
@@ -214,7 +216,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setPin(false);
+    setMinimizeModal(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -251,10 +253,15 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setUserLocation(userCurrentLocation);
     if (location?.latitude && location?.longitude) return;
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
-      const { data } = await axios.get(url);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      const { data } = await axios.get(url, {
+        params: {
+          withCredentials: true,
+        },
+      });
 
       setLocation(undefined);
       setCurrentLocation({
@@ -277,14 +284,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         addressComponents: data.results[0].address_components,
       });
 
-      setPin(true);
-
       setLocation({
         longitude: longitude,
         latitude: latitude,
         address: googleAddress,
         name: undefined,
       });
+      setMinimizeModal(false);
       setSelected(true);
 
       const { data: locationData } = await updateNoteLocation({
@@ -316,7 +322,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setPin(false);
+    setMinimizeModal(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -377,6 +383,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               onFocus={() => {
                 if (chooseDirections) {
                   setChooseDirections(false);
+                  setMinimizeModal(false);
                   setSelected(true);
                 }
               }}
@@ -450,6 +457,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             {selected && currentLocation && (
               <Selected
                 noteId={noteId}
+                minimizeModal={minizeModal}
                 setLocation={setLocation}
                 currentLocation={currentLocation}
                 address={address}
@@ -473,10 +481,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             setChooseDirections={setChooseDirections}
             currentLocation={currentLocation}
             setCurrentLocation={setCurrentLocation}
-            pin={pin}
+            setMinimizeModal={setMinimizeModal}
             setInitialLocation={setInitialLocation}
             initialLocation={initialLocation}
-            setPin={setPin}
             setSelected={setSelected}
             setAddress={setAddress}
           />
