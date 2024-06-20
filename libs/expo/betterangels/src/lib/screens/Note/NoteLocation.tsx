@@ -18,7 +18,6 @@ export default function NoteLocation({
       <MapView
         zoomEnabled={false}
         scrollEnabled={false}
-        // https://github.com/expo/expo/issues/28705
         provider={PROVIDER_GOOGLE}
         region={{
           longitudeDelta: 0.005,
