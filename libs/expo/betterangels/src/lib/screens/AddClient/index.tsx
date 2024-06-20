@@ -79,7 +79,6 @@ export default function AddClient() {
     delete input.socialSecurity;
 
     try {
-      console.log(client.dateOfBirth);
       const data = await createClient({
         variables: {
           data: input,
@@ -90,7 +89,7 @@ export default function AddClient() {
       }
       navigation.goBack();
     } catch (err) {
-      console.error(err);
+      throw new Error(`Failed to create a client profile: ${err}`);
     }
   };
 
