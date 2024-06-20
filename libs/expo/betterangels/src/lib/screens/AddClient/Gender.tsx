@@ -79,6 +79,7 @@ export default function Gender(props: IGenderProps) {
         </View>
         {other && (
           <BasicInput
+            label="Other"
             value={client.otherGender}
             onChangeText={(e) =>
               setClient({
