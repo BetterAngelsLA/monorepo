@@ -74,6 +74,12 @@ class ClientProfileFilter:
         return queryset, Q()
 
 
+@strawberry.input
+class LoginInput:
+    username: str
+    password: str
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
     id: auto

@@ -200,6 +200,8 @@ export type CreateUserInput = {
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
+export type DeleteCurrentUserPayload = DeletedObjectType | OperationInfo;
+
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
@@ -298,6 +300,11 @@ export type LocationType = {
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
 
+export type LoginInput = {
+  password: Scalars['String']['input'];
+  username: Scalars['String']['input'];
+};
+
 export type MagicLinkInput = {
   email: Scalars['String']['input'];
 };
@@ -349,6 +356,7 @@ export type Mutation = {
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteClientProfile: DeleteClientProfilePayload;
+  deleteCurrentUser: DeleteCurrentUserPayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteNoteAttachment: DeleteNoteAttachmentPayload;
@@ -356,6 +364,7 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
+  login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
@@ -456,6 +465,11 @@ export type MutationGenerateMagicLinkArgs = {
 
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationLoginArgs = {
+  input: LoginInput;
 };
 
 
@@ -629,6 +643,12 @@ export enum Ordering {
   DescNullsFirst = 'DESC_NULLS_FIRST',
   DescNullsLast = 'DESC_NULLS_LAST'
 }
+
+export type OrganizationType = {
+  __typename?: 'OrganizationType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
 
 /** Permission definition for schema directives. */
 export type PermDefinition = {
@@ -928,7 +948,9 @@ export type UserType = {
   email: Scalars['String']['output'];
   firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  isOutreachAuthorized: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
+  organizationsOrganization: Array<OrganizationType>;
   username: Scalars['String']['output'];
 };
 
