@@ -64,6 +64,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
       : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
         params: {
           withCredentials: true,

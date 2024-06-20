@@ -117,6 +117,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     };
 
     try {
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(url, {
         params: {
           bounds: defaultBounds,
@@ -145,6 +146,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         setChooseDirections(false);
       }
       setLocation(undefined);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(
         `${apiUrl}/proxy/maps/api/place/details/json`,
         {
@@ -262,6 +264,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
         params: {
           withCredentials: true,
