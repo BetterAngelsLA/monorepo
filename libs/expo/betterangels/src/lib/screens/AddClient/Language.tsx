@@ -44,7 +44,8 @@ export default function Language(props: ILanguageProps) {
       >
         <Select
           placeholder="Select Language"
-          setExternalValue={(e) =>
+          value={client.preferredLanguage || ''}
+          onChange={(e) =>
             setClient({
               ...client,
               preferredLanguage: e as LanguageEnum,
