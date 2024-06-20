@@ -29,7 +29,7 @@ export default {
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+        googleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
       },
     },
     android: {
@@ -54,7 +54,7 @@ export default {
       ],
       config: {
         googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+          apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
     },
