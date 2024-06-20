@@ -14,13 +14,12 @@ interface IMapProps {
       | { longitude: number; latitude: number; name: string | undefined }
       | undefined
   ) => void;
-  pin: boolean;
   setInitialLocation: (initialLocation: {
     longitude: number;
     latitude: number;
   }) => void;
   initialLocation: { longitude: number; latitude: number };
-  setPin: (pin: boolean) => void;
+  setMinimizeModal: (minimizeModal: boolean) => void;
   setSelected: (selected: boolean) => void;
   setAddress: (
     address:
@@ -38,10 +37,9 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
   const {
     currentLocation,
     setCurrentLocation,
-    pin,
     setInitialLocation,
     initialLocation,
-    setPin,
+    setMinimizeModal,
     setAddress,
     setSelected,
     setChooseDirections,
@@ -54,53 +52,46 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       setChooseDirections(false);
       return;
     }
-    if (!pin) {
-      const latitude = e.nativeEvent.coordinate.latitude;
-      const longitude = e.nativeEvent.coordinate.longitude;
-      const name =
-        e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
-      const placeId = e.nativeEvent.placeId || undefined;
-      const url = isId
-        ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-        : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-      try {
-        const { data } = await axios.get(url);
+    const latitude = e.nativeEvent.coordinate.latitude;
+    const longitude = e.nativeEvent.coordinate.longitude;
+    const name =
+      e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
+    const placeId = e.nativeEvent.placeId || undefined;
+    const url = isId
+      ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
+      : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    try {
+      const { data } = await axios.get(url);
 
-        setCurrentLocation({
-          longitude,
-          latitude,
-          name,
-        });
+      setCurrentLocation({
+        longitude,
+        latitude,
+        name,
+      });
 
-        setInitialLocation({
-          longitude,
-          latitude,
-        });
+      setInitialLocation({
+        longitude,
+        latitude,
+      });
 
-        const googleAddress = isId
-          ? data.result.formatted_address
-          : data.results[0].formatted_address;
-        const addressComponents = isId
-          ? data.result.address_components
-          : data.results[0].address_components;
+      const googleAddress = isId
+        ? data.result.formatted_address
+        : data.results[0].formatted_address;
+      const addressComponents = isId
+        ? data.result.address_components
+        : data.results[0].address_components;
 
-        const shortAddress = isId ? name : googleAddress.split(', ')[0];
+      const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
-        setAddress({
-          short: shortAddress,
-          full: googleAddress,
-          addressComponents,
-        });
-        setPin(true);
-        setSelected(true);
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      setAddress(undefined);
-      setCurrentLocation(undefined);
-      setPin(false);
-      setSelected(false);
+      setAddress({
+        short: shortAddress,
+        full: googleAddress,
+        addressComponents,
+      });
+      setMinimizeModal(false);
+      setSelected(true);
+    } catch (err) {
+      console.log(err);
     }
   }
 
@@ -114,6 +105,10 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
+      onPanDrag={() => {
+        setMinimizeModal(true);
+      }}
+      onDoublePress={() => setMinimizeModal(true)}
       // https://github.com/expo/expo/issues/28705
       provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
       initialRegion={{

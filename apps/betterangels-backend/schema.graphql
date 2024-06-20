@@ -300,6 +300,11 @@ type LocationType {
   pointOfInterest: String
 }
 
+input LoginInput {
+  username: String!
+  password: String!
+}
+
 input MagicLinkInput {
   email: String!
 }
@@ -339,6 +344,7 @@ type MoodType {
 type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   logout: Boolean!
+  login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
@@ -696,8 +702,8 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
-  isOutreachAuthorized: Boolean!
-  organizationsOrganization: [OrganizationType!]!
+  isOutreachAuthorized: Boolean
+  organizationsOrganization: [OrganizationType!]
 }
 
 enum YesNoPreferNotToSayEnum {
