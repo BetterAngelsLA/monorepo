@@ -14,14 +14,17 @@ interface INameProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
+  errorState: string | null;
 }
 
 export default function Name(props: INameProps) {
-  const { expanded, setClient, client, setExpanded, scrollRef } = props;
+  const { expanded, setClient, client, setExpanded, scrollRef, errorState } =
+    props;
 
   const isName = expanded === 'Name';
   return (
     <FieldCard
+      error={errorState ? 'First Name is required' : ''}
       scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
@@ -36,7 +39,9 @@ export default function Name(props: INameProps) {
         !isName ? (
           <TextMedium size="sm">Add Name</TextMedium>
         ) : (
-          ''
+          <TextMedium size="sm">
+            {client?.user.firstName} {client?.user.lastName}
+          </TextMedium>
         )
       }
       title="Name"
@@ -49,6 +54,8 @@ export default function Name(props: INameProps) {
         }}
       >
         <BasicInput
+          required
+          error={!!errorState}
           placeholder="Enter First Name"
           label="First Name"
           onDelete={() => {

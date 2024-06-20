@@ -8,9 +8,9 @@ export const Languages = [
   'Khmer',
   'Korean',
   'Russian',
-  'SimplifiedChinese',
+  'Simplified Chinese',
   'Spanish',
   'Tagalog',
-  'TraditionalChinese',
+  'Traditional Chinese',
   'Vietnamese',
 ];

@@ -33,7 +33,6 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
       setExpanded={() => {
         setExpanded(isVeteranStatus ? null : 'Veteran Status');
       }}
-      required
       mb="xs"
       actionName={
         !client.veteranStatus && !isVeteranStatus ? (
