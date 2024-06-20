@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 
-# @login_required
+@login_required
 def google_maps_api(request: HttpRequest, path: str) -> HttpResponse:
     """
     Proxies a request to the Google Maps API.
