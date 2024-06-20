@@ -1,6 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { RefObject } from 'react';
+import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput } from '../../apollo';
 
 interface IProfilePhotoProps {
@@ -8,13 +9,15 @@ interface IProfilePhotoProps {
   setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function ProfilePhoto(props: IProfilePhotoProps) {
-  const { expanded, setExpanded, client } = props;
+  const { expanded, setExpanded, client, scrollRef } = props;
   const isProfilePhoto = expanded === 'Profile Photo';
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
         setExpanded(isProfilePhoto ? null : 'Date of Birth');

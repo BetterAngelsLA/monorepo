@@ -5,7 +5,7 @@ import TextRegular from '../TextRegular';
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IBasicRadioProps {
-  label: string | number;
+  label: string | undefined | null;
   onPress: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
@@ -53,7 +53,12 @@ export function BasicRadio(props: IBasicRadioProps) {
       ]}
       onPress={onPress}
     >
-      <View style={[styles.radio, value === label && styles.checked]} />
+      <View
+        style={[
+          styles.radio,
+          value?.toLowerCase() === label?.toLowerCase() && styles.checked,
+        ]}
+      />
       <TextRegular size="sm" ml="xs">
         {label}
       </TextRegular>

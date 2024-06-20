@@ -4,7 +4,8 @@ import {
   Select,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { RefObject } from 'react';
+import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput, LanguageEnum } from '../../apollo';
 
 interface ILanguageProps {
@@ -12,14 +13,16 @@ interface ILanguageProps {
   setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function Language(props: ILanguageProps) {
-  const { expanded, setExpanded, client, setClient } = props;
+  const { expanded, setExpanded, client, setClient, scrollRef } = props;
 
   const isLanguage = expanded === 'Language';
   return (
     <FieldCard
+      scrollRef={scrollRef}
       overflow={isLanguage ? 'visible' : 'hidden'}
       expanded={expanded}
       setExpanded={() => {
@@ -30,7 +33,9 @@ export default function Language(props: ILanguageProps) {
         !client.preferredLanguage && !isLanguage ? (
           <TextMedium size="sm">Add Language</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.preferredLanguage}</TextMedium>
+          <TextMedium textTransform="capitalize" size="sm">
+            {client.preferredLanguage}
+          </TextMedium>
         )
       }
       title="Language"
