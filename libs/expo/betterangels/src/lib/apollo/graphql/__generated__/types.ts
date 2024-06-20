@@ -948,9 +948,9 @@ export type UserType = {
   email: Scalars['String']['output'];
   firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  isOutreachAuthorized: Scalars['Boolean']['output'];
+  isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
-  organizationsOrganization: Array<OrganizationType>;
+  organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
 };
 

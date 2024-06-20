@@ -702,8 +702,8 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
-  isOutreachAuthorized: Boolean!
-  organizationsOrganization: [OrganizationType!]!
+  isOutreachAuthorized: Boolean
+  organizationsOrganization: [OrganizationType!]
 }
 
 enum YesNoPreferNotToSayEnum {
