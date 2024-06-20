@@ -121,7 +121,7 @@ jobs:
       - name: 🧹 Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.${{ needs.prepare.outputs.channel_name }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+          cat eas.json | jq -r '.build.${{ needs.prepare.outputs.channel_name }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
         working-directory: apps/${{ matrix.project }}
 
       - name: Load Application Secrets
@@ -129,11 +129,14 @@ jobs:
         shell: bash
         run: |
           echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+          # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+          # but include items such as API keys and configurations (e.g., Google API keys)
+          # that we prefer not to commit directly into our GitHub repository.
           secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
 
-          # Set the filtered secrets as environment variables # Write to disk?
+          # Write the filtered secrets to the .env file
           while IFS= read -r line; do
-            echo "$line" >> $GITHUB_ENV
+            echo "$line" >> .env
           done <<< "$secrets"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
@@ -157,3 +160,9 @@ jobs:
           else
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
+
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
