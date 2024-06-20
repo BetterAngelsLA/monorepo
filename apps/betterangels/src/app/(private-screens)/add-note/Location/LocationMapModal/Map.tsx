@@ -1,9 +1,11 @@
+import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/apollo';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { getItem } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:
@@ -14,12 +16,13 @@ interface IMapProps {
       | { longitude: number; latitude: number; name: string | undefined }
       | undefined
   ) => void;
+  pin: boolean;
   setInitialLocation: (initialLocation: {
     longitude: number;
     latitude: number;
   }) => void;
   initialLocation: { longitude: number; latitude: number };
-  setMinimizeModal: (minimizeModal: boolean) => void;
+  setPin: (pin: boolean) => void;
   setSelected: (selected: boolean) => void;
   setAddress: (
     address:
@@ -37,9 +40,10 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
   const {
     currentLocation,
     setCurrentLocation,
+    pin,
     setInitialLocation,
     initialLocation,
-    setMinimizeModal,
+    setPin,
     setAddress,
     setSelected,
     setChooseDirections,
@@ -52,46 +56,60 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       setChooseDirections(false);
       return;
     }
-    const latitude = e.nativeEvent.coordinate.latitude;
-    const longitude = e.nativeEvent.coordinate.longitude;
-    const name =
-      e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
-    const placeId = e.nativeEvent.placeId || undefined;
-    const url = isId
-      ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-      : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-    try {
-      const { data } = await axios.get(url);
+    if (!pin) {
+      const latitude = e.nativeEvent.coordinate.latitude;
+      const longitude = e.nativeEvent.coordinate.longitude;
+      const name =
+        e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
+      const placeId = e.nativeEvent.placeId || undefined;
+      const url = isId
+        ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
+        : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+      try {
+        const { data } = await axios.get(url, {
+          params: {
+            withCredentials: true,
+            headers: {
+              CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
+            },
+          },
+        });
 
-      setCurrentLocation({
-        longitude,
-        latitude,
-        name,
-      });
+        setCurrentLocation({
+          longitude,
+          latitude,
+          name,
+        });
 
-      setInitialLocation({
-        longitude,
-        latitude,
-      });
+        setInitialLocation({
+          longitude,
+          latitude,
+        });
 
-      const googleAddress = isId
-        ? data.result.formatted_address
-        : data.results[0].formatted_address;
-      const addressComponents = isId
-        ? data.result.address_components
-        : data.results[0].address_components;
+        const googleAddress = isId
+          ? data.result.formatted_address
+          : data.results[0].formatted_address;
+        const addressComponents = isId
+          ? data.result.address_components
+          : data.results[0].address_components;
 
-      const shortAddress = isId ? name : googleAddress.split(', ')[0];
+        const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
-      setAddress({
-        short: shortAddress,
-        full: googleAddress,
-        addressComponents,
-      });
-      setMinimizeModal(false);
-      setSelected(true);
-    } catch (err) {
-      console.log(err);
+        setAddress({
+          short: shortAddress,
+          full: googleAddress,
+          addressComponents,
+        });
+        setPin(true);
+        setSelected(true);
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      setAddress(undefined);
+      setCurrentLocation(undefined);
+      setPin(false);
+      setSelected(false);
     }
   }
 
@@ -101,16 +119,12 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       showsUserLocation={userLocation ? true : false}
       showsMyLocationButton={false}
       mapType="standard"
-      onPoiClick={(e) => console.log(e.nativeEvent.name)}
+      onPoiClick={(e) => placePin(e, true)}
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
-      onPanDrag={() => {
-        setMinimizeModal(true);
-      }}
-      onDoublePress={() => setMinimizeModal(true)}
       // https://github.com/expo/expo/issues/28705
-      provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
+      provider={PROVIDER_GOOGLE}
       initialRegion={{
         longitudeDelta: 0.005,
         latitudeDelta: 0.005,

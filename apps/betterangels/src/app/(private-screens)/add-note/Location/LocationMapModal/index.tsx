@@ -1,4 +1,5 @@
 import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
+import { CSRF_HEADER_NAME } from '@monorepo/expo/shared/apollo';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -8,6 +9,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
+import { getItem } from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -18,12 +20,11 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-
-const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -66,7 +67,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setError,
   } = props;
   const mapRef = useRef<MapView>(null);
-  const [minizeModal, setMinimizeModal] = useState(false);
+  const [pin, setPin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
@@ -102,7 +103,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
+    const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
     // geocode for approx center of LA COUNTY
@@ -119,9 +120,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         params: {
           bounds: defaultBounds,
           input: query,
-          key: apiKey,
           components: 'country:us',
           strictBounds: true,
+          withCredentials: true,
+          headers: {
+            CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
+          },
         },
       });
 
@@ -141,12 +145,15 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       }
       setLocation(undefined);
       const response = await axios.get(
-        'https://maps.googleapis.com/maps/api/place/details/json',
+        `${apiUrl}/proxy/maps/api/place/details/json`,
         {
           params: {
             place_id: place.place_id,
             fields: 'geometry,address_component',
-            key: apiKey,
+            withCredentials: true,
+            headers: {
+              CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
+            },
           },
         }
       );
@@ -180,7 +187,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         full: place.description,
         addressComponents: response.data.result.address_components,
       });
-      setMinimizeModal(false);
+      setPin(true);
       setSelected(true);
     } catch (err) {
       console.error(err);
@@ -214,7 +221,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setMinimizeModal(false);
+    setPin(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -251,10 +258,17 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setUserLocation(userCurrentLocation);
     if (location?.latitude && location?.longitude) return;
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
-      const { data } = await axios.get(url);
+      const { data } = await axios.get(url, {
+        params: {
+          withCredentials: true,
+          headers: {
+            CSRF_HEADER_NAME: getItem(CSRF_HEADER_NAME),
+          },
+        },
+      });
 
       setLocation(undefined);
       setCurrentLocation({
@@ -277,13 +291,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         addressComponents: data.results[0].address_components,
       });
 
+      setPin(true);
+
       setLocation({
         longitude: longitude,
         latitude: latitude,
         address: googleAddress,
         name: undefined,
       });
-      setMinimizeModal(false);
       setSelected(true);
 
       const { data: locationData } = await updateNoteLocation({
@@ -315,7 +330,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setMinimizeModal(false);
+    setPin(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -376,7 +391,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               onFocus={() => {
                 if (chooseDirections) {
                   setChooseDirections(false);
-                  setMinimizeModal(false);
                   setSelected(true);
                 }
               }}
@@ -450,7 +464,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             {selected && currentLocation && (
               <Selected
                 noteId={noteId}
-                minimizeModal={minizeModal}
                 setLocation={setLocation}
                 currentLocation={currentLocation}
                 address={address}
@@ -474,9 +487,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             setChooseDirections={setChooseDirections}
             currentLocation={currentLocation}
             setCurrentLocation={setCurrentLocation}
-            setMinimizeModal={setMinimizeModal}
+            pin={pin}
             setInitialLocation={setInitialLocation}
             initialLocation={initialLocation}
+            setPin={setPin}
             setSelected={setSelected}
             setAddress={setAddress}
           />

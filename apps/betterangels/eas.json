@@ -4,10 +4,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://localhost:8000",
-        "EXPO_PUBLIC_REDIRECT_URL": "http://localhost:8000/auth-redirect",
-        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
+        "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
+        "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com"
       },
       "channel": "development",
       "ios": {
@@ -21,8 +20,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
-        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "AIzaSyBLaCdTiqFz2N-Ab6U_KiWo0B5lVm2_8Fk"
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com"
       },
       "node": "20.12.2"
     },
@@ -33,8 +31,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.betterangels.la",
         "EXPO_PUBLIC_REDIRECT_URL": "https://api.betterangels.la/auth-redirect",
-        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<FILL_FOR_PRODUCTION>",
-        "EXPO_PUBLIC_GOOGLEMAPS_APIKEY": "<FILL_FOR_PRODUCTION>"
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "<FILL_FOR_PRODUCTION>"
       },
       "channel": "production",
       "node": "20.12.2"

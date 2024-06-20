@@ -26,8 +26,11 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      associatedDomains: [`applinks:${BUNDLE_IDENTIFIER}`],
+      associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
+      config: {
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY,
+      },
     },
     android: {
       adaptiveIcon: {
@@ -42,7 +45,7 @@ export default {
           data: [
             {
               scheme: 'https',
-              host: BUNDLE_IDENTIFIER,
+              host: HOSTNAME,
               pathPrefix: '/',
             },
           ],
