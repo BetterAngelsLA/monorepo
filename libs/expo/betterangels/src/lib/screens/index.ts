@@ -1,3 +1,4 @@
+export { default as AddClient } from './AddClient';
 export { default as Client } from './Client';
 export { default as Clients } from './Clients';
 export { default as Home } from './Home';

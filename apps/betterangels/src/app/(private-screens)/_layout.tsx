@@ -142,6 +142,26 @@ export default function PrivateLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="add-client"
+        options={{
+          title: 'Add Client',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 }
