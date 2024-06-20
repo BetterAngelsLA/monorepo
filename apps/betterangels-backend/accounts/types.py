@@ -93,6 +93,7 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
+    middle_name: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
 

@@ -702,6 +702,7 @@ type UserType {
   firstName: String
   lastName: String
   email: String!
+  middleName: String
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
 }

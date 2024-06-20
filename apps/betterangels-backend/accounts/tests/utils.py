@@ -34,6 +34,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
                 "hmisId": "A1B2C3",
+                "middleName": "Toad",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -86,6 +87,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dateOfBirth
                         gender
                         hmisId
+                        middleName
                         nickname
                         phoneNumber
                         preferredLanguage
