@@ -11,7 +11,7 @@ const createSvgIcon = (
 ) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
-    color = '#ffffff',
+    color = '#052B73',
     rotate = '0deg',
     mb,
     mt,
