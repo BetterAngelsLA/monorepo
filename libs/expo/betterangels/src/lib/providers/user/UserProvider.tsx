@@ -20,15 +20,23 @@ export default function UserProvider({ children }: UserProviderProps) {
     try {
       const response = await refetch();
       if (response.data && response.data.currentUser) {
-        const { id, username, firstName, lastName, email } =
-          response.data.currentUser;
+        const {
+          id,
+          username,
+          firstName,
+          lastName,
+          email,
+          organizations,
+          isOutreachAuthorized,
+        } = response.data.currentUser;
         setUser({
           id,
           username,
           firstName: firstName || undefined,
           lastName: lastName || undefined,
           email,
-          hasOrganization: false,
+          organizations: organizations || null,
+          isOutreachAuthorized: isOutreachAuthorized || false,
         });
       }
     } catch (err) {
@@ -38,14 +46,23 @@ export default function UserProvider({ children }: UserProviderProps) {
 
   useEffect(() => {
     if (data && !isLoading) {
-      const { id, username, firstName, lastName, email } = data.currentUser;
+      const {
+        id,
+        username,
+        firstName,
+        lastName,
+        email,
+        organizations,
+        isOutreachAuthorized,
+      } = data.currentUser;
       setUser({
         id,
         username,
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         email,
-        hasOrganization: false,
+        organizations: organizations || null,
+        isOutreachAuthorized: isOutreachAuthorized || false,
       });
     }
   }, [data, isLoading]);

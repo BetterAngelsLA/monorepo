@@ -28,7 +28,10 @@ def google_maps_api(request: HttpRequest, path: str) -> HttpResponse:
     try:
         response = requests.get(google_maps_api_url, params=params)
         response.raise_for_status()
-    except requests.RequestException as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        response_data = response.json()
+    except requests.RequestException:
+        return JsonResponse({"error": "An error occurred while contacting Google Maps API."}, status=500)
+    except ValueError:
+        return JsonResponse({"error": "Invalid response from Google Maps API."}, status=500)
 
-    return JsonResponse(response.json(), safe=False)
+    return JsonResponse(response_data, safe=False)
