@@ -66,7 +66,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setError,
   } = props;
   const mapRef = useRef<MapView>(null);
-  const [pin, setPin] = useState(false);
+  const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
@@ -180,7 +180,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         full: place.description,
         addressComponents: response.data.result.address_components,
       });
-      setPin(true);
+      setMinimizeModal(false);
       setSelected(true);
     } catch (err) {
       console.error(err);
@@ -214,7 +214,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setPin(false);
+    setMinimizeModal(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -277,14 +277,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         addressComponents: data.results[0].address_components,
       });
 
-      setPin(true);
-
       setLocation({
         longitude: longitude,
         latitude: latitude,
         address: googleAddress,
         name: undefined,
       });
+      setMinimizeModal(false);
       setSelected(true);
 
       const { data: locationData } = await updateNoteLocation({
@@ -304,7 +303,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         },
       });
       if (!locationData) {
-        console.error('Error updating note location', updateError);
+        console.error('Error updating interaction location', updateError);
       }
     } catch (err) {
       console.error(err);
@@ -316,7 +315,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
-    setPin(false);
+    setMinimizeModal(false);
     setSearchQuery('');
     setIsSearch(false);
     setSuggestions([]);
@@ -377,6 +376,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
               onFocus={() => {
                 if (chooseDirections) {
                   setChooseDirections(false);
+                  setMinimizeModal(false);
                   setSelected(true);
                 }
               }}
@@ -450,6 +450,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             {selected && currentLocation && (
               <Selected
                 noteId={noteId}
+                minimizeModal={minizeModal}
                 setLocation={setLocation}
                 currentLocation={currentLocation}
                 address={address}
@@ -473,10 +474,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             setChooseDirections={setChooseDirections}
             currentLocation={currentLocation}
             setCurrentLocation={setCurrentLocation}
-            pin={pin}
+            setMinimizeModal={setMinimizeModal}
             setInitialLocation={setInitialLocation}
             initialLocation={initialLocation}
-            setPin={setPin}
             setSelected={setSelected}
             setAddress={setAddress}
           />

@@ -43,6 +43,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
+    GOOGLE_MAPS_API_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
@@ -115,9 +116,10 @@ INSTALLED_APPS = [
     # Our Apps
     "accounts",
     "common",
-    "notes",
-    "shelters",
     "legal",
+    "notes",
+    "proxy",
+    "shelters",
 ]
 
 MIDDLEWARE = [
@@ -368,6 +370,9 @@ INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+
+# Google Maps
+GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

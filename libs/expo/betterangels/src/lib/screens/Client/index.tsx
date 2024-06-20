@@ -1,7 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, useState } from 'react';
-import { MainScrollContainer } from '../../ui-components';
+import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
@@ -13,20 +13,24 @@ import Services from './Services';
 import Tasks from './Tasks';
 import { useClientProfileQuery } from './__generated__/Client.generated';
 
-const getTabComponent = (key: string, id: string): ReactElement => {
-  const components: { [key: string]: (props: { id: string }) => JSX.Element } =
-    {
-      Profile,
-      Interactions,
-      Tasks,
-      Services,
-      Docs,
-      Schedule,
-      Locations,
-    };
+const getTabComponent = (
+  key: string,
+  userId: string | undefined
+): ReactElement => {
+  const components: {
+    [key: string]: (props: { userId: string | undefined }) => JSX.Element;
+  } = {
+    Profile,
+    Interactions,
+    Tasks,
+    Services,
+    Docs,
+    Schedule,
+    Locations,
+  };
 
   const Component = components[key];
-  return <Component id={id} />;
+  return <Component userId={userId} />;
 };
 
 export default function Client({ id }: { id: string }) {
@@ -38,7 +42,7 @@ export default function Client({ id }: { id: string }) {
   if (error) throw new Error('Something went wrong. Please try again.');
 
   return (
-    <MainScrollContainer pt={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
+    <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
         firstName={data?.clientProfile.user.firstName}
         lastName={data?.clientProfile.user.lastName}
@@ -48,7 +52,7 @@ export default function Client({ id }: { id: string }) {
         age={data?.clientProfile.age}
       />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, id)}
-    </MainScrollContainer>
+      {getTabComponent(tab, data?.clientProfile.user.id)}
+    </MainContainer>
   );
 }

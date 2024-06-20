@@ -29,4 +29,5 @@ urlpatterns = [
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
     path("legal/", include("legal.urls")),
+    path("proxy/", include("proxy.urls"), name="proxy"),
 ]
