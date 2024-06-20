@@ -18,10 +18,11 @@ import Language from './Language';
 import Name from './Name';
 import SocialSecurity from './SocialSecurity';
 import VeteranStatus from './VeteranStatus';
+import { useCreateClientProfileMutation } from './__generated__/AddClient.generated';
 
 const INITIAL_STATE = {
   address: '',
-  dateOfBirth: '',
+  dateOfBirth: undefined as Date | undefined,
   gender: undefined as GenderEnum | undefined,
   hmisId: '',
   nickname: '',
@@ -40,6 +41,8 @@ const INITIAL_STATE = {
 export default function AddClient() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [client, setClient] = useState<CreateClientProfileInput>(INITIAL_STATE);
+  const [createClient, { error }] = useCreateClientProfileMutation();
+  const [errorState, setErrorState] = useState<string | null>(null);
   const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -49,10 +52,46 @@ export default function AddClient() {
     client,
     setClient,
     scrollRef,
+    errorState,
   };
 
-  const submitNote = () => {
-    console.log('submitting note', client);
+  const submitNote = async () => {
+    if (!client.user.firstName) {
+      setErrorState('First Name is required');
+      return;
+    }
+    setErrorState(null);
+    const input = {
+      ...client,
+    };
+
+    if (client.dateOfBirth) {
+      input.dateOfBirth = new Date(client.dateOfBirth);
+    }
+
+    if (client.preferredLanguage) {
+      const trimmedLanguage =
+        client.preferredLanguage.trim() as keyof typeof LanguageEnum;
+      input.preferredLanguage = LanguageEnum[trimmedLanguage];
+    }
+
+    // Removing social security from the input until model is updated
+    delete input.socialSecurity;
+
+    try {
+      console.log(client.dateOfBirth);
+      const data = await createClient({
+        variables: {
+          data: input,
+        },
+      });
+      if (!data) {
+        throw new Error(`Failed to create a client profile: ${error}`);
+      }
+      navigation.goBack();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
