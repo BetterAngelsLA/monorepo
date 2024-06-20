@@ -30,6 +30,7 @@ export default {
       usesAppleSignIn: true,
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
+        usesNonExemptEncryption: false,
       },
     },
     android: {
