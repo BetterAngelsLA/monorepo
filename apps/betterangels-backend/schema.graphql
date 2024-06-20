@@ -262,7 +262,7 @@ type FlagType {
 enum GenderEnum {
   MALE
   FEMALE
-  NONBINARY
+  OTHER
 }
 
 """
