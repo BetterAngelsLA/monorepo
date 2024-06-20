@@ -29,6 +29,7 @@ interface IFieldCardProps {
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
   scrollRef?: RefObject<ScrollView>;
+  overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
 }
 
 export function FieldCard(props: IFieldCardProps) {
@@ -49,6 +50,7 @@ export function FieldCard(props: IFieldCardProps) {
     info,
     childHeight,
     scrollRef,
+    overflow = 'hidden',
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
@@ -120,7 +122,7 @@ export function FieldCard(props: IFieldCardProps) {
           onStartShouldSetResponder={() => true}
           style={{
             height: childHeight,
-            overflow: 'hidden',
+            overflow,
             marginTop: expanded === title ? Spacings.sm : Spacings.md,
             marginBottom: expanded === title ? Spacings.md : 0,
           }}
