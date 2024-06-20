@@ -2,6 +2,7 @@ export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
+export { default as BasicRadio } from './BasicRadio';
 export { default as BasicTextarea } from './BasicTextarea';
 export { default as BottomActions } from './BottomActions';
 export { default as Button } from './Button';
