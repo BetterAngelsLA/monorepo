@@ -6,6 +6,7 @@ import Button from '../Button';
 interface IBottomActionsProps {
   optionalAction?: ReactNode;
   cancel: ReactNode;
+  submitTitle?: string;
   onSubmit: () => void;
   /**
    * Optional action to be displayed on the right side of the bottom actions.
@@ -13,7 +14,7 @@ interface IBottomActionsProps {
 }
 
 export default function BottomActions(props: IBottomActionsProps) {
-  const { optionalAction, cancel, onSubmit } = props;
+  const { optionalAction, cancel, onSubmit, submitTitle = 'Submit' } = props;
 
   return (
     <View
@@ -37,7 +38,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           height="md"
           variant="primary"
           accessibilityHint="submit the note"
-          title="Submit"
+          title={submitTitle}
           style={{ maxWidth: 85 }}
           onPress={onSubmit}
         />

@@ -1,11 +1,11 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { RefObject, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput } from '../../apollo';
 import { formatSSN } from '../../helpers';
 
@@ -14,6 +14,7 @@ interface ISocialSecurityProps {
   setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 const initialSSN = {
@@ -23,7 +24,7 @@ const initialSSN = {
 };
 
 export default function SocialSecurity(props: ISocialSecurityProps) {
-  const { expanded, setExpanded, client, setClient } = props;
+  const { expanded, setExpanded, client, setClient, scrollRef } = props;
   const [ssn, setSsn] = useState(
     client.socialSecurity
       ? {
@@ -48,6 +49,7 @@ export default function SocialSecurity(props: ISocialSecurityProps) {
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
         setExpanded(isSocialSecurity ? null : 'Social Security');
@@ -66,10 +68,11 @@ export default function SocialSecurity(props: ISocialSecurityProps) {
     >
       <View
         style={{
-          gap: Spacings.sm,
+          gap: 2.5,
           height: isSocialSecurity ? 'auto' : 0,
           overflow: 'hidden',
           flexDirection: 'row',
+          alignItems: 'center',
         }}
       >
         <View style={{ flex: 1 }}>
@@ -80,6 +83,9 @@ export default function SocialSecurity(props: ISocialSecurityProps) {
             onChangeText={(e) => handleSSNChange(e, 'ssn1')}
           />
         </View>
+        <View
+          style={{ width: 5, height: 1, backgroundColor: Colors.NEUTRAL_DARK }}
+        />
         <View style={{ flex: 1 }}>
           <BasicInput
             maxLength={2}
@@ -88,6 +94,9 @@ export default function SocialSecurity(props: ISocialSecurityProps) {
             onChangeText={(e) => handleSSNChange(e, 'ssn2')}
           />
         </View>
+        <View
+          style={{ width: 5, height: 1, backgroundColor: Colors.NEUTRAL_DARK }}
+        />
         <View style={{ flex: 1 }}>
           <BasicInput
             maxLength={4}

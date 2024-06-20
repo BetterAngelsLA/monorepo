@@ -4,7 +4,8 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { RefObject } from 'react';
+import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput, GenderEnum } from '../../apollo';
 
 interface IGenderProps {
@@ -12,6 +13,7 @@ interface IGenderProps {
   setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 const GENDERS: Array<'Male' | 'Female' | 'Nonbinary'> = [
@@ -21,12 +23,13 @@ const GENDERS: Array<'Male' | 'Female' | 'Nonbinary'> = [
 ];
 
 export default function Gender(props: IGenderProps) {
-  const { expanded, setExpanded, client, setClient } = props;
+  const { expanded, setExpanded, client, setClient, scrollRef } = props;
 
   const isGender = expanded === 'Gender';
 
   return (
     <FieldCard
+      scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
         setExpanded(isGender ? null : 'Gender');
@@ -36,7 +39,9 @@ export default function Gender(props: IGenderProps) {
         !client.gender && !isGender ? (
           <TextMedium size="sm">Add Gender</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.gender}</TextMedium>
+          <TextMedium textTransform="capitalize" size="sm">
+            {client.gender}
+          </TextMedium>
         )
       }
       title="Gender"
@@ -59,7 +64,7 @@ export default function Gender(props: IGenderProps) {
             onPress={() =>
               setClient({
                 ...client,
-                gender: q as GenderEnum,
+                gender: GenderEnum[q],
               })
             }
           />
