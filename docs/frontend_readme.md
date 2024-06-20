@@ -12,7 +12,10 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 - [Xcode](https://developer.apple.com/xcode/resources/)
 - [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
-- [Expo Dev Client](https://expo.dev/accounts/better-angels/projects/betterangels/builds/ce732740-c558-4189-a7d0-fca56877dc43)
+- Expo Dev Builds
+  - [Android](https://expo.dev/accounts/better-angels/projects/betterangels/builds/d76c28fb-9433-4f49-a062-6dfb961bc59a)
+  - [iOS](https://expo.dev/accounts/better-angels/projects/betterangels/builds/eee2cfba-66d7-4cfe-ad56-4bd7cd69e2cb)
+  - [iOS Simulator](https://expo.dev/accounts/better-angels/projects/betterangels/builds/905d580b-59fa-4c50-9372-9469b6305b43)
 
 **Setup:**
 
