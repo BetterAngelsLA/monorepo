@@ -36,6 +36,7 @@ interface ISelectedProps {
   closeModal: (hasLocation: boolean) => void;
   setLocation: (location: TLocation) => void;
   noteId: string | undefined;
+  minimizeModal: boolean;
 }
 
 export default function Selected(props: ISelectedProps) {
@@ -47,6 +48,7 @@ export default function Selected(props: ISelectedProps) {
     closeModal,
     setLocation,
     noteId,
+    minimizeModal,
   } = props;
   const [copy, setCopy] = useState<string | null>();
   const [updateNoteLocation, { error }] = useUpdateNoteLocationMutation();
@@ -122,71 +124,75 @@ export default function Selected(props: ISelectedProps) {
           <TextRegular mx="md">{address?.full}</TextRegular>
         </Pressable>
       </View>
-      <TextButton
-        onPress={() => {
-          Platform.OS === 'ios'
-            ? handleIosDirections()
-            : openMap({
-                end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
-                query: address?.full,
-                provider: 'google',
-              });
-        }}
-        fontSize="sm"
-        color={Colors.PRIMARY}
-        mx="md"
-        mb="sm"
-        accessibilityHint="opens maps to get directions"
-        title="Get directions"
-      />
-
-      <View
-        style={{
-          position: 'relative',
-
-          marginBottom: Spacings.sm,
-          width: '100%',
-          backgroundColor:
-            copy === 'geo' ? Colors.NEUTRAL_EXTRA_LIGHT : 'transparent',
-        }}
-      >
-        {copy === 'geo' && currentLocation.longitude && (
-          <Copy
-            closeCopy={() => setCopy(null)}
-            textToCopy={`${currentLocation.longitude} ${currentLocation.latitude}`}
+      {!minimizeModal && (
+        <>
+          <TextButton
+            onPress={() => {
+              Platform.OS === 'ios'
+                ? handleIosDirections()
+                : openMap({
+                    end: `${currentLocation?.latitude},${currentLocation?.longitude}`,
+                    query: address?.full,
+                    provider: 'google',
+                  });
+            }}
+            fontSize="sm"
+            color={Colors.PRIMARY}
+            mx="md"
+            mb="sm"
+            accessibilityHint="opens maps to get directions"
+            title="Get directions"
           />
-        )}
-        <View
-          style={{
-            paddingHorizontal: Spacings.md,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: Spacings.sm,
-          }}
-        >
-          <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
-          <Pressable
-            style={{ paddingVertical: Spacings.xs }}
-            accessibilityRole="button"
-            accessibilityHint="long press to copy coordinates"
-            onLongPress={() => setCopy('geo')}
+
+          <View
+            style={{
+              position: 'relative',
+
+              marginBottom: Spacings.sm,
+              width: '100%',
+              backgroundColor:
+                copy === 'geo' ? Colors.NEUTRAL_EXTRA_LIGHT : 'transparent',
+            }}
           >
-            <TextBold style={{ flex: 1 }}>
-              {currentLocation.latitude.toFixed(7)}{' '}
-              {currentLocation.longitude.toFixed(7)}
-            </TextBold>
-          </Pressable>
-        </View>
-      </View>
-      <View style={{ paddingHorizontal: Spacings.md }}>
-        <Button
-          onPress={selectLocation}
-          size="full"
-          title="Select this location"
-          accessibilityHint="select pinned location"
-          variant="primary"
-        />
-      </View>
+            {copy === 'geo' && currentLocation.longitude && (
+              <Copy
+                closeCopy={() => setCopy(null)}
+                textToCopy={`${currentLocation.longitude} ${currentLocation.latitude}`}
+              />
+            )}
+            <View
+              style={{
+                paddingHorizontal: Spacings.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacings.sm,
+              }}
+            >
+              <TargetIcon color={Colors.PRIMARY_EXTRA_DARK} />
+              <Pressable
+                style={{ paddingVertical: Spacings.xs }}
+                accessibilityRole="button"
+                accessibilityHint="long press to copy coordinates"
+                onLongPress={() => setCopy('geo')}
+              >
+                <TextBold style={{ flex: 1 }}>
+                  {currentLocation.latitude.toFixed(7)}{' '}
+                  {currentLocation.longitude.toFixed(7)}
+                </TextBold>
+              </Pressable>
+            </View>
+          </View>
+          <View style={{ paddingHorizontal: Spacings.md }}>
+            <Button
+              onPress={selectLocation}
+              size="full"
+              title="Select this location"
+              accessibilityHint="select pinned location"
+              variant="primary"
+            />
+          </View>
+        </>
+      )}
     </View>
   );
 }

@@ -5,11 +5,11 @@ import strawberry_django
 from accounts.models import ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
+from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from guardian.shortcuts import assign_perm
-from notes.utils import get_user_permission_group
 from strawberry.types import Info
 from strawberry_django import auth, mutations
 from strawberry_django.auth.utils import get_current_user
@@ -23,6 +23,7 @@ from .types import (
     AuthResponse,
     ClientProfileType,
     CreateClientProfileInput,
+    LoginInput,
     MagicLinkInput,
     MagicLinkResponse,
     UpdateClientProfileInput,
@@ -46,6 +47,11 @@ class Query:
 @strawberry.type
 class Mutation:
     logout = auth.logout()
+
+    @strawberry.mutation
+    def login(self, input: LoginInput) -> AuthResponse:
+        # The is a stub and logic is handled client-side by Apollo
+        return AuthResponse(status_code="")
 
     @strawberry.mutation
     def google_auth(self, input: AuthInput) -> AuthResponse:
@@ -122,3 +128,12 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_current_user(self, info: Info) -> DeletedObjectType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            user_id = user.pk
+            user.delete()
+
+            return DeletedObjectType(id=user_id)

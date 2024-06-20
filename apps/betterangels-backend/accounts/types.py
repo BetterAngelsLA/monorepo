@@ -7,6 +7,7 @@ from accounts.enums import LanguageEnum
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
+from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
@@ -73,6 +74,18 @@ class ClientProfileFilter:
         return queryset, Q()
 
 
+@strawberry.input
+class LoginInput:
+    username: str
+    password: str
+
+
+@strawberry_django.type(Organization)
+class OrganizationType:
+    id: auto
+    name: auto
+
+
 @strawberry_django.type(User)
 class UserType:
     id: auto
@@ -80,6 +93,8 @@ class UserType:
     first_name: auto
     last_name: auto
     email: auto
+    is_outreach_authorized: Optional[bool]
+    organizations_organization: Optional[List[OrganizationType]]
 
 
 @strawberry_django.input(User)
