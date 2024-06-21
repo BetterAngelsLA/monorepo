@@ -46,7 +46,6 @@
     }
   },
   "cli": {
-    "version": ">= 5",
-    "appVersionSource": "remote"
+    "version": ">= 5"
   }
 }
