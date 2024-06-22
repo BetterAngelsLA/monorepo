@@ -10,6 +10,7 @@ import { Platform } from 'react-native';
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
 import { googleClientId, isLoginFormEnabled, redirectUri } from '../../config';
 
 const FLOW = {

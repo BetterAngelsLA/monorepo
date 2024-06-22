@@ -129,7 +129,7 @@ export default function TabLayout() {
             tabPress: (e) => {
               e.preventDefault();
               router.navigate({
-                pathname: 'clients',
+                pathname: '/clients',
                 params: {
                   title: '',
                   select: 'false',

@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 class GenderEnum(models.TextChoices):
     MALE = "male", _("Male")
     FEMALE = "female", _("Female")
-    NONBINARY = "nonbinary", _("Non-binary")
+    OTHER = "other", _("Other")
 
 
 @strawberry.enum

@@ -22,8 +22,8 @@ import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-
-const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
+// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
+import { apiUrl } from '../../../../../../config';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -102,7 +102,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
+    const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
     // geocode for approx center of LA COUNTY
@@ -115,13 +115,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     };
 
     try {
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(url, {
         params: {
           bounds: defaultBounds,
           input: query,
-          key: apiKey,
           components: 'country:us',
           strictBounds: true,
+          withCredentials: true,
         },
       });
 
@@ -140,13 +141,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         setChooseDirections(false);
       }
       setLocation(undefined);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(
-        'https://maps.googleapis.com/maps/api/place/details/json',
+        `${apiUrl}/proxy/maps/api/place/details/json`,
         {
           params: {
             place_id: place.place_id,
             fields: 'geometry,address_component',
-            key: apiKey,
+            withCredentials: true,
           },
         }
       );
@@ -251,10 +253,15 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setUserLocation(userCurrentLocation);
     if (location?.latitude && location?.longitude) return;
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
-      const { data } = await axios.get(url);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      const { data } = await axios.get(url, {
+        params: {
+          withCredentials: true,
+        },
+      });
 
       setLocation(undefined);
       setCurrentLocation({

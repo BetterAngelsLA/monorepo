@@ -53,7 +53,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.back();
+      router.navigate('/interactions');
     } catch (err) {
       console.error(err);
     }
