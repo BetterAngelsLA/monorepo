@@ -22,5 +22,3 @@ ios/build/
 android/build/
 android/app/build/
 
-# Config
-*.env

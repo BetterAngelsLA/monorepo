@@ -38,7 +38,7 @@ export default function useSignIn(mutation: DocumentNode) {
   // NOTE: We may want to consider putting this routing elsewhere.
   useEffect(() => {
     if (user) {
-      router.replace(user.hasOrganization ? '/' : '/welcome');
+      router.replace(user.isOutreachAuthorized ? '/' : '/welcome');
     }
   }, [user]);
 

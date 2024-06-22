@@ -2,8 +2,9 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
+import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:
@@ -58,10 +59,15 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
     const url = isId
-      ? `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-      : `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+      ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
+      : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
-      const { data } = await axios.get(url);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      const { data } = await axios.get(url, {
+        params: {
+          withCredentials: true,
+        },
+      });
 
       setCurrentLocation({
         longitude,
@@ -101,7 +107,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
       showsUserLocation={userLocation ? true : false}
       showsMyLocationButton={false}
       mapType="standard"
-      onPoiClick={(e) => console.log(e.nativeEvent.name)}
+      onPoiClick={(e) => placePin(e, true)}
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
@@ -109,8 +115,7 @@ const Map = forwardRef<MapView, IMapProps>((props: IMapProps, ref) => {
         setMinimizeModal(true);
       }}
       onDoublePress={() => setMinimizeModal(true)}
-      // https://github.com/expo/expo/issues/28705
-      provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
+      provider={PROVIDER_GOOGLE}
       initialRegion={{
         longitudeDelta: 0.005,
         latitudeDelta: 0.005,
