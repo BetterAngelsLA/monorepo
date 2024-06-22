@@ -55,10 +55,35 @@ export default function ContactInfo(props: IContactInfoProps) {
         />
         <BasicInput
           onDelete={() => setClient({ ...client, phoneNumber: '' })}
+          keyboardType="phone-pad"
           label="Phone Number"
           placeholder="Enter Phone Number"
           value={client.phoneNumber || ''}
           onChangeText={(e) => setClient({ ...client, phoneNumber: e })}
+        />
+        <BasicInput
+          keyboardType="email-address"
+          onDelete={() =>
+            setClient({
+              ...client,
+              user: {
+                ...client.user,
+                email: '',
+              },
+            })
+          }
+          label="Email"
+          placeholder="Enter Email"
+          value={client.phoneNumber || ''}
+          onChangeText={(e) =>
+            setClient({
+              ...client,
+              user: {
+                ...client.user,
+                email: e,
+              },
+            })
+          }
         />
       </View>
 
@@ -74,6 +99,12 @@ export default function ContactInfo(props: IContactInfoProps) {
         <View style={{ marginBottom: Spacings.sm }}>
           <TextRegular size="sm">Phone Number</TextRegular>
           <TextBold size="sm">{client.phoneNumber}</TextBold>
+        </View>
+      )}
+      {client.user.email && !isContactInfo && (
+        <View style={{ marginBottom: Spacings.sm }}>
+          <TextRegular size="sm">Email</TextRegular>
+          <TextBold size="sm">{client.user.email}</TextBold>
         </View>
       )}
     </FieldCard>
