@@ -49,14 +49,13 @@ export default function Language(props: ILanguageProps) {
       >
         <Select
           placeholder="Select Language"
-          value={client.preferredLanguage || ''}
-          onChange={(e) =>
+          onValueChange={(e) =>
             setClient({
               ...client,
               preferredLanguage: e as LanguageEnum,
             })
           }
-          data={Languages}
+          items={Languages.map((item) => ({ title: item }))}
         />
       </View>
     </FieldCard>
