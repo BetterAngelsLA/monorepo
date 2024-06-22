@@ -16,7 +16,6 @@ import Gender from './Gender';
 import HMIS from './HMIS';
 import Language from './Language';
 import Name from './Name';
-import SocialSecurity from './SocialSecurity';
 import VeteranStatus from './VeteranStatus';
 import { useCreateClientProfileMutation } from './__generated__/AddClient.generated';
 
@@ -75,9 +74,6 @@ export default function AddClient() {
       input.preferredLanguage = LanguageEnum[trimmedLanguage];
     }
 
-    // Removing social security from the input until model is updated
-    delete input.socialSecurity;
-
     try {
       const data = await createClient({
         variables: {
@@ -100,7 +96,6 @@ export default function AddClient() {
         <Dob {...props} />
         <Gender {...props} />
         <Language {...props} />
-        <SocialSecurity {...props} />
         <HMIS {...props} />
         <ContactInfo {...props} />
         <VeteranStatus {...props} />

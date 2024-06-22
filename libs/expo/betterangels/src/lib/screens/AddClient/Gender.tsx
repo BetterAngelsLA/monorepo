@@ -1,11 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
   BasicRadio,
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useState } from 'react';
+import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput, GenderEnum } from '../../apollo';
 
@@ -21,7 +20,6 @@ const GENDERS: Array<'Male' | 'Female' | 'Other'> = ['Male', 'Female', 'Other'];
 
 export default function Gender(props: IGenderProps) {
   const { expanded, setExpanded, client, setClient, scrollRef } = props;
-  const [other, setOther] = useState(false);
 
   const isGender = expanded === 'Gender';
 
@@ -65,30 +63,14 @@ export default function Gender(props: IGenderProps) {
               key={q}
               value={client.gender}
               onPress={() => {
-                const isOther = q === 'Other';
-                setOther(isOther);
-
                 setClient({
                   ...client,
-                  gender: q as GenderEnum,
-                  otherGender: isOther ? client.otherGender : undefined,
+                  gender: GenderEnum[q],
                 });
               }}
             />
           ))}
         </View>
-        {other && (
-          <BasicInput
-            label="Other"
-            value={client.otherGender}
-            onChangeText={(e) =>
-              setClient({
-                ...client,
-                otherGender: e,
-              })
-            }
-          />
-        )}
       </View>
     </FieldCard>
   );
