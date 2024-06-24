@@ -2,17 +2,16 @@ import 'expo-dev-client';
 
 import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
-import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
-import { Link, Stack, useRouter } from 'expo-router';
+import { Link, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import client from './apollo';
-import Logo from './assets/images/logo.svg';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -50,8 +49,6 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const router = useRouter();
-
   return (
     <ApolloProvider client={client}>
       <UserProvider>
@@ -91,24 +88,7 @@ function RootLayoutNav() {
           <Stack.Screen
             name="sign-in"
             options={{
-              headerTransparent: true,
-              headerBackVisible: false,
-              headerLeft: () => (
-                <IconButton
-                  accessibilityHint="goes back to auth screen"
-                  accessibilityLabel="Back"
-                  style={{ marginLeft: -17 }}
-                  variant="transparent"
-                  onPress={() => router.back()}
-                >
-                  <ArrowLeftIcon color={Colors.WHITE} size="sm" />
-                </IconButton>
-              ),
-              headerTitle: () => (
-                <View>
-                  <Logo color={Colors.WHITE} width={130} height={19.5} />
-                </View>
-              ),
+              headerShown: false,
             }}
           />
           <Stack.Screen name="auth" options={{ headerShown: false }} />

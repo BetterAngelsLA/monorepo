@@ -4,53 +4,41 @@ import {
   GoogleSignIn,
   LoginForm,
 } from '@monorepo/expo/betterangels';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Platform } from 'react-native';
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 // DEV-445 - Implement Import Aliases to Replace Long Relative Paths
+import { Colors } from '@monorepo/expo/shared/static';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Link } from 'expo-router';
 import { googleClientId, isLoginFormEnabled, redirectUri } from '../../config';
-
-const FLOW = {
-  title: 'Log In',
-  message: null,
-};
+import Logo from './assets/images/logo.svg';
 
 export default function SignIn() {
   return (
-    <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
+    <AuthContainer Logo={Logo}>
       <View style={styles.container}>
-        <TextBold
-          mb="xl"
-          color={Colors.BRAND_ANGEL_BLUE}
-          size="2xl"
-          textTransform="uppercase"
-        >
-          {FLOW.title}
-        </TextBold>
-        {FLOW.message && (
-          <TextRegular mb="md" color={Colors.WHITE}>
-            {FLOW.message}
-          </TextRegular>
-        )}
-        <View style={{ width: '100%', marginBottom: Spacings.md }}>
-          <GoogleSignIn
-            clientId={googleClientId}
-            redirectUri={redirectUri}
-          ></GoogleSignIn>
-          {Platform.OS === 'ios' && <AppleSignIn />}
-        </View>
-        {isLoginFormEnabled && <LoginForm></LoginForm>}
+        <GoogleSignIn
+          clientId={googleClientId}
+          redirectUri={redirectUri}
+        ></GoogleSignIn>
+        {Platform.OS === 'ios' && <AppleSignIn />}
+        <TextRegular textAlign="center" color={Colors.WHITE} mt="xl">
+          By continuing, you agree our <Link href="#">Terms of Service</Link>{' '}
+          and <Link href="#">Privacy Policy.</Link>
+        </TextRegular>
       </View>
+      {isLoginFormEnabled && <LoginForm />}
     </AuthContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 170,
     flex: 1,
+    justifyContent: 'flex-end',
+    width: '100%',
+    paddingBottom: 60,
   },
 });
