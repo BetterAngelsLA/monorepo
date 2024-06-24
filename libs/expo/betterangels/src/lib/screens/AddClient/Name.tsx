@@ -33,10 +33,7 @@ export default function Name(props: INameProps) {
       required
       mb="xs"
       actionName={
-        !client?.user.firstName &&
-        !client?.user.lastName &&
-        !client?.nickname &&
-        !isName ? (
+        !client?.user.firstName && !isName ? (
           <TextMedium size="sm">Add Name</TextMedium>
         ) : (
           <TextMedium size="sm">
@@ -77,6 +74,29 @@ export default function Name(props: INameProps) {
             })
           }
           value={client.user.firstName || ''}
+        />
+        <BasicInput
+          placeholder="Enter Middle Name"
+          label="Middle Name"
+          onDelete={() => {
+            setClient({
+              ...client,
+              user: {
+                ...client.user,
+                middleName: '',
+              },
+            });
+          }}
+          onChangeText={(e) =>
+            setClient({
+              ...client,
+              user: {
+                ...client.user,
+                middleName: e,
+              },
+            })
+          }
+          value={client.user.middleName || ''}
         />
         <BasicInput
           placeholder="Enter Last Name"
