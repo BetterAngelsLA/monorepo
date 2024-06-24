@@ -54,6 +54,9 @@ Source: https://icon-sets.iconify.design/fa6-solid/bars/
 Title: fa6-solid:chevron-left.svg
 Source: https://icon-sets.iconify.design/fa6-solid/chevron-left/
 
+Title: fa6-solid:chevron-right.svg
+Source: https://icon-sets.iconify.design/fa6-solid/chevron-right/
+
 Title: fa6-solid:flag.svg
 Source: https://icon-sets.iconify.design/fa6-solid/flag/
 
