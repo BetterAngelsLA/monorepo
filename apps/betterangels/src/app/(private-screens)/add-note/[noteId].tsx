@@ -159,20 +159,22 @@ export default function AddNote() {
           setIsPublicNoteEdited={setIsPublicNoteEdited}
           {...props}
         />
-        <DeleteModal
-          body="All data associated with this interaction will be deleted"
-          title="Delete interaction?"
-          onDelete={deleteNoteFunction}
-          button={
-            <Button
-              accessibilityHint="deletes creation"
-              title="Delete Interaction"
-              variant="negative"
-              size="full"
-              mt="xs"
-            />
-          }
-        />
+        {revertBeforeTimestamp && (
+          <DeleteModal
+            body="All data associated with this interaction will be deleted"
+            title="Delete interaction?"
+            onDelete={deleteNoteFunction}
+            button={
+              <Button
+                accessibilityHint="deletes creation"
+                title="Delete Interaction"
+                variant="negative"
+                size="full"
+                mt="xs"
+              />
+            }
+          />
+        )}
       </MainScrollContainer>
       <BottomActions
         cancel={
