@@ -16,3 +16,7 @@ class SignUpView(CreateView[models.Model, UserCreationForm]):
 
 class GoogleOauthHomePage(TemplateView):
     template_name = "account/google-oauth-homepage.html"
+
+
+class SupportPage(TemplateView):
+    template_name = "account/support.html"
