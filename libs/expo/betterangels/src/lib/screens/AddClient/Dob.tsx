@@ -45,6 +45,7 @@ export default function Dob(props: IDobProps) {
       >
         <DatePicker
           disabled
+          maxDate={new Date()}
           initialDate={new Date()}
           pattern={Regex.date}
           mode="date"
