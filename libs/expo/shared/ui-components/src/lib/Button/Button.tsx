@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
+  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark' | 'login']: {
     bg: string;
     color: string;
     border: string;
@@ -56,6 +56,11 @@ const VARIANTS: TVariants = {
     color: Colors.ERROR_DARK,
     border: Colors.ERROR_LIGHT,
   },
+  login: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -64,7 +69,7 @@ interface IButtonProps {
   title: string;
   size: 'sm' | 'full' | 'auto';
   onPress?: () => void;
-  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
+  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark' | 'login';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
@@ -78,6 +83,7 @@ interface IButtonProps {
   height?: 'sm' | 'md' | 'lg' | 'xl';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
+  borderRadius?: number;
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
@@ -102,6 +108,7 @@ export function Button(props: IButtonProps) {
     my,
     mx,
     borderColor,
+    borderRadius,
     accessibilityLabel,
     testID,
     accessibilityHint,
@@ -127,6 +134,7 @@ export function Button(props: IButtonProps) {
             : borderColor
             ? borderColor
             : VARIANTS[variant].border,
+          borderRadius: borderRadius,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
