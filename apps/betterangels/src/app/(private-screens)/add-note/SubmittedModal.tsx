@@ -69,7 +69,7 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
             style={{ width: 120, height: 115, marginTop: 67, marginBottom: 50 }}
           />
           <TextRegular textAlign="center" size="md">
-            Thank you for helping{!firstName ? ` ${firstName}` : ''}!
+            Thank you for helping{firstName ? ` ${firstName}` : ''}!
           </TextRegular>
         </View>
       </View>
