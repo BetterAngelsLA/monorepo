@@ -42,8 +42,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
     )
-    first_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
-    last_name = models.CharField(max_length=30, blank=True, null=True, db_index=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     email = models.EmailField(unique=True)

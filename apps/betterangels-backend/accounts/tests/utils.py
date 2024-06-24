@@ -19,11 +19,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1_user = {
             "firstName": "Todd",
             "lastName": "Chavez",
+            "middleName": "Gustav",
             "email": "todd@pblivin.com",
         }
         self.client_profile_2_user = {
             "firstName": "Mister",
             "lastName": "Peanutbutter",
+            "middleName": "T",
             "email": "mister@pblivin.com",
         }
 
@@ -96,6 +98,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                             id
                             firstName
                             lastName
+                            middleName
                             email
                         }}
                     }}
