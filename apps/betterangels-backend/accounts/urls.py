@@ -1,5 +1,10 @@
 from accounts.views.auth_views import AppleLogin, AuthRedirectView, GoogleLogin
-from accounts.views.class_views import GoogleOauthHomePage, SignUpView, SupportPage
+from accounts.views.class_views import (
+    GoogleOauthHomePage,
+    SignUpView,
+    SupportPage,
+    delete_account,
+)
 from django.urls import include, path
 from organizations.backends import invitation_backend
 from sesame.views import LoginView
@@ -7,6 +12,7 @@ from sesame.views import LoginView
 urlpatterns = [
     path("google-oauth-homepage/", GoogleOauthHomePage.as_view()),
     path("support/", SupportPage.as_view()),
+    path("delete-account/", delete_account, name="delete_account"),
     path("signup/", SignUpView.as_view(), name="signup"),
     path("rest-auth/google/", GoogleLogin.as_view(), name="api_google_login"),
     path("rest-auth/apple/", AppleLogin.as_view(), name="api_apple_login"),
