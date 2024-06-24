@@ -87,22 +87,29 @@ class OrganizationType:
 
 
 @strawberry_django.type(User)
-class UserType:
-    id: auto
-    username: auto
+class UserBaseType:
     first_name: auto
     last_name: auto
-    email: auto
     middle_name: auto
+    email: auto
+
+
+@strawberry_django.type(User)
+class UserType(UserBaseType):
+    id: auto
+    username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
 
 
 @strawberry_django.input(User)
-class CreateUserInput:
-    first_name: auto
-    last_name: auto
-    email: Optional[str]
+class CreateUserInput(UserBaseType):
+    pass
+
+
+@strawberry_django.input(User, partial=True)
+class UpdateUserInput(UserBaseType):
+    id: auto
 
 
 @strawberry_django.type(ClientProfile)
@@ -142,6 +149,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
+    user: UpdateUserInput
 
 
 @strawberry.input

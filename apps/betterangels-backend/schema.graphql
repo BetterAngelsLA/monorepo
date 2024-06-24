@@ -188,7 +188,8 @@ union CreateTaskPayload = TaskType | OperationInfo
 input CreateUserInput {
   firstName: String
   lastName: String
-  email: String
+  middleName: String
+  email: String!
 }
 
 """Date (isoformat)"""
@@ -643,6 +644,7 @@ input UpdateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
+  user: UpdateUserInput!
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
@@ -694,15 +696,23 @@ union UpdateTaskLocationPayload = TaskType | OperationInfo
 
 union UpdateTaskPayload = TaskType | OperationInfo
 
+input UpdateUserInput {
+  firstName: String
+  lastName: String
+  middleName: String
+  email: String
+  id: ID
+}
+
 scalar Upload
 
 type UserType {
-  id: ID!
-  username: String!
   firstName: String
   lastName: String
-  email: String!
   middleName: String
+  email: String!
+  id: ID!
+  username: String!
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
 }

@@ -74,6 +74,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                 email
                 username
                 firstName
+                middleName
                 lastName
                 isOutreachAuthorized
                 organizations: organizationsOrganization {
@@ -113,6 +114,10 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             user.last_name,
         )
         self.assertEqual(
+            response["data"]["currentUser"]["middleName"],
+            user.middle_name,
+        )
+        self.assertEqual(
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
         )
@@ -139,7 +144,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     dateOfBirth
                     gender
                     hmisId
-                    middleName
                     nickname
                     phoneNumber
                     preferredLanguage
@@ -150,6 +154,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         id
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }
@@ -168,6 +173,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "id": str(self.client_profile_1["user"]["id"]),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
+            "middleName": self.client_profile_1_user["middleName"],
             "email": self.client_profile_1_user["email"],
         }
         expected_client = {
@@ -177,7 +183,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.MALE.name,
             "hmisId": self.client_profile_1["hmisId"],
-            "middleName": self.client_profile_1["middleName"],
             "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -199,7 +204,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     dateOfBirth
                     gender
                     hmisId
-                    middleName
                     phoneNumber
                     preferredLanguage
                     pronouns
@@ -209,6 +213,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         id
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }

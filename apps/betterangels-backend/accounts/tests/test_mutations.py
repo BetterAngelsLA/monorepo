@@ -71,6 +71,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
+            "middleName": "Middly",
             "email": "firsty_lasty@example.com",
         }
 
@@ -79,7 +80,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
-            "middleName": "Middly",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -98,7 +98,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
-            "middleName": "Middly",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -109,6 +108,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 "id": ANY,
                 "firstName": "Firsty",
                 "lastName": "Lasty",
+                "middleName": "Middly",
                 "email": "firsty_lasty@example.com",
             },
         }
@@ -122,13 +122,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
-            "middleName": "Middly",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": "she/her",
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "user": {
+                "id": self.client_profile_1["user"]["id"],
+                "firstName": "Firstey",
+                "lastName": "Lastey",
+                "middleName": "Middley",
+                "email": "firstey_lastey@example.com",
+            },
         }
 
         response = self._update_client_profile_fixture(variables)
@@ -140,7 +146,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
-            "middleName": "Middly",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -149,12 +154,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {
                 "id": ANY,
-                "firstName": self.client_profile_1_user["firstName"],
-                "lastName": self.client_profile_1_user["lastName"],
-                "email": self.client_profile_1_user["email"],
+                "firstName": "Firstey",
+                "lastName": "Lastey",
+                "middleName": "Middley",
+                "email": "firstey_lastey@example.com",
             },
         }
+        from IPython import embed
 
+        # embed()
         self.assertEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:

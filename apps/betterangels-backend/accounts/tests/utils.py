@@ -19,11 +19,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1_user = {
             "firstName": "Todd",
             "lastName": "Chavez",
+            "middleName": "Gustav",
             "email": "todd@pblivin.com",
         }
         self.client_profile_2_user = {
             "firstName": "Mister",
             "lastName": "Peanutbutter",
+            "middleName": "T",
             "email": "mister@pblivin.com",
         }
 
@@ -34,7 +36,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
                 "hmisId": "A1B2C3",
-                "middleName": "Toad",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -69,6 +70,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         return self._create_or_update_client_profile_fixture("update", variables)
 
     def _create_or_update_client_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        from IPython import embed
+
+        # embed()
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
             mutation {operation.capitalize()}ClientProfile($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950
@@ -87,7 +91,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dateOfBirth
                         gender
                         hmisId
-                        middleName
                         nickname
                         phoneNumber
                         preferredLanguage
@@ -98,6 +101,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                             id
                             firstName
                             lastName
+                            middleName
                             email
                         }}
                     }}
