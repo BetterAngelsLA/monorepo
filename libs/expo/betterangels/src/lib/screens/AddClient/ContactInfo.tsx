@@ -31,7 +31,8 @@ export default function ContactInfo(props: IContactInfoProps) {
       }}
       mb="xs"
       actionName={
-        !(client.address || client.phoneNumber) && !isContactInfo ? (
+        !(client.address || client.phoneNumber || client.user.email) &&
+        !isContactInfo ? (
           <TextMedium size="sm">Add Contact Info</TextMedium>
         ) : (
           ''
@@ -74,7 +75,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           }
           label="Email"
           placeholder="Enter Email"
-          value={client.phoneNumber || ''}
+          value={client.user.email || ''}
           onChangeText={(e) =>
             setClient({
               ...client,
