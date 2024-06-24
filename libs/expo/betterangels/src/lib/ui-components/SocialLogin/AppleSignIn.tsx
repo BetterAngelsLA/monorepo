@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%', // Adjust width to be flexible and consistent
-    height: 44,
+    height: 46,
+    marginBottom: 8,
   },
 });
