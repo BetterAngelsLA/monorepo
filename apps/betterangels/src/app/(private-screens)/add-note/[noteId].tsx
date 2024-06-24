@@ -219,6 +219,7 @@ export default function AddNote() {
       />
 
       <SubmittedModal
+        firstName={data.note.client?.firstName}
         closeModal={() => {
           setSubmitted(false);
           router.navigate('/interactions');

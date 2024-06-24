@@ -8,10 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface ISubmittedModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
+  firstName: string | null | undefined;
 }
 
 export default function SubmittedModal(props: ISubmittedModalProps) {
-  const { closeModal, isModalVisible } = props;
+  const { closeModal, isModalVisible, firstName } = props;
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
@@ -68,7 +69,7 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
             style={{ width: 120, height: 115, marginTop: 67, marginBottom: 50 }}
           />
           <TextRegular textAlign="center" size="md">
-            Thank you for helping Jose with food, water, and a shelter referral!
+            Thank you for helping{!firstName ? ` ${firstName}` : ''}!
           </TextRegular>
         </View>
       </View>
