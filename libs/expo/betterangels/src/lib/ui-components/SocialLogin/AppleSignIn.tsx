@@ -23,8 +23,8 @@ export function AppleSignIn() {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-      cornerRadius={5}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+      cornerRadius={20}
       style={styles.button}
       onPress={async () => {
         try {
