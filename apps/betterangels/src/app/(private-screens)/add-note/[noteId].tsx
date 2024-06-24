@@ -23,7 +23,9 @@ import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
+import SubmittedModal from './SubmittedModal';
 import Title from './Title';
+
 export default function AddNote() {
   const router = useRouter();
   const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
@@ -44,6 +46,7 @@ export default function AddNote() {
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
+  const [isSubmitted, setSubmitted] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   async function deleteNoteFunction() {
@@ -96,7 +99,11 @@ export default function AddNote() {
         console.error(`Failed to update interaction: ${updateError}`);
         return;
       }
-      router.replace('/');
+
+      if (revertBeforeTimestamp) {
+        return router.replace('/');
+      }
+      setSubmitted(true);
     } catch (err) {
       console.error(err);
     }
@@ -209,6 +216,14 @@ export default function AddNote() {
           )
         }
         onSubmit={submitNote}
+      />
+
+      <SubmittedModal
+        closeModal={() => {
+          setSubmitted(false);
+          router.navigate('/interactions');
+        }}
+        isModalVisible={isSubmitted}
       />
     </View>
   );
