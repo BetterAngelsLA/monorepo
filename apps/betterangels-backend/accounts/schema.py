@@ -112,7 +112,7 @@ class Mutation:
                 ).get(id=data.id)
                 client = client_profile.user
             except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
+                raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user") or {}
