@@ -102,7 +102,7 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationType]]
 
 
-@strawberry_django.input(User)
+@strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
     pass
 
@@ -149,7 +149,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
-    user: UpdateUserInput
+    user: Optional[UpdateUserInput]
 
 
 @strawberry.input

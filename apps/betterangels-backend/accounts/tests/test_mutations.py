@@ -160,9 +160,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
                 "email": "firstey_lastey@example.com",
             },
         }
-        from IPython import embed
 
-        # embed()
         self.assertEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:

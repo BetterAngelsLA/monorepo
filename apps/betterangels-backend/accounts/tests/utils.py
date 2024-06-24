@@ -70,9 +70,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         return self._create_or_update_client_profile_fixture("update", variables)
 
     def _create_or_update_client_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
-        from IPython import embed
-
-        # embed()
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
             mutation {operation.capitalize()}ClientProfile($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950

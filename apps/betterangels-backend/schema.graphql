@@ -189,7 +189,7 @@ input CreateUserInput {
   firstName: String
   lastName: String
   middleName: String
-  email: String!
+  email: String
 }
 
 """Date (isoformat)"""
@@ -343,13 +343,13 @@ type MoodType {
 }
 
 type Mutation {
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
@@ -644,7 +644,7 @@ input UpdateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
-  user: UpdateUserInput!
+  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
