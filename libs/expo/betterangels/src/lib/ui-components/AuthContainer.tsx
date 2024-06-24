@@ -30,7 +30,7 @@ export default function AuthContainer({
       >
         {Logo && (
           <View style={{ position: 'absolute' }}>
-            <Logo width={200} height={30} />
+            <Logo width={160} height={24} />
           </View>
         )}
         {children}

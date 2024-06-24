@@ -25,8 +25,14 @@ export default function SignIn() {
         ></GoogleSignIn>
         {Platform.OS === 'ios' && <AppleSignIn />}
         <TextRegular textAlign="center" color={Colors.WHITE} mt="xl">
-          By continuing, you agree our <Link href="#">Terms of Service</Link>{' '}
-          and <Link href="#">Privacy Policy.</Link>
+          By continuing, you agree our{' '}
+          <Link style={{ textDecorationLine: 'underline' }} href="#">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link style={{ textDecorationLine: 'underline' }} href="#">
+            Privacy Policy.
+          </Link>
         </TextRegular>
       </View>
       {isLoginFormEnabled && <LoginForm />}
