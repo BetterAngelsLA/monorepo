@@ -8,6 +8,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Platform } from 'react-native';
 
+import { BookOpenIcon } from '@monorepo/expo/shared/icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { googleClientId, isLoginFormEnabled, redirectUri } from '../../config';
@@ -21,6 +22,11 @@ export default function SignIn() {
   return (
     <AuthContainer imageSource={require('./assets/images/auth-background.png')}>
       <View style={styles.container}>
+        <BookOpenIcon
+          fillColor="white"
+          strokeColor="#052B73"
+          size="2xl"
+        ></BookOpenIcon>
         <TextBold
           mb="xl"
           color={Colors.BRAND_ANGEL_BLUE}

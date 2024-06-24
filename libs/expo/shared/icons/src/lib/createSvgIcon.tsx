@@ -4,14 +4,17 @@ import { SvgProps } from 'react-native-svg';
 import { IIconProps } from './types';
 import { extractSize } from './utils';
 
+interface ExtendedIconProps extends IIconProps {
+  strokeWidth?: number;
+  strokeColor?: string;
+  fillColor?: string;
+}
+
 // Higher Order Component to create SVG icons
-const createSvgIcon = (
-  SvgComponent: React.ComponentType<SvgProps>,
-  useStroke = false
-) => {
-  const IconComponent: React.FC<IIconProps> = ({
+const createSvgIcon = (SvgComponent: React.ComponentType<SvgProps>) => {
+  const IconComponent: React.FC<ExtendedIconProps> = ({
     size = 'md',
-    color = '#052B73',
+    color = '#ffffff',
     rotate = '0deg',
     mb,
     mt,
@@ -19,26 +22,36 @@ const createSvgIcon = (
     ml,
     my,
     mx,
+    strokeWidth = 1,
+    strokeColor,
+    fillColor,
+    ...props
   }) => {
     const { w, h } = extractSize(size);
+
+    const style = {
+      transform: [{ rotate }],
+      marginBottom: mb ? Spacings[mb] : undefined,
+      marginTop: mt ? Spacings[mt] : undefined,
+      marginLeft: ml ? Spacings[ml] : undefined,
+      marginRight: mr ? Spacings[mr] : undefined,
+      marginHorizontal: mx ? Spacings[mx] : undefined,
+      marginVertical: my ? Spacings[my] : undefined,
+    };
+
     return (
       <SvgComponent
-        style={{
-          transform: [{ rotate }],
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        }}
         width={w}
         height={h}
-        color={color}
-        {...(useStroke ? { stroke: color } : { fill: color })}
+        style={style}
+        stroke={strokeColor || color}
+        strokeWidth={strokeWidth}
+        fill={fillColor || color}
+        {...props}
       />
     );
   };
+
   return memo(IconComponent);
 };
 
