@@ -36,11 +36,11 @@ export default function SignIn() {
           </TextRegular>
         )}
         <View style={{ width: '100%', marginBottom: Spacings.md }}>
+          {Platform.OS === 'ios' && <AppleSignIn />}
           <GoogleSignIn
             clientId={googleClientId}
             redirectUri={redirectUri}
           ></GoogleSignIn>
-          {Platform.OS === 'ios' && <AppleSignIn />}
         </View>
         {isLoginFormEnabled && <LoginForm></LoginForm>}
       </View>
