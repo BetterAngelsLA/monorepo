@@ -188,6 +188,7 @@ union CreateTaskPayload = TaskType | OperationInfo
 input CreateUserInput {
   firstName: String
   lastName: String
+  middleName: String
   email: String
 }
 
@@ -342,13 +343,13 @@ type MoodType {
 }
 
 type Mutation {
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
@@ -643,6 +644,7 @@ input UpdateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
+  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
@@ -694,14 +696,23 @@ union UpdateTaskLocationPayload = TaskType | OperationInfo
 
 union UpdateTaskPayload = TaskType | OperationInfo
 
+input UpdateUserInput {
+  firstName: String
+  lastName: String
+  middleName: String
+  email: String
+  id: ID
+}
+
 scalar Upload
 
 type UserType {
-  id: ID!
-  username: String!
   firstName: String
   lastName: String
+  middleName: String
   email: String!
+  id: ID!
+  username: String!
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
 }
