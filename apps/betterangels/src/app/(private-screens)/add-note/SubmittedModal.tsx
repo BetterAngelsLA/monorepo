@@ -46,7 +46,7 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
         <Pressable
           style={{
             position: 'absolute',
-            top: Spacings.sm,
+            top: Spacings.md,
             right: Spacings.sm,
             padding: Spacings.sm,
           }}
