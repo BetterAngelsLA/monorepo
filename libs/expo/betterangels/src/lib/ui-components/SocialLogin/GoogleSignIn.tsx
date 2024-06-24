@@ -162,8 +162,9 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
       size="full"
       title="Continue with Google" // TODO: make this work with flow
       align="center"
-      icon={<GoogleIcon size="lg" />}
-      variant="dark"
+      borderRadius={40}
+      icon={<GoogleIcon size="md" />}
+      variant="login"
       onPress={() => promptAsync({ showInRecents: false })}
       disabled={!generatedState && !request}
     />
