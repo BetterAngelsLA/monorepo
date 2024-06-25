@@ -1,9 +1,7 @@
 from typing import Type, cast
 
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -95,5 +93,3 @@ admin.site.unregister(OrganizationInvitation)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
-
-admin.site.login = staff_member_required(admin.site.login, login_url=settings.LOGIN_URL)  # type: ignore
