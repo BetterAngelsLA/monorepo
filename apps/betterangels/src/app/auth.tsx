@@ -1,4 +1,5 @@
 import { AuthContainer } from '@monorepo/expo/betterangels';
+import { CarIcon } from '@monorepo/expo/shared/icons';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -19,6 +20,7 @@ export default function Auth() {
       >
         <View />
         <Logo width={200} height={30} />
+        <CarIcon color="white" size="2xl"></CarIcon>
         <View style={styles.buttonsContainer}>
           <Button
             accessibilityHint="goes to sign in screen"
