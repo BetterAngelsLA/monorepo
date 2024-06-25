@@ -1,5 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Loading } from '@monorepo/expo/shared/ui-components';
+import {
+  Loading,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
@@ -91,6 +95,31 @@ export default function Interactions() {
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
+      {search && !loading && notes.length < 1 && (
+        <View
+          style={{
+            flexGrow: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              height: 90,
+              width: 90,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 100,
+              backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+              marginBottom: Spacings.md,
+            }}
+          ></View>
+          <TextBold mb="xs" size="sm">
+            No Results
+          </TextBold>
+          <TextRegular size="sm">Try searching for something else.</TextRegular>
+        </View>
+      )}
       <FlatList
         refreshControl={
           <RefreshControl
