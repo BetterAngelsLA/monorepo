@@ -1,44 +1,8 @@
+{% extends "admin/login.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="description" content="Login to the BetterAngels Dashboard.">
-    <meta name="keywords" content="BetterAngels, Login, Dashboard">
-    <title>Log in | BetterAngels Dashboard</title>
-    <link rel="stylesheet"
-          href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
-    <link rel="stylesheet"
-          href="{% static 'vendor/adminlte/css/adminlte.min.css' %}">
-    <link rel="stylesheet"
-          href="{% static 'vendor/bootswatch/flatly/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'jazzmin/css/main.css' %}">
-    <link rel="stylesheet" href="{% static 'css/betterangels.css' %}">
-    <link rel="shortcut icon"
-          href="{% static 'assets/images/icon.png' %}"
-          type="image/png">
-    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700"
-          rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/google_login_button.css' %}">
-  </head>
-  <body class="hold-transition jazzmin-login-page">
-    <div class="login-box">
-      <div class="login-logo">
-        <a href="#">
-          <img src="{% static 'assets/images/favicon.png' %}"
-               alt="BetterAngels"
-               width="32"
-               height="32">
-        </a>
-      </div>
-      <div class="card">
-        <div class="card-body login-card-body">
-          <p class="login-box-msg">Please Sign In To Continue</p>
-          <div class="social-login">{% include "account/google_login_button.html" %}</div>
-        </div>
-      </div>
-    </div>
-  </body>
-</html>
+{% block content %}
+  <!-- Original admin login form -->
+  <!-- Social Account Logins -->
+  <p class="login-box-msg">Please Sign In To Continue</p>
+  <div>{% include "account/google_login_button.html" %}</div>
+{% endblock content %}
