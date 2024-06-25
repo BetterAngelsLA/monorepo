@@ -6,10 +6,8 @@
 .button-svg {
   display: block; /* This replaces the inline 'display: block' style on SVG */
 }
-/* Full width and centered button container */
-.full-width-centered {
-  text-align: center;
-  width: 100%;
+
+.login-button-margin {
   margin-top: 20px;
 }
 
