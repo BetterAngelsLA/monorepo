@@ -12,7 +12,13 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Link } from 'expo-router';
-import { googleClientId, isLoginFormEnabled, redirectUri } from '../../config';
+import {
+  googleClientId,
+  isLoginFormEnabled,
+  privacyPolicyUrl,
+  redirectUri,
+  termsOfServiceUrl,
+} from '../../config';
 import Logo from './assets/images/logo.svg';
 
 export default function SignIn() {
@@ -26,11 +32,17 @@ export default function SignIn() {
         ></GoogleSignIn>
         <TextRegular textAlign="center" size="sm" color={Colors.WHITE} mt="xl">
           By continuing, you agree to our{' '}
-          <Link style={{ textDecorationLine: 'underline' }} href="#">
+          <Link
+            style={{ textDecorationLine: 'underline' }}
+            href={termsOfServiceUrl}
+          >
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link style={{ textDecorationLine: 'underline' }} href="#">
+          <Link
+            style={{ textDecorationLine: 'underline' }}
+            href={privacyPolicyUrl}
+          >
             Privacy Policy.
           </Link>
         </TextRegular>
