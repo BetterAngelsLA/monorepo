@@ -22,4 +22,14 @@ function loadConfig() {
 const { apiUrl, googleClientId, redirectUri, isLoginFormEnabled } =
   loadConfig();
 
-export { apiUrl, googleClientId, isLoginFormEnabled, redirectUri };
+const privacyPolicyUrl = `${apiUrl}/legal/privacy-policy`;
+const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
+
+export {
+  apiUrl,
+  googleClientId,
+  isLoginFormEnabled,
+  privacyPolicyUrl,
+  redirectUri,
+  termsOfServiceUrl,
+};
