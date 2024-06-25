@@ -54,14 +54,9 @@ export function AppleSignIn() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   button: {
     width: '100%', // Adjust width to be flexible and consistent
-    height: 44,
+    height: 46,
     marginBottom: Spacings.xs,
   },
 });
