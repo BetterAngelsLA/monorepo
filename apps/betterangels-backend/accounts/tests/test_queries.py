@@ -74,6 +74,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                 email
                 username
                 firstName
+                middleName
                 lastName
                 isOutreachAuthorized
                 organizations: organizationsOrganization {
@@ -113,6 +114,10 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             user.last_name,
         )
         self.assertEqual(
+            response["data"]["currentUser"]["middleName"],
+            user.middle_name,
+        )
+        self.assertEqual(
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
         )
@@ -149,6 +154,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         id
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }
@@ -167,6 +173,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "id": str(self.client_profile_1["user"]["id"]),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
+            "middleName": self.client_profile_1_user["middleName"],
             "email": self.client_profile_1_user["email"],
         }
         expected_client = {
@@ -206,6 +213,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         id
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }

@@ -20,7 +20,17 @@ const createSvgIcon = (
     my,
     mx,
   }) => {
-    const { w, h } = extractSize(size);
+    let w, h;
+
+    if (typeof size === 'number') {
+      w = size;
+      h = size;
+    } else {
+      const extractedSize = extractSize(size);
+      w = extractedSize.w;
+      h = extractedSize.h;
+    }
+
     return (
       <SvgComponent
         style={{

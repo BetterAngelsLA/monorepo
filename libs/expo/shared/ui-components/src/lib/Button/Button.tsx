@@ -10,7 +10,14 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark' | 'login']: {
+  [key in
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black']: {
     bg: string;
     color: string;
     border: string;
@@ -31,6 +38,16 @@ const HEIGHT = {
 };
 
 const VARIANTS: TVariants = {
+  black: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
+  primaryDark: {
+    bg: Colors.PRIMARY_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_DARK,
+  },
   dark: {
     bg: Colors.BRAND_STEEL_BLUE,
     color: Colors.WHITE,
@@ -55,12 +72,7 @@ const VARIANTS: TVariants = {
     bg: Colors.ERROR_EXTRA_LIGHT,
     color: Colors.ERROR_DARK,
     border: Colors.ERROR_LIGHT,
-  },
-  login: {
-    bg: Colors.BLACK,
-    color: Colors.WHITE,
-    border: Colors.BLACK,
-  },
+  }
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -69,7 +81,14 @@ interface IButtonProps {
   title: string;
   size: 'sm' | 'full' | 'auto';
   onPress?: () => void;
-  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark' | 'login';
+  variant:
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
@@ -87,6 +106,7 @@ interface IButtonProps {
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
+  borderRadius?: 8 | 50;
 }
 
 export function Button(props: IButtonProps) {
@@ -112,6 +132,7 @@ export function Button(props: IButtonProps) {
     accessibilityLabel,
     testID,
     accessibilityHint,
+    borderRadius = 8,
   } = props;
   return (
     <Pressable
@@ -125,6 +146,7 @@ export function Button(props: IButtonProps) {
         style,
         {
           width: SIZES[size],
+          borderRadius,
           alignItems: align,
           backgroundColor: disabled
             ? Colors.NEUTRAL_LIGHT
@@ -171,7 +193,6 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: Spacings.xs,
   },
