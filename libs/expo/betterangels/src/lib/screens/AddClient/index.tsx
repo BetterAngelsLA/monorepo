@@ -69,9 +69,18 @@ export default function AddClient() {
     }
 
     if (client.preferredLanguage) {
-      const trimmedLanguage =
-        client.preferredLanguage.trim() as keyof typeof LanguageEnum;
+      const trimmedLanguage = client.preferredLanguage.replace(
+        /\s+/g,
+        ''
+      ) as keyof typeof LanguageEnum;
       input.preferredLanguage = LanguageEnum[trimmedLanguage];
+    }
+
+    if (client.veteranStatus) {
+      input.veteranStatus = client.veteranStatus.replace(
+        /\s+/g,
+        ''
+      ) as YesNoPreferNotToSayEnum;
     }
 
     try {
