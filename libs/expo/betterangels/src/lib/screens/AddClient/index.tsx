@@ -40,7 +40,7 @@ const INITIAL_STATE = {
 export default function AddClient() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [client, setClient] = useState<CreateClientProfileInput>(INITIAL_STATE);
-  const [createClient, { error }] = useCreateClientProfileMutation();
+  const [createClient] = useCreateClientProfileMutation();
   const [errorState, setErrorState] = useState<string | null>(null);
   const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
@@ -93,7 +93,9 @@ export default function AddClient() {
         data?.createClientProfile?.__typename === 'OperationInfo' &&
         data.createClientProfile.messages
       ) {
-        throw new Error(`Failed to create a client profile: ${error}`);
+        throw new Error(
+          `Failed to create a client profile: ${data?.createClientProfile.messages[0].message}`
+        );
       }
       navigation.goBack();
     } catch (err) {
