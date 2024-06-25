@@ -218,6 +218,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           ListFooterComponent={renderFooter}
         />
         <Button
+          onPress={() => router.navigate('/add-client')}
           height="xl"
           icon={<UserAddIcon size="md" color={Colors.PRIMARY} />}
           title="Add Client"
