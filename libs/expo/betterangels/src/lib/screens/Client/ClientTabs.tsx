@@ -8,13 +8,13 @@ interface IClientTabsProps {
 }
 
 const TABS = [
-  'Profile',
-  'Docs',
+  // 'Profile',
+  // 'Docs',
   'Interactions',
-  'Tasks',
-  'Services',
-  'Schedule',
-  'Locations',
+  // 'Tasks',
+  // 'Services',
+  // 'Schedule',
+  // 'Locations',
 ];
 
 export default function ClientTabs(props: IClientTabsProps) {
