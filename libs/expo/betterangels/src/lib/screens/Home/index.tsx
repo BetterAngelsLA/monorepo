@@ -2,6 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
   Loading,
+  TextBold,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -9,6 +10,7 @@ import { Link, useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 
+import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -88,6 +90,35 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   return (
     <View style={{ flex: 1 }}>
       <Header title="Home" Logo={Logo} />
+      {!loading && clients.length < 1 && (
+        <View
+          style={{
+            flexGrow: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              height: 90,
+              width: 90,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 100,
+              backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+              marginBottom: Spacings.md,
+            }}
+          >
+            <UserAddOutlineIcon size="2xl" color={Colors.PRIMARY} />
+          </View>
+          <TextBold mb="xs" size="sm">
+            No Active Clients
+          </TextBold>
+          <TextRegular size="sm">
+            Try adding a client or an interaction.
+          </TextRegular>
+        </View>
+      )}
       <FlatList
         style={{
           flex: 1,
