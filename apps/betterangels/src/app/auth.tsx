@@ -13,7 +13,6 @@ export default function Auth() {
       <View style={styles.buttonsContainer}>
         <Button
           accessibilityHint="goes to sign in screen"
-          mb="xs"
           onPress={() =>
             router.navigate({
               pathname: '/sign-in',
@@ -23,6 +22,7 @@ export default function Auth() {
           size="full"
           variant="primaryDark"
           borderRadius={50}
+          borderWidth={0}
         />
       </View>
     </AuthContainer>
