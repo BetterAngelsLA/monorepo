@@ -25,7 +25,7 @@ export default function SignIn() {
           redirectUri={redirectUri}
         ></GoogleSignIn>
         <TextRegular textAlign="center" size="sm" color={Colors.WHITE} mt="xl">
-          By continuing, you agree our{' '}
+          By continuing, you agree to our{' '}
           <Link style={{ textDecorationLine: 'underline' }} href="#">
             Terms of Service
           </Link>{' '}
