@@ -19,11 +19,11 @@ export default function SignIn() {
   return (
     <AuthContainer Logo={Logo}>
       <View style={styles.container}>
+        {Platform.OS === 'ios' && <AppleSignIn />}
         <GoogleSignIn
           clientId={googleClientId}
           redirectUri={redirectUri}
         ></GoogleSignIn>
-        {Platform.OS === 'ios' && <AppleSignIn />}
         <TextRegular textAlign="center" color={Colors.WHITE} mt="xl">
           By continuing, you agree our{' '}
           <Link style={{ textDecorationLine: 'underline' }} href="#">

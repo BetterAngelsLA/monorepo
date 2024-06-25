@@ -72,7 +72,7 @@ const VARIANTS: TVariants = {
     bg: Colors.ERROR_EXTRA_LIGHT,
     color: Colors.ERROR_DARK,
     border: Colors.ERROR_LIGHT,
-  },
+  }
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -102,6 +102,7 @@ interface IButtonProps {
   height?: 'sm' | 'md' | 'lg' | 'xl';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
+  borderRadius?: number;
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
@@ -127,6 +128,7 @@ export function Button(props: IButtonProps) {
     my,
     mx,
     borderColor,
+    borderRadius,
     accessibilityLabel,
     testID,
     accessibilityHint,
@@ -154,6 +156,7 @@ export function Button(props: IButtonProps) {
             : borderColor
             ? borderColor
             : VARIANTS[variant].border,
+          borderRadius: borderRadius,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],

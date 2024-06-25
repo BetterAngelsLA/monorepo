@@ -23,7 +23,7 @@ export function AppleSignIn() {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
       cornerRadius={50}
       style={styles.button}
       onPress={async () => {
@@ -61,5 +61,6 @@ const styles = StyleSheet.create({
   button: {
     width: '100%', // Adjust width to be flexible and consistent
     height: 44,
+    marginBottom: 8,
   },
 });
