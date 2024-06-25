@@ -19,6 +19,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
+            "middleName": "Middly",
             "email": "firsty_lasty@example.com",
         }
         variables = {
@@ -65,6 +66,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                     user {
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }
@@ -136,6 +138,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                     user {
                         firstName
                         lastName
+                        middleName
                         email
                     }
                 }

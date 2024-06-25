@@ -1,0 +1,7 @@
+{% extends "admin/login.html" %}
+{% block content %}
+    <!-- Original admin login form -->
+    {{ block.super }}
+    <!-- Social Account Logins -->
+    <div>{% include "account/google_login_button.html" %}</div>
+{% endblock content %}
