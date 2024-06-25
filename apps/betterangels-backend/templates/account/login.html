@@ -1,51 +1,44 @@
-{% extends "account/base.html" %}
-{% load i18n %}
-{% block head_links %}<title>Sign In</title>{% endblock %}
-{% block head_title %}
-  {% trans "Sign In" %}
-{% endblock %}
-{% block content %}
-  <div class="container-fluid">
-    {% block messages %}
-      {% if messages %}
-        <div>
-          <ul>
-            {% for message in messages %}
-              <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>{{ message }}</strong>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-            {% endfor %}
-          </ul>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="Login to the BetterAngels Dashboard.">
+    <meta name="keywords" content="BetterAngels, Login, Dashboard">
+    <title>Log in | BetterAngels Dashboard</title>
+    <link rel="stylesheet"
+          href="{% static 'vendor/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'vendor/adminlte/css/adminlte.min.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'vendor/bootswatch/flatly/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'jazzmin/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/betterangels.css' %}">
+    <link rel="shortcut icon"
+          href="{% static 'assets/images/icon.png' %}"
+          type="image/png">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/google_login_button.css' %}">
+  </head>
+  <body class="hold-transition jazzmin-login-page">
+    <div class="login-box">
+      <div class="login-logo">
+        <a href="#">
+          <img src="{% static 'assets/images/favicon.png' %}"
+               alt="BetterAngels"
+               width="32"
+               height="32">
+        </a>
+      </div>
+      <div class="card">
+        <div class="card-body login-card-body">
+          <p class="login-box-msg">Please Sign In To Continue</p>
+          <div class="social-login">{% include "account/google_login_button.html" %}</div>
         </div>
-      {% endif %}
-    {% endblock %}
-    <h3 class="h3" id="head_banner">{% trans "Sign In" %}</h3>
-    <form class="container-fluid text-center"
-          id="login_form"
-          method="POST"
-          action="{% url 'account_login' %}">
-      {% csrf_token %}
-      {{ form.as_p }}
-      {% if redirect_field_value %}
-        <input type="hidden"
-               name="{{ redirect_field_name }}"
-               value="{{ redirect_field_value }}" />
-      {% endif %}
-      <button class="btn btn-outline-primary " type="submit">{% trans "Sign In" %}</button>
-      <a class="btn btn-outline-dark"
-         href="{% url 'account_reset_password' %}">{% trans "Forgot Password ?" %}</a>
-    </form>
-    {% load account socialaccount %}
-    {% get_providers as socialaccount_providers %}
-    <ul class="social_providers_list">
-      {% for provider in socialaccount_providers %}
-        <a title="{{ provider.name }}"
-           class="btn btn-outline-dark"
-           href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}"><i class="fa fa-{{ provider.name }}" id="social_icon"></i>{{ provider.name }}</a>
-      {% endfor %}
-    </ul>
-  </div>
-{% endblock %}
+      </div>
+    </div>
+  </body>
+</html>

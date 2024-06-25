@@ -16,6 +16,8 @@ Including another URLconf
 """
 
 from common.graphql.views import ProtectedGraphQLView
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
@@ -30,4 +32,4 @@ urlpatterns = [
     path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
