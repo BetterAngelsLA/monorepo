@@ -6,6 +6,7 @@ import {
   ClientCard,
   Loading,
   TextBold,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -185,6 +186,33 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setClients({});
           }}
         />
+        {search && !loading && sections.length < 1 && (
+          <View
+            style={{
+              flexGrow: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                height: 90,
+                width: 90,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 100,
+                backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                marginBottom: Spacings.md,
+              }}
+            ></View>
+            <TextBold mb="xs" size="sm">
+              No Results
+            </TextBold>
+            <TextRegular size="sm">
+              Try searching for something else.
+            </TextRegular>
+          </View>
+        )}
         <SectionList
           style={{
             flex: 1,
