@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django.contrib.sites",
     "django_extensions",
@@ -177,6 +178,7 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
@@ -427,7 +429,7 @@ JAZZMIN_SETTINGS = {
     "site_icon": "assets/images/icon.png",
     "site_logo_classes": "",
     "related_modal_active": True,
-    "custom_css": "assets/css/betterangels-admin.css",
+    "custom_css": "css/betterangels.css",
 }
 
 JAZZMIN_UI_TWEAKS = {
