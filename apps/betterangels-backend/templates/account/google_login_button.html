@@ -1,6 +1,9 @@
 <!-- templates/google_login_button.html -->
 {% load static %}
 {% load socialaccount %}
+<link rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/google_login_button.css' %}">
 <div class="full-width-centered">
     <button class="gsi-material-button full-width-button"
             onclick="window.location.href='{% provider_login_url 'google' %}'">

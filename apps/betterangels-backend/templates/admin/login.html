@@ -5,9 +5,6 @@
     {{ block.super }}
     <!-- Social Account Login with correct full-width styling -->
     <div class="full-width-centered">
-        <link rel="stylesheet"
-              type="text/css"
-              href="{% static 'css/google_login_button.css' %}">
         <!-- Ensuring the button fills the width of its container -->
         <div>{% include "account/google_login_button.html" %}</div>
     </div>
