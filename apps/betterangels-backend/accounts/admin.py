@@ -1,9 +1,7 @@
 from typing import Type, cast
 
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
