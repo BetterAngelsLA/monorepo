@@ -33,7 +33,7 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
 const HEIGHT = {
   sm: 32,
   md: 40,
-  lg: 46,
+  lg: 44,
   xl: 56,
 };
 
@@ -72,7 +72,7 @@ const VARIANTS: TVariants = {
     bg: Colors.ERROR_EXTRA_LIGHT,
     color: Colors.ERROR_DARK,
     border: Colors.ERROR_LIGHT,
-  }
+  },
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -102,11 +102,11 @@ interface IButtonProps {
   height?: 'sm' | 'md' | 'lg' | 'xl';
   fontSize?: 'sm' | 'md';
   borderColor?: string;
-  borderRadius?: number;
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
   borderRadius?: 8 | 50;
+  borderWidth?: 1 | 0;
 }
 
 export function Button(props: IButtonProps) {
@@ -128,11 +128,11 @@ export function Button(props: IButtonProps) {
     my,
     mx,
     borderColor,
-    borderRadius,
     accessibilityLabel,
     testID,
     accessibilityHint,
     borderRadius = 8,
+    borderWidth = 1,
   } = props;
   return (
     <Pressable
@@ -147,6 +147,7 @@ export function Button(props: IButtonProps) {
         {
           width: SIZES[size],
           borderRadius,
+          borderWidth,
           alignItems: align,
           backgroundColor: disabled
             ? Colors.NEUTRAL_LIGHT
@@ -156,7 +157,6 @@ export function Button(props: IButtonProps) {
             : borderColor
             ? borderColor
             : VARIANTS[variant].border,
-          borderRadius: borderRadius,
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -193,7 +193,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderWidth: 1,
+
     paddingHorizontal: Spacings.xs,
   },
   text: {

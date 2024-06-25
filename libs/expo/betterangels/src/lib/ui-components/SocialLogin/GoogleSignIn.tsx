@@ -1,6 +1,5 @@
 import { gql } from '@apollo/client';
 import { GoogleIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
@@ -158,9 +157,9 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
   }
   return (
     <Button
+      borderWidth={0}
       borderRadius={50}
       accessibilityHint="authorizes with Google"
-      mb="xs"
       size="full"
       title="Continue with Google" // TODO: make this work with flow
       align="center"

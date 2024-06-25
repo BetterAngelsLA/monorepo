@@ -24,7 +24,7 @@ export default function SignIn() {
           clientId={googleClientId}
           redirectUri={redirectUri}
         ></GoogleSignIn>
-        <TextRegular textAlign="center" color={Colors.WHITE} mt="xl">
+        <TextRegular textAlign="center" size="sm" color={Colors.WHITE} mt="xl">
           By continuing, you agree our{' '}
           <Link style={{ textDecorationLine: 'underline' }} href="#">
             Terms of Service
