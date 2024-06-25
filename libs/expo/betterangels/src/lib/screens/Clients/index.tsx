@@ -1,4 +1,8 @@
-import { SearchIcon, UserAddIcon } from '@monorepo/expo/shared/icons';
+import {
+  SearchIcon,
+  UserAddIcon,
+  UserSearchIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -204,7 +208,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                 marginBottom: Spacings.md,
               }}
-            ></View>
+            >
+              <UserSearchIcon size="2xl" color={Colors.PRIMARY} />
+            </View>
             <TextBold mb="xs" size="sm">
               No Results
             </TextBold>
