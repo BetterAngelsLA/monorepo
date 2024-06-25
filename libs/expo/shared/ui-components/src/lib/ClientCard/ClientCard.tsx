@@ -1,8 +1,4 @@
-import {
-  LocationDotIcon,
-  PawIcon,
-  TentIcon,
-} from '@monorepo/expo/shared/icons';
+import { LocationDotIcon, TentIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
@@ -91,9 +87,6 @@ export function ClientCard(props: IClientCardProps) {
             <TextRegular size="xs"> {address}</TextRegular>
           </View>
         )}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <PawIcon size="sm" color={Colors.NEUTRAL_DARK} />
-        </View>
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
         <TextButton
