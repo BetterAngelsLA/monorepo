@@ -61,7 +61,9 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
+            flexWrap: 'wrap',
             gap: Spacings.sm,
+            flex: 1,
           }}
         >
           {VETERAN_STATUS.map((q) => (
@@ -73,10 +75,7 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
               onPress={() =>
                 setClient({
                   ...client,
-                  veteranStatus:
-                    YesNoPreferNotToSayEnum[
-                      q.trim() as 'Yes' | 'No' | 'PreferNotToSay'
-                    ],
+                  veteranStatus: q.trim() as YesNoPreferNotToSayEnum,
                 })
               }
             />
