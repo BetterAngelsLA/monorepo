@@ -20,7 +20,11 @@ interface IVeteranStatusProps {
   scrollRef: RefObject<ScrollView>;
 }
 
-const VETERAN_STATUS: Array<'Yes' | 'No'> = ['Yes', 'No'];
+const VETERAN_STATUS: Array<'Yes' | 'No' | 'Prefer Not To Say'> = [
+  'Yes',
+  'No',
+  'Prefer Not To Say',
+];
 
 export default function VeteranStatus(props: IVeteranStatusProps) {
   const { expanded, setExpanded, client, scrollRef, setClient } = props;
@@ -69,7 +73,10 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
               onPress={() =>
                 setClient({
                   ...client,
-                  veteranStatus: YesNoPreferNotToSayEnum[q],
+                  veteranStatus:
+                    YesNoPreferNotToSayEnum[
+                      q.trim() as 'Yes' | 'No' | 'PreferNotToSay'
+                    ],
                 })
               }
             />

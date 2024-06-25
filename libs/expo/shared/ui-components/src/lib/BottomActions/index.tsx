@@ -37,7 +37,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           size="full"
           height="md"
           variant="primary"
-          accessibilityHint="submit the note"
+          accessibilityHint="submit the form"
           title={submitTitle}
           style={{ maxWidth: 85 }}
           onPress={onSubmit}
