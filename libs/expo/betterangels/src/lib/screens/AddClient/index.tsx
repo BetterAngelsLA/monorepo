@@ -23,7 +23,7 @@ const INITIAL_STATE = {
   address: '',
   dateOfBirth: undefined as Date | undefined,
   gender: undefined as GenderEnum | undefined,
-  hmisId: '',
+  hmisId: null,
   nickname: '',
   phoneNumber: '',
   preferredLanguage: undefined as LanguageEnum | undefined,
@@ -54,7 +54,7 @@ export default function AddClient() {
     errorState,
   };
 
-  const submitNote = async () => {
+  const createClientProfile = async () => {
     if (!client.user.firstName) {
       setErrorState('First Name is required');
       return;
@@ -75,7 +75,7 @@ export default function AddClient() {
     }
 
     try {
-      const data = await createClient({
+      const { data } = await createClient({
         variables: {
           data: input,
         },
@@ -106,11 +106,11 @@ export default function AddClient() {
           <TextButton
             onPress={navigation.goBack}
             fontSize="sm"
-            accessibilityHint="discards changes and reverts note to previous state"
+            accessibilityHint="cancels the creation of a new client profile"
             title="Cancel"
           />
         }
-        onSubmit={submitNote}
+        onSubmit={createClientProfile}
       />
     </View>
   );
