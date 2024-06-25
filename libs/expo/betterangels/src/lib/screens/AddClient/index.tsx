@@ -89,7 +89,10 @@ export default function AddClient() {
           data: input,
         },
       });
-      if (!data) {
+      if (
+        data?.createClientProfile?.__typename === 'OperationInfo' &&
+        data.createClientProfile.messages
+      ) {
         throw new Error(`Failed to create a client profile: ${error}`);
       }
       navigation.goBack();
