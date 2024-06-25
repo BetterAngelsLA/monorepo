@@ -16,9 +16,16 @@ export default function NoteCardHeader(props: INoteCardHeaderProps) {
       style={{
         justifyContent: 'space-between',
         flexDirection: 'row',
+        alignItems: 'center',
       }}
     >
-      <View style={{ flexDirection: 'row', flex: 2 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          flex: 2,
+          alignItems: 'center',
+        }}
+      >
         <NoteIcon mr="xs" color={Colors.NEUTRAL_DARK} />
         <TextRegular
           numberOfLines={2}
