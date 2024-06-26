@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+import { Spacings } from '@monorepo/expo/shared/static';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { StyleSheet } from 'react-native';
 import useSignIn from '../../hooks/user/useSignIn';
@@ -23,8 +24,8 @@ export function AppleSignIn() {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-      cornerRadius={5}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+      cornerRadius={50}
       style={styles.button}
       onPress={async () => {
         try {
@@ -53,13 +54,9 @@ export function AppleSignIn() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   button: {
     width: '100%', // Adjust width to be flexible and consistent
-    height: 44,
+    height: 46,
+    marginBottom: Spacings.xs,
   },
 });
