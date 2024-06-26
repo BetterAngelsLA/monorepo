@@ -80,6 +80,7 @@ export default function EditClient({ id }: { id: string }) {
       ...client,
       id,
       user: {
+        id: client.user.id,
         firstName: client.user.firstName,
         lastName: client.user.lastName,
         email: client.user.email,

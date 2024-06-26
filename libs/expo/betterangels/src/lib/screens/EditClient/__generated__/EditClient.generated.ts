@@ -15,7 +15,7 @@ export type GetClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, hmisId?: string | null, nickname?: string | null, phoneNumber?: string | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: string | null, spokenLanguages?: Array<Types.LanguageEnum | null> | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, user: { __typename?: 'UserType', email: string, firstName?: string | null, middleName?: string | null, lastName?: string | null } } };
+export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, hmisId?: string | null, nickname?: string | null, phoneNumber?: string | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: string | null, spokenLanguages?: Array<Types.LanguageEnum | null> | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, user: { __typename?: 'UserType', id: string, email: string, firstName?: string | null, middleName?: string | null, lastName?: string | null } } };
 
 
 export const UpdateClientProfileDocument = gql`
@@ -76,6 +76,7 @@ export const GetClientProfileDocument = gql`
       spokenLanguages
       veteranStatus
       user {
+        id
         email
         firstName
         middleName
