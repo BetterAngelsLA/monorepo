@@ -157,13 +157,14 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
   }
   return (
     <Button
+      borderWidth={0}
+      borderRadius={50}
       accessibilityHint="authorizes with Google"
-      mb="xs"
       size="full"
       title="Continue with Google" // TODO: make this work with flow
       align="center"
-      icon={<GoogleIcon size="lg" />}
-      variant="dark"
+      icon={<GoogleIcon size="md" />}
+      variant="black"
       onPress={() => promptAsync({ showInRecents: false })}
       disabled={!generatedState && !request}
     />
