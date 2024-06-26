@@ -35,7 +35,7 @@ const getTabComponent = (
 
 export default function Client({ id }: { id: string }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
-  const [tab, setTab] = useState('Profile');
+  const [tab, setTab] = useState('Interactions');
 
   if (loading) return <TextRegular>Loading</TextRegular>;
 
