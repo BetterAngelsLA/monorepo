@@ -157,6 +157,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
   deploy:
+    needs: prepare
     environment: production
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
