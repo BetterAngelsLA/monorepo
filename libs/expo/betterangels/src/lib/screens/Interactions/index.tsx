@@ -1,3 +1,4 @@
+import { FileSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Loading,
@@ -113,7 +114,9 @@ export default function Interactions() {
               backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
               marginBottom: Spacings.md,
             }}
-          ></View>
+          >
+            <FileSearchIcon size="2xl" />
+          </View>
           <TextBold mb="xs" size="sm">
             No Results
           </TextBold>

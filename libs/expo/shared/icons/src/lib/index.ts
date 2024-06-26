@@ -36,6 +36,7 @@ export { default as FaceSmileBeamIcon } from './components/FaceSmileBeamIcon';
 export { default as FaceSmileIcon } from './components/FaceSmileIcon';
 export { default as FaceTiredIcon } from './components/FaceTiredIcon';
 export { default as FilePlusIcon } from './components/FilePlusIcon';
+export { default as FileSearchIcon } from './components/FileSearchIcon';
 export { default as GenderIcon } from './components/GenderIcon';
 export { default as GlobeIcon } from './components/GlobeIcon';
 export { default as GoogleIcon } from './components/GoogleIcon';
