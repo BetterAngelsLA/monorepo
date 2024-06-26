@@ -221,7 +221,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           height="xl"
           icon={<UserAddIcon size="md" color={Colors.PRIMARY} />}
           title="Add Client"
-          size="auto"
+          size="full"
           variant="secondary"
           accessibilityHint="adding new client"
         />
