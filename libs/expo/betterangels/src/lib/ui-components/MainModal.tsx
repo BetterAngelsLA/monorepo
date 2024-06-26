@@ -58,9 +58,9 @@ export default function MainModal(props: IMainModalProps) {
       animationIn={vertical ? 'slideInUp' : 'slideInRight'}
       animationOut={vertical ? 'slideOutDown' : 'slideOutRight'}
       backdropOpacity={opacity}
-      useNativeDriverForBackdrop={true}
       isVisible={isModalVisible}
       onBackdropPress={closeModal}
+      useNativeDriverForBackdrop={true}
     >
       <View
         style={{
