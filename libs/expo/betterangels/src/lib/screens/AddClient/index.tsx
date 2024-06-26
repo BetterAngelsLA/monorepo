@@ -77,12 +77,14 @@ export default function AddClient() {
     }
 
     if (client.veteranStatus) {
-      input.veteranStatus = client.veteranStatus.replace(
+      const trimmedVeteranStatus = client.veteranStatus.replace(
         /\s+/g,
         ''
-      ) as YesNoPreferNotToSayEnum;
+      ) as keyof typeof YesNoPreferNotToSayEnum;
+      input.veteranStatus = YesNoPreferNotToSayEnum[trimmedVeteranStatus];
     }
 
+    console.log('client', input);
     try {
       const { data } = await createClient({
         variables: {
