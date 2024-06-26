@@ -13,8 +13,8 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+// import { useNavigation } from '@react-navigation/native';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
