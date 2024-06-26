@@ -60,15 +60,6 @@ jobs:
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-      - name: 🔍 Determine Channel Config
-        id: set-channel
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "channel_name=production" >> $GITHUB_OUTPUT
-          else
-            echo "channel_name=preview" >> $GITHUB_OUTPUT
-          fi
-
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
@@ -144,7 +135,7 @@ jobs:
         id: continuos_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          profile: ${{ needs.prepare.outputs.channel_name }}
+          profile: preview
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
