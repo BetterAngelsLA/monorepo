@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, useState } from 'react';
+import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useNavigation, useRouter } from 'expo-router';
+import { ReactElement, useEffect, useState } from 'react';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
@@ -36,6 +37,23 @@ const getTabComponent = (
 export default function Client({ id }: { id: string }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Interactions');
+
+  const navigation = useNavigation();
+  const router = useRouter();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TextButton
+          color={Colors.WHITE}
+          regular
+          onPress={() => router.navigate(`/edit-client/${id}`)}
+          title="Edit"
+          accessibilityHint="goes to the edit client profile screen"
+        />
+      ),
+    });
+  }, []);
 
   if (loading) return <TextRegular>Loading</TextRegular>;
 
