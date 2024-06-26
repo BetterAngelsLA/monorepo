@@ -1,9 +1,12 @@
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 const HOSTNAME = IS_PRODUCTION
-  ? 'app.betterangels.la'
+  ? 'app.prod.betterangels.la'
   : 'app.dev.betterangels.la';
-const BUNDLE_IDENTIFIER = HOSTNAME.split('.').reverse().join('.');
+
+const BUNDLE_IDENTIFIER = IS_PRODUCTION
+  ? 'la.betterangels.app'
+  : 'la.betterangels.dev.app';
 
 export default {
   expo: {
@@ -26,7 +29,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.1',
+      buildNumber: '1.0.2',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -59,7 +62,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 2,
+      versionCode: 3,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
