@@ -29,6 +29,7 @@ query GetClientProfile($id: ID!) {
       spokenLanguages
       veteranStatus
       user {
+        id
         email
         firstName
         middleName
