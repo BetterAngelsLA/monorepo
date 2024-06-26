@@ -84,7 +84,6 @@ export default function AddClient() {
       input.veteranStatus = YesNoPreferNotToSayEnum[trimmedVeteranStatus];
     }
 
-    console.log('client', input);
     try {
       const { data } = await createClient({
         variables: {
