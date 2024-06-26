@@ -68,7 +68,10 @@ export function FieldCard(props: IFieldCardProps) {
   }, [place]);
 
   return (
-    <View
+    <Pressable
+      onPress={() => {
+        setExpanded();
+      }}
       onLayout={(event) => {
         const layout = event.nativeEvent.layout;
         expanded === title && scrollRef
@@ -77,7 +80,10 @@ export function FieldCard(props: IFieldCardProps) {
             }, 300)
           : setPlace(null);
       }}
-      style={[
+      accessible
+      accessibilityRole="button"
+      accessibilityHint={`expands ${title} field`}
+      style={({ pressed }) => [
         styles.container,
         {
           marginBottom: mb && Spacings[mb],
@@ -86,49 +92,41 @@ export function FieldCard(props: IFieldCardProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
+          backgroundColor: pressed ? Colors.LIGHT : Colors.WHITE,
           borderColor:
             !!error && expanded !== title ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
         },
       ]}
     >
-      <Pressable
-        onPress={() => {
-          setExpanded();
+      <View style={[styles.header]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {expanded === title ? (
+            <TextMedium size="lg">{title}</TextMedium>
+          ) : (
+            <TextRegular size="sm">{title}</TextRegular>
+          )}
+          {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
+          {info && info}
+        </View>
+        {actionName}
+      </View>
+      {error && (
+        <TextRegular mt="xs" color={Colors.ERROR}>
+          {error}
+        </TextRegular>
+      )}
+      <View
+        onStartShouldSetResponder={() => true}
+        style={{
+          height: childHeight,
+          overflow: 'hidden',
+          marginTop: expanded === title ? Spacings.sm : Spacings.md,
+          marginBottom: expanded === title ? Spacings.md : 0,
         }}
-        accessible
-        accessibilityRole="button"
-        accessibilityHint={`expands ${title} field`}
       >
-        <View style={[styles.header]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {expanded === title ? (
-              <TextMedium size="lg">{title}</TextMedium>
-            ) : (
-              <TextRegular size="sm">{title}</TextRegular>
-            )}
-            {required && <TextRegular color={Colors.ERROR}>*</TextRegular>}
-            {info && info}
-          </View>
-          {actionName}
-        </View>
-        {error && (
-          <TextRegular mt="xs" color={Colors.ERROR}>
-            {error}
-          </TextRegular>
-        )}
-        <View
-          onStartShouldSetResponder={() => true}
-          style={{
-            height: childHeight,
-            overflow: 'hidden',
-            marginTop: expanded === title ? Spacings.sm : Spacings.md,
-            marginBottom: expanded === title ? Spacings.md : 0,
-          }}
-        >
-          {children}
-        </View>
-      </Pressable>
-    </View>
+        {children}
+      </View>
+    </Pressable>
   );
 }
 

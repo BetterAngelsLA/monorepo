@@ -31,7 +31,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextBold,
-  TextMedium,
+  TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -259,7 +259,14 @@ export default function RequestedServices(props: IRequestedServicesProps) {
             )}
           </View>
         ) : (
-          <TextMedium size="sm">Add Services</TextMedium>
+          <TextButton
+            fontSize="sm"
+            title={'Add Services'}
+            accessibilityHint={'Add Services'}
+            onPress={() =>
+              setExpanded(isRequestedServices ? null : 'Requested Services')
+            }
+          />
         )
       }
       mb="xs"

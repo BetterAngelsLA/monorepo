@@ -20,7 +20,12 @@ export default function NoteCard(props: INoteCardProps) {
     <Pressable
       accessibilityRole="button"
       onPress={() => router.navigate(`/note/${note.id}`)}
-      style={styles.container}
+      style={({ pressed }) => [
+        styles.container,
+        {
+          backgroundColor: pressed ? Colors.LIGHT : Colors.WHITE,
+        },
+      ]}
     >
       <NoteCardHeader title={note.title} interactedAt={note.interactedAt} />
       <NoteCardClient client={note.client} isSubmitted={note.isSubmitted} />
@@ -47,6 +52,5 @@ const styles = StyleSheet.create({
     padding: Spacings.sm,
     gap: Spacings.xs,
     borderRadius: 8,
-    backgroundColor: Colors.WHITE,
   },
 });

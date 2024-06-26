@@ -51,7 +51,7 @@ export function ClientCard(props: IClientCardProps) {
     <Pressable
       accessibilityRole="button"
       onPress={() => router.navigate(`/client/${id}`)}
-      style={[
+      style={({ pressed }) => [
         styles.container,
         {
           marginBottom: mb && Spacings[mb],
@@ -60,6 +60,7 @@ export function ClientCard(props: IClientCardProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
+          backgroundColor: pressed ? Colors.LIGHT : Colors.WHITE,
         },
       ]}
     >
@@ -104,7 +105,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 8,
     padding: Spacings.xs,
-    backgroundColor: Colors.WHITE,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

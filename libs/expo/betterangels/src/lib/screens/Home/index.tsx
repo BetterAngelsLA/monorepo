@@ -2,10 +2,10 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
   Loading,
+  TextButton,
   TextMedium,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 
@@ -107,14 +107,14 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             }}
           >
             <TextMedium size="lg">Active Clients</TextMedium>
-            <Link
-              accessible
+            <TextButton
               accessibilityHint="goes to all active clients list"
-              accessibilityRole="button"
-              href="/clients"
-            >
-              <TextRegular color={Colors.PRIMARY}>All Clients</TextRegular>
-            </Link>
+              color={Colors.PRIMARY}
+              fontSize="sm"
+              regular={true}
+              title="All Clients"
+              onPress={() => router.navigate('/clients')}
+            />
           </View>
         }
         renderItem={({ item: clientProfile }) =>

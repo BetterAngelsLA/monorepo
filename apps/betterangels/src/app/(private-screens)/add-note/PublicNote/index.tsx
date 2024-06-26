@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextBold,
-  TextMedium,
+  TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
@@ -24,24 +24,35 @@ export default function PublicNote(props: IPublicNoteProps) {
   const { expanded, note, noteId, scrollRef } = props;
   const router = useRouter();
 
+  const navigateToNote = () => {
+    router.navigate({
+      pathname: '/public-note',
+      params: {
+        id: noteId,
+      },
+    });
+  };
+
   return (
     <FieldCard
       scrollRef={scrollRef}
       expanded={expanded}
       mb="xs"
-      setExpanded={() =>
-        router.navigate({
-          pathname: '/public-note',
-          params: {
-            id: noteId,
-          },
-        })
-      }
+      setExpanded={() => {
+        navigateToNote();
+      }}
       title="Public Note"
       info={<InfoModal />}
       actionName={
         !note ? (
-          <TextMedium size="sm">Add HMIS note</TextMedium>
+          <TextButton
+            fontSize="sm"
+            title={'Add HMIS note'}
+            accessibilityHint={'Add HMIS note'}
+            onPress={() => {
+              navigateToNote();
+            }}
+          />
         ) : (
           <View
             style={{

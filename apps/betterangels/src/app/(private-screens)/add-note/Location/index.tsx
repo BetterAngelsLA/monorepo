@@ -1,6 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { FieldCard, TextButton } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -49,6 +49,17 @@ export default function LocationComponent(props: ILocationProps) {
 
   const isLocation = expanded === 'Location';
 
+  function expandLocation() {
+    if (isLocation) {
+      setExpanded(undefined);
+    } else {
+      setExpanded(isLocation ? undefined : 'Location');
+
+      toggleModal(true);
+      setExpanded('Location');
+    }
+  }
+
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -57,27 +68,34 @@ export default function LocationComponent(props: ILocationProps) {
       mb="xs"
       error={error ? 'Please enter a location' : undefined}
       setExpanded={() => {
-        if (isLocation) {
-          setExpanded(undefined);
-        } else {
-          setExpanded(isLocation ? undefined : 'Location');
-
-          toggleModal(true);
-          setExpanded('Location');
-        }
+        expandLocation();
       }}
       title="Location "
       actionName={
         (!location || (location && !location.address)) && !isLocation ? (
-          <TextMedium size="sm">Add Location</TextMedium>
+          <TextButton
+            fontSize="sm"
+            title={'Add Location'}
+            accessibilityHint={'Add Location'}
+            onPress={() => {
+              expandLocation();
+            }}
+          />
         ) : (
-          <TextMedium size="sm">
-            {location && location.latitude
-              ? location?.name
-                ? location.name
-                : location.address?.split(', ')[0]
-              : 'Add Location'}
-          </TextMedium>
+          <TextButton
+            fontSize="sm"
+            title={
+              location && location.latitude
+                ? location?.name
+                  ? location.name
+                  : location.address?.split(', ')[0] || ''
+                : 'Add Location'
+            }
+            accessibilityHint={'Add Location'}
+            onPress={() => {
+              expandLocation();
+            }}
+          />
         )
       }
     >

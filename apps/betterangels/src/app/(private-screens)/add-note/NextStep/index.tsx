@@ -3,6 +3,7 @@ import { CircleSolidIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
+  TextButton,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -80,7 +81,12 @@ export default function NextStep(props: INextStepProps) {
         hasValidActions || isNextStep ? (
           ''
         ) : (
-          <TextMedium size="sm">Add Plan</TextMedium>
+          <TextButton
+            fontSize="sm"
+            title={'Add Plan'}
+            accessibilityHint={'Add Plan'}
+            onPress={() => setExpanded(isNextStep ? null : 'Next Step')}
+          />
         )
       }
     >
