@@ -141,6 +141,14 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
 
+      - name: 🚀 Build Main for Dev
+        if: github.ref == 'refs/heads/main'
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: preview
+          branch: main
+          working-directory: apps/${{ matrix.project }}
+
       - name: 🚀 Continuously Deploy
         id: continuos_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
