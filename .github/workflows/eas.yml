@@ -161,6 +161,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-main
+    env:
+      APP_VARIANT: production
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
