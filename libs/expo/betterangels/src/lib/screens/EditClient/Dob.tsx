@@ -4,13 +4,14 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
+import { parse } from 'date-fns';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
+import { UpdateClientProfileInput } from '../../apollo';
 
 interface IDobProps {
-  client: CreateClientProfileInput;
-  setClient: (client: CreateClientProfileInput) => void;
+  client: UpdateClientProfileInput;
+  setClient: (client: UpdateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -47,7 +48,11 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={new Date()}
+          initialDate={
+            client.dateOfBirth
+              ? parse(client.dateOfBirth, 'MM/dd/yyyy', new Date())
+              : new Date()
+          }
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"

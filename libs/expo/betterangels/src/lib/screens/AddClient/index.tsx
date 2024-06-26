@@ -1,5 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { BottomActions, TextButton } from '@monorepo/expo/shared/ui-components';
+import { format, parse } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -65,7 +66,8 @@ export default function AddClient() {
     };
 
     if (client.dateOfBirth) {
-      input.dateOfBirth = new Date(client.dateOfBirth);
+      const parsedDate = parse(client.dateOfBirth, 'MM/dd/yyyy', new Date());
+      input.dateOfBirth = format(parsedDate, 'yyyy-MM-dd');
     }
 
     if (client.preferredLanguage) {
@@ -82,6 +84,8 @@ export default function AddClient() {
         ''
       ) as YesNoPreferNotToSayEnum;
     }
+
+    console.log(input.dateOfBirth, client.dateOfBirth);
 
     try {
       const { data } = await createClient({

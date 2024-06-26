@@ -1,0 +1,39 @@
+mutation UpdateClientProfile($data: UpdateClientProfileInput!) {
+  updateClientProfile(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientProfileType {
+      id
+    }
+  }
+}
+
+query GetClientProfile($id: ID!) {
+  clientProfile(pk: $id) {
+    ... on ClientProfileType {
+      id
+      address
+      dateOfBirth
+      gender
+      hmisId
+      nickname
+      phoneNumber
+      preferredLanguage
+      pronouns
+      spokenLanguages
+      veteranStatus
+      user {
+        email
+        firstName
+        middleName
+        lastName
+      }
+    }
+  }
+}
