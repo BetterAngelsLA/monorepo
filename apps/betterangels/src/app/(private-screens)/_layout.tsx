@@ -32,16 +32,6 @@ export default function PrivateLayout() {
           },
           title: 'Add interaction',
           headerTitleAlign: 'center',
-          headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
-          ),
         }}
       />
       <Stack.Screen
