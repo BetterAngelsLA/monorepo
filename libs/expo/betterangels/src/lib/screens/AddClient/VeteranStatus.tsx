@@ -11,6 +11,7 @@ import {
   CreateClientProfileInput,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
+import { convertCapitalize } from '../../helpers';
 
 interface IVeteranStatusProps {
   client: CreateClientProfileInput;
@@ -19,12 +20,6 @@ interface IVeteranStatusProps {
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
-
-const VETERAN_STATUS: Array<'Yes' | 'No' | 'Prefer Not To Say'> = [
-  'Yes',
-  'No',
-  'Prefer Not To Say',
-];
 
 export default function VeteranStatus(props: IVeteranStatusProps) {
   const { expanded, setExpanded, client, scrollRef, setClient } = props;
@@ -66,20 +61,23 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
             flex: 1,
           }}
         >
-          {VETERAN_STATUS.map((q) => (
-            <BasicRadio
-              label={q}
-              accessibilityHint={`Select ${q}`}
-              key={q}
-              value={client.veteranStatus}
-              onPress={() =>
-                setClient({
-                  ...client,
-                  veteranStatus: q.trim() as YesNoPreferNotToSayEnum,
-                })
-              }
-            />
-          ))}
+          {Object.values(YesNoPreferNotToSayEnum).map((q) => {
+            const parsedQ = convertCapitalize(q);
+            return (
+              <BasicRadio
+                label={parsedQ}
+                accessibilityHint={`Select ${parsedQ}`}
+                key={parsedQ}
+                value={client.veteranStatus}
+                onPress={() =>
+                  setClient({
+                    ...client,
+                    veteranStatus: parsedQ.trim() as YesNoPreferNotToSayEnum,
+                  })
+                }
+              />
+            );
+          })}
         </View>
       </View>
     </FieldCard>
