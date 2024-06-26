@@ -88,8 +88,8 @@ const VARIANTS: TVariants = {
   },
   negative: {
     bg: Colors.ERROR_EXTRA_LIGHT,
-    color: Colors.ERROR_NOTICE,
-    border: Colors.ERROR_NOTICE,
+    color: Colors.ERROR_DARK,
+    border: Colors.ERROR,
   },
 };
 
