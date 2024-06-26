@@ -38,18 +38,25 @@ export default function ClientTabs(props: IClientTabsProps) {
               position: 'relative',
               alignItems: 'center',
               justifyContent: 'center',
-              borderBottomWidth: 3,
-              borderColor: t === tab ? Colors.PRIMARY : Colors.WHITE,
+              borderBottomWidth: t === tab ? 3 : 0,
+              borderColor: Colors.PRIMARY,
             }}
             key={t}
           >
             <TextButton
               onPress={() => setTab(t)}
               style={{
+                position: 'absolute',
+                zIndex: 100,
                 padding: Spacings.sm,
               }}
-              title={t}
               regular={t !== tab}
+              title={t}
+              accessibilityHint={`select ${t} tab`}
+            />
+            <TextButton
+              style={{ opacity: 0, padding: Spacings.sm }}
+              title={t}
               accessibilityHint={`select ${t} tab`}
             />
           </View>
