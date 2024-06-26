@@ -1,4 +1,4 @@
-import { Languages, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   Select,
@@ -55,7 +55,9 @@ export default function Language(props: ILanguageProps) {
               preferredLanguage: e as LanguageEnum,
             })
           }
-          items={Languages.map((item) => ({ title: item }))}
+          items={Object.values(LanguageEnum).map((item) => ({
+            title: item.replace(/_/g, ' '),
+          }))}
         />
       </View>
     </FieldCard>

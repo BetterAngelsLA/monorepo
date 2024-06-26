@@ -66,7 +66,7 @@ export function Select(props: ISelectProps) {
         renderButton={(selectedItem, isOpened) => {
           return (
             <View style={styles.select}>
-              <TextRegular>
+              <TextRegular textTransform="capitalize">
                 {(selectedItem && selectedItem.title) || placeholder}
               </TextRegular>
               <ChevronLeftIcon
@@ -86,7 +86,9 @@ export function Select(props: ISelectProps) {
                 borderTopColor: Colors.NEUTRAL_LIGHT,
               }}
             >
-              <TextRegular size="sm">{item.title}</TextRegular>
+              <TextRegular textTransform="capitalize" size="sm">
+                {item.title}
+              </TextRegular>
             </View>
           );
         }}
