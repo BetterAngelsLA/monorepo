@@ -13,8 +13,8 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
@@ -45,6 +45,16 @@ export default function AddNote() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+      console.log('onback');
+      // Do your stuff here
+      // navigation.dispatch(e.data.action);
+    });
+  }, []);
 
   async function deleteNoteFunction() {
     try {
