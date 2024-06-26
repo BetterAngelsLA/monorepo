@@ -106,6 +106,12 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="drawerPlaceholder"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openModal();
+            },
+          }}
           options={{
             title: '',
             tabBarIcon: () => (

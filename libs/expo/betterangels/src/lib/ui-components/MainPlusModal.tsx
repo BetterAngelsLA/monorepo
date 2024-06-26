@@ -62,7 +62,6 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
 }
 
 const styles = StyleSheet.create({
-  // Added wrapper to avoid the UI shifting when button height changes
   wrapper: {
     width: 66,
     height: 66,

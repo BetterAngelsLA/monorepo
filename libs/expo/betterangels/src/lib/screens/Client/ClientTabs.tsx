@@ -46,17 +46,10 @@ export default function ClientTabs(props: IClientTabsProps) {
             <TextButton
               onPress={() => setTab(t)}
               style={{
-                position: 'absolute',
-                zIndex: 100,
                 padding: Spacings.sm,
               }}
+              title={t}
               regular={t !== tab}
-              title={t}
-              accessibilityHint={`select ${t} tab`}
-            />
-            <TextButton
-              style={{ opacity: 0, padding: Spacings.sm }}
-              title={t}
               accessibilityHint={`select ${t} tab`}
             />
           </View>
