@@ -135,11 +135,13 @@ export default function Title(props: ITitleProps) {
           }}
         >
           {(errors.title || errors.date || errors.time) && (
-            <TextRegular color={Colors.ERROR} size="xs">
+            <TextRegular color={Colors.ERROR}>
               These fields are required
             </TextRegular>
           )}
-          <TextMedium mr="sm">{note.title}</TextMedium>
+          <TextMedium mr="sm">
+            {note.title} <TextRegular color={Colors.ERROR}>*</TextRegular>
+          </TextMedium>
         </Pressable>
         <TextRegular size="xs" mb="md">
           {note.date} {note?.time || ''}
