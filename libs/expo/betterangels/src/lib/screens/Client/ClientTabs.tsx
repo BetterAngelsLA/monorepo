@@ -38,8 +38,8 @@ export default function ClientTabs(props: IClientTabsProps) {
               position: 'relative',
               alignItems: 'center',
               justifyContent: 'center',
-              borderBottomWidth: t === tab ? 3 : 0,
-              borderColor: Colors.PRIMARY,
+              borderBottomWidth: 3,
+              borderColor: t === tab ? Colors.PRIMARY : Colors.WHITE,
             }}
             key={t}
           >
