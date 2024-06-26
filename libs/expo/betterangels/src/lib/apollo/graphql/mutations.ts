@@ -9,6 +9,23 @@ export const GENERATE_MAGIC_LINK_MUTATION = gql`
   }
 `;
 
+export const DELETE_CURRENT_USER = gql`
+  mutation DeleteCurrentUser {
+    deleteCurrentUser {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
+      ... on DeletedObjectType {
+        id
+      }
+    }
+  }
+`;
+
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {
