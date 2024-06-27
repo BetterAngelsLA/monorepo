@@ -85,4 +85,3 @@ export { default as XmarkIcon } from './components/XmarkIcon';
 export * from './constant';
 export * from './types';
 export * from './utils';
-
