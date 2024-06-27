@@ -84,6 +84,12 @@ export default function AddNote() {
   const [deleteNote] = useDeleteNoteMutation();
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
+  const [errors, setErrors] = useState({
+    title: false,
+    location: false,
+    date: false,
+    time: false,
+  });
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const navigation = useNavigation();
@@ -158,9 +164,14 @@ export default function AddNote() {
     setExpanded,
     noteId,
     scrollRef,
+    errors,
+    setErrors,
   };
 
   async function submitNote() {
+    if (Object.values(errors).some((error) => error)) {
+      return;
+    }
     try {
       const result = await updateNote({
         variables: {

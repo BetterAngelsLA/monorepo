@@ -14,12 +14,11 @@ interface IPurposeProps {
   setPurposes: (purposes: { value: string; id: string | undefined }[]) => void;
   purposes: { value: string; id: string | undefined }[];
   purpose: { value: string; id: string | undefined };
-  hasError: boolean;
   noteId: string | undefined;
 }
 
 export default function PurposeInput(props: IPurposeProps) {
-  const { index, hasError, purpose, setPurposes, noteId, purposes } = props;
+  const { index, purpose, setPurposes, noteId, purposes } = props;
   const [task, setTask] = useState(purpose.value);
   const [localId, setLocalId] = useState<string | undefined>(
     purpose.id || undefined
@@ -121,7 +120,6 @@ export default function PurposeInput(props: IPurposeProps) {
       onDelete={onDelete}
       placeholder="Enter a purpose"
       mt={index !== 0 ? 'xs' : undefined}
-      error={hasError && index === 0}
       value={task}
       onChangeText={onChange}
     />

@@ -31,11 +31,56 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   auto: 'auto',
 };
 
+const PRESSED_HEIGHT = {
+  sm: 30,
+  md: 38,
+  lg: 42,
+  xl: 54,
+};
+
 const HEIGHT = {
   sm: 32,
   md: 40,
   lg: 44,
   xl: 56,
+};
+
+const PRESSED_VARIANTS: TVariants = {
+  black: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
+  primaryDark: {
+    bg: Colors.PRIMARY_EXTRA_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_EXTRA_DARK,
+  },
+  dark: {
+    bg: Colors.BRAND_STEEL_BLUE,
+    color: Colors.WHITE,
+    border: Colors.BRAND_STEEL_BLUE,
+  },
+  sky: {
+    bg: Colors.BRAND_SKY_BLUE,
+    color: Colors.BRAND_DARK_BLUE,
+    border: Colors.BRAND_SKY_BLUE,
+  },
+  primary: {
+    bg: Colors.PRIMARY_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_DARK,
+  },
+  secondary: {
+    bg: Colors.GRAY_PRESSED,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    border: Colors.NEUTRAL_LIGHT,
+  },
+  negative: {
+    bg: Colors.ERROR_LIGHT,
+    color: Colors.ERROR_DARK,
+    border: Colors.ERROR,
+  },
 };
 
 const VARIANTS: TVariants = {
@@ -66,13 +111,13 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.WHITE,
-    color: Colors.PRIMARY,
+    color: Colors.PRIMARY_EXTRA_DARK,
     border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
     bg: Colors.ERROR_EXTRA_LIGHT,
     color: Colors.ERROR_DARK,
-    border: Colors.ERROR_LIGHT,
+    border: Colors.ERROR,
   },
 };
 
@@ -138,41 +183,53 @@ export function Button(props: IButtonProps) {
     loading,
   } = props;
   return (
-    <Pressable
-      accessible
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={accessibilityHint}
-      accessibilityRole="button"
-      disabled={disabled || loading}
+    <View
       style={[
-        styles.button,
-        style,
+        styles.container,
         {
-          width: SIZES[size],
-          borderRadius,
-          borderWidth,
-          alignItems: align,
-          backgroundColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : VARIANTS[variant].bg,
-          borderColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : borderColor
-            ? borderColor
-            : VARIANTS[variant].border,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
           height: HEIGHT[height],
         },
       ]}
-      onPress={onPress}
-      testID={testID}
     >
-      <View style={styles.wrapper}>
+      <Pressable
+        accessible
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole="button"
+        disabled={disabled}
+        style={({ pressed }) => [
+          styles.button,
+          style,
+          {
+            width: SIZES[size],
+            borderRadius,
+            borderWidth,
+            alignItems: align,
+            backgroundColor: disabled
+              ? Colors.NEUTRAL_LIGHT
+              : pressed
+              ? PRESSED_VARIANTS[variant].bg
+              : VARIANTS[variant].bg,
+            borderColor: disabled
+              ? Colors.NEUTRAL_LIGHT
+              : borderColor
+              ? borderColor
+              : pressed
+              ? PRESSED_VARIANTS[variant].border
+              : VARIANTS[variant].border,
+            marginBottom: mb && Spacings[mb],
+            marginTop: mt && Spacings[mt],
+            marginLeft: ml && Spacings[ml],
+            marginRight: mr && Spacings[mr],
+            marginHorizontal: mx && Spacings[mx],
+            marginVertical: my && Spacings[my],
+            height: pressed ? PRESSED_HEIGHT[height] : HEIGHT[height],
+          },
+        ]}
+        onPress={onPress}
+        testID={testID}
+      >
+              <View style={styles.wrapper}>
         {loading ? (
           <Loading size="small" />
         ) : (
@@ -197,7 +254,8 @@ export function Button(props: IButtonProps) {
           </>
         )}
       </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -213,5 +271,9 @@ const styles = StyleSheet.create({
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

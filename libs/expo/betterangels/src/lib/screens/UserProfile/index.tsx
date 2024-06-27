@@ -72,7 +72,7 @@ export default function UserProfile() {
             <Button
               mt="xs"
               title="Delete My Account"
-              size="auto"
+              size="full"
               variant="negative"
               accessibilityHint="deletes user's account"
             />
