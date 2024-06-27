@@ -60,6 +60,7 @@ export default function MainModal(props: IMainModalProps) {
       backdropOpacity={opacity}
       isVisible={isModalVisible}
       onBackdropPress={closeModal}
+      useNativeDriverForBackdrop={true}
     >
       <View
         style={{
