@@ -19,6 +19,23 @@ interface ILanguageProps {
 export default function Language(props: ILanguageProps) {
   const { expanded, setExpanded, client, setClient, scrollRef } = props;
 
+  const enumDisplayMap: { [key in LanguageEnum]: string } = {
+    [LanguageEnum.Arabic]: 'Arabic',
+    [LanguageEnum.Armenian]: 'Armenian',
+    [LanguageEnum.English]: 'English',
+    [LanguageEnum.Farsi]: 'Farsi',
+    [LanguageEnum.Indonesian]: 'Indonesian',
+    [LanguageEnum.Japanese]: 'Japanese',
+    [LanguageEnum.Khmer]: 'Khmer',
+    [LanguageEnum.Korean]: 'Korean',
+    [LanguageEnum.Russian]: 'Russian',
+    [LanguageEnum.SimplifiedChinese]: 'Simplified Chinese',
+    [LanguageEnum.Spanish]: 'Spanish',
+    [LanguageEnum.Tagalog]: 'Tagalog',
+    [LanguageEnum.TraditionalChinese]: 'Traditional Chinese',
+    [LanguageEnum.Vietnamese]: 'Vietnamese',
+  };
+
   const isLanguage = expanded === 'Language';
   return (
     <FieldCard
@@ -49,15 +66,18 @@ export default function Language(props: ILanguageProps) {
       >
         <Select
           placeholder="Select Language"
-          onValueChange={(e) =>
+          onValueChange={(enumValue) =>
             setClient({
               ...client,
-              preferredLanguage: e as LanguageEnum,
+              preferredLanguage: enumValue as LanguageEnum,
             })
           }
-          items={Object.values(LanguageEnum).map((item) => ({
-            title: item.replace(/_/g, ' '),
-          }))}
+          items={Object.entries(enumDisplayMap).map(
+            ([enumValue, displayValue]) => ({
+              displayValue: displayValue,
+              value: enumValue,
+            })
+          )}
         />
       </View>
     </FieldCard>
