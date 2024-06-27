@@ -20,11 +20,11 @@ interface IVeteranStatusProps {
   scrollRef: RefObject<ScrollView>;
 }
 
-const VETERAN_STATUS: Array<'Yes' | 'No' | 'Prefer Not To Say'> = [
-  'Yes',
-  'No',
-  'Prefer Not To Say',
-];
+const enumDisplayMap: { [key in YesNoPreferNotToSayEnum]: string } = {
+  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+  [YesNoPreferNotToSayEnum.No]: 'No',
+  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+};
 
 export default function VeteranStatus(props: IVeteranStatusProps) {
   const { expanded, setExpanded, client, scrollRef, setClient } = props;
@@ -42,7 +42,10 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
         !client.veteranStatus && !isVeteranStatus ? (
           <TextMedium size="sm">Add Veteran Status</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.veteranStatus}</TextMedium>
+          <TextMedium size="sm">
+            {' '}
+            {client.veteranStatus && enumDisplayMap[client.veteranStatus]}
+          </TextMedium>
         )
       }
       title="Veteran Status"
@@ -66,16 +69,18 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
             flex: 1,
           }}
         >
-          {VETERAN_STATUS.map((q) => (
+          {Object.entries(enumDisplayMap).map(([enumValue, displayValue]) => (
             <BasicRadio
-              label={q}
-              accessibilityHint={`Select ${q}`}
-              key={q}
-              value={client.veteranStatus}
+              label={displayValue}
+              accessibilityHint={`Select ${displayValue}`}
+              key={enumValue}
+              value={
+                client.veteranStatus && enumDisplayMap[client.veteranStatus]
+              }
               onPress={() =>
                 setClient({
                   ...client,
-                  veteranStatus: q as YesNoPreferNotToSayEnum,
+                  veteranStatus: enumValue as YesNoPreferNotToSayEnum,
                 })
               }
             />

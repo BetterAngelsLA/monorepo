@@ -1,4 +1,4 @@
-import { Languages, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   Select,
@@ -15,6 +15,23 @@ interface ILanguageProps {
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
+
+const enumDisplayMap: { [key in LanguageEnum]: string } = {
+  [LanguageEnum.Arabic]: 'Arabic',
+  [LanguageEnum.Armenian]: 'Armenian',
+  [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
+  [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
+  [LanguageEnum.English]: 'English',
+  [LanguageEnum.Farsi]: 'Farsi',
+  [LanguageEnum.Indonesian]: 'Indonesian',
+  [LanguageEnum.Japanese]: 'Japanese',
+  [LanguageEnum.Khmer]: 'Khmer',
+  [LanguageEnum.Korean]: 'Korean',
+  [LanguageEnum.Russian]: 'Russian',
+  [LanguageEnum.Spanish]: 'Spanish',
+  [LanguageEnum.Tagalog]: 'Tagalog',
+  [LanguageEnum.Vietnamese]: 'Vietnamese',
+};
 
 export default function Language(props: ILanguageProps) {
   const { expanded, setExpanded, client, setClient, scrollRef } = props;
@@ -34,7 +51,8 @@ export default function Language(props: ILanguageProps) {
           <TextMedium size="sm">Add Language</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client.preferredLanguage}
+            {client.preferredLanguage &&
+              enumDisplayMap[client.preferredLanguage]}
           </TextMedium>
         )
       }
@@ -49,13 +67,18 @@ export default function Language(props: ILanguageProps) {
       >
         <Select
           placeholder="Select Language"
-          onValueChange={(e) =>
+          onValueChange={(enumValue) =>
             setClient({
               ...client,
-              preferredLanguage: e as LanguageEnum,
+              preferredLanguage: enumValue as LanguageEnum,
             })
           }
-          items={Languages.map((item) => ({ title: item }))}
+          items={Object.entries(enumDisplayMap).map(
+            ([enumValue, displayValue]) => ({
+              displayValue: displayValue,
+              value: enumValue,
+            })
+          )}
         />
       </View>
     </FieldCard>
