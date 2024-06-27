@@ -59,7 +59,7 @@ export function BasicRadio(props: IBasicRadioProps) {
           value?.toLowerCase() === label?.toLowerCase() && styles.checked,
         ]}
       />
-      <TextRegular size="sm" ml="xs">
+      <TextRegular textTransform="capitalize" size="sm" ml="xs">
         {label}
       </TextRegular>
     </Pressable>
