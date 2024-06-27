@@ -10,7 +10,14 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
+  [key in
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black']: {
     bg: string;
     color: string;
     border: string;
@@ -26,11 +33,21 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
 const HEIGHT = {
   sm: 32,
   md: 40,
-  lg: 46,
+  lg: 44,
   xl: 56,
 };
 
 const VARIANTS: TVariants = {
+  black: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
+  primaryDark: {
+    bg: Colors.PRIMARY_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_DARK,
+  },
   dark: {
     bg: Colors.BRAND_STEEL_BLUE,
     color: Colors.WHITE,
@@ -64,7 +81,14 @@ interface IButtonProps {
   title: string;
   size: 'sm' | 'full' | 'auto';
   onPress?: () => void;
-  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
+  variant:
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
@@ -81,6 +105,8 @@ interface IButtonProps {
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
+  borderRadius?: 8 | 50;
+  borderWidth?: 1 | 0;
 }
 
 export function Button(props: IButtonProps) {
@@ -105,6 +131,8 @@ export function Button(props: IButtonProps) {
     accessibilityLabel,
     testID,
     accessibilityHint,
+    borderRadius = 8,
+    borderWidth = 1,
   } = props;
   return (
     <Pressable
@@ -118,6 +146,8 @@ export function Button(props: IButtonProps) {
         style,
         {
           width: SIZES[size],
+          borderRadius,
+          borderWidth,
           alignItems: align,
           backgroundColor: disabled
             ? Colors.NEUTRAL_LIGHT
@@ -163,8 +193,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
+
     paddingHorizontal: Spacings.xs,
   },
   text: {

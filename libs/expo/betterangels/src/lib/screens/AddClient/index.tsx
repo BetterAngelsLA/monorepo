@@ -70,23 +70,6 @@ export default function AddClient() {
       input.dateOfBirth = format(parsedDate, 'yyyy-MM-dd');
     }
 
-    if (client.preferredLanguage) {
-      const trimmedLanguage = client.preferredLanguage.replace(
-        /\s+/g,
-        ''
-      ) as keyof typeof LanguageEnum;
-      input.preferredLanguage = LanguageEnum[trimmedLanguage];
-    }
-
-    if (client.veteranStatus) {
-      input.veteranStatus = client.veteranStatus.replace(
-        /\s+/g,
-        ''
-      ) as YesNoPreferNotToSayEnum;
-    }
-
-    console.log(input.dateOfBirth, client.dateOfBirth);
-
     try {
       const { data } = await createClient({
         variables: {

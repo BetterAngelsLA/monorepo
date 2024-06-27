@@ -17,7 +17,7 @@ interface ISelectProps {
   label?: string;
   placeholder?: string;
   onValueChange: (value: string) => void;
-  items: { title: string }[];
+  items: { displayValue: string; value?: string }[];
 }
 
 export function Select(props: ISelectProps) {
@@ -61,13 +61,13 @@ export function Select(props: ISelectProps) {
       <SelectDropdown
         data={items}
         onSelect={(selectedItem, index) => {
-          onValueChange(selectedItem.title);
+          onValueChange(selectedItem.value);
         }}
         renderButton={(selectedItem, isOpened) => {
           return (
             <View style={styles.select}>
-              <TextRegular>
-                {(selectedItem && selectedItem.title) || placeholder}
+              <TextRegular textTransform="capitalize">
+                {(selectedItem && selectedItem.displayValue) || placeholder}
               </TextRegular>
               <ChevronLeftIcon
                 size="sm"
@@ -86,7 +86,9 @@ export function Select(props: ISelectProps) {
                 borderTopColor: Colors.NEUTRAL_LIGHT,
               }}
             >
-              <TextRegular size="sm">{item.title}</TextRegular>
+              <TextRegular textTransform="capitalize" size="sm">
+                {item.displayValue}
+              </TextRegular>
             </View>
           );
         }}
