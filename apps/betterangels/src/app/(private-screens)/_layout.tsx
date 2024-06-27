@@ -1,14 +1,20 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
-import { Pressable, Text } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 export default function PrivateLayout() {
   const { user, isLoading } = useUser();
   const router = useRouter();
 
-  if (isLoading) return <Text>Loading</Text>;
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (!user) {
     return <Redirect href="/auth" />;
@@ -136,6 +142,26 @@ export default function PrivateLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="add-client"
+        options={{
+          title: 'Add Client',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
