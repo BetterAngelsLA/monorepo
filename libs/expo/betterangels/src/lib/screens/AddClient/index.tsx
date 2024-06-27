@@ -68,7 +68,6 @@ export default function AddClient() {
       input.dateOfBirth = new Date(client.dateOfBirth);
     }
 
-    console.log('client', input);
     try {
       const { data } = await createClient({
         variables: {
