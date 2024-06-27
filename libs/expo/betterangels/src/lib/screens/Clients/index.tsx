@@ -227,6 +227,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
+                arrivedFrom="/clients"
                 select={select as string}
                 id={clientProfile.id}
                 onPress={() =>
