@@ -9,8 +9,8 @@ import { ScrollView, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../apollo';
 
 interface IHMISProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -29,10 +29,10 @@ export default function HMIS(props: IHMISProps) {
       }}
       mb="xs"
       actionName={
-        !client.hmisId && !isHMIS ? (
+        !client?.hmisId && !isHMIS ? (
           <TextMedium size="sm">Add HMIS ID#</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.hmisId}</TextMedium>
+          <TextMedium size="sm">{client?.hmisId}</TextMedium>
         )
       }
       title="HMIS ID#"
@@ -45,9 +45,9 @@ export default function HMIS(props: IHMISProps) {
         }}
       >
         <BasicInput
-          value={client.hmisId || ''}
-          onDelete={() => setClient({ ...client, hmisId: '' })}
-          onChangeText={(e) => setClient({ ...client, hmisId: e })}
+          value={client?.hmisId || ''}
+          onDelete={() => client && setClient({ ...client, hmisId: '' })}
+          onChangeText={(e) => client && setClient({ ...client, hmisId: e })}
           placeholder="Enter HMIS ID#"
         />
       </View>

@@ -9,8 +9,8 @@ import { ScrollView, View } from 'react-native';
 import { GenderEnum, UpdateClientProfileInput } from '../../apollo';
 
 interface IGenderProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -32,11 +32,11 @@ export default function Gender(props: IGenderProps) {
       }}
       mb="xs"
       actionName={
-        !client.gender && !isGender ? (
+        !client?.gender && !isGender ? (
           <TextMedium size="sm">Add Gender</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client.gender}
+            {client?.gender}
           </TextMedium>
         )
       }
@@ -61,12 +61,13 @@ export default function Gender(props: IGenderProps) {
               label={q}
               accessibilityHint={`Select ${q}`}
               key={q}
-              value={client.gender}
+              value={client?.gender}
               onPress={() => {
-                setClient({
-                  ...client,
-                  gender: GenderEnum[q],
-                });
+                client &&
+                  setClient({
+                    ...client,
+                    gender: GenderEnum[q],
+                  });
               }}
             />
           ))}
