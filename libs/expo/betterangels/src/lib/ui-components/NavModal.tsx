@@ -1,5 +1,5 @@
 import {
-  HamburgerMenuIcon,
+  BarsIcon,
   HouseLineIcon,
   NoteIcon,
   SignOutIcon,
@@ -54,7 +54,7 @@ export default function NavModal(props: INavModalProps) {
         accessibilityRole="button"
         accessibilityHint="opens main navigation modal"
       >
-        <HamburgerMenuIcon size={'xl'} color={Colors.WHITE} />
+        <BarsIcon size={'xl'} color={Colors.WHITE} />
       </Pressable>
       <MainModal
         ml={Spacings.xl}
