@@ -67,9 +67,10 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
+  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
+    arrivedFrom: string;
   }>();
 
   if (!noteId) {
@@ -137,7 +138,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.replace('/interactions');
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
     }
