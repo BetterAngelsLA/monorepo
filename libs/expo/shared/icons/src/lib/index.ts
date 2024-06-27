@@ -40,6 +40,7 @@ export { default as FileSearchIcon } from './components/FileSearchIcon';
 export { default as GenderIcon } from './components/GenderIcon';
 export { default as GlobeIcon } from './components/GlobeIcon';
 export { default as GoogleIcon } from './components/GoogleIcon';
+export { default as HamburgerMenuIcon } from './components/HamburgerMenuIcon';
 export { default as HouseLineIcon } from './components/HouseLineIcon';
 export { default as HouseSolidIcon } from './components/HouseSolidIcon';
 export { default as ImageIcon } from './components/ImageIcon';
