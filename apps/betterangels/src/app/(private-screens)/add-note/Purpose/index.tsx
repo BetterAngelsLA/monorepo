@@ -34,7 +34,6 @@ export default function Purpose(props: IPurposeProps) {
       }>
     | undefined
   >(undefined);
-  const [hasError, setHasError] = useState({ error: false, check: false });
 
   const isPurpose = expanded === 'Purpose';
   const isGreaterThanZeroPurpses = purposes && purposes.length > 0;
@@ -55,11 +54,6 @@ export default function Purpose(props: IPurposeProps) {
   useEffect(() => {
     if (!isPurpose) {
       deletePurposesWithoutValue();
-      if (hasError.check && purposes && !purposes[0].value) {
-        setHasError({ error: true, check: true });
-      }
-    } else {
-      setHasError({ error: false, check: true });
     }
   }, [expanded]);
 
@@ -89,12 +83,6 @@ export default function Purpose(props: IPurposeProps) {
       setExpanded={() => {
         setExpanded(isPurpose ? null : 'Purpose');
       }}
-      error={
-        hasError.check && hasError.error && !isPurpose
-          ? `Please enter the purpose(s) of today's interaction`
-          : undefined
-      }
-      required
       mb="xs"
       actionName={
         !hasAnyValidPurpose && !isPurpose ? (
@@ -119,7 +107,6 @@ export default function Purpose(props: IPurposeProps) {
             purpose={purpose}
             purposes={purposes}
             setPurposes={setPurposes}
-            hasError={hasError.check && hasError.error}
           />
         ))}
         {isGreaterThanZeroPurpses &&
