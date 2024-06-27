@@ -200,6 +200,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
               title="Cancel"
             />
             <Pressable
+              disabled={isLoading}
               onPress={captureImage}
               style={{ flex: 2, alignItems: 'center' }}
               accessibilityRole="button"
