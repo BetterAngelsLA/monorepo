@@ -11,7 +11,6 @@ import {
   CreateClientProfileInput,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
-import { convertCapitalize } from '../../helpers';
 
 interface IVeteranStatusProps {
   client: CreateClientProfileInput;
@@ -24,7 +23,21 @@ interface IVeteranStatusProps {
 export default function VeteranStatus(props: IVeteranStatusProps) {
   const { expanded, setExpanded, client, scrollRef, setClient } = props;
 
+  const enumDisplayMap: { [key in YesNoPreferNotToSayEnum]: string } = {
+    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+    [YesNoPreferNotToSayEnum.No]: 'No',
+    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+  };
   const isVeteranStatus = expanded === 'Veteran Status';
+
+  // function doTheThing(enumValue: string) {
+  //   setClient({
+  //     ...client,
+  //     veteranStatus: enumValue as YesNoPreferNotToSayEnum,
+  //   });
+  //   console.log('client', client.veteranStatus);
+  //   console.log('enumValue', enumValue);
+  // }
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -37,7 +50,9 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
         !client.veteranStatus && !isVeteranStatus ? (
           <TextMedium size="sm">Add Veteran Status</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.veteranStatus}</TextMedium>
+          <TextMedium size="sm">
+            {enumDisplayMap[client.veteranStatus]}
+          </TextMedium>
         )
       }
       title="Veteran Status"
@@ -61,23 +76,21 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
             flex: 1,
           }}
         >
-          {Object.values(YesNoPreferNotToSayEnum).map((q) => {
-            const parsedQ = convertCapitalize(q);
-            return (
-              <BasicRadio
-                label={parsedQ}
-                accessibilityHint={`Select ${parsedQ}`}
-                key={parsedQ}
-                value={client.veteranStatus}
-                onPress={() =>
-                  setClient({
-                    ...client,
-                    veteranStatus: parsedQ.trim() as YesNoPreferNotToSayEnum,
-                  })
-                }
-              />
-            );
-          })}
+          {Object.entries(enumDisplayMap).map(([enumValue, displayValue]) => (
+            <BasicRadio
+              label={displayValue}
+              accessibilityHint={`Select ${displayValue}`}
+              key={enumValue}
+              value={client.veteranStatus}
+              onPress={() =>
+                setClient({
+                  ...client,
+                  veteranStatus: enumValue as YesNoPreferNotToSayEnum,
+                })
+              }
+              // onPress={() => doTheThing(enumValue)}
+            />
+          ))}
         </View>
       </View>
     </FieldCard>

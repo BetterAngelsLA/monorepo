@@ -68,22 +68,6 @@ export default function AddClient() {
       input.dateOfBirth = new Date(client.dateOfBirth);
     }
 
-    if (client.preferredLanguage) {
-      const trimmedLanguage = client.preferredLanguage.replace(
-        /\s+/g,
-        ''
-      ) as keyof typeof LanguageEnum;
-      input.preferredLanguage = LanguageEnum[trimmedLanguage];
-    }
-
-    if (client.veteranStatus) {
-      const trimmedVeteranStatus = client.veteranStatus.replace(
-        /\s+/g,
-        ''
-      ) as keyof typeof YesNoPreferNotToSayEnum;
-      input.veteranStatus = YesNoPreferNotToSayEnum[trimmedVeteranStatus];
-    }
-
     console.log('client', input);
     try {
       const { data } = await createClient({
