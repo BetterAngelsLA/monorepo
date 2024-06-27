@@ -51,7 +51,8 @@ export default function Language(props: ILanguageProps) {
           <TextMedium size="sm">Add Language</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client.preferredLanguage}
+            {client.preferredLanguage &&
+              enumDisplayMap[client.preferredLanguage]}
           </TextMedium>
         )
       }
