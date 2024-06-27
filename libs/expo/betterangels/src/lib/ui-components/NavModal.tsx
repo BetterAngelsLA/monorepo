@@ -1,4 +1,5 @@
 import {
+  BarsIcon,
   HouseLineIcon,
   NoteIcon,
   SignOutIcon,
@@ -53,14 +54,7 @@ export default function NavModal(props: INavModalProps) {
         accessibilityRole="button"
         accessibilityHint="opens main navigation modal"
       >
-        <Avatar
-          mb="xs"
-          hasBorder
-          borderColor={Colors.BLACK}
-          accessibilityHint="my avatar"
-          accessibilityLabel="My Avatar"
-          size="md"
-        />
+        <BarsIcon size={'xl'} color={Colors.WHITE} />
       </Pressable>
       <MainModal
         ml={Spacings.xl}

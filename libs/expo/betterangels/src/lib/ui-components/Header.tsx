@@ -26,14 +26,6 @@ export default function Header({
       </View>
       <View style={{ alignItems: 'center' }}>
         <NavModal />
-        <View
-          style={{
-            height: 6,
-            width: 6,
-            borderRadius: 100,
-            backgroundColor: Colors.ERROR,
-          }}
-        />
       </View>
     </View>
   );

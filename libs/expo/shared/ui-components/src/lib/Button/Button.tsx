@@ -8,6 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import Loading from '../Loading';
 
 type TVariants = {
   [key in
@@ -152,6 +153,7 @@ interface IButtonProps {
   testID?: string;
   borderRadius?: 8 | 50;
   borderWidth?: 1 | 0;
+  loading?: boolean;
 }
 
 export function Button(props: IButtonProps) {
@@ -178,6 +180,7 @@ export function Button(props: IButtonProps) {
     accessibilityHint,
     borderRadius = 8,
     borderWidth = 1,
+    loading,
   } = props;
   return (
     <View
@@ -226,23 +229,31 @@ export function Button(props: IButtonProps) {
         onPress={onPress}
         testID={testID}
       >
-        <View style={styles.wrapper}>
-          {icon && icon}
-          <Text
-            style={[
-              styles.text,
-              {
-                color: disabled ? Colors.NEUTRAL_DARK : VARIANTS[variant].color,
-                marginLeft: icon ? Spacings.xs : 0,
-                fontFamily: 'Poppins-SemiBold',
-                fontSize: FontSizes[fontSize].fontSize,
-                lineHeight: FontSizes[fontSize].lineHeight,
-              },
-            ]}
-          >
-            {title}
-          </Text>
-        </View>
+              <View style={styles.wrapper}>
+        {loading ? (
+          <Loading size="small" />
+        ) : (
+          <>
+            {icon && icon}
+            <Text
+              style={[
+                styles.text,
+                {
+                  color: disabled
+                    ? Colors.NEUTRAL_DARK
+                    : VARIANTS[variant].color,
+                  marginLeft: icon ? Spacings.xs : 0,
+                  fontFamily: 'Poppins-SemiBold',
+                  fontSize: FontSizes[fontSize].fontSize,
+                  lineHeight: FontSizes[fontSize].lineHeight,
+                },
+              ]}
+            >
+              {title}
+            </Text>
+          </>
+        )}
+      </View>
       </Pressable>
     </View>
   );
