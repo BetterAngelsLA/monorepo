@@ -93,20 +93,6 @@ export default function EditClient({ id }: { id: string }) {
       input.dateOfBirth = format(parsedDate, 'yyyy-MM-dd');
     }
 
-    if (client.preferredLanguage) {
-      const trimmedLanguage = client.preferredLanguage.replace(
-        /\s+/g,
-        ''
-      ) as keyof typeof LanguageEnum;
-      input.preferredLanguage = LanguageEnum[trimmedLanguage];
-    }
-
-    if (client.veteranStatus) {
-      input.veteranStatus = client.veteranStatus
-        .replace(/\s+/g, '_')
-        .toUpperCase() as YesNoPreferNotToSayEnum;
-    }
-
     try {
       const { data } = await updateClient({
         variables: {
