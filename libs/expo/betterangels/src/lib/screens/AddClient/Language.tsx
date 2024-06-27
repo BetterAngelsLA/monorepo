@@ -22,6 +22,8 @@ export default function Language(props: ILanguageProps) {
   const enumDisplayMap: { [key in LanguageEnum]: string } = {
     [LanguageEnum.Arabic]: 'Arabic',
     [LanguageEnum.Armenian]: 'Armenian',
+    [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
+    [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
     [LanguageEnum.English]: 'English',
     [LanguageEnum.Farsi]: 'Farsi',
     [LanguageEnum.Indonesian]: 'Indonesian',
@@ -29,10 +31,8 @@ export default function Language(props: ILanguageProps) {
     [LanguageEnum.Khmer]: 'Khmer',
     [LanguageEnum.Korean]: 'Korean',
     [LanguageEnum.Russian]: 'Russian',
-    [LanguageEnum.SimplifiedChinese]: 'Simplified Chinese',
     [LanguageEnum.Spanish]: 'Spanish',
     [LanguageEnum.Tagalog]: 'Tagalog',
-    [LanguageEnum.TraditionalChinese]: 'Traditional Chinese',
     [LanguageEnum.Vietnamese]: 'Vietnamese',
   };
 
