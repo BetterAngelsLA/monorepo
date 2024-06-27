@@ -19,7 +19,7 @@ describe('Select Component', () => {
   it('renders correctly with a label', () => {
     const { getByText } = render(
       <Select
-        items={mockData.map((item) => ({ title: item }))}
+        items={mockData.map((item) => ({ displayValue: item }))}
         onValueChange={mockSetExternalValue}
         label="Select Label"
         placeholder="Select an option"
