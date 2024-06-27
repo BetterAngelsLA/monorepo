@@ -1,6 +1,7 @@
 export enum Colors {
   BLACK = '#000000',
   WHITE = '#ffffff',
+  GRAY_PRESSED = '#E8ECF2',
 
   BRAND_ANGEL_BLUE = '#F2FAFC',
   BRAND_SKY_BLUE = '#9CDCED',
@@ -34,7 +35,7 @@ export enum Colors {
 
   ERROR_EXTRA_LIGHT = '#FFECE8',
   ERROR_LIGHT = '#FFC5BF',
-  ERROR = '#E55141',
+  ERROR = '#CB0808',
   ERROR_DARK = '#960000',
   ERROR_EXTRA_DARK = '#620000',
 
