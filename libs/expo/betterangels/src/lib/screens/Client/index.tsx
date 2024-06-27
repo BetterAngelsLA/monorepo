@@ -1,7 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextButton, Loading } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { ReactElement, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
@@ -55,7 +56,20 @@ export default function Client({ id }: { id: string }) {
     });
   }, []);
 
-  if (loading) return <TextRegular>Loading</TextRegular>;
+    if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (error) throw new Error('Something went wrong. Please try again.');
 

@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
 import { useNavigation, useRouter } from 'expo-router';
@@ -52,7 +52,20 @@ export default function Note({ id }: { id: string }) {
     });
   }, []);
 
-  if (loading) return <TextRegular>Loading</TextRegular>;
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (error) throw new Error('Something went wrong. Please try again.');
 

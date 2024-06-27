@@ -16,7 +16,7 @@ import {
   UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,7 +35,13 @@ export default function TabLayout() {
     setModalVisible(false);
   };
 
-  if (isLoading) return <Text>Loading</Text>;
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (!user) {
     return <Redirect href="/auth" />;
