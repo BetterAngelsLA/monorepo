@@ -4,8 +4,8 @@ import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IRadioProps {
-  label: string | number;
+interface IBasicRadioProps {
+  label: string | undefined | null;
   onPress: () => void;
   accessibilityLabel?: string;
   accessibilityHint: string;
@@ -18,7 +18,7 @@ interface IRadioProps {
   value: string | undefined | null;
 }
 
-export function Radio(props: IRadioProps) {
+export function BasicRadio(props: IBasicRadioProps) {
   const {
     label,
     onPress,
@@ -42,12 +42,7 @@ export function Radio(props: IRadioProps) {
       style={[
         styles.container,
         {
-          backgroundColor:
-            value === label ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
           borderColor: Colors.NEUTRAL_LIGHT,
-          paddingHorizontal: Spacings.sm,
-          paddingVertical: Spacings.xs,
-          justifyContent: 'space-between',
           marginBottom: mb && Spacings[mb],
           marginTop: mt && Spacings[mt],
           marginLeft: ml && Spacings[ml],
@@ -58,8 +53,15 @@ export function Radio(props: IRadioProps) {
       ]}
       onPress={onPress}
     >
-      <TextRegular ml="xs">{label}</TextRegular>
-      <View style={[styles.radio, value === label && styles.checked]} />
+      <View
+        style={[
+          styles.radio,
+          value?.toLowerCase() === label?.toLowerCase() && styles.checked,
+        ]}
+      />
+      <TextRegular textTransform="capitalize" size="sm" ml="xs">
+        {label}
+      </TextRegular>
     </Pressable>
   );
 }
@@ -68,8 +70,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
   },
   radio: {
     width: 16,

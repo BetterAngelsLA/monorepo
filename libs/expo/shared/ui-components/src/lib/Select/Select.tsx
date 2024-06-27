@@ -1,26 +1,13 @@
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { useRef, useState } from 'react';
-import {
-  Dimensions,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from 'react-native';
-import TextRegular from '../TextRegular';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import SelectDropdown from 'react-native-select-dropdown';
 
-const MIN_FITABLE_HEIGHT = 300;
-const DROPDOWN_MAX_HEIGHT = 150;
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface ISelectProps {
-  data: string[];
-  setExternalValue: (e: string) => void;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -29,42 +16,27 @@ interface ISelectProps {
   mr?: TSpacing;
   label?: string;
   placeholder?: string;
+  onValueChange: (value: string) => void;
+  items: { displayValue: string; value?: string }[];
 }
 
 export function Select(props: ISelectProps) {
-  const { setExternalValue, data, mb, mt, mr, ml, my, mx, label, placeholder } =
-    props;
-  const [value, setValue] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState('bottom');
-  const buttonRef = useRef<View>(null);
-
-  const handleDropdown = () => {
-    setShowDropdown(true);
-    if (buttonRef.current) {
-      buttonRef.current?.measure((fx, fy, width, height, px, py) => {
-        const screenHeight = Dimensions.get('window').height;
-        const bottomSpace = screenHeight - (py + height);
-        if (bottomSpace < MIN_FITABLE_HEIGHT) {
-          setDropdownPosition('top');
-        } else {
-          setDropdownPosition('bottom');
-        }
-      });
-    }
-  };
-
-  const handlePress = (newValue: string) => {
-    setValue(newValue);
-    setExternalValue(newValue);
-    setShowDropdown(false);
-  };
+  const {
+    items,
+    mb,
+    mt,
+    mr,
+    ml,
+    my,
+    mx,
+    label,
+    onValueChange,
+    placeholder = '',
+  } = props;
 
   const containerStyle: ViewStyle = {
-    position: 'relative',
     width: '100%',
     maxWidth: 600,
-    ...(Platform.OS === 'ios' && showDropdown ? { zIndex: 10 } : null),
   };
 
   return (
@@ -86,81 +58,71 @@ export function Select(props: ISelectProps) {
           {label}
         </TextRegular>
       )}
-      <Pressable
-        accessible
-        accessibilityRole="button"
-        accessibilityHint="opens dropdown"
-        onPress={handleDropdown}
-      >
-        <View style={styles.select} ref={buttonRef}>
-          <TextRegular>{value ? value : placeholder}</TextRegular>
-          <View style={styles.icon}>
-            <ChevronLeftIcon
-              rotate={showDropdown ? '90deg' : '-90deg'}
-              color={Colors.PRIMARY_EXTRA_DARK}
-            />
-          </View>
-        </View>
-      </Pressable>
-      {showDropdown && (
-        <ScrollView
-          contentContainerStyle={{ padding: Spacings.xs }}
-          keyboardShouldPersistTaps="handled"
-          style={[
-            styles.dropdown,
-            dropdownPosition === 'top'
-              ? styles.dropdownTop
-              : styles.dropdownBottom,
-          ]}
-          testID="select-dropdown"
-        >
-          {data.map((item, idx) => (
-            <TouchableOpacity
-              accessible
-              accessibilityRole="button"
-              accessibilityHint={'selects ${item} from opened dropdown'}
-              style={{ padding: Spacings.xs }}
-              key={idx}
-              onPress={() => handlePress(item)}
+      <SelectDropdown
+        data={items}
+        onSelect={(selectedItem, index) => {
+          onValueChange(selectedItem.value);
+        }}
+        renderButton={(selectedItem, isOpened) => {
+          return (
+            <View style={styles.select}>
+              <TextRegular textTransform="capitalize">
+                {(selectedItem && selectedItem.displayValue) || placeholder}
+              </TextRegular>
+              <ChevronLeftIcon
+                size="sm"
+                rotate={isOpened ? '90deg' : '-90deg'}
+              />
+            </View>
+          );
+        }}
+        renderItem={(item, index, isSelected) => {
+          return (
+            <View
+              style={{
+                ...styles.dropdownItemStyle,
+                ...(isSelected && { backgroundColor: '#D2D9DF' }),
+                borderTopWidth: index === 0 ? 0 : 1,
+                borderTopColor: Colors.NEUTRAL_LIGHT,
+              }}
             >
-              <TextRegular>{item}</TextRegular>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+              <TextRegular textTransform="capitalize" size="sm">
+                {item.displayValue}
+              </TextRegular>
+            </View>
+          );
+        }}
+        showsVerticalScrollIndicator={false}
+        dropdownStyle={styles.dropdownMenuStyle}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   select: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: Colors.PRIMARY_EXTRA_DARK,
-    justifyContent: 'center',
-    paddingLeft: Spacings.sm,
-    paddingRight: 38,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    paddingHorizontal: Spacings.sm,
+
     height: 56,
   },
-  dropdown: {
-    width: '100%',
-    maxHeight: DROPDOWN_MAX_HEIGHT,
-    position: 'absolute',
-    zIndex: 100,
-    borderWidth: 1,
+
+  dropdownMenuStyle: {
+    backgroundColor: '#E9ECEF',
     borderRadius: 8,
-    borderColor: Colors.PRIMARY_EXTRA_DARK,
-    backgroundColor: Colors.WHITE,
   },
-  dropdownTop: {
-    bottom: '102%',
-  },
-  dropdownBottom: {
-    top: '102%',
-  },
-  icon: {
-    position: 'absolute',
-    right: 20,
+  dropdownItemStyle: {
+    width: '100%',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
   },
 });
