@@ -60,6 +60,7 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         placeholder="Select the role"
         label="Roles and permissions"
         // TODO: This may need to be updated. Needed to update Select component contract.
+        // Need to review this and make sure it didn't introduce any breaking changes.
         items={[{ displayValue: 'Case Manager', value: 'Case Manager' }]}
         onValueChange={(value) => console.log(value)}
       />
