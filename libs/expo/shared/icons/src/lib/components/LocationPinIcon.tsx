@@ -1,4 +1,4 @@
-import LocationPinIconSVG from '../../assets/third_party/tdesign/svg/tdesign:location.svg';
+import LocationPinIconSVG from '../../assets/better_angels/red-location-pin.svg';
 import createSvgIcon from '../createSvgIcon';
 
 const LocationPinIcon = createSvgIcon(LocationPinIconSVG);

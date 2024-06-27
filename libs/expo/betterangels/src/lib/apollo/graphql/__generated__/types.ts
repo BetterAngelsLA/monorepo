@@ -196,6 +196,7 @@ export type CreateUserInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
@@ -891,6 +892,7 @@ export type UpdateClientProfileInput = {
   preferredLanguage?: InputMaybe<LanguageEnum>;
   pronouns?: InputMaybe<Scalars['String']['input']>;
   spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
+  user?: InputMaybe<UpdateUserInput>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -943,6 +945,14 @@ export type UpdateTaskLocationPayload = OperationInfo | TaskType;
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
 
+export type UpdateUserInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UserType = {
   __typename?: 'UserType';
   email: Scalars['String']['output'];
@@ -950,6 +960,7 @@ export type UserType = {
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
+  middleName?: Maybe<Scalars['String']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
 };

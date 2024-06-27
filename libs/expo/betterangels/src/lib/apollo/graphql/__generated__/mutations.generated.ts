@@ -8,6 +8,11 @@ export type GenerateMagicLinkMutationVariables = Types.Exact<{ [key: string]: ne
 
 export type GenerateMagicLinkMutation = { __typename?: 'Mutation', generateMagicLink: { __typename?: 'MagicLinkResponse', message: string } };
 
+export type DeleteCurrentUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type DeleteCurrentUserMutation = { __typename?: 'Mutation', deleteCurrentUser: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
 export type UpdateNoteMutationVariables = Types.Exact<{
   data: Types.UpdateNoteInput;
 }>;
@@ -134,6 +139,47 @@ export function useGenerateMagicLinkMutation(baseOptions?: Apollo.MutationHookOp
 export type GenerateMagicLinkMutationHookResult = ReturnType<typeof useGenerateMagicLinkMutation>;
 export type GenerateMagicLinkMutationResult = Apollo.MutationResult<GenerateMagicLinkMutation>;
 export type GenerateMagicLinkMutationOptions = Apollo.BaseMutationOptions<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
+export const DeleteCurrentUserDocument = gql`
+    mutation DeleteCurrentUser {
+  deleteCurrentUser {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}
+    `;
+export type DeleteCurrentUserMutationFn = Apollo.MutationFunction<DeleteCurrentUserMutation, DeleteCurrentUserMutationVariables>;
+
+/**
+ * __useDeleteCurrentUserMutation__
+ *
+ * To run a mutation, you first call `useDeleteCurrentUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCurrentUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCurrentUserMutation, { data, loading, error }] = useDeleteCurrentUserMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDeleteCurrentUserMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCurrentUserMutation, DeleteCurrentUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCurrentUserMutation, DeleteCurrentUserMutationVariables>(DeleteCurrentUserDocument, options);
+      }
+export type DeleteCurrentUserMutationHookResult = ReturnType<typeof useDeleteCurrentUserMutation>;
+export type DeleteCurrentUserMutationResult = Apollo.MutationResult<DeleteCurrentUserMutation>;
+export type DeleteCurrentUserMutationOptions = Apollo.BaseMutationOptions<DeleteCurrentUserMutation, DeleteCurrentUserMutationVariables>;
 export const UpdateNoteDocument = gql`
     mutation UpdateNote($data: UpdateNoteInput!) {
   updateNote(data: $data) {

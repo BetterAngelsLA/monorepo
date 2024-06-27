@@ -32,16 +32,6 @@ export default function PrivateLayout() {
           },
           title: 'Add interaction',
           headerTitleAlign: 'center',
-          headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
-              accessibilityHint="goes to previous screen"
-              onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
-          ),
         }}
       />
       <Stack.Screen
@@ -146,6 +136,26 @@ export default function PrivateLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessible
+              accessibilityHint="goes to previous screen"
+              onPress={router.back}
+            >
+              <TextRegular color={Colors.WHITE}>Back</TextRegular>
+            </Pressable>
+          ),
+        }}
+      />
+       <Stack.Screen
+        name="add-client"
+        options={{
+          title: 'Add Client',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,

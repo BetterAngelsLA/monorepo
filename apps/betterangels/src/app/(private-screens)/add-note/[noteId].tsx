@@ -13,8 +13,9 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
+import { useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
@@ -24,6 +25,46 @@ import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import Title from './Title';
+
+const renderModal = (
+  isRevert: string | undefined,
+  onRevert: () => void,
+  onDelete: () => void,
+  buttonTitle: string
+) => {
+  if (isRevert) {
+    return (
+      <RevertModal
+        body="All changes you made since the last save will be discarded"
+        title="Discard changes?"
+        onRevert={onRevert}
+        button={
+          <TextButton
+            fontSize="sm"
+            accessibilityHint="discards changes and reverts interaction to previous state"
+            title={buttonTitle}
+          />
+        }
+      />
+    );
+  } else {
+    return (
+      <DeleteModal
+        body="All data associated with this interaction will be deleted"
+        title="Delete interaction?"
+        onDelete={onDelete}
+        button={
+          <TextButton
+            fontSize="sm"
+            accessibilityHint="deletes creation"
+            title={buttonTitle}
+          />
+        }
+      />
+    );
+  }
+};
+
 export default function AddNote() {
   const router = useRouter();
   const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
@@ -45,6 +86,43 @@ export default function AddNote() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      headerLeft: () =>
+        revertBeforeTimestamp ? (
+          <RevertModal
+            body="All changes you made since the last save will be discarded"
+            title="Discard changes?"
+            onRevert={revertNoteFunction}
+            button={
+              <TextButton
+                color={Colors.WHITE}
+                fontSize="sm"
+                accessibilityHint="discards changes and reverts interaction to previous state"
+                title="Back"
+              />
+            }
+          />
+        ) : (
+          <DeleteModal
+            body="All data associated with this interaction will be deleted"
+            title="Delete interaction?"
+            onDelete={deleteNoteFunction}
+            button={
+              <TextButton
+                color={Colors.WHITE}
+                fontSize="sm"
+                accessibilityHint="deletes creation"
+                title="Back"
+              />
+            }
+          />
+        ),
+    });
+  }, [navigation, revertBeforeTimestamp]);
 
   async function deleteNoteFunction() {
     try {
@@ -53,7 +131,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.navigate('/interactions');
+      router.replace('/interactions');
     } catch (err) {
       console.error(err);
     }
@@ -170,35 +248,12 @@ export default function AddNote() {
         )}
       </MainScrollContainer>
       <BottomActions
-        cancel={
-          revertBeforeTimestamp ? (
-            <RevertModal
-              body="All changes you made since the last save will be discarded"
-              title="Discard changes?"
-              onRevert={revertNoteFunction}
-              button={
-                <TextButton
-                  fontSize="sm"
-                  accessibilityHint="discards changes and reverts interaction to previous state"
-                  title="Cancel"
-                />
-              }
-            />
-          ) : (
-            <DeleteModal
-              body="All data associated with this interaction will be deleted"
-              title="Delete interaction?"
-              onDelete={deleteNoteFunction}
-              button={
-                <TextButton
-                  fontSize="sm"
-                  accessibilityHint="deletes creation"
-                  title="Cancel"
-                />
-              }
-            />
-          )
-        }
+        cancel={renderModal(
+          revertBeforeTimestamp,
+          revertNoteFunction,
+          deleteNoteFunction,
+          'Cancel'
+        )}
         optionalAction={
           !data.note.isSubmitted && (
             <TextButton
