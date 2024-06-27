@@ -33,7 +33,7 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
 const PRESSED_HEIGHT = {
   sm: 30,
   md: 38,
-  lg: 44,
+  lg: 42,
   xl: 54,
 };
 
@@ -45,6 +45,16 @@ const HEIGHT = {
 };
 
 const PRESSED_VARIANTS: TVariants = {
+  black: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
+  primaryDark: {
+    bg: Colors.PRIMARY_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_DARK,
+  },
   dark: {
     bg: Colors.BRAND_STEEL_BLUE,
     color: Colors.WHITE,
@@ -174,24 +184,6 @@ export function Button(props: IButtonProps) {
       style={[
         styles.container,
         {
-          width: SIZES[size],
-          borderRadius,
-          borderWidth,
-          alignItems: align,
-          backgroundColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : VARIANTS[variant].bg,
-          borderColor: disabled
-            ? Colors.NEUTRAL_LIGHT
-            : borderColor
-            ? borderColor
-            : VARIANTS[variant].border,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
           height: HEIGHT[height],
         },
       ]}
@@ -207,6 +199,8 @@ export function Button(props: IButtonProps) {
           style,
           {
             width: SIZES[size],
+            borderRadius,
+            borderWidth,
             alignItems: align,
             backgroundColor: disabled
               ? Colors.NEUTRAL_LIGHT
