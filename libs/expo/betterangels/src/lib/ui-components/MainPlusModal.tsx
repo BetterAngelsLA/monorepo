@@ -20,7 +20,7 @@ const ACTIONS = [
   {
     title: 'Add client',
     Icon: UserAddIcon,
-    route: '/clients', // TODO: update path once add client screen is created
+    route: '/add-client',
   },
 ];
 

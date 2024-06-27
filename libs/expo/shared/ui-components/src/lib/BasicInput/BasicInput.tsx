@@ -86,7 +86,7 @@ export function BasicInput(props: IBasicInputProps) {
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
             paddingLeft: icon ? Spacings.xs : Spacings.sm,
-            paddingRight: 38,
+            paddingRight: onDelete ? 38 : Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
             fontSize: 16,
@@ -101,7 +101,7 @@ export function BasicInput(props: IBasicInputProps) {
           {...rest}
           value={value}
         />
-        {value && (
+        {value && onDelete && (
           <Pressable
             accessible
             accessibilityRole="button"

@@ -59,8 +59,10 @@ export default function TeamAddMemberScreen(props: ITeamEditScreenProps) {
         mb="sm"
         placeholder="Select the role"
         label="Roles and permissions"
-        data={['Case Manager']}
-        setExternalValue={(value) => console.log(value)}
+        // TODO: This may need to be updated. Needed to update Select component contract.
+        // Need to review this and make sure it didn't introduce any breaking changes.
+        items={[{ displayValue: 'Case Manager', value: 'Case Manager' }]}
+        onValueChange={(value) => console.log(value)}
       />
       <Input mb="sm" label="Email Address" control={control} name="email" />
       <View style={styles.otherTeam}>
