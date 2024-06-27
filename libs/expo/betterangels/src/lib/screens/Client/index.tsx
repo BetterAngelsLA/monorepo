@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, useState } from 'react';
+import { View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
@@ -37,7 +38,20 @@ export default function Client({ id }: { id: string }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Interactions');
 
-  if (loading) return <TextRegular>Loading</TextRegular>;
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (error) throw new Error('Something went wrong. Please try again.');
 
