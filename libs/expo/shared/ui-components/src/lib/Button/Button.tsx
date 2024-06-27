@@ -10,7 +10,14 @@ import {
 } from 'react-native';
 
 type TVariants = {
-  [key in 'primary' | 'secondary' | 'negative' | 'sky' | 'dark']: {
+  [key in
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black']: {
     bg: string;
     color: string;
     border: string;
@@ -33,7 +40,7 @@ const PRESSED_HEIGHT = {
 const HEIGHT = {
   sm: 32,
   md: 40,
-  lg: 46,
+  lg: 44,
   xl: 56,
 };
 
@@ -66,6 +73,16 @@ const PRESSED_VARIANTS: TVariants = {
 };
 
 const VARIANTS: TVariants = {
+  black: {
+    bg: Colors.BLACK,
+    color: Colors.WHITE,
+    border: Colors.BLACK,
+  },
+  primaryDark: {
+    bg: Colors.PRIMARY_DARK,
+    color: Colors.WHITE,
+    border: Colors.PRIMARY_DARK,
+  },
   dark: {
     bg: Colors.BRAND_STEEL_BLUE,
     color: Colors.WHITE,
@@ -99,7 +116,14 @@ interface IButtonProps {
   title: string;
   size: 'sm' | 'full' | 'auto';
   onPress?: () => void;
-  variant: 'primary' | 'secondary' | 'negative' | 'sky' | 'dark';
+  variant:
+    | 'primary'
+    | 'primaryDark'
+    | 'secondary'
+    | 'negative'
+    | 'sky'
+    | 'dark'
+    | 'black';
   align?: 'flex-start' | 'center';
   disabled?: boolean;
   style?: ViewStyle;
@@ -116,6 +140,8 @@ interface IButtonProps {
   accessibilityLabel?: string;
   accessibilityHint: string;
   testID?: string;
+  borderRadius?: 8 | 50;
+  borderWidth?: 1 | 0;
 }
 
 export function Button(props: IButtonProps) {
@@ -140,12 +166,32 @@ export function Button(props: IButtonProps) {
     accessibilityLabel,
     testID,
     accessibilityHint,
+    borderRadius = 8,
+    borderWidth = 1,
   } = props;
   return (
     <View
       style={[
         styles.container,
         {
+          width: SIZES[size],
+          borderRadius,
+          borderWidth,
+          alignItems: align,
+          backgroundColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : VARIANTS[variant].bg,
+          borderColor: disabled
+            ? Colors.NEUTRAL_LIGHT
+            : borderColor
+            ? borderColor
+            : VARIANTS[variant].border,
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           height: HEIGHT[height],
         },
       ]}
@@ -211,8 +257,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
+
     paddingHorizontal: Spacings.xs,
   },
   text: {

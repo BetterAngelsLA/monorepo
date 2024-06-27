@@ -1,5 +1,5 @@
 export interface IIconProps {
-  size?: TIconSizes;
+  size?: TIconSizes | number;
   color?: string;
   rotate?: string;
   mb?: TSpacing;
