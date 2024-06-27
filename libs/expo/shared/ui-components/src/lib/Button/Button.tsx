@@ -51,9 +51,9 @@ const PRESSED_VARIANTS: TVariants = {
     border: Colors.BLACK,
   },
   primaryDark: {
-    bg: Colors.PRIMARY_DARK,
+    bg: Colors.PRIMARY_EXTRA_DARK,
     color: Colors.WHITE,
-    border: Colors.PRIMARY_DARK,
+    border: Colors.PRIMARY_EXTRA_DARK,
   },
   dark: {
     bg: Colors.BRAND_STEEL_BLUE,
