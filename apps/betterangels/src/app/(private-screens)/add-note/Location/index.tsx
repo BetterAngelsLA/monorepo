@@ -9,6 +9,18 @@ import LocationMapModal from './LocationMapModal';
 interface ILocationProps {
   scrollRef: RefObject<ScrollView>;
   expanded: string | undefined | null;
+  errors: {
+    location: boolean;
+    title: boolean;
+    date: boolean;
+    time: boolean;
+  };
+  setErrors: (errors: {
+    location: boolean;
+    title: boolean;
+    date: boolean;
+    time: boolean;
+  }) => void;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string | undefined;
   point?: number[] | null;
@@ -34,8 +46,16 @@ type TLocation =
   | undefined;
 
 export default function LocationComponent(props: ILocationProps) {
-  const { expanded, setExpanded, noteId, address, point, scrollRef } = props;
-  const [error, setError] = useState(false);
+  const {
+    expanded,
+    setExpanded,
+    noteId,
+    address,
+    point,
+    scrollRef,
+    errors,
+    setErrors,
+  } = props;
   const [location, setLocation] = useState<TLocation>({
     latitude: point ? point[1] : null,
     longitude: point ? point[0] : null,
@@ -55,7 +75,7 @@ export default function LocationComponent(props: ILocationProps) {
       required
       expanded={expanded}
       mb="xs"
-      error={error ? 'Please enter a location' : undefined}
+      error={errors.location ? 'Please enter a location' : undefined}
       setExpanded={() => {
         if (isLocation) {
           setExpanded(undefined);
@@ -107,7 +127,12 @@ export default function LocationComponent(props: ILocationProps) {
         </View>
       )}
       <LocationMapModal
-        setError={setError}
+        setError={(err) =>
+          setErrors({
+            ...errors,
+            location: err,
+          })
+        }
         setLocation={setLocation}
         location={location}
         noteId={noteId}

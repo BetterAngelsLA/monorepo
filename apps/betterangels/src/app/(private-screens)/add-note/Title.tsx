@@ -4,7 +4,7 @@ import {
   UpdateNoteMutation,
   UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
-import { Regex, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   DatePicker,
@@ -22,6 +22,18 @@ interface ITitleProps {
   noteTitle?: string;
   noteId: string | undefined;
   noteDate: Date;
+  errors: {
+    title: boolean;
+    location: boolean;
+    date: boolean;
+    time: boolean;
+  };
+  setErrors: (errors: {
+    title: boolean;
+    location: boolean;
+    date: boolean;
+    time: boolean;
+  }) => void;
 }
 
 type TNote = {
@@ -33,7 +45,15 @@ type TNote = {
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
-  const { noteTitle, expanded, setExpanded, noteId, noteDate } = props;
+  const {
+    noteTitle,
+    expanded,
+    setExpanded,
+    noteId,
+    noteDate,
+    errors,
+    setErrors,
+  } = props;
   const [updateNote] = useMutation<
     UpdateNoteMutation,
     UpdateNoteMutationVariables
@@ -44,11 +64,6 @@ export default function Title(props: ITitleProps) {
     time: format(noteDate, 'HH:mm'),
   });
 
-  const [error, setError] = useState({
-    title: false,
-    date: false,
-    time: false,
-  });
   const noteRef = useRef(note);
   const isTitle = expanded === 'Title';
 
@@ -89,10 +104,10 @@ export default function Title(props: ITitleProps) {
 
   const onChange = (key: 'title' | 'date' | 'time', value: string) => {
     if (!value) {
-      setError({ ...error, [key]: true });
+      setErrors({ ...errors, [key]: true });
     }
-    if (error[key]) {
-      setError({ ...error, [key]: false });
+    if (errors[key]) {
+      setErrors({ ...errors, [key]: false });
     }
     setNote({ ...note, [key]: value });
     updateNoteFunction(key, value);
@@ -119,7 +134,14 @@ export default function Title(props: ITitleProps) {
             alignItems: 'center',
           }}
         >
-          <TextMedium mr="sm">{note.title}</TextMedium>
+          {(errors.title || errors.date || errors.time) && (
+            <TextRegular color={Colors.ERROR}>
+              These fields are required
+            </TextRegular>
+          )}
+          <TextMedium mr="sm">
+            {note.title} <TextRegular color={Colors.ERROR}>*</TextRegular>
+          </TextMedium>
         </Pressable>
         <TextRegular size="xs" mb="md">
           {note.date} {note?.time || ''}
@@ -134,14 +156,14 @@ export default function Title(props: ITitleProps) {
         <BasicInput
           onDelete={() => {
             setNote({ ...note, title: '' });
-            setError({ ...error, title: true });
+            setErrors({ ...errors, title: true });
           }}
-          error={!!error.title}
+          error={!!errors.title}
           value={note.title}
           onChangeText={(e) => onChange('title', e)}
         />
         <DatePicker
-          error={!!error.date}
+          error={!!errors.date}
           required
           disabled
           initialDate={noteDate}
@@ -154,7 +176,7 @@ export default function Title(props: ITitleProps) {
           onSave={(date) => onChange('date', date)}
         />
         <DatePicker
-          error={!!error.time}
+          error={!!errors.time}
           disabled
           required
           maxDate={endOfDay}
