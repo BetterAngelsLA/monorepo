@@ -1,6 +1,6 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 interface IClientTabsProps {
   tab: string;
@@ -54,11 +54,27 @@ export default function ClientTabs(props: IClientTabsProps) {
               title={t}
               accessibilityHint={`select ${t} tab`}
             />
-            <TextButton
-              style={{ opacity: 0, padding: Spacings.sm }}
-              title={t}
-              accessibilityHint={`select ${t} tab`}
-            />
+            <Pressable
+              style={{
+                padding: Spacings.sm,
+                justifyContent: 'center',
+                opacity: 0,
+              }}
+              accessibilityRole="button"
+            >
+              <Text
+                style={{
+                  letterSpacing: 0.4,
+                  textAlign: 'center',
+                  fontFamily: 'Poppins-SemiBold',
+                  fontSize: FontSizes.md.fontSize,
+                  lineHeight: FontSizes.md.lineHeight,
+                }}
+                accessibilityHint={`select ${t} tab`}
+              >
+                {t}
+              </Text>
+            </Pressable>
           </View>
         ))}
       </ScrollView>
