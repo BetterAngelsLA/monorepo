@@ -26,8 +26,8 @@ import {
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
-  TextButton,
-  TextRegular,
+  TextMedium,
+  TextRegular
 } from '@monorepo/expo/shared/ui-components';
 import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -319,12 +319,7 @@ export default function Mood(props: IMoodProps) {
             )}
           </View>
         ) : (
-          <TextButton
-            fontSize="sm"
-            title={'Add Mood'}
-            accessibilityHint={'Add Mood'}
-            onPress={() => setExpanded(isMood ? null : 'Mood')}
-          />
+          <TextMedium size="sm">Add Mood</TextMedium>
         )
       }
       title="Mood"

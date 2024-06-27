@@ -71,7 +71,7 @@ const PRESSED_VARIANTS: TVariants = {
     border: Colors.PRIMARY_DARK,
   },
   secondary: {
-    bg: Colors.LIGHT,
+    bg: Colors.GRAY_PRESSED,
     color: Colors.PRIMARY_EXTRA_DARK,
     border: Colors.NEUTRAL_LIGHT,
   },

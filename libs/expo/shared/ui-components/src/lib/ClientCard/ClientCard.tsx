@@ -60,7 +60,7 @@ export function ClientCard(props: IClientCardProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
-          backgroundColor: pressed ? Colors.LIGHT : Colors.WHITE,
+          backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
         },
       ]}
     >

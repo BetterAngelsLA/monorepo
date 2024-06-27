@@ -23,7 +23,7 @@ export default function NoteCard(props: INoteCardProps) {
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: pressed ? Colors.LIGHT : Colors.WHITE,
+          backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
         },
       ]}
     >

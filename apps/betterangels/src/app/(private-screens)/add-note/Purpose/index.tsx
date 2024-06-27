@@ -3,7 +3,6 @@ import { CircleSolidIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
-  TextButton,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -99,14 +98,8 @@ export default function Purpose(props: IPurposeProps) {
       mb="xs"
       actionName={
         !hasAnyValidPurpose && !isPurpose ? (
-          <TextButton
-            fontSize="sm"
-            title={'Add Purpose'}
-            accessibilityHint={'Add Purpose'}
-            onPress={() => setExpanded(isPurpose ? null : 'Purpose')}
-          />
+          <TextMedium size="sm">Add Purpose</TextMedium>
         ) : (
-          // <TextMedium size="sm">Add Purpose</TextMedium>
           ''
         )
       }
