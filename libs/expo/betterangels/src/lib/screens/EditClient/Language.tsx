@@ -9,8 +9,8 @@ import { ScrollView, View } from 'react-native';
 import { LanguageEnum, UpdateClientProfileInput } from '../../apollo';
 
 interface ILanguageProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -47,11 +47,11 @@ export default function Language(props: ILanguageProps) {
       }}
       mb="xs"
       actionName={
-        !client.preferredLanguage && !isLanguage ? (
+        !client?.preferredLanguage && !isLanguage ? (
           <TextMedium size="sm">Add Language</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client.preferredLanguage &&
+            {client?.preferredLanguage &&
               enumDisplayMap[client.preferredLanguage]}
           </TextMedium>
         )
@@ -68,6 +68,7 @@ export default function Language(props: ILanguageProps) {
         <Select
           placeholder="Select Language"
           onValueChange={(enumValue) =>
+            client &&
             setClient({
               ...client,
               preferredLanguage: enumValue as LanguageEnum,

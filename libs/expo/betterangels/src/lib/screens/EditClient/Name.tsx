@@ -9,8 +9,8 @@ import { ScrollView, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../apollo';
 
 interface INameProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -56,15 +56,17 @@ export default function Name(props: INameProps) {
           placeholder="Enter First Name"
           label="First Name"
           onDelete={() => {
-            setClient({
-              ...client,
-              user: {
-                ...client.user,
-                firstName: '',
-              },
-            });
+            client &&
+              setClient({
+                ...client,
+                user: {
+                  ...client.user,
+                  firstName: '',
+                },
+              });
           }}
           onChangeText={(e) =>
+            client &&
             setClient({
               ...client,
               user: {
@@ -73,21 +75,23 @@ export default function Name(props: INameProps) {
               },
             })
           }
-          value={client.user?.firstName || ''}
+          value={client?.user?.firstName || ''}
         />
         <BasicInput
           placeholder="Enter Middle Name"
           label="Middle Name"
           onDelete={() => {
-            setClient({
-              ...client,
-              user: {
-                ...client.user,
-                middleName: '',
-              },
-            });
+            client &&
+              setClient({
+                ...client,
+                user: {
+                  ...client.user,
+                  middleName: '',
+                },
+              });
           }}
           onChangeText={(e) =>
+            client &&
             setClient({
               ...client,
               user: {
@@ -96,21 +100,23 @@ export default function Name(props: INameProps) {
               },
             })
           }
-          value={client.user?.middleName || ''}
+          value={client?.user?.middleName || ''}
         />
         <BasicInput
           placeholder="Enter Last Name"
           label="Last Name"
           onDelete={() => {
-            setClient({
-              ...client,
-              user: {
-                ...client.user,
-                lastName: '',
-              },
-            });
+            client &&
+              setClient({
+                ...client,
+                user: {
+                  ...client.user,
+                  lastName: '',
+                },
+              });
           }}
           onChangeText={(e) =>
+            client &&
             setClient({
               ...client,
               user: {
@@ -119,24 +125,26 @@ export default function Name(props: INameProps) {
               },
             })
           }
-          value={client.user?.lastName || ''}
+          value={client?.user?.lastName || ''}
         />
         <BasicInput
           placeholder="Enter Nickname"
           label="Nickname"
           onDelete={() => {
-            setClient({
-              ...client,
-              nickname: '',
-            });
+            client &&
+              setClient({
+                ...client,
+                nickname: '',
+              });
           }}
           onChangeText={(e) =>
+            client &&
             setClient({
               ...client,
               nickname: e,
             })
           }
-          value={client.nickname || ''}
+          value={client?.nickname || ''}
         />
       </View>
     </FieldCard>

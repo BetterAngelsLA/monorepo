@@ -11,8 +11,8 @@ import { ScrollView, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../apollo';
 
 interface IContactInfoProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -31,7 +31,7 @@ export default function ContactInfo(props: IContactInfoProps) {
       }}
       mb="xs"
       actionName={
-        !(client.address || client.phoneNumber || client.user?.email) &&
+        !(client?.address || client?.phoneNumber || client?.user?.email) &&
         !isContactInfo ? (
           <TextMedium size="sm">Add Contact Info</TextMedium>
         ) : (
@@ -48,23 +48,26 @@ export default function ContactInfo(props: IContactInfoProps) {
         }}
       >
         <BasicInput
-          onDelete={() => setClient({ ...client, address: '' })}
+          onDelete={() => client && setClient({ ...client, address: '' })}
           label="Mailing Address"
           placeholder="Enter Mailing Address"
-          value={client.address || ''}
-          onChangeText={(e) => setClient({ ...client, address: e })}
+          value={client?.address || ''}
+          onChangeText={(e) => client && setClient({ ...client, address: e })}
         />
         <BasicInput
-          onDelete={() => setClient({ ...client, phoneNumber: '' })}
+          onDelete={() => client && setClient({ ...client, phoneNumber: '' })}
           keyboardType="phone-pad"
           label="Phone Number"
           placeholder="Enter Phone Number"
-          value={client.phoneNumber || ''}
-          onChangeText={(e) => setClient({ ...client, phoneNumber: e })}
+          value={client?.phoneNumber || ''}
+          onChangeText={(e) =>
+            client && setClient({ ...client, phoneNumber: e })
+          }
         />
         <BasicInput
           keyboardType="email-address"
           onDelete={() =>
+            client &&
             setClient({
               ...client,
               user: {
@@ -75,8 +78,9 @@ export default function ContactInfo(props: IContactInfoProps) {
           }
           label="Email"
           placeholder="Enter Email"
-          value={client.user?.email || ''}
+          value={client?.user?.email || ''}
           onChangeText={(e) =>
+            client &&
             setClient({
               ...client,
               user: {
@@ -88,7 +92,7 @@ export default function ContactInfo(props: IContactInfoProps) {
         />
       </View>
 
-      {client.address && !isContactInfo && (
+      {client?.address && !isContactInfo && (
         <View style={{ marginBottom: Spacings.sm }}>
           <TextRegular mb="xxs" size="sm">
             Address
@@ -96,13 +100,13 @@ export default function ContactInfo(props: IContactInfoProps) {
           <TextBold size="sm">{client.address}</TextBold>
         </View>
       )}
-      {client.phoneNumber && !isContactInfo && (
+      {client?.phoneNumber && !isContactInfo && (
         <View style={{ marginBottom: Spacings.sm }}>
           <TextRegular size="sm">Phone Number</TextRegular>
           <TextBold size="sm">{client.phoneNumber}</TextBold>
         </View>
       )}
-      {client.user?.email && !isContactInfo && (
+      {client?.user?.email && !isContactInfo && (
         <View style={{ marginBottom: Spacings.sm }}>
           <TextRegular size="sm">Email</TextRegular>
           <TextBold size="sm">{client.user.email}</TextBold>

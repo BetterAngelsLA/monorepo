@@ -8,13 +8,7 @@ import { format, parse } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import {
-  GenderEnum,
-  InputMaybe,
-  LanguageEnum,
-  UpdateClientProfileInput,
-  YesNoPreferNotToSayEnum,
-} from '../../apollo';
+import { UpdateClientProfileInput } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import ContactInfo from './ContactInfo';
 import Dob from './Dob';
@@ -28,46 +22,17 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/EditClient.generated';
 
-const INITIAL_STATE = {
-  address: '',
-  dateOfBirth: undefined as Date | undefined,
-  gender: undefined as GenderEnum | undefined,
-  hmisId: null,
-  nickname: '',
-  phoneNumber: '',
-  preferredLanguage: undefined as LanguageEnum | undefined,
-  pronouns: '',
-  spokenLanguages: [] as LanguageEnum[],
-  user: {
-    firstName: '',
-    lastName: '',
-    email: '',
-  },
-  veteranStatus: undefined as YesNoPreferNotToSayEnum | undefined,
-};
-
-function convertString(input: InputMaybe<YesNoPreferNotToSayEnum> | undefined) {
-  if (!input) return undefined;
-  let result = input.replace(/_/g, ' ');
-
-  result = result.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
-
-  return result as YesNoPreferNotToSayEnum;
-}
-
 export default function EditClient({ id }: { id: string }) {
   const { data, loading, error, refetch } = useGetClientProfileQuery({
     variables: { id },
   });
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [client, setClient] = useState<UpdateClientProfileInput>({
-    ...INITIAL_STATE,
-    id,
-  });
+  const [client, setClient] = useState<UpdateClientProfileInput | undefined>();
   const [updateClient] = useUpdateClientProfileMutation();
   const [errorState, setErrorState] = useState<string | null>(null);
   const navigation = useNavigation();
+  const [initialDate, setInitialDate] = useState<Date | undefined>();
   const scrollRef = useRef<ScrollView>(null);
 
   const updateClientProfile = async () => {
@@ -119,16 +84,15 @@ export default function EditClient({ id }: { id: string }) {
 
     const clientInput = {
       ...data.clientProfile,
-      veteranStatus: convertString(
-        data.clientProfile.veteranStatus
-          ? data.clientProfile.veteranStatus
-          : undefined
-      ),
     };
 
     if (data.clientProfile.dateOfBirth) {
-      const dateString = data.clientProfile.dateOfBirth.trim();
-      const parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+      const parsedDate = parse(
+        data.clientProfile.dateOfBirth,
+        'yyyy-MM-dd',
+        new Date()
+      );
+      setInitialDate(parsedDate);
       clientInput.dateOfBirth = format(parsedDate, 'MM/dd/yyyy');
     }
 
@@ -167,7 +131,7 @@ export default function EditClient({ id }: { id: string }) {
     <View style={{ flex: 1 }}>
       <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <Name {...props} />
-        <Dob {...props} />
+        <Dob initialDate={initialDate} {...props} />
         <Gender {...props} />
         <Language {...props} />
         <HMIS {...props} />

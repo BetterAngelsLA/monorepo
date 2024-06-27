@@ -13,8 +13,8 @@ import {
 } from '../../apollo';
 
 interface IVeteranStatusProps {
-  client: UpdateClientProfileInput;
-  setClient: (client: UpdateClientProfileInput) => void;
+  client: UpdateClientProfileInput | undefined;
+  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -39,12 +39,12 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
       }}
       mb="xs"
       actionName={
-        !client.veteranStatus && !isVeteranStatus ? (
+        !client?.veteranStatus && !isVeteranStatus ? (
           <TextMedium size="sm">Add Veteran Status</TextMedium>
         ) : (
           <TextMedium size="sm">
             {' '}
-            {client.veteranStatus && enumDisplayMap[client.veteranStatus]}
+            {client?.veteranStatus && enumDisplayMap[client.veteranStatus]}
           </TextMedium>
         )
       }
@@ -75,9 +75,10 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
               accessibilityHint={`Select ${displayValue}`}
               key={enumValue}
               value={
-                client.veteranStatus && enumDisplayMap[client.veteranStatus]
+                client?.veteranStatus && enumDisplayMap[client.veteranStatus]
               }
               onPress={() =>
+                client &&
                 setClient({
                   ...client,
                   veteranStatus: enumValue as YesNoPreferNotToSayEnum,

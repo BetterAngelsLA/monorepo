@@ -2,7 +2,7 @@ import { CalendarLineIcon, ClockIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RegisterOptions } from 'react-hook-form';
 import {
   Keyboard,
@@ -74,9 +74,14 @@ export function DatePicker(props: IDatePickerProps) {
     initialDate,
     ...rest
   } = props;
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(
+    initialDate ? dateFnsFormat(initialDate, format) : ''
+  );
+
   const [picker, setPicker] = useState(false);
-  const [pickerDate, setPickerDate] = useState(new Date());
+  const [pickerDate, setPickerDate] = useState(
+    initialDate ? new Date(initialDate) : new Date()
+  );
 
   function setDate(onChange: (e: string) => void, date: Date | undefined) {
     setPicker(false);
@@ -86,14 +91,6 @@ export function DatePicker(props: IDatePickerProps) {
       setValue(formattedDate);
     }
   }
-
-  useEffect(() => {
-    if (initialDate) {
-      const formattedDate = dateFnsFormat(initialDate, format);
-      setPickerDate(initialDate);
-      setValue(formattedDate);
-    }
-  }, [initialDate]);
 
   return (
     <View
