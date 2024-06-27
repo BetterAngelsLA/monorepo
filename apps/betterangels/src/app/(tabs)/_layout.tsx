@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
@@ -120,9 +120,23 @@ export default function TabLayout() {
             title: '',
             tabBarIcon: () => (
               <View style={styles.wrapper}>
-                <View style={styles.middleButton}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityHint="Opening homepage main modal"
+                  onPress={openModal}
+                  style={({ pressed }) => [
+                    styles.middleButton,
+                    {
+                      backgroundColor: pressed
+                        ? Colors.PRIMARY_DARK
+                        : Colors.PRIMARY,
+                      height: pressed ? 64 : 66,
+                      width: pressed ? 64 : 66,
+                    },
+                  ]}
+                >
                   <PlusIcon color={Colors.WHITE} />
-                </View>
+                </Pressable>
               </View>
             ),
           }}
@@ -259,11 +273,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs.fontSize,
   },
   middleButton: {
-    height: 66,
-    width: 66,
     borderRadius: 100,
-    backgroundColor: Colors.PRIMARY,
     alignItems: 'center',
+
     justifyContent: 'center',
   },
   wrapper: {
