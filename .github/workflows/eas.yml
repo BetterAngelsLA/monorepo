@@ -60,23 +60,13 @@ jobs:
           echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-      - name: 🔍 Determine Channel Config
-        id: set-channel
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "channel_name=production" >> $GITHUB_OUTPUT
-          else
-            echo "channel_name=preview" >> $GITHUB_OUTPUT
-          fi
-
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
-      channel_name: ${{ steps.set-channel.outputs.channel_name }}
 
   preview:
     needs: prepare
-    environment: ${{ needs.prepare.outputs.channel_name }}
+    environment: preview
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
@@ -120,7 +110,7 @@ jobs:
       - name: 🧹 Clear All .env files and load eas.json
         run: |
           find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.${{ needs.prepare.outputs.channel_name }}.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+          cat eas.json | jq -r '.build.preview.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
         working-directory: apps/${{ matrix.project }}
 
       - name: Load Application Secrets
@@ -141,19 +131,11 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
 
-      - name: 🚀 Build Main for Dev
-        if: github.ref == 'refs/heads/main'
-        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
-        with:
-          profile: preview
-          branch: main
-          working-directory: apps/${{ matrix.project }}
-
       - name: 🚀 Continuously Deploy
         id: continuos_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
-          profile: ${{ needs.prepare.outputs.channel_name }}
+          profile: preview
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
@@ -167,6 +149,89 @@ jobs:
           else
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
+
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
+
+  deploy:
+    needs: prepare
+    environment: production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+    concurrency: continuous-deploy-fingerprint-main
+    env:
+      APP_VARIANT: production
+    strategy:
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+    permissions:
+      # REQUIRED: Allow comments on PRs
+      pull-requests: write # Allow comments on PRs
+      # REQUIRED: Allow updating fingerprint in action caches
+      actions: write
+      # Following permissions are required for private repos
+      contents: read
+      packages: write
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/expo/expo-github-action/issues/229
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+      - run: |
+          corepack enable
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: 9.2.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: yarn install
+
+      - name: 🧹 Clear All .env files and load eas.json
+        run: |
+          find . -name '*.env*' -delete
+          cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+        working-directory: apps/${{ matrix.project }}
+
+      - name: Load Application Secrets
+        id: filter-secrets
+        shell: bash
+        run: |
+          echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+          # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+          # but include items such as API keys and configurations (e.g., Google API keys)
+          # that we prefer not to commit directly into our GitHub repository.
+          secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+
+          # Write the filtered secrets to the .env file
+          while IFS= read -r line; do
+            echo "$line" >> .env
+          done <<< "$secrets"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        working-directory: apps/${{ matrix.project }}
+
+      - name: 🚀 Continuously Deploy
+        id: continuos_deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: production
+          branch: main
+          working-directory: apps/${{ matrix.project }}
 
       - name: 🧼 Cleanup .env file
         if: always()
