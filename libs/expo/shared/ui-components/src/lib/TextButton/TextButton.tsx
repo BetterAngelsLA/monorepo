@@ -55,7 +55,7 @@ export function TextButton(props: ITextButtonProps) {
       accessibilityHint={accessibilityHint}
       accessibilityRole="button"
       disabled={disabled}
-      style={[
+      style={({ pressed }) => [
         styles.button,
         style,
         {
@@ -65,6 +65,7 @@ export function TextButton(props: ITextButtonProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
+          opacity: pressed ? 0.4 : 1,
         },
       ]}
       onPress={onPress}
