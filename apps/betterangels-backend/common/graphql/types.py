@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location
+from django.db.models import TextChoices
 from strawberry import auto
 
 
@@ -88,3 +89,13 @@ class FeatureControlData:
 @strawberry.type
 class DeletedObjectType:
     id: int
+
+
+# Define the type variable with a descriptive name
+ChoiceEnum = TypeVar("ChoiceEnum", bound=TextChoices)
+
+
+@strawberry.type
+class EnumValueDisplay(Generic[ChoiceEnum]):
+    value: ChoiceEnum
+    display: str

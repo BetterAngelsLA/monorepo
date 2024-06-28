@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+@strawberry.enum
 class MoodEnum(models.TextChoices):
     AGITATED = "agitated", _("Agitated")
     AGREEABLE = "agreeable", _("Agreeable")

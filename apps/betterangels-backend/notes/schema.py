@@ -5,7 +5,12 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.queries import get_enum_values
+from common.graphql.types import (
+    DeleteDjangoObjectInput,
+    DeletedObjectType,
+    EnumValueDisplay,
+)
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
@@ -14,7 +19,12 @@ from django.db import transaction
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import (
+    MoodEnum,
+    ServiceRequestStatusEnum,
+    ServiceRequestTypeEnum,
+    TaskTypeEnum,
+)
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
@@ -59,6 +69,8 @@ from .types import (
 
 @strawberry.type
 class Query:
+    moodEnumDisplay: list[EnumValueDisplay[MoodEnum]] = get_enum_values(MoodEnum)
+
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
     notes: List[NoteType] = strawberry_django.field(
