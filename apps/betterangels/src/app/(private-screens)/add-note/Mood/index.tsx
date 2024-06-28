@@ -227,14 +227,12 @@ export default function Mood(props: IMoodProps) {
   const moodDataWithLabels = { ...MOOD_DATA, ...data?.moodEnumLabels };
   const mergedMoodData = moodDataWithLabels.map((moodEnumLabel, index) => {
     const tmp_mood_data = MOOD_DATA[moodEnumLabel.key];
-    const t = {
-      Icon: tmp_mood_data.Icon,
-      tab: tmp_mood_data.tab,
-      id: moodEnumLabel.label,
-      title: moodEnumLabel.label,
+    return {
+      ...tmp_mood_data,
       enum: moodEnumLabel.key,
+      id: moodEnumLabel.key,
+      title: moodEnumLabel.label,
     };
-    return t;
   });
 
   return (
