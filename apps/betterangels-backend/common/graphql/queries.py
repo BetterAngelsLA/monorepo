@@ -5,7 +5,7 @@ import strawberry_django
 from .types import ChoiceEnum, EnumValueDisplay
 
 
-def get_enum_values(enum: Type[ChoiceEnum]) -> list[EnumValueDisplay[ChoiceEnum]]:
+def get_enum_labels(enum: Type[ChoiceEnum]) -> list[EnumValueDisplay[ChoiceEnum]]:
     def resolver() -> list[EnumValueDisplay[ChoiceEnum]]:
         return [EnumValueDisplay(key=item, label=item.label) for item in enum]
 

@@ -3,6 +3,7 @@ import {
   MoodEnum,
   NoteNamespaceEnum,
   ViewNoteQuery,
+  useMoodEnumLabelsQuery,
 } from '@monorepo/expo/betterangels';
 import {
   FaceAngryIcon,
@@ -27,19 +28,16 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextMedium,
-  TextRegular
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import MoodSelector from './MoodSelector';
 
-interface Mood {
+import MoodSelector from './MoodSelector';
+type Mood = {
   Icon: ComponentType<IIconProps>;
-  title: string;
-  enum: MoodEnum;
-  id?: string;
   tab: 'pleasant' | 'neutral' | 'unpleasant';
-}
+};
 
 interface IMoodProps {
   expanded: string | undefined | null;
@@ -50,157 +48,94 @@ interface IMoodProps {
   attachments: ViewNoteQuery['note']['attachments'];
 }
 
-const MOOD_DATA: Mood[] = [
-  {
+const MOOD_DATA: Record<MoodEnum, Mood> = {
+  [MoodEnum.Agreeable]: {
     Icon: FaceGrinWinkIcon,
-    title: 'Agreeable',
-    enum: MoodEnum.Agreeable,
     tab: 'pleasant',
   },
-  {
+  [MoodEnum.Euthymic]: {
     Icon: FaceCalmIcon,
-    title: 'Euthymic',
-    enum: MoodEnum.Euthymic,
     tab: 'pleasant',
   },
-  {
+  [MoodEnum.Happy]: {
     Icon: FaceLaughIcon,
-    title: 'Happy',
     tab: 'pleasant',
-    enum: MoodEnum.Happy,
   },
-  {
+  [MoodEnum.Motivated]: {
     Icon: FaceGrinStarsIcon,
-    title: 'Motivated',
     tab: 'pleasant',
-    enum: MoodEnum.Motivated,
   },
-  {
+  [MoodEnum.Optimistic]: {
     Icon: FaceSmileIcon,
-    title: 'Optimistic',
     tab: 'pleasant',
-    enum: MoodEnum.Optimistic,
   },
-  {
+  [MoodEnum.Personable]: {
     Icon: FaceGrinTongueWinkIcon,
-    title: 'Personable',
-    enum: MoodEnum.Personable,
     tab: 'pleasant',
   },
-  {
+  [MoodEnum.Pleasant]: {
     Icon: FaceSmileBeamIcon,
-    title: 'Pleasant',
     tab: 'pleasant',
-    enum: MoodEnum.Pleasant,
   },
-  {
+  [MoodEnum.Agitated]: {
     Icon: FaceAngryIcon,
-    title: 'Agitated',
     tab: 'neutral',
-    enum: MoodEnum.Agitated,
   },
-  {
+  [MoodEnum.DisorganizedThought]: {
     Icon: FaceEyesXmarksIcon,
-    title: 'Disorganized Thought',
-    enum: MoodEnum.DisorganizedThought,
     tab: 'neutral',
   },
-  {
+  [MoodEnum.FlatBlunted]: {
     Icon: FaceMehBlankIcon,
-    title: 'Flat/blunted',
-    enum: MoodEnum.FlatBlunted,
     tab: 'neutral',
   },
-  {
+  [MoodEnum.Indifferent]: {
     Icon: FaceRollingEyesIcon,
-    title: 'Indifferent',
-    enum: MoodEnum.Indifferent,
     tab: 'neutral',
   },
-  {
+  [MoodEnum.Restless]: {
     Icon: FaceTiredIcon,
-    title: 'Restless',
-    enum: MoodEnum.Restless,
     tab: 'neutral',
   },
-  {
+  [MoodEnum.Anxious]: {
     Icon: FaceGrimmaceIcon,
-    title: 'Anxious',
     tab: 'unpleasant',
-    enum: MoodEnum.Anxious,
   },
-  {
+  [MoodEnum.Depressed]: {
     Icon: FaceFrownIcon,
-    title: 'Depressed',
-    enum: MoodEnum.Depressed,
     tab: 'unpleasant',
   },
-  {
+  [MoodEnum.Detached]: {
     Icon: FaceMehIcon,
-    title: 'Detached',
     tab: 'unpleasant',
-    enum: MoodEnum.Detached,
   },
-  {
+  [MoodEnum.Disoriented]: {
     Icon: FaceEyesXmarksIcon,
-    title: 'Disoriented',
     tab: 'unpleasant',
-    enum: MoodEnum.Disoriented,
   },
-  {
+  [MoodEnum.Escalated]: {
     Icon: FaceAngryIcon,
-    title: 'Escalated',
     tab: 'unpleasant',
-    enum: MoodEnum.Escalated,
   },
-  {
+  [MoodEnum.Hopeless]: {
     Icon: FaceTiredIcon,
-    title: 'Hopeless',
     tab: 'unpleasant',
-    enum: MoodEnum.Hopeless,
   },
-  {
+  [MoodEnum.Manic]: {
     Icon: FaceAngryIcon,
-    title: 'Manic',
     tab: 'unpleasant',
-    enum: MoodEnum.Manic,
   },
-  {
+  [MoodEnum.Suicidal]: {
     Icon: FaceEyesXmarksIcon,
-    title: 'Suicidal',
     tab: 'unpleasant',
-    enum: MoodEnum.Suicidal,
   },
-];
+};
 
 const TABS: ['pleasant', 'neutral', 'unpleasant'] = [
   'pleasant',
   'neutral',
   'unpleasant',
 ];
-
-const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  AGREEABLE: FaceGrinWinkIcon,
-  EUTHYMIC: FaceCalmIcon,
-  HAPPY: FaceLaughIcon,
-  MOTIVATED: FaceGrinStarsIcon,
-  OPTIMISTIC: FaceSmileIcon,
-  PERSONABLE: FaceGrinTongueWinkIcon,
-  PLEASANT: FaceSmileBeamIcon,
-  ANXIOUS: FaceGrimmaceIcon,
-  DEPRESSED: FaceFrownIcon,
-  DETACHED: FaceMehIcon,
-  DISORIENTED: FaceEyesXmarksIcon,
-  ESCALATED: FaceAngryIcon,
-  HOPELESS: FaceTiredIcon,
-  MANIC: FaceAngryIcon,
-  SUICIDAL: FaceEyesXmarksIcon,
-  AGITATED: FaceAngryIcon,
-  DISORGANIZED_THOUGHT: FaceEyesXmarksIcon,
-  FLAT_BLUNTED: FaceMehBlankIcon,
-  INDIFFERENT: FaceRollingEyesIcon,
-  RESTLESS: FaceTiredIcon,
-};
 
 export default function Mood(props: IMoodProps) {
   const {
@@ -212,6 +147,7 @@ export default function Mood(props: IMoodProps) {
     scrollRef,
   } = props;
 
+  const { data, loading, error } = useMoodEnumLabelsQuery();
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }> | undefined
   >(undefined);
@@ -286,6 +222,20 @@ export default function Mood(props: IMoodProps) {
   }, [attachments]);
 
   if (!moods || !images) return null;
+  if (!data || !('moodEnumLabels' in data)) return null;
+
+  const moodDataWithLabels = { ...MOOD_DATA, ...data?.moodEnumLabels };
+  const mergedMoodData = moodDataWithLabels.map((moodEnumLabel, index) => {
+    const tmp_mood_data = MOOD_DATA[moodEnumLabel.key];
+    const t = {
+      Icon: tmp_mood_data.Icon,
+      tab: tmp_mood_data.tab,
+      id: moodEnumLabel.label,
+      title: moodEnumLabel.label,
+      enum: moodEnumLabel.key,
+    };
+    return t;
+  });
 
   return (
     <FieldCard
@@ -304,7 +254,7 @@ export default function Mood(props: IMoodProps) {
             }}
           >
             {moods.map((mood: { enum: MoodEnum }) => {
-              const IconComponent = ICONS[mood.enum];
+              const IconComponent = MOOD_DATA[mood.enum].Icon;
               return (
                 <IconComponent
                   mr="xs"
@@ -353,7 +303,7 @@ export default function Mood(props: IMoodProps) {
           setMoods={setMoods}
           tab={tab}
           noteId={noteId}
-          moodsData={MOOD_DATA}
+          moodsData={mergedMoodData}
         />
         <Attachments
           noteId={noteId}

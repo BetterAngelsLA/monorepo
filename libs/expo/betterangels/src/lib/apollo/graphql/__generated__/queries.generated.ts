@@ -19,6 +19,11 @@ export type ViewNoteQueryVariables = Types.Exact<{
 
 export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } }>, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, purposes: Array<{ __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, createdAt: any, createdBy: { __typename?: 'UserType', id: string, email: string, username: string } }>, nextSteps: Array<{ __typename?: 'TaskType', id: string, title: string }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, customService?: string | null }>, client?: { __typename?: 'UserType', id: string, email: string, firstName?: string | null, lastName?: string | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
+export type MoodEnumLabelsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type MoodEnumLabelsQuery = { __typename?: 'Query', moodEnumLabels: Array<{ __typename?: 'MoodEnumEnumValueDisplay', key: Types.MoodEnum, label: string }> };
+
 
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
@@ -214,3 +219,43 @@ export type ViewNoteQueryHookResult = ReturnType<typeof useViewNoteQuery>;
 export type ViewNoteLazyQueryHookResult = ReturnType<typeof useViewNoteLazyQuery>;
 export type ViewNoteSuspenseQueryHookResult = ReturnType<typeof useViewNoteSuspenseQuery>;
 export type ViewNoteQueryResult = Apollo.QueryResult<ViewNoteQuery, ViewNoteQueryVariables>;
+export const MoodEnumLabelsDocument = gql`
+    query MoodEnumLabels {
+  moodEnumLabels {
+    key
+    label
+  }
+}
+    `;
+
+/**
+ * __useMoodEnumLabelsQuery__
+ *
+ * To run a query within a React component, call `useMoodEnumLabelsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMoodEnumLabelsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMoodEnumLabelsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMoodEnumLabelsQuery(baseOptions?: Apollo.QueryHookOptions<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>(MoodEnumLabelsDocument, options);
+      }
+export function useMoodEnumLabelsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>(MoodEnumLabelsDocument, options);
+        }
+export function useMoodEnumLabelsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>(MoodEnumLabelsDocument, options);
+        }
+export type MoodEnumLabelsQueryHookResult = ReturnType<typeof useMoodEnumLabelsQuery>;
+export type MoodEnumLabelsLazyQueryHookResult = ReturnType<typeof useMoodEnumLabelsLazyQuery>;
+export type MoodEnumLabelsSuspenseQueryHookResult = ReturnType<typeof useMoodEnumLabelsSuspenseQuery>;
+export type MoodEnumLabelsQueryResult = Apollo.QueryResult<MoodEnumLabelsQuery, MoodEnumLabelsQueryVariables>;

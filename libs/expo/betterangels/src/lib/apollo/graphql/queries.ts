@@ -131,3 +131,12 @@ export const GET_NOTE = gql`
     }
   }
 `;
+
+export const MOOD_ENUM_LABELS = gql`
+  query MoodEnumLabels {
+    moodEnumLabels {
+      key
+      label
+    }
+  }
+`;
