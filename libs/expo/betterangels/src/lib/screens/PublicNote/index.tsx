@@ -89,6 +89,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   }
 
   return (
+    <>
     <MainScrollContainer pb={40} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View
         style={{
@@ -127,54 +128,56 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             style={styles.input}
           />
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: Colors.WHITE,
-            padding: Spacings.sm,
-            paddingTop: Spacings.xl,
-            gap: Spacings.xs,
-            elevation: 5,
-            shadowColor: '#CCC',
-            shadowOffset: { width: 0, height: -3 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-          }}
-        >
-          <View
-            style={{
-              flex: 1,
-            }}
-          >
-            <Button
-              onPress={() => {
-                if (autoNote !== publicNote) {
-                  return setPublicNote(autoNote);
-                }
-                onChange('');
-              }}
-              height="xl"
-              accessibilityHint="clears HMIS input"
-              size="full"
-              variant="secondary"
-              title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
-            />
-          </View>
 
-          <View style={{ flex: 1 }}>
-            <Button
-              onPress={() => router.back()}
-              height="xl"
-              accessibilityHint="clears HMIS input"
-              size="full"
-              variant="primary"
-              title="Save Note"
-            />
-          </View>
-        </View>
       </View>
     </MainScrollContainer>
+            <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: Colors.WHITE,
+              padding: Spacings.sm,
+              paddingTop: Spacings.xl,
+              gap: Spacings.xs,
+              elevation: 5,
+              shadowColor: '#CCC',
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+              }}
+            >
+              <Button
+                onPress={() => {
+                  if (autoNote !== publicNote) {
+                    return setPublicNote(autoNote);
+                  }
+                  onChange('');
+                }}
+                height="xl"
+                accessibilityHint="clears HMIS input"
+                size="full"
+                variant="secondary"
+                title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
+              />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={() => router.back()}
+                height="xl"
+                accessibilityHint="clears HMIS input"
+                size="full"
+                variant="primary"
+                title="Save Note"
+              />
+            </View>
+          </View>
+    </>
   );
 }
 
