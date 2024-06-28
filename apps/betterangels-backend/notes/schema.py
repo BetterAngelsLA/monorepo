@@ -6,11 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from common.graphql.queries import get_enum_labels
-from common.graphql.types import (
-    DeleteDjangoObjectInput,
-    DeletedObjectType,
-    EnumValueDisplay,
-)
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType, EnumLabel
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
@@ -69,7 +65,7 @@ from .types import (
 
 @strawberry.type
 class Query:
-    moodEnumLabels: list[EnumValueDisplay[MoodEnum]] = get_enum_labels(MoodEnum)
+    moodEnumLabels: list[EnumLabel[MoodEnum]] = get_enum_labels(MoodEnum)
 
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 

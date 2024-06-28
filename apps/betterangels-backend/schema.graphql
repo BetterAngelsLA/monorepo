@@ -337,7 +337,7 @@ enum MoodEnum {
   SUICIDAL
 }
 
-type MoodEnumEnumValueDisplay {
+type MoodEnumEnumLabel {
   key: MoodEnum!
   label: String!
 }
@@ -493,7 +493,7 @@ type Query {
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
-  moodEnumLabels: [MoodEnumEnumValueDisplay!]!
+  moodEnumLabels: [MoodEnumEnumLabel!]!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)

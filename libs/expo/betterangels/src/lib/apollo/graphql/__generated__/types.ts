@@ -338,8 +338,8 @@ export enum MoodEnum {
   Suicidal = 'SUICIDAL'
 }
 
-export type MoodEnumEnumValueDisplay = {
-  __typename?: 'MoodEnumEnumValueDisplay';
+export type MoodEnumEnumLabel = {
+  __typename?: 'MoodEnumEnumLabel';
   key: MoodEnum;
   label: Scalars['String']['output'];
 };
@@ -671,7 +671,7 @@ export type Query = {
   clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
   featureControls: FeatureControlData;
-  moodEnumLabels: Array<MoodEnumEnumValueDisplay>;
+  moodEnumLabels: Array<MoodEnumEnumLabel>;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;

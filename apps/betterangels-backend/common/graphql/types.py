@@ -96,6 +96,6 @@ ChoiceEnum = TypeVar("ChoiceEnum", bound=TextChoices)
 
 
 @strawberry.type
-class EnumValueDisplay(Generic[ChoiceEnum]):
+class EnumLabel(Generic[ChoiceEnum]):
     key: ChoiceEnum
     label: str

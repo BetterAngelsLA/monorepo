@@ -22,7 +22,7 @@ export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteTy
 export type MoodEnumLabelsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MoodEnumLabelsQuery = { __typename?: 'Query', moodEnumLabels: Array<{ __typename?: 'MoodEnumEnumValueDisplay', key: Types.MoodEnum, label: string }> };
+export type MoodEnumLabelsQuery = { __typename?: 'Query', moodEnumLabels: Array<{ __typename?: 'MoodEnumEnumLabel', key: Types.MoodEnum, label: string }> };
 
 
 export const NotesDocument = gql`
