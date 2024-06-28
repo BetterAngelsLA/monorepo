@@ -147,7 +147,10 @@ export default function Mood(props: IMoodProps) {
     scrollRef,
   } = props;
 
-  const { data, loading, error } = useMoodEnumLabelsQuery();
+  const { data, loading, error } = useMoodEnumLabelsQuery({
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'cache-first',
+  });
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }> | undefined
   >(undefined);
