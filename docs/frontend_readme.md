@@ -19,10 +19,18 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Setup:**
 
-1. Install [NVM](https://github.com/nvm-sh/nvm) to be able to use different node versions.
+Run the following on the host machine (not in the container):
+
+1. Install [NVM](https://github.com/nvm-sh/nvm)
 
    ```bash
    brew install nvm
+   ```
+
+1. Install yarn
+
+   ```
+   brew install yarn
    ```
 
 1. Follow the instructions in the terminal to configure NVM in your shell profile. It should look similar to:
@@ -35,7 +43,7 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
    [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
    ```
 
-   If these instructions don't appear, run the following:
+   If these instructions don't appear, run the following: (what do you mean @paul?)
 
    ```bash
    brew info nvm
@@ -45,12 +53,6 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
    ```bash
    nvm install 20.12.2
-   ```
-
-1. Install yarn
-
-   ```
-   brew install yarn
    ```
 
 1. Go to the monorepo and run yarn install

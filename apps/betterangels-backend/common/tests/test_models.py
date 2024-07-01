@@ -8,7 +8,7 @@ from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class LocationModelTest(ParametrizedTestCase, TestCase):
+class LocationModelTestCase(ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         self.point = (-118.2437207, 34.0521723)
         self._setup_location()
