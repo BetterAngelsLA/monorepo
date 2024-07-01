@@ -66,7 +66,7 @@ All of the source code to this product is released as [free](https://www.gnu.org
 
 For assets in this repository, you must also keep any license notices present in the source code and retain any attributions.
 
-For additional information regarding licensing and attribution requirements and contribution guidelines, please refer to the README in the respective directory. See our [Attribution Guidlines](./docs/attribution_guidelines.md) form more information.
+For additional information regarding licensing and attribution requirements and contribution guidelines, please refer to the README in the respective directory. See our [Attribution Guidlines](./docs/attribution_guidelines.md) for more information.
 
 ### Thank You
 
