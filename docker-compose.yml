@@ -1,0 +1,19 @@
+services:
+  better-angels:
+    environment:
+      - IS_LOCAL_DEV=True
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '8000:8000'
+  db:
+    image: nickblah/postgis:15-bullseye-postgis-3.4
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    command: postgres -c log_statement=all -c log_destination=stderr
+  redis:
+    image: redis:7.2.2

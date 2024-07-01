@@ -1,0 +1,58 @@
+interactions:
+  - request:
+      body: redirect_uri=http%3A%2F%2Flocalhost%3A8081&grant_type=authorization_code&code=4%2F0AfJohXlMiYtJqgYn1vPaxFHTBwVC6fUr9SlqTOZPOHszgKlyx9dcQMP7C8yIkmi2WnS5gA&client_id=488261458560-ign54eicotm281qll13vi7gq7ps4ga3h.apps.googleusercontent.com&client_secret=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&code_verifier=7VGpxs4u64mTyhh719aji60LwPOSn48dDUi4KmkrwcDC9CEuLM23aSOWf2tEmmNmK9fASrMp8o9Rx9LRkBEVvHIBk0HYItZiN6XSwKEnEXAFfI69dpF0M7JyAVU4QFOD
+      headers:
+        Accept:
+          - '*/*'
+        Accept-Encoding:
+          - gzip, deflate
+        Connection:
+          - keep-alive
+        Content-Length:
+          - '429'
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - python-requests/2.31.0
+      method: POST
+      uri: https://oauth2.googleapis.com/token
+    response:
+      body:
+        string: '{
+          "access_token": "ya29.a0AfB_byBrfRSq-kuPSSC_IxzMmqAuAfc3yiUbZug1P4l6v8IZg0Rc3Qnneb1XD1_pYbD4Z4dijBp7eSbnaU8wLkIhxzM37URPw3_W0s9eAQvSm7n5stoMLcgvtEYVjNszMTVMDBTAin6wdce_lidPJhL-TPBu5JRgQbhGaCgYKAckSARESFQGOcNnCcCWRPkDd_odFyU8oy09O8g0171",
+          "expires_in": 3497055754,
+          "scope": "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid",
+          "token_type": "Bearer",
+          "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI0ODgyNjE0NTg1NjAtaWduNTRlaWNvdG0yODFxbGwxM3ZpN2dxN3BzNGdhM2guYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI0ODgyNjE0NTg1NjAtaWduNTRlaWNvdG0yODFxbGwxM3ZpN2dxN3BzNGdhM2guYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDc1MDg2MzM5MTkxNzE0NDI4MTgiLCJoZCI6ImJldHRlcmFuZ2Vscy5sYSIsImVtYWlsIjoiYW50aG9ueUBiZXR0ZXJhbmdlbHMubGEiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkVxV2FCT0swZGdmZjhaa18yQkwydHciLCJuYW1lIjoiQW50aG9ueSBLaW0iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTlCcnpDZzlwOG9VNndkYWowWkVsMzFLR2h5eGlCN1BWMWJocnltV3F6PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6IkFudGhvbnkiLCJmYW1pbHlfbmFtZSI6IktpbSIsImxvY2FsZSI6ImVuIiwiaWF0IjoxNjk3MTUwNzc4LCJleHAiOjM0OTcwNTU3NTR9.WB01cHr92gzDbFsZ1CjzWWSznDRdFRY6yyQ4Y6EMJcc"
+        }'
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - no-cache, no-store, max-age=0, must-revalidate
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 12 Oct 2023 22:46:18 GMT
+        Expires:
+          - Mon, 01 Jan 1990 00:00:00 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - scaffolding on HTTPServer2
+        Transfer-Encoding:
+          - chunked
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-XSS-Protection:
+          - '0'
+      status:
+        code: 200
+        message: OK
+version: 1

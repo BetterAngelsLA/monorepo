@@ -1,0 +1,4 @@
+The icons listed below, by Atisa (https://github.com/atisawd/boxicons), are licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Title: bx:blanket.svg
+Source: https://icon-sets.iconify.design/bx/blanket/

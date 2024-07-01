@@ -1,0 +1,16 @@
+{
+  "name": "expo-shared-apollo",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/shared/apollo/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/expo/shared/apollo/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}

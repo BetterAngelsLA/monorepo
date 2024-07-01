@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "tasksRunnerOptions": {
+    "default": {}
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "cache": true
+    },
+    "test": {
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "cache": true
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ],
+      "cache": true
+    },
+    "build-storybook": {
+      "inputs": [
+        "default",
+        "^production",
+        "{projectRoot}/.storybook/**/*",
+        "{projectRoot}/tsconfig.storybook.json"
+      ],
+      "cache": true
+    },
+    "@nx/jest:jest": {
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+      "cache": true,
+      "options": {
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    },
+    "@nx/eslint:lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ],
+      "cache": true
+    }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
+      "!{projectRoot}/.storybook/**/*",
+      "!{projectRoot}/tsconfig.storybook.json"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/Dockerfile",
+      "{workspaceRoot}/docker-compose*.yml",
+      "{workspaceRoot}/mypy.ini",
+      "{workspaceRoot}/poetry.*",
+      "{workspaceRoot}/docker-compose*.yml",
+      "{workspaceRoot}/docker-pyproject.toml"
+    ]
+  },
+  "plugins": ["@nxlv/python"]
+}

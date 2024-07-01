@@ -1,0 +1,24 @@
+{
+  "name": "expo-shared-static",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/expo/shared/static/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/expo/shared/static",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
+    }
+  },
+  "tags": []
+}

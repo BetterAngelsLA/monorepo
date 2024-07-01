@@ -1,0 +1,50 @@
+mutation CreateNote($data: CreateNoteInput!) {
+  createNote(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on NoteType {
+      id
+      title
+      publicDetails
+      client {
+        id
+        username
+        firstName
+        lastName
+        email
+      }
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
+    }
+  }
+}
+
+query ClientProfiles(
+  $filters: ClientProfileFilter
+  $pagination: OffsetPaginationInput
+  $order: ClientProfileOrder
+) {
+  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
+    ... on ClientProfileType {
+      id
+      hmisId
+      user {
+        id
+        email
+        firstName
+        lastName
+        username
+      }
+    }
+  }
+}
