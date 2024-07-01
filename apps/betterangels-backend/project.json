@@ -1,0 +1,146 @@
+{
+  "name": "betterangels-backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/betterangels-backend/betterangels_backend",
+  "targets": {
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "deploy": {
+      "command": "tools/deploy/ecs_deploy.sh"
+    },
+    "makemigrations": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py makemigrations",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "manage": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "check-migrations": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py makemigrations --check",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "migrate": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py migrate",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py runserver 0.0.0.0:8000",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start-scheduler": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run celery -A betterangels_backend beat -S redbeat.RedBeatScheduler",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "start-worker": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run celery -A betterangels_backend worker -l INFO",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "format": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "poetry run black --config ../../pyproject.toml .",
+          "poetry run isort ."
+        ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    },
+    "generate-graphql-schema": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python manage.py export_schema betterangels_backend.schema > schema.graphql",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "validate-graphql-schema": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "bash -c 'diff <(poetry run python manage.py export_schema betterangels_backend.schema) schema.graphql'",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": [
+          "poetry run flake8 .",
+          "poetry run black --config ../../pyproject.toml --check .",
+          "poetry run isort . --check-only"
+        ],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/apps/betterangels-backend/unittests",
+        "{workspaceRoot}/coverage/apps/betterangels-backend"
+      ],
+      "options": {
+        "command": "poetry run python manage.py test",
+        "cwd": "apps/betterangels-backend"
+      }
+    },
+    "typecheck": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "commands": ["poetry run mypy --config-file=../../mypy.ini ."],
+        "cwd": "apps/betterangels-backend",
+        "parallel": false
+      }
+    }
+  },
+  "tags": []
+}

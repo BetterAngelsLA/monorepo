@@ -1,0 +1,14 @@
+query currentUser {
+  currentUser {
+    id
+    username
+    firstName
+    lastName
+    email
+    organizations: organizationsOrganization {
+      id
+      name
+    }
+    isOutreachAuthorized
+  }
+}

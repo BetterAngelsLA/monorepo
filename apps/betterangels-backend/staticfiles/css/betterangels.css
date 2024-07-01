@@ -1,0 +1,48 @@
+@font-face {
+  font-family: Poppins;
+  src: url('../fonts/Poppins-Regular.ttf');
+}
+
+.brand-image {
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.ba-sidebar {
+  background-color: #1e3342;
+}
+
+.ba-navbar .navbar-nav .nav-link {
+  color: #052b73;
+}
+
+.ba-navbar {
+  color: #052b73;
+  background-color: #f4f6fd;
+}
+
+.content-wrapper {
+  background-color: #fff;
+}
+
+.btn-primary {
+  background-color: #216af8;
+}
+
+.btn-secondary {
+  background-color: #052b73;
+}
+
+.btn-info {
+  background-color: #6a97da;
+}
+
+.btn-success {
+  background-color: #23ce6b;
+}
+
+body {
+  font-family: Poppins;
+  color: #052b73;
+  background-color: #f2fafc;
+}

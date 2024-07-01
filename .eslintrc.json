@@ -1,0 +1,78 @@
+{
+  "root": true,
+  "plugins": ["@nx", "react-native-a11y"],
+  "extends": ["plugin:react-native-a11y/all"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "import/export": "error",
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": ["plugin:@nx/typescript", "plugin:react-native-a11y/all"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "error",
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ],
+        "eol-last": ["error", "always"],
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ]
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "extends": ["plugin:@nx/javascript", "plugin:react-native-a11y/all"],
+      "rules": {
+        "no-unused-vars": "error",
+        "quotes": [
+          "error",
+          "single",
+          { "allowTemplateLiterals": true, "avoidEscape": true }
+        ],
+        "no-multiple-empty-lines": [
+          "error",
+          {
+            "max": 1
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "processor": "@graphql-eslint/graphql"
+    },
+    {
+      "files": ["*.graphql"],
+      "parser": "@graphql-eslint/eslint-plugin",
+      "plugins": ["@graphql-eslint"],
+      "rules": {
+        "@graphql-eslint/known-type-names": "error"
+      },
+      "parserOptions": {
+        "schema": "apps/betterangels-backend/schema.graphql"
+      }
+    }
+  ]
+}

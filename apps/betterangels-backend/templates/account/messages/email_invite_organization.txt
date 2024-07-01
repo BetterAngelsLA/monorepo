@@ -1,0 +1,12 @@
+Hello!
+
+Congratulations on receiving the invite from your organization to use the Better Angels app!
+
+Create your account by clicking the Sign Up button below.
+
+We look forward to working with you to make solving homelessness in LA easier!
+
+Sign Up to Better Angels App with this link: http://{{ domain.domain }}{% url "invitations_register" user.pk token %}
+
+Best,
+Better Angels Team
