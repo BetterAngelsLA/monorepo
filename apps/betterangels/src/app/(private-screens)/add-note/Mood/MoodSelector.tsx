@@ -1,60 +1,132 @@
-import { MoodEnum } from '@monorepo/expo/betterangels';
-import { IIconProps } from '@monorepo/expo/shared/icons';
+import {
+  MoodEnum,
+  useCreateNoteMoodMutation,
+  useDeleteMoodMutation,
+} from '@monorepo/expo/betterangels';
+import { Colors } from '@monorepo/expo/shared/static';
+import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { debounce } from 'lodash';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { MoodAttributes } from './types';
 
-import React, { ComponentType } from 'react';
-import { View } from 'react-native';
-import MoodCheckbox from './MoodCheckbox';
-
-interface Mood {
-  Icon: ComponentType<IIconProps>;
-  title: string;
-  enum: MoodEnum;
-  id?: string;
-  tab: 'pleasant' | 'neutral' | 'unpleasant';
-}
-
-interface MoodSelectorProps {
-  moodsData: Mood[];
+interface MoodCheckboxProps {
+  moodEnum: MoodEnum;
+  moodAttributes: MoodAttributes;
+  isChecked: boolean;
   noteId: string | undefined;
-  tab: 'pleasant' | 'neutral' | 'unpleasant';
-  setMoods: (
-    moods: {
-      enum: MoodEnum;
-      id: string | undefined;
-    }[]
-  ) => void;
-  moods: {
-    enum: MoodEnum;
-    id: string | undefined;
-  }[];
+  onChange: (isSelected: boolean) => void;
 }
 
-const MoodSelector: React.FC<MoodSelectorProps> = ({
-  moodsData,
+const MoodCheckbox: React.FC<MoodCheckboxProps> = ({
+  moodEnum,
+  moodAttributes,
+  isChecked,
   noteId,
-  tab,
-  moods,
-  setMoods,
+  onChange,
 }) => {
+  const [createNoteMood] = useCreateNoteMoodMutation();
+  const [deleteMood] = useDeleteMoodMutation();
+  const [moodId, setMoodId] = useState<string | undefined>();
+  const [checked, setChecked] = useState<boolean>(isChecked);
+
+  const processAction = async (checked: boolean) => {
+    if (!noteId) return;
+    if (checked) {
+      const { data } = await createNoteMood({
+        variables: {
+          data: {
+            noteId: noteId,
+            descriptor: moodEnum,
+          },
+        },
+      });
+      if (data && 'id' in data.createNoteMood) {
+        setMoodId(data.createNoteMood.id);
+      }
+    } else {
+      if (!moodId) return;
+      await deleteMood({
+        variables: {
+          data: { id: moodId },
+        },
+      });
+      setMoodId(undefined);
+    }
+  };
+
+  const debouncedProcessAction = debounce((checked: boolean) => {
+    processAction(checked);
+  }, 300);
+
+  return (
+    <Checkbox
+      isChecked={checked}
+      mt="xs"
+      hasBorder
+      onCheck={() => {
+        onChange(!checked);
+        setChecked(!checked);
+        debouncedProcessAction(!checked);
+      }}
+      accessibilityHint={moodAttributes.title}
+      label={
+        <View style={styles.labelContainer}>
+          <moodAttributes.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+          <TextRegular ml="xs">{moodAttributes.title}</TextRegular>
+        </View>
+      }
+    />
+  );
+};
+
+const MoodSelector: React.FC<{
+  moodsData: Record<MoodEnum, MoodAttributes>;
+  tab: 'pleasant' | 'neutral' | 'unpleasant';
+  noteId: string | undefined;
+}> = ({ moodsData, tab, noteId }) => {
+  const [selectedMoods, setSelectedMoods] = useState<Set<MoodEnum>>(new Set());
+
+  const filteredMoods = Object.entries(moodsData).filter(
+    ([_, mood]) => mood.tab === tab
+  );
+
+  const handleMoodChange = (moodEnum: MoodEnum, isSelected: boolean) => {
+    setSelectedMoods((prevSelectedMoods) => {
+      if (isSelected) {
+        prevSelectedMoods.add(moodEnum);
+      } else {
+        prevSelectedMoods.delete(moodEnum);
+      }
+      setSelectedMoods(prevSelectedMoods);
+      return prevSelectedMoods;
+    });
+  };
+
   return (
     <View>
-      {moodsData.map((mood, idx) => {
-        const moodId = moods.find((item) => item.enum === mood.enum)?.id;
+      {filteredMoods.map(([moodKey, moodAttributes]) => {
+        const moodEnum = moodKey as MoodEnum;
         return (
           <MoodCheckbox
-            id={moodId}
-            moods={moods}
-            setMoods={setMoods}
-            tab={tab}
+            key={moodEnum.toLowerCase()}
+            moodEnum={moodEnum}
+            moodAttributes={moodAttributes}
+            isChecked={selectedMoods.has(moodEnum)}
             noteId={noteId}
-            idx={idx}
-            key={mood.enum}
-            mood={mood}
+            onChange={(isSelected) => handleMoodChange(moodEnum, isSelected)}
           />
         );
       })}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
 
 export default MoodSelector;

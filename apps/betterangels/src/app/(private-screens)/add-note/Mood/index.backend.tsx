@@ -3,6 +3,7 @@ import {
   MoodEnum,
   NoteNamespaceEnum,
   ViewNoteQuery,
+  useMoodEnumLabelsQuery,
 } from '@monorepo/expo/betterangels';
 import {
   FaceAngryIcon,
@@ -20,6 +21,7 @@ import {
   FaceSmileBeamIcon,
   FaceSmileIcon,
   FaceTiredIcon,
+  IIconProps,
   PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -28,11 +30,10 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useEffect, useState } from 'react';
+import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import MoodSelector from './MoodSelector';
-import { MoodAttributes } from './types';
 
 interface IMoodProps {
   expanded: string | undefined | null;
@@ -43,108 +44,95 @@ interface IMoodProps {
   attachments: ViewNoteQuery['note']['attachments'];
 }
 
-const MOOD_DATA: Record<MoodEnum, MoodAttributes> = {
+const MOOD_DATA: Record<
+  MoodEnum,
+  {
+    Icon: ComponentType<IIconProps>;
+    tab: 'pleasant' | 'neutral' | 'unpleasant';
+  }
+> = {
   [MoodEnum.Agreeable]: {
-    title: 'Agreeable',
     Icon: FaceGrinWinkIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Euthymic]: {
-    title: 'Euthymic',
     Icon: FaceCalmIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Happy]: {
-    title: 'Happy',
     Icon: FaceLaughIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Motivated]: {
-    title: 'Motivated',
     Icon: FaceGrinStarsIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Optimistic]: {
-    title: 'Optimistic',
     Icon: FaceSmileIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Personable]: {
-    title: 'Personable',
     Icon: FaceGrinTongueWinkIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Pleasant]: {
-    title: 'Pleasant',
     Icon: FaceSmileBeamIcon,
     tab: 'pleasant',
   },
   [MoodEnum.Agitated]: {
-    title: 'Agitated',
     Icon: FaceAngryIcon,
     tab: 'neutral',
   },
   [MoodEnum.DisorganizedThought]: {
-    title: 'Disorganized Thought',
     Icon: FaceEyesXmarksIcon,
     tab: 'neutral',
   },
   [MoodEnum.FlatBlunted]: {
-    title: 'Flat/blunted',
     Icon: FaceMehBlankIcon,
     tab: 'neutral',
   },
   [MoodEnum.Indifferent]: {
-    title: 'Indifferent',
     Icon: FaceRollingEyesIcon,
     tab: 'neutral',
   },
   [MoodEnum.Restless]: {
-    title: 'Restless',
     Icon: FaceTiredIcon,
     tab: 'neutral',
   },
   [MoodEnum.Anxious]: {
-    title: 'Anxious',
     Icon: FaceGrimmaceIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Depressed]: {
-    title: 'Depressed',
     Icon: FaceFrownIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Detached]: {
-    title: 'Detached',
     Icon: FaceMehIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Disoriented]: {
-    title: 'Disoriented',
     Icon: FaceEyesXmarksIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Escalated]: {
-    title: 'Escalated',
     Icon: FaceAngryIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Hopeless]: {
-    title: 'Hopeless',
     Icon: FaceTiredIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Manic]: {
-    title: 'Manic',
     Icon: FaceAngryIcon,
     tab: 'unpleasant',
   },
   [MoodEnum.Suicidal]: {
-    title: 'Suicidal',
     Icon: FaceEyesXmarksIcon,
     tab: 'unpleasant',
   },
 };
+
 const TABS: ['pleasant', 'neutral', 'unpleasant'] = [
   'pleasant',
   'neutral',
@@ -161,6 +149,10 @@ export default function Mood(props: IMoodProps) {
     scrollRef,
   } = props;
 
+  const { data, loading, error } = useMoodEnumLabelsQuery({
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'cache-first',
+  });
   const [images, setImages] = useState<
     Array<{ id: string | undefined; uri: string }> | undefined
   >(undefined);
@@ -235,6 +227,18 @@ export default function Mood(props: IMoodProps) {
   }, [attachments]);
 
   if (!moods || !images) return null;
+  if (!data || !('moodEnumLabels' in data)) return null;
+
+  const moodDataWithLabels = { ...MOOD_DATA, ...data?.moodEnumLabels };
+  const mergedMoodData = moodDataWithLabels.map((moodEnumLabel, index) => {
+    const tmp_mood_data = MOOD_DATA[moodEnumLabel.key];
+    return {
+      ...tmp_mood_data,
+      enum: moodEnumLabel.key,
+      id: moodEnumLabel.key,
+      title: moodEnumLabel.label,
+    };
+  });
 
   return (
     <FieldCard
@@ -298,11 +302,11 @@ export default function Mood(props: IMoodProps) {
           ))}
         </View>
         <MoodSelector
-          // moodsData={moods}
-          // setMoods={setMoods}
-          noteId={noteId}
+          moods={moods}
+          setMoods={setMoods}
           tab={tab}
-          moodsData={MOOD_DATA}
+          noteId={noteId}
+          moodsData={mergedMoodData}
         />
         <Attachments
           noteId={noteId}
