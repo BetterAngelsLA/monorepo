@@ -31,7 +31,7 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 2. [Frontend Development](#frontend-development)
 3. [Backend Development](#backend-development)
 4. [Development Workflow](#development-workflow)
-5. [License](#license)
+5. [Licensing Details](#licensing-details)
 
 ## Project Overview
 
