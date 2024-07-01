@@ -55,11 +55,19 @@ To maintain a consistent and efficient development process, we have established 
 
 - **[Development Workflow Guide](docs/development_workflow.md)**: This document outlines our development practices, including how to create branches, submit pull requests, and conduct code reviews.
 
-## License
+## Licensing Details
 
-This project is licensed under the AGPL.
+We are grateful to the open-source community for their invaluable contributions. By integrating these assets, we not only enhance our application but also contribute to a broader ecosystem of shared resources and innovation. Thank you for supporting open source! If you have any questions about the licensing details or can provide information regarding any missing or incorrect licenses, please contact Better Angels United, Inc at opensource-licensing@betterangels.la.
 
-- **[License](LICENSE)**: View the full license text.
+### Source Code
+
+All of the source code to this product is released as [free](https://www.gnu.org/philosophy/free-sw.html) and [open source](https://www.opensource.org/docs/definition.php), licensed under the [GNU Affero General Public License (AGPL)](./LICENSE). This license ensures that our code remains free and open, encouraging others to contribute and share improvements while also ensuring that any modifications are made available to the community.
+
+### Assets
+
+For assets in this repository, you must also keep any license notices present in the source code and retain any attributions.
+
+Below is a summary of the third-party assets used herein. For additional information regarding licensing and attribution requirements and contribution guidelines, please refer to the README in the respective directory. See our [Attribution Guidlines](./docs/attribution_guidelines.md) form more information.
 
 ---
 
