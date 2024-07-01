@@ -70,7 +70,9 @@ For additional information regarding licensing and attribution requirements and 
 
 ### Thank You
 
-We are grateful to the open-source community for their invaluable contributions. By integrating these assets and leveraging other open-source resources (such as source code, libraries, frameworks, etc.), we not only enhance our application but also contribute to a broader ecosystem of shared resources and innovation. Thank you for supporting open source! If you have any questions about licensing details or can provide information regarding any missing or incorrect licenses, please contact Better Angels United, Inc. at opensource-licensing@betterangels.la.
+We are grateful to the open-source community for their invaluable contributions. By integrating these assets and leveraging other open-source resources (such as source code, libraries, frameworks, etc.), we not only enhance our application but also contribute to a broader ecosystem of shared resources and innovation. Thank you for supporting open source!
+
+If you have any questions about licensing details or can provide information regarding any missing or incorrect licenses, please contact Better Angels United, Inc. at opensource-licensing@betterangels.la.
 
 ## Contributing
 
