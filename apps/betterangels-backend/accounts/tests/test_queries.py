@@ -246,10 +246,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"order": {"user_FirstName": sort_order}})
 
-        client_profile_count = ClientProfile.objects.count()
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
-        self.assertEqual(client_profile_count, len(client_profiles))
+        self.assertEqual(len(client_profiles), ClientProfile.objects.count())
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
@@ -310,4 +309,4 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
         client_profiles = response["data"]["clientProfiles"]
-        self.assertEqual(expected_client_profile_count, len(client_profiles))
+        self.assertEqual(len(client_profiles), expected_client_profile_count)

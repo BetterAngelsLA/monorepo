@@ -18,7 +18,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         """
         response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["logout"], False)
+        self.assertFalse(response["data"]["logout"])
 
     def test_logged_in_user_logout(self) -> None:
         user = baker.make(User, email="test@example.com", username="testuser")
@@ -31,7 +31,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         """
         response = self.execute_graphql(query)
         self.assertIsNone(response.get("errors"))
-        self.assertEqual(response["data"]["logout"], True)
+        self.assertTrue(response["data"]["logout"])
 
     def test_delete_current_user(self) -> None:
         initial_user_count = User.objects.count()
