@@ -1,6 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { BottomActions, TextButton } from '@monorepo/expo/shared/ui-components';
-import { format, parse } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -66,8 +65,7 @@ export default function AddClient() {
     };
 
     if (client.dateOfBirth) {
-      const parsedDate = parse(client.dateOfBirth, 'MM/dd/yyyy', new Date());
-      input.dateOfBirth = format(parsedDate, 'yyyy-MM-dd');
+      input.dateOfBirth = new Date(client.dateOfBirth);
     }
 
     try {
