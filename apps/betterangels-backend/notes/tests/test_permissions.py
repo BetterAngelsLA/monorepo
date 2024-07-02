@@ -153,12 +153,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=note_id)
-        self.assertEqual(0, note.purposes.count())
+        self.assertEqual(note.purposes.count(), 0)
 
         response = self._add_note_task_fixture(variables)
         if should_succeed:
             self.assertIsNotNone(response["data"]["addNoteTask"]["id"])
-            self.assertEqual(1, note.purposes.count())
+            self.assertEqual(note.purposes.count(), 1)
         else:
             if not has_note_permissions:
                 self.assertEqual(
@@ -170,7 +170,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     response["errors"][0]["message"],
                     "You do not have permission to access that task.",
                 )
-            self.assertEqual(0, note.purposes.count())
+            self.assertEqual(note.purposes.count(), 0)
 
     @parametrize(
         "has_note_permissions, has_task_permissions, should_succeed",
@@ -220,12 +220,12 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=note_id)
         task = Task.objects.get(id=task_id)
         note.purposes.add(task)
-        self.assertEqual(1, note.purposes.count())
+        self.assertEqual(note.purposes.count(), 1)
 
         response = self._remove_note_task_fixture(variables)
         if should_succeed:
             self.assertIsNotNone(response["data"]["removeNoteTask"]["id"])
-            self.assertEqual(0, note.purposes.count())
+            self.assertEqual(note.purposes.count(), 0)
         else:
             if not has_note_permissions:
                 self.assertEqual(
@@ -237,7 +237,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                     response["errors"][0]["message"],
                     "You do not have permission to access that task.",
                 )
-            self.assertEqual(1, note.purposes.count())
+            self.assertEqual(note.purposes.count(), 1)
 
     @parametrize(
         "user_label, should_succeed",
@@ -563,12 +563,12 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                 )
             else:
                 self.assertEqual(
+                    response["data"]["createNoteServiceRequest"]["messages"][0],
                     {
                         "kind": "PERMISSION",
                         "field": "createNoteServiceRequest",
                         "message": "You don't have permission to access this app.",
                     },
-                    response["data"]["createNoteServiceRequest"]["messages"][0],
                 )
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
@@ -606,12 +606,12 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
                 )
             else:
                 self.assertEqual(
+                    response["data"]["createNoteTask"]["messages"][0],
                     {
                         "kind": "PERMISSION",
                         "field": "createNoteTask",
                         "message": "You don't have permission to access this app.",
                     },
-                    response["data"]["createNoteTask"]["messages"][0],
                 )
             self.assertEqual(task_count, Task.objects.count())
 

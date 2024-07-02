@@ -5,7 +5,7 @@ from ..models import User
 # Tests inspired from here: https://learndjango.com/tutorials/django-custom-user-model
 
 
-class UsersManagersTests(TestCase):
+class UserManagerTestCase(TestCase):
     def test_create_user(self) -> None:
         user = User.objects.create_user(
             email="normal@user.com",

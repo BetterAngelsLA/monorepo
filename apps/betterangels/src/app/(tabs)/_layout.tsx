@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
@@ -16,7 +16,7 @@ import {
   UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,7 +35,13 @@ export default function TabLayout() {
     setModalVisible(false);
   };
 
-  if (isLoading) return <Text>Loading</Text>;
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Loading size="large" />
+      </View>
+    );
+  }
 
   if (!user) {
     return <Redirect href="/auth" />;
@@ -114,9 +120,23 @@ export default function TabLayout() {
             title: '',
             tabBarIcon: () => (
               <View style={styles.wrapper}>
-                <View style={styles.middleButton}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityHint="Opening homepage main modal"
+                  onPress={openModal}
+                  style={({ pressed }) => [
+                    styles.middleButton,
+                    {
+                      backgroundColor: pressed
+                        ? Colors.PRIMARY_DARK
+                        : Colors.PRIMARY,
+                      height: pressed ? 64 : 66,
+                      width: pressed ? 64 : 66,
+                    },
+                  ]}
+                >
                   <PlusIcon color={Colors.WHITE} />
-                </View>
+                </Pressable>
               </View>
             ),
           }}
@@ -253,11 +273,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs.fontSize,
   },
   middleButton: {
-    height: 66,
-    width: 66,
     borderRadius: 100,
-    backgroundColor: Colors.PRIMARY,
     alignItems: 'center',
+
     justifyContent: 'center',
   },
   wrapper: {

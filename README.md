@@ -30,11 +30,12 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 2. [Frontend Development](#frontend-development)
 3. [Backend Development](#backend-development)
 4. [Development Workflow](#development-workflow)
-5. [License](#license)
+5. [Licensing Details](#licensing-details)
+6. [Contributing](#contributing)
 
 ## Project Overview
 
-BetterAngels is a nonprofit organization focused on addressing the homelessness crisis in Los Angeles and across the nation. This monorepo contains the core applications that power our platform, including mobile apps, web apps, and backend services.
+BetterAngels is a nonprofit organization focused on addressing the homelessness epidemic in Los Angeles. This monorepo contains the core applications that power our platform, including mobile apps, web apps, and backend services.
 
 ## Frontend Development
 
@@ -54,11 +55,31 @@ To maintain a consistent and efficient development process, we have established 
 
 - **[Development Workflow Guide](docs/development_workflow.md)**: This document outlines our development practices, including how to create branches, submit pull requests, and conduct code reviews.
 
-## License
+## Licensing Details
 
-This project is licensed under the AGPL.
+### Source Code
 
-- **[License](LICENSE)**: View the full license text.
+All of the source code to this product is released as [free](https://www.gnu.org/philosophy/free-sw.html) and [open source](https://www.opensource.org/docs/definition.php), licensed under the [GNU Affero General Public License (AGPL)](./LICENSE). This license ensures that our code remains free and open, encouraging others to contribute and share improvements while also ensuring that any modifications are made available to the community.
+
+### Assets
+
+For assets in this repository, you must also keep any license notices present in the source code and retain any attributions.
+
+For additional information regarding licensing and attribution requirements and contribution guidelines, please refer to the README in the respective directory. See our [Attribution Guidlines](./docs/attribution_guidelines.md) for more information.
+
+### Thank You
+
+We are grateful to the open-source community for their invaluable contributions. By integrating these assets and leveraging other open-source resources (such as source code, libraries, frameworks, etc.), we not only enhance our application but also contribute to a broader ecosystem of shared resources and innovation. Thank you for supporting open source!
+
+If you have any questions about licensing details or can provide information regarding any missing or incorrect licenses, please contact Better Angels United, Inc. at opensource-licensing@betterangels.la.
+
+## Contributing
+
+Are you a passionate technologist with a heart for service? Better Angels Tech Corps is calling on volunteers like you to help us craft a software platform that addresses every facet of homelessness. From outreach and shelter to client services and housing, we’re committed to creating holistic tech solutions that streamline processes and enhance user experiences for those most in need in our community.
+
+We have immediate opportunities for volunteers in front-end and back-end development, infrastructure, and testing. Join us in the early stages of our volunteer program and make a difference.
+
+Check out our [volunteer portal](https://volunteer.betterangels.la/need/detail/?need_id=866651) to sign up as a volunteer and get started!
 
 ---
 

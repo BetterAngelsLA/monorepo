@@ -2,7 +2,7 @@ from accounts.models import User
 from django.test import TestCase
 
 
-class UserEventsTest(TestCase):
+class UserEventsTestCase(TestCase):
     def setUp(self) -> None:
         # Create a user instance
         self.user = User.objects.create(

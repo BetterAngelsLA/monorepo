@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Button,
+  Loading,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -74,9 +75,15 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        {/* There should be loading from other PR */}
-        <TextRegular>Loading</TextRegular>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <Loading size="large" />
       </View>
     );
   }
