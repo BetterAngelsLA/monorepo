@@ -92,8 +92,6 @@ Run the following on the host machine (not in the container):
    nvm use 20.12.2
    ```
 
-1. Press "w" to open the web version of the application :tada:
-
 #### Starting the iOS emulator
 
 1. Make sure Xcode is fully installed and hit "i" while Expo is running
