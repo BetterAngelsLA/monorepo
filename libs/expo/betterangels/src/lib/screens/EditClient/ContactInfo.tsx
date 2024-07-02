@@ -16,14 +16,17 @@ interface IContactInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
+  errorState: { email?: string; firstName?: string };
 }
 
 export default function ContactInfo(props: IContactInfoProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const { expanded, setExpanded, client, setClient, scrollRef, errorState } =
+    props;
 
   const isContactInfo = expanded === 'Contact Info';
   return (
     <FieldCard
+      error={errorState && errorState.email}
       scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
@@ -65,6 +68,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           }
         />
         <BasicInput
+          error={errorState ? !!errorState.email : false}
           keyboardType="email-address"
           onDelete={() =>
             client &&

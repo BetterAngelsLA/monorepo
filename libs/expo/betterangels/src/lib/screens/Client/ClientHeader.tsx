@@ -28,6 +28,7 @@ interface IClientHeaderProps {
 export default function ClientHeader(props: IClientHeaderProps) {
   const { firstName, lastName, gender, preferredLanguage, dateOfBirth, age } =
     props;
+
   return (
     <View
       style={{
