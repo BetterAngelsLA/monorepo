@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -99,7 +99,7 @@ class UserType(UserBaseType):
     id: auto
     username: auto
     is_outreach_authorized: Optional[bool]
-    organizations_organization: Optional[List[OrganizationType]]
+    organizations_organization: Optional[list[OrganizationType]]
 
 
 @strawberry_django.input(User, partial=True)
@@ -122,7 +122,7 @@ class ClientProfileBaseType:
     phone_number: auto
     preferred_language: auto
     pronouns: auto
-    spoken_languages: Optional[List[Optional[LanguageEnum]]]
+    spoken_languages: Optional[list[Optional[LanguageEnum]]]
     veteran_status: auto
 
 

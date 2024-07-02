@@ -21,7 +21,7 @@ class PytestTestRunner:
     def add_arguments(cls: Type["PytestTestRunner"], parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--keepdb", action="store_true", help="Preserves the test DB between runs.")
 
-    def run_tests(self, test_labels: List[str], **kwargs: Any) -> int:
+    def run_tests(self, test_labels: list[str], **kwargs: Any) -> int:
         """Run pytest and return the exitcode.
 
         It translates some of Django's test command option to pytest's.

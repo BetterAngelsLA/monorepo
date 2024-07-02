@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import Dict, cast
 
 import pghistory
 import strawberry
@@ -22,6 +22,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
     TaskPermissions,
 )
+from notes.types_relay import InteractionType
 from notes.utils import NoteReverter
 from strawberry import asdict
 from strawberry.types import Info
@@ -29,6 +30,7 @@ from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.relay import ListConnectionWithTotalCount
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
@@ -42,7 +44,6 @@ from .types import (
     CreateTaskInput,
     MoodType,
     NoteAttachmentType,
-    NoteFilter,
     NoteType,
     RemoveNoteServiceRequestInput,
     RemoveNoteTaskInput,
@@ -59,17 +60,19 @@ from .types import (
 
 @strawberry.type
 class Query:
-    note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
-    notes: List[NoteType] = strawberry_django.field(
+    # BEGIN: DEPRECATED QUERIES #
+    note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)])
+
+    notes: list[NoteType] = strawberry_django.field(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
-
+    # END: DEPRECATED QUERIES
     note_attachment: NoteAttachmentType = strawberry_django.field(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
-    note_attachments: List[NoteAttachmentType] = strawberry_django.field(
+    note_attachments: list[NoteAttachmentType] = strawberry_django.field(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
@@ -77,13 +80,21 @@ class Query:
         extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
     )
 
-    service_requests: List[ServiceRequestType] = strawberry_django.field(
+    service_requests: list[ServiceRequestType] = strawberry_django.field(
         extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
     )
 
     task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
-    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
+    tasks: list[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
+
+    # BEGIN: New Relay Queries
+    interaction: InteractionType = strawberry_django.node(extensions=[HasRetvalPerm(NotePermissions.VIEW)])
+
+    interactions: ListConnectionWithTotalCount[InteractionType] = strawberry_django.connection(
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)]
+    )
+    # END: New Relay Queries
 
 
 @strawberry.type

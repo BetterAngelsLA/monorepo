@@ -49,11 +49,11 @@ class ShelterType:
     phone: auto
     website: auto
 
-    services: List[str]
-    populations: List[str]
-    requirements: List[str]
+    services: list[str]
+    populations: list[str]
+    requirements: list[str]
 
-    funders: List[str]
+    funders: list[str]
 
     # TODO: Update the Shelter App to use permissions.  Until then we only expose nonconfidential locations
     @classmethod

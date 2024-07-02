@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -196,12 +196,12 @@ class NoteType:
     id: auto
     title: auto
     location: Optional[LocationType]
-    attachments: List[NoteAttachmentType]
-    moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
-    provided_services: List[ServiceRequestType]
-    requested_services: List[ServiceRequestType]
+    attachments: list[NoteAttachmentType]
+    moods: list[MoodType]
+    purposes: list[TaskType]
+    next_steps: list[TaskType]
+    provided_services: list[ServiceRequestType]
+    requested_services: list[ServiceRequestType]
     public_details: auto
     is_submitted: auto
     client: Optional[UserType]

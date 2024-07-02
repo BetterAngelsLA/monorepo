@@ -28,7 +28,7 @@ class LatLongField(forms.MultiValueField):
         fields = (forms.FloatField(min_value=-90, max_value=90), forms.FloatField(min_value=-180, max_value=180))
         super().__init__(fields, *args, **kwargs)
 
-    def compress(self, data_list: List[float]) -> Optional[str]:
+    def compress(self, data_list: list[float]) -> Optional[str]:
         if data_list:
             # User can decline to provide lat and long, but if they provide one they must provide the other
             latitude, longitude = data_list

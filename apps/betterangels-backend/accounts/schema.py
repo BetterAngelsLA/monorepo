@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 import strawberry
 import strawberry_django
@@ -39,7 +39,7 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    client_profiles: List[ClientProfileType] = strawberry_django.field(
+    client_profiles: list[ClientProfileType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 

@@ -37,9 +37,9 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         delete_street_number: bool = False,
         include_point_of_interest: bool = False,
         delete_components: bool = False,
-    ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
+    ) -> Tuple[Dict[str, str], Dict[str, Union[str, list[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
-        address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
+        address_input: Dict[str, Union[str, list[Dict[str, Any]]]] = {
             "address_components": [
                 {
                     "long_name": "106",
@@ -148,7 +148,7 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         self.assertEqual(Address.objects.count(), 1)
         self.assertEqual(Location.objects.count(), 1)
         json_address_input: Dict[str, str]
-        address_input: Dict[str, Union[str, List[Dict[str, Any]]]]
+        address_input: Dict[str, Union[str, list[Dict[str, Any]]]]
         json_address_input, address_input = self._get_address_inputs(
             street_number_override=street_number,
             include_point_of_interest=include_component_point_of_interest,

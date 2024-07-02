@@ -65,9 +65,9 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         delete_street_number: bool = False,
         include_point_of_interest: bool = False,
         delete_components: bool = False,
-    ) -> Tuple[Dict[str, str], Dict[str, Union[str, List[Dict[str, Any]]]]]:
+    ) -> Tuple[Dict[str, str], Dict[str, Union[str, list[Dict[str, Any]]]]]:
         """Returns address input in two formats. JSON, for use in the mutation, and a dictionary for test assertions."""
-        address_input: Dict[str, Union[str, List[Dict[str, Any]]]] = {
+        address_input: Dict[str, Union[str, list[Dict[str, Any]]]] = {
             "addressComponents": [
                 {
                     "long_name": "106",
