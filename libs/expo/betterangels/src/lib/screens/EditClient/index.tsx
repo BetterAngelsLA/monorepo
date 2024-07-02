@@ -1,11 +1,11 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
   Loading,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { format, parse } from 'date-fns';
-import { useNavigation } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../apollo';
@@ -22,6 +22,11 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/EditClient.generated';
 
+type ErrorStateType = {
+  firstName?: string;
+  email?: string;
+};
+
 export default function EditClient({ id }: { id: string }) {
   const { data, loading, error, refetch } = useGetClientProfileQuery({
     variables: { id },
@@ -30,17 +35,28 @@ export default function EditClient({ id }: { id: string }) {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [client, setClient] = useState<UpdateClientProfileInput | undefined>();
   const [updateClient] = useUpdateClientProfileMutation();
-  const [errorState, setErrorState] = useState<string | null>(null);
-  const navigation = useNavigation();
+  const [errorState, setErrorState] = useState<ErrorStateType>({});
+  const router = useRouter();
   const [initialDate, setInitialDate] = useState<Date | undefined>();
   const scrollRef = useRef<ScrollView>(null);
 
   const updateClientProfile = async () => {
     if (!client?.user?.firstName) {
-      setErrorState('First Name is required');
+      setErrorState((prev) => ({
+        ...prev,
+        firstName: 'First Name is required',
+      }));
+
       return;
     }
-    setErrorState(null);
+    if (client && client.user?.email && !Regex.email.test(client.user.email)) {
+      setErrorState((prev) => ({
+        ...prev,
+        email: 'Enter a valid email address.',
+      }));
+      return;
+    }
+    setErrorState({});
     const input = {
       ...client,
       id,
@@ -68,14 +84,25 @@ export default function EditClient({ id }: { id: string }) {
         data?.updateClientProfile?.__typename === 'OperationInfo' &&
         data.updateClientProfile.messages
       ) {
-        throw new Error(
-          `Failed to update a client profile: ${data?.updateClientProfile.messages[0].message}`
-        );
+        if (
+          data.updateClientProfile.messages[0].message ===
+          'User with this Email already exists.'
+        ) {
+          setErrorState({
+            firstName: errorState?.firstName,
+            email: data.updateClientProfile.messages[0].message,
+          });
+          return;
+        } else {
+          throw new Error(
+            `Failed to update a client profile 3: ${data?.updateClientProfile.messages[0].message}`
+          );
+        }
       }
       refetch();
-      navigation.goBack();
+      router.replace(`/client/${id}`);
     } catch (err) {
-      throw new Error(`Failed to update a client profile: ${err}`);
+      throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };
 
@@ -142,7 +169,7 @@ export default function EditClient({ id }: { id: string }) {
         submitTitle="Update"
         cancel={
           <TextButton
-            onPress={navigation.goBack}
+            onPress={router.back}
             fontSize="sm"
             accessibilityHint="cancels the update of a new client profile"
             title="Cancel"
