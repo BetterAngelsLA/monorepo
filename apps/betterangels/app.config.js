@@ -29,7 +29,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.6',
+      buildNumber: '1.0.10',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -62,7 +62,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 6,
+      versionCode: 10,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -88,20 +88,21 @@ export default {
         'expo-image-picker',
         {
           photosPermission:
-            'Allow access to photos to upload photos from your library.',
+            'Allow $(PRODUCT_NAME) to access your photos to upload images for documenting client interactions.',
         },
       ],
       [
         'expo-camera',
         {
-          cameraPermission: 'Allow $(PRODUCT_NAME) to access your camera.',
+          cameraPermission:
+            'Allow $(PRODUCT_NAME) to use your camera to take photos for documenting client interactions.',
         },
       ],
       [
         'expo-location',
         {
-          locationAlwaysAndWhenInUsePermission:
-            'Allow $(PRODUCT_NAME) to use your location.',
+          locationWhenInUsePermission:
+            'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
     ],

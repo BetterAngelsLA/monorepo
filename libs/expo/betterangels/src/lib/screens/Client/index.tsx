@@ -1,5 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextButton, Loading } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { ReactElement, useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -56,7 +56,7 @@ export default function Client({ id }: { id: string }) {
     });
   }, []);
 
-    if (loading) {
+  if (loading) {
     return (
       <View
         style={{
