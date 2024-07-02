@@ -8,7 +8,7 @@ from django.urls import reverse
 from model_bakery import baker
 
 
-class GoogleMapsApiViewTest(TestCase):
+class GoogleMapsApiViewTestCase(TestCase):
 
     def setUp(self) -> None:
         self.client = Client()
