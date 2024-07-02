@@ -659,7 +659,7 @@ type UserType {
   firstName: String
   lastName: String
   middleName: String
-  email: String!
+  email: String
   id: ID!
   username: String!
   isOutreachAuthorized: Boolean

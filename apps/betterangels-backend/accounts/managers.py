@@ -9,22 +9,21 @@ if TYPE_CHECKING:
 
 
 class UserManager(BaseUserManager["User"]):
-    def create_user(self, email: str, password: str = "", **extra_fields: Any) -> "User":
-        if not email:
-            raise ValueError("The Email field must be set")
+    def create_user(self, password: str = "", **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
-        email = self.normalize_email(email)
+        email = self.normalize_email(extra_fields.get("email")) or None
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+
         return user
 
-    def create_client(self, email: str, **extra_fields: Any) -> "User":
+    def create_client(self, email: Optional[str] = None, **extra_fields: Any) -> "User":
         random_id = uuid.uuid4()
-        email = email or self.normalize_email(f"client_{random_id}@example.com")
         client = self.create_user(email, username=random_id, **extra_fields)
         client.set_unusable_password()
+
         return client
 
     def create_superuser(self, email: str, password: str = "", **extra_fields: Any) -> "User":

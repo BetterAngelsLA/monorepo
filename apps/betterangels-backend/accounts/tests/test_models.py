@@ -38,3 +38,21 @@ class UserModelTestCase(TestCase):
         self.assertTrue(user_in_both_orgs.is_outreach_authorized)
         self.assertFalse(user_in_unauth_org.is_outreach_authorized)
         self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+
+
+class UserManagerTest(TestCase):
+    def test_create_user(self) -> None:
+        user_count = User.objects.count()
+        user = User.objects.create_user()
+
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.is_superuser)
+        self.assertEqual(user.password[:13], "pbkdf2_sha256")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_create_client(self) -> None:
+        client_count = User.objects.count()
+        client = User.objects.create_client()
+
+        self.assertEqual(client.password[0], "!")
+        self.assertEqual(User.objects.count(), client_count + 1)
