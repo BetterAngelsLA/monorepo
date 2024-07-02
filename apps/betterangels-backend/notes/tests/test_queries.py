@@ -389,8 +389,8 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query, variables)
 
         self.assertEqual(
-            self.attachment_1["data"]["createNoteAttachment"],
             response["data"]["noteAttachment"],
+            self.attachment_1["data"]["createNoteAttachment"],
         )
 
     def test_view_note_attachments_permission(self) -> None:
@@ -410,11 +410,11 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query)
 
         self.assertEqual(
+            response["data"]["noteAttachments"],
             [
                 self.attachment_1["data"]["createNoteAttachment"],
                 self.attachment_2["data"]["createNoteAttachment"],
             ],
-            response["data"]["noteAttachments"],
         )
 
 
@@ -473,7 +473,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
-        self.assertEqual(expected_service_request, service_request)
+        self.assertEqual(service_request, expected_service_request)
 
     def test_service_requests_query(self) -> None:
         query = """
@@ -501,7 +501,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
 
         service_requests = response["data"]["serviceRequests"]
         self.assertEqual(len(service_requests), 1)
-        self.assertEqual(self.service_request, service_requests[0])
+        self.assertEqual(service_requests[0], self.service_request)
 
 
 @ignore_warnings(category=UserWarning)
@@ -585,7 +585,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
 
-        self.assertEqual(expected_task, task)
+        self.assertEqual(task, expected_task)
 
     def test_tasks_query(self) -> None:
         query = """
@@ -623,4 +623,4 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
 
         tasks = response["data"]["tasks"]
         self.assertEqual(len(tasks), 1)
-        self.assertEqual(self.task, tasks[0])
+        self.assertEqual(tasks[0], self.task)

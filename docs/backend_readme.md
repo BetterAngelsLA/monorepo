@@ -105,7 +105,7 @@ To use VSCode's debugger:
 
 1. Select the `Testing` (test tube) icon on the left
 1. Add a breakpoint (red dot) on the line you would like to break at
-1. Navigate through the test directory to find the test you want to run and click the `Debug Test` 🐞:arrow_forward: button
+1. Navigate through the test directory to find the test you want to run and click the `Debug Test` (🐞 :arrow_forward:) button
 1. Once the breakpoint is hit, you will be moved to the `Run and Debug` screen where you can step through your code
 1. To access the interactive shell and run commands directly, go to the `Debug Console` tab of the terminal on the bottom
 
@@ -190,7 +190,7 @@ import pghistory
 
 @pghistory.track(
    pghistory.InsertEvent("your_model.add"),
-   pghistory.UpdateEvent('your_model.update'),
+   pghistory.UpdateEvent("your_model.update"),
    pghistory.DeleteEvent("your_model.remove"),
 )
 class YourModel(models.Model):
@@ -232,7 +232,7 @@ class Mutation:
 To track the historical events for a certain model based on their id and timestamp, query the `Context` table using the custom `tracked_model_id` and `timestamp` metadata fields added in Step 3.
 
 ```python
-Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by('metadata__timestamp')
+Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
 </details>
