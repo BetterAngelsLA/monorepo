@@ -33,21 +33,23 @@ Run the following on the host machine (not in the container):
    brew install yarn
    ```
 
-1. Follow the instructions in the terminal to configure NVM in your shell profile. It should look similar to:
+1. Follow the instructions in the terminal to configure NVM in your shell profile. If the instructions don't appear, run `brew info nvm`.
 
-   e.g. `~/.profile` or `~/.zshrc`:
+   The instructions will look similar to:
 
-   ```
-   export NVM_DIR="$HOME/.nvm"
-   [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
-   [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
-   ```
+   > You should create NVM's working directory if it doesn't exist:
+   >
+   > ```
+   > mkdir ~/.nvm
+   > ```
 
-   If these instructions don't appear, run the following: (what do you mean @paul?)
+   > Add the following to your shell profile e.g. ~/.profile or ~/.zshrc:
 
-   ```bash
-   brew info nvm
-   ```
+   > ```
+   > export NVM_DIR="$HOME/.nvm"
+   > [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
+   > [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+   > ```
 
 1. Install node version 20.12.2
 
