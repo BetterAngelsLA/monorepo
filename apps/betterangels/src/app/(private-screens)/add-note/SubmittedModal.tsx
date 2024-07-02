@@ -4,6 +4,7 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AnimatedIcon from './AnimatedIcon';
 
 interface ISubmittedModalProps {
   closeModal: () => void;
@@ -29,6 +30,8 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
       isVisible={isModalVisible}
       onBackdropPress={closeModal}
     >
+      <AnimatedIcon />
+
       <View
         style={{
           flex: 1,
