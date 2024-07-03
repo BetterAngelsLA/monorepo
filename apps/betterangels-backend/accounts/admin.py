@@ -4,6 +4,10 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import SafeString
+from notes.models import Note
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 from .admin_request_mixin import AdminRequestMixin
@@ -17,6 +21,32 @@ from .models import (
 )
 
 
+class NotesByAdminMixin(object):
+    def notes_by(self, obj: User) -> SafeString:
+        notes = Note.objects.filter(created_by=obj)
+        note_links = [
+            '<a href="{}">{}</a>'.format(
+                reverse("admin:notes_note_change", args=(note.id,)),
+                f"Note {note.id}: {note} (with {note.client.full_name if note.client else None} {note.interacted_at.date()})",
+            )
+            for note in notes
+        ]
+        return format_html("<br>".join(note_links))
+
+
+class NotesForAdminMixin(object):
+    def notes_for(self, obj: User) -> SafeString:
+        notes = Note.objects.filter(client=obj)
+        note_links = [
+            '<a href="{}">{}</a>'.format(
+                reverse("admin:notes_note_change", args=(note.id,)),
+                f"Note {note.id}: {note} (by {note.created_by.full_name if note.created_by else None} {note.interacted_at.date()})",
+            )
+            for note in notes
+        ]
+        return format_html("<br>".join(note_links))
+
+
 class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
     form = OrganizationUserForm
 
@@ -27,7 +57,7 @@ class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitat
     list_filter = ("organization",)
 
 
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(NotesForAdminMixin, NotesByAdminMixin, BaseUserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
     fieldsets = (
@@ -46,12 +76,24 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
         (("Important dates"), {"fields": ("last_login",)}),
+        (("Notes created by"), {"fields": ("notes_by",)}),
+        (("Notes created for"), {"fields": ("notes_for",)}),
     )
     # Not convinced this is the right type
     model = cast(Type[DefaultUser], User)
     list_display = [
+        "id",
+        "full_name",
         "email",
+        "is_client",
     ]
+    readonly_fields = [
+        "notes_by",
+        "notes_for",
+    ]
+
+    def is_client(self, obj: User) -> bool:
+        return hasattr(obj, "clientprofile")
 
 
 class ClientProfileAdmin(admin.ModelAdmin):
