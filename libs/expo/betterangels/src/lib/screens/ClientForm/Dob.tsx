@@ -14,10 +14,18 @@ interface IDobProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
+  initialDateOfBirth: Date | undefined;
 }
 
 export default function Dob(props: IDobProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const {
+    expanded,
+    setExpanded,
+    client,
+    setClient,
+    scrollRef,
+    initialDateOfBirth,
+  } = props;
   const isDob = expanded === 'Date of Birth';
 
   return (
@@ -47,7 +55,7 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={new Date()}
+          initialDate={initialDateOfBirth}
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"
