@@ -12,7 +12,6 @@ import {
   CreateClientProfileInput,
   GenderEnum,
   LanguageEnum,
-  UpdateClientProfileInput,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
@@ -52,6 +51,10 @@ type ErrorStateType = {
   email?: string;
 };
 
+type UpdateClientProfileInput = CreateClientProfileInput & {
+  id: string;
+};
+
 export default function ClientForm({ id }: { id: string }) {
   const { data, loading, error, refetch } = useGetClientProfileQuery({
     variables: { id },
@@ -70,7 +73,7 @@ export default function ClientForm({ id }: { id: string }) {
   const [initialDateOfBirth, setInitialDateOfBirth] = useState<
     Date | undefined
   >();
-
+  console.log('errorState at load', errorState);
   useEffect(() => {
     if (!data || !('clientProfile' in data)) return;
 
@@ -100,20 +103,7 @@ export default function ClientForm({ id }: { id: string }) {
     errorState,
   };
 
-  const createClientProfile = async () => {
-    // if (!client.user.firstName) {
-    //   setErrorState('First Name is required');
-    //   return;
-    // }
-    setErrorState({});
-    const input = {
-      ...client,
-    };
-
-    if (client.dateOfBirth) {
-      input.dateOfBirth = new Date(client.dateOfBirth);
-    }
-
+  const createClientProfile = async (input: CreateClientProfileInput) => {
     try {
       const { data } = await createClient({
         variables: {
@@ -135,24 +125,19 @@ export default function ClientForm({ id }: { id: string }) {
   };
 
   const updateClientProfile = async () => {
-    console.log('UPDATING');
-    console.log(client);
-    // if (!client?.user?.firstName) {
-    //   setErrorState((prev) => ({
-    //     ...prev,
-    //     firstName: 'First Name is required',
-    //   }));
+    if (!client?.user?.firstName) {
+      setErrorState((prev) => ({
+        ...prev,
+        firstName: 'First Name is required',
+      }));
 
-    //   return;
-    // }
-    // if (client && client.user?.email && !Regex.email.test(client.user.email)) {
-    //   setErrorState((prev) => ({
-    //     ...prev,
-    //     email: 'Enter a valid email address.',
-    //   }));
-    //   return;
-    // }
-    if (!client?.user) {
+      return;
+    }
+    if (client && client.user?.email && !Regex.email.test(client.user.email)) {
+      setErrorState((prev) => ({
+        ...prev,
+        email: 'Enter a valid email address.',
+      }));
       return;
     }
     setErrorState({});
@@ -160,7 +145,7 @@ export default function ClientForm({ id }: { id: string }) {
       ...client,
       id,
       user: {
-        id: client.user.id || null,
+        id: client.user.id,
         firstName: client.user.firstName,
         lastName: client.user.lastName,
         email: client.user.email,
@@ -174,41 +159,69 @@ export default function ClientForm({ id }: { id: string }) {
     }
 
     try {
-      console.log('try input');
-      console.log(input);
       const { data } = await updateClient({
         variables: {
           data: input,
         },
       });
-      console.log('try data');
-      console.log(data);
-      console.log(data?.updateClientProfile.messages[0]);
-      // if (
-      //   data?.updateClientProfile?.__typename === 'OperationInfo' &&
-      //   data.updateClientProfile.messages
-      // ) {
-      //   if (
-      //     data.updateClientProfile.messages[0].message ===
-      //     'User with this Email already exists.'
-      //   ) {
-      //     setErrorState({
-      //       firstName: errorState?.firstName,
-      //       email: data.updateClientProfile.messages[0].message,
-      //     });
-      //     return;
-      //   } else {
-      //     throw new Error(
-      //       `Failed to update a client profile 3: ${data?.updateClientProfile.messages[0].message}`
-      //     );
-      //   }
-      // }
+      if (
+        data?.updateClientProfile?.__typename === 'OperationInfo' &&
+        data.updateClientProfile.messages
+      ) {
+        if (
+          data.updateClientProfile.messages[0].message ===
+          'User with this Email already exists.'
+        ) {
+          setErrorState({
+            firstName: errorState?.firstName,
+            email: data.updateClientProfile.messages[0].message,
+          });
+          return;
+        } else {
+          throw new Error(
+            `Failed to update a client profile 3: ${data?.updateClientProfile.messages[0].message}`
+          );
+        }
+      }
       refetch();
       router.replace(`/client/${id}`);
     } catch (err) {
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };
+
+  // function submitForm() {
+  //   if (!client.user.firstName) {
+  //     setErrorState({ firstName: 'First Name is required' });
+  //     return;
+  //   }
+  //   setErrorState({});
+
+  //   let input = {
+  //     ...client,
+  //   };
+
+  //   if (client.dateOfBirth) {
+  //     input.dateOfBirth = new Date(client.dateOfBirth);
+  //   }
+
+  //   if (id) {
+  //     input = {
+  //       ...client,
+  //       id,
+  //       user: {
+  //         id: client.user.id || null,
+  //         firstName: client.user.firstName,
+  //         lastName: client.user.lastName,
+  //         email: client.user.email,
+  //         middleName: client.user.middleName,
+  //       },
+  //     };
+  //     updateClientProfile(input);
+  //   } else {
+  //     createClientProfile(input);
+  //   }
+  // }
 
   if (loading || !client)
     return (
@@ -229,7 +242,7 @@ export default function ClientForm({ id }: { id: string }) {
   return (
     <View style={{ flex: 1 }}>
       <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-        <Name {...props} />
+        <Name setErrorState={setErrorState} {...props} />
         <Dob initialDateOfBirth={initialDateOfBirth} {...props} />
         <Gender {...props} />
         <Language {...props} />
@@ -247,6 +260,7 @@ export default function ClientForm({ id }: { id: string }) {
             title="Cancel"
           />
         }
+        // onSubmit={submitForm}
         onSubmit={id ? updateClientProfile : createClientProfile}
       />
     </View>

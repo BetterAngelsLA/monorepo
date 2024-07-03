@@ -6,7 +6,10 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface IHMISProps {
   client: CreateClientProfileInput;

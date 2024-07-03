@@ -8,6 +8,11 @@ import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { CreateClientProfileInput } from '../../apollo';
 
+type ErrorStateType = {
+  firstName?: string;
+  email?: string;
+};
+
 interface INameProps {
   client: CreateClientProfileInput;
   setClient: (client: CreateClientProfileInput) => void;
@@ -15,13 +20,33 @@ interface INameProps {
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
   errorState: string | null;
+  setErrorState: (errorState: ErrorStateType) => void;
 }
 
 export default function Name(props: INameProps) {
-  const { expanded, setClient, client, setExpanded, scrollRef, errorState } =
-    props;
+  const {
+    expanded,
+    setClient,
+    client,
+    setExpanded,
+    scrollRef,
+    errorState,
+    setErrorState,
+  } = props;
 
   const isName = expanded === 'Name';
+
+  function changeText(e: string) {
+    setClient({
+      ...client,
+      user: {
+        ...client.user,
+        firstName: e,
+      },
+    });
+    setErrorState(e === '' ? { firstName: 'First Name is required' } : {});
+  }
+
   return (
     <FieldCard
       error={errorState ? 'First Name is required' : ''}
@@ -64,15 +89,7 @@ export default function Name(props: INameProps) {
               },
             });
           }}
-          onChangeText={(e) =>
-            setClient({
-              ...client,
-              user: {
-                ...client.user,
-                firstName: e,
-              },
-            })
-          }
+          onChangeText={(e) => changeText(e)}
           value={client.user.firstName || ''}
         />
         <BasicInput
