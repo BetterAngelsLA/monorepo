@@ -11,9 +11,12 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
+  Ordering,
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
+import { ClientProfileDocument } from '../Client/__generated__/Client.generated';
+import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
 import ContactInfo from './ContactInfo';
 import Dob from './Dob';
 import Gender from './Gender';
@@ -29,15 +32,39 @@ import {
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
-  const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
+  const { data, loading, error } = useGetClientProfileQuery(checkId);
 
   const methods = useForm<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [updateClient] = useUpdateClientProfileMutation();
-  const [createClient] = useCreateClientProfileMutation();
+  const [updateClient] = useUpdateClientProfileMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id,
+        },
+      },
+    ],
+  });
+  const [createClient] = useCreateClientProfileMutation({
+    refetchQueries: [
+      {
+        query: ClientProfilesDocument,
+        variables: {
+          pagination: { limit: 20 + 1, offset: 0 },
+          filters: {
+            search: '',
+          },
+          order: {
+            user_FirstName: Ordering.AscNullsFirst,
+          },
+        },
+      },
+    ],
+  });
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -91,7 +118,6 @@ export default function AddEditClient({ id }: { id?: string }) {
           );
         }
       }
-      refetch();
 
       if (id) {
         router.replace(`/client/${id}`);
