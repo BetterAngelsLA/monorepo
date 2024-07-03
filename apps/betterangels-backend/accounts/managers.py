@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class UserManager(BaseUserManager["User"]):
-    def create_user(self, password: str = "", **extra_fields: Any) -> "User":
+    def create_user(self, email: Optional[str] = None, password: str = "", **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         email = self.normalize_email(extra_fields.get("email")) or None

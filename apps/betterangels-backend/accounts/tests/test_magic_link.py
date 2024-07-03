@@ -66,6 +66,7 @@ class TestMagicLink(TestCase):
         self.assertIn(magic_login_url, found.message)
 
     def test_send_magic_link(self) -> None:
+        assert self.user.email
         query_string = send_magic_link(self.user.email, "http://localhost")
         found = Email.objects.all().first()
         self.assertIn(query_string, found.html_message)
