@@ -6,11 +6,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { UpdateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface INameProps {
-  client: UpdateClientProfileInput | undefined;
-  setClient: (client: UpdateClientProfileInput | undefined) => void;
+  client: UpdateClientProfileInput | CreateClientProfileInput | undefined;
+  setClient: (
+    client: UpdateClientProfileInput | CreateClientProfileInput | undefined
+  ) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
