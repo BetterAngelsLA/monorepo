@@ -91,6 +91,9 @@ export default function ClientForm({ id }: { id: string }) {
       clientInput.dateOfBirth = format(parsedDate, 'MM/dd/yyyy');
     }
 
+    delete clientInput.__typename;
+    delete clientInput.user.__typename;
+
     setClient(clientInput);
   }, [data]);
 
@@ -103,7 +106,23 @@ export default function ClientForm({ id }: { id: string }) {
     errorState,
   };
 
-  const createClientProfile = async (input: CreateClientProfileInput) => {
+  const createClientProfile = async () => {
+    if (!client.user.firstName) {
+      setErrorState((prev) => ({
+        ...prev,
+        firstName: 'First Name is required',
+      }));
+      return;
+    }
+    setErrorState({});
+    const input = {
+      ...client,
+    };
+
+    if (client.dateOfBirth) {
+      input.dateOfBirth = new Date(client.dateOfBirth);
+    }
+
     try {
       const { data } = await createClient({
         variables: {
@@ -125,22 +144,23 @@ export default function ClientForm({ id }: { id: string }) {
   };
 
   const updateClientProfile = async () => {
-    if (!client?.user?.firstName) {
-      setErrorState((prev) => ({
-        ...prev,
-        firstName: 'First Name is required',
-      }));
+    console.log('UPDATING');
+    // if (!client?.user?.firstName) {
+    //   setErrorState((prev) => ({
+    //     ...prev,
+    //     firstName: 'First Name is required',
+    //   }));
 
-      return;
-    }
-    if (client && client.user?.email && !Regex.email.test(client.user.email)) {
-      setErrorState((prev) => ({
-        ...prev,
-        email: 'Enter a valid email address.',
-      }));
-      return;
-    }
-    setErrorState({});
+    //   return;
+    // }
+    // if (client && client.user?.email && !Regex.email.test(client.user.email)) {
+    //   setErrorState((prev) => ({
+    //     ...prev,
+    //     email: 'Enter a valid email address.',
+    //   }));
+    //   return;
+    // }
+    // setErrorState({});
     const input = {
       ...client,
       id,
@@ -159,19 +179,25 @@ export default function ClientForm({ id }: { id: string }) {
     }
 
     try {
+      console.log('try input', input);
+
       const { data } = await updateClient({
         variables: {
           data: input,
         },
       });
+      console.log('try data', data);
+      // console.log('messages', data?.updateClientProfile?.messages[0]);
       if (
         data?.updateClientProfile?.__typename === 'OperationInfo' &&
         data.updateClientProfile.messages
       ) {
+        console.log('in the first if');
         if (
           data.updateClientProfile.messages[0].message ===
           'User with this Email already exists.'
         ) {
+          console.log('in the second if');
           setErrorState({
             firstName: errorState?.firstName,
             email: data.updateClientProfile.messages[0].message,
@@ -183,6 +209,7 @@ export default function ClientForm({ id }: { id: string }) {
           );
         }
       }
+      console.log('refetch and redirect');
       refetch();
       router.replace(`/client/${id}`);
     } catch (err) {
