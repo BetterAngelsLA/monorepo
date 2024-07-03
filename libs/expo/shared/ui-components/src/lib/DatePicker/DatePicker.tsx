@@ -147,7 +147,6 @@ export function DatePicker(props: IDatePickerProps) {
           accessibilityLabel="open date picker"
           accessibilityHint="Opens the date picker to select a date"
           onPress={() => {
-            // value && setPicker(value);
             setPicker(true);
             Keyboard.dismiss();
           }}

@@ -5,12 +5,15 @@ import {
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { GenderEnum, UpdateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  GenderEnum,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface IGenderProps {
-  client: UpdateClientProfileInput | undefined;
-  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -19,7 +22,12 @@ interface IGenderProps {
 const GENDERS: Array<'Male' | 'Female' | 'Other'> = ['Male', 'Female', 'Other'];
 
 export default function Gender(props: IGenderProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const { expanded, setExpanded, scrollRef } = props;
+  const { setValue, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
+
+  const gender = watch('gender');
 
   const isGender = expanded === 'Gender';
 
@@ -32,11 +40,11 @@ export default function Gender(props: IGenderProps) {
       }}
       mb="xs"
       actionName={
-        !client?.gender && !isGender ? (
+        !gender && !isGender ? (
           <TextMedium size="sm">Add Gender</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client?.gender}
+            {gender}
           </TextMedium>
         )
       }
@@ -61,14 +69,8 @@ export default function Gender(props: IGenderProps) {
               label={q}
               accessibilityHint={`Select ${q}`}
               key={q}
-              value={client?.gender}
-              onPress={() => {
-                client &&
-                  setClient({
-                    ...client,
-                    gender: GenderEnum[q],
-                  });
-              }}
+              value={gender}
+              onPress={() => setValue('gender', GenderEnum[q])}
             />
           ))}
         </View>

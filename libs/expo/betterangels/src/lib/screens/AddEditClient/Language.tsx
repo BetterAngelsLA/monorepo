@@ -5,38 +5,29 @@ import {
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { LanguageEnum, UpdateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  LanguageEnum,
+  UpdateClientProfileInput,
+} from '../../apollo';
+import { enumDisplayLanguage } from '../../static/enumDisplayMaping';
 
 interface ILanguageProps {
-  client: UpdateClientProfileInput | undefined;
-  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
 
-const enumDisplayMap: { [key in LanguageEnum]: string } = {
-  [LanguageEnum.Arabic]: 'Arabic',
-  [LanguageEnum.Armenian]: 'Armenian',
-  [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
-  [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
-  [LanguageEnum.English]: 'English',
-  [LanguageEnum.Farsi]: 'Farsi',
-  [LanguageEnum.Indonesian]: 'Indonesian',
-  [LanguageEnum.Japanese]: 'Japanese',
-  [LanguageEnum.Khmer]: 'Khmer',
-  [LanguageEnum.Korean]: 'Korean',
-  [LanguageEnum.Russian]: 'Russian',
-  [LanguageEnum.Spanish]: 'Spanish',
-  [LanguageEnum.Tagalog]: 'Tagalog',
-  [LanguageEnum.Vietnamese]: 'Vietnamese',
-};
-
 export default function Language(props: ILanguageProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const { expanded, setExpanded, scrollRef } = props;
+  const { setValue, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
 
   const isLanguage = expanded === 'Language';
+  const preferredLanguage = watch('preferredLanguage');
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -47,12 +38,11 @@ export default function Language(props: ILanguageProps) {
       }}
       mb="xs"
       actionName={
-        !client?.preferredLanguage && !isLanguage ? (
+        !preferredLanguage && !isLanguage ? (
           <TextMedium size="sm">Add Language</TextMedium>
         ) : (
           <TextMedium textTransform="capitalize" size="sm">
-            {client?.preferredLanguage &&
-              enumDisplayMap[client.preferredLanguage]}
+            {preferredLanguage && enumDisplayLanguage[preferredLanguage]}
           </TextMedium>
         )
       }
@@ -68,13 +58,9 @@ export default function Language(props: ILanguageProps) {
         <Select
           placeholder="Select Language"
           onValueChange={(enumValue) =>
-            client &&
-            setClient({
-              ...client,
-              preferredLanguage: enumValue as LanguageEnum,
-            })
+            setValue('preferredLanguage', enumValue as LanguageEnum)
           }
-          items={Object.entries(enumDisplayMap).map(
+          items={Object.entries(enumDisplayLanguage).map(
             ([enumValue, displayValue]) => ({
               displayValue: displayValue,
               value: enumValue,

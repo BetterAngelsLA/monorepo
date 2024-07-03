@@ -4,13 +4,16 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { parse } from 'date-fns';
+import { RefObject, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { UpdateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface IDobProps {
-  client: UpdateClientProfileInput | undefined;
-  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
@@ -18,11 +21,22 @@ interface IDobProps {
 }
 
 export default function Dob(props: IDobProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef, initialDate } =
-    props;
+  const { expanded, setExpanded, scrollRef, initialDate } = props;
+
+  const { setValue, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
+
+  const dateOfBirth = watch('dateOfBirth');
   const isDob = expanded === 'Date of Birth';
 
-  if (!client) return;
+  const parsedDate = useMemo(() => {
+    return dateOfBirth
+      ? parse(dateOfBirth, 'MM/dd/yyyy', new Date())
+      : new Date();
+  }, [dateOfBirth]);
+
+  console.log(dateOfBirth);
 
   return (
     <FieldCard
@@ -33,10 +47,10 @@ export default function Dob(props: IDobProps) {
       }}
       mb="xs"
       actionName={
-        !client?.dateOfBirth && !isDob ? (
+        !dateOfBirth && !isDob ? (
           <TextMedium size="sm">Add DoB</TextMedium>
         ) : (
-          <TextMedium size="sm">{client?.dateOfBirth}</TextMedium>
+          <TextMedium size="sm">{dateOfBirth}</TextMedium>
         )
       }
       title="Date of Birth"
@@ -51,18 +65,17 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={initialDate}
+          initialDate={
+            dateOfBirth
+              ? parse(dateOfBirth, 'MM/dd/yyyy', new Date())
+              : new Date()
+          }
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          onSave={(date) =>
-            setClient({
-              ...client,
-              dateOfBirth: date,
-            })
-          }
+          onSave={(date) => setValue('dateOfBirth', date)}
         />
       </View>
     </FieldCard>

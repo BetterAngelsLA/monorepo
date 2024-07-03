@@ -1,25 +1,32 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
   FieldCard,
+  Input,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { UpdateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface IHMISProps {
-  client: UpdateClientProfileInput | undefined;
-  setClient: (client: UpdateClientProfileInput | undefined) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
 
 export default function HMIS(props: IHMISProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const { expanded, setExpanded, scrollRef } = props;
+  const { control, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
 
   const isHMIS = expanded === 'HMIS ID#';
+  const hmisId = watch('hmisId');
+
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -29,10 +36,10 @@ export default function HMIS(props: IHMISProps) {
       }}
       mb="xs"
       actionName={
-        !client?.hmisId && !isHMIS ? (
+        !hmisId && !isHMIS ? (
           <TextMedium size="sm">Add HMIS ID#</TextMedium>
         ) : (
-          <TextMedium size="sm">{client?.hmisId}</TextMedium>
+          <TextMedium size="sm">{hmisId}</TextMedium>
         )
       }
       title="HMIS ID#"
@@ -44,12 +51,7 @@ export default function HMIS(props: IHMISProps) {
           overflow: 'hidden',
         }}
       >
-        <BasicInput
-          value={client?.hmisId || ''}
-          onDelete={() => client && setClient({ ...client, hmisId: '' })}
-          onChangeText={(e) => client && setClient({ ...client, hmisId: e })}
-          placeholder="Enter HMIS ID#"
-        />
+        <Input control={control} name="hmisId" placeholder="Enter HMIS ID#" />
       </View>
     </FieldCard>
   );

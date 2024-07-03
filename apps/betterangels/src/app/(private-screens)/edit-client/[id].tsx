@@ -1,4 +1,4 @@
-import { EditClient } from '@monorepo/expo/betterangels';
+import { AddEditClient } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function EditClientScreen() {
@@ -8,5 +8,5 @@ export default function EditClientScreen() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <EditClient id={id} />;
+  return <AddEditClient id={id} />;
 }

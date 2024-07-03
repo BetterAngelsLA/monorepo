@@ -1,4 +1,4 @@
-import { GenderEnum, LanguageEnum } from '../apollo';
+import { GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum } from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
@@ -22,3 +22,10 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Male]: 'Male',
   [GenderEnum.Other]: 'Other',
 };
+
+export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
+  {
+    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+    [YesNoPreferNotToSayEnum.No]: 'No',
+    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+  };
