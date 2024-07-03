@@ -8,7 +8,7 @@ from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class LocationModelTest(ParametrizedTestCase, TestCase):
+class LocationModelTestCase(ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         self.point = (-118.2437207, 34.0521723)
         self._setup_location()
@@ -118,7 +118,7 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
             "point_of_interest": "An Interesting Point (Component)",
         }
 
-        self.assertEqual(expected_parsed_address_components, parsed_address_components)
+        self.assertEqual(parsed_address_components, expected_parsed_address_components)
 
     @parametrize(
         (
@@ -145,8 +145,8 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         include_standalone_point_of_interest: bool,
         include_component_point_of_interest: bool,
     ) -> None:
-        self.assertEqual(1, Address.objects.count())
-        self.assertEqual(1, Location.objects.count())
+        self.assertEqual(Address.objects.count(), 1)
+        self.assertEqual(Location.objects.count(), 1)
         json_address_input: Dict[str, str]
         address_input: Dict[str, Union[str, List[Dict[str, Any]]]]
         json_address_input, address_input = self._get_address_inputs(
@@ -180,8 +180,8 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         expected_formatted_address = address_input["formatted_address"]
         expected_address_components = json_address_input["address_components"]
 
-        self.assertEqual(expected_address_count, Address.objects.count())
-        self.assertEqual(expected_location_count, Location.objects.count())
+        self.assertEqual(Address.objects.count(), expected_address_count)
+        self.assertEqual(Location.objects.count(), expected_location_count)
 
         assert location.address
         assert location.point
@@ -205,7 +205,7 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         }
         location = Location.get_or_create_location(location_data)
 
-        self.assertEqual(address_count + 1, Address.objects.count())
+        self.assertEqual(Address.objects.count(), address_count + 1)
         assert location.address
         self.assertIsNone(location.address.street)
         self.assertIsNone(location.address.city)
@@ -235,5 +235,5 @@ class LocationModelTest(ParametrizedTestCase, TestCase):
         location = Location.get_or_create_location(location_data)
 
         assert location.address
-        self.assertEqual(address_count + 1, Address.objects.count())
+        self.assertEqual(Address.objects.count(), address_count + 1)
         self.assertEqual(location.address.street, expected_street)

@@ -6,7 +6,7 @@ from model_bakery import baker
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
-class UserModelTest(TestCase):
+class UserModelTestCase(TestCase):
     def test_full_name(self) -> None:
         user = baker.make(User, first_name="Dale", last_name="Cooper")
         self.assertEqual(user.full_name, "Dale Cooper")

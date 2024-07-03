@@ -53,7 +53,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
-        self.assertEqual(expected_note, created_note)
+        self.assertEqual(created_note, expected_note)
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_update_note_mutation(self) -> None:
@@ -98,7 +98,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
-        self.assertEqual(expected_note, updated_note)
+        self.assertEqual(updated_note, expected_note)
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_partial_update_note_mutation(self) -> None:
@@ -129,7 +129,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
-        self.assertEqual(expected_note, updated_note)
+        self.assertEqual(updated_note, expected_note)
 
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]
@@ -161,8 +161,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         updated_note_location = response["data"]["updateNoteLocation"]["location"]
-        self.assertEqual(self.point, updated_note_location["point"])
-        self.assertEqual(expected_address, updated_note_location["address"])
+        self.assertEqual(updated_note_location["point"], self.point)
+        self.assertEqual(updated_note_location["address"], expected_address)
 
         note = Note.objects.get(id=note_id)
         self.assertIsNotNone(note.location)
@@ -191,7 +191,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, getattr(note, tasks_to_check).count())
+        self.assertEqual(getattr(note, tasks_to_check).count(), 0)
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_task_fixture(variables)
@@ -206,11 +206,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
         }
-        task = response["data"]["createNoteTask"]
+        created_task = response["data"]["createNoteTask"]
 
-        self.assertEqual(expected_task, task)
-        self.assertEqual(1, getattr(note, tasks_to_check).count())
-        self.assertEqual(task["id"], str(getattr(note, tasks_to_check).get().id))
+        self.assertEqual(created_task, expected_task)
+        self.assertEqual(getattr(note, tasks_to_check).count(), 1)
+        self.assertEqual(created_task["id"], str(getattr(note, tasks_to_check).get().id))
 
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
@@ -234,7 +234,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, getattr(note, service_requests_to_check).count())
+        self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_service_request_fixture(variables)
@@ -250,12 +250,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
         }
-        service_request = response["data"]["createNoteServiceRequest"]
+        created_service_request = response["data"]["createNoteServiceRequest"]
 
-        self.assertEqual(expected_service_request, service_request)
-        self.assertEqual(1, getattr(note, service_requests_to_check).count())
+        self.assertEqual(created_service_request, expected_service_request)
+        self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
         self.assertEqual(
-            service_request["id"],
+            created_service_request["id"],
             str(getattr(note, service_requests_to_check).get().id),
         )
 
@@ -281,7 +281,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, getattr(note, service_requests_to_check).count())
+        self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_service_request_fixture(variables)
@@ -297,12 +297,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
         }
-        service_request = response["data"]["createNoteServiceRequest"]
+        created_service_request = response["data"]["createNoteServiceRequest"]
 
-        self.assertEqual(expected_service_request, service_request)
-        self.assertEqual(1, getattr(note, service_requests_to_check).count())
+        self.assertEqual(created_service_request, expected_service_request)
+        self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
         self.assertEqual(
-            service_request["id"],
+            created_service_request["id"],
             str(getattr(note, service_requests_to_check).get().id),
         )
 
@@ -359,7 +359,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(0, getattr(note, tasks_to_check).count())
+        self.assertEqual(getattr(note, tasks_to_check).count(), 0)
 
         expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -383,7 +383,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ),
         }
         returned_note = response["data"]["addNoteTask"]
-        self.assertEqual(expected_note, returned_note)
+        self.assertEqual(returned_note, expected_note)
         self.assertEqual(1, getattr(note, tasks_to_check).count())
         self.assertEqual(int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id)
 
@@ -404,8 +404,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         note.purposes.add(self.purpose_1["id"])
         note.next_steps.add(self.next_step_1["id"])
-        self.assertEqual(1, note.purposes.count())
-        self.assertEqual(1, note.next_steps.count())
+        self.assertEqual(note.purposes.count(), 1)
+        self.assertEqual(note.next_steps.count(), 1)
 
         expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -432,8 +432,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ),
         }
         returned_note = response["data"]["removeNoteTask"]
-        self.assertEqual(expected_note, returned_note)
-        self.assertEqual(0, getattr(note, tasks_to_check).count())
+        self.assertEqual(returned_note, expected_note)
+        self.assertEqual(getattr(note, tasks_to_check).count(), 0)
 
     def test_create_note_mood_mutation(self) -> None:
         baker.make(Mood, note_id=self.note["id"])
@@ -443,7 +443,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(1, note.moods.count())
+        self.assertEqual(note.moods.count(), 1)
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -453,22 +453,22 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "descriptor": "ANXIOUS",
         }
-        mood = response["data"]["createNoteMood"]
-        self.assertEqual(expected_mood, mood)
-        self.assertEqual(2, note.moods.count())
-        self.assertIn(mood["id"], str(note.moods.only("id")))
+        created_mood = response["data"]["createNoteMood"]
+        self.assertEqual(created_mood, expected_mood)
+        self.assertEqual(note.moods.count(), 2)
+        self.assertIn(created_mood["id"], str(note.moods.only("id")))
 
     def test_delete_mood_mutation(self) -> None:
         note = Note.objects.get(id=self.note["id"])
         moods = baker.make(Mood, note_id=note.id, _quantity=2)
-        self.assertEqual(2, note.moods.count())
+        self.assertEqual(note.moods.count(), 2)
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_mood_fixture(mood_id=moods[0].pk)
 
         self.assertIsNotNone(response["data"]["deleteMood"])
-        self.assertEqual(1, note.moods.count())
+        self.assertEqual(note.moods.count(), 1)
         with self.assertRaises(Mood.DoesNotExist):
             Mood.objects.get(id=moods[0].pk)
 
@@ -1614,7 +1614,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
-        self.assertEqual(expected_service_request, created_service_request)
+        self.assertEqual(created_service_request, expected_service_request)
 
     @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_update_service_request_mutation(self) -> None:
@@ -1641,7 +1641,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
-        self.assertEqual(expected_service_request, updated_service_request)
+        self.assertEqual(updated_service_request, expected_service_request)
 
     @time_machine.travel("2024-03-11 12:34:56", tick=False)
     def test_partial_update_service_request_mutation(self) -> None:
@@ -1666,7 +1666,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
-        self.assertEqual(expected_service_request, updated_service_request)
+        self.assertEqual(updated_service_request, expected_service_request)
 
     def test_delete_service_request_mutation(self) -> None:
         mutation = """
@@ -1725,7 +1725,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(expected_task, created_task)
+        self.assertEqual(created_task, expected_task)
 
     def test_update_task_mutation(self) -> None:
         variables = {
@@ -1761,7 +1761,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(expected_task, updated_task)
+        self.assertEqual(updated_task, expected_task)
 
     def test_partial_update_task_mutation(self) -> None:
         variables = {
@@ -1784,7 +1784,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
-        self.assertEqual(expected_task, updated_task)
+        self.assertEqual(updated_task, expected_task)
 
     def test_update_task_location_mutation(self) -> None:
         task_id = self.task["id"]
@@ -1820,7 +1820,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "pointOfInterest": self.point_of_interest,
         }
         updated_task_location = response["data"]["updateTaskLocation"]["location"]
-        self.assertEqual(expected_location, updated_task_location)
+        self.assertEqual(updated_task_location, expected_location)
 
         task = Task.objects.get(id=task_id)
         self.assertIsNotNone(task.location)

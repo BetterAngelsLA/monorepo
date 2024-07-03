@@ -19,15 +19,14 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
 1. Run Docker
 1. Clone the monorepo repo from github
 1. Open it in a VSCode workspace
-1. Cmd + Shift + P and select "Dev Containers: Rebuild Container"
-1. Reopen a new VSCode workspace
+1. Cmd + Shift + P and select "Dev Containers: Rebuild and Reopen in Container" (this command take a few minutes to complete). It will close and reopen a new VSCode workspace
 1. Apply migrations:
 
    ```bash
    yarn nx run betterangels-backend:migrate
    ```
 
-1. Install dependencies
+1. Install dependencies (if you just built the container, this step might already be done)
 
    ```bash
    poetry install
@@ -97,17 +96,18 @@ To run tests with breakpoints via the terminal, you'll need to use a `poetry she
 1. Run tests using `python manage.py test`. Example:
 
    ```bash
-   python manage.py test accounts.tests.UsersManagersTests.test_create_user
+   python manage.py test accounts/tests/test_user_manager.py::UserManagerTestCase::test_create_user
    ```
 
 To use VSCode's debugger:
 
 <img width="1230" alt="image" src="https://github.com/BetterAngelsLA/monorepo/assets/4707640/2d8d6351-1cf3-44cb-912c-7d069e597095">
 
-1. Select the test tube icon on the left
+1. Select the `Testing` (test tube) icon on the left
 1. Add a breakpoint (red dot) on the line you would like to break at
-1. Click the "Run and Debug" button next to the test you want to run
-1. Go to the `Debug Console` on the bottom to access the interactive shell
+1. Navigate through the test directory to find the test you want to run and click the `Debug Test` (🐞 :arrow_forward:) button
+1. Once the breakpoint is hit, you will be moved to the `Run and Debug` screen where you can step through your code
+1. To access the interactive shell and run commands directly, go to the `Debug Console` tab of the terminal on the bottom
 
 ### Celery Integration
 
@@ -190,7 +190,7 @@ import pghistory
 
 @pghistory.track(
    pghistory.InsertEvent("your_model.add"),
-   pghistory.UpdateEvent('your_model.update'),
+   pghistory.UpdateEvent("your_model.update"),
    pghistory.DeleteEvent("your_model.remove"),
 )
 class YourModel(models.Model):
@@ -232,7 +232,7 @@ class Mutation:
 To track the historical events for a certain model based on their id and timestamp, query the `Context` table using the custom `tracked_model_id` and `timestamp` metadata fields added in Step 3.
 
 ```python
-Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by('metadata__timestamp')
+Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
 </details>

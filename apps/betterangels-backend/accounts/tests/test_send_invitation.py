@@ -6,7 +6,7 @@ from ..backends import CustomInvitations
 
 
 @override_settings(EMAIL_BACKEND="post_office.EmailBackend")
-class SendInvitationTest(TestCase):
+class SendInvitationTestCase(TestCase):
     def setUp(self) -> None:
         # Create a test user
         self.email = "testuser@test.com"
