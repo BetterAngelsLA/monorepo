@@ -9,13 +9,18 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { GenderEnum, LanguageEnum } from '../../apollo';
+import {
+  enumDisplayGender,
+  enumDisplayLanguage,
+} from '../../static/enumDisplayMaping';
 
 interface IClientHeaderProps {
   firstName: string | null | undefined;
   lastName: string | null | undefined;
-  gender: string | null | undefined;
-  preferredLanguage: string | null | undefined;
+  gender: GenderEnum | null | undefined;
+  preferredLanguage: LanguageEnum | null | undefined;
   dateOfBirth: string | null | undefined;
   age: number | null | undefined;
 }
@@ -23,6 +28,7 @@ interface IClientHeaderProps {
 export default function ClientHeader(props: IClientHeaderProps) {
   const { firstName, lastName, gender, preferredLanguage, dateOfBirth, age } =
     props;
+
   return (
     <View
       style={{
@@ -48,21 +54,22 @@ export default function ClientHeader(props: IClientHeaderProps) {
           {firstName} {lastName}
         </TextMedium>
       </View>
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacings.sm }}
+      <ScrollView
+        contentContainerStyle={{ alignItems: 'center', gap: Spacings.sm }}
+        horizontal
+        style={{ flexDirection: 'row' }}
       >
         {gender && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <GenderIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-            <TextRegular textTransform="capitalize">{gender}</TextRegular>
+            <TextRegular>{enumDisplayGender[gender]}</TextRegular>
           </View>
         )}
         {preferredLanguage && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <GlobeIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-            <TextRegular textTransform="capitalize">
-              {preferredLanguage}
-            </TextRegular>
+
+            <TextRegular>{enumDisplayLanguage[preferredLanguage]}</TextRegular>
           </View>
         )}
         {dateOfBirth && (
@@ -73,7 +80,7 @@ export default function ClientHeader(props: IClientHeaderProps) {
             </TextRegular>
           </View>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
