@@ -4,8 +4,7 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
-import { parse } from 'date-fns';
-import { RefObject, useMemo } from 'react';
+import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
@@ -29,14 +28,6 @@ export default function Dob(props: IDobProps) {
 
   const dateOfBirth = watch('dateOfBirth');
   const isDob = expanded === 'Date of Birth';
-
-  const parsedDate = useMemo(() => {
-    return dateOfBirth
-      ? parse(dateOfBirth, 'MM/dd/yyyy', new Date())
-      : new Date();
-  }, [dateOfBirth]);
-
-  console.log(dateOfBirth);
 
   return (
     <FieldCard
@@ -65,11 +56,7 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={
-            dateOfBirth
-              ? parse(dateOfBirth, 'MM/dd/yyyy', new Date())
-              : new Date()
-          }
+          initialDate={initialDate}
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"
