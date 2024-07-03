@@ -73,6 +73,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           keyboardType="phone-pad"
         />
         <Input
+          required
           placeholder="Enter Email"
           label="Email"
           error={!!errors['user']?.email}
@@ -80,8 +81,8 @@ export default function ContactInfo(props: IContactInfoProps) {
           control={control}
           keyboardType="email-address"
           rules={{
-            validate: (value) => value && Regex.email.test(value),
-            required: false,
+            required: true,
+            pattern: Regex.email,
           }}
         />
       </View>

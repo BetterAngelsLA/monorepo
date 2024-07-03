@@ -108,6 +108,9 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const clientInput = {
       ...data.clientProfile,
+      user: {
+        ...data.clientProfile.user,
+      },
     };
 
     if (data.clientProfile.dateOfBirth) {
