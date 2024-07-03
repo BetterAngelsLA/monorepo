@@ -40,6 +40,7 @@ export function BasicInput(props: IBasicInputProps) {
     disabled,
     componentStyle,
     height = 56,
+    maxLength,
     mb,
     mt,
     my,
@@ -98,6 +99,7 @@ export function BasicInput(props: IBasicInputProps) {
             }),
           }}
           editable={!disabled}
+          maxLength={maxLength}
           {...rest}
           value={value}
         />
