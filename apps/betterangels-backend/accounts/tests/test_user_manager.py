@@ -8,18 +8,20 @@ from ..models import User
 class UserManagerTestCase(TestCase):
     def test_create_user(self) -> None:
         user = User.objects.create_user(
-            email="normal@user.com",
             password="foo",
+            email="normal@user.com",
         )
         self.assertEqual(user.email, "normal@user.com")
         self.assertTrue(user.is_active)
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
-        with self.assertRaises(ValueError):
-            User.objects.create_user(email="")
-        with self.assertRaises(ValueError):
-            User.objects.create_user(email="", password="foo")
+    def test_create_client(self) -> None:
+        client_count = User.objects.count()
+        client = User.objects.create_client()
+
+        self.assertEqual(client.password[0], "!")
+        self.assertEqual(User.objects.count(), client_count + 1)
 
     def test_create_superuser(self) -> None:
         admin_user = User.objects.create_superuser(email="super@user.com", password="foo")

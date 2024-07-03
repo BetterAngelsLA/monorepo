@@ -9,24 +9,24 @@ if TYPE_CHECKING:
 
 
 class UserManager(BaseUserManager["User"]):
-    def create_user(self, email: Optional[str] = None, password: str = "", **extra_fields: Any) -> "User":
+    def create_user(self, **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
-        email = self.normalize_email(extra_fields.get("email")) or None
+        email = self.normalize_email(extra_fields.pop("email", None))
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        user.set_password(extra_fields.get("password"))
         user.save(using=self._db)
 
         return user
 
-    def create_client(self, email: Optional[str] = None, **extra_fields: Any) -> "User":
+    def create_client(self, **extra_fields: Any) -> "User":
         random_id = uuid.uuid4()
-        client = self.create_user(email, username=random_id, **extra_fields)
+        client = self.create_user(username=random_id, **extra_fields)
         client.set_unusable_password()
 
         return client
 
-    def create_superuser(self, email: str, password: str = "", **extra_fields: Any) -> "User":
+    def create_superuser(self, **extra_fields: Any) -> "User":
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -35,7 +35,7 @@ class UserManager(BaseUserManager["User"]):
             raise ValueError(_("Superuser must have is_staff=True."))
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser must have is_superuser=True."))
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(**extra_fields)
 
     def find_by_email(self, email: str) -> Optional["User"]:
         try:
