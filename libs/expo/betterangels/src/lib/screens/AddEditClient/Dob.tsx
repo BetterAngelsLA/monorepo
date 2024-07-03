@@ -4,6 +4,7 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
@@ -16,11 +17,10 @@ interface IDobProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
-  initialDate: Date | undefined;
 }
 
 export default function Dob(props: IDobProps) {
-  const { expanded, setExpanded, scrollRef, initialDate } = props;
+  const { expanded, setExpanded, scrollRef } = props;
 
   const { setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
@@ -41,7 +41,9 @@ export default function Dob(props: IDobProps) {
         !dateOfBirth && !isDob ? (
           <TextMedium size="sm">Add DoB</TextMedium>
         ) : (
-          <TextMedium size="sm">{dateOfBirth}</TextMedium>
+          <TextMedium size="sm">
+            {dateOfBirth && format(dateOfBirth, 'MM/dd/yyyy')}
+          </TextMedium>
         )
       }
       title="Date of Birth"
@@ -56,13 +58,13 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={initialDate}
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          onSave={(date) => setValue('dateOfBirth', date)}
+          value={dateOfBirth || new Date()}
+          setValue={(date) => setValue('dateOfBirth', date)}
         />
       </View>
     </FieldCard>

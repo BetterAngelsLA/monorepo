@@ -4,7 +4,7 @@ import {
   Loading,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { format, parse } from 'date-fns';
+import { parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -14,7 +14,6 @@ import {
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
-import { useCreateClientProfileMutation } from '../AddClient/__generated__/AddClient.generated';
 import ContactInfo from './ContactInfo';
 import Dob from './Dob';
 import Gender from './Gender';
@@ -23,15 +22,14 @@ import Language from './Language';
 import Name from './Name';
 import VeteranStatus from './VeteranStatus';
 import {
+  useCreateClientProfileMutation,
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 
-export default function AddEditClient({ id }: { id: string }) {
-  const { data, loading, error, refetch } = useGetClientProfileQuery({
-    variables: { id },
-    skip: !id,
-  });
+export default function AddEditClient({ id }: { id?: string }) {
+  const checkId = id ? { variables: { id } } : { skip: true };
+  const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
 
   const methods = useForm<
     UpdateClientProfileInput | CreateClientProfileInput
@@ -41,7 +39,6 @@ export default function AddEditClient({ id }: { id: string }) {
   const [updateClient] = useUpdateClientProfileMutation();
   const [createClient] = useCreateClientProfileMutation();
   const router = useRouter();
-  const [initialDate, setInitialDate] = useState<Date | undefined>();
   const scrollRef = useRef<ScrollView>(null);
 
   const onSubmit: SubmitHandler<
@@ -52,8 +49,7 @@ export default function AddEditClient({ id }: { id: string }) {
     };
 
     if (values.dateOfBirth) {
-      const parsedDate = parse(values.dateOfBirth, 'MM/dd/yyyy', new Date());
-      input.dateOfBirth = format(parsedDate, 'yyyy-MM-dd');
+      input.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
     try {
@@ -96,7 +92,12 @@ export default function AddEditClient({ id }: { id: string }) {
         }
       }
       refetch();
-      router.replace(`/client/${id}`);
+
+      if (id) {
+        router.replace(`/client/${id}`);
+      } else {
+        router.replace('/');
+      }
     } catch (err) {
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
@@ -115,8 +116,8 @@ export default function AddEditClient({ id }: { id: string }) {
         'yyyy-MM-dd',
         new Date()
       );
-      setInitialDate(parsedDate);
-      clientInput.dateOfBirth = format(parsedDate, 'MM/dd/yyyy');
+
+      clientInput.dateOfBirth = parsedDate;
     }
 
     delete clientInput.__typename;
@@ -152,7 +153,7 @@ export default function AddEditClient({ id }: { id: string }) {
       <View style={{ flex: 1 }}>
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
           <Name {...props} />
-          <Dob initialDate={initialDate} {...props} />
+          <Dob {...props} />
           <Gender {...props} />
           <Language {...props} />
           <HMIS {...props} />

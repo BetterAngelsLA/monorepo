@@ -1,4 +1,3 @@
-export { default as AddClient } from './AddClient';
 export { default as AddEditClient } from './AddEditClient';
 export { default as Client } from './Client';
 export { default as Clients } from './Clients';

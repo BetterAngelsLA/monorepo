@@ -80,7 +80,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           control={control}
           keyboardType="email-address"
           rules={{
-            validate: (value) => value === '' || Regex.email.test(value),
+            validate: (value) => value && Regex.email.test(value),
             required: false,
           }}
         />
