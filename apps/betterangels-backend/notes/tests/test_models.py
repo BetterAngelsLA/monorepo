@@ -8,7 +8,7 @@ from notes.enums import DueByGroupEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import ServiceRequest, Task
 
 
-class ServiceRequestModelTest(TestCase):
+class ServiceRequestModelTestCase(TestCase):
     def setUp(self) -> None:
         self.user = baker.make(User, email="test@example.com", username="testuser")
 
@@ -44,7 +44,7 @@ class ServiceRequestModelTest(TestCase):
         )
 
 
-class TaskModelTest(TestCase):
+class TaskModelTestCase(TestCase):
     @time_machine.travel("06-01-2024 10:11:12", tick=False)
     def test_due_by_group(self) -> None:
         """Verify that due_by_group is populated correctly."""

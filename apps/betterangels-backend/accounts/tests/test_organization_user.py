@@ -7,7 +7,7 @@ from organizations.models import OrganizationUser
 from .baker_recipes import organization_recipe
 
 
-class OrganizationUserTests(TestCase):
+class OrganizationUserTestCase(TestCase):
     def setUp(self) -> None:
         self.organization1 = organization_recipe.make()
         self.organization2 = organization_recipe.make()
