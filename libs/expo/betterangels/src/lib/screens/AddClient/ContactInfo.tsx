@@ -61,6 +61,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           placeholder="Enter Phone Number"
           value={client.phoneNumber || ''}
           onChangeText={(e) => setClient({ ...client, phoneNumber: e })}
+          maxLength={10}
         />
         <BasicInput
           keyboardType="email-address"
