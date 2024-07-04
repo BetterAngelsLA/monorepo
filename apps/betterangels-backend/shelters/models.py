@@ -1,8 +1,11 @@
-from common.models import BaseModel
+from common.enums import AttachmentType
+from common.models import Attachment, BaseModel
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django_choices_field import TextChoicesField
 from organizations.models import Organization
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .enums import (
     FunderEnum,
@@ -26,8 +29,12 @@ class Location(BaseModel):
 
 
 class Shelter(BaseModel):
+    # Basic Information
     title = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
+    email = models.EmailField(max_length=254, null=True, blank=True)
+    phone = PhoneNumberField()
+    website = models.URLField(null=True, blank=True)
 
     # Demo Images are Base64 encoded to embed in the data rather than having to fetch
     # an image file from a separate location. Will eventually move to the parent
@@ -40,9 +47,6 @@ class Shelter(BaseModel):
     confidential = models.BooleanField(blank=True, null=True)
 
     # Contact Information
-    email = models.EmailField(max_length=254, null=True, blank=True)
-    phone = models.CharField(max_length=20, blank=True, default="")
-    website = models.URLField(null=True, blank=True)
 
     # Description
     description = models.TextField(blank=True, null=True)
@@ -56,10 +60,31 @@ class Shelter(BaseModel):
     average_bed_rate = models.DecimalField(blank=True, null=True, max_digits=10, decimal_places=2)
     bed_layout_description = models.TextField(blank=True, null=True)
 
-    # TODO -- handle notes - can notes be shared between apps
+    # Visuals (Will need to display based off of type)
+    # # Will handle photos and videos What about hero image?
+    # Could be generic or concreete tables, prefer the generic. but will take concrete if better
+    # hero_image = models.OneToOneField(
+    #     Attachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="hero_image_shelter"
+    # )
+    # photos = models.ManyToManyField(Attachment, related_name="photo_shelters", blank=True)
+    hero_image = models.OneToOneField(
+        Attachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="hero_image_shelter"
+    )
+    photos = GenericRelation(
+        Attachment, related_query_name="photo", content_type_field="content_type", object_id_field="object_id"
+    )
+    videos = GenericRelation(
+        Attachment, related_query_name="video", content_type_field="content_type", object_id_field="object_id"
+    )
 
     def __str__(self) -> str:
         return self.title
+
+    def get_photos(self):
+        return self.photos.filter(attachment_type=AttachmentType.IMAGE)
+
+    def get_videos(self):
+        return self.videos.filter(attachment_type=AttachmentType.VIDEO)
 
 
 class Population(models.Model):

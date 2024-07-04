@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
+from django.utils.safestring import mark_safe
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
@@ -52,9 +53,7 @@ class Attachment(BaseModel):
 
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
     associated_with = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="associated_attachments",
+        User, on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
     )
 
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
@@ -75,6 +74,11 @@ class Attachment(BaseModel):
                 name="attachment_comp_idx",
             )
         ]
+
+    def thumbnail(self):
+        # if self.attachment_type == AttachmentType.IMAGE and self.file:
+        return mark_safe(f'<img src="{self.file.url}" width="100" height="100" />')
+        return ""
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """

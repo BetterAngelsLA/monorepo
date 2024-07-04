@@ -110,9 +110,10 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
-    "strawberry_django",
+    "phonenumber_field",
     "pghistory",
     "pgtrigger",
+    "strawberry_django",
     "waffle",
     # Our Apps
     "accounts",
