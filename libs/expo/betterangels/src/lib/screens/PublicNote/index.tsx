@@ -9,6 +9,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
 import { MainScrollContainer } from '../../ui-components';
@@ -24,6 +25,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottomOffset = insets.bottom;
 
   const updateNoteFunction = useRef(
     debounce(async (value: string) => {
@@ -136,7 +139,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           alignItems: 'center',
           backgroundColor: Colors.WHITE,
           padding: Spacings.sm,
-          paddingTop: Spacings.xl,
+          paddingBottom: bottomOffset + Spacings.sm,
           gap: Spacings.xs,
           elevation: 5,
           shadowColor: '#CCC',
