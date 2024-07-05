@@ -70,21 +70,10 @@ class Shelter(BaseModel):
     hero_image = models.OneToOneField(
         Attachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="hero_image_shelter"
     )
-    photos = GenericRelation(
-        Attachment, related_query_name="photo", content_type_field="content_type", object_id_field="object_id"
-    )
-    videos = GenericRelation(
-        Attachment, related_query_name="video", content_type_field="content_type", object_id_field="object_id"
-    )
+    attachments = GenericRelation(Attachment)
 
     def __str__(self) -> str:
         return self.title
-
-    def get_photos(self):
-        return self.photos.filter(attachment_type=AttachmentType.IMAGE)
-
-    def get_videos(self):
-        return self.videos.filter(attachment_type=AttachmentType.VIDEO)
 
 
 class Population(models.Model):

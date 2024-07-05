@@ -1,11 +1,12 @@
+from common.admin import AttachmentInline
 from common.enums import AttachmentType
 from common.models import Attachment
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericStackedInline, GenericTabularInline
 from django.db.models import QuerySet
 from django.http import HttpRequest
+from django.template.loader import get_template
 
-from .forms import LocationAdminForm, VideoAttachmentForm
+from .forms import LocationAdminForm
 from .models import (
     Funder,
     HowToEnter,
@@ -60,38 +61,20 @@ class FunderInline(admin.TabularInline):
 #         return qs.filter(attachment_type=AttachmentType.IMAGE, namespace="hero")
 
 
-# class ImageInline(GenericStackedInline):
-#     model = Attachment
-#     fields = ["file", "attachment_type"]
-#     readonly_fields = ["attachment_type"]
-#     extra = 0
+class PhotoInline(AttachmentInline):
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
+        qs = super().get_queryset(request)
+        return qs.filter(attachment_type=AttachmentType.IMAGE)
 
-#     def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
-#         qs = super().get_queryset(request)
-#         return qs.filter(attachment_type=AttachmentType.IMAGE)
-
-
-class AttachmentInline(GenericTabularInline):
-    model = Attachment
-    extra = 1
-    fields = ["thumbnail", "file"]
-    list_display = ("__str__", "thumbnail")
-    readonly_fields = ["thumbnail", "attachment_type", "namespace"]
-
-    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    #     field = super().formfield_for_foreignkey(db_field, request, **kwargs)
-    #     if db_field.name == "content_type":
-    #         field.widget = forms.HiddenInput()
-    #     return field
-
-    # def save_model(self, request, obj, form, change):
-    #     obj.content_type = ContentType.objects.get_for_model(self.parent_model)
-    #     obj.object_id = obj.id
-    #     super().save_model(request, obj, form, change)
+    verbose_name = "Photo"
+    verbose_name_plural = "Photos"
 
 
 class VideoInline(AttachmentInline):
-    form = VideoAttachmentForm
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
+        qs = super().get_queryset(request)
+        return qs.filter(attachment_type=AttachmentType.VIDEO)
+
     verbose_name = "Video"
     verbose_name_plural = "Videos"
 
@@ -104,8 +87,7 @@ class ShelterAdmin(admin.ModelAdmin):
         ShelterTypeInline,
         RequirementInline,
         HowToEnterInline,
-        # HeroImageInline,
-        # ImageInline,
+        PhotoInline,
         VideoInline,
     ]
 
@@ -157,6 +139,7 @@ class ShelterAdmin(admin.ModelAdmin):
     )
 
     list_display = ("title",)
+    # readonly_fields = ("image_inline",)
     search_fields = ("title",)
 
 

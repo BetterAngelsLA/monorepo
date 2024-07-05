@@ -1,9 +1,13 @@
 from typing import TYPE_CHECKING, Union
 
+from common.enums import AttachmentType
 from common.models import Attachment, Location
+from django import forms
 from django.apps import apps
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
@@ -79,6 +83,77 @@ class AttachmentAdmin(admin.ModelAdmin):
     @admin.display(description="Attachment")
     def get_str(self, obj: Attachment) -> str:
         return str(obj)
+
+
+class AttachmentInline(GenericTabularInline):
+    model = Attachment
+    extra = 1
+    fields = [
+        "get_thumbnail",
+        "file",
+    ]
+    readonly_fields = [
+        "get_thumbnail",
+    ]
+
+    # formfield_overrides = {models.FileField: {"widget": forms.FileInput}}
+
+    @admin.display(description="Thumbnail")
+    def get_thumbnail(self, obj: Attachment) -> str:
+        max_width = "100px"
+        max_height = "100px"
+
+        if obj.file:
+            mime_type = obj.mime_type
+            attachment_type = obj.attachment_type
+
+            if attachment_type == AttachmentType.IMAGE:
+                return format_html(
+                    '<a href="{}" target="_blank">'
+                    '<img src="{}" style="max-width: {}; max-height: {};" alt="{}" />'
+                    "</a>",
+                    obj.file.url,
+                    obj.file.url,
+                    max_width,
+                    max_height,
+                    mime_type,
+                )
+            elif attachment_type == AttachmentType.VIDEO:
+                return format_html(
+                    '<a href="{}" target="_blank">'
+                    '<video width="{}" height="{}" controls>'
+                    '<source src="{}" type="{}">'
+                    "Your browser does not support the video tag."
+                    "</video>"
+                    "</a>",
+                    obj.file.url,
+                    max_width,
+                    max_height,
+                    obj.file.url,
+                    mime_type,
+                )
+            elif attachment_type == AttachmentType.DOCUMENT:
+                return format_html(
+                    '<a href="{}" target="_blank">'
+                    '<img src="/static/icons/word-icon.png" style="max-width: {}; max-height: {};" alt="{}" />'
+                    "</a>",
+                    obj.file.url,
+                    max_width,
+                    max_height,
+                    mime_type,
+                )
+            # Add more file type icons as needed
+            else:
+                return format_html(
+                    '<a href="{}" target="_blank">'
+                    '<img src="/static/icons/file-icon.png" style="max-width: {}; max-height: {};" alt="{}" />'
+                    "</a>",
+                    obj.file.url,
+                    max_width,
+                    max_height,
+                    mime_type,
+                )
+        return "No file"
 
 
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):

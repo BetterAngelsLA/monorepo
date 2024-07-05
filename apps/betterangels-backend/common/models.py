@@ -43,6 +43,7 @@ class Attachment(BaseModel):
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
+    mime_type = models.CharField()
     original_filename = models.CharField(max_length=255, blank=True, null=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -75,11 +76,6 @@ class Attachment(BaseModel):
             )
         ]
 
-    def thumbnail(self):
-        # if self.attachment_type == AttachmentType.IMAGE and self.file:
-        return mark_safe(f'<img src="{self.file.url}" width="100" height="100" />')
-        return ""
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Saves the Attachment instance. If it's a new instance (without an ID),
@@ -92,6 +88,7 @@ class Attachment(BaseModel):
 
             # Determine the MIME type of the file
             mime_type = self.file.file.content_type
+            self.mime_type = mime_type
             # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
                 self.attachment_type = AttachmentType.IMAGE

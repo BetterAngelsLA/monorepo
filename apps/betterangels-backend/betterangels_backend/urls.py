@@ -15,7 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from betterangels_backend import settings
 from common.graphql.views import ProtectedGraphQLView
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
@@ -31,3 +33,7 @@ urlpatterns = [
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
