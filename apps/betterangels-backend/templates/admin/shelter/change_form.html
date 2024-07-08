@@ -1,0 +1,74 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript">
+        // Ensure the script runs after the built-in jQuery is loaded
+        (function($) {
+            $(window).on('load', function() {
+                function moveCardSection(sourceHeaderText, targetHeaderText) {
+                    // Find the card-header with the specified source text
+                    var cardHeader = $('.card-header').filter(function() {
+                        return $(this).text().trim() === sourceHeaderText;
+                    });
+
+                    if (cardHeader.length === 0) {
+                        console.log('Source header not found:', sourceHeaderText);
+                        return;
+                    }
+
+                    // Get the parent .card element of the card-header
+                    var cardParent = cardHeader.closest('.card');
+
+                    if (cardParent.length === 0) {
+                        console.log('Parent card not found for:', sourceHeaderText);
+                        return;
+                    }
+
+                    // Find the target card-header by the specified target header text
+                    var targetCardHeader = $('.card-header').filter(function() {
+                        return $(this).text().trim() === targetHeaderText;
+                    });
+
+                    if (targetCardHeader.length === 0) {
+                        console.log('Target header not found for:', targetHeaderText);
+                        return;
+                    }
+
+                    // Get the parent .card element of the target card-header
+                    var targetCardParent = targetCardHeader.closest('.card');
+                    console.log(targetCardParent)
+                    if (targetCardParent.length === 0) {
+                        console.log('Parent card not found for target header:', targetHeaderText);
+                        return;
+                    }
+
+
+                    // Find the card-body within the target card
+                    var targetCardBody = targetCardParent.find('.card-body').first();
+
+                    if (targetCardBody.length === 0) {
+                        console.log('Target card body not found for:', targetHeaderText);
+                        return;
+                    }
+
+                    // Move the parent card of the source card-header to the target card-body
+                    cardParent.appendTo(targetCardBody);
+                }
+
+                // Define card sections to be created and their contents to be moved
+                var cardSections = [
+                    {title: 'Visuals', contents: ['Hero Image', 'Photos', 'Videos']},
+                    {title: 'Advanced Info', contents:['Shelter types', 'Populations', 'Funder']}
+                ];
+
+                // Create card sections and move specified contents
+                cardSections.forEach(function(section) {
+                    section.contents.forEach(function(content) {
+                        moveCardSection(content, section.title);
+                    });
+                });
+            });
+        })(django.jQuery);
+    </script>
+{% endblock %}

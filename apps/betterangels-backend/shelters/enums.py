@@ -20,6 +20,15 @@ class ServiceEnum(models.TextChoices):
     TRANSPORTATION = "Transportation", _("Transportation")
 
 
+class PetsAllowedEnum(models.TextChoices):
+    SERVICE_ANIMAL = "Service Animal", _("Service Animal")
+    CATS = "Cats", _("Cats")
+    EMOTIONAL_SUPPORT = "Emotional Support", _("Emotional Support")
+    DOGS_UNDER_25_LBS = "Dogs <25lbs", _("Dogs <25lbs")
+    DOGS_OVER_25_LBS = "Dogs >25lbs", _("Dogs >25lbs")
+    EXOTICS = "Exotics", _("Exotics")
+
+
 class PopulationEnum(models.TextChoices):
     ADULTS = "Adults", _("Adults")
     MEN = "Men", _("Men")
@@ -34,21 +43,11 @@ class PopulationEnum(models.TextChoices):
     HIV_AND_AIDS = "HIV/AIDS", _("HIV/AIDS")
 
 
-class RequirementEnum(models.TextChoices):
+class EntryRequirements(models.TextChoices):
     PHOTO_ID = "Photo ID", _("Photo ID")
     MEDICAID_OR_MEDICARE = "Medicaid or Medicare", _("Medicaid or Medicare")
-    VETERAN = "Veteran", _("Veteran")
     RESERVATION = "Reservation", _("Reservation")
     REFERRAL = "Referral", _("Referral")
-    WHEELCHAIR_ACCESSIBLE = "Wheelchair Accessibel", _("Wheelchair Accessible")
-    MEDICAL_EQUIPMENT_PERMITTED = "Medical Equipment Permitted", _("Medical Equipment Permitted")
-    PETS_ALLOWED = "Pets Allowed", _("Pets Allowed")
-
-
-class HowToEnterEnum(models.TextChoices):
-    CALL = "Call", _("Call")
-    REFERRAL = "Referral", _("Referral")
-    WALK_IN = "Walk-In", _("Walk-In")
 
 
 class BedStateEnum(models.TextChoices):

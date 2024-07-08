@@ -3,8 +3,15 @@
 import django.contrib.gis.db.models.fields
 from django.db import migrations, models
 import django.db.models.deletion
+from django.utils.translation import gettext_lazy as _
 import django_choices_field.fields
 import shelters.enums
+
+
+class HowToEnterEnum(models.TextChoices):
+    CALL = "Call", _("Call")
+    REFERRAL = "Referral", _("Referral")
+    WALK_IN = "Walk-In", _("Walk-In")
 
 
 class Migration(migrations.Migration):
@@ -199,7 +206,7 @@ class Migration(migrations.Migration):
                             ("Reservation", "Reservation"),
                             ("Referral", "Referral"),
                         ],
-                        choices_enum=shelters.enums.RequirementEnum,
+                        choices_enum=shelters.enums.EntryRequirements,
                         max_length=20,
                     ),
                 ),
@@ -274,7 +281,7 @@ class Migration(migrations.Migration):
                             ("Referral", "Referral"),
                             ("Walk-In", "Walk-In"),
                         ],
-                        choices_enum=shelters.enums.HowToEnterEnum,
+                        choices_enum=HowToEnterEnum,
                         max_length=8,
                     ),
                 ),

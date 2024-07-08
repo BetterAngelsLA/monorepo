@@ -3,6 +3,12 @@ from typing import Any, Dict, Optional
 
 from accounts.models import User
 from common.enums import AttachmentType
+from common.managers import (
+    AttachmentQuerySet,
+    HeroImageManager,
+    ImageAttachmentManager,
+    VideoAttachmentManager,
+)
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -59,6 +65,12 @@ class Attachment(BaseModel):
 
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
     attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
+
+    # ustom managers
+    objects = AttachmentQuerySet.as_manager()
+    images = ImageAttachmentManager()
+    videos = VideoAttachmentManager()
+    hero_image = HeroImageManager()
 
     def __str__(self) -> str:
         return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"

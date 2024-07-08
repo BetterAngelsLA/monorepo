@@ -1,18 +1,18 @@
-from common.admin import AttachmentInline
-from common.enums import AttachmentType
+from typing import cast
+
+from common.admin import AttachmentInline, SingleAttachmentInline
+from common.managers import AttachmentQuerySet
 from common.models import Attachment
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.forms import ModelForm, model_to_dict
 from django.http import HttpRequest
-from django.template.loader import get_template
 
 from .forms import LocationAdminForm
 from .models import (
+    EntryRequirement,
     Funder,
-    HowToEnter,
     Location,
     Population,
-    Requirement,
     Service,
     Shelter,
     ShelterType,
@@ -32,12 +32,7 @@ class ShelterTypeInline(admin.TabularInline):
 
 
 class RequirementInline(admin.TabularInline):
-    model = Requirement
-
-
-class HowToEnterInline(admin.TabularInline):
-    model = HowToEnter
-    verbose_name_plural = "How to Enter"
+    model = EntryRequirement
 
 
 class LocationAdmin(admin.ModelAdmin):
@@ -61,22 +56,46 @@ class FunderInline(admin.TabularInline):
 #         return qs.filter(attachment_type=AttachmentType.IMAGE, namespace="hero")
 
 
-class PhotoInline(AttachmentInline):
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
-        qs = super().get_queryset(request)
-        return qs.filter(attachment_type=AttachmentType.IMAGE)
+class HeroInine(SingleAttachmentInline):
+    verbose_name = "Hero Image"
+    verbose_name_plural = "Hero Image"
 
+    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
+        qs = cast(AttachmentQuerySet, super().get_queryset(request))
+        return qs.hero_image()
+
+    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
+        instance = form.save(commit=False)
+        data = model_to_dict(instance, exclude=["id"])  # Convert instance to dict and exclude the primary key
+        return Attachment.hero_image.create(**data)
+
+
+class PhotoInline(AttachmentInline):
     verbose_name = "Photo"
     verbose_name_plural = "Photos"
 
+    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
+        qs = cast(AttachmentQuerySet, super().get_queryset(request)).exclude(namespace="hero_image")
+        return qs.images()
+
+    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
+        instance = form.save(commit=False)
+        data = model_to_dict(instance, exclude=["id"])  # Convert instance to dict and exclude the primary key
+        return Attachment.images.create(**data)
+
 
 class VideoInline(AttachmentInline):
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
-        qs = super().get_queryset(request)
-        return qs.filter(attachment_type=AttachmentType.VIDEO)
-
     verbose_name = "Video"
     verbose_name_plural = "Videos"
+
+    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
+        qs = cast(AttachmentQuerySet, super().get_queryset(request))
+        return qs.videos()
+
+    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
+        instance = form.save(commit=False)
+        data = model_to_dict(instance, exclude=["id"])  # Convert instance to dict and exclude the primary key
+        return Attachment.videos.create(**data)
 
 
 class ShelterAdmin(admin.ModelAdmin):
@@ -86,25 +105,21 @@ class ShelterAdmin(admin.ModelAdmin):
         ServiceInline,
         ShelterTypeInline,
         RequirementInline,
-        HowToEnterInline,
+        HeroInine,
         PhotoInline,
         VideoInline,
     ]
+
+    change_form_template = "admin/shelter/change_form.html"
 
     fieldsets = (
         (
             "Basic Information",
             {
-                "fields": (
-                    "title",
-                    "organization",
-                    "email",
-                    "phone",
-                    "website",
-                    "image_url",
-                ),
+                "fields": ("title", "organization", "email", "phone", "website"),
             },
         ),
+        ("Other Details", {"fields": ()}),
         (
             "Location",
             {
@@ -115,31 +130,31 @@ class ShelterAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("Advanced Info", {"fields": ()}),
         (
             "Beds",
             {
                 "fields": (
                     "total_beds",
                     "private_beds",
-                    "average_bed_rate",
                     "bed_layout_description",
                 )
             },
         ),
-        (
-            "Other Details",
-            {
-                "fields": (
-                    "max_stay",
-                    "description",
-                    "typical_stay_description",
-                )
-            },
-        ),
+        ("Visuals", {"fields": ()}),
+        # (
+        #     "Other Details",
+        #     {
+        #         "fields": (
+        #             "max_stay",
+        #             "description",
+        #             # "typical_stay_description",
+        #         )
+        #     },
+        # ),
     )
 
     list_display = ("title",)
-    # readonly_fields = ("image_inline",)
     search_fields = ("title",)
 
 

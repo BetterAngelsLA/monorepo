@@ -1,13 +1,14 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from common.enums import AttachmentType
 from common.models import Attachment, Location
-from django import forms
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db.models import FileField
+from django.forms import FileInput
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from notes.models import Note, Task
 
 
-class AttachmentAdminMixin(object):
+class AttachmentAdminMixin:
     def attachments(self, obj: Union["Note", "Task"]) -> SafeString:
         attachments = Attachment.objects.filter(
             content_type=ContentType.objects.get_for_model(obj),
@@ -32,7 +33,7 @@ class AttachmentAdminMixin(object):
         return format_html("<br>".join(attachment_links))
 
 
-class LocationNoteAdminMixin(object):
+class LocationNoteAdminMixin:
     def notes(self, obj: Location) -> SafeString:
         Note = apps.get_model("notes", "Note")
         notes = list(Note.objects.filter(location=obj))
@@ -47,7 +48,7 @@ class LocationNoteAdminMixin(object):
         return format_html("<br>".join(note_links))
 
 
-class LocationTaskAdminMixin(object):
+class LocationTaskAdminMixin:
     def tasks(self, obj: Location) -> SafeString:
         Task = apps.get_model("notes", "Task")
         tasks = list(Task.objects.filter(location=obj))
@@ -90,13 +91,17 @@ class AttachmentInline(GenericTabularInline):
     extra = 1
     fields = [
         "get_thumbnail",
+        # "original_filename",
         "file",
     ]
     readonly_fields = [
         "get_thumbnail",
+        # "original_filename",
     ]
 
-    # formfield_overrides = {models.FileField: {"widget": forms.FileInput}}
+    formfield_overrides = {
+        FileField: {"widget": FileInput(attrs={"class": "file-input"})},
+    }
 
     @admin.display(description="Thumbnail")
     def get_thumbnail(self, obj: Attachment) -> str:
@@ -154,6 +159,11 @@ class AttachmentInline(GenericTabularInline):
                     mime_type,
                 )
         return "No file"
+
+
+class SingleAttachmentInline(AttachmentInline):
+    def get_max_num(self, request: HttpRequest, obj: Optional[Any] = None, **kwargs: Any) -> int:
+        return 1
 
 
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):

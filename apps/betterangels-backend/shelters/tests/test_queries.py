@@ -3,10 +3,10 @@ from django.test import TestCase
 from model_bakery import baker
 from organizations.models import Organization
 from shelters.models import (
+    EntryRequirement,
     Funder,
     Location,
     Population,
-    Requirement,
     Service,
     Shelter,
     ShelterType,
@@ -41,7 +41,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, TestCase):
         baker.make(Service, shelter=self.shelter1, title="Showers")
         baker.make(Population, shelter=self.shelter1, title="Men")
         baker.make(Population, shelter=self.shelter1, title="Women")
-        baker.make(Requirement, shelter=self.shelter1, title="Veteran")
+        baker.make(EntryRequirement, shelter=self.shelter1, title="Veteran")
         baker.make(Funder, shelter=self.shelter1, title="MPP")
         baker.make(Funder, shelter=self.shelter1, title="DMH")
 
