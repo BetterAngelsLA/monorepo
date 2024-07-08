@@ -93,7 +93,7 @@ export default function Interactions() {
   if (error) throw new Error('Something went wrong!');
 
   return (
-    <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+    <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
