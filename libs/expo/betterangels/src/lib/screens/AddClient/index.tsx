@@ -7,9 +7,11 @@ import {
   CreateClientProfileInput,
   GenderEnum,
   LanguageEnum,
+  Ordering,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
+import { ClientProfilesDocument } from '../Home/__generated__/ActiveClients.generated';
 import ContactInfo from './ContactInfo';
 import Dob from './Dob';
 import Gender from './Gender';
@@ -40,7 +42,22 @@ const INITIAL_STATE = {
 export default function AddClient() {
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [client, setClient] = useState<CreateClientProfileInput>(INITIAL_STATE);
-  const [createClient] = useCreateClientProfileMutation();
+  const [createClient] = useCreateClientProfileMutation({
+    refetchQueries: [
+      {
+        query: ClientProfilesDocument,
+        variables: {
+          pagination: { limit: 20 + 1, offset: 0 },
+          filters: {
+            search: '',
+          },
+          order: {
+            user_FirstName: Ordering.AscNullsFirst,
+          },
+        },
+      },
+    ],
+  });
   const [errorState, setErrorState] = useState<string | null>(null);
   const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
