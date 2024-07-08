@@ -19,7 +19,7 @@ export default function InteractionsHeader(props: IInteractionsHeaderProps) {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacings.lg,
+        marginBottom: Spacings.sm,
       }}
     >
       <View style={{ flex: 1 }}>
