@@ -3,66 +3,62 @@
 {% block extrahead %}
     {{ block.super }}
     <script type="text/javascript">
-        // Ensure the script runs after the built-in jQuery is loaded
         (function($) {
             $(window).on('load', function() {
-                function moveCardSection(sourceHeaderText, targetHeaderText) {
-                    // Find the card-header with the specified source text
-                    var cardHeader = $('.card-header').filter(function() {
-                        return $(this).text().trim() === sourceHeaderText;
+                function findCardHeaderByText(headerText) {
+                    const cardHeader = $('.card-header').filter(function() {
+                        return $(this).text().trim() === headerText;
                     });
 
-                    if (cardHeader.length === 0) {
-                        console.log('Source header not found:', sourceHeaderText);
-                        return;
+                    if (!cardHeader.length) {
+                        console.log('Header not found:', headerText);
+                        return null;
                     }
 
-                    // Get the parent .card element of the card-header
-                    var cardParent = cardHeader.closest('.card');
+                    return cardHeader;
+                }
 
-                    if (cardParent.length === 0) {
+                function findCardBodyByHeaderText(headerText) {
+                    const cardHeader = findCardHeaderByText(headerText);
+                    if (!cardHeader) return null;
+
+                    const cardParent = cardHeader.closest('.card');
+                    if (!cardParent.length) {
+                        console.log('Parent card not found for:', headerText);
+                        return null;
+                    }
+
+                    const cardBody = cardParent.find('.card-body').first();
+                    if (!cardBody.length) {
+                        console.log('Card body not found for:', headerText);
+                        return null;
+                    }
+
+                    return cardBody;
+                }
+
+                function moveCardSection(sourceHeaderText, targetHeaderText) {
+                    const sourceCardHeader = findCardHeaderByText(sourceHeaderText);
+                    if (!sourceCardHeader) return;
+
+                    const sourceCardParent = sourceCardHeader.closest('.card');
+                    if (!sourceCardParent.length) {
                         console.log('Parent card not found for:', sourceHeaderText);
                         return;
                     }
 
-                    // Find the target card-header by the specified target header text
-                    var targetCardHeader = $('.card-header').filter(function() {
-                        return $(this).text().trim() === targetHeaderText;
-                    });
+                    const targetCardBody = findCardBodyByHeaderText(targetHeaderText);
+                    if (!targetCardBody) return;
 
-                    if (targetCardHeader.length === 0) {
-                        console.log('Target header not found for:', targetHeaderText);
-                        return;
-                    }
-
-                    // Get the parent .card element of the target card-header
-                    var targetCardParent = targetCardHeader.closest('.card');
-                    console.log(targetCardParent)
-                    if (targetCardParent.length === 0) {
-                        console.log('Parent card not found for target header:', targetHeaderText);
-                        return;
-                    }
-
-
-                    // Find the card-body within the target card
-                    var targetCardBody = targetCardParent.find('.card-body').first();
-
-                    if (targetCardBody.length === 0) {
-                        console.log('Target card body not found for:', targetHeaderText);
-                        return;
-                    }
-
-                    // Move the parent card of the source card-header to the target card-body
-                    cardParent.appendTo(targetCardBody);
+                    sourceCardParent.appendTo(targetCardBody);
                 }
 
-                // Define card sections to be created and their contents to be moved
-                var cardSections = [
-                    {title: 'Visuals', contents: ['Hero Image', 'Photos', 'Videos']},
-                    {title: 'Advanced Info', contents:['Shelter types', 'Populations', 'Funder']}
+                // Maps Inlines to Appropriate Admin Section
+                const cardSections = [
+                    { title: 'Visuals', contents: ['Hero Image', 'Photos', 'Videos'] },
+                    { title: 'Advanced Info', contents: ['Shelter types', 'Populations', 'Funder'] }
                 ];
 
-                // Create card sections and move specified contents
                 cardSections.forEach(function(section) {
                     section.contents.forEach(function(content) {
                         moveCardSection(content, section.title);
@@ -71,4 +67,4 @@
             });
         })(django.jQuery);
     </script>
-{% endblock %}
+{% endblock extrahead %}
