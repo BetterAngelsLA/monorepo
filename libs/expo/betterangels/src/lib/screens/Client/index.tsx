@@ -1,8 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { ReactElement, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { ReactElement, useLayoutEffect, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
@@ -35,23 +35,32 @@ const getTabComponent = (
   return <Component userId={userId} />;
 };
 
-export default function Client({ id }: { id: string }) {
+export default function Client({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Interactions');
 
   const navigation = useNavigation();
   const router = useRouter();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TextButton
-          color={Colors.WHITE}
-          regular
-          onPress={() => router.navigate(`/edit-client/${id}`)}
-          title="Edit"
-          accessibilityHint="goes to the edit client profile screen"
-        />
+      headerLeft: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessible
+          accessibilityHint="goes to previous screen"
+          onPress={() =>
+            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
+          }
+        >
+          <TextRegular color={Colors.WHITE}>Back</TextRegular>
+        </Pressable>
       ),
     });
   }, []);

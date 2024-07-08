@@ -25,6 +25,7 @@ interface IClientCardProps {
   onPress?: () => void;
   id: string;
   select?: string;
+  arrivedFrom?: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -43,6 +44,7 @@ export function ClientCard(props: IClientCardProps) {
     onPress,
     id,
     select = 'false',
+    arrivedFrom,
   } = props;
 
   const router = useRouter();
@@ -50,7 +52,14 @@ export function ClientCard(props: IClientCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.navigate(`/client/${id}`)}
+      onPress={() =>
+        router.navigate({
+          pathname: `/client/${id}`,
+          params: {
+            arrivedFrom,
+          },
+        })
+      }
       style={({ pressed }) => [
         styles.container,
         {
