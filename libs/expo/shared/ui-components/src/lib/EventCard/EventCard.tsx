@@ -74,7 +74,7 @@ export function EventCard(props: IEventCardProps) {
 const styles = StyleSheet.create({
   conatiner: {
     padding: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
     backgroundColor: Colors.WHITE,

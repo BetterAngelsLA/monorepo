@@ -1,5 +1,5 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: 97,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
   },

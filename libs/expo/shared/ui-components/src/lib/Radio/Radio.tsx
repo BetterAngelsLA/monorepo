@@ -68,12 +68,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderWidth: 1,
   },
   radio: {
-    width: 16,
-    height: 16,
+    width: Spacings.sm,
+    height: Spacings.sm,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -81,15 +81,15 @@ const styles = StyleSheet.create({
     borderColor: Colors.NEUTRAL_LIGHT,
   },
   checked: {
-    borderWidth: 4,
+    borderWidth: Spacings.xxs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
-    height: 16,
-    width: 16,
+    height: Spacings.sm,
+    width: Spacings.sm,
   },
   radioLabel: {
     color: Colors.WHITE,
   },
   label: {
-    fontSize: 16,
+    fontSize: Spacings.sm,
   },
 });

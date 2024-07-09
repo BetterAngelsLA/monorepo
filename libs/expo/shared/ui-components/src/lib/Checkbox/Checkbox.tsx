@@ -30,8 +30,8 @@ interface ICheckboxProps {
 }
 
 const SIZES = {
-  sm: 16,
-  md: 24,
+  sm: Spacings.sm,
+  md: Spacings.md,
 } as const;
 
 export function Checkbox(props: ICheckboxProps) {
@@ -122,12 +122,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderWidth: 1,
   },
   checkbox: {
-    width: 24,
-    height: 24,
+    width: Spacings.md,
+    height: Spacings.md,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -141,6 +141,6 @@ const styles = StyleSheet.create({
     color: Colors.WHITE,
   },
   label: {
-    fontSize: 16,
+    fontSize: Spacings.sm,
   },
 });

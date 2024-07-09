@@ -41,7 +41,7 @@ export default function BasicModal(props: IBasicModalProps) {
               paddingRight: Spacings.xs,
               paddingTop: Spacings.md,
               paddingBottom: Spacings.xl,
-              borderRadius: 8,
+              borderRadius: Spacings.xs,
               zIndex: 1,
             }}
           >

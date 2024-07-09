@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
   container: {
     padding: Spacings.sm,
     gap: Spacings.xs,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
   },
 });

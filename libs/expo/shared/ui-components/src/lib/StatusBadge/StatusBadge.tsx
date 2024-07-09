@@ -47,9 +47,9 @@ export function StatusBadge({
 const styles = StyleSheet.create({
   container: {
     width: 75,
-    height: 32,
+    height: Spacings.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
   },
 });

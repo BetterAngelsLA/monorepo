@@ -169,7 +169,7 @@ export default function NoteServices({
     <View
       style={{
         backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-        borderRadius: 4,
+        borderRadius: Spacings.xxs,
         paddingHorizontal: Spacings.sm,
       }}
     >

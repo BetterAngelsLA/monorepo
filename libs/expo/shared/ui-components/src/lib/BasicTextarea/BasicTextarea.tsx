@@ -88,7 +88,7 @@ export function BasicTextarea(props: IBasicTextareaProps) {
             padding: Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
-            fontSize: 16,
+            fontSize: Spacings.sm,
             height,
             ...Platform.select({
               web: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },

@@ -82,8 +82,8 @@ export default function NavModal(props: INavModalProps) {
                   backgroundColor: pressed
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
-                  borderRadius: 8,
-                  paddingHorizontal: 16,
+                  borderRadius: Spacings.xs,
+                  paddingHorizontal: Spacings.sm,
                   paddingVertical: Spacings.sm,
                 }}
               >
@@ -118,7 +118,7 @@ export default function NavModal(props: INavModalProps) {
                   backgroundColor: pressed
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
-                  borderRadius: 8,
+                  borderRadius: Spacings.xs,
                   paddingHorizontal: Spacings.sm,
                   paddingVertical: Spacings.sm,
                 }}
@@ -126,8 +126,8 @@ export default function NavModal(props: INavModalProps) {
                 <View
                   style={{
                     marginRight: Spacings.sm,
-                    height: 40,
-                    width: 40,
+                    height: Spacings.xl,
+                    width: Spacings.xl,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}

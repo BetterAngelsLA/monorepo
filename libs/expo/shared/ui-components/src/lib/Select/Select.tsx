@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
     paddingHorizontal: Spacings.sm,
 
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
 
   dropdownMenuStyle: {
     backgroundColor: '#E9ECEF',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
   },
   dropdownItemStyle: {
     width: '100%',
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    paddingVertical: 8,
+    paddingVertical: Spacings.xs,
   },
 });

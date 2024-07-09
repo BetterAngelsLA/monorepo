@@ -146,7 +146,7 @@ export function SearchableDropdown({
 
       {showDropdown && (
         <ScrollView
-          contentContainerStyle={{ padding: 8 }}
+          contentContainerStyle={{ padding: Spacings.xs }}
           keyboardShouldPersistTaps="handled"
           style={[
             styles.dropdown,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 100,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },
@@ -219,9 +219,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
+    right: Spacings.sm,
+    height: Spacings.sm,
+    width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
     borderRadius: 100,
     alignItems: 'center',

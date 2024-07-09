@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     flexDirection: 'column',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     bottom: '100%',
     left: '50%',
     transform: [{ translateX: -25 }],

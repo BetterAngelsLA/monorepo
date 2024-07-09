@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.md,
     gap: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
     borderWidth: 1,
   },

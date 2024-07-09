@@ -103,7 +103,7 @@ export function ClientCard(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',

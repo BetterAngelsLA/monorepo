@@ -119,7 +119,7 @@ export function Input(props: IInputProps) {
                 paddingRight: 38,
                 flex: 1,
                 fontFamily: 'Poppins-Regular',
-                fontSize: 16,
+                fontSize: Spacings.sm,
                 height,
                 ...Platform.select({
                   web: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -184,9 +184,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
+    right: Spacings.sm,
+    height: Spacings.sm,
+    width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
     borderRadius: 100,
     alignItems: 'center',

@@ -135,7 +135,7 @@ export function FieldCard(props: IFieldCardProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
   },

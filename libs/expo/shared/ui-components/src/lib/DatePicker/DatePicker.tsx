@@ -123,10 +123,10 @@ export function DatePicker(props: IDatePickerProps) {
           maxLength={18}
           style={{
             color: Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: 16,
+            paddingLeft: Spacings.sm,
             paddingRight: 38,
             fontFamily: 'Poppins-Regular',
-            fontSize: 16,
+            fontSize: Spacings.sm,
             height,
             ...Platform.select({
               web: {
@@ -171,7 +171,7 @@ export function DatePicker(props: IDatePickerProps) {
             }}
             style={{
               backgroundColor: Colors.WHITE,
-              borderRadius: 8,
+              borderRadius: Spacings.xs,
               overflow: 'hidden',
             }}
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     justifyContent: 'center',
   },
   label: {

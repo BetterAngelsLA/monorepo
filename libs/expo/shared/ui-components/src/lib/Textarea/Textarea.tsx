@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     justifyContent: 'center',
   },
   label: {

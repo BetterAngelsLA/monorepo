@@ -64,8 +64,8 @@ export default function MainModal(props: IMainModalProps) {
     >
       <View
         style={{
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
+          borderTopLeftRadius: Spacings.xs,
+          borderTopRightRadius: Spacings.xs,
           paddingTop: topOffset + Spacings.xs,
           paddingHorizontal: Spacings.md,
           paddingBottom: 35 + bottomOffset,
@@ -109,7 +109,7 @@ export default function MainModal(props: IMainModalProps) {
                     backgroundColor: pressed
                       ? Colors.NEUTRAL_EXTRA_LIGHT
                       : Colors.WHITE,
-                    borderRadius: 8,
+                    borderRadius: Spacings.xs,
                     paddingHorizontal: Spacings.sm,
                     paddingVertical: Spacings.sm,
                   }}
@@ -117,8 +117,8 @@ export default function MainModal(props: IMainModalProps) {
                   <View
                     style={{
                       marginRight: Spacings.sm,
-                      height: 40,
-                      width: 40,
+                      height: Spacings.xl,
+                      width: Spacings.xl,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}

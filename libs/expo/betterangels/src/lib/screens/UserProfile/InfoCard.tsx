@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     padding: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
     backgroundColor: Colors.WHITE,
   },
 });

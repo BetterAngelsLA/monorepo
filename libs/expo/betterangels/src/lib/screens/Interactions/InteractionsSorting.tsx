@@ -87,10 +87,10 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
 
 const styles = StyleSheet.create({
   sortButton: {
-    height: 40,
-    width: 40,
+    height: Spacings.xl,
+    width: Spacings.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: Spacings.xs,
   },
 });

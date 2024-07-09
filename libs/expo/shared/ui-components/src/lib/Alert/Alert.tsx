@@ -58,7 +58,7 @@ export function Alert(props: IAlertProps) {
       style={{
         padding: Spacings.sm,
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: Spacings.xs,
         borderColor: VARIANTS[variant].borderColor,
         backgroundColor: VARIANTS[variant].backgroundColor,
         alignItems: 'center',

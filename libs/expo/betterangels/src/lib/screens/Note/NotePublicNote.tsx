@@ -17,7 +17,7 @@ export default function NotePublicNote({
         style={{
           backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
           padding: Spacings.sm,
-          borderRadius: 4,
+          borderRadius: Spacings.xxs,
         }}
       >
         <TextRegular size="sm">{note?.publicDetails}</TextRegular>
