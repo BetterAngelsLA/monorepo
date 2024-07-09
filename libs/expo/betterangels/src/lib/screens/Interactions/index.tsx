@@ -1,16 +1,16 @@
 import { FileSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Loading,
+  Button,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
-import { MainContainer, NoteCard } from '../../ui-components';
+import { MainContainer } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
@@ -25,7 +25,7 @@ export default function Interactions() {
 
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset: offset },
+      pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc },
       filters: { createdBy: user?.id, search: filterSearch },
     },
@@ -61,7 +61,7 @@ export default function Interactions() {
     setOffset(0);
     try {
       const response = await refetch({
-        pagination: { limit: paginationLimit + 1, offset: 0 },
+        pagination: { limit: paginationLimit, offset: 0 },
       });
       const isMoreAvailable =
         response.data &&
@@ -77,18 +77,40 @@ export default function Interactions() {
   useEffect(() => {
     if (!data || !('notes' in data)) return;
 
-    const notesToShow = data.notes.slice(0, paginationLimit);
-    const isMoreAvailable = data.notes.length > notesToShow.length;
+    const notesToShow = data.notes;
+    const isMoreAvailable = data.notes.length >= notesToShow.length;
+
+    // console.log(
+    //   'data',
+    //   data.notes.map((note) => note.id)
+    // );
 
     if (offset === 0) {
       setNotes(notesToShow);
     } else {
-      setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
+      setNotes((prevNotes) => {
+        console.log(
+          'prev',
+          prevNotes.map((note) => note.id)
+        );
+        console.log(
+          'new',
+          notesToShow.map((note) => note.id)
+        );
+        return [...prevNotes, ...notesToShow];
+      });
     }
 
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
-  }, [data, offset]);
+  }, [data]);
+
+  useEffect(() => {
+    console.log(
+      'note',
+      notes.map((note) => note.id)
+    );
+  }, [notes]);
 
   if (error) throw new Error('Something went wrong!');
 
@@ -123,7 +145,16 @@ export default function Interactions() {
           <TextRegular size="sm">Try searching for something else.</TextRegular>
         </View>
       )}
-      <FlatList
+      <ScrollView>
+        {notes.length > 0 &&
+          notes
+            .map((note) => note.id)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((noteId) => {
+              return <TextRegular key={noteId}>{noteId}</TextRegular>;
+            })}
+      </ScrollView>
+      {/* <FlatList
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -134,7 +165,7 @@ export default function Interactions() {
         ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
         data={notes}
         renderItem={({ item: note }) => <NoteCard note={note} />}
-        keyExtractor={(note) => note.id}
+        keyExtractor={(item) => item.id}
         ListFooterComponent={() =>
           loading ? (
             <View style={{ marginTop: 10, alignItems: 'center' }}>
@@ -142,9 +173,10 @@ export default function Interactions() {
             </View>
           ) : null
         }
-        onEndReached={loadMoreInteractions}
-        onEndReachedThreshold={0.5}
-      />
+        // onEndReached={loadMoreInteractions}
+        // onEndReachedThreshold={0.5}
+      /> */}
+      <Button variant="primary" title="load" onPress={loadMoreInteractions} />
     </MainContainer>
   );
 }
