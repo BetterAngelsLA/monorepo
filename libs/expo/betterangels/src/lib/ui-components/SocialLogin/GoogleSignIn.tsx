@@ -5,7 +5,13 @@ import { Buffer } from 'buffer';
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { AppState, Linking, View } from 'react-native';
 import useSignIn from '../../hooks/user/useSignIn';
 
@@ -56,9 +62,14 @@ function generateStatePayload(length = 32) {
 interface GoogleSignInProps {
   clientId: string;
   redirectUri: string;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
+export function GoogleSignIn({
+  clientId,
+  redirectUri,
+  setIsLoading,
+}: GoogleSignInProps) {
   const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
   const [generatedState, setGeneratedState] = useState<string | undefined>(
@@ -119,13 +130,21 @@ export function GoogleSignIn({ clientId, redirectUri }: GoogleSignInProps) {
           return;
         }
       }
+      setIsLoading(true);
       await signIn({
         code,
         codeVerifier: request?.codeVerifier,
         redirectUri,
       });
     },
-    [redirectUri, request?.codeVerifier, request?.state, response, signIn]
+    [
+      redirectUri,
+      request?.codeVerifier,
+      request?.state,
+      response,
+      signIn,
+      setIsLoading,
+    ]
   );
 
   useEffect(() => {
