@@ -1,0 +1,14 @@
+{% for group, options, index in widget.optgroups %}
+    {% for option in options %}
+        <div class="checkbox">
+            <label {% if option.attrs.id %}for="{{ option.attrs.id }}"{% endif %}>
+                <input type="checkbox"
+                       name="{{ option.name }}"
+                       value="{{ option.value }}"
+                       {% if option.selected %}checked{% endif %}
+                       {% if option.attrs.disabled %}disabled{% endif %} />
+                {{ option.label }}
+            </label>
+        </div>
+    {% endfor %}
+{% endfor %}

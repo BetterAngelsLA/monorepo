@@ -1,11 +1,16 @@
+from random import choices
 from typing import cast
 
 from common.admin import AttachmentInline, SingleAttachmentInline
 from common.managers import AttachmentQuerySet
 from common.models import Attachment
+from common.widgets import CustomManyToManyField
+from django import forms
 from django.contrib import admin
-from django.forms import ModelForm, model_to_dict
+from django.db.models import CharField, ManyToManyField
+from django.forms import CheckboxSelectMultiple, ModelForm, model_to_dict
 from django.http import HttpRequest
+from shelters.enums import PopulationEnum
 
 from .forms import LocationAdminForm
 from .models import (
@@ -42,18 +47,6 @@ class LocationAdmin(admin.ModelAdmin):
 class FunderInline(admin.TabularInline):
     model = Funder
     verbose_name_plural = "Funders"
-
-
-# class HeroImageInline(admin.StackedInline):
-#     model = Attachment
-#     fk_name = "content_object"
-#     fields = ["file", "attachment_type"]
-#     readonly_fields = ["attachment_type"]
-#     extra = 0
-
-#     def get_queryset(self, request: HttpRequest) -> QuerySet[Attachment]:
-#         qs = super().get_queryset(request)
-#         return qs.filter(attachment_type=AttachmentType.IMAGE, namespace="hero")
 
 
 class HeroInine(SingleAttachmentInline):
@@ -98,7 +91,17 @@ class VideoInline(AttachmentInline):
         return Attachment.videos.create(**data)
 
 
+class ShelterForm(forms.ModelForm):
+
+    class Meta:
+        Model = Shelter
+        widgets = {
+            "testing_populations": forms.SelectMultiple(choices=PopulationEnum),
+        }
+
+
 class ShelterAdmin(admin.ModelAdmin):
+    form = ShelterForm
     inlines = [
         FunderInline,
         PopulationInline,
@@ -116,7 +119,7 @@ class ShelterAdmin(admin.ModelAdmin):
         (
             "Basic Information",
             {
-                "fields": ("title", "organization", "email", "phone", "website"),
+                "fields": ("title", "organization", "email", "phone", "website", "testing_populations"),
             },
         ),
         ("Other Details", {"fields": ()}),
@@ -142,16 +145,6 @@ class ShelterAdmin(admin.ModelAdmin):
             },
         ),
         ("Visuals", {"fields": ()}),
-        # (
-        #     "Other Details",
-        #     {
-        #         "fields": (
-        #             "max_stay",
-        #             "description",
-        #             # "typical_stay_description",
-        #         )
-        #     },
-        # ),
     )
 
     list_display = ("title",)

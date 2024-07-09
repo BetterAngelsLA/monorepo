@@ -29,6 +29,10 @@ class Location(BaseModel):
         return self.address
 
 
+class PopulationTest(models.Model):
+    name = models.CharField(max_length=255, choices=PopulationEnum.choices)
+
+
 class Shelter(BaseModel):
     # Basic Information
     title = models.CharField(max_length=255)
@@ -66,6 +70,8 @@ class Shelter(BaseModel):
     attachments = GenericRelation(
         Attachment,
     )
+
+    testing_populations = models.ManyToManyField(PopulationTest, choices=PopulationEnum)
 
     def __str__(self) -> str:
         return self.title

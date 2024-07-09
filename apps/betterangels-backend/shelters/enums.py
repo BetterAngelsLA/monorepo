@@ -2,6 +2,12 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+class ImmediateNeedsEnum(models.TextChoices):
+    FOOD = "Food", _("Food")
+    SHOWERS = "Showers", _("Showers")
+    CLOTHING = "Clothing", _("Clothing")
+
+
 class ServiceEnum(models.TextChoices):
     FOOD = "Food", _("Food")
     SHOWERS = "Showers", _("Showers")
@@ -57,10 +63,11 @@ class BedStateEnum(models.TextChoices):
 
 
 class ShelterTypeEnum(models.TextChoices):
+    FAITH_BASED = "Faith Based", _("Faith Based")
     INTERIM_HOUSING = "Interim Housing", _("Interim Housing")
     PERMANENT_HOUSING = "Permanent Housing", _("Permanent Housing")
-    A_BRIDGE_HOME = "A Bridge Home (ABH)", _("A Bridge Home")
-    PROJECT_HOMEKEY = "Project Homekey (PHK)", _("Project Homekey (PHK)")
+    A_BRIDGE_HOME = "A Bridge Home", _("A Bridge Home")
+    PROJECT_HOMEKEY = "Project Home Key (PHK)", _("Project Home Key (PHK)")
     TINY_HOME_VILLAGE = "Tiny Home Village", _("Tiny Home Village")
     WINTER_SHELTER = "Winter Shelter", _("Winter Shelter")
     EMERGENCY_SHELTER = "Emergency Shelter", _("Emergency Shelter")
@@ -68,8 +75,9 @@ class ShelterTypeEnum(models.TextChoices):
     RECUPERATIVE_CARE = "Recuperative Care", _("Recuperative Care")
     TRANSITIONAL_HOUSING = "Transitional Housing", _("Transitional Housing")
     ROADMAP_HOME = "Roadmap Home", _("Roadmap Home")
-    RAPID_REHOUSING = "Rapid Re-housing", _("Rapid Re-housing")
+    RAPID_REHOUSING = "Rapid Rehousing", _("Rapid Rehousing")
     SOBER_LIVING = "Sober Living", _("Sober Living")
+    SAFE_PARK_LA = "Safe Park LA", _("Safe Park LA")
 
 
 class FunderEnum(models.TextChoices):
