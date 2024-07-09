@@ -86,7 +86,7 @@ export default function Name(props: INameProps) {
         <Input
           placeholder="Enter Nickname"
           label="Nickname"
-          name="user.nickname"
+          name="nickname"
           control={control}
         />
       </View>
