@@ -27,7 +27,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
   return (
     <View
       style={{
-        marginBottom: Spacings.md,
+        marginBottom: Spacings.sm,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
