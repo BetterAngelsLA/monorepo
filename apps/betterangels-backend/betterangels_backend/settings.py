@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
     "corsheaders",
+    "django_ckeditor_5",
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "django_structlog",
@@ -444,6 +445,23 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar": "ba-sidebar sidebar-dark-primary",
 }
 
+# Markdown Settings
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading",
+            "|",
+            "bold",
+            "italic",
+            "link",
+            "bulletedList",
+            "numberedList",
+            "blockQuote",
+            "imageUpload",
+        ],
+    },
+}
+
 # Test Runner
 TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
 
@@ -475,3 +493,6 @@ SESAME_ONE_TIME = env("SESAME_ONE_TIME")
 SESAME_SALT = env("SESAME_SALT")
 
 RUNSCRIPT_LOG_TO_STDOUT = True
+
+# Phonenumber Field
+PHONENUMBER_DEFAULT_REGION = "US"

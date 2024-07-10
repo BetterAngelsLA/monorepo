@@ -43,6 +43,7 @@ django-waffle = "^4.1.0"
 django-structlog = "^8.0.0"
 deepdiff = "^7.0.1"
 django-phonenumber-field = {extras = ["phonenumbers"], version = "^8.0.0"}
+django-ckeditor-5 = "^0.2.13"
 
 [build-system]
 requires = ["poetry-core"]

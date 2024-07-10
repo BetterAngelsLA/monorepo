@@ -6,26 +6,35 @@ from common.models import Attachment
 from django import forms
 from django.contrib import admin
 from django.db import models
-from django.forms import CheckboxSelectMultiple, ModelForm, model_to_dict
+from django.forms import (
+    CheckboxSelectMultiple,
+    ModelForm,
+    SelectMultiple,
+    model_to_dict,
+)
 from django.http import HttpRequest
 
 from .enums import (
-    AccessibilityEnum,
-    CareerServiceEnum,
-    EntryRequirementEnum,
-    FunderEnum,
-    GeneralServiceEnum,
-    HealthServiceEnum,
-    ImmediateNeedEnum,
-    ParkingEnum,
-    PopulationEnum,
-    ShelterTypeEnum,
-    StorageEnum,
+    AccessibilityChoices,
+    CareerServiceChoices,
+    CityChoices,
+    EntryRequirementChoices,
+    FunderChoices,
+    GeneralServiceChoices,
+    HealthServiceChoices,
+    ImmediateNeedChocies,
+    ParkingChoices,
+    PetChoices,
+    PopulationChoices,
+    ShelterChoices,
+    SleepingChocies,
+    StorageChoices,
 )
 from .forms import LocationAdminForm
 from .models import (
     Accessibility,
     CareerService,
+    City,
     EntryRequirement,
     Funder,
     GeneralService,
@@ -33,6 +42,7 @@ from .models import (
     ImmediateNeed,
     Location,
     Parking,
+    Pet,
     Population,
     Shelter,
     ShelterType,
@@ -91,30 +101,37 @@ T = TypeVar("T", bound=models.Model)
 
 class ShelterForm(forms.ModelForm):
     # Advanced Info
-    populations = forms.MultipleChoiceField(choices=PopulationEnum, widget=CheckboxSelectMultiple(), required=False)
-    shelter_types = forms.MultipleChoiceField(choices=ShelterTypeEnum, widget=CheckboxSelectMultiple(), required=False)
+    populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=False)
+    shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
     immediate_needs = forms.MultipleChoiceField(
-        choices=ImmediateNeedEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=ImmediateNeedChocies, widget=CheckboxSelectMultiple(), required=False
     )
     general_services = forms.MultipleChoiceField(
-        choices=GeneralServiceEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=GeneralServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
     health_services = forms.MultipleChoiceField(
-        choices=HealthServiceEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=HealthServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
     career_services = forms.MultipleChoiceField(
-        choices=CareerServiceEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=CareerServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    funders = forms.MultipleChoiceField(choices=FunderEnum, widget=CheckboxSelectMultiple(), required=False)
+    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=CheckboxSelectMultiple(), required=False)
     accessibility = forms.MultipleChoiceField(
-        choices=AccessibilityEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    storage = forms.MultipleChoiceField(choices=StorageEnum, widget=CheckboxSelectMultiple(), required=False)
-    parking = forms.MultipleChoiceField(choices=ParkingEnum, widget=CheckboxSelectMultiple(), required=False)
+    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=False)
+    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=False)
 
     # Restrictions
     entry_requirements = forms.MultipleChoiceField(
-        choices=EntryRequirementEnum, widget=CheckboxSelectMultiple(), required=False
+        choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
+    )
+    cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
+    pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
+
+    # Sleeping Information
+    sleeping_options = forms.MultipleChoiceField(
+        choices=SleepingChocies, widget=CheckboxSelectMultiple(), required=False
     )
 
     class Meta:
@@ -135,6 +152,8 @@ class ShelterForm(forms.ModelForm):
             "storage": Storage,
             "parking": Parking,
             "entry_requirements": EntryRequirement,
+            "cities": City,
+            "pets": Pet,
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
@@ -166,14 +185,16 @@ class ShelterAdmin(admin.ModelAdmin):
                 "fields": ("title", "organization", "email", "phone", "website"),
             },
         ),
-        ("Other Details", {"fields": ()}),
+        (
+            "Other Details",
+            {"fields": ("description", "how_to_enter", "mandatory_worship_attendance")},
+        ),
         (
             "Location",
             {
                 "fields": (
                     "location",
                     "confidential",
-                    "spa",
                 )
             },
         ),
@@ -194,14 +215,17 @@ class ShelterAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Restrictions", {"fields": ("entry_requirements",)}),
+        (
+            "Restrictions",
+            {"fields": ("entry_requirements", "cities", "city_district", "supervisorial_district", "spa", "pets")},
+        ),
         (
             "Beds",
             {
                 "fields": (
+                    "fees",
                     "total_beds",
-                    "private_beds",
-                    "bed_layout_description",
+                    "sleeping_options",
                 )
             },
         ),
