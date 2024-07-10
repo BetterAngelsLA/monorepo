@@ -2,7 +2,7 @@ from typing import Type, TypeVar, cast
 
 from common.admin import AttachmentInline, SingleAttachmentInline
 from common.managers import AttachmentQuerySet
-from common.models import Address, Attachment
+from common.models import Attachment
 from django import forms
 from django.contrib import admin
 from django.db import models
@@ -23,12 +23,12 @@ from .enums import (
     FunderChoices,
     GeneralServiceChoices,
     HealthServiceChoices,
-    ImmediateNeedChocies,
+    ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
     PopulationChoices,
     ShelterChoices,
-    SleepingChocies,
+    SleepingChoices,
     StorageChoices,
 )
 from .models import (
@@ -101,7 +101,7 @@ class ShelterForm(forms.ModelForm):
     populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=True)
     shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
     immediate_needs = forms.MultipleChoiceField(
-        choices=ImmediateNeedChocies, widget=CheckboxSelectMultiple(), required=False
+        choices=ImmediateNeedChoices, widget=CheckboxSelectMultiple(), required=False
     )
     general_services = forms.MultipleChoiceField(
         choices=GeneralServiceChoices, widget=CheckboxSelectMultiple(), required=False
@@ -128,7 +128,7 @@ class ShelterForm(forms.ModelForm):
 
     # Sleeping Information
     sleeping_options = forms.MultipleChoiceField(
-        choices=SleepingChocies, widget=CheckboxSelectMultiple(), required=False
+        choices=SleepingChoices, widget=CheckboxSelectMultiple(), required=False
     )
 
     class Meta:

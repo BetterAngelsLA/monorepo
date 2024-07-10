@@ -15,12 +15,12 @@ from .enums import (
     FunderChoices,
     GeneralServiceChoices,
     HealthServiceChoices,
-    ImmediateNeedChocies,
+    ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
     PopulationChoices,
     ShelterChoices,
-    SleepingChocies,
+    SleepingChoices,
     StorageChoices,
 )
 
@@ -41,7 +41,7 @@ class Population(models.Model):
 
 
 class ImmediateNeed(models.Model):
-    name = TextChoicesField(choices_enum=ImmediateNeedChocies, unique=True, blank=True, null=True)
+    name = TextChoicesField(choices_enum=ImmediateNeedChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
@@ -120,7 +120,7 @@ class Pet(models.Model):
 
 # Sleeping Info
 class SleepingOption(models.Model):
-    name = TextChoicesField(choices_enum=SleepingChocies, unique=True, blank=True, null=True)
+    name = TextChoicesField(choices_enum=SleepingChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
