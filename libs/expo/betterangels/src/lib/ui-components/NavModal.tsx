@@ -5,7 +5,7 @@ import {
   SignOutIcon,
   UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -82,7 +82,7 @@ export default function NavModal(props: INavModalProps) {
                   backgroundColor: pressed
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
-                  borderRadius: Spacings.xs,
+                  borderRadius: Radiuses.xs,
                   paddingHorizontal: Spacings.sm,
                   paddingVertical: Spacings.sm,
                 }}
@@ -118,7 +118,7 @@ export default function NavModal(props: INavModalProps) {
                   backgroundColor: pressed
                     ? Colors.NEUTRAL_EXTRA_LIGHT
                     : Colors.WHITE,
-                  borderRadius: Spacings.xs,
+                  borderRadius: Radiuses.xs,
                   paddingHorizontal: Spacings.sm,
                   paddingVertical: Spacings.sm,
                 }}

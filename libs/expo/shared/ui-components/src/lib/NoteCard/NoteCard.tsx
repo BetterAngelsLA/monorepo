@@ -1,5 +1,5 @@
 import { LocationDotIcon, PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import IconButton from '../IconButton';
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     paddingTop: Spacings.sm,
     width: 160,
     backgroundColor: Colors.WHITE,

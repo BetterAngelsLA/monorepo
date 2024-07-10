@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
@@ -50,6 +50,6 @@ const styles = StyleSheet.create({
     height: Spacings.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
   },
 });

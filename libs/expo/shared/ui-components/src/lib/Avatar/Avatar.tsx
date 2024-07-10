@@ -1,5 +1,5 @@
 import { UserIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -62,7 +62,7 @@ export function Avatar(props: IAvatarProps) {
       style={{
         height: SIZE[size],
         width: SIZE[size],
-        borderRadius: 100,
+        borderRadius: Radiuses.xxxl,
         backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
         marginBottom: mb && Spacings[mb],
         marginTop: mt && Spacings[mt],
@@ -78,7 +78,7 @@ export function Avatar(props: IAvatarProps) {
         style={{
           borderWidth: size === 'sm' ? 1 : 0,
           borderColor: Colors.WHITE,
-          borderRadius: 100,
+          borderRadius: Radiuses.xxxl,
           height: '100%',
           width: '100%',
           alignItems: 'center',
@@ -95,7 +95,7 @@ export function Avatar(props: IAvatarProps) {
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,
-              borderRadius: 100,
+              borderRadius: Radiuses.xxxl,
               resizeMode: 'cover',
             }}
             source={{

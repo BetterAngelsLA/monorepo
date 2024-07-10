@@ -1,4 +1,9 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -122,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderWidth: 1,
   },
   checkbox: {
@@ -131,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: Radiuses.xxxs,
     borderColor: Colors.NEUTRAL_LIGHT,
   },
   checked: {
@@ -141,6 +146,6 @@ const styles = StyleSheet.create({
     color: Colors.WHITE,
   },
   label: {
-    fontSize: Spacings.sm,
+    fontSize: FontSizes.md.fontSize,
   },
 });

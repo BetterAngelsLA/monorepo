@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ViewNoteQuery } from '../../apollo';
@@ -17,7 +17,7 @@ export default function NotePublicNote({
         style={{
           backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
           padding: Spacings.sm,
-          borderRadius: Spacings.xxs,
+          borderRadius: Radiuses.xxs,
         }}
       >
         <TextRegular size="sm">{note?.publicDetails}</TextRegular>

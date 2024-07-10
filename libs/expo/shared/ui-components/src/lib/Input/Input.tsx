@@ -1,5 +1,10 @@
 import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
@@ -119,7 +124,7 @@ export function Input(props: IInputProps) {
                 paddingRight: 38,
                 flex: 1,
                 fontFamily: 'Poppins-Regular',
-                fontSize: Spacings.sm,
+                fontSize: FontSizes.md.fontSize,
                 height,
                 ...Platform.select({
                   web: {
@@ -163,7 +168,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
     height: Spacings.sm,
     width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },

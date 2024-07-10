@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
   Loading,
@@ -113,13 +113,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             >
               <TextMedium size="lg">Active Clients</TextMedium>
               <TextButton
-              accessibilityHint="goes to all active clients list"
-              color={Colors.PRIMARY}
-              fontSize="sm"
-              regular={true}
-              title="All Clients"
-              onPress={() => router.navigate('/clients')}
-            />
+                accessibilityHint="goes to all active clients list"
+                color={Colors.PRIMARY}
+                fontSize="sm"
+                regular={true}
+                title="All Clients"
+                onPress={() => router.navigate('/clients')}
+              />
             </View>
             {!loading && clients.length < 1 && (
               <View
@@ -136,7 +136,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
                     width: 90,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 100,
+                    borderRadius: Radiuses.xxxl,
                     backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                     marginBottom: Spacings.md,
                   }}

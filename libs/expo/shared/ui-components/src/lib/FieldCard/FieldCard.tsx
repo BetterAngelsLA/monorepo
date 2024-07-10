@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode, RefObject, useEffect, useState } from 'react';
 import {
   DimensionValue,
@@ -135,7 +135,7 @@ export function FieldCard(props: IFieldCardProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacings.sm,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
   },

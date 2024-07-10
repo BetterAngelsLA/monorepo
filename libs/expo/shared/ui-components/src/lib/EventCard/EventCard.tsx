@@ -1,5 +1,5 @@
 import { CalendarLineIcon, ListIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
@@ -74,7 +74,7 @@ export function EventCard(props: IEventCardProps) {
 const styles = StyleSheet.create({
   conatiner: {
     padding: Spacings.sm,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
     backgroundColor: Colors.WHITE,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     shadowColor: Colors.NEUTRAL,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
-    shadowRadius: 3,
+    shadowRadius: Radiuses.xxxs,
     elevation: 5,
   },
   itemContainer: {

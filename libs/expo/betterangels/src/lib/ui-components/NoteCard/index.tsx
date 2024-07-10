@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
   container: {
     padding: Spacings.sm,
     gap: Spacings.xs,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
   },
 });

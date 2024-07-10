@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown';
 
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
     paddingHorizontal: Spacings.sm,
 
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
 
   dropdownMenuStyle: {
     backgroundColor: '#E9ECEF',
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
   },
   dropdownItemStyle: {
     width: '100%',

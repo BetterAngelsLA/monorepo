@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.md,
     gap: Spacings.sm,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
     borderWidth: 1,
   },

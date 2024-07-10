@@ -3,7 +3,7 @@ import {
   UserAddIcon,
   UserSearchIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
@@ -204,7 +204,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 width: 90,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 100,
+                borderRadius: Radiuses.xxxl,
                 backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                 marginBottom: Spacings.md,
               }}

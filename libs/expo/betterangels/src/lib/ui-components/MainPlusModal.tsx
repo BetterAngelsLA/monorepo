@@ -3,7 +3,7 @@ import {
   UserAddIcon,
   XmarkIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import MainModal from './MainModal';
 
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   middleButton: {
     marginTop: Spacings.sm,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 'auto',

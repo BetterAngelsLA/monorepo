@@ -1,5 +1,10 @@
 import { CalendarLineIcon, ClockIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
 import { useState } from 'react';
@@ -126,7 +131,7 @@ export function DatePicker(props: IDatePickerProps) {
             paddingLeft: Spacings.sm,
             paddingRight: 38,
             fontFamily: 'Poppins-Regular',
-            fontSize: Spacings.sm,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -171,7 +176,7 @@ export function DatePicker(props: IDatePickerProps) {
             }}
             style={{
               backgroundColor: Colors.WHITE,
-              borderRadius: Spacings.xs,
+              borderRadius: Radiuses.xs,
               overflow: 'hidden',
             }}
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
@@ -211,7 +216,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     justifyContent: 'center',
   },
   label: {

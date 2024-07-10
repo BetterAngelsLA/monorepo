@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     padding: Spacings.sm,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
   },
 });

@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import * as Clipboard from 'expo-clipboard';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     flexDirection: 'column',
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     bottom: '100%',
     left: '50%',
     transform: [{ translateX: -25 }],

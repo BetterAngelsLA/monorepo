@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { Spacings } from '@monorepo/expo/shared/static';
+import { FontSizes, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import {
   Alert,
@@ -107,13 +107,13 @@ const styles = StyleSheet.create({
   },
   warning: {
     color: 'red',
-    fontSize: 14,
+    fontSize: FontSizes.sm.fontSize,
     marginBottom: Spacings.sm,
     textAlign: 'center',
   },
   label: {
     color: '#FFF',
-    fontSize: Spacings.sm,
+    fontSize: FontSizes.md.fontSize,
     marginBottom: Spacings.xs,
   },
   input: {
@@ -122,17 +122,17 @@ const styles = StyleSheet.create({
     color: '#D3D3D3',
     padding: Spacings.xs,
     marginBottom: Spacings.sm,
-    borderRadius: Spacings.xxs,
+    borderRadius: Radiuses.xxs,
     backgroundColor: '#555',
   },
   button: {
     backgroundColor: '#007BFF',
     padding: 10,
-    borderRadius: Spacings.xxs,
+    borderRadius: Radiuses.xxs,
     alignItems: 'center',
   },
   buttonText: {
     color: '#FFF',
-    fontSize: Spacings.sm,
+    fontSize: FontSizes.md.fontSize,
   },
 });

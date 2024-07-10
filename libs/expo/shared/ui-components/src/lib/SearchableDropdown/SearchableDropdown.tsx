@@ -1,5 +1,10 @@
 import { PlusIcon, XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import {
   Dimensions,
@@ -197,7 +202,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     justifyContent: 'center',
   },
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 100,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
   },
@@ -223,7 +228,7 @@ const styles = StyleSheet.create({
     height: Spacings.sm,
     width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },

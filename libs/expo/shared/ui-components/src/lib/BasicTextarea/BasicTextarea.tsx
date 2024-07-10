@@ -1,4 +1,9 @@
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   DimensionValue,
@@ -88,7 +93,7 @@ export function BasicTextarea(props: IBasicTextareaProps) {
             padding: Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
-            fontSize: Spacings.sm,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -116,7 +121,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },

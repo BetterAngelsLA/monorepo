@@ -1,4 +1,9 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   Button,
   Loading,
@@ -105,7 +110,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             <View
               style={{
                 padding: Spacings.xs,
-                borderRadius: Spacings.xs,
+                borderRadius: Radiuses.xs,
                 backgroundColor: Colors.WARNING_EXTRA_LIGHT,
               }}
             >
@@ -145,7 +150,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           shadowColor: '#CCC',
           shadowOffset: { width: 0, height: -3 },
           shadowOpacity: 0.3,
-          shadowRadius: Spacings.xxs,
+          shadowRadius: Radiuses.xxs,
         }}
       >
         <View
@@ -188,12 +193,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacings.sm,
     fontFamily: 'Poppins-Regular',
-    fontSize: Spacings.sm,
+    fontSize: FontSizes.md.fontSize,
     color: Colors.PRIMARY_EXTRA_DARK,
     backgroundColor: Colors.WHITE,
     borderColor: Colors.NEUTRAL_LIGHT,
     borderWidth: 1,
-    borderRadius: Spacings.xs,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
     maxWidth: 600,
