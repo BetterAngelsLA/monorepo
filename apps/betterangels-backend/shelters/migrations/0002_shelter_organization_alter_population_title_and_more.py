@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
                     ("Medical Equipment Permitted", "Medical Equipment Permitted"),
                     ("Pets Allowed", "Pets Allowed"),
                 ],
-                choices_enum=shelters.enums.EntryRequirements,
+                choices_enum=shelters.enums.EntryRequirementEnum,
                 max_length=27,
             ),
         ),

@@ -14,6 +14,27 @@ class HowToEnterEnum(models.TextChoices):
     WALK_IN = "Walk-In", _("Walk-In")
 
 
+class ServiceEnum(models.TextChoices):
+    BLANKET = "blanket", _("Blanket")
+    BOOK = "book", _("Book")
+    CLOTHES = "clothes", _("Clothes")
+    DENTAL = "dental", _("Dental")
+    FOOD = "food", _("Food")
+    HARM_REDUCTION = "harm_reduction", _("Harm Reduction")
+    HYGIENE_KIT = "hygiene_kit", _("Hygiene Kit")
+    MEDICAL = "medical", _("Medical")
+    PET_CARE = "pet_care", _("Pet Care")
+    PET_FOOD = "pet_food", _("Pet Food")
+    SHELTER = "shelter", _("Shelter")
+    SHOES = "shoes", _("Shoes")
+    SHOWER = "shower", _("Shower")
+    STABILIZE = "stabilize", _("Stabilize")
+    STORAGE = "storage", _("Storage")
+    TRANSPORT = "transport", _("Transport")
+    WATER = "water", _("Water")
+    OTHER = "other", _("Other")
+
+
 class Migration(migrations.Migration):
     initial = True
 
@@ -170,7 +191,7 @@ class Migration(migrations.Migration):
                             ("Legal Assistance", "Legal Assistance"),
                             ("Transportation", "Transportation"),
                         ],
-                        choices_enum=shelters.enums.ServiceEnum,
+                        choices_enum=ServiceEnum,
                         max_length=20,
                     ),
                 ),
@@ -206,7 +227,7 @@ class Migration(migrations.Migration):
                             ("Reservation", "Reservation"),
                             ("Referral", "Referral"),
                         ],
-                        choices_enum=shelters.enums.EntryRequirements,
+                        choices_enum=shelters.enums.EntryRequirementEnum,
                         max_length=20,
                     ),
                 ),

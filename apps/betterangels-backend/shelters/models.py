@@ -1,20 +1,23 @@
-from common.enums import AttachmentType
 from common.models import Attachment, BaseModel
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
 from django.db import models
-from django.forms import ValidationError
 from django_choices_field import TextChoicesField
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .enums import (
-    EntryRequirements,
+    AccessibilityEnum,
+    CareerServiceEnum,
+    EntryRequirementEnum,
     FunderEnum,
-    PetsAllowedEnum,
+    GeneralServiceEnum,
+    HealthServiceEnum,
+    ImmediateNeedEnum,
+    ParkingEnum,
     PopulationEnum,
-    ServiceEnum,
     ShelterTypeEnum,
+    StorageEnum,
 )
 
 
@@ -29,8 +32,83 @@ class Location(BaseModel):
         return self.address
 
 
-class PopulationTest(models.Model):
-    name = models.CharField(max_length=255, choices=PopulationEnum.choices)
+# Advanced Info
+class ShelterType(models.Model):
+    name = TextChoicesField(choices_enum=ShelterTypeEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Population(models.Model):
+    name = TextChoicesField(choices_enum=PopulationEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class ImmediateNeed(models.Model):
+    name = TextChoicesField(choices_enum=ImmediateNeedEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class GeneralService(models.Model):
+    name = TextChoicesField(choices_enum=GeneralServiceEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class HealthService(models.Model):
+    name = TextChoicesField(choices_enum=HealthServiceEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class CareerService(models.Model):
+    name = TextChoicesField(choices_enum=CareerServiceEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Funder(models.Model):
+    name = TextChoicesField(choices_enum=FunderEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Accessibility(models.Model):
+    name = TextChoicesField(choices_enum=AccessibilityEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Storage(models.Model):
+    name = TextChoicesField(choices_enum=StorageEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Parking(models.Model):
+    name = TextChoicesField(choices_enum=ParkingEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+# Restrictions
+class EntryRequirement(models.Model):
+    name = TextChoicesField(choices_enum=EntryRequirementEnum, db_index=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
 
 
 class Shelter(BaseModel):
@@ -50,7 +128,19 @@ class Shelter(BaseModel):
     confidential = models.BooleanField(blank=True, null=True)
 
     # Advanced Info
-    spa = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="SPA")
+    shelter_types = models.ManyToManyField(ShelterType)
+    populations = models.ManyToManyField(Population)
+    imeediate_needs = models.ManyToManyField(ImmediateNeed)
+    general_services = models.ManyToManyField(GeneralService)
+    health_services = models.ManyToManyField(HealthService)
+    career_services = models.ManyToManyField(CareerService)
+    funders = models.ManyToManyField(Funder)
+    accessibility = models.ManyToManyField(Accessibility)
+    storage = models.ManyToManyField(Storage)
+    parking = models.ManyToManyField(Parking)
+
+    # Restrictions
+    entry_requirements = models.ManyToManyField(EntryRequirement)
 
     # Service Information
 
@@ -62,6 +152,7 @@ class Shelter(BaseModel):
     bed_layout_description = models.TextField(blank=True, null=True)
 
     # Restrictions and Requirements
+    spa = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name="SPA")
 
     # Visuals
     hero_image = models.OneToOneField(
@@ -71,73 +162,5 @@ class Shelter(BaseModel):
         Attachment,
     )
 
-    testing_populations = models.ManyToManyField(PopulationTest, choices=PopulationEnum)
-
     def __str__(self) -> str:
         return self.title
-
-
-class PetsAllowed(models.Model):
-    title = TextChoicesField(choices_enum=PetsAllowedEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="pets_allowed")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class Population(models.Model):
-    title = TextChoicesField(choices_enum=PopulationEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="populations")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class EntryRequirement(models.Model):
-    title = TextChoicesField(choices_enum=EntryRequirements)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="requirements")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class ShelterType(models.Model):
-    title = TextChoicesField(choices_enum=ShelterTypeEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="shelter_type")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class Service(models.Model):
-    title = TextChoicesField(choices_enum=ServiceEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="services")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
-
-
-class Funder(models.Model):
-    title = TextChoicesField(choices_enum=FunderEnum)
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="funders")
-
-    class Meta:
-        unique_together = ("title", "shelter")
-
-    def __str__(self) -> str:
-        return str(self.title)
