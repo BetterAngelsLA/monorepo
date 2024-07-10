@@ -121,38 +121,24 @@ class ShelterForm(forms.ModelForm):
         model = Shelter
         fields = "__all__"
 
-    def clean_populations(self) -> list[Population]:
-        return self._clean_choices("populations", Population)
-
-    def clean_shelter_types(self) -> list[ShelterType]:
-        return self._clean_choices("shelter_types", ShelterType)
-
-    def clean_immediate_needs(self) -> list[ImmediateNeed]:
-        return self._clean_choices("immediate_needs", ImmediateNeed)
-
-    def clean_general_services(self) -> list[GeneralService]:
-        return self._clean_choices("general_services", GeneralService)
-
-    def clean_health_services(self) -> list[HealthService]:
-        return self._clean_choices("health_services", HealthService)
-
-    def clean_career_services(self) -> list[CareerService]:
-        return self._clean_choices("career_services", CareerService)
-
-    def clean_funders(self) -> list[Funder]:
-        return self._clean_choices("funders", Funder)
-
-    def clean_accessibility(self) -> list[Accessibility]:
-        return self._clean_choices("accessibility", Accessibility)
-
-    def clean_storage(self) -> list[Storage]:
-        return self._clean_choices("storage", Storage)
-
-    def clean_parking(self) -> list[Parking]:
-        return self._clean_choices("parking", Parking)
-
-    def clean_entry_requirements(self) -> list[EntryRequirement]:
-        return self._clean_choices("entry_requirements", EntryRequirement)
+    def clean(self) -> dict:
+        cleaned_data = super().clean() or {}
+        fields_to_clean = {
+            "populations": Population,
+            "shelter_types": ShelterType,
+            "immediate_needs": ImmediateNeed,
+            "general_services": GeneralService,
+            "health_services": HealthService,
+            "career_services": CareerService,
+            "funders": Funder,
+            "accessibility": Accessibility,
+            "storage": Storage,
+            "parking": Parking,
+            "entry_requirements": EntryRequirement,
+        }
+        for field_name, model_class in fields_to_clean.items():
+            cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+        return cleaned_data
 
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
         choices: list[str] = self.cleaned_data.get(field_name, [])
