@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
@@ -110,7 +110,11 @@ export function BasicInput(props: IBasicInputProps) {
             onPress={onDelete}
             style={styles.icon}
           >
-            <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
+            <PlusIcon
+              color={Colors.PRIMARY_EXTRA_DARK}
+              size="xs"
+              rotate="45deg"
+            />
           </Pressable>
         )}
       </View>

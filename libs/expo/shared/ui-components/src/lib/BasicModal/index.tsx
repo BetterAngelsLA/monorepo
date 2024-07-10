@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { hexToRGBA } from '@monorepo/expo/shared/utils';
 import { Modal, Pressable, TouchableWithoutFeedback, View } from 'react-native';
@@ -52,7 +52,11 @@ export default function BasicModal(props: IBasicModalProps) {
               accessibilityLabel="close modal"
               accessibilityHint="closing public note information modal"
             >
-              <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+              <PlusIcon
+                color={Colors.PRIMARY_EXTRA_DARK}
+                size="sm"
+                rotate="45deg"
+              />
             </IconButton>
             <View style={{ paddingRight: Spacings.sm }}>{children}</View>
           </View>
