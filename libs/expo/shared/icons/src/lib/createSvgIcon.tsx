@@ -1,4 +1,4 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
 import { SvgProps } from 'react-native-svg';
 import { IIconProps } from './types';
@@ -11,7 +11,7 @@ const createSvgIcon = (
 ) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
-    color = '#ffffff',
+    color = Colors.PRIMARY_EXTRA_DARK,
     rotate = '0deg',
     mb,
     mt,
