@@ -15,7 +15,6 @@ import {
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
-import { ClientProfileDocument } from '../Client/__generated__/Client.generated';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
 import ContactInfo from './ContactInfo';
 import Dob from './Dob';
@@ -32,23 +31,14 @@ import {
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
-  const { data, loading, error } = useGetClientProfileQuery(checkId);
+  const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
 
   const methods = useForm<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [updateClient] = useUpdateClientProfileMutation({
-    refetchQueries: [
-      {
-        query: ClientProfileDocument,
-        variables: {
-          id,
-        },
-      },
-    ],
-  });
+  const [updateClient] = useUpdateClientProfileMutation();
   const [createClient] = useCreateClientProfileMutation({
     refetchQueries: [
       {
@@ -91,6 +81,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             },
           },
         });
+        refetch();
         operationResult = updateResponse.data?.updateClientProfile;
       } else {
         const createResponse = await createClient({
@@ -151,7 +142,7 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
-
+    console.log(clientInput);
     methods.reset(clientInput);
   }, [data]);
 
