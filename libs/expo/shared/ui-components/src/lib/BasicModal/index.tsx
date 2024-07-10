@@ -52,11 +52,7 @@ export default function BasicModal(props: IBasicModalProps) {
               accessibilityLabel="close modal"
               accessibilityHint="closing public note information modal"
             >
-              <PlusIcon
-                color={Colors.PRIMARY_EXTRA_DARK}
-                size="sm"
-                rotate="45deg"
-              />
+              <PlusIcon size="sm" rotate="45deg" />
             </IconButton>
             <View style={{ paddingRight: Spacings.sm }}>{children}</View>
           </View>

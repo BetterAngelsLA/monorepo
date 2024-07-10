@@ -139,11 +139,7 @@ export function SearchableDropdown({
             onPress={() => setValue('')}
             style={styles.icon}
           >
-            <PlusIcon
-              color={Colors.PRIMARY_EXTRA_DARK}
-              size="xs"
-              rotate="45deg"
-            />
+            <PlusIcon size="xs" rotate="45deg" />
           </Pressable>
         )}
       </View>
@@ -184,7 +180,7 @@ export function SearchableDropdown({
               onPress={onExtraPress}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
+                <PlusIcon size="sm" />
                 <TextRegular ml="xs">{extraTitle}</TextRegular>
               </View>
             </TouchableOpacity>

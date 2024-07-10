@@ -110,11 +110,7 @@ export function BasicInput(props: IBasicInputProps) {
             onPress={onDelete}
             style={styles.icon}
           >
-            <PlusIcon
-              color={Colors.PRIMARY_EXTRA_DARK}
-              size="xs"
-              rotate="45deg"
-            />
+            <PlusIcon size="xs" rotate="45deg" />
           </Pressable>
         )}
       </View>

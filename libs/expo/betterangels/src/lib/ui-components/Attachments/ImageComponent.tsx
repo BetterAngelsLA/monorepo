@@ -73,11 +73,7 @@ export default function ImageComponent(props: IImageComponentProps) {
             accessibilityLabel="delete"
             accessibilityHint="deletes the image"
           >
-            <PlusIcon
-              size="sm"
-              color={Colors.PRIMARY_EXTRA_DARK}
-              rotate="45deg"
-            />
+            <PlusIcon size="sm" rotate="45deg" />
           </IconButton>
         </View>
       )}

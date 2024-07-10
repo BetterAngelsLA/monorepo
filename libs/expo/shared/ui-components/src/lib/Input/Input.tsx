@@ -142,11 +142,7 @@ export function Input(props: IInputProps) {
                 onPress={() => onChange('')}
                 style={styles.icon}
               >
-                <PlusIcon
-                  color={Colors.PRIMARY_EXTRA_DARK}
-                  size="xs"
-                  rotate="45deg"
-                />
+                <PlusIcon size="xs" rotate="45deg" />
               </Pressable>
             )}
           </View>
