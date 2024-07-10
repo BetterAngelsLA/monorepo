@@ -9,6 +9,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
 import { MainScrollContainer } from '../../ui-components';
@@ -24,6 +25,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottomOffset = insets.bottom;
 
   const updateNoteFunction = useRef(
     debounce(async (value: string) => {
@@ -89,92 +92,94 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   }
 
   return (
-    <MainScrollContainer pb={40} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View
-        style={{
-          gap: Spacings.sm,
-          flex: 1,
-        }}
-      >
-        <TextBold size="lg">Write Public Note</TextBold>
-        {autoNote !== publicNote && (
-          <View
-            style={{
-              padding: Spacings.xs,
-              borderRadius: 8,
-              backgroundColor: Colors.WARNING_EXTRA_LIGHT,
-            }}
-          >
-            <TextRegular size="sm" color={Colors.WARNING_DARK}>
-              You changed the form above. Please review note text for
-              consistency.
-            </TextRegular>
-          </View>
-        )}
-        <TextRegular size="md">
-          Use the generated text below to get started. When finished, click
-          “Save Note.”
-        </TextRegular>
-
-        <View style={{ flexGrow: 1 }}>
-          <TextInput
-            value={publicNote}
-            onChangeText={(text) => onChange(text)}
-            multiline
-            accessibilityHint="area to write an HMIS note"
-            textAlignVertical="top"
-            accessibilityLabel="HMIS input"
-            style={styles.input}
-          />
-        </View>
+    <>
+      <MainScrollContainer pb={40} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: Colors.WHITE,
-            padding: Spacings.sm,
-            paddingTop: Spacings.xl,
-            gap: Spacings.xs,
-            elevation: 5,
-            shadowColor: '#CCC',
-            shadowOffset: { width: 0, height: -3 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
+            gap: Spacings.sm,
+            flex: 1,
           }}
         >
-          <View
-            style={{
-              flex: 1,
-            }}
-          >
-            <Button
-              onPress={() => {
-                if (autoNote !== publicNote) {
-                  return setPublicNote(autoNote);
-                }
-                onChange('');
+          <TextBold size="lg">Write Public Note</TextBold>
+          {autoNote !== publicNote && (
+            <View
+              style={{
+                padding: Spacings.xs,
+                borderRadius: 8,
+                backgroundColor: Colors.WARNING_EXTRA_LIGHT,
               }}
-              height="xl"
-              accessibilityHint="clears HMIS input"
-              size="full"
-              variant="secondary"
-              title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
-            />
-          </View>
+            >
+              <TextRegular size="sm" color={Colors.WARNING_DARK}>
+                You changed the form above. Please review note text for
+                consistency.
+              </TextRegular>
+            </View>
+          )}
+          <TextRegular size="md">
+            Use the generated text below to get started. When finished, click
+            “Save Note.”
+          </TextRegular>
 
-          <View style={{ flex: 1 }}>
-            <Button
-              onPress={() => router.back()}
-              height="xl"
-              accessibilityHint="clears HMIS input"
-              size="full"
-              variant="primary"
-              title="Save Note"
+          <View style={{ flexGrow: 1 }}>
+            <TextInput
+              value={publicNote}
+              onChangeText={(text) => onChange(text)}
+              multiline
+              accessibilityHint="area to write an HMIS note"
+              textAlignVertical="top"
+              accessibilityLabel="HMIS input"
+              style={styles.input}
             />
           </View>
         </View>
+      </MainScrollContainer>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: Colors.WHITE,
+          padding: Spacings.sm,
+          paddingBottom: bottomOffset + Spacings.sm,
+          gap: Spacings.xs,
+          elevation: 5,
+          shadowColor: '#CCC',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+          }}
+        >
+          <Button
+            onPress={() => {
+              if (autoNote !== publicNote) {
+                return setPublicNote(autoNote);
+              }
+              onChange('');
+            }}
+            height="xl"
+            accessibilityHint="clears HMIS input"
+            size="full"
+            variant="secondary"
+            title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
+          />
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <Button
+            onPress={() => router.back()}
+            height="xl"
+            accessibilityHint="clears HMIS input"
+            size="full"
+            variant="primary"
+            title="Save Note"
+          />
+        </View>
       </View>
-    </MainScrollContainer>
+    </>
   );
 }
 
