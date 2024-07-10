@@ -135,7 +135,7 @@ class Shelter(BaseModel):
     website = models.URLField(null=True, blank=True)
 
     # Other Information
-    description = CKEditor5Field(blank=True, null=True)
+    description = CKEditor5Field(null=True)
     how_to_enter = CKEditor5Field(blank=True, null=True)
     mandatory_worship_attendance = models.BooleanField(null=True, blank=True)
 
@@ -174,7 +174,7 @@ class Shelter(BaseModel):
 
     # Bed Information
     fees = CKEditor5Field(blank=True, null=True)
-    total_beds = models.PositiveIntegerField(blank=True, null=True)
+    total_beds = models.PositiveIntegerField()
     sleeping_options = models.ManyToManyField(SleepingOption)
 
     # Visuals

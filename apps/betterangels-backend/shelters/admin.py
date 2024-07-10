@@ -10,6 +10,7 @@ from django.forms import (
     CheckboxSelectMultiple,
     ModelForm,
     SelectMultiple,
+    TimeInput,
     model_to_dict,
 )
 from django.http import HttpRequest
@@ -94,14 +95,10 @@ T = TypeVar("T", bound=models.Model)
 
 
 class ShelterForm(forms.ModelForm):
-    # Location
-    street = forms.CharField(max_length=255, required=False)
-    city = forms.CharField(max_length=100, required=False)
-    state = forms.CharField(max_length=100, required=False)
-    zip_code = forms.CharField(max_length=50, required=False)
+    curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}))
 
     # Advanced Info
-    populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=False)
+    populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=True)
     shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
     immediate_needs = forms.MultipleChoiceField(
         choices=ImmediateNeedChocies, widget=CheckboxSelectMultiple(), required=False
@@ -197,8 +194,8 @@ class ShelterAdmin(admin.ModelAdmin):
             "Advanced Info",
             {
                 "fields": (
-                    "populations",
                     "shelter_types",
+                    "populations",
                     "immediate_needs",
                     "general_services",
                     "health_services",
@@ -207,6 +204,8 @@ class ShelterAdmin(admin.ModelAdmin):
                     "accessibility",
                     "storage",
                     "parking",
+                    "curfew",
+                    "max_stay",
                 )
             },
         ),

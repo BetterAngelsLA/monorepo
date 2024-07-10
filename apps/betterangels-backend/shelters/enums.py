@@ -4,99 +4,99 @@ from django.utils.translation import gettext_lazy as _
 
 # Advanced Info
 class ShelterChoices(models.TextChoices):
+    A_BRIDGE_HOME = "A Bridge Home", _("A Bridge Home")
+    CRISIS_HOUSING = "Crisis Housing", _("Crisis Housing")
+    EMERGENCY_SHELTER = "Emergency Shelter", _("Emergency Shelter")
     FAITH_BASED = "Faith Based", _("Faith Based")
     INTERIM_HOUSING = "Interim Housing", _("Interim Housing")
     PERMANENT_HOUSING = "Permanent Housing", _("Permanent Housing")
-    A_BRIDGE_HOME = "A Bridge Home", _("A Bridge Home")
     PROJECT_HOMEKEY = "Project Home Key (PHK)", _("Project Home Key (PHK)")
-    TINY_HOME_VILLAGE = "Tiny Home Village", _("Tiny Home Village")
-    WINTER_SHELTER = "Winter Shelter", _("Winter Shelter")
-    EMERGENCY_SHELTER = "Emergency Shelter", _("Emergency Shelter")
-    CRISIS_HOUSING = "Crisis Housing", _("Crisis Housing")
-    RECUPERATIVE_CARE = "Recuperative Care", _("Recuperative Care")
-    TRANSITIONAL_HOUSING = "Transitional Housing", _("Transitional Housing")
-    ROADMAP_HOME = "Roadmap Home", _("Roadmap Home")
     RAPID_REHOUSING = "Rapid Rehousing", _("Rapid Rehousing")
-    SOBER_LIVING = "Sober Living", _("Sober Living")
+    RECUPERATIVE_CARE = "Recuperative Care", _("Recuperative Care")
+    ROADMAP_HOME = "Roadmap Home", _("Roadmap Home")
     SAFE_PARK_LA = "Safe Park LA", _("Safe Park LA")
+    SOBER_LIVING = "Sober Living", _("Sober Living")
+    TINY_HOME_VILLAGE = "Tiny Home Village", _("Tiny Home Village")
+    TRANSITIONAL_HOUSING = "Transitional Housing", _("Transitional Housing")
+    WINTER_SHELTER = "Winter Shelter", _("Winter Shelter")
 
 
 class PopulationChoices(models.TextChoices):
     ADULTS = "Adults", _("Adults")
-    MEN = "Men", _("Men")
-    WOMEN = "Women", _("Women")
-    FAMILIES = "Families", _("Families")
-    YOUTH = "Youth (TAY)", _("Youth (TAY)")
     BOYS = "Boys", _("Boys")
+    FAMILIES = "Families", _("Families")
     GIRLS = "Girls", _("Girls")
+    HIV_AND_AIDS = "HIV/AIDS", _("HIV/AIDS")
+    LGBTQ = "LGBTQ", _("LGBTQ")
+    MEN = "Men", _("Men")
     SENIORS = "Seniors (55+)", _("Seniors (55+)")
     VETERANS = "Veterans", _("Veterans")
-    LGBTQ = "LGBTQ", _("LGBTQ")
-    HIV_AND_AIDS = "HIV/AIDS", _("HIV/AIDS")
+    WOMEN = "Women", _("Women")
+    YOUTH = "Youth (TAY)", _("Youth (TAY)")
 
 
-class ImmediateNeedChocies(models.TextChoices):
+class ImmediateNeedChoices(models.TextChoices):
+    CLOTHING = "Clothing", _("Clothing")
     FOOD = "Food", _("Food")
     SHOWERS = "Showers", _("Showers")
-    CLOTHING = "Clothing", _("Clothing")
 
 
 class GeneralServiceChoices(models.TextChoices):
-    MAIL = "Mail", _("Mail")
-    PHONE = "Phone", _("Phone")
+    CASE_MANAGEMENT = "Case Management", _("Case Management")
     COMPUTERS = "Computers", _("Computers")
     LEGAL_ASSISTANCE = "Legal Assistance", _("Legal Assistance")
-    TRANSPORTATION = "Transportation", _("Transportation")
-    CASE_MANAGEMENT = "Case Management", _("Case Management")
+    MAIL = "Mail", _("Mail")
     MONEY_MANAGEMENT = "Money Management", _("Money Management")
+    PHONE = "Phone", _("Phone")
+    TRANSPORTATION = "Transportation", _("Transportation")
 
 
 class HealthServiceChoices(models.TextChoices):
-    MEDICATION_MONITORING = "Medication Monitoring", _("Medication Monitoring")
-    MEDICATION_ADMINISTRATION = "Medication Administration", _("Medication Administration")
-    MENTAL_HEALTH = "Mental Health", _("Mental Health")
     DRUG_TREATMENT = "Drug Treatment", _("Drug Treatment")
+    MEDICATION_ADMINISTRATION = "Medication Administration", _("Medication Administration")
+    MEDICATION_MONITORING = "Medication Monitoring", _("Medication Monitoring")
+    MENTAL_HEALTH = "Mental Health", _("Mental Health")
 
 
 class CareerServiceChoices(models.TextChoices):
     JOB_TRAINING = "Job Training", _("Job Training")
-    TUTORING = "Tutoring", _("Tutoring")
     LIFE_SKILLS_TRAINING = "Life Skills Training", _("Life Skills Training")
+    TUTORING = "Tutoring", _("Tutoring")
 
 
 class FunderChoices(models.TextChoices):
-    LAHSA = "LAHSA", _("LAHSA")
-    DMH = "DMH", _("DMH")
     DHS = "DHS", _("DHS")
-    PRIVATE = "Private", _("Private")
+    DMH = "DMH", _("DMH")
     FEDERAL_FUNDING = "Federal Funding", _("Federal Funding")
     HOPWA = "HOPWA", _("HOPWA")
+    LAHSA = "LAHSA", _("LAHSA")
+    PRIVATE = "Private", _("Private")
 
 
 class AccessibilityChoices(models.TextChoices):
-    WHEELCHAIR_ACCESSIBLE = "Wheelchair Accessible", _("Wheelchair Accessible")
     MEDICAL_EQUIPMENT_PERMITTED = "Medical Equipment Permitted", _("Medical Equipment Permitted")
+    WHEELCHAIR_ACCESSIBLE = "Wheelchair Accessible", _("Wheelchair Accessible")
 
 
 class StorageChoices(models.TextChoices):
-    STORAGE = "Storage", _("Storage")
-    LOCKERS = "Lockers", _("Lockers")
     AMNESTY_LOCKERS = "Amnesty Lockers", _("Amnesty Lockers")
+    LOCKERS = "Lockers", _("Lockers")
+    STORAGE = "Storage", _("Storage")
 
 
 class ParkingChoices(models.TextChoices):
     AUTO_OR_SMALL_TRUCK = "Auto or Small Truck", _("Auto or Small Truck")
     BICYCLE = "Bicycle", _("Bicycle")
-    MOTOR_CYCLE = "Motor Cycle", _("Motor Cycle")
+    MOTORCYCLE = "Motorcycle", _("Motorcycle")
     RV = "RV", _("RV")
 
 
 # Restrictions
 class EntryRequirementChoices(models.TextChoices):
-    PHOTO_ID = "Photo ID", _("Photo ID")
     MEDICAID_OR_MEDICARE = "Medicaid or Medicare", _("Medicaid or Medicare")
-    RESERVATION = "Reservation", _("Reservation")
+    PHOTO_ID = "Photo ID", _("Photo ID")
     REFERRAL = "Referral", _("Referral")
+    RESERVATION = "Reservation", _("Reservation")
 
 
 class CityChoices(models.TextChoices):
@@ -108,8 +108,8 @@ class CityChoices(models.TextChoices):
     AZUSA = "Azusa", _("Azusa")
     BALDWIN_PARK = "Baldwin Park", _("Baldwin Park")
     BELL = "Bell", _("Bell")
-    BELL_GARDENS = "Bell Gardens", _("Bell Gardens")
     BELLFLOWER = "Bellflower", _("Bellflower")
+    BELL_GARDENS = "Bell Gardens", _("Bell Gardens")
     BEVERLY_HILLS = "Beverly Hills", _("Beverly Hills")
     BRADBURY = "Bradbury", _("Bradbury")
     BURBANK = "Burbank", _("Burbank")
@@ -191,20 +191,20 @@ class CityChoices(models.TextChoices):
 
 
 class PetChoices(models.TextChoices):
-    SERVICE_ANIMAL = "Service Animal", _("Service Animal")
     CATS = "Cats", _("Cats")
-    EMOTIONAL_SUPPORT = "Emotional Support", _("Emotional Support")
-    DOGS_UNDER_25_LBS = "Dogs <25lbs", _("Dogs <25lbs")
     DOGS_OVER_25_LBS = "Dogs >25lbs", _("Dogs >25lbs")
+    DOGS_UNDER_25_LBS = "Dogs <25lbs", _("Dogs <25lbs")
+    EMOTIONAL_SUPPORT = "Emotional Support", _("Emotional Support")
     EXOTICS = "Exotics", _("Exotics")
+    SERVICE_ANIMAL = "Service Animal", _("Service Animal")
 
 
 # Bed Information
-class SleepingChocies(models.TextChoices):
-    LOW_BARRIER = "Low Barrier", _("Low Barrier")
+class SleepingChoices(models.TextChoices):
     BED_LAYOUT_DESCRIPTION = "Bed Layout Description", _("Bed Layout Description")
     BUNK_BEDS = "Bunk beds", _("Bunk beds")
-    SHARED_ROOMS = "Shared Rooms", _("Shared Rooms")
     DORMITORY = "Dormitory", _("Dormitory")
+    LOW_BARRIER = "Low Barrier", _("Low Barrier")
     MOTEL = "Motel", _("Motel")
+    SHARED_ROOMS = "Shared Rooms", _("Shared Rooms")
     SINGLE_ROOM = "Single Room", _("Single Room")
