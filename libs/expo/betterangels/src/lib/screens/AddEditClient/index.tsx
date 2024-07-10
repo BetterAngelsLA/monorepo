@@ -142,9 +142,8 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
-    console.log(clientInput);
     methods.reset(clientInput);
-  }, [data]);
+  }, [data, id]);
 
   const props = {
     expanded,
