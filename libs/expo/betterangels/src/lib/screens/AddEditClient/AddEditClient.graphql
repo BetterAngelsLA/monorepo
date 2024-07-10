@@ -26,7 +26,6 @@ query GetClientProfile($id: ID!) {
       phoneNumber
       preferredLanguage
       pronouns
-      spokenLanguages
       veteranStatus
       user {
         id
