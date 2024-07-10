@@ -88,6 +88,7 @@ export default function Interactions() {
     if (offset === 0) {
       setNotes(notesToShow);
     } else {
+      console.log('offset', offset);
       setNotes((prevNotes) => {
         console.log(
           'prev',
@@ -105,12 +106,12 @@ export default function Interactions() {
     setHasMore(isMoreAvailable);
   }, [data]);
 
-  useEffect(() => {
-    console.log(
-      'note',
-      notes.map((note) => note.id)
-    );
-  }, [notes]);
+  // useEffect(() => {
+  //   console.log(
+  //     'note',
+  //     notes.map((note) => note.id)
+  //   );
+  // }, [notes]);
 
   if (error) throw new Error('Something went wrong!');
 
