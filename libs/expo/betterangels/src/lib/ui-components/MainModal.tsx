@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
@@ -82,7 +82,7 @@ export default function MainModal(props: IMainModalProps) {
             accessibilityLabel="close"
             onPress={closeModal}
           >
-            <XmarkIcon size="md" color={Colors.BLACK} />
+            <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
           </Pressable>
         )}
         <View style={styles.modalOverlay}>

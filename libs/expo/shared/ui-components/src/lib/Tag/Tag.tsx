@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
@@ -20,7 +20,7 @@ export function Tag(props: ITagProps) {
         onPress={onRemove}
         style={styles.icon}
       >
-        <XmarkIcon size="sm" color={Colors.NEUTRAL_DARK} />
+        <PlusIcon size="sm" color={Colors.NEUTRAL_DARK} rotate="45deg" />
       </Pressable>
     </View>
   );

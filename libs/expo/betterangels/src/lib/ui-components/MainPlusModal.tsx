@@ -1,7 +1,7 @@
 import {
   FilePlusIcon,
+  PlusIcon,
   UserAddIcon,
-  XmarkIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -53,7 +53,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
               },
             ]}
           >
-            <XmarkIcon color={Colors.WHITE} />
+            <PlusIcon color={Colors.WHITE} rotate="45deg" />
           </Pressable>
         </View>
       }
