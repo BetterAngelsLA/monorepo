@@ -12,7 +12,7 @@ import {
   LanguageEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
-import { enumDisplayLanguage } from '../../static/enumDisplayMaping';
+import { enumDisplayLanguage } from '../../static/enumDisplayMapping';
 
 interface ILanguageProps {
   expanded: undefined | string | null;

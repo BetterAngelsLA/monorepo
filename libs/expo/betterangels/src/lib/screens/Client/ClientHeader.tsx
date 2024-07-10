@@ -14,7 +14,7 @@ import { GenderEnum, LanguageEnum } from '../../apollo';
 import {
   enumDisplayGender,
   enumDisplayLanguage,
-} from '../../static/enumDisplayMaping';
+} from '../../static/enumDisplayMapping';
 
 interface IClientHeaderProps {
   firstName: string | null | undefined;

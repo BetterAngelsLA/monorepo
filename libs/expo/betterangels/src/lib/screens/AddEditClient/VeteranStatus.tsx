@@ -13,7 +13,7 @@ import {
   UpdateClientProfileInput,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
-import { enumDisplayVeteran } from '../../static/enumDisplayMaping';
+import { enumDisplayVeteran } from '../../static/enumDisplayMapping';
 
 interface IVeteranStatusProps {
   expanded: undefined | string | null;
