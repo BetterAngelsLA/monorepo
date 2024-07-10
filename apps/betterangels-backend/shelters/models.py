@@ -1,6 +1,5 @@
-from common.models import Attachment, BaseModel
+from common.models import Address, Attachment, BaseModel
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.gis.db.models import PointField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django_choices_field import TextChoicesField
@@ -24,17 +23,6 @@ from .enums import (
     SleepingChocies,
     StorageChoices,
 )
-
-
-class Location(BaseModel):
-    point = PointField(blank=True, null=True, geography=True)
-    address = models.CharField(max_length=255)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    zip_code = models.CharField(max_length=50, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return self.address
 
 
 # Advanced Info
@@ -140,7 +128,7 @@ class SleepingOption(models.Model):
 
 class Shelter(BaseModel):
     # Basic Information
-    title = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
     email = models.EmailField(max_length=254, null=True, blank=True)
     phone = PhoneNumberField()
@@ -152,8 +140,7 @@ class Shelter(BaseModel):
     mandatory_worship_attendance = models.BooleanField(null=True, blank=True)
 
     # Location Fields
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-    confidential = models.BooleanField(blank=True, null=True)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
 
     # Advanced Info
     shelter_types = models.ManyToManyField(ShelterType)
@@ -199,4 +186,4 @@ class Shelter(BaseModel):
     )
 
     def __str__(self) -> str:
-        return self.title
+        return self.name

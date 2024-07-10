@@ -2,7 +2,7 @@ from typing import Type, TypeVar, cast
 
 from common.admin import AttachmentInline, SingleAttachmentInline
 from common.managers import AttachmentQuerySet
-from common.models import Attachment
+from common.models import Address, Attachment
 from django import forms
 from django.contrib import admin
 from django.db import models
@@ -30,7 +30,6 @@ from .enums import (
     SleepingChocies,
     StorageChoices,
 )
-from .forms import LocationAdminForm
 from .models import (
     Accessibility,
     CareerService,
@@ -40,7 +39,6 @@ from .models import (
     GeneralService,
     HealthService,
     ImmediateNeed,
-    Location,
     Parking,
     Pet,
     Population,
@@ -48,10 +46,6 @@ from .models import (
     ShelterType,
     Storage,
 )
-
-
-class LocationAdmin(admin.ModelAdmin):
-    form = LocationAdminForm
 
 
 class HeroInine(SingleAttachmentInline):
@@ -100,6 +94,12 @@ T = TypeVar("T", bound=models.Model)
 
 
 class ShelterForm(forms.ModelForm):
+    # Location
+    street = forms.CharField(max_length=255, required=False)
+    city = forms.CharField(max_length=100, required=False)
+    state = forms.CharField(max_length=100, required=False)
+    zip_code = forms.CharField(max_length=50, required=False)
+
     # Advanced Info
     populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=False)
     shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
@@ -182,7 +182,7 @@ class ShelterAdmin(admin.ModelAdmin):
         (
             "Basic Information",
             {
-                "fields": ("title", "organization", "email", "phone", "website"),
+                "fields": ("name", "organization", "email", "phone", "website"),
             },
         ),
         (
@@ -191,12 +191,7 @@ class ShelterAdmin(admin.ModelAdmin):
         ),
         (
             "Location",
-            {
-                "fields": (
-                    "location",
-                    "confidential",
-                )
-            },
+            {"fields": ("address",)},
         ),
         (
             "Advanced Info",
@@ -232,9 +227,8 @@ class ShelterAdmin(admin.ModelAdmin):
         ("Visuals", {"fields": ()}),
     )
 
-    list_display = ("title",)
-    search_fields = ("title",)
+    list_display = ("name", "organization", "address", "phone", "email", "website")
+    search_fields = ("name", "organization__name")
 
 
-admin.site.register(Location, LocationAdmin)
 admin.site.register(Shelter, ShelterAdmin)

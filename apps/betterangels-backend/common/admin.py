@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from common.enums import AttachmentType
-from common.models import Attachment, Location
+from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
@@ -166,6 +166,10 @@ class SingleAttachmentInline(AttachmentInline):
         return 1
 
 
+class AddressAdmin(admin.ModelAdmin):
+    readonly_fields = ("address_components", "formatted_address")
+
+
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):
     list_display = (
         "formatted_address",
@@ -183,7 +187,6 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
     # display doesn't work well as is, and we'll probably want to replace it with google maps.
     exclude = ("point",)
     readonly_fields = (
-        "point_coords",
         "address",
         "point_of_interest",
         "notes",
@@ -197,5 +200,6 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
         return str(obj.address.formatted_address) if obj.address else ""
 
 
+admin.site.register(Address, AddressAdmin)
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Location, LocationAdmin)

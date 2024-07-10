@@ -119,6 +119,7 @@ class Address(BaseModel):
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=10, blank=True, null=True)
+    confidential = models.BooleanField(null=True, blank=True)
 
     address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)
