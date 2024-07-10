@@ -1,5 +1,5 @@
 import { useMutation } from '@apollo/client';
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { Image, View } from 'react-native';
@@ -73,7 +73,7 @@ export default function ImageComponent(props: IImageComponentProps) {
             accessibilityLabel="delete"
             accessibilityHint="deletes the image"
           >
-            <XmarkIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
+            <PlusIcon size="sm" rotate="45deg" />
           </IconButton>
         </View>
       )}
