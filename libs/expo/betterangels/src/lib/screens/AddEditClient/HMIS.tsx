@@ -24,7 +24,7 @@ export default function HMIS(props: IHMISProps) {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const isHMIS = expanded === 'HMIS ID#';
+  const isHmis = expanded === 'HMIS ID#';
   const hmisId = watch('hmisId');
 
   return (
@@ -32,11 +32,11 @@ export default function HMIS(props: IHMISProps) {
       scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
-        setExpanded(isHMIS ? null : 'HMIS ID#');
+        setExpanded(isHmis ? null : 'HMIS ID#');
       }}
       mb="xs"
       actionName={
-        !hmisId && !isHMIS ? (
+        !hmisId && !isHmis ? (
           <TextMedium size="sm">Add HMIS ID#</TextMedium>
         ) : (
           <TextMedium size="sm">{hmisId}</TextMedium>
@@ -47,7 +47,7 @@ export default function HMIS(props: IHMISProps) {
       <View
         style={{
           gap: Spacings.sm,
-          height: isHMIS ? 'auto' : 0,
+          height: isHmis ? 'auto' : 0,
           overflow: 'hidden',
         }}
       >
