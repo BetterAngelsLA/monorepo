@@ -1,10 +1,10 @@
 import { RefObject } from 'react';
 import { ScrollView } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
+import { UpdateClientProfileInput } from '../../apollo';
 
 interface ISocialSecurityProps {
-  client: CreateClientProfileInput;
-  setClient: (client: CreateClientProfileInput) => void;
+  client: UpdateClientProfileInput;
+  setClient: (client: UpdateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
