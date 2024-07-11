@@ -3,14 +3,13 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
-  NativeSyntheticEvent,
   Platform,
   Pressable,
   StyleProp,
   StyleSheet,
   Text,
   TextInput,
-  TextInputSubmitEditingEventData,
+  TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,7 +21,7 @@ type TRules = Omit<
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IInputProps {
+interface IInputProps extends TextInputProps {
   label?: string;
   control?: Control<any>;
   height?: 40 | 56 | 200;
@@ -39,11 +38,7 @@ interface IInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
-  placeholder?: string;
   icon?: ReactNode;
-  onSubmitEditing?:
-    | ((e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void)
-    | undefined;
 }
 
 export function Input(props: IInputProps) {
@@ -56,7 +51,6 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
-    placeholder,
     height = 56,
     mb,
     mt,
@@ -74,6 +68,7 @@ export function Input(props: IInputProps) {
       props.onBlur();
     }
   };
+
   return (
     <Controller
       control={control}
@@ -110,7 +105,6 @@ export function Input(props: IInputProps) {
           >
             {icon && icon}
             <TextInput
-              placeholder={placeholder}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
