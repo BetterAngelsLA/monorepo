@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
@@ -59,7 +59,7 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
           accessibilityLabel="close"
           onPress={closeModal}
         >
-          <XmarkIcon size="md" color={Colors.BLACK} />
+          <PlusIcon rotate="45deg" size="md" color={Colors.BLACK} />
         </Pressable>
 
         <View style={styles.modalOverlay}>
