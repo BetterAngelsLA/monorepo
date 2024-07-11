@@ -1,12 +1,9 @@
-from typing import Type, TypeVar, cast
+from typing import Type, TypeVar
 
-from common.admin import AttachmentInline
-from common.managers import AttachmentQuerySet
 from django import forms
 from django.contrib import admin
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
-from django.http import HttpRequest
 
 from .enums import (
     AccessibilityChoices,
@@ -24,7 +21,6 @@ from .enums import (
     SleepingChoices,
     StorageChoices,
 )
-from .forms import BaseAttachmentForm, HeroForm
 from .models import (
     Accessibility,
     CareerService,
@@ -42,35 +38,6 @@ from .models import (
     SleepingOption,
     Storage,
 )
-
-
-class HeroInine(AttachmentInline):
-    form = HeroForm
-    max_num = 1
-    verbose_name = "Hero Image"
-    verbose_name_plural = "Hero Image"
-
-    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        return cast(AttachmentQuerySet, super().get_queryset(request)).hero_image()
-
-
-class PhotoInline(AttachmentInline):
-    verbose_name = "Photo"
-    verbose_name_plural = "Photos"
-    form = BaseAttachmentForm
-
-    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        return cast(AttachmentQuerySet, super().get_queryset(request)).images().exclude(namespace="hero_image")
-
-
-class VideoInline(AttachmentInline):
-    verbose_name = "Video"
-    verbose_name_plural = "Videos"
-    form = BaseAttachmentForm
-
-    def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        return cast(AttachmentQuerySet, super().get_queryset(request)).videos()
-
 
 T = TypeVar("T", bound=models.Model)
 
@@ -149,13 +116,6 @@ class ShelterForm(forms.ModelForm):
 
 class ShelterAdmin(admin.ModelAdmin):
     form = ShelterForm
-    inlines = [
-        HeroInine,
-        PhotoInline,
-        VideoInline,
-    ]
-
-    change_form_template = "admin/shelter/change_form.html"
 
     fieldsets = (
         (
@@ -205,7 +165,6 @@ class ShelterAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Visuals", {"fields": ()}),
     )
 
     list_display = ("name", "organization", "address", "phone", "email", "website")
