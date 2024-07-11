@@ -1,4 +1,5 @@
 import { ApolloClient, InMemoryCache, from } from '@apollo/client';
+import { apiUrl } from '@monorepo/apps/betterangels/config';
 import {
   csrfLink,
   isReactNativeFileInstance,
@@ -6,8 +7,6 @@ import {
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
-// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
-import { apiUrl } from '../../config';
 
 // Function to conditionally set headers based on the platform
 const getHeaders = (): { [key: string]: string } | undefined => {

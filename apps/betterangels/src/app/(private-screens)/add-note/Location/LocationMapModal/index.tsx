@@ -1,3 +1,4 @@
+import { apiUrl } from '@monorepo/apps/betterangels/config';
 import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -22,8 +23,6 @@ import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
-import { apiUrl } from '../../../../../../config';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,

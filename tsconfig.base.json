@@ -16,6 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@monorepo/apps/betterangels/config": ["apps/betterangels/config.ts"],
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/apollo": ["libs/expo/shared/apollo/src/index.ts"],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
