@@ -2,11 +2,11 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
+import { UpdateClientProfileInput } from '../../apollo';
 
 interface IProfilePhotoProps {
-  client: CreateClientProfileInput;
-  setClient: (client: CreateClientProfileInput) => void;
+  client: UpdateClientProfileInput;
+  setClient: (client: UpdateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;

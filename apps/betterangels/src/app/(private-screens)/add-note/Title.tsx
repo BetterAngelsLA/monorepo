@@ -12,7 +12,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { format, parse, setHours, setMinutes } from 'date-fns';
+import { format, setHours, setMinutes } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -38,8 +38,8 @@ interface ITitleProps {
 
 type TNote = {
   title: string | undefined;
-  date: string;
-  time: string;
+  date: Date;
+  time: Date;
 };
 
 const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
@@ -60,15 +60,15 @@ export default function Title(props: ITitleProps) {
   >(UPDATE_NOTE);
   const [note, setNote] = useState<TNote>({
     title: noteTitle,
-    date: format(noteDate, 'MM/dd/yyyy'),
-    time: format(noteDate, 'HH:mm'),
+    date: noteDate,
+    time: noteDate,
   });
 
   const noteRef = useRef(note);
   const isTitle = expanded === 'Title';
 
   const updateNoteFunction = useRef(
-    debounce(async (key: 'time' | 'title' | 'date', value: string) => {
+    debounce(async (key: 'time' | 'title' | 'date', value: string | Date) => {
       if (!noteId || !value) return;
       const currentNote = noteRef.current;
       const dateValue = key === 'date' ? value : currentNote.date;
@@ -77,14 +77,20 @@ export default function Title(props: ITitleProps) {
 
       const updatingKey = key === 'title' ? 'title' : 'interactedAt';
       if (key === 'time' || key === 'date') {
-        const parsedDate = parse(dateValue, 'MM/dd/yyyy', new Date());
-        const [hours, minutes] = timeValue.split(':').map(Number);
-        const combinedDateTime = setMinutes(
-          setHours(parsedDate, hours),
-          minutes
-        );
+        if (timeValue instanceof Date && dateValue instanceof Date) {
+          const hours = timeValue.getHours();
+          const minutes = timeValue.getMinutes();
+          const combinedDateTime = setMinutes(
+            setHours(dateValue, hours),
+            minutes
+          );
 
-        updatingField = new Date(combinedDateTime).toISOString();
+          updatingField = new Date(combinedDateTime).toISOString();
+        } else {
+          throw new Error(
+            'Both timeValue and dateValue should be Date objects'
+          );
+        }
       }
 
       try {
@@ -102,7 +108,7 @@ export default function Title(props: ITitleProps) {
     }, 500)
   ).current;
 
-  const onChange = (key: 'title' | 'date' | 'time', value: string) => {
+  const onChange = (key: 'title' | 'date' | 'time', value: string | Date) => {
     if (!value) {
       setErrors({ ...errors, [key]: true });
     }
@@ -144,7 +150,8 @@ export default function Title(props: ITitleProps) {
           </TextMedium>
         </Pressable>
         <TextRegular size="xs" mb="md">
-          {note.date} {note?.time || ''}
+          {note.date ? format(note.date, 'MM/dd/yyyy') : ''}{' '}
+          {note.time ? format(note.time, 'HH:mm') : ''}
         </TextRegular>
       </View>
       <View
@@ -173,7 +180,8 @@ export default function Title(props: ITitleProps) {
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          onSave={(date) => onChange('date', date)}
+          value={new Date(note.date) || new Date()}
+          setValue={(date) => onChange('date', date)}
         />
         <DatePicker
           error={!!errors.time}
@@ -185,7 +193,8 @@ export default function Title(props: ITitleProps) {
           format="HH:mm"
           placeholder="HH:MM"
           mt="xs"
-          onSave={(time) => onChange('time', time)}
+          value={new Date(note.time) || new Date()}
+          setValue={(time) => onChange('time', time)}
         />
       </View>
     </View>
