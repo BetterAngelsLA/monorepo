@@ -62,6 +62,7 @@ export default function Name(props: INameProps) {
       >
         <Input
           placeholder="Enter First Name"
+          autoCorrect={false}
           required
           error={!!errors.user?.firstName}
           rules={{
@@ -73,18 +74,21 @@ export default function Name(props: INameProps) {
         />
         <Input
           placeholder="Enter Middle Name"
+          autoCorrect={false}
           label="Middle Name"
           name="user.middleName"
           control={control}
         />
         <Input
           placeholder="Enter Last Name"
+          autoCorrect={false}
           label="Last Name"
           name="user.lastName"
           control={control}
         />
         <Input
           placeholder="Enter Nickname"
+          autoCorrect={false}
           label="Nickname"
           name="nickname"
           control={control}
