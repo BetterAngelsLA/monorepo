@@ -1,11 +1,8 @@
-from common.enums import AttachmentType
 from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import FileField, Model
-from django.forms import FileInput
+from django.db.models import Model
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
