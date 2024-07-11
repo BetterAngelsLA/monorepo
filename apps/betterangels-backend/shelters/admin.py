@@ -1,18 +1,12 @@
-from typing import Type, TypeVar, cast
+from typing import Any, Optional, Type, TypeVar, cast
 
-from common.admin import AttachmentInline, SingleAttachmentInline
+from common.admin import AttachmentInline
 from common.managers import AttachmentQuerySet
 from common.models import Attachment
 from django import forms
 from django.contrib import admin
 from django.db import models
-from django.forms import (
-    CheckboxSelectMultiple,
-    ModelForm,
-    SelectMultiple,
-    TimeInput,
-    model_to_dict,
-)
+from django.forms import CheckboxSelectMultiple, ModelForm, SelectMultiple, TimeInput
 from django.http import HttpRequest
 
 from .enums import (
@@ -45,22 +39,24 @@ from .models import (
     Population,
     Shelter,
     ShelterType,
+    SleepingOption,
     Storage,
 )
 
 
-class HeroInine(SingleAttachmentInline):
+class HeroInine(AttachmentInline):
+    class HeroForm(ModelForm):
+        def __init__(self, instance: Optional[Attachment] = None, **kwargs: Any):
+            super().__init__(instance=instance, **kwargs)
+            self.instance.namespace = "hero_image"
+
+    form = HeroForm
+    max_num = 1
     verbose_name = "Hero Image"
     verbose_name_plural = "Hero Image"
 
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        qs = cast(AttachmentQuerySet, super().get_queryset(request))
-        return qs.hero_image()
-
-    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
-        instance = form.save(commit=False)
-        data = model_to_dict(instance, exclude=["id"])
-        return Attachment.hero_image.create(**data)
+        return cast(AttachmentQuerySet, super().get_queryset(request)).hero_image()
 
 
 class PhotoInline(AttachmentInline):
@@ -68,13 +64,7 @@ class PhotoInline(AttachmentInline):
     verbose_name_plural = "Photos"
 
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        qs = cast(AttachmentQuerySet, super().get_queryset(request)).exclude(namespace="hero_image")
-        return qs.images()
-
-    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
-        instance = form.save(commit=False)
-        data = model_to_dict(instance, exclude=["id"])
-        return Attachment.images.create(**data)
+        return cast(AttachmentQuerySet, super().get_queryset(request)).images().exclude(namespace="hero_image")
 
 
 class VideoInline(AttachmentInline):
@@ -84,11 +74,6 @@ class VideoInline(AttachmentInline):
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
         qs = cast(AttachmentQuerySet, super().get_queryset(request))
         return qs.videos()
-
-    def save_new(self, form: ModelForm, commit: bool = True) -> Attachment:
-        instance = form.save(commit=False)
-        data = model_to_dict(instance, exclude=["id"])
-        return Attachment.videos.create(**data)
 
 
 T = TypeVar("T", bound=models.Model)
@@ -151,6 +136,7 @@ class ShelterForm(forms.ModelForm):
             "entry_requirements": EntryRequirement,
             "cities": City,
             "pets": Pet,
+            "sleeping_options": SleepingOption,
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)

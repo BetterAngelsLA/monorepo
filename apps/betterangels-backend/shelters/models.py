@@ -184,9 +184,6 @@ class Shelter(BaseModel):
     sleeping_options = models.ManyToManyField(SleepingOption)
 
     # Visuals
-    hero_image = models.OneToOneField(
-        Attachment, null=True, blank=True, on_delete=models.SET_NULL, related_name="hero_image_shelter"
-    )
     attachments = GenericRelation(
         Attachment,
     )

@@ -61,7 +61,8 @@ class VideoAttachmentManager(BaseAttachmentManager):
 
 class HeroImageManager(BaseAttachmentManager):
     def get_queryset(self, request: Optional[HttpRequest] = None) -> AttachmentQuerySet:
-        return super().get_queryset(request).images().filter(namespace="hero_image")
+        qs = super().get_queryset(request)
+        return super().get_queryset(request).filter(attachment_type=AttachmentType.IMAGE).filter(namespace="hero_image")
 
     def create(self, **kwargs: Any) -> "Attachment":
         content_type = kwargs.get("content_type")

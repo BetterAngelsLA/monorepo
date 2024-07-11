@@ -1,27 +1,21 @@
-from typing import TYPE_CHECKING, Any, Optional, Union
-
 from common.enums import AttachmentType
 from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import FileField
+from django.db.models import FileField, Model
 from django.forms import FileInput
-from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
-if TYPE_CHECKING:
-    from notes.models import Note, Task
-
 
 class AttachmentAdminMixin:
-    def attachments(self, obj: Union["Note", "Task"]) -> SafeString:
+    def attachments(self, obj: Model) -> SafeString:
         attachments = Attachment.objects.filter(
             content_type=ContentType.objects.get_for_model(obj),
-            object_id=obj.id,
+            object_id=obj.pk,
         )
         attachment_links = [
             '<a href="{}">{}</a>'.format(
@@ -91,12 +85,10 @@ class AttachmentInline(GenericTabularInline):
     extra = 1
     fields = [
         "get_thumbnail",
-        # "original_filename",
         "file",
     ]
     readonly_fields = [
         "get_thumbnail",
-        # "original_filename",
     ]
 
     formfield_overrides = {
@@ -159,11 +151,6 @@ class AttachmentInline(GenericTabularInline):
                     mime_type,
                 )
         return "No file"
-
-
-class SingleAttachmentInline(AttachmentInline):
-    def get_max_num(self, request: HttpRequest, obj: Optional[Any] = None, **kwargs: Any) -> int:
-        return 1
 
 
 class AddressAdmin(admin.ModelAdmin):
