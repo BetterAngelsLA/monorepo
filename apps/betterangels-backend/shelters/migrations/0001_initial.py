@@ -3,36 +3,8 @@
 import django.contrib.gis.db.models.fields
 from django.db import migrations, models
 import django.db.models.deletion
-from django.utils.translation import gettext_lazy as _
 import django_choices_field.fields
 import shelters.enums
-
-
-class HowToEnterEnum(models.TextChoices):
-    CALL = "Call", _("Call")
-    REFERRAL = "Referral", _("Referral")
-    WALK_IN = "Walk-In", _("Walk-In")
-
-
-class ServiceEnum(models.TextChoices):
-    BLANKET = "blanket", _("Blanket")
-    BOOK = "book", _("Book")
-    CLOTHES = "clothes", _("Clothes")
-    DENTAL = "dental", _("Dental")
-    FOOD = "food", _("Food")
-    HARM_REDUCTION = "harm_reduction", _("Harm Reduction")
-    HYGIENE_KIT = "hygiene_kit", _("Hygiene Kit")
-    MEDICAL = "medical", _("Medical")
-    PET_CARE = "pet_care", _("Pet Care")
-    PET_FOOD = "pet_food", _("Pet Food")
-    SHELTER = "shelter", _("Shelter")
-    SHOES = "shoes", _("Shoes")
-    SHOWER = "shower", _("Shower")
-    STABILIZE = "stabilize", _("Stabilize")
-    STORAGE = "storage", _("Storage")
-    TRANSPORT = "transport", _("Transport")
-    WATER = "water", _("Water")
-    OTHER = "other", _("Other")
 
 
 class Migration(migrations.Migration):
@@ -191,7 +163,7 @@ class Migration(migrations.Migration):
                             ("Legal Assistance", "Legal Assistance"),
                             ("Transportation", "Transportation"),
                         ],
-                        choices_enum=ServiceEnum,
+                        choices_enum=shelters.enums.GeneralServiceChoices,
                         max_length=20,
                     ),
                 ),
@@ -302,7 +274,7 @@ class Migration(migrations.Migration):
                             ("Referral", "Referral"),
                             ("Walk-In", "Walk-In"),
                         ],
-                        choices_enum=HowToEnterEnum,
+                        choices_enum=shelters.enums.EntryRequirementChoices,
                         max_length=8,
                     ),
                 ),
