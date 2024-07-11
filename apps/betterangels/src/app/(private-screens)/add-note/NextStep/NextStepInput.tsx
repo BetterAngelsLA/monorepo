@@ -6,11 +6,7 @@ import {
   useUpdateTaskMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
-import {
-  BasicInput,
-  DatePicker,
-  TextBold,
-} from '@monorepo/expo/shared/ui-components';
+import { BasicInput, TextBold } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -169,7 +165,7 @@ export default function NextStepInput(props: INextStepProps) {
         value={task.action}
         onChangeText={(e) => onChange(e, 'action')}
       />
-      <DatePicker
+      {/* <DatePicker
         onSave={(e) => onChange(e, 'date')}
         disabled
         label="Date (optional)"
@@ -184,7 +180,7 @@ export default function NextStepInput(props: INextStepProps) {
         format="HH:mm"
         placeholder="HH:MM"
         mode="time"
-      />
+      /> */}
     </View>
   );
 }
