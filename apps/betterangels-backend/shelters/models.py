@@ -158,17 +158,23 @@ class Shelter(BaseModel):
     entry_requirements = models.ManyToManyField(EntryRequirement)
     cities = models.ManyToManyField(City)
     city_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(15)], null=True, blank=True
+        validators=[MinValueValidator(1), MaxValueValidator(15)],
+        null=True,
+        blank=True,
+        verbose_name="LA City Council District (1-15)",
     )
     supervisorial_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)], null=True, blank=True
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        null=True,
+        blank=True,
+        verbose_name="Supervisorial District (1-5)",
     )
     spa = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(8)], null=True, blank=True
+        validators=[MinValueValidator(1), MaxValueValidator(8)], null=True, blank=True, verbose_name="SPA (1-8)"
     )
     pets = models.ManyToManyField(Pet)
     curfew = models.TimeField(null=True, blank=True)
-    max_stay = models.PositiveIntegerField(blank=True, null=True)
+    max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
     drugs = models.BooleanField(null=True, blank=True)
     program_fees = models.BooleanField(null=True, blank=True)
 
