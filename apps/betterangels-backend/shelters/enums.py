@@ -201,7 +201,6 @@ class PetChoices(models.TextChoices):
 
 # Bed Information
 class SleepingChoices(models.TextChoices):
-    BED_LAYOUT_DESCRIPTION = "Bed Layout Description", _("Bed Layout Description")
     BUNK_BEDS = "Bunk beds", _("Bunk beds")
     DORMITORY = "Dormitory", _("Dormitory")
     LOW_BARRIER = "Low Barrier", _("Low Barrier")
