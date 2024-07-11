@@ -145,7 +145,7 @@ class Shelter(BaseModel):
     # Advanced Info
     shelter_types = models.ManyToManyField(ShelterType)
     populations = models.ManyToManyField(Population)
-    imeediate_needs = models.ManyToManyField(ImmediateNeed)
+    immediate_needs = models.ManyToManyField(ImmediateNeed)
     general_services = models.ManyToManyField(GeneralService)
     health_services = models.ManyToManyField(HealthService)
     career_services = models.ManyToManyField(CareerService)
