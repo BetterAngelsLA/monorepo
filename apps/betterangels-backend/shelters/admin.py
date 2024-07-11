@@ -27,6 +27,7 @@ from .enums import (
 )
 from .models import (
     Accessibility,
+    Attachment,
     CareerService,
     City,
     EntryRequirement,
@@ -44,11 +45,26 @@ from .models import (
 )
 
 
+class BaseAttachmentForm(ModelForm):
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.initial_file = self.instance.file if self.instance.pk else None
+
+    def save(self, commit: bool = True) -> Attachment:
+        new_attachment: Attachment = super().save(commit=commit)
+
+        # If there was an initial file and a new file has been uploaded
+        if self.initial_file and self.initial_file != new_attachment.file:
+            self.initial_file.delete(save=False)
+
+        return new_attachment
+
+
 class HeroInine(AttachmentInline):
-    class HeroForm(ModelForm):
-        def __init__(self, instance: Optional[Attachment] = None, **kwargs: Any):
-            super().__init__(instance=instance, **kwargs)
+    class HeroForm(BaseAttachmentForm):
+        def save(self, commit: bool = True) -> Attachment:
             self.instance.namespace = "hero_image"
+            return super().save(commit=commit)
 
     form = HeroForm
     max_num = 1
@@ -62,6 +78,7 @@ class HeroInine(AttachmentInline):
 class PhotoInline(AttachmentInline):
     verbose_name = "Photo"
     verbose_name_plural = "Photos"
+    form = BaseAttachmentForm
 
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
         return cast(AttachmentQuerySet, super().get_queryset(request)).images().exclude(namespace="hero_image")
@@ -70,6 +87,7 @@ class PhotoInline(AttachmentInline):
 class VideoInline(AttachmentInline):
     verbose_name = "Video"
     verbose_name_plural = "Videos"
+    form = BaseAttachmentForm
 
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
         return cast(AttachmentQuerySet, super().get_queryset(request)).videos()
