@@ -11,7 +11,7 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [],
+            "allow": ["@monorepo/**"],
             "depConstraints": [
               {
                 "sourceTag": "*",
