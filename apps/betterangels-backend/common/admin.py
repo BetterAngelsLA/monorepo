@@ -174,6 +174,7 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
     # display doesn't work well as is, and we'll probably want to replace it with google maps.
     exclude = ("point",)
     readonly_fields = (
+        "point_coords",
         "address",
         "point_of_interest",
         "notes",

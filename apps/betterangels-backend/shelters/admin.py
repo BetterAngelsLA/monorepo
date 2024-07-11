@@ -72,15 +72,14 @@ class VideoInline(AttachmentInline):
     verbose_name_plural = "Videos"
 
     def get_queryset(self, request: HttpRequest) -> AttachmentQuerySet:
-        qs = cast(AttachmentQuerySet, super().get_queryset(request))
-        return qs.videos()
+        return cast(AttachmentQuerySet, super().get_queryset(request)).videos()
 
 
 T = TypeVar("T", bound=models.Model)
 
 
 class ShelterForm(forms.ModelForm):
-    curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}))
+    curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
     # Advanced Info
     populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=True)
