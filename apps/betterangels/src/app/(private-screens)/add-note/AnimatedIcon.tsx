@@ -2,6 +2,8 @@ import { Colors } from '@monorepo/expo/shared/static';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 
+const IMAGE_SOURCE = '../../assets/images/transparent-logo.png';
+
 const AnimatedIcon = () => {
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -43,7 +45,7 @@ const AnimatedIcon = () => {
   return (
     <Animated.View style={[styles.container, { opacity: backgroundOpacity }]}>
       <Animated.Image
-        source={require('../../assets/images/transparent-logo.png')}
+        source={require(IMAGE_SOURCE)}
         style={[
           styles.image,
           {

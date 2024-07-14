@@ -6,6 +6,8 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimatedIcon from './AnimatedIcon';
 
+const IMAGE_SOURCE = '../../assets/images/transparent-logo.png';
+
 interface ISubmittedModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
@@ -68,7 +70,7 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
           </TextBold>
           <Image
             accessibilityIgnoresInvertColors
-            source={require('../../assets/images/transparent-logo.png')}
+            source={require(IMAGE_SOURCE)}
             style={{ width: 120, height: 115, marginTop: 67, marginBottom: 50 }}
           />
           <TextRegular textAlign="center" size="md">
