@@ -1,8 +1,11 @@
 import {
   MainScrollContainer,
+  NotesDocument,
+  Ordering,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
+  useUser,
   useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -67,6 +70,7 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
+  const { user } = useUser();
   const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
@@ -82,7 +86,18 @@ export default function AddNote() {
     nextFetchPolicy: 'cache-first',
   });
   const [updateNote, { error: updateError }] = useUpdateNoteMutation();
-  const [deleteNote] = useDeleteNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation({
+    refetchQueries: [
+      {
+        query: NotesDocument,
+        variables: {
+          pagination: { limit: 10 + 1, offset: 0 },
+          order: { interactedAt: Ordering.Desc },
+          filters: { createdBy: user?.id, search: '' },
+        },
+      },
+    ],
+  });
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
