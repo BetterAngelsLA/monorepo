@@ -27,7 +27,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   TextMedium,
-  TextRegular
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
