@@ -16,8 +16,6 @@ export type Scalars = {
   Date: { input: any; output: any; }
   /** Date with time (isoformat) */
   DateTime: { input: any; output: any; }
-  /** Decimal (fixed-point) */
-  Decimal: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
@@ -72,16 +70,6 @@ export type AuthInput = {
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
-};
-
-export type BedsType = {
-  __typename?: 'BedsType';
-  availableBeds?: Maybe<Scalars['Int']['output']>;
-  averageBedRate?: Maybe<Scalars['Decimal']['output']>;
-  bedLayoutDescription?: Maybe<Scalars['String']['output']>;
-  maxStay?: Maybe<Scalars['Int']['output']>;
-  privateBeds?: Maybe<Scalars['Int']['output']>;
-  totalBeds?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ClientProfileFilter = {
@@ -222,23 +210,12 @@ export type DeletedObjectType = {
   id: Scalars['Int']['output'];
 };
 
-export type DescriptionType = {
-  __typename?: 'DescriptionType';
-  description?: Maybe<Scalars['String']['output']>;
-  typicalStayDescription?: Maybe<Scalars['String']['output']>;
-};
-
 export type DjangoFileType = {
   __typename?: 'DjangoFileType';
   name: Scalars['String']['output'];
   path: Scalars['String']['output'];
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
-};
-
-export type DjangoModelType = {
-  __typename?: 'DjangoModelType';
-  pk: Scalars['ID']['output'];
 };
 
 export enum DueByGroupEnum {
@@ -671,8 +648,6 @@ export type Query = {
   notes: Array<NoteType>;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
-  shelter: ShelterType;
-  shelters: Array<ShelterType>;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -719,16 +694,6 @@ export type QueryServiceRequestArgs = {
 
 
 export type QueryServiceRequestsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryShelterArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QuerySheltersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -816,36 +781,6 @@ export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
   Requested = 'REQUESTED'
 }
-
-export type ShelterLocationType = {
-  __typename?: 'ShelterLocationType';
-  address?: Maybe<Scalars['String']['output']>;
-  city?: Maybe<Scalars['String']['output']>;
-  confidential?: Maybe<Scalars['Boolean']['output']>;
-  point?: Maybe<Scalars['Point']['output']>;
-  spa?: Maybe<Scalars['Int']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
-  zipCode?: Maybe<Scalars['String']['output']>;
-};
-
-export type ShelterType = {
-  __typename?: 'ShelterType';
-  beds: BedsType;
-  description: DescriptionType;
-  email?: Maybe<Scalars['String']['output']>;
-  funders: Array<Scalars['String']['output']>;
-  howToEnter: Array<DjangoModelType>;
-  id: Scalars['ID']['output'];
-  imageUrl?: Maybe<Scalars['String']['output']>;
-  location: ShelterLocationType;
-  organization: Scalars['String']['output'];
-  phone: Scalars['String']['output'];
-  populations: Array<Scalars['String']['output']>;
-  requirements: Array<Scalars['String']['output']>;
-  services: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  website?: Maybe<Scalars['String']['output']>;
-};
 
 export type SwitchType = {
   __typename?: 'SwitchType';
