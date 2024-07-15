@@ -110,7 +110,7 @@ export function BasicInput(props: IBasicInputProps) {
             onPress={onDelete}
             style={styles.icon}
           >
-            <PlusIcon size="xs" rotate="45deg" />
+            <PlusIcon size="sm" rotate="45deg" />
           </Pressable>
         )}
       </View>
@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: 16,
-    height: 16,
-    width: 16,
+    height: 24,
+    width: 24,
     backgroundColor: Colors.NEUTRAL_LIGHT,
     borderRadius: 100,
     alignItems: 'center',
