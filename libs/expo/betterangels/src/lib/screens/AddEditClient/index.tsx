@@ -203,7 +203,7 @@ export default function AddEditClient({ id }: { id?: string }) {
               onDelete={deleteClientFunction}
               button={
                 <Button
-                  accessibilityHint="deletes creation"
+                  accessibilityHint="deletes client"
                   title="Delete Client"
                   variant="negative"
                   size="full"
