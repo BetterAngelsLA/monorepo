@@ -76,6 +76,8 @@ export default function ContactInfo(props: IContactInfoProps) {
           required
           placeholder="Enter Email"
           label="Email"
+          autoCorrect={false}
+          autoCapitalize="none"
           error={!!errors['user']?.email}
           name="user.email"
           control={control}
