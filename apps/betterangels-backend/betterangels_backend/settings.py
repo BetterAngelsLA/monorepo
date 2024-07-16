@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
     "corsheaders",
+    "django_ckeditor_5",
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "django_structlog",
@@ -110,9 +111,10 @@ INSTALLED_APPS = [
     "post_office",
     "rest_framework",
     "organizations",
-    "strawberry_django",
+    "phonenumber_field",
     "pghistory",
     "pgtrigger",
+    "strawberry_django",
     "waffle",
     # Our Apps
     "accounts",
@@ -313,6 +315,10 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Media settings
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -439,6 +445,22 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar": "ba-sidebar sidebar-dark-primary",
 }
 
+# Markdown Settings
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading",
+            "|",
+            "bold",
+            "italic",
+            "link",
+            "bulletedList",
+            "numberedList",
+            "blockQuote",
+        ],
+    },
+}
+
 # Test Runner
 TEST_RUNNER = "betterangels_backend.runner.PytestTestRunner"
 
@@ -470,3 +492,6 @@ SESAME_ONE_TIME = env("SESAME_ONE_TIME")
 SESAME_SALT = env("SESAME_SALT")
 
 RUNSCRIPT_LOG_TO_STDOUT = True
+
+# Phonenumber Field
+PHONENUMBER_DEFAULT_REGION = "US"
