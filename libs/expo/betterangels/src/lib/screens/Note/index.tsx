@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
@@ -21,13 +21,19 @@ const hasServicesOrMoods = (note: ViewNoteQuery['note']) => {
   );
 };
 
-export default function Note({ id }: { id: string }) {
+export default function Note({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useViewNoteQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const { arrivedFrom } = useLocalSearchParams();
+
   const navigation = useNavigation();
   const router = useRouter();
 

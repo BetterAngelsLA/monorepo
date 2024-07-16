@@ -56,10 +56,20 @@ export default function Client({
           accessible
           accessibilityHint="goes to previous screen"
           onPress={() =>
-            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
+            arrivedFrom ? router.navigate(arrivedFrom) : router.navigate('/')
           }
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
+        </Pressable>
+      ),
+      headerRight: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessible
+          accessibilityHint="goes to previous screen"
+          onPress={() => router.navigate(`/edit-client/${id}`)}
+        >
+          <TextRegular color={Colors.WHITE}>Edit</TextRegular>
         </Pressable>
       ),
     });
