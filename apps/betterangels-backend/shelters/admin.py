@@ -146,14 +146,26 @@ class ShelterAdmin(admin.ModelAdmin):
                     "accessibility",
                     "storage",
                     "parking",
-                    "curfew",
-                    "max_stay",
                 )
             },
         ),
         (
             "Restrictions",
-            {"fields": ("entry_requirements", "cities", "city_district", "supervisorial_district", "spa", "pets")},
+            {
+                "fields": (
+                    "entry_requirements",
+                    "cities",
+                    "city_district",
+                    "supervisorial_district",
+                    "spa",
+                    "pets",
+                    "curfew",
+                    "max_stay",
+                    "security",
+                    "drugs",
+                    "program_fees",
+                )
+            },
         ),
         (
             "Beds",
