@@ -3,10 +3,10 @@ import {
   csrfLink,
   isReactNativeFileInstance,
 } from '@monorepo/expo/shared/apollo';
-import { apiUrl } from '@monorepo/expo/shared/utils';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
+import { apiUrl } from '../../config';
 
 // Function to conditionally set headers based on the platform
 const getHeaders = (): { [key: string]: string } | undefined => {

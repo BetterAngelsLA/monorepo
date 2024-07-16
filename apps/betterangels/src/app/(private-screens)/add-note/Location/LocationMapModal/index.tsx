@@ -6,7 +6,6 @@ import {
   IconButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { apiUrl } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
@@ -19,6 +18,7 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';

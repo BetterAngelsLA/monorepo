@@ -1,9 +1,9 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { apiUrl } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:

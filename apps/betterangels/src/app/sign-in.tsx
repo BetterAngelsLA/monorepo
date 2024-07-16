@@ -9,16 +9,16 @@ import { Platform } from 'react-native';
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Link } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import {
   googleClientId,
   isLoginFormEnabled,
   privacyPolicyUrl,
   redirectUri,
   termsOfServiceUrl,
-} from '@monorepo/expo/shared/utils';
-import { Link } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+} from '../../config';
 import Logo from './assets/images/logo.svg';
 
 export default function SignIn() {
