@@ -23,7 +23,7 @@
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
       ],
-      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"]
+      "@betterangels/*": ["apps/betterangels/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]
