@@ -1,5 +1,5 @@
-import { apiUrl } from '@monorepo/apps/betterangels/config';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { apiUrl } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';

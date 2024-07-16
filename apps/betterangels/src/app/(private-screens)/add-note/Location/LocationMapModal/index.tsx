@@ -1,4 +1,3 @@
-import { apiUrl } from '@monorepo/apps/betterangels/config';
 import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -7,6 +6,7 @@ import {
   IconButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { apiUrl } from '@monorepo/expo/shared/utils';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';

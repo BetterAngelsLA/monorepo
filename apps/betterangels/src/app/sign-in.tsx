@@ -6,16 +6,16 @@ import {
 } from '@monorepo/expo/betterangels';
 import { Platform } from 'react-native';
 
+import { useUser } from '@monorepo/expo/betterangels';
+import { Colors } from '@monorepo/expo/shared/static';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import {
   googleClientId,
   isLoginFormEnabled,
   privacyPolicyUrl,
   redirectUri,
   termsOfServiceUrl,
-} from '@monorepo/apps/betterangels/config';
-import { useUser } from '@monorepo/expo/betterangels';
-import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+} from '@monorepo/expo/shared/utils';
 import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
