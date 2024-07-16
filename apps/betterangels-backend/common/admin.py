@@ -1,22 +1,18 @@
-from typing import TYPE_CHECKING, Union
-
-from common.models import Attachment, Location
+from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Model
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
-if TYPE_CHECKING:
-    from notes.models import Note, Task
 
-
-class AttachmentAdminMixin(object):
-    def attachments(self, obj: Union["Note", "Task"]) -> SafeString:
+class AttachmentAdminMixin:
+    def attachments(self, obj: Model) -> SafeString:
         attachments = Attachment.objects.filter(
             content_type=ContentType.objects.get_for_model(obj),
-            object_id=obj.id,
+            object_id=obj.pk,
         )
         attachment_links = [
             '<a href="{}">{}</a>'.format(
@@ -28,7 +24,7 @@ class AttachmentAdminMixin(object):
         return format_html("<br>".join(attachment_links))
 
 
-class LocationNoteAdminMixin(object):
+class LocationNoteAdminMixin:
     def notes(self, obj: Location) -> SafeString:
         Note = apps.get_model("notes", "Note")
         notes = list(Note.objects.filter(location=obj))
@@ -43,7 +39,7 @@ class LocationNoteAdminMixin(object):
         return format_html("<br>".join(note_links))
 
 
-class LocationTaskAdminMixin(object):
+class LocationTaskAdminMixin:
     def tasks(self, obj: Location) -> SafeString:
         Task = apps.get_model("notes", "Task")
         tasks = list(Task.objects.filter(location=obj))
@@ -81,6 +77,10 @@ class AttachmentAdmin(admin.ModelAdmin):
         return str(obj)
 
 
+class AddressAdmin(admin.ModelAdmin):
+    readonly_fields = ("address_components", "formatted_address")
+
+
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):
     list_display = (
         "formatted_address",
@@ -112,5 +112,6 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
         return str(obj.address.formatted_address) if obj.address else ""
 
 
+admin.site.register(Address, AddressAdmin)
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Location, LocationAdmin)

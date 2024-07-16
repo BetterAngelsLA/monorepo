@@ -49,6 +49,7 @@ export function BasicInput(props: IBasicInputProps) {
     icon,
     value,
     onDelete,
+    autoCorrect = true,
     ...rest
   } = props;
 
@@ -98,6 +99,7 @@ export function BasicInput(props: IBasicInputProps) {
             }),
           }}
           editable={!disabled}
+          autoCorrect={autoCorrect}
           {...rest}
           value={value}
         />

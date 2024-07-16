@@ -113,13 +113,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             >
               <TextMedium size="lg">Active Clients</TextMedium>
               <TextButton
-              accessibilityHint="goes to all active clients list"
-              color={Colors.PRIMARY}
-              fontSize="sm"
-              regular={true}
-              title="All Clients"
-              onPress={() => router.navigate('/clients')}
-            />
+                accessibilityHint="goes to all active clients list"
+                color={Colors.PRIMARY}
+                fontSize="sm"
+                regular={true}
+                title="All Clients"
+                onPress={() => router.navigate('/clients')}
+              />
             </View>
             {!loading && clients.length < 1 && (
               <View
@@ -156,6 +156,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         renderItem={({ item: clientProfile }) =>
           clients ? (
             <ClientCard
+              arrivedFrom="/"
               id={clientProfile.id}
               onPress={() =>
                 createNoteFunction(

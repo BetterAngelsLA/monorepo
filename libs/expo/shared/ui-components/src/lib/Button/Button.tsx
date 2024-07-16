@@ -229,31 +229,31 @@ export function Button(props: IButtonProps) {
         onPress={onPress}
         testID={testID}
       >
-              <View style={styles.wrapper}>
-        {loading ? (
-          <Loading size="small" />
-        ) : (
-          <>
-            {icon && icon}
-            <Text
-              style={[
-                styles.text,
-                {
-                  color: disabled
-                    ? Colors.NEUTRAL_DARK
-                    : VARIANTS[variant].color,
-                  marginLeft: icon ? Spacings.xs : 0,
-                  fontFamily: 'Poppins-SemiBold',
-                  fontSize: FontSizes[fontSize].fontSize,
-                  lineHeight: FontSizes[fontSize].lineHeight,
-                },
-              ]}
-            >
-              {title}
-            </Text>
-          </>
-        )}
-      </View>
+        <View style={styles.wrapper}>
+          {loading ? (
+            <Loading size="small" />
+          ) : (
+            <>
+              {icon && icon}
+              <Text
+                style={[
+                  styles.text,
+                  {
+                    color: disabled
+                      ? Colors.NEUTRAL_DARK
+                      : VARIANTS[variant].color,
+                    marginLeft: icon ? Spacings.xs : 0,
+                    fontFamily: 'Poppins-SemiBold',
+                    fontSize: FontSizes[fontSize].fontSize,
+                    lineHeight: FontSizes[fontSize].lineHeight,
+                  },
+                ]}
+              >
+                {title}
+              </Text>
+            </>
+          )}
+        </View>
       </Pressable>
     </View>
   );

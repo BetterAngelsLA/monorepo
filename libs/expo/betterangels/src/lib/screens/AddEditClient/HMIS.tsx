@@ -51,7 +51,12 @@ export default function HMIS(props: IHMISProps) {
           overflow: 'hidden',
         }}
       >
-        <Input control={control} name="hmisId" placeholder="Enter HMIS ID#" />
+        <Input
+          control={control}
+          name="hmisId"
+          placeholder="Enter HMIS ID#"
+          autoCorrect={false}
+        />
       </View>
     </FieldCard>
   );

@@ -182,6 +182,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
           placeholder="Search Client Name"
+          autoCorrect={false}
           onChangeText={onChange}
           onDelete={() => {
             setSearch('');
@@ -227,6 +228,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
+                arrivedFrom="/clients"
                 select={select as string}
                 id={clientProfile.id}
                 onPress={() =>

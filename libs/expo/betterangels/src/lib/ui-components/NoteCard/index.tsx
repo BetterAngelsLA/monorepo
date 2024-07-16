@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
@@ -13,13 +13,18 @@ interface INoteCardProps {
 
 export default function NoteCard(props: INoteCardProps) {
   const { note } = props;
-
+  const pathname = usePathname();
   const router = useRouter();
 
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.navigate(`/note/${note.id}`)}
+      onPress={() =>
+        router.navigate({
+          pathname: `/note/${note.id}`,
+          params: { arrivedFrom: pathname },
+        })
+      }
       style={({ pressed }) => [
         styles.container,
         {
