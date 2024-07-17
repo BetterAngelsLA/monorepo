@@ -24,9 +24,11 @@ class ShelterChoices(models.TextChoices):
 class PopulationChoices(models.TextChoices):
     ADULTS = "Adults", _("Adults")
     BOYS = "Boys", _("Boys")
+    DOMESTIC_VIOLENCE = "Domestic Violence (DV/IPV)", _("Domestic Violence (DV/IPV)")
     FAMILIES = "Families", _("Families")
     GIRLS = "Girls", _("Girls")
     HIV_AND_AIDS = "HIV/AIDS", _("HIV/AIDS")
+    HUMAN_TRAFFICKING = "Human Trafficking", _("Human Trafficking")
     LGBTQ = "LGBTQ", _("LGBTQ")
     MEN = "Men", _("Men")
     SENIORS = "Seniors (55+)", _("Seniors (55+)")
@@ -43,7 +45,9 @@ class ImmediateNeedChoices(models.TextChoices):
 
 class GeneralServiceChoices(models.TextChoices):
     CASE_MANAGEMENT = "Case Management", _("Case Management")
+    CHILDCARE = "Childcare", _("Childcare")
     COMPUTERS = "Computers", _("Computers")
+    HOUSING_NAVIGATION = "Housing Navigation", _("Housing Navigation")
     LEGAL_ASSISTANCE = "Legal Assistance", _("Legal Assistance")
     MAIL = "Mail", _("Mail")
     MONEY_MANAGEMENT = "Money Management", _("Money Management")
@@ -134,6 +138,7 @@ class CityChoices(models.TextChoices):
     HAWTHORNE = "Hawthorne", _("Hawthorne")
     HERMOSA_BEACH = "Hermosa Beach", _("Hermosa Beach")
     HIDDEN_HILLS = "Hidden Hills", _("Hidden Hills")
+    HOLLYWOOD = "Hollywood", _("Hollywood")
     HUNTINGTON_PARK = "Huntington Park", _("Huntington Park")
     INDUSTRY = "Industry", _("Industry")
     INGLEWOOD = "Inglewood", _("Inglewood")
@@ -187,6 +192,7 @@ class CityChoices(models.TextChoices):
     WEST_COVINA = "West Covina", _("West Covina")
     WEST_HOLLYWOOD = "West Hollywood", _("West Hollywood")
     WESTLAKE_VILLAGE = "Westlake Village", _("Westlake Village")
+    WEST_LOS_ANGELES = "West Los Angeles", _("West Los Angeles")
     WHITTIER = "Whittier", _("Whittier")
 
 

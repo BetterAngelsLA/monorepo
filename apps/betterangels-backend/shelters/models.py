@@ -181,7 +181,7 @@ class Shelter(BaseModel):
 
     # Bed Information
     fees = CKEditor5Field(blank=True, null=True)
-    total_beds = models.PositiveIntegerField()
+    total_beds = models.PositiveIntegerField(blank=True, null=True)
     sleeping_options = models.ManyToManyField(SleepingOption)
 
     # Visuals
