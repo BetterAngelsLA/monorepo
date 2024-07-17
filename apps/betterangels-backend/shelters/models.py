@@ -175,6 +175,7 @@ class Shelter(BaseModel):
     pets = models.ManyToManyField(Pet)
     curfew = models.TimeField(null=True, blank=True)
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
+    security = models.BooleanField(null=True, blank=True)
     drugs = models.BooleanField(null=True, blank=True)
     program_fees = models.BooleanField(null=True, blank=True)
 

@@ -13,8 +13,7 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
@@ -68,9 +67,10 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
+  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
+    arrivedFrom: string;
   }>();
 
   if (!noteId) {
@@ -139,7 +139,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.replace('/interactions');
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
     }
