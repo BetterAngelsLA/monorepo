@@ -169,18 +169,19 @@ export function DatePicker(props: IDatePickerProps) {
             value={value}
           />
           {Platform.OS === 'ios' && (
-            <Button
-              mt="xs"
-              style={{ alignSelf: 'flex-end' }}
-              variant="primary"
-              size="sm"
-              height="sm"
-              accessibilityHint="save date"
-              onPress={() => {
-                setPicker(false);
-              }}
-              title="Done"
-            />
+            <View style={{ marginTop: Spacings.xs }}>
+              <Button
+                style={{ alignSelf: 'flex-end' }}
+                variant="primary"
+                size="sm"
+                height="sm"
+                accessibilityHint="save date"
+                onPress={() => {
+                  setPicker(false);
+                }}
+                title="Done"
+              />
+            </View>
           )}
         </View>
       )}
