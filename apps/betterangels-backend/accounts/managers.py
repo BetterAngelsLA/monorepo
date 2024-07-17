@@ -1,44 +1,25 @@
 import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
-from django.contrib.auth.base_user import BaseUserManager
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import UserManager as DjangoUserManager
+from django.core.exceptions import ObjectDoesNotExist
 
 if TYPE_CHECKING:
     from .models import User
 
 
-class UserManager(BaseUserManager["User"]):
-    def create_user(self, **extra_fields: Any) -> "User":
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        email = self.normalize_email(extra_fields.pop("email", None))
-        user = self.model(email=email, **extra_fields)
-        user.set_password(extra_fields.get("password"))
-        user.save(using=self._db)
-
-        return user
-
+class UserManager(DjangoUserManager):
     def create_client(self, **extra_fields: Any) -> "User":
-        random_id = uuid.uuid4()
-        client = self.create_user(username=random_id, **extra_fields)
+        client: "User" = self.create_user(username=str(uuid.uuid4()), **extra_fields)  # type: ignore[assignment]
         client.set_unusable_password()
 
         return client
 
-    def create_superuser(self, **extra_fields: Any) -> "User":
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError(_("Superuser must have is_staff=True."))
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError(_("Superuser must have is_superuser=True."))
-        return self.create_user(**extra_fields)
-
     def find_by_email(self, email: str) -> Optional["User"]:
         try:
-            return self.get(email__iexact=email)
-        except self.model.DoesNotExist:
+            user: "User" = self.get(email__iexact=email)  # type: ignore[assignment]
+
+            return user
+
+        except ObjectDoesNotExist:
             return None

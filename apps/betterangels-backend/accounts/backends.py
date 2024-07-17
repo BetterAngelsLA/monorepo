@@ -1,4 +1,5 @@
 import email.utils
+import uuid
 from typing import Any, Optional
 
 from django.conf import settings
@@ -29,7 +30,7 @@ class CustomInvitations(InvitationBackend):
         try:
             user = self.user_model.objects.get(email=email)
         except self.user_model.DoesNotExist:
-            user = self.user_model.objects.create(email=email)
+            user = self.user_model.objects.create(username=str(uuid.uuid4()), email=email)
             user.set_unusable_password()
             user.is_active = False
             user.save()

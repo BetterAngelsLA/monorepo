@@ -41,6 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
+        unique=True,
     )
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)

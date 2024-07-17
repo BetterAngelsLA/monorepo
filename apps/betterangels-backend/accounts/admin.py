@@ -25,10 +25,7 @@ class NotesByAdminMixin(object):
     def notes_by(self, obj: User) -> SafeString:
         notes = Note.objects.filter(created_by=obj)
         note_links = [
-            '<a href="{}">{}</a>'.format(
-                reverse("admin:notes_note_change", args=(note.id,)),
-                f"Note {note.id}: {note} (with {note.client.full_name if note.client else None} {note.interacted_at.date()})",
-            )
+            '<a href="{}">{}</a>'.format(reverse("admin:notes_note_change", args=(note.id,)), note.label_with_client)
             for note in notes
         ]
         return format_html("<br>".join(note_links))
@@ -39,8 +36,7 @@ class NotesForAdminMixin(object):
         notes = Note.objects.filter(client=obj)
         note_links = [
             '<a href="{}">{}</a>'.format(
-                reverse("admin:notes_note_change", args=(note.id,)),
-                f"Note {note.id}: {note} (by {note.created_by.full_name if note.created_by else None} {note.interacted_at.date()})",
+                reverse("admin:notes_note_change", args=(note.id,)), note.label_with_created_by
             )
             for note in notes
         ]
