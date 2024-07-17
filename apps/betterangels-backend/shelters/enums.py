@@ -47,19 +47,19 @@ class GeneralServiceChoices(models.TextChoices):
     CASE_MANAGEMENT = "Case Management", _("Case Management")
     CHILDCARE = "Childcare", _("Childcare")
     COMPUTERS = "Computers", _("Computers")
+    FINANCIAL_LITERACY_ASSISTANCE = "Financial Literacy/Assistance", _("Financial Literacy/Assistance")
     HOUSING_NAVIGATION = "Housing Navigation", _("Housing Navigation")
     LEGAL_ASSISTANCE = "Legal Assistance", _("Legal Assistance")
     MAIL = "Mail", _("Mail")
-    MONEY_MANAGEMENT = "Money Management", _("Money Management")
     PHONE = "Phone", _("Phone")
     TRANSPORTATION = "Transportation", _("Transportation")
 
 
 class HealthServiceChoices(models.TextChoices):
-    DRUG_TREATMENT = "Drug Treatment", _("Drug Treatment")
     MEDICATION_ADMINISTRATION = "Medication Administration", _("Medication Administration")
     MEDICATION_MONITORING = "Medication Monitoring", _("Medication Monitoring")
     MENTAL_HEALTH = "Mental Health", _("Mental Health")
+    SUBSTANCE_USE_TREATMENT = "Substance Use Treatment", _("Substance Use Treatment")
 
 
 class CareerServiceChoices(models.TextChoices):
