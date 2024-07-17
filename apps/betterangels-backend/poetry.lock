@@ -638,6 +638,20 @@ files = [
 Django = ">=3.2"
 
 [[package]]
+name = "django-formset"
+version = "1.5"
+description = "The missing widgets and form manipulation library for Django"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django_formset-1.5-py3-none-any.whl", hash = "sha256:41a8bd11ca82f8d0f4846f5bd3e45244f45b875788b97e86359bbc9c43af408e"},
+    {file = "django_formset-1.5.tar.gz", hash = "sha256:e9c6e412bdf916a9baf8bc2de783a5d982234519216783125305fba7d555e195"},
+]
+
+[package.dependencies]
+django = ">=4.0"
+
+[[package]]
 name = "django-guardian"
 version = "2.4.0"
 description = "Implementation of per object permissions for Django."
@@ -1867,4 +1881,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.2"
-content-hash = "a259a9b77b5b196eacb26fc8fd5dd455eb9026112ab21c50ea97969511fac706"
+content-hash = "1148e0cd174e3fac47684b2d700b00072db0be6a249527378850c8c4ac21308e"

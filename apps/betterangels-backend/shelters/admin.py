@@ -1,9 +1,12 @@
 from typing import Type, TypeVar
 
+from common.admin import AttachmentInline
 from django import forms
 from django.contrib import admin
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
+from django.http import HttpRequest
+from shelters.forms import HeroForm
 
 from .enums import (
     AccessibilityChoices,
@@ -114,9 +117,19 @@ class ShelterForm(forms.ModelForm):
         return entries
 
 
+class HeroInine(AttachmentInline):
+    form = HeroForm
+    max_num = 1
+    verbose_name = "Hero Image"
+    verbose_name_plural = "Hero Image"
+
+    # def get_queryset(self, request: HttpRequest:
+    #     return super().get_queryset(request)ero_image()
+
+
 class ShelterAdmin(admin.ModelAdmin):
     form = ShelterForm
-
+    inlines = [HeroInine]
     fieldsets = (
         (
             "Basic Information",

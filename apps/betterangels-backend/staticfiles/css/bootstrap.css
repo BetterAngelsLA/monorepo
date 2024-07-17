@@ -1,0 +1,39 @@
+@import "/static/node_modules/bootstrap/dist/css/bootstrap.min.css";
+@import "/static/node_modules/bootstrap-icons/font/bootstrap-icons.css";
+@import "/static/formset/css/collections.css";
+@import "/static/formset/css/bootstrap5-extra.css";
+
+.container {
+	margin-bottom: 250px;
+}
+
+django-form-collection[sibling-position] {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+django-form-collection[sibling-position]:not(:last-of-type) {
+	border-bottom: 1px dashed var(--bs-gray-400);
+}
+django-form-collection[sibling-position] > .remove-collection {
+	top: 0.25rem;
+}
+django-form-collection[sibling-position] > .collection-drag-handle ~ .remove-collection {
+	top: 0.375rem;
+}
+.collection-siblings {
+	border-bottom: 1px solid var(--bs-gray-400);
+	margin-bottom: -9px;
+}
+.add-collection {
+	margin-top: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+#id_some_date ~ .dj-calendar .monthdays > li {
+	display: flex;
+	flex-direction: column;
+}
+#id_some_date ~ .dj-calendar .monthdays > li > sub {
+	height: 1em;
+	bottom: 0;
+}
