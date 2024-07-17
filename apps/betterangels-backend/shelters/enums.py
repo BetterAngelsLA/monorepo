@@ -196,6 +196,17 @@ class CityChoices(models.TextChoices):
     WHITTIER = "Whittier", _("Whittier")
 
 
+class SPAChoices(models.IntegerChoices):
+    ONE = 1, _("1 - Antelope Valley")
+    TWO = 2, _("2 - San Fernando")
+    THREE = 3, _("3 - San Gabriel")
+    FOUR = 4, _("4 - Metro")
+    FIVE = 5, _("5 - West")
+    SIX = 6, _("6 - South")
+    SEVEN = 7, _("7 - East")
+    EIGHT = 8, _("8 - South Bay/Harbor")
+
+
 class PetChoices(models.TextChoices):
     CATS = "Cats", _("Cats")
     DOGS_OVER_25_LBS = "Dogs >25lbs", _("Dogs >25lbs")
