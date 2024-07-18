@@ -88,7 +88,7 @@ class ShelterForm(forms.ModelForm):
 
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
-        text_choice_fields_to_clean = {
+        fields_to_clean = {
             "populations": Population,
             "shelter_types": ShelterType,
             "immediate_needs": ImmediateNeed,
@@ -105,7 +105,7 @@ class ShelterForm(forms.ModelForm):
             "sleeping_options": SleepingOption,
             "spa": SPA,
         }
-        for field_name, model_class in text_choice_fields_to_clean.items():
+        for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
         return cleaned_data
