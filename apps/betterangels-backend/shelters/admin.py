@@ -19,9 +19,11 @@ from .enums import (
     PopulationChoices,
     ShelterChoices,
     SleepingChoices,
+    SPAChoices,
     StorageChoices,
 )
 from .models import (
+    SPA,
     Accessibility,
     CareerService,
     City,
@@ -72,6 +74,7 @@ class ShelterForm(forms.ModelForm):
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
+    spa = forms.MultipleChoiceField(choices=SPAChoices.choices, widget=SelectMultiple(), required=False)
     pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
 
     # Sleeping Information
@@ -100,12 +103,14 @@ class ShelterForm(forms.ModelForm):
             "cities": City,
             "pets": Pet,
             "sleeping_options": SleepingOption,
+            "spa": SPA,
         }
         for field_name, model_class in text_choice_fields_to_clean.items():
-            cleaned_data[field_name] = self._clean_text_choices(field_name, model_class)
+            cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+
         return cleaned_data
 
-    def _clean_text_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
+    def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
         choices: list[str] = self.cleaned_data.get(field_name, [])
 
         if not choices:
@@ -113,28 +118,10 @@ class ShelterForm(forms.ModelForm):
 
         # Retrieve existing objects and their names
         existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
-        existing_names = {obj.name for obj in existing_objects}
+        existing_entries = {str(obj.name.value) for obj in existing_objects}
 
         # Create missing objects
-        missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_names]
-        if missing_choices:
-            new_objects = model_class.objects.bulk_create(missing_choices)  # type: ignore[attr-defined]
-            existing_objects.extend(new_objects)
-
-        return existing_objects
-
-    def _clean_int_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
-        choices: list[str] = self.cleaned_data.get(field_name, [])
-
-        if not choices:
-            return []
-
-        # Retrieve existing objects and their names
-        existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
-        existing_names = {obj.name for obj in existing_objects}
-
-        # Create missing objects
-        missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_names]
+        missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_entries]
         if missing_choices:
             new_objects = model_class.objects.bulk_create(missing_choices)  # type: ignore[attr-defined]
             existing_objects.extend(new_objects)

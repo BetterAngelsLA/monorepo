@@ -113,10 +113,10 @@ class City(models.Model):
 
 
 class SPA(models.Model):
-    number = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
+    name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
-        return f"SPA {self.number}"
+        return str(self.name)
 
 
 class Pet(models.Model):
