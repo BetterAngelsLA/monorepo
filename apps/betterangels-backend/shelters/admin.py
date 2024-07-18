@@ -101,9 +101,9 @@ class ShelterForm(forms.ModelForm):
             "parking": Parking,
             "entry_requirements": EntryRequirement,
             "cities": City,
+            "spa": SPA,
             "pets": Pet,
             "sleeping_options": SleepingOption,
-            "spa": SPA,
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
