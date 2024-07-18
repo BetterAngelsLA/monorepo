@@ -74,7 +74,7 @@ class ShelterForm(forms.ModelForm):
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
-    spa = forms.MultipleChoiceField(choices=SPAChoices.choices, widget=SelectMultiple(), required=False)
+    spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
     pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
 
     # Sleeping Information
