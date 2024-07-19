@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
@@ -20,7 +20,7 @@ export default function Interactions({
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch, fetchMore } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
@@ -33,10 +33,18 @@ export default function Interactions({
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
+  const debounceLoadMoreInteractions = useMemo(
+    () =>
+      debounce(() => {
+        if (hasMore && !loading) {
+          loadMoreInteractions();
+        }
+      }, 400),
+    [hasMore, loading]
+  );
+
   function loadMoreInteractions() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
+    setOffset((prevOffset) => prevOffset + paginationLimit);
   }
 
   const debounceFetch = useMemo(
@@ -70,6 +78,18 @@ export default function Interactions({
 
     debounceFetch(e);
   };
+
+  useLayoutEffect(() => {
+    if (hasMore && !loading) {
+      fetchMore({
+        variables: {
+          pagination: { limit: paginationLimit + 1, offset: offset + 10 },
+          order: { interactedAt: Ordering.Desc },
+          filters: { client: userId, search: filterSearch },
+        },
+      });
+    }
+  }, [offset, hasMore, loading]);
 
   useEffect(() => {
     if (!data || !('notes' in data)) return;
@@ -115,7 +135,7 @@ export default function Interactions({
             </View>
           ) : null
         }
-        onEndReached={loadMoreInteractions}
+        onEndReached={debounceLoadMoreInteractions}
         onEndReachedThreshold={0.5}
       />
     </MainContainer>
