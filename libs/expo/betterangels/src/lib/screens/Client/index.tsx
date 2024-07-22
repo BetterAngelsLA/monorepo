@@ -63,14 +63,14 @@ export default function Client({
         />
       ),
       headerRight: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessible
-          accessibilityHint="goes to previous screen"
+        <TextButton
+          regular
+          color={Colors.WHITE}
+          fontSize="md"
+          accessibilityHint="goes to Edit screen"
+          title="Edit"
           onPress={() => router.navigate(`/edit-client/${id}`)}
-        >
-          <TextRegular color={Colors.WHITE}>Edit</TextRegular>
-        </Pressable>
+        />
       ),
     });
   }, []);
