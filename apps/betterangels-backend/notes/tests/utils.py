@@ -12,11 +12,11 @@ from test_utils.mixins import HasGraphQLProtocol
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._setup_note()
-        self._setup_note_tasks()
-        self._setup_location()
-        self.provided_services = baker.make(ServiceRequest, _quantity=2)
-        self.requested_services = baker.make(ServiceRequest, _quantity=2)
+        # self._setup_note()
+        # self._setup_note_tasks()
+        # self._setup_location()
+        # self.provided_services = baker.make(ServiceRequest, _quantity=2)
+        # self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note

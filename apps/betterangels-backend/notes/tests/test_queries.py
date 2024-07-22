@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-
+from django.db import connection, reset_queries
 import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from deepdiff import DeepDiff
@@ -363,6 +363,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         ],
     )
     def test_notes_query_pagination(self, notes_to_create: int, order_direction: str) -> None:
+        reset_queries()
         note_count = Note.objects.count()
         organization = organization_recipe.make()
         baker.make(Note, organization=organization, _quantity=notes_to_create)
@@ -372,18 +373,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         pagination_offset = 0
         more_to_load = True
 
-        pagination = {"limit": pagination_limit + 1, "offset": pagination_offset}
+        pagination = {"limit": pagination_limit, "offset": pagination_offset}
+        # pagination = {"limit": pagination_limit + 1, "offset": pagination_offset}
         order = {"interactedAt": order_direction}
         # filters = { "createdBy": user?.id, search: filterSearch },
 
         variables = {
+            # "order": order,
             "pagination": pagination,
-            "order": order,
         }
 
         query = """
-            query Notes($pagination: OffsetPaginationInput, $order: NoteOrder) {
-                notes(pagination: $pagination, order: $order) {
+            query Notes($order: NoteOrder, $pagination: OffsetPaginationInput) {
+                notes(order: $order, pagination: $pagination) {
                     id
                 }
             }
@@ -394,24 +396,26 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         notes: List[Note] = []
 
         while more_to_load:
-            response = self.execute_graphql(query, variables)
             from IPython import embed
 
             embed()
-            notes += response["data"]["notes"][:pagination_limit]
-            note_ids = [n["id"] for n in notes]
-            if len(note_ids) != len(set(note_ids)):
-                print("ughhhhhhhhhhhhh")
-            #     from IPython import embed
+            expected_query_count = 1
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self.execute_graphql(query, variables)
+                notes += response["data"]["notes"][:pagination_limit]
+                note_ids = [n["id"] for n in notes]
+                if len(note_ids) != len(set(note_ids)):
+                    print("ughhhhhhhhhhhhh")
+                #     from IPython import embed
 
-            #     embed()
-            # self.assertEqual(len(note_ids), Note.objects.count())
-            pagination["offset"] += pagination_limit
-            more_to_load = len(notes) < note_count + notes_to_create
+                #     embed()
+                # self.assertEqual(len(note_ids), Note.objects.count())
+                pagination["offset"] += pagination_limit
+                more_to_load = len(notes) < note_count + notes_to_create
 
-        from IPython import embed
+        # from IPython import embed
 
-        embed()
+        # embed()
 
         note_ids = [n["id"] for n in notes]
         self.assertEqual(len(note_ids), len(set(note_ids)))
