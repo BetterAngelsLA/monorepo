@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
@@ -114,7 +114,7 @@ export function IconButton(props: IIconButtonProps) {
           height: Height[height],
           width: Width[width],
           borderWidth: 1,
-          borderRadius: 8,
+          borderRadius: Radiuses.xs,
           backgroundColor: VARIANTS[variant].bg,
           borderColor: borderColor ? borderColor : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
