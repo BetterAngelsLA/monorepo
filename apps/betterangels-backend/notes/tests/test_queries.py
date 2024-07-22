@@ -1,9 +1,11 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import time_machine
+from accounts.tests.baker_recipes import organization_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+from model_bakery import baker
 from notes.enums import DueByGroupEnum, NoteNamespaceEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
@@ -11,7 +13,7 @@ from notes.tests.utils import (
     ServiceRequestGraphQLBaseTestCase,
     TaskGraphQLBaseTestCase,
 )
-from unittest_parametrize import parametrize
+from unittest_parametrize import param, parametrize
 
 
 @ignore_warnings(category=UserWarning)
@@ -351,6 +353,76 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]]
         )
+
+    @parametrize(
+        ("notes_to_create", "order_direction"),
+        [
+            (10, None),
+            (10, "DESC_NULLS_LAST"),
+            # (500, "interactedAt", "DESC"),
+        ],
+    )
+    def test_notes_query_pagination(self, notes_to_create: int, order_direction: str) -> None:
+        note_count = Note.objects.count()
+        organization = organization_recipe.make()
+        baker.make(Note, organization=organization, _quantity=notes_to_create)
+        self.assertEqual(Note.objects.count(), note_count + notes_to_create)
+
+        pagination_limit = 2
+        pagination_offset = 0
+        more_to_load = True
+
+        pagination = {"limit": pagination_limit + 1, "offset": pagination_offset}
+        order = {"interactedAt": order_direction}
+        # filters = { "createdBy": user?.id, search: filterSearch },
+
+        variables = {
+            "pagination": pagination,
+            "order": order,
+        }
+
+        query = """
+            query Notes($pagination: OffsetPaginationInput, $order: NoteOrder) {
+                notes(pagination: $pagination, order: $order) {
+                    id
+                }
+            }
+        """
+
+        # expected_query_count = 3
+
+        notes: List[Note] = []
+
+        while more_to_load:
+            response = self.execute_graphql(query, variables)
+            from IPython import embed
+
+            embed()
+            notes += response["data"]["notes"][:pagination_limit]
+            note_ids = [n["id"] for n in notes]
+            if len(note_ids) != len(set(note_ids)):
+                print("ughhhhhhhhhhhhh")
+            #     from IPython import embed
+
+            #     embed()
+            # self.assertEqual(len(note_ids), Note.objects.count())
+            pagination["offset"] += pagination_limit
+            more_to_load = len(notes) < note_count + notes_to_create
+
+        from IPython import embed
+
+        embed()
+
+        note_ids = [n["id"] for n in notes]
+        self.assertEqual(len(note_ids), len(set(note_ids)))
+        self.assertEqual(len(note_ids), Note.objects.count())
+
+        # with self.assertNumQueriesWithoutCache(expected_query_count):
+        #     from IPython import embed
+
+        #     embed()
+        #     response = self.execute_graphql(query, variables={"pagination": pagination})
+        #     notes = response["data"]["notes"]
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
