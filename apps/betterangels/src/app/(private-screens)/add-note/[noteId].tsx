@@ -13,8 +13,7 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
@@ -24,6 +23,7 @@ import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
+import SubmittedModal from './SubmittedModal';
 import Title from './Title';
 
 const renderModal = (
@@ -67,9 +67,10 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
+  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
+    arrivedFrom: string;
   }>();
 
   if (!noteId) {
@@ -91,6 +92,7 @@ export default function AddNote() {
     time: false,
   });
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
+  const [isSubmitted, setSubmitted] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const navigation = useNavigation();
 
@@ -105,8 +107,9 @@ export default function AddNote() {
             onRevert={revertNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="discards changes and reverts interaction to previous state"
                 title="Back"
               />
@@ -119,8 +122,9 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="deletes creation"
                 title="Back"
               />
@@ -137,7 +141,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.replace('/interactions');
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
     }
@@ -185,7 +189,11 @@ export default function AddNote() {
         console.error(`Failed to update interaction: ${updateError}`);
         return;
       }
-      router.replace('/');
+
+      if (revertBeforeTimestamp) {
+        return router.replace('/');
+      }
+      setSubmitted(true);
     } catch (err) {
       console.error(err);
     }
@@ -277,6 +285,15 @@ export default function AddNote() {
           )
         }
         onSubmit={submitNote}
+      />
+
+      <SubmittedModal
+        firstName={data.note.client?.firstName}
+        closeModal={() => {
+          setSubmitted(false);
+          router.navigate('/');
+        }}
+        isModalVisible={isSubmitted}
       />
     </View>
   );

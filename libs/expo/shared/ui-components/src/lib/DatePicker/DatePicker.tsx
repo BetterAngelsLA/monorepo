@@ -51,8 +51,9 @@ interface IDatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
-  onSave: (e: string) => void;
+  setValue: (e: Date) => void;
   initialDate?: Date;
+  value: Date;
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -75,24 +76,13 @@ export function DatePicker(props: IDatePickerProps) {
     placeholder,
     format = 'MM/dd/yyyy',
     pattern,
-    onSave,
+    setValue,
     initialDate,
+    value,
     ...rest
   } = props;
-  const [value, setValue] = useState('');
-  const [picker, setPicker] = useState(false);
-  const [pickerDate, setPickerDate] = useState(
-    initialDate ? new Date(initialDate) : new Date()
-  );
 
-  function setDate(onChange: (e: string) => void, date: Date | undefined) {
-    setPicker(false);
-    if (date) {
-      const formattedDate = dateFnsFormat(date, format);
-      onChange(formattedDate);
-      setValue(formattedDate);
-    }
-  }
+  const [picker, setPicker] = useState(false);
 
   return (
     <View
@@ -139,7 +129,7 @@ export function DatePicker(props: IDatePickerProps) {
               },
             }),
           }}
-          value={value}
+          value={dateFnsFormat(value, format)}
           editable={!disabled}
           {...rest}
         />
@@ -149,7 +139,6 @@ export function DatePicker(props: IDatePickerProps) {
           accessibilityLabel="open date picker"
           accessibilityHint="Opens the date picker to select a date"
           onPress={() => {
-            // value && setPicker(value);
             setPicker(true);
             Keyboard.dismiss();
           }}
@@ -171,8 +160,7 @@ export function DatePicker(props: IDatePickerProps) {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
               }
-              setPickerDate(date || new Date());
-              Platform.OS !== 'ios' && setDate(onSave, date);
+              setValue(date);
             }}
             style={{
               backgroundColor: Colors.WHITE,
@@ -183,7 +171,7 @@ export function DatePicker(props: IDatePickerProps) {
             mode={mode}
             minimumDate={minDate}
             maximumDate={maxDate}
-            value={pickerDate}
+            value={value}
           />
           {Platform.OS === 'ios' && (
             <Button
@@ -194,7 +182,7 @@ export function DatePicker(props: IDatePickerProps) {
               height="sm"
               accessibilityHint="save date"
               onPress={() => {
-                setDate(onSave, pickerDate);
+                setPicker(false);
               }}
               title="Done"
             />

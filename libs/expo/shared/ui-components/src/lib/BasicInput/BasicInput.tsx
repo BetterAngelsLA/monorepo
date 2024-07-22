@@ -1,4 +1,4 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
@@ -54,6 +54,7 @@ export function BasicInput(props: IBasicInputProps) {
     icon,
     value,
     onDelete,
+    autoCorrect = true,
     ...rest
   } = props;
 
@@ -103,6 +104,7 @@ export function BasicInput(props: IBasicInputProps) {
             }),
           }}
           editable={!disabled}
+          autoCorrect={autoCorrect}
           {...rest}
           value={value}
         />
@@ -115,7 +117,7 @@ export function BasicInput(props: IBasicInputProps) {
             onPress={onDelete}
             style={styles.icon}
           >
-            <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
+            <PlusIcon size="xs" rotate="45deg" />
           </Pressable>
         )}
       </View>

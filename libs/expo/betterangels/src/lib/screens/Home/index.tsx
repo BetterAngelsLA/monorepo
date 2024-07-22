@@ -156,6 +156,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         renderItem={({ item: clientProfile }) =>
           clients ? (
             <ClientCard
+              arrivedFrom="/"
               id={clientProfile.id}
               onPress={() =>
                 createNoteFunction(

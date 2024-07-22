@@ -69,15 +69,6 @@ type AuthResponse {
   status_code: String!
 }
 
-type BedsType {
-  totalBeds: Int
-  privateBeds: Int
-  availableBeds: Int
-  maxStay: Int
-  averageBedRate: Decimal
-  bedLayoutDescription: String
-}
-
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -198,9 +189,6 @@ scalar Date
 """Date with time (isoformat)"""
 scalar DateTime
 
-"""Decimal (fixed-point)"""
-scalar Decimal
-
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
@@ -223,20 +211,11 @@ type DeletedObjectType {
   id: Int!
 }
 
-type DescriptionType {
-  description: String
-  typicalStayDescription: String
-}
-
 type DjangoFileType {
   name: String!
   path: String!
   size: Int!
   url: String!
-}
-
-type DjangoModelType {
-  pk: ID!
 }
 
 enum DueByGroupEnum {
@@ -496,8 +475,6 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput): [ShelterType!]!
 }
 
 input RemoveNoteServiceRequestInput {
@@ -570,34 +547,6 @@ type ServiceRequestType {
 enum ServiceRequestTypeEnum {
   PROVIDED
   REQUESTED
-}
-
-type ShelterLocationType {
-  point: Point
-  spa: Int
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  confidential: Boolean
-}
-
-type ShelterType {
-  id: ID!
-  title: String!
-  imageUrl: String
-  howToEnter: [DjangoModelType!]!
-  email: String
-  phone: String!
-  website: String
-  services: [String!]!
-  populations: [String!]!
-  requirements: [String!]!
-  funders: [String!]!
-  location: ShelterLocationType!
-  organization: String!
-  description: DescriptionType!
-  beds: BedsType!
 }
 
 type SwitchType {

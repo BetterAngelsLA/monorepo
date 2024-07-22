@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, useState } from 'react';
+import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
+import { useNavigation, useRouter } from 'expo-router';
+import { ReactElement, useLayoutEffect, useState } from 'react';
 import { View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
@@ -34,9 +35,35 @@ const getTabComponent = (
   return <Component userId={userId} />;
 };
 
-export default function Client({ id }: { id: string }) {
+export default function Client({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Interactions');
+
+  const navigation = useNavigation();
+  const router = useRouter();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TextButton
+          regular
+          color={Colors.WHITE}
+          fontSize="md"
+          accessibilityHint="goes to previous screen"
+          title="Back"
+          onPress={() =>
+            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
+          }
+        />
+      ),
+    });
+  }, []);
 
   if (loading) {
     return (
