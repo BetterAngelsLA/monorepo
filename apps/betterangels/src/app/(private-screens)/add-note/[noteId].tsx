@@ -122,8 +122,9 @@ export default function AddNote() {
             onRevert={revertNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="discards changes and reverts interaction to previous state"
                 title="Back"
               />
@@ -136,8 +137,9 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="deletes creation"
                 title="Back"
               />

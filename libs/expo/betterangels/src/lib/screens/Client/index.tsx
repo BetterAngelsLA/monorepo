@@ -1,8 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { ReactElement, useLayoutEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientTabs from './ClientTabs';
@@ -51,16 +51,16 @@ export default function Client({
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <Pressable
-          accessibilityRole="button"
-          accessible
+        <TextButton
+          regular
+          color={Colors.WHITE}
+          fontSize="md"
           accessibilityHint="goes to previous screen"
+          title="Back"
           onPress={() =>
             arrivedFrom ? router.navigate(arrivedFrom) : router.back()
           }
-        >
-          <TextRegular color={Colors.WHITE}>Back</TextRegular>
-        </Pressable>
+        />
       ),
     });
   }, []);
