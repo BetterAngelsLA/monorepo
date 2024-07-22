@@ -1,5 +1,5 @@
 import { LocationDotIcon, TentIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
@@ -112,7 +112,7 @@ export function ClientCard(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',

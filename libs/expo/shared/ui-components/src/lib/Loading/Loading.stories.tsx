@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { Loading } from './Loading';
@@ -10,7 +11,7 @@ const ButtonMeta: ComponentMeta<typeof Loading> = {
   },
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: Spacings.sm }}>
         <Story />
       </View>
     ),

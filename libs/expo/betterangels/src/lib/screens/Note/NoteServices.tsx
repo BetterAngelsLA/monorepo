@@ -32,7 +32,7 @@ import {
   ToothbrushIcon,
   WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MoodEnum, ServiceEnum, ViewNoteQuery } from '../../apollo';
@@ -169,7 +169,7 @@ export default function NoteServices({
     <View
       style={{
         backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-        borderRadius: 4,
+        borderRadius: Radiuses.xxs,
         paddingHorizontal: Spacings.sm,
       }}
     >

@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { DatePicker } from './DatePicker';
@@ -8,8 +9,8 @@ const DatePickerMeta: ComponentMeta<typeof DatePicker> = {
   decorators: [
     (Story) => {
       return (
-        <View style={{ padding: 16 }}>
-          <View style={{ padding: 16 }}>
+        <View style={{ padding: Spacings.sm }}>
+          <View style={{ padding: Spacings.sm }}>
             <Story />
           </View>
         </View>

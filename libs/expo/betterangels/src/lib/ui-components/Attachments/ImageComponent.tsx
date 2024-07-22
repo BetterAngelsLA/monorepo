@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { Image, View } from 'react-native';
 import { DELETE_NOTE_ATTACHMENT } from '../../apollo';
@@ -59,7 +59,7 @@ export default function ImageComponent(props: IImageComponentProps) {
         <View
           style={{
             backgroundColor: Colors.WHITE,
-            borderRadius: 100,
+            borderRadius: Radiuses.xxxl,
             position: 'absolute',
             top: 5,
             right: 5,

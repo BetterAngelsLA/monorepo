@@ -1,5 +1,10 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   Platform,
@@ -90,7 +95,7 @@ export function BasicInput(props: IBasicInputProps) {
             paddingRight: onDelete ? 38 : Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
-            fontSize: 16,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -133,7 +138,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -154,17 +159,17 @@ const styles = StyleSheet.create({
   },
   pressable: {
     position: 'absolute',
-    right: 8,
-    height: 32,
-    width: 32,
+    right: Spacings.xs,
+    height: Spacings.lg,
+    width: Spacings.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    height: 16,
-    width: 16,
+    height: Spacings.sm,
+    width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
