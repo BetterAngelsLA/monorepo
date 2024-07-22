@@ -115,9 +115,11 @@ export function BasicInput(props: IBasicInputProps) {
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={styles.icon}
+            style={styles.pressable}
           >
-            <PlusIcon size="xs" rotate="45deg" />
+            <View style={styles.icon}>
+              <PlusIcon size="xs" rotate="45deg" />
+            </View>
           </Pressable>
         )}
       </View>
@@ -155,9 +157,15 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     color: 'red',
   },
-  icon: {
+  pressable: {
     position: 'absolute',
-    right: Spacings.sm,
+    right: Spacings.xs,
+    height: Spacings.lg,
+    width: Spacings.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
     height: Spacings.sm,
     width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
