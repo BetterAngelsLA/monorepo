@@ -61,17 +61,27 @@ class ClientProfileFilter:
         value: Optional[str],
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
-        if value:
-            return (
-                queryset.filter(
-                    Q(user__first_name__icontains=value)
-                    | Q(user__last_name__icontains=value)
-                    | Q(hmis_id__icontains=value)
-                ),
-                Q(),
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split(" ")
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(
+                Q(user__first_name__icontains=term)
+                | Q(user__last_name__icontains=term)
+                | Q(user__middle_name__icontains=term)
+                | Q(nickname__icontains=term)
+                | Q(hmis_id__icontains=term)
             )
 
-        return queryset, Q()
+            query &= q_search
+
+        return (
+            queryset.filter(query),
+            Q(),
+        )
 
 
 @strawberry.input
