@@ -536,7 +536,7 @@ input RemoveNoteTaskInput {
 union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
-  id: ID
+  id: ID!
   revertBeforeTimestamp: DateTime!
 }
 
@@ -630,7 +630,7 @@ input UpdateClientContactInput {
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
-  id: ID
+  id: ID!
 }
 
 input UpdateClientProfileInput {
@@ -644,7 +644,7 @@ input UpdateClientProfileInput {
   pronouns: String
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
-  id: ID
+  id: ID!
   user: UpdateUserInput
   contacts: [UpdateClientContactInput!]
 }
@@ -652,7 +652,7 @@ input UpdateClientProfileInput {
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 input UpdateNoteInput {
-  id: ID
+  id: ID!
   title: String
   location: ID
   publicDetails: String
@@ -662,7 +662,7 @@ input UpdateNoteInput {
 }
 
 input UpdateNoteLocationInput {
-  id: ID
+  id: ID!
   location: LocationInput!
 }
 
@@ -671,7 +671,7 @@ union UpdateNoteLocationPayload = NoteType | OperationInfo
 union UpdateNotePayload = NoteType | OperationInfo
 
 input UpdateServiceRequestInput {
-  id: ID
+  id: ID!
   customService: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
@@ -681,7 +681,7 @@ input UpdateServiceRequestInput {
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input UpdateTaskInput {
-  id: ID
+  id: ID!
   title: String
   location: ID
   status: TaskStatusEnum
@@ -690,7 +690,7 @@ input UpdateTaskInput {
 }
 
 input UpdateTaskLocationInput {
-  id: ID
+  id: ID!
   location: LocationInput!
 }
 
@@ -703,7 +703,7 @@ input UpdateUserInput {
   lastName: String
   middleName: String
   email: String
-  id: ID
+  id: ID!
 }
 
 scalar Upload

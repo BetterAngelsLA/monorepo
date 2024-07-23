@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
-from strawberry import Info, auto
+from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
 from .models import ClientContact, ClientProfile, User
@@ -82,7 +82,7 @@ class LoginInput:
 
 @strawberry_django.type(Organization)
 class OrganizationType:
-    id: auto
+    id: ID
     name: auto
 
 
@@ -96,7 +96,7 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    id: auto
+    id: ID
     username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
@@ -109,7 +109,7 @@ class CreateUserInput(UserBaseType):
 
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
-    id: auto
+    id: ID
 
 
 @strawberry_django.type(ClientProfile)
@@ -138,7 +138,7 @@ class ClientContactBaseType:
 
 @strawberry_django.type(ClientContact)
 class ClientContactType(ClientContactBaseType):
-    id: auto
+    id: ID
     client_profile: auto
 
 
@@ -149,12 +149,12 @@ class CreateClientContactInput(ClientContactBaseType):
 
 @strawberry_django.input(ClientContact, partial=True)
 class UpdateClientContactInput(ClientContactBaseType):
-    id: auto
+    id: ID
 
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
-    id: auto
+    id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
 
@@ -176,7 +176,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
-    id: auto
+    id: ID
     user: Optional[UpdateUserInput]
     contacts: Optional[List[UpdateClientContactInput]]
 
