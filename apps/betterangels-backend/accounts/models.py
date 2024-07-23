@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
 
 import pghistory
 from accounts.enums import (
@@ -13,6 +13,7 @@ from accounts.enums import (
 )
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -23,6 +24,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
+from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -129,6 +131,15 @@ class ClientProfile(models.Model):
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
+
+    @model_property
+    def age(self) -> Optional[int]:
+        if not self.date_of_birth:
+            return None
+
+        today = timezone.now().date()
+        age = relativedelta(today, self.date_of_birth).years
+        return age
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
