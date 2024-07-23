@@ -5,7 +5,6 @@ import strawberry
 import strawberry_django
 from accounts.enums import LanguageEnum
 from django.db.models import Max, Q, QuerySet
-from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
@@ -115,6 +114,7 @@ class UpdateUserInput(UserBaseType):
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
+    age: auto
     city_of_birth: auto
     date_of_birth: auto
     eye_color: auto
@@ -137,15 +137,6 @@ class ClientProfileBaseType:
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
-
-    @strawberry.field
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
-
-        today = timezone.now().date()
-        age = relativedelta(today, self.date_of_birth).years
-        return age
 
 
 @strawberry_django.input(ClientProfile, partial=True)
