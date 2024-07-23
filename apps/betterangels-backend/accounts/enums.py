@@ -13,7 +13,6 @@ class GenderEnum(models.TextChoices):
     MALE = "male", _("Male")
     FEMALE = "female", _("Female")
     NON_BINARY = "non_binary", _("Non-binary")
-    INTERSEX = "intersex", _("Intersex")
     OTHER = "other", _("Other")
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 

@@ -243,7 +243,6 @@ enum GenderEnum {
   MALE
   FEMALE
   NON_BINARY
-  INTERSEX
   OTHER
   PREFER_NOT_TO_SAY
 }
