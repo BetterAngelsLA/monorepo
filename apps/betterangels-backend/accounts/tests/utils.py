@@ -1,9 +1,13 @@
 from typing import Any, Dict
 
 from accounts.enums import (
+    EyeColorEnum,
     GenderEnum,
+    HairColorEnum,
     LanguageEnum,
+    MaritalStatusEnum,
     PronounEnum,
+    RaceEnum,
     YesNoPreferNotToSayEnum,
 )
 from common.tests.utils import GraphQLBaseTestCase
@@ -40,12 +44,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "cityOfBirth": "Los Angeles, CA",
                 "dateOfBirth": self.date_of_birth,
+                "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
+                "hairColor": HairColorEnum.BROWN.name,
+                "heightInInches": 66.0,
                 "hmisId": "A1B2C3",
+                "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
+                "physicalDescription": "A human",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
+                "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
@@ -57,12 +67,20 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "address": None,
                 "cityOfBirth": None,
                 "dateOfBirth": None,
+                "eyeColor": None,
                 "gender": None,
+                "hairColor": None,
+                "hairColor": None,
+                "heightInInches": None,
                 "hmisId": "A1B3C4",
+                "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
+                "physicalDescription": None,
                 "preferredLanguage": None,
                 "pronouns": None,
+                "pronouns": None,
+                "race": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }
