@@ -85,13 +85,20 @@ input ClientProfileOrder {
 
 type ClientProfileType {
   address: String
+  cityOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: String
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
@@ -101,13 +108,20 @@ type ClientProfileType {
 
 input CreateClientProfileInput {
   address: String
+  cityOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: String
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
@@ -227,6 +241,15 @@ enum DueByGroupEnum {
   NO_DUE_DATE
 }
 
+enum EyeColorEnum {
+  BLUE
+  BROWN
+  GREEN
+  GRAY
+  HAZEL
+  OTHER
+}
+
 type FeatureControlData {
   flags: [FlagType!]!
   switches: [SwitchType!]!
@@ -245,6 +268,17 @@ enum GenderEnum {
   NON_BINARY
   OTHER
   PREFER_NOT_TO_SAY
+}
+
+enum HairColorEnum {
+  BLACK
+  BLONDE
+  BROWN
+  GRAY
+  RED
+  WHITE
+  BALD
+  OTHER
 }
 
 """
@@ -293,6 +327,14 @@ input MagicLinkInput {
 
 type MagicLinkResponse {
   message: String!
+}
+
+enum MaritalStatusEnum {
+  DIVORCED
+  MARRIED
+  SEPARATED
+  SINGLE
+  WIDOWED
 }
 
 enum MoodEnum {
@@ -464,6 +506,13 @@ type OrganizationType {
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
+enum PronounEnum {
+  HE_HIM_HIS
+  SHE_HER_HERS
+  THEY_THEM_THEIRS
+  OTHER
+}
+
 type Query {
   currentUser: UserType!
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
@@ -477,6 +526,16 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+}
+
+enum RaceEnum {
+  AMERICAN_INDIAN_ALASKA_NATIVE
+  ASIAN
+  BLACK_AFRICAN_AMERICAN
+  HISPANIC_LATINO
+  NATIVE_HAWAIIAN_PACIFIC_ISLANDER
+  WHITE_CAUCASIAN
+  OTHER
 }
 
 input RemoveNoteServiceRequestInput {
@@ -585,13 +644,20 @@ enum TaskTypeEnum {
 
 input UpdateClientProfileInput {
   address: String
+  cityOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: String
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!

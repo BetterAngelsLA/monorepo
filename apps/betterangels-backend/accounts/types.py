@@ -4,8 +4,8 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import LanguageEnum
-from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
@@ -115,13 +115,20 @@ class UpdateUserInput(UserBaseType):
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
+    city_of_birth: auto
     date_of_birth: auto
+    eye_color: auto
     gender: auto
+    hair_color: auto
+    height_in_inches: auto
     hmis_id: auto
+    marital_status: auto
     nickname: auto
     phone_number: auto
+    physical_description: auto
     preferred_language: auto
     pronouns: auto
+    race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
