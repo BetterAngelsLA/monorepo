@@ -72,16 +72,14 @@ class MaritalStatusEnum(models.TextChoices):
 
 class RelationshipTypeEnum(models.TextChoices):
     AUNT = "aunt", _("Aunt")
-    BROTHER = "brother", _("Brother")
+    CHILD = "child", _("Child")
     COUSIN = "cousin", _("Cousin")
-    DAUGHTER = "daughter", _("Daughter")
     FATHER = "father", _("Father")
     FRIEND = "friend", _("Friend")
     GRANDPARENT = "grandparent", _("Grandparent")
     MOTHER = "mother", _("Mother")
     PET = "pet", _("Pet")
-    SISTER = "sister", _("Sister")
-    SON = "son", _("Son")
+    SIBLING = "sibling", _("Sibling")
     UNCLE = "uncle", _("Uncle")
     OTHER = "other", _("Other")
 
