@@ -8,10 +8,10 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
-from strawberry import ID, Info, auto
+from strawberry import Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, User
+from .models import ClientContact, ClientProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -126,10 +126,37 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
+@strawberry_django.type(ClientContact)
+class ClientContactBaseType:
+    name: auto
+    email: auto
+    phone_number: auto
+    mailing_address: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientContact)
+class ClientContactType(ClientContactBaseType):
+    id: auto
+    client_profile: auto
+
+
+@strawberry_django.input(ClientContact, partial=True)
+class CreateClientContactInput(ClientContactBaseType):
+    pass
+
+
+@strawberry_django.input(ClientContact, partial=True)
+class UpdateClientContactInput(ClientContactBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
+    contacts: Optional[List[ClientContactType]]
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -144,12 +171,14 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    contacts: Optional[List[CreateClientContactInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
-    id: ID
+    id: auto
     user: Optional[UpdateUserInput]
+    contacts: Optional[List[UpdateClientContactInput]]
 
 
 @strawberry.input

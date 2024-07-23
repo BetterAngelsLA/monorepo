@@ -69,6 +69,17 @@ type AuthResponse {
   status_code: String!
 }
 
+type ClientContactType {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID!
+  clientProfile: DjangoModelType!
+}
+
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -96,7 +107,17 @@ type ClientProfileType {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
+  contacts: [ClientContactType!]
   age: Int
+}
+
+input CreateClientContactInput {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
 }
 
 input CreateClientProfileInput {
@@ -111,6 +132,7 @@ input CreateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
+  contacts: [CreateClientContactInput!]
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -216,6 +238,10 @@ type DjangoFileType {
   path: String!
   size: Int!
   url: String!
+}
+
+type DjangoModelType {
+  pk: ID!
 }
 
 enum DueByGroupEnum {
@@ -479,6 +505,20 @@ type Query {
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
 
+enum RelationshipTypeEnum {
+  AUNT
+  CHILD
+  COUSIN
+  FATHER
+  FRIEND
+  GRANDPARENT
+  MOTHER
+  PET
+  SIBLING
+  UNCLE
+  OTHER
+}
+
 input RemoveNoteServiceRequestInput {
   serviceRequestId: ID!
   noteId: ID!
@@ -583,6 +623,16 @@ enum TaskTypeEnum {
   NEXT_STEP
 }
 
+input UpdateClientContactInput {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID
+}
+
 input UpdateClientProfileInput {
   address: String
   dateOfBirth: Date
@@ -594,8 +644,9 @@ input UpdateClientProfileInput {
   pronouns: String
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
-  id: ID!
+  id: ID
   user: UpdateUserInput
+  contacts: [UpdateClientContactInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
