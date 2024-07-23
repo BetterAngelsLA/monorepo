@@ -1,6 +1,15 @@
 from unittest.mock import ANY
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    EyeColorEnum,
+    GenderEnum,
+    HairColorEnum,
+    LanguageEnum,
+    MaritalStatusEnum,
+    PronounEnum,
+    RaceEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
@@ -77,13 +86,20 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "address": "1234 Main St",
+            "cityOfBirth": "Los Angeles",
             "dateOfBirth": self.date_of_birth,
+            "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 60.0,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "eerily cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": "she/her",
+            "pronouns": PronounEnum.SHE_HER_HERS.name,
+            "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
@@ -93,15 +109,22 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client = response["data"]["createClientProfile"]
         expected_client_profile = {
             "id": ANY,
-            "age": self.EXPECTED_CLIENT_AGE,
             "address": "1234 Main St",
+            "age": self.EXPECTED_CLIENT_AGE,
+            "cityOfBirth": "Los Angeles",
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 60.0,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "eerily cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": "she/her",
+            "pronouns": PronounEnum.SHE_HER_HERS.name,
+            "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {
@@ -120,12 +143,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
             "dateOfBirth": self.date_of_birth,
+            "cityOfBirth": "Los Angeles, CA",
+            "eyeColor": EyeColorEnum.GRAY.name,
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.GRAY.name,
+            "heightInInches": 60.5,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "normally cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": "she/her",
+            "pronouns": PronounEnum.THEY_THEM_THEIRS.name,
+            "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {
@@ -141,15 +171,22 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client = response["data"]["updateClientProfile"]
         expected_client_profile = {
             "id": self.client_profile_1["id"],
-            "age": self.EXPECTED_CLIENT_AGE,
             "address": "1234 Main St",
+            "age": self.EXPECTED_CLIENT_AGE,
+            "cityOfBirth": "Los Angeles, CA",
+            "eyeColor": EyeColorEnum.GRAY.name,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.GRAY.name,
+            "heightInInches": 60.5,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "normally cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": "she/her",
+            "pronouns": PronounEnum.THEY_THEM_THEIRS.name,
+            "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": {

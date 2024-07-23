@@ -1,6 +1,11 @@
 from typing import Any, Dict
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    GenderEnum,
+    LanguageEnum,
+    PronounEnum,
+    YesNoPreferNotToSayEnum,
+)
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -33,13 +38,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
+                "cityOfBirth": "Los Angeles, CA",
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
                 "hmisId": "A1B2C3",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
-                "pronouns": "he/him",
+                "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
@@ -49,6 +55,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_2_user,
                 "address": None,
+                "cityOfBirth": None,
                 "dateOfBirth": None,
                 "gender": None,
                 "hmisId": "A1B3C4",
@@ -85,13 +92,20 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         address
                         age
+                        cityOfBirth
                         dateOfBirth
+                        eyeColor
                         gender
+                        hairColor
+                        heightInInches
                         hmisId
+                        maritalStatus
                         nickname
                         phoneNumber
+                        physicalDescription
                         preferredLanguage
                         pronouns
+                        race
                         spokenLanguages
                         veteranStatus
                         user {{
