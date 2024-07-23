@@ -17,6 +17,37 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        self.client_profile_fields = """
+            id
+            address
+            age
+            dateOfBirth
+            gender
+            hmisId
+            nickname
+            phoneNumber
+            preferredLanguage
+            pronouns
+            spokenLanguages
+            veteranStatus
+            contacts {
+                id
+                name
+                email
+                phoneNumber
+                mailingAddress
+                relationshipToClient
+                relationshipToClientOther
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
+            }
+        """
+
         self._setup_clients()
 
     def _setup_clients(self) -> None:
@@ -109,34 +140,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }}
                     }}
                     ... on ClientProfileType {{
-                        id
-                        address
-                        age
-                        dateOfBirth
-                        gender
-                        hmisId
-                        nickname
-                        phoneNumber
-                        preferredLanguage
-                        pronouns
-                        spokenLanguages
-                        veteranStatus
-                        contacts {{
-                            id
-                            name
-                            email
-                            phoneNumber
-                            mailingAddress
-                            relationshipToClient
-                            relationshipToClientOther
-                        }}
-                        user {{
-                            id
-                            firstName
-                            lastName
-                            middleName
-                            email
-                        }}
+                        {self.client_profile_fields}
                     }}
                 }}
             }}
