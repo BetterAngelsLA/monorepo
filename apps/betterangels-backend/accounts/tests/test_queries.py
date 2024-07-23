@@ -2,7 +2,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    EyeColorEnum,
+    GenderEnum,
+    HairColorEnum,
+    LanguageEnum,
+    MaritalStatusEnum,
+    PronounEnum,
+    RaceEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -141,13 +150,20 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     id
                     address
                     age
+                    cityOfBirth
                     dateOfBirth
+                    eyeColor
                     gender
+                    hairColor
+                    heightInInches
                     hmisId
+                    maritalStatus
                     nickname
                     phoneNumber
+                    physicalDescription
                     preferredLanguage
                     pronouns
+                    race
                     spokenLanguages
                     veteranStatus
                     user {
@@ -180,13 +196,20 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
+            "cityOfBirth": self.client_profile_1["cityOfBirth"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 66.0,
             "hmisId": self.client_profile_1["hmisId"],
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
+            "physicalDescription": "A human",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": self.client_profile_1["pronouns"],
+            "pronouns": PronounEnum.HE_HIM_HIS.name,
+            "race": RaceEnum.WHITE_CAUCASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": expected_user,
@@ -201,12 +224,20 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     id
                     address
                     age
+                    cityOfBirth
                     dateOfBirth
+                    eyeColor
                     gender
+                    hairColor
+                    heightInInches
                     hmisId
+                    maritalStatus
+                    nickname
                     phoneNumber
+                    physicalDescription
                     preferredLanguage
                     pronouns
+                    race
                     spokenLanguages
                     veteranStatus
                     user {
