@@ -277,12 +277,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        self.organization = organization_recipe.make()
-        self.client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
-        self.client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+        organization = organization_recipe.make()
+        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
         # Make two notes for Client 1 (Chavez, inactive)
-        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
-        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
 
         query = """
             query ClientProfiles($isActive: Boolean, $search: String) {
@@ -297,11 +297,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             # Make two notes for Client 2 (Peanutbutter, active)
-            baker.make(Note, organization=self.organization, client=self.client_profile_2.user)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
             baker.make(
                 Note,
-                organization=self.organization,
-                client=self.client_profile_2.user,
+                organization=organization,
+                client=client_profile_2.user,
             )
 
             expected_query_count = 3

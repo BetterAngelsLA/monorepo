@@ -1,6 +1,12 @@
 from typing import Any, Dict
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    GenderEnum,
+    LanguageEnum,
+    PronounEnum,
+    RelationshipTypeEnum,
+    YesNoPreferNotToSayEnum,
+)
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -28,6 +34,26 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "middleName": "T",
             "email": "mister@pblivin.com",
         }
+        self.client_profile_1_contact_1 = {
+            "name": "Jerry",
+            "email": "jerry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "bestie",
+        }
+        self.client_profile_1_contact_2 = {
+            "name": "Gary",
+            "email": "gary@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_contacts = [
+            self.client_profile_1_contact_1,
+            self.client_profile_1_contact_2,
+        ]
 
         self.client_profile_1 = self._create_client_profile_fixture(
             {
@@ -39,9 +65,10 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
-                "pronouns": "he/him",
+                "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+                "contacts": self.client_1_contacts,
             }
         )["data"]["createClientProfile"]
 
@@ -94,6 +121,15 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         pronouns
                         spokenLanguages
                         veteranStatus
+                        contacts {{
+                            id
+                            name
+                            email
+                            phoneNumber
+                            mailingAddress
+                            relationshipToClient
+                            relationshipToClientOther
+                        }}
                         user {{
                             id
                             firstName

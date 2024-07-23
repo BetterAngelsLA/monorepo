@@ -1,8 +1,8 @@
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import ClientProfile, User
+from accounts.models import ClientContact, ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -73,22 +73,39 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-            client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user") or {}
-
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
 
-            client = User.objects.create_client(**user_data)
+            client_profile_data: dict = strawberry.asdict(data)
+            user_data = client_profile_data.pop("user", {})
+            contacts_data = client_profile_data.pop("contacts", [])
+
+            client_user = User.objects.create_client(**user_data)
 
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
                 {
                     **client_profile_data,
-                    "user": client,
+                    "user": client_user,
                 },
             )
+
+            if contacts_data:
+                contacts_to_create = [
+                    ClientContact(
+                        client_profile=client_profile,
+                        name=contact.get("name", None),
+                        email=contact.get("email", None),
+                        phone_number=contact.get("phone_number", None),
+                        mailing_address=contact.get("mailing_address", None),
+                        relationship_to_client=contact.get("relationship_to_client", None),
+                        relationship_to_client_other=contact.get("relationship_to_client_other", None),
+                    )
+                    for contact in contacts_data
+                ]
+
+                ClientContact.objects.bulk_create(contacts_to_create)
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -110,21 +127,42 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.id)
-                client = client_profile.user
+                client_user = client_profile.user
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user") or {}
+            user_data = client_profile_data.pop("user", {})
+            contacts_data = client_profile_data.pop("contacts", [])
 
-            client = resolvers.update(
+            client_user = resolvers.update(
                 info,
-                client,
+                client_user,
                 {
                     **user_data,
                     "id": client_profile.user.id,
                 },
             )
+
+            if contacts_data:
+                contact_ids = [contact.get("id") for contact in contacts_data if contact.get("id")]
+                contacts_to_update = ClientContact.objects.filter(id__in=contact_ids, client_profile=client_profile)
+
+                contact_updates = {
+                    contact.get("id"): {k: v for k, v in contact.items() if k != "id"}
+                    for contact in contacts_data
+                    if contact.get("id")
+                }
+
+                for contact in contacts_to_update:
+                    updates: Dict[str, Any] = contact_updates[str(contact.id)]
+                    for field, value in updates.items():
+                        setattr(contact, field, value)
+
+                    ClientContact.objects.bulk_update(
+                        contacts_to_update, fields=list(next(iter(contact_updates.values())).keys())
+                    )
+
             client_profile = resolvers.update(
                 info,
                 client_profile,
