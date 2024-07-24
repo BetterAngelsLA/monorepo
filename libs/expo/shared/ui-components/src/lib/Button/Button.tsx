@@ -125,7 +125,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IButtonProps {
   title: string;
-  size: 'sm' | 'full' | 'auto';
+  size?: 'sm' | 'full' | 'auto';
   onPress?: () => void;
   variant:
     | 'primary'
@@ -160,7 +160,7 @@ export function Button(props: IButtonProps) {
   const {
     onPress,
     title,
-    size,
+    size = 'auto',
     align = 'center',
     variant,
     disabled,

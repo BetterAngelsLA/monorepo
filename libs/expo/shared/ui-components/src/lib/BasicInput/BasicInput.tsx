@@ -1,5 +1,10 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
   Platform,
@@ -90,7 +95,7 @@ export function BasicInput(props: IBasicInputProps) {
             paddingRight: onDelete ? 38 : Spacings.sm,
             flex: 1,
             fontFamily: 'Poppins-Regular',
-            fontSize: 16,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -110,9 +115,11 @@ export function BasicInput(props: IBasicInputProps) {
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={styles.icon}
+            style={styles.pressable}
           >
-            <PlusIcon size="xs" rotate="45deg" />
+            <View style={styles.icon}>
+              <PlusIcon size="xs" rotate="45deg" />
+            </View>
           </Pressable>
         )}
       </View>
@@ -131,7 +138,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -150,13 +157,19 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     color: 'red',
   },
-  icon: {
+  pressable: {
     position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
+    right: Spacings.xs,
+    height: Spacings.lg,
+    width: Spacings.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    height: Spacings.sm,
+    width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },
