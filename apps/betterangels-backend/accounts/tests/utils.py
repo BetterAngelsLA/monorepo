@@ -112,6 +112,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dateOfBirth
                         gender
                         hmisId
+                        hmisProfiles {{
+                            id
+                            hmisId
+                            agency
+                        }}
                         nickname
                         phoneNumber
                         preferredLanguage

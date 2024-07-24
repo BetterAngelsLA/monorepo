@@ -157,6 +157,7 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)

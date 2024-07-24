@@ -1,6 +1,11 @@
 from unittest.mock import ANY
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    GenderEnum,
+    HmisAgencyEnum,
+    LanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
@@ -74,12 +79,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
         }
+        client_profile_hmis_profile = {
+            "hmisId": "12345678",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        expected_hmis_profile = {**client_profile_hmis_profile, "id": ANY}
 
         variables = {
             "address": "1234 Main St",
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
+            "hmisProfiles": [client_profile_hmis_profile],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -98,6 +109,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
+            "hmisProfiles": [expected_hmis_profile],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
