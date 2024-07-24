@@ -92,20 +92,15 @@ class Mutation:
             )
 
             if contacts_data:
-                contacts_to_create = [
-                    ClientContact(
-                        client_profile=client_profile,
-                        name=contact.get("name", None),
-                        email=contact.get("email", None),
-                        phone_number=contact.get("phone_number", None),
-                        mailing_address=contact.get("mailing_address", None),
-                        relationship_to_client=contact.get("relationship_to_client", None),
-                        relationship_to_client_other=contact.get("relationship_to_client_other", None),
+                for contact in contacts_data:
+                    resolvers.create(
+                        info,
+                        ClientContact,
+                        {
+                            **contact,
+                            "client_profile": client_profile,
+                        },
                     )
-                    for contact in contacts_data
-                ]
-
-                ClientContact.objects.bulk_create(contacts_to_create)
 
             permissions = [
                 ClientProfilePermissions.VIEW,
