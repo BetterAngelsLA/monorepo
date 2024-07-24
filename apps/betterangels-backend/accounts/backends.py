@@ -32,6 +32,7 @@ class CustomInvitations(InvitationBackend):
         except self.user_model.DoesNotExist:
             user = self.user_model.objects.create(username=str(uuid.uuid4()), email=email)
             user.set_unusable_password()
+            # TODO: DEV-554 - Fix the issue that turning the user to inactive disables social login
             user.is_active = False
             user.save()
 

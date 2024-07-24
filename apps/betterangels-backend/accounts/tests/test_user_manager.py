@@ -50,7 +50,7 @@ class UserManagerTestCase(TestCase):
             )
 
     def test_create_superuser_without_email(self) -> None:
-        admin_user = User.objects.create_superuser(username="superuser", password="foo")
+        admin_user = User.objects.create_superuser(username="superuser", email="", password="foo")
         self.assertEqual(admin_user.username, "superuser")
         self.assertTrue(admin_user.is_active)
         self.assertTrue(admin_user.is_staff)

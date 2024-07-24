@@ -80,14 +80,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
-        return f"{self.full_name} ({self.pk})"
+        return f"{self.pk} - {self.full_name}"
 
     @model_property
     def full_name(self: "User") -> str:
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
-        display_name = " ".join(name_parts).strip()
-
-        return display_name
+        return " ".join(name_parts).strip()
 
     @model_property
     def is_outreach_authorized(self: "User") -> bool:
