@@ -1,8 +1,8 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 export default function PrivateLayout() {
   const { user, isLoading } = useUser();
@@ -47,14 +47,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -67,14 +67,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -87,14 +87,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -107,14 +107,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -127,14 +127,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -147,14 +147,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -167,14 +167,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -187,14 +187,14 @@ export default function PrivateLayout() {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
           headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessible
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
               accessibilityHint="goes to previous screen"
+              title="Back"
               onPress={router.back}
-            >
-              <TextRegular color={Colors.WHITE}>Back</TextRegular>
-            </Pressable>
+            />
           ),
         }}
       />

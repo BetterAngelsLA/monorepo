@@ -1,5 +1,5 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -64,8 +64,8 @@ export default function MainModal(props: IMainModalProps) {
     >
       <View
         style={{
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
+          borderTopLeftRadius: Radiuses.xs,
+          borderTopRightRadius: Radiuses.xs,
           paddingTop: topOffset + Spacings.xs,
           paddingHorizontal: Spacings.md,
           paddingBottom: 35 + bottomOffset,
@@ -109,7 +109,7 @@ export default function MainModal(props: IMainModalProps) {
                     backgroundColor: pressed
                       ? Colors.NEUTRAL_EXTRA_LIGHT
                       : Colors.WHITE,
-                    borderRadius: 8,
+                    borderRadius: Radiuses.xs,
                     paddingHorizontal: Spacings.sm,
                     paddingVertical: Spacings.sm,
                   }}
@@ -117,8 +117,8 @@ export default function MainModal(props: IMainModalProps) {
                   <View
                     style={{
                       marginRight: Spacings.sm,
-                      height: 40,
-                      width: 40,
+                      height: Spacings.xl,
+                      width: Spacings.xl,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
