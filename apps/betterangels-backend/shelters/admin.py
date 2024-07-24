@@ -19,9 +19,11 @@ from .enums import (
     PopulationChoices,
     ShelterChoices,
     SleepingChoices,
+    SPAChoices,
     StorageChoices,
 )
 from .models import (
+    SPA,
     Accessibility,
     CareerService,
     City,
@@ -72,6 +74,7 @@ class ShelterForm(forms.ModelForm):
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
+    spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
     pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
 
     # Sleeping Information
@@ -98,20 +101,32 @@ class ShelterForm(forms.ModelForm):
             "parking": Parking,
             "entry_requirements": EntryRequirement,
             "cities": City,
+            "spa": SPA,
             "pets": Pet,
             "sleeping_options": SleepingOption,
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+
         return cleaned_data
 
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
         choices: list[str] = self.cleaned_data.get(field_name, [])
-        entries: list[T] = []
-        for choice in choices:
-            obj, _ = model_class.objects.get_or_create(name=choice)  # type: ignore[attr-defined]
-            entries.append(obj)
-        return entries
+
+        if not choices:
+            return []
+
+        # Retrieve existing objects and their names
+        existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
+        existing_entries = {obj.name for obj in existing_objects}
+
+        # Create missing objects
+        missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_entries]
+        if missing_choices:
+            new_objects = model_class.objects.bulk_create(missing_choices)  # type: ignore[attr-defined]
+            existing_objects.extend(new_objects)
+
+        return existing_objects
 
 
 class ShelterAdmin(admin.ModelAdmin):
