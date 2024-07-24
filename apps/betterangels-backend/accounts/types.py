@@ -80,6 +80,18 @@ class LoginInput:
     password: str
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType:
+    id: auto
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.input(HmisProfile)
+class HmisProfileInput(HmisProfileType):
+    pass
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
     id: auto
@@ -126,28 +138,11 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(HmisProfile)
-class HmisProfileBaseType:
-    hmis_id: auto
-    agency: auto
-
-
-@strawberry_django.type(HmisProfile)
-class HmisProfileType(HmisProfileBaseType):
-    id: auto
-
-
-@strawberry_django.type(HmisProfile)
-class HmisProfileInput(HmisProfileBaseType):
-    id: auto
-    hmis_id: auto
-    agency: auto
-
-
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
+    hmis_profiles: List[HmisProfileType]
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -168,6 +163,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry.input

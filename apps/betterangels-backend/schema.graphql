@@ -96,6 +96,7 @@ type ClientProfileType {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
+  hmisProfiles: [HmisProfileType!]!
   age: Int
 }
 
@@ -245,6 +246,26 @@ enum GenderEnum {
   NON_BINARY
   OTHER
   PREFER_NOT_TO_SAY
+}
+
+enum HmisAgencyEnum {
+  LAHSA
+  SANTA_MONICA
+  PASADENA
+  CHAMP
+  VASH
+}
+
+input HmisProfileInput {
+  id: ID
+  hmisId: String!
+  agency: HmisAgencyEnum!
+}
+
+type HmisProfileType {
+  id: ID!
+  hmisId: String!
+  agency: HmisAgencyEnum!
 }
 
 """
@@ -596,6 +617,7 @@ input UpdateClientProfileInput {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
+  hmisProfiles: [HmisProfileInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
