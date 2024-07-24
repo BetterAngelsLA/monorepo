@@ -18,12 +18,11 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
-import { apiUrl } from '../../../../../../config';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,

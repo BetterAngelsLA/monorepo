@@ -3,7 +3,6 @@ import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-// DEV-445 - Implement Import Aliases to Replace Long Relative Paths
 import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {
