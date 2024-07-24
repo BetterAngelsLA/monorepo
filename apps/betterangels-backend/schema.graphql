@@ -112,6 +112,7 @@ input CreateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
+  hmisProfiles: [HmisProfileInput!]
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
