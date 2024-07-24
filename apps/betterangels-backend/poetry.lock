@@ -1634,19 +1634,19 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.46.2"
+version = "0.47.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "strawberry_graphql_django-0.46.2-py3-none-any.whl", hash = "sha256:f0870e9467db403aa36a98011a163e1ae220e8122f359ff11ea4d4ebe04b4afb"},
-    {file = "strawberry_graphql_django-0.46.2.tar.gz", hash = "sha256:1d7ec5066f002716a419b1384bc5e7b77ef4cdd463068e6cd0f65145471e049a"},
+    {file = "strawberry_graphql_django-0.47.1-py3-none-any.whl", hash = "sha256:9afef91933c6b7a87b80a61b6634a278086f8880b3fbc0d2aa56f78747043cbc"},
+    {file = "strawberry_graphql_django-0.47.1.tar.gz", hash = "sha256:864c3f41de741639ce1b33107ee16ccd400167d5d0bc4e1fe01b1f3f556e127e"},
 ]
 
 [package.dependencies]
 asgiref = ">=3.8"
 django = ">=3.2"
-strawberry-graphql = ">=0.235.1"
+strawberry-graphql = ">=0.236.0"
 
 [package.extras]
 debug-toolbar = ["django-debug-toolbar (>=3.4)"]
@@ -1862,4 +1862,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.2"
-content-hash = "0750c967745084e7e1811e1c7206c7c5ce9650c7cbeeb19b2746120052752b2e"
+content-hash = "e41237ef1b62fd282f1fe5c5814bbe59cdad9b0c6f76d0d4474b19ca9dd75a11"
