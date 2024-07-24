@@ -1,7 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 
 import pghistory
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    GenderEnum,
+    HmisAgencyEnum,
+    LanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
 from django.contrib.auth.models import (
@@ -103,6 +108,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         ).exists()
 
 
+class HmisProfile(models.Model):
+    client_profile = models.OneToOneField("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profile")
+    hmis_id = models.CharField(max_length=50)
+    agency = TextChoicesField(choices_enum=HmisAgencyEnum)
+
+
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
@@ -115,6 +126,10 @@ class ClientProfile(models.Model):
     pronouns = models.CharField(max_length=50, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
+
+    @model_property
+    def hmis_profiles(self: "ClientProfile") -> models.QuerySet[HmisProfile]:
+        return HmisProfile.objects.filter(client_profile=self)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

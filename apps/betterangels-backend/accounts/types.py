@@ -11,7 +11,7 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, User
+from .models import ClientProfile, HmisProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -124,6 +124,24 @@ class ClientProfileBaseType:
     pronouns: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
+
+
+@strawberry_django.type(HmisProfile)
+class HmisProfileBaseType:
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.type(HmisProfile)
+class HmisProfileType(HmisProfileBaseType):
+    id: auto
+
+
+@strawberry_django.type(HmisProfile)
+class HmisProfileInput(HmisProfileBaseType):
+    id: auto
+    hmis_id: auto
+    agency: auto
 
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
