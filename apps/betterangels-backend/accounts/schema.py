@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, cast
+from typing import List, cast
 
 import strawberry
 import strawberry_django
@@ -145,22 +145,27 @@ class Mutation:
             )
 
             if contacts_data:
-                contact_ids = [contact.get("id") for contact in contacts_data if contact.get("id")]
-                contacts_to_update = ClientContact.objects.filter(id__in=contact_ids, client_profile=client_profile)
+                contact_updates_by_id = {c["id"]: c for c in contacts_data if c.get("id")}
+                contacts_to_create = [c for c in contacts_data if not c.get("id")]
+                contacts_to_update = ClientContact.objects.filter(
+                    id__in=contact_updates_by_id.keys(), client_profile=client_profile
+                )
 
-                contact_updates = {
-                    contact.get("id"): {k: v for k, v in contact.items() if k != "id"}
-                    for contact in contacts_data
-                    if contact.get("id")
-                }
+                for contact in contacts_to_create:
+                    resolvers.create(
+                        info,
+                        ClientContact,
+                        {
+                            **contact,
+                            "client_profile": client_profile,
+                        },
+                    )
 
                 for contact in contacts_to_update:
-                    updates: Dict[str, Any] = contact_updates[str(contact.id)]
-                    for field, value in updates.items():
-                        setattr(contact, field, value)
-
-                    ClientContact.objects.bulk_update(
-                        contacts_to_update, fields=list(next(iter(contact_updates.values())).keys())
+                    resolvers.update(
+                        info,
+                        contact,
+                        contact_updates_by_id[str(contact.id)],
                     )
 
             client_profile = resolvers.update(

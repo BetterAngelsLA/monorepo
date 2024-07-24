@@ -136,14 +136,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_update_client_profile_mutation(self) -> None:
-        expected_client_profile_user = {
+        client_profile_user = {
             "id": self.client_profile_1["user"]["id"],
             "firstName": "Firstey",
             "lastName": "Lastey",
             "middleName": "Middley",
             "email": "firstey_lastey@example.com",
         }
-        expected_client_profile_contact_1 = {
+        client_profile_contact_1 = {
             "id": self.client_profile_1["contacts"][0]["id"],
             "name": "Jerryyy",
             "email": "jerryyy@example.co",
@@ -152,7 +152,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "bff",
         }
-        expected_client_profile_contact_2 = {
+        client_profile_contact_2 = {
             "id": self.client_profile_1["contacts"][1]["id"],
             "name": "Garyyy",
             "email": "garyyy@example.co",
@@ -161,9 +161,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.PET.name,
             "relationshipToClientOther": None,
         }
-        expected_client_contacts = [
-            expected_client_profile_contact_1,
-            expected_client_profile_contact_2,
+        # Make sure we can add a new contact while updating existing contacts
+        client_profile_contact_3 = {
+            "name": "New guy",
+            "email": "new_guy@example.co",
+            "phoneNumber": "3475551212",
+            "mailingAddress": "1236 Main Street",
+            "relationshipToClient": RelationshipTypeEnum.UNCLE.name,
+            "relationshipToClientOther": None,
+        }
+        client_contacts = [
+            client_profile_contact_1,
+            client_profile_contact_2,
+            client_profile_contact_3,
         ]
 
         variables = {
@@ -178,18 +188,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
-            "contacts": expected_client_contacts,
-            "user": expected_client_profile_user,
+            "contacts": client_contacts,
+            "user": client_profile_user,
         }
         response = self._update_client_profile_fixture(variables)
         client = response["data"]["updateClientProfile"]
 
+        client_profile_contact_3["id"] = ANY
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting dob
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "age": self.EXPECTED_CLIENT_AGE,
         }
-
         self.assertEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:

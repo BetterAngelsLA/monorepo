@@ -149,7 +149,7 @@ class CreateClientContactInput(ClientContactBaseType):
 
 @strawberry_django.input(ClientContact, partial=True)
 class UpdateClientContactInput(ClientContactBaseType):
-    id: ID
+    id: auto
 
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]

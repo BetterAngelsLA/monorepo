@@ -630,7 +630,7 @@ input UpdateClientContactInput {
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
-  id: ID!
+  id: ID
 }
 
 input UpdateClientProfileInput {
