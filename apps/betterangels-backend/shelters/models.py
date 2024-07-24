@@ -2,7 +2,7 @@ from common.models import Address, Attachment, BaseModel
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django_choices_field import TextChoicesField
+from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
@@ -21,6 +21,7 @@ from .enums import (
     PopulationChoices,
     ShelterChoices,
     SleepingChoices,
+    SPAChoices,
     StorageChoices,
 )
 
@@ -111,6 +112,13 @@ class City(models.Model):
         return str(self.name)
 
 
+class SPA(models.Model):
+    name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class Pet(models.Model):
     name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
 
@@ -169,9 +177,7 @@ class Shelter(BaseModel):
         blank=True,
         verbose_name="Supervisorial District (1-5)",
     )
-    spa = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(8)], null=True, blank=True, verbose_name="SPA (1-8)"
-    )
+    spa = models.ManyToManyField(SPA)
     pets = models.ManyToManyField(Pet)
     curfew = models.TimeField(null=True, blank=True)
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
@@ -181,7 +187,7 @@ class Shelter(BaseModel):
 
     # Bed Information
     fees = CKEditor5Field(blank=True, null=True)
-    total_beds = models.PositiveIntegerField()
+    total_beds = models.PositiveIntegerField(blank=True, null=True)
     sleeping_options = models.ManyToManyField(SleepingOption)
 
     # Visuals
