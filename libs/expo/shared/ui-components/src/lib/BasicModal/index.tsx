@@ -1,5 +1,5 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { hexToRGBA } from '@monorepo/expo/shared/utils';
 import { Modal, Pressable, TouchableWithoutFeedback, View } from 'react-native';
 import IconButton from '../IconButton';
@@ -41,7 +41,7 @@ export default function BasicModal(props: IBasicModalProps) {
               paddingRight: Spacings.xs,
               paddingTop: Spacings.md,
               paddingBottom: Spacings.xl,
-              borderRadius: 8,
+              borderRadius: Radiuses.xs,
               zIndex: 1,
             }}
           >

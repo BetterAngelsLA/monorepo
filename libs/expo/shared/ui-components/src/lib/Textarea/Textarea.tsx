@@ -1,4 +1,9 @@
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
 import {
   Platform,
@@ -151,7 +156,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     justifyContent: 'center',
   },
   label: {
