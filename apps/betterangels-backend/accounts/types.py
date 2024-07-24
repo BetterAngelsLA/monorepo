@@ -143,12 +143,7 @@ class ClientContactType(ClientContactBaseType):
 
 
 @strawberry_django.input(ClientContact, partial=True)
-class CreateClientContactInput(ClientContactBaseType):
-    pass
-
-
-@strawberry_django.input(ClientContact, partial=True)
-class UpdateClientContactInput(ClientContactBaseType):
+class ClientContactInput(ClientContactBaseType):
     id: auto
 
 
@@ -171,14 +166,14 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
-    contacts: Optional[List[CreateClientContactInput]]
+    contacts: Optional[List[ClientContactInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
-    contacts: Optional[List[UpdateClientContactInput]]
+    contacts: Optional[List[ClientContactInput]]
 
 
 @strawberry.input

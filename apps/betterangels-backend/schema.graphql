@@ -69,6 +69,16 @@ type AuthResponse {
   status_code: String!
 }
 
+input ClientContactInput {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID
+}
+
 type ClientContactType {
   name: String
   email: String
@@ -111,15 +121,6 @@ type ClientProfileType {
   age: Int
 }
 
-input CreateClientContactInput {
-  name: String
-  email: String
-  phoneNumber: String
-  mailingAddress: String
-  relationshipToClient: RelationshipTypeEnum
-  relationshipToClientOther: String
-}
-
 input CreateClientProfileInput {
   address: String
   dateOfBirth: Date
@@ -132,7 +133,7 @@ input CreateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
-  contacts: [CreateClientContactInput!]
+  contacts: [ClientContactInput!]
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -623,16 +624,6 @@ enum TaskTypeEnum {
   NEXT_STEP
 }
 
-input UpdateClientContactInput {
-  name: String
-  email: String
-  phoneNumber: String
-  mailingAddress: String
-  relationshipToClient: RelationshipTypeEnum
-  relationshipToClientOther: String
-  id: ID
-}
-
 input UpdateClientProfileInput {
   address: String
   dateOfBirth: Date
@@ -646,7 +637,7 @@ input UpdateClientProfileInput {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
-  contacts: [UpdateClientContactInput!]
+  contacts: [ClientContactInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
