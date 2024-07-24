@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0024_remove_user_user_add_insert_and_more"),
+        ("accounts", "0025_alter_clientprofile_gender"),
     ]
 
     operations = [
