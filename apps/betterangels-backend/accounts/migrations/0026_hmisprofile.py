@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "client_profile",
-                    models.OneToOneField(
+                    models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="hmis_profile",
                         to="accounts.clientprofile",

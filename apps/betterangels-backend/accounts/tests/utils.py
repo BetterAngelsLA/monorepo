@@ -1,9 +1,16 @@
 from typing import Any, Dict
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    GenderEnum,
+    HmisAgencyEnum,
+    LanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
+from accounts.models import HmisProfile
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from model_bakery import baker
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -28,7 +35,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "middleName": "T",
             "email": "mister@pblivin.com",
         }
-
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
@@ -44,7 +50,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
-
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_2_user,
@@ -60,6 +65,25 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
+        self.client_profile_1_hmis_profile_1 = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_1["id"],
+            hmis_id="A1B2C3LAHSA",
+            agency=HmisAgencyEnum.LAHSA,
+        )
+        self.client_profile_1_hmis_profile_2 = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_1["id"],
+            hmis_id="A1B2C3PASADENA",
+            agency=HmisAgencyEnum.PASADENA,
+        )
+        self.client_profile_2_hmis_profile = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_2["id"],
+            hmis_id="A1B3C4",
+            agency=HmisAgencyEnum.PASADENA,
+        )
+
         # Logout after setting up the clients
         self.graphql_client.logout()
 

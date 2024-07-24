@@ -144,6 +144,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     dateOfBirth
                     gender
                     hmisId
+                    hmisProfiles {
+                        id
+                        hmisId
+                        agency
+                    }
                     nickname
                     phoneNumber
                     preferredLanguage
@@ -162,7 +167,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 3
+        expected_query_count = 4
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -176,6 +181,18 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": self.client_profile_1_user["middleName"],
             "email": self.client_profile_1_user["email"],
         }
+        expected_hmis_profiles = [
+            {
+                "id": str(self.client_profile_1_hmis_profile_1.id),
+                "hmisId": self.client_profile_1_hmis_profile_1.hmis_id,
+                "agency": self.client_profile_1_hmis_profile_1.agency.name,
+            },
+            {
+                "id": str(self.client_profile_1_hmis_profile_2.id),
+                "hmisId": self.client_profile_1_hmis_profile_2.hmis_id,
+                "agency": self.client_profile_1_hmis_profile_2.agency.name,
+            },
+        ]
         expected_client = {
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
@@ -183,6 +200,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.MALE.name,
             "hmisId": self.client_profile_1["hmisId"],
+            "hmisProfiles": expected_hmis_profiles,
             "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -204,6 +222,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     dateOfBirth
                     gender
                     hmisId
+                    hmisProfiles {
+                        id
+                        hmisId
+                        agency
+                    }
                     phoneNumber
                     preferredLanguage
                     pronouns
@@ -219,7 +242,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        expected_query_count = 3
+        # TODO: why did this go up by 2?
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

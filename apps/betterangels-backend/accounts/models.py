@@ -109,7 +109,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class HmisProfile(models.Model):
-    client_profile = models.OneToOneField("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profile")
+    client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profile")
     hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
 
