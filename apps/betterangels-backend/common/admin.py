@@ -57,7 +57,7 @@ class LocationTaskAdminMixin:
 
 
 class AttachmentAdmin(admin.ModelAdmin):
-    template = "admin/shelters/change_form_2.html"
+    template = "admin/shelter/change_form.html"
 
     list_display = (
         "get_str",

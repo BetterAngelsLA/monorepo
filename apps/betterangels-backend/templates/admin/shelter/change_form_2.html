@@ -2,7 +2,8 @@
 {% load static %}
 {% block extrahead %}
     {{ block.super }}
-    <script type="module" src="{% static 'formset/django-formset.js' %}"></script>
+    <script type="module" src="{% static 'formset/js/django-formset.js' %}"></script>
+    <div>HIPPI</div>
 {% endblock %}
 {% block content %}
     <django-formset endpoint="{{ request.path }}" csrf-token="{{ csrf_token }}">
