@@ -198,7 +198,8 @@ class ShelterAdmin(admin.ModelAdmin):
     )
 
     list_display = ("name", "organization", "address", "phone", "email", "website", "reviewed")
-    search_fields = ("name", "organization__name", "reviewed")
+    list_filter = ("reviewed",)
+    search_fields = ("name", "organization__name")
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
