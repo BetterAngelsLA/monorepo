@@ -119,11 +119,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name="shelter",
-            options={"permissions": (("change_shelter_reviewed", "Can change shelter reviewed"),)},
+            options={"permissions": (("change_shelter_is_reviewed", "Can change shelter is reviewed"),)},
         ),
         migrations.AddField(
             model_name="shelter",
-            name="reviewed",
+            name="is_reviewed",
             field=models.BooleanField(default=False),
         ),
         migrations.RunPython(create_shelter_data_entry_group),

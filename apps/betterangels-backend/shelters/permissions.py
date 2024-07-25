@@ -87,7 +87,7 @@ class ShelterPermissions(models.TextChoices):
 
 
 class ShelterFieldPermissions(models.TextChoices):
-    CHANGE_REVIEWED = "shelters.change_shelter_reviewed", _("Can change shelter reviewed")
+    CHANGE_IS_REVIEWED = "shelters.change_shelter_is_reviewed", _("Can change shelter is reviewed")
 
 
 class ShelterTypePermissions(models.TextChoices):

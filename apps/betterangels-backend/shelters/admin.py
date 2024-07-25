@@ -197,16 +197,16 @@ class ShelterAdmin(admin.ModelAdmin):
         ("BA Administration", {"fields": ("reviewed",)}),
     )
 
-    list_display = ("name", "organization", "address", "phone", "email", "website", "reviewed")
-    list_filter = ("reviewed",)
+    list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
+    list_filter = ("is_reviewed",)
     search_fields = ("name", "organization__name")
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
-        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_REVIEWED):
-            readonly_fields = (*readonly_fields, "reviewed")
+        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+            readonly_fields = (*readonly_fields, "is_reviewed")
         return readonly_fields
 
 

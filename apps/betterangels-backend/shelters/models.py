@@ -198,7 +198,7 @@ class Shelter(BaseModel):
     )
 
     # Administration
-    reviewed = models.BooleanField(default=False)
+    is_reviewed = models.BooleanField(default=False)
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
