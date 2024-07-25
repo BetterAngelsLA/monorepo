@@ -41,13 +41,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
+        unique=True,
     )
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     middle_name = models.CharField(max_length=50, blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(
         ("staff status"),
@@ -79,11 +80,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
-        return self.email
+        return f"{self.pk} - {self.full_name}"
 
     @model_property
     def full_name(self: "User") -> str:
-        return f"{self.first_name} {self.last_name}"
+        name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
+        return " ".join(name_parts).strip()
 
     @model_property
     def is_outreach_authorized(self: "User") -> bool:
