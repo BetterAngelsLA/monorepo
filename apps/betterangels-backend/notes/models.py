@@ -190,6 +190,24 @@ class Note(BaseModel):
     def __str__(self) -> str:
         return self.title
 
+    @property
+    def label_with_client(self) -> str:
+        if client := self.client:
+            client_label = client.full_name or client.id
+        else:
+            client_label = "Client"
+
+        return f"Note {self.id}: {self.title} (with {client_label} {self.interacted_at.date()})"
+
+    @property
+    def label_with_created_by(self) -> str:
+        if created_by := self.created_by:
+            created_by_label = created_by.full_name or created_by.id
+        else:
+            created_by_label = "Case Manager"
+
+        return f"Note {self.id}: {self.title} (by {created_by_label} {self.interacted_at.date()})"
+
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
             case "update":

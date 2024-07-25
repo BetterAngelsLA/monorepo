@@ -24,10 +24,10 @@ class MoodAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
     def note_client(self, obj: Mood) -> str:
-        return obj.note.client.email if obj.note.client else ""
+        return str(obj.note.client)
 
     def created_by(self, obj: Mood) -> str:
-        return obj.note.created_by.email if obj.note.created_by else ""
+        return str(obj.note.created_by)
 
 
 class MoodInline(admin.TabularInline):
