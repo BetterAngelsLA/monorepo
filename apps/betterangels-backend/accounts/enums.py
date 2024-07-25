@@ -71,6 +71,9 @@ class MaritalStatusEnum(models.TextChoices):
 
 
 class RelationshipTypeEnum(models.TextChoices):
+    CURRENT_CASE_MANAGER = "current_case_manager", _("Current Case Manager")
+    PAST_CASE_MANAGER = "past_case_manager", _("Past Case Manager")
+    ORGANIZATION = "organization", _("Organization")
     AUNT = "aunt", _("Aunt")
     CHILD = "child", _("Child")
     COUSIN = "cousin", _("Cousin")
@@ -84,7 +87,6 @@ class RelationshipTypeEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
-@strawberry.enum
 class LanguageEnum(models.TextChoices):
     ARABIC = "arabic", _("Arabic")
     ARMENIAN = "armenian", _("Armenian")

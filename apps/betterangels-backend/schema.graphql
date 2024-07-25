@@ -507,6 +507,9 @@ type Query {
 }
 
 enum RelationshipTypeEnum {
+  CURRENT_CASE_MANAGER
+  PAST_CASE_MANAGER
+  ORGANIZATION
   AUNT
   CHILD
   COUSIN
