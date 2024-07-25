@@ -95,7 +95,7 @@ def create_shelter_data_entry_group(apps, schema_editor):
         Spa: [SpaPermissions],
         Storage: [StoragePermissions],
     }
-    group, created = Group.objects.get_or_create(name="Shelter Data Administration")
+    group, created = Group.objects.get_or_create(name="Shelter Administration")
 
     for model, perm_enums in administration_permission_map.items():
         content_type = ContentType.objects.get_for_model(model)
