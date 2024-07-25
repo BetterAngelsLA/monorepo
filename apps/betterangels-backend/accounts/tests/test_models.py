@@ -9,7 +9,7 @@ from .baker_recipes import organization_recipe, permission_group_recipe
 class UserModelTestCase(TestCase):
     def test_str_method(self) -> None:
         user = baker.make(User, first_name="Dale", last_name="Cooper")
-        self.assertEqual(f"{user}", f"{user.id} - Dale Cooper")
+        self.assertEqual(f"{user}", "Dale Cooper")
 
     def test_full_name(self) -> None:
         user_1 = baker.make(User, first_name="Dale", middle_name=None, last_name="Cooper")
