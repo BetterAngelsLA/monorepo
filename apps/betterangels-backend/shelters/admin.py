@@ -194,7 +194,7 @@ class ShelterAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("BA Administration", {"fields": ("reviewed",)}),
+        ("BA Administration", {"fields": ("is_reviewed",)}),
     )
 
     list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
