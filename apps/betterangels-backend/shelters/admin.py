@@ -118,7 +118,7 @@ class ShelterForm(forms.ModelForm):
 
         # Retrieve existing objects and their names
         existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
-        existing_entries = {obj.name for obj in existing_objects}
+        existing_entries = {str(obj.name) for obj in existing_objects}
 
         # Create missing objects
         missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_entries]
