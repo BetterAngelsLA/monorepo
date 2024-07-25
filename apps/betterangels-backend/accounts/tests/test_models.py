@@ -7,9 +7,16 @@ from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class UserModelTestCase(TestCase):
-    def test_full_name(self) -> None:
+    def test_str_method(self) -> None:
         user = baker.make(User, first_name="Dale", last_name="Cooper")
-        self.assertEqual(user.full_name, "Dale Cooper")
+        self.assertEqual(f"{user}", f"{user.id} - Dale Cooper")
+
+    def test_full_name(self) -> None:
+        user_1 = baker.make(User, first_name="Dale", middle_name=None, last_name="Cooper")
+        self.assertEqual(user_1.full_name, "Dale Cooper")
+
+        user_2 = baker.make(User, first_name="Dale", middle_name="Bartholomew", last_name="Cooper")
+        self.assertEqual(user_2.full_name, "Dale Bartholomew Cooper")
 
     def test_is_outreach_authorized(self) -> None:
         authorized_org = organization_recipe.make(name="authorized org")
