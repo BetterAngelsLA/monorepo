@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/expo/betterangels/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
@@ -36,6 +37,5 @@
         "jestConfig": "libs/expo/betterangels/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }
