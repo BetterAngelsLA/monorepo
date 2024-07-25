@@ -87,6 +87,7 @@ class RelationshipTypeEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class LanguageEnum(models.TextChoices):
     ARABIC = "arabic", _("Arabic")
     ARMENIAN = "armenian", _("Armenian")
