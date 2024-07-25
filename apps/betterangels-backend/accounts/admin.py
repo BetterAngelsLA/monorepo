@@ -57,7 +57,7 @@ class UserAdmin(BaseUserAdmin):
     ]
 
     def is_client(self, obj: User) -> bool:
-        return hasattr(obj, "clientprofile")
+        return hasattr(obj, "client_profile")
 
 
 class ClientProfileAdmin(admin.ModelAdmin):
