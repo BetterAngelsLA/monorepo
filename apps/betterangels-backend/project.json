@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/betterangels-backend/betterangels_backend",
+  "tags": [],
   "targets": {
     "lock": {
       "executor": "@nxlv/python:run-commands",
@@ -141,6 +142,5 @@
         "parallel": false
       }
     }
-  },
-  "tags": []
+  }
 }
