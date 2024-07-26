@@ -80,7 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
-        return f"{self.pk} - {self.full_name}"
+        return f"{self.full_name if self.full_name else self.pk}"
 
     @model_property
     def full_name(self: "User") -> str:
