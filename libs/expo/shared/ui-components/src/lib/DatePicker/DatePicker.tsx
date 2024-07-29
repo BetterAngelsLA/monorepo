@@ -155,7 +155,9 @@ export function DatePicker(props: IDatePickerProps) {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
               }
+
               setValue(date);
+              Platform.OS !== 'ios' && setPicker(false);
             }}
             style={{
               backgroundColor: Colors.WHITE,
