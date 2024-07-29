@@ -16,6 +16,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@betterangels/*": ["apps/betterangels/*"],
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/apollo": ["libs/expo/shared/apollo/src/index.ts"],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
@@ -23,8 +24,7 @@
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
       ],
-      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"],
-      "@betterangels/*": ["apps/betterangels/*"]
+      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

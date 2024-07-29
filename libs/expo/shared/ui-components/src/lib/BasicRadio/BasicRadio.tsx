@@ -1,4 +1,9 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
@@ -72,24 +77,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   radio: {
-    width: 16,
-    height: 16,
+    width: Spacings.sm,
+    height: Spacings.sm,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     borderColor: Colors.NEUTRAL_LIGHT,
   },
   checked: {
-    borderWidth: 4,
+    borderWidth: Spacings.xxs,
     borderColor: Colors.PRIMARY_EXTRA_DARK,
-    height: 16,
-    width: 16,
+    height: Spacings.sm,
+    width: Spacings.sm,
   },
   radioLabel: {
     color: Colors.WHITE,
   },
   label: {
-    fontSize: 16,
+    fontSize: FontSizes.md.fontSize,
   },
 });

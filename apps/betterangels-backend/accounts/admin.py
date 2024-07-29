@@ -50,8 +50,14 @@ class UserAdmin(BaseUserAdmin):
     # Not convinced this is the right type
     model = cast(Type[DefaultUser], User)
     list_display = [
+        "id",
+        "full_name",
         "email",
+        "is_client",
     ]
+
+    def is_client(self, obj: User) -> bool:
+        return hasattr(obj, "client_profile")
 
 
 class ClientProfileAdmin(admin.ModelAdmin):

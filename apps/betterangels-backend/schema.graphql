@@ -242,7 +242,9 @@ type FlagType {
 enum GenderEnum {
   MALE
   FEMALE
+  NON_BINARY
   OTHER
+  PREFER_NOT_TO_SAY
 }
 
 """
@@ -659,7 +661,7 @@ type UserType {
   firstName: String
   lastName: String
   middleName: String
-  email: String!
+  email: String
   id: ID!
   username: String!
   isOutreachAuthorized: Boolean

@@ -6,7 +6,7 @@ import {
   CameraIcon,
   CameraRotateIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import {
   CameraType,
@@ -214,7 +214,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
                     backgroundColor: Colors.BLACK,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 100,
+                    borderRadius: Radiuses.xxxl,
                     borderWidth: 5,
                     borderColor: Colors.WHITE,
                     height: 60,
@@ -224,7 +224,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
                   <View
                     style={{
                       backgroundColor: Colors.WHITE,
-                      borderRadius: 100,
+                      borderRadius: Radiuses.xxxl,
                       height: pressed ? 38 : 45,
                       width: pressed ? 38 : 45,
                     }}
@@ -238,7 +238,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
                   backgroundColor: '#1C1C1C',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: 100,
+                  borderRadius: Radiuses.xxxl,
                   height: 41,
                   width: 41,
                 }}

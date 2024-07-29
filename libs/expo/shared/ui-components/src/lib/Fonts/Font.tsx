@@ -1,3 +1,4 @@
+import { FontSizes } from '@monorepo/expo/shared/static';
 import { StyleSheet, Text } from 'react-native';
 
 interface IFontProps {
@@ -12,7 +13,7 @@ export function Font(props: IFontProps) {
 
 const styles = StyleSheet.create({
   text: {
-    fontSize: 16,
+    fontSize: FontSizes.md.fontSize,
     lineHeight: 25,
     letterSpacing: 0.25,
   },
