@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
   Loading,
@@ -136,7 +136,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
                     width: 90,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 100,
+                    borderRadius: Radiuses.xxxl,
                     backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                     marginBottom: Spacings.md,
                   }}

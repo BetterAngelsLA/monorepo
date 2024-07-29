@@ -3,7 +3,7 @@ import {
   LocationDotSolidIcon,
   SortSolidIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../apollo';
@@ -87,10 +87,10 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
 
 const styles = StyleSheet.create({
   sortButton: {
-    height: 40,
-    width: 40,
+    height: Spacings.xl,
+    width: Spacings.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
   },
 });

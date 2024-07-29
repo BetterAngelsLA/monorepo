@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
 import {
   Avatar,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     padding: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
   },
 });
