@@ -71,6 +71,10 @@ export default function ContactInfo(props: IContactInfoProps) {
           name="phoneNumber"
           control={control}
           keyboardType="phone-pad"
+          maxLength={10}
+          rules={{
+            pattern: Regex.number,
+          }}
         />
         <Input
           required
