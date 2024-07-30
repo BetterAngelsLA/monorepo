@@ -160,7 +160,9 @@ export function DatePicker(props: IDatePickerProps) {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
               }
+
               setValue(date);
+              Platform.OS !== 'ios' && setPicker(false);
             }}
             style={{
               backgroundColor: Colors.WHITE,
@@ -174,18 +176,19 @@ export function DatePicker(props: IDatePickerProps) {
             value={value}
           />
           {Platform.OS === 'ios' && (
-            <Button
-              mt="xs"
-              style={{ alignSelf: 'flex-end' }}
-              variant="primary"
-              size="sm"
-              height="sm"
-              accessibilityHint="save date"
-              onPress={() => {
-                setPicker(false);
-              }}
-              title="Done"
-            />
+            <View style={{ marginTop: Spacings.xs }}>
+              <Button
+                style={{ alignSelf: 'flex-end' }}
+                variant="primary"
+                size="sm"
+                height="sm"
+                accessibilityHint="save date"
+                onPress={() => {
+                  setPicker(false);
+                }}
+                title="Done"
+              />
+            </View>
           )}
         </View>
       )}
