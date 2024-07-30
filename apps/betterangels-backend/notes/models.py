@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
-from common.permissions.utils import permission_enum_to_django_meta_permissions
+from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Q
@@ -219,7 +219,7 @@ class Note(BaseModel):
                 raise Exception(f"Action {action} is not revertable")
 
     class Meta:
-        permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)
+        permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
 
 
 @pghistory.track(

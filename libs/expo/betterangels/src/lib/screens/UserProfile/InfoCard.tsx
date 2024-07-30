@@ -7,7 +7,7 @@ export default function InfoCard({
   value,
 }: {
   title: string;
-  value: string | undefined;
+  value: string | undefined | null;
 }) {
   return (
     <View style={styles.infoBox}>

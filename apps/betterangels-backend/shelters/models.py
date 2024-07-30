@@ -1,4 +1,5 @@
 from common.models import Address, Attachment, BaseModel
+from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -6,6 +7,7 @@ from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
+from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
@@ -194,6 +196,12 @@ class Shelter(BaseModel):
     attachments = GenericRelation(
         Attachment,
     )
+
+    # Administration
+    is_reviewed = models.BooleanField(default=False)
+
+    class Meta:
+        permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
 
     def __str__(self) -> str:
         return self.name

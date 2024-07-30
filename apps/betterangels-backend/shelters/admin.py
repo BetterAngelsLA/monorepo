@@ -1,9 +1,11 @@
-from typing import Type, TypeVar
+from typing import Optional, Tuple, Type, TypeVar, Union
 
 from django import forms
 from django.contrib import admin
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
+from django.http import HttpRequest
+from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
@@ -118,7 +120,7 @@ class ShelterForm(forms.ModelForm):
 
         # Retrieve existing objects and their names
         existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
-        existing_entries = {str(obj.name) for obj in existing_objects}
+        existing_entries = {str(obj) for obj in existing_objects}
 
         # Create missing objects
         missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_entries]
@@ -192,10 +194,20 @@ class ShelterAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("BA Administration", {"fields": ("is_reviewed",)}),
     )
 
-    list_display = ("name", "organization", "address", "phone", "email", "website")
+    list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
+    list_filter = ("is_reviewed",)
     search_fields = ("name", "organization__name")
+
+    def get_readonly_fields(
+        self, request: HttpRequest, obj: Optional[Shelter] = None
+    ) -> Union[list[str], Tuple[str, ...]]:
+        readonly_fields = super().get_readonly_fields(request, obj)
+        if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+            readonly_fields = (*readonly_fields, "is_reviewed")
+        return readonly_fields
 
 
 admin.site.register(Shelter, ShelterAdmin)
