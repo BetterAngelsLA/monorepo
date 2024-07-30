@@ -21,6 +21,8 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
   [GenderEnum.Other]: 'Other',
+  [GenderEnum.NonBinary]: 'Non-Binary',
+  [GenderEnum.PreferNotToSay]: 'Prefer not to say',
 };
 
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =

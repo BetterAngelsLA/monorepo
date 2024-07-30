@@ -15,7 +15,7 @@ export type GetClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, hmisId?: string | null, nickname?: string | null, phoneNumber?: string | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, user: { __typename?: 'UserType', id: string, email: string, firstName?: string | null, middleName?: string | null, lastName?: string | null } } };
+export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, hmisId?: string | null, nickname?: string | null, phoneNumber?: string | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null } } };
 
 export type CreateClientProfileMutationVariables = Types.Exact<{
   data: Types.CreateClientProfileInput;
@@ -23,6 +23,13 @@ export type CreateClientProfileMutationVariables = Types.Exact<{
 
 
 export type CreateClientProfileMutation = { __typename?: 'Mutation', createClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
+export type DeleteClientProfileMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+}>;
+
+
+export type DeleteClientProfileMutation = { __typename?: 'Mutation', deleteClientProfile: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const UpdateClientProfileDocument = gql`
@@ -167,3 +174,45 @@ export function useCreateClientProfileMutation(baseOptions?: Apollo.MutationHook
 export type CreateClientProfileMutationHookResult = ReturnType<typeof useCreateClientProfileMutation>;
 export type CreateClientProfileMutationResult = Apollo.MutationResult<CreateClientProfileMutation>;
 export type CreateClientProfileMutationOptions = Apollo.BaseMutationOptions<CreateClientProfileMutation, CreateClientProfileMutationVariables>;
+export const DeleteClientProfileDocument = gql`
+    mutation DeleteClientProfile($id: ID!) {
+  deleteClientProfile(data: {id: $id}) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}
+    `;
+export type DeleteClientProfileMutationFn = Apollo.MutationFunction<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>;
+
+/**
+ * __useDeleteClientProfileMutation__
+ *
+ * To run a mutation, you first call `useDeleteClientProfileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteClientProfileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteClientProfileMutation, { data, loading, error }] = useDeleteClientProfileMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteClientProfileMutation(baseOptions?: Apollo.MutationHookOptions<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>(DeleteClientProfileDocument, options);
+      }
+export type DeleteClientProfileMutationHookResult = ReturnType<typeof useDeleteClientProfileMutation>;
+export type DeleteClientProfileMutationResult = Apollo.MutationResult<DeleteClientProfileMutation>;
+export type DeleteClientProfileMutationOptions = Apollo.BaseMutationOptions<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>;

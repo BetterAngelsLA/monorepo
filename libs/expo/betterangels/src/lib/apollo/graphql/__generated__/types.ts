@@ -244,7 +244,9 @@ export type FlagType = {
 export enum GenderEnum {
   Female = 'FEMALE',
   Male = 'MALE',
-  Other = 'OTHER'
+  NonBinary = 'NON_BINARY',
+  Other = 'OTHER',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY'
 }
 
 export enum LanguageEnum {
@@ -890,7 +892,7 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
-  email: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
