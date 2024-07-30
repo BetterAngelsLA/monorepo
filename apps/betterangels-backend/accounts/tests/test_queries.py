@@ -242,8 +242,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        # TODO: why did this go up by 2?
-        expected_query_count = 5
+
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

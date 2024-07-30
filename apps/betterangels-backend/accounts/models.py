@@ -109,7 +109,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class HmisProfile(models.Model):
-    client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profile")
+    client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
 
@@ -129,10 +129,6 @@ class ClientProfile(models.Model):
     pronouns = models.CharField(max_length=50, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
-
-    @model_property
-    def hmis_profiles(self: "ClientProfile") -> models.QuerySet[HmisProfile]:
-        return HmisProfile.objects.filter(client_profile=self)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

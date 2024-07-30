@@ -159,7 +159,7 @@ class ClientProfileBaseType:
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
-    hmis_profiles: List[HmisProfileType]
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
 
     @strawberry.field
     def age(self) -> Optional[int]:

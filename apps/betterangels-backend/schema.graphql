@@ -96,7 +96,7 @@ type ClientProfileType {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
-  hmisProfiles: [HmisProfileType!]!
+  hmisProfiles: [HmisProfileType]
   age: Int
 }
 
