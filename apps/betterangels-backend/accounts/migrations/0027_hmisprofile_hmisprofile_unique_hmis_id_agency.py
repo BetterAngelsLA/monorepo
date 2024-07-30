@@ -10,9 +10,8 @@ def add_hmis_profile(apps, schema_editor):
     ClientProfile = apps.get_model("accounts", "ClientProfile")
     HmisProfile = apps.get_model("accounts", "HmisProfile")
 
-    client_profiles = ClientProfile.objects.all()
-
-    for client_profile in client_profiles:
+    client_profiles_with_hmis_id = ClientProfile.objects.filter(hmis_id__isnull=False)
+    for client_profile in client_profiles_with_hmis_id:
         HmisProfile.objects.create(
             client_profile=client_profile,
             hmis_id=client_profile.hmis_id,
