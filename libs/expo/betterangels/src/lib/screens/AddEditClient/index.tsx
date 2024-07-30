@@ -41,7 +41,22 @@ export default function AddEditClient({ id }: { id?: string }) {
   >();
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [deleteClient] = useDeleteClientProfileMutation();
+  const [deleteClient] = useDeleteClientProfileMutation({
+    refetchQueries: [
+      {
+        query: ClientProfilesDocument,
+        variables: {
+          pagination: { limit: 20 + 1, offset: 0 },
+          filters: {
+            search: '',
+          },
+          order: {
+            user_FirstName: Ordering.AscNullsFirst,
+          },
+        },
+      },
+    ],
+  });
   const [updateClient] = useUpdateClientProfileMutation();
   const [createClient] = useCreateClientProfileMutation({
     refetchQueries: [
