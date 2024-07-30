@@ -71,8 +71,8 @@ export default function Title(props: ITitleProps) {
     debounce(async (key: 'time' | 'title' | 'date', value: string | Date) => {
       if (!noteId || !value) return;
       const currentNote = noteRef.current;
-      const dateValue = key === 'date' ? value : currentNote.date;
-      const timeValue = key === 'time' ? value : currentNote.time;
+      const dateValue = key === 'date' ? value : new Date(currentNote.date);
+      const timeValue = key === 'time' ? value : new Date(currentNote.time);
       let updatingField = value;
 
       const updatingKey = key === 'title' ? 'title' : 'interactedAt';
