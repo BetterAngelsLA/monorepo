@@ -1,5 +1,9 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  Loading,
+  TextButton,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { ReactElement, useLayoutEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -56,10 +60,27 @@ export default function Client({
           accessible
           accessibilityHint="goes to previous screen"
           onPress={() =>
-            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
+            arrivedFrom ? router.navigate(arrivedFrom) : router.navigate('/')
           }
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
+        </Pressable>
+      ),
+      headerRight: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessible
+          accessibilityHint="goes to previous screen"
+          onPress={() => router.navigate(`/edit-client/${id}`)}
+        >
+          <TextButton
+            regular
+            color={Colors.WHITE}
+            fontSize="md"
+            accessibilityHint="goes to Edit screen"
+            title="Edit"
+            onPress={() => router.navigate(`/edit-client/${id}`)}
+          />
         </Pressable>
       ),
     });
