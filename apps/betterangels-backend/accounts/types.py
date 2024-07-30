@@ -106,7 +106,7 @@ class HmisProfileType:
 
 @strawberry_django.input(HmisProfile)
 class HmisProfileInput(HmisProfileType):
-    pass
+    "See parent"
 
 
 @strawberry_django.type(Organization)
@@ -133,7 +133,7 @@ class UserType(UserBaseType):
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
-    pass
+    "See parent"
 
 
 @strawberry_django.input(User, partial=True)

@@ -54,9 +54,9 @@ class UserModelTestCase(TestCase):
 
 class HmisProfileModelTestCase(TestCase):
     def test_hmis_profile_unique_constraint(self) -> None:
-        baker.make(HmisProfile, hmis_id="A1B2C3", agency=HmisAgencyEnum.LAHSA)
-        baker.make(HmisProfile, hmis_id="A1B2C2", agency=HmisAgencyEnum.LAHSA)
-        baker.make(HmisProfile, hmis_id="A1B2C3", agency=HmisAgencyEnum.PASADENA)
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID2", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.PASADENA)
 
         with self.assertRaises(IntegrityError):
-            baker.make(HmisProfile, hmis_id="A1B2C3", agency=HmisAgencyEnum.LAHSA)
+            baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)

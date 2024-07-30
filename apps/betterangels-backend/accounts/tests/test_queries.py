@@ -287,13 +287,13 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("pea", False, 0),  # last_name search matching active client + active filter false
             ("pea", True, 1),  # last_name search matching active client + active filter true
             ("tod pea", None, 0),  # no match first_name, last_name search + active filter false
-            ("A1B", None, 2),  # hmis_id search matching both clients
-            ("A1B", False, 1),  # hmis_id search matching both clients + active filter false
-            ("A1B", True, 1),  # hmis_id search matching both clients + active filter true
-            ("A1B2", False, 1),  # hmis_id search matching inactive client
-            ("A1B2", True, 0),  # hmis_id search matching inactive client + active filter true
-            ("A1B3", False, 0),  # hmis_id search matching active client + active filter false
-            ("A1B3", True, 1),  # hmis_id search matching active client + active filter true
+            ("HMISid", None, 2),  # hmis_id search matching both clients
+            ("HMISid", False, 1),  # hmis_id search matching both clients + active filter false
+            ("HMISid", True, 1),  # hmis_id search matching both clients + active filter true
+            ("HMISid1", False, 1),  # hmis_id search matching inactive client
+            ("HMISid1", True, 0),  # hmis_id search matching inactive client + active filter true
+            ("HMISid3", False, 0),  # hmis_id search matching active client + active filter false
+            ("HMISid3", True, 1),  # hmis_id search matching active client + active filter true
         ],
     )
     def test_client_profiles_query_search(

@@ -78,7 +78,7 @@ class Mutation:
 
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user") or {}
-            hmis_profiles_data = client_profile_data.pop("hmis_profiles", [])
+            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
 
             client = User.objects.create_client(**user_data)
 
@@ -91,8 +91,8 @@ class Mutation:
                 },
             )
 
-            if hmis_profiles_data:
-                for hmis_profile in hmis_profiles_data:
+            if hmis_profiles:
+                for hmis_profile in hmis_profiles:
                     resolvers.create(
                         info,
                         HmisProfile,
@@ -128,7 +128,7 @@ class Mutation:
 
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user") or {}
-            hmis_profiles_data = client_profile_data.pop("hmis_profiles", [])
+            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
 
             client = resolvers.update(
                 info,
@@ -146,9 +146,9 @@ class Mutation:
                 },
             )
 
-            if hmis_profiles_data:
-                hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles_data if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles_data if not hp.get("id")]
+            if hmis_profiles:
+                hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
+                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
                 hmis_profiles_to_update = HmisProfile.objects.filter(
                     id__in=hmis_profile_updates_by_id.keys(), client_profile=client_profile
                 )

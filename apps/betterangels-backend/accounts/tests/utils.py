@@ -41,7 +41,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
-                "hmisId": "A1B2C3",
+                "hmisId": "hmisID1",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -56,7 +56,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "address": None,
                 "dateOfBirth": None,
                 "gender": None,
-                "hmisId": "A1B3C4",
+                "hmisId": "hmisID3",
                 "nickname": None,
                 "phoneNumber": None,
                 "preferredLanguage": None,
@@ -68,19 +68,19 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1_hmis_profile_1 = baker.make(
             HmisProfile,
             client_profile_id=self.client_profile_1["id"],
-            hmis_id="A1B2C3LAHSA",
+            hmis_id="hmisID1LAHSA",
             agency=HmisAgencyEnum.LAHSA,
         )
         self.client_profile_1_hmis_profile_2 = baker.make(
             HmisProfile,
             client_profile_id=self.client_profile_1["id"],
-            hmis_id="A1B2C3PASADENA",
+            hmis_id="hmisID1PASADENA",
             agency=HmisAgencyEnum.PASADENA,
         )
         self.client_profile_2_hmis_profile = baker.make(
             HmisProfile,
             client_profile_id=self.client_profile_2["id"],
-            hmis_id="A1B3C4",
+            hmis_id="hmisID3PASADENA",
             agency=HmisAgencyEnum.PASADENA,
         )
 
