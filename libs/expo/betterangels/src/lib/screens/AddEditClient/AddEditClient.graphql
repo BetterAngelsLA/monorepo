@@ -53,3 +53,18 @@ mutation CreateClientProfile($data: CreateClientProfileInput!) {
     }
   }
 }
+
+mutation DeleteClientProfile($id: ID!) {
+  deleteClientProfile(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}
