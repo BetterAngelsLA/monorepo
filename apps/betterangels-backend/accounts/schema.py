@@ -148,9 +148,9 @@ class Mutation:
 
             if hmis_profiles:
                 hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
+                hmis_profiles_to_create = [hp for hp in hmis_profiles if hp.get("id") is None]
                 hmis_profiles_to_update = HmisProfile.objects.filter(
-                    id__in=hmis_profile_updates_by_id.keys(), client_profile=client_profile
+                    id__in=hmis_profile_updates_by_id, client_profile=client_profile
                 )
 
                 for hmis_profile in hmis_profiles_to_create:

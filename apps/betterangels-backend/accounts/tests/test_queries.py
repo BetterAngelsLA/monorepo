@@ -290,10 +290,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("HMISid", None, 2),  # hmis_id search matching both clients
             ("HMISid", False, 1),  # hmis_id search matching both clients + active filter false
             ("HMISid", True, 1),  # hmis_id search matching both clients + active filter true
-            ("HMISid1", False, 1),  # hmis_id search matching inactive client
-            ("HMISid1", True, 0),  # hmis_id search matching inactive client + active filter true
-            ("HMISid3", False, 0),  # hmis_id search matching active client + active filter false
-            ("HMISid3", True, 1),  # hmis_id search matching active client + active filter true
+            ("HMISidL", False, 1),  # hmis_id search matching inactive client
+            ("HMISidL", True, 0),  # hmis_id search matching inactive client + active filter true
+            ("HMISidP", False, 0),  # hmis_id search matching active client + active filter false
+            ("HMISidP", True, 1),  # hmis_id search matching active client + active filter true
         ],
     )
     def test_client_profiles_query_search(
