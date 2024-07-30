@@ -32,7 +32,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_2_user = {
             "firstName": "Mister",
             "lastName": "Peanutbutter",
-            "middleName": "T",
+            "middleName": "Tee",
             "email": "mister@pblivin.com",
         }
         self.client_profile_1 = self._create_client_profile_fixture(

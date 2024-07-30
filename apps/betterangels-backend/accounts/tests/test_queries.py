@@ -280,10 +280,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             (None, None, 2),  # no filters
             (None, False, 1),  # active filter false
             (None, True, 1),  # active filter true
-            ("tod", None, 1),  # first_name search matching inactive client
+            ("tod ch gust toa", None, 1),  # name search matching inactive client
             ("tod", False, 1),  # first_name search matching inactive client + active filter false
             ("tod", True, 0),  # first_name search matching inactive client + active filter true
-            ("pea", None, 1),  # last_name search matching active client
+            ("pea mi tr", None, 0),  # name search matching matching no clients
             ("pea", False, 0),  # last_name search matching active client + active filter false
             ("pea", True, 1),  # last_name search matching active client + active filter true
             ("tod pea", None, 0),  # no match first_name, last_name search + active filter false
