@@ -10,7 +10,9 @@ def add_hmis_profile(apps, schema_editor):
     ClientProfile = apps.get_model("accounts", "ClientProfile")
     HmisProfile = apps.get_model("accounts", "HmisProfile")
 
-    for client_profile in ClientProfile.objects.all():
+    client_profiles = ClientProfile.objects.all()
+
+    for client_profile in client_profiles:
         HmisProfile.objects.create(
             client_profile=client_profile,
             hmis_id=client_profile.hmis_id,
@@ -21,7 +23,7 @@ def add_hmis_profile(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0025_alter_clientprofile_gender"),
+        ("accounts", "0026_alter_user_email_alter_user_username_and_more"),
     ]
 
     operations = [
