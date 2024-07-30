@@ -1,4 +1,6 @@
 from datetime import timedelta
+from functools import reduce
+from operator import and_, or_
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -65,21 +67,26 @@ class ClientProfileFilter:
             return queryset, Q()
 
         search_terms = value.split(" ")
-        query = Q()
+
+        q_objects = []
+        combined_q_search = []
+        searchable_fields = [
+            "hmis_id",
+            "nickname",
+            "user__first_name",
+            "user__last_name",
+            "user__middle_name",
+        ]
 
         for term in search_terms:
-            q_search = Q(
-                Q(user__first_name__icontains=term)
-                | Q(user__last_name__icontains=term)
-                | Q(user__middle_name__icontains=term)
-                | Q(nickname__icontains=term)
-                | Q(hmis_id__icontains=term)
-            )
+            q_search = [Q(**{f"{field}__icontains": term}) for field in searchable_fields]
+            combined_q_search.append((reduce(or_, q_search)))
+            q_objects.append(Q(*combined_q_search))
 
-            query &= q_search
+        queryset = queryset.filter(reduce(and_, q_objects))
 
         return (
-            queryset.filter(query),
+            queryset,
             Q(),
         )
 
