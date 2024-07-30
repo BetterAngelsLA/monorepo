@@ -6,7 +6,7 @@ from accounts.enums import (
     LanguageEnum,
     YesNoPreferNotToSayEnum,
 )
-from accounts.models import ClientProfile, User
+from accounts.models import ClientProfile, HmisProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -183,6 +183,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         user = client_profile.user
+        hmis_profile_ids = client_profile.hmis_profiles.values_list("id", flat=True)
 
         mutation = """
             mutation DeleteClientProfile($id: ID!) {
@@ -213,3 +214,5 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(id=user.pk)
+
+        self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
