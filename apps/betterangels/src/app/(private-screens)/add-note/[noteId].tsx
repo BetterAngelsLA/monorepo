@@ -56,7 +56,7 @@ const renderModal = (
         button={
           <TextButton
             fontSize="sm"
-            accessibilityHint="deletes creation"
+            accessibilityHint="deletes interaction"
             title={buttonTitle}
           />
         }
@@ -256,7 +256,7 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <Button
-                accessibilityHint="deletes creation"
+                accessibilityHint="deletes interaction"
                 title="Delete Interaction"
                 variant="negative"
                 size="full"
