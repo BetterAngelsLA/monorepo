@@ -80,7 +80,7 @@ class ClientProfileFilter:
 
         for term in search_terms:
             q_search = [Q(**{f"{field}__icontains": term}) for field in searchable_fields]
-            combined_q_search.append((reduce(or_, q_search)))
+            combined_q_search.append(reduce(or_, q_search))
             q_objects.append(Q(*combined_q_search))
 
         queryset = queryset.filter(reduce(and_, q_objects))
