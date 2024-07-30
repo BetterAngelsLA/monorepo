@@ -1,5 +1,5 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
@@ -29,7 +29,7 @@ export function Tag(props: ITagProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.SECONDARY_LIGHT,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     height: 20,
     width: 20,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacings.xs,
