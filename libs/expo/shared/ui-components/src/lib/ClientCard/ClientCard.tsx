@@ -1,8 +1,13 @@
-import { LocationDotIcon, TentIcon } from '@monorepo/expo/shared/icons';
+import {
+  CarIcon,
+  LocationDotIcon,
+  TentIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
+import IconButton from '../IconButton';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
@@ -99,12 +104,23 @@ export function ClientCard(props: IClientCardProps) {
         )}
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
-        <TextButton
-          fontSize="sm"
-          title={select === 'true' ? 'Select' : 'Add Interaction'}
-          onPress={onPress}
-          accessibilityHint={`Add a interaction for client ${firstName} ${lastName}`}
-        />
+        {select === 'true' ? (
+          <TextButton
+            fontSize="sm"
+            title={'Select'}
+            onPress={onPress}
+            accessibilityHint={`Add a interaction for client ${firstName} ${lastName}`}
+          />
+        ) : (
+          <IconButton
+            onPress={onPress}
+            variant="transparent"
+            accessibilityLabel={'open client details modal'}
+            accessibilityHint={'open client details modal'}
+          >
+            <CarIcon />
+          </IconButton>
+        )}
       </View>
     </Pressable>
   );
