@@ -2,14 +2,17 @@ from typing import Any, Dict
 
 from accounts.enums import (
     GenderEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     PronounEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
+from accounts.models import HmisProfile
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from model_bakery import baker
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -38,6 +41,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 mailingAddress
                 relationshipToClient
                 relationshipToClientOther
+            }
+            hmisProfiles {
+                id
+                hmisId
+                agency
             }
             user {
                 id
@@ -92,7 +100,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "dateOfBirth": self.date_of_birth,
                 "gender": GenderEnum.MALE.name,
-                "hmisId": "A1B2C3",
+                "hmisId": "HMISidLAHSA1",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -102,14 +110,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "contacts": self.client_1_contacts,
             }
         )["data"]["createClientProfile"]
-
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_2_user,
                 "address": None,
                 "dateOfBirth": None,
                 "gender": None,
-                "hmisId": "A1B3C4",
+                "hmisId": "HMISidPASADENA1",
                 "nickname": None,
                 "phoneNumber": None,
                 "preferredLanguage": None,
@@ -118,6 +125,25 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
+        self.client_profile_1_hmis_profile_1 = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_1["id"],
+            hmis_id="HMISidLAHSA1",
+            agency=HmisAgencyEnum.LAHSA,
+        )
+        self.client_profile_1_hmis_profile_2 = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_1["id"],
+            hmis_id="HMISidPASADENA1",
+            agency=HmisAgencyEnum.PASADENA,
+        )
+        self.client_profile_2_hmis_profile = baker.make(
+            HmisProfile,
+            client_profile_id=self.client_profile_2["id"],
+            hmis_id="HMISidPASADENA2",
+            agency=HmisAgencyEnum.PASADENA,
+        )
+
         # Logout after setting up the clients
         self.graphql_client.logout()
 

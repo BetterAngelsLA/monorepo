@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0026_alter_user_email_alter_user_username_and_more"),
+        ("accounts", "0027_hmisprofile_hmisprofile_unique_hmis_id_agency"),
     ]
 
     operations = [

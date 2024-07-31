@@ -2,12 +2,13 @@ from unittest.mock import ANY
 
 from accounts.enums import (
     GenderEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     PronounEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
-from accounts.models import ClientProfile, User
+from accounts.models import ClientProfile, HmisProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -100,12 +101,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_contact_1,
             client_profile_contact_2,
         ]
+        client_profile_hmis_profile = {
+            "hmisId": "12345678",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        expected_hmis_profile = {**client_profile_hmis_profile, "id": ANY}
 
         variables = {
             "address": "1234 Main St",
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
+            "hmisProfiles": [client_profile_hmis_profile],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -131,6 +138,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "contacts": expected_client_contacts,
             "user": expected_user,
+            "hmisProfiles": [expected_hmis_profile],
         }
 
         self.assertEqual(client_profile, expected_client_profile)
@@ -161,6 +169,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.PET.name,
             "relationshipToClientOther": None,
         }
+
         # Make sure we can add a new contact while updating existing contacts
         client_profile_contact_3 = {
             "name": "New guy",
@@ -175,6 +184,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_contact_2,
             client_profile_contact_3,
         ]
+        hmis_profile_to_update = {
+            "id": str(self.client_profile_1_hmis_profile_1.id),
+            "hmisId": "UPDATEDHMISID",
+            "agency": HmisAgencyEnum.SANTA_MONICA.name,
+        }
+        hmis_profile_to_create = {
+            "hmisId": "NEWHMISPROFILEID",
+            "agency": HmisAgencyEnum.VASH.name,
+        }
+        hmis_profiles = [
+            hmis_profile_to_update,
+            hmis_profile_to_create,
+        ]
 
         variables = {
             "id": self.client_profile_1["id"],
@@ -182,6 +204,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "hmisId": "12345678",
+            "hmisProfiles": hmis_profiles,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -195,17 +218,22 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client = response["data"]["updateClientProfile"]
 
         client_profile_contact_3["id"] = ANY
+        hmis_profile_to_create = {
+            **hmis_profile_to_create,
+            "id": ANY,
+        }
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting dob
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "age": self.EXPECTED_CLIENT_AGE,
         }
-        self.assertEqual(client, expected_client_profile)
+        self.assertCountEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         user = client_profile.user
+        hmis_profile_ids = client_profile.hmis_profiles.values_list("id", flat=True)
 
         mutation = """
             mutation DeleteClientProfile($id: ID!) {
@@ -225,7 +253,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 33
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -236,3 +264,5 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(id=user.pk)
+
+        self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)

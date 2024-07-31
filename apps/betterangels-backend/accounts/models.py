@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
 import pghistory
 from accounts.enums import (
     GenderEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
@@ -106,6 +107,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         return PermissionGroup.objects.filter(
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
+
+
+class HmisProfile(models.Model):
+    client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
+    hmis_id = models.CharField(max_length=50)
+    agency = TextChoicesField(choices_enum=HmisAgencyEnum)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["hmis_id", "agency"], name="unique_hmis_id_agency")]
 
 
 class ClientProfile(models.Model):

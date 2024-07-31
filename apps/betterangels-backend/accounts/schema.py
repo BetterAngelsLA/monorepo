@@ -2,7 +2,7 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import ClientContact, ClientProfile, User
+from accounts.models import ClientContact, ClientProfile, HmisProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -79,7 +79,7 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user", {})
             contacts_data = client_profile_data.pop("contacts", [])
-
+            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
             client_user = User.objects.create_client(**user_data)
 
             client_profile = resolvers.create(
@@ -98,6 +98,17 @@ class Mutation:
                         ClientContact,
                         {
                             **contact,
+                            "client_profile": client_profile,
+                        },
+                    )
+
+            if hmis_profiles:
+                for hmis_profile in hmis_profiles:
+                    resolvers.create(
+                        info,
+                        HmisProfile,
+                        {
+                            **hmis_profile,
                             "client_profile": client_profile,
                         },
                     )
@@ -129,6 +140,7 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user", {})
             contacts_data = client_profile_data.pop("contacts", [])
+            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
 
             client_user = resolvers.update(
                 info,
@@ -170,6 +182,30 @@ class Mutation:
                     **client_profile_data,
                 },
             )
+
+            if hmis_profiles:
+                hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
+                hmis_profiles_to_create = [hp for hp in hmis_profiles if hp.get("id") is None]
+                hmis_profiles_to_update = HmisProfile.objects.filter(
+                    id__in=hmis_profile_updates_by_id, client_profile=client_profile
+                )
+
+                for hmis_profile in hmis_profiles_to_create:
+                    resolvers.create(
+                        info,
+                        HmisProfile,
+                        {
+                            **hmis_profile,
+                            "client_profile": client_profile,
+                        },
+                    )
+
+                for hmis_profile in hmis_profiles_to_update:
+                    resolvers.update(
+                        info,
+                        hmis_profile,
+                        hmis_profile_updates_by_id[str(hmis_profile.id)],
+                    )
 
             return cast(ClientProfileType, client_profile)
 
