@@ -71,17 +71,18 @@ class MaritalStatusEnum(models.TextChoices):
 
 
 class RelationshipTypeEnum(models.TextChoices):
+    CURRENT_CASE_MANAGER = "current_case_manager", _("Current Case Manager")
+    PAST_CASE_MANAGER = "past_case_manager", _("Past Case Manager")
+    ORGANIZATION = "organization", _("Organization")
     AUNT = "aunt", _("Aunt")
-    BROTHER = "brother", _("Brother")
+    CHILD = "child", _("Child")
     COUSIN = "cousin", _("Cousin")
-    DAUGHTER = "daughter", _("Daughter")
     FATHER = "father", _("Father")
     FRIEND = "friend", _("Friend")
     GRANDPARENT = "grandparent", _("Grandparent")
     MOTHER = "mother", _("Mother")
     PET = "pet", _("Pet")
-    SISTER = "sister", _("Sister")
-    SON = "son", _("Son")
+    SIBLING = "sibling", _("Sibling")
     UNCLE = "uncle", _("Uncle")
     OTHER = "other", _("Other")
 

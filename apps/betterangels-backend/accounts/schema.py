@@ -2,7 +2,7 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import ClientProfile, HmisProfile, User
+from accounts.models import ClientContact, ClientProfile, HmisProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -77,19 +77,30 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user") or {}
+            user_data = client_profile_data.pop("user", {})
+            contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-
-            client = User.objects.create_client(**user_data)
+            client_user = User.objects.create_client(**user_data)
 
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
                 {
                     **client_profile_data,
-                    "user": client,
+                    "user": client_user,
                 },
             )
+
+            if contacts_data:
+                for contact in contacts_data:
+                    resolvers.create(
+                        info,
+                        ClientContact,
+                        {
+                            **contact,
+                            "client_profile": client_profile,
+                        },
+                    )
 
             if hmis_profiles:
                 for hmis_profile in hmis_profiles:
@@ -122,22 +133,48 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.id)
-                client = client_profile.user
+                client_user = client_profile.user
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user") or {}
+            user_data = client_profile_data.pop("user", {})
+            contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
 
-            client = resolvers.update(
+            client_user = resolvers.update(
                 info,
-                client,
+                client_user,
                 {
                     **user_data,
                     "id": client_profile.user.id,
                 },
             )
+
+            if contacts_data:
+                contact_updates_by_id = {c["id"]: c for c in contacts_data if c.get("id")}
+                contacts_to_create = [c for c in contacts_data if not c.get("id")]
+                contacts_to_update = ClientContact.objects.filter(
+                    id__in=contact_updates_by_id.keys(), client_profile=client_profile
+                )
+
+                for contact in contacts_to_create:
+                    resolvers.create(
+                        info,
+                        ClientContact,
+                        {
+                            **contact,
+                            "client_profile": client_profile,
+                        },
+                    )
+
+                for contact in contacts_to_update:
+                    resolvers.update(
+                        info,
+                        contact,
+                        contact_updates_by_id[str(contact.id)],
+                    )
+
             client_profile = resolvers.update(
                 info,
                 client_profile,
