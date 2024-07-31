@@ -4,7 +4,7 @@ from typing import Optional
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location
-from strawberry import auto
+from strawberry import ID, auto
 
 
 @strawberry.input
@@ -14,7 +14,7 @@ class DeleteDjangoObjectInput:
 
 @strawberry_django.type(Address)
 class AddressType:
-    id: auto
+    id: ID
     street: auto
     city: auto
     state: auto
@@ -29,7 +29,7 @@ class AddressInput:
 
 @strawberry_django.type(Location)
 class LocationType:
-    id: auto
+    id: ID
     address: AddressType
     point: auto
     point_of_interest: auto
@@ -44,7 +44,7 @@ class LocationInput:
 
 @strawberry_django.type(Attachment, is_interface=True)
 class AttachmentInterface:
-    id: auto
+    id: ID
     file: auto
     attachment_type: auto
     original_filename: auto
