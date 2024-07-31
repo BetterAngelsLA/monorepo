@@ -4,13 +4,14 @@ import accounts.enums
 import django.db.models.deletion
 import django_choices_field.fields
 from django.db import migrations, models
+from django.db.models.query import Q
 
 
 def add_hmis_profile(apps, schema_editor):
     ClientProfile = apps.get_model("accounts", "ClientProfile")
     HmisProfile = apps.get_model("accounts", "HmisProfile")
 
-    client_profiles_with_hmis_id = ClientProfile.objects.exclude(hmis_id=None).exclude(hmis_id="")
+    client_profiles_with_hmis_id = ClientProfile.objects.exclude(Q(hmis_id=None) | Q(hmis_id=""))
 
     for client_profile in client_profiles_with_hmis_id:
         HmisProfile.objects.create(
