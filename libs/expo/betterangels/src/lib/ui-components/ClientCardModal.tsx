@@ -56,6 +56,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
   ];
   return (
     <MainModal
+      closeButton
       vertical
       actions={ACTIONS}
       isModalVisible={isModalVisible}
