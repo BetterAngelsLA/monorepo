@@ -13,7 +13,7 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, User
+from .models import ClientProfile, HmisProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -97,6 +97,18 @@ class LoginInput:
     password: str
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType:
+    id: auto
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.input(HmisProfile)
+class HmisProfileInput(HmisProfileType):
+    "See parent"
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
     id: auto
@@ -121,7 +133,7 @@ class UserType(UserBaseType):
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
-    pass
+    "See parent"
 
 
 @strawberry_django.input(User, partial=True)
@@ -147,6 +159,7 @@ class ClientProfileBaseType:
 class ClientProfileType(ClientProfileBaseType):
     id: auto
     user: UserType
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -161,12 +174,14 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry.input
