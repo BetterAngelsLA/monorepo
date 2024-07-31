@@ -1,4 +1,4 @@
-import { FilePlusIcon } from '@monorepo/expo/shared/icons';
+import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
 import { ClientProfileType } from '../apollo';
 import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
@@ -50,7 +50,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     },
     {
       title: 'Upload Documents',
-      Icon: FilePlusIcon,
+      Icon: UploadIcon,
       route: '/add-client',
     },
   ];

@@ -1,7 +1,7 @@
 import {
-  CarIcon,
   LocationDotIcon,
   TentIcon,
+  ThreeDotIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
@@ -118,7 +118,7 @@ export function ClientCard(props: IClientCardProps) {
             accessibilityLabel={'open client details modal'}
             accessibilityHint={'open client details modal'}
           >
-            <CarIcon />
+            <ThreeDotIcon />
           </IconButton>
         )}
       </View>
