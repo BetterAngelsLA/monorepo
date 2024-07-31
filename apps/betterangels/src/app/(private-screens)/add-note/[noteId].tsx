@@ -2,6 +2,7 @@ import {
   MainScrollContainer,
   NotesDocument,
   Ordering,
+  NoteNamespaceEnum,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
@@ -17,7 +18,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
@@ -59,7 +60,7 @@ const renderModal = (
         button={
           <TextButton
             fontSize="sm"
-            accessibilityHint="deletes creation"
+            accessibilityHint="deletes interaction"
             title={buttonTitle}
           />
         }
@@ -214,6 +215,26 @@ export default function AddNote() {
     }
   }
 
+  const filterAttachments = (namespace: NoteNamespaceEnum) => {
+    return (
+      data?.note?.attachments?.filter((item) => item.namespace === namespace) ||
+      []
+    );
+  };
+
+  const MoodAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
+    [data]
+  );
+  const RequestedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.RequestedServices),
+    [data]
+  );
+  const ProvidedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.ProvidedServices),
+    [data]
+  );
+
   if (!data || isLoading) {
     return null;
   }
@@ -237,23 +258,17 @@ export default function AddNote() {
         />
         <Purpose purposes={data.note.purposes} {...props} />
         <Mood
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'MOOD_ASSESSMENT'
-          )}
+          attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
         />
         <ProvidedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'PROVIDED_SERVICES'
-          )}
+          attachments={ProvidedAttachments}
           services={data.note.providedServices}
           {...props}
         />
         <RequestedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'REQUESTED_SERVICES'
-          )}
+          attachments={RequestedAttachments}
           services={data.note.requestedServices}
           {...props}
         />
@@ -271,7 +286,7 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <Button
-                accessibilityHint="deletes creation"
+                accessibilityHint="deletes interaction"
                 title="Delete Interaction"
                 variant="negative"
                 size="full"

@@ -1,6 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
+  Button,
+  DeleteModal,
   Loading,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
@@ -25,6 +27,7 @@ import Name from './Name';
 import VeteranStatus from './VeteranStatus';
 import {
   useCreateClientProfileMutation,
+  useDeleteClientProfileMutation,
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
@@ -38,6 +41,22 @@ export default function AddEditClient({ id }: { id?: string }) {
   >();
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
+  const [deleteClient] = useDeleteClientProfileMutation({
+    refetchQueries: [
+      {
+        query: ClientProfilesDocument,
+        variables: {
+          pagination: { limit: 20 + 1, offset: 0 },
+          filters: {
+            search: '',
+          },
+          order: {
+            user_FirstName: Ordering.AscNullsFirst,
+          },
+        },
+      },
+    ],
+  });
   const [updateClient] = useUpdateClientProfileMutation();
   const [createClient] = useCreateClientProfileMutation({
     refetchQueries: [
@@ -57,6 +76,20 @@ export default function AddEditClient({ id }: { id?: string }) {
   });
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+
+  async function deleteClientFunction() {
+    if (!id) return;
+    try {
+      await deleteClient({
+        variables: {
+          id,
+        },
+      });
+      router.replace('/clients');
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
@@ -178,6 +211,22 @@ export default function AddEditClient({ id }: { id?: string }) {
           <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
+          {id && (
+            <DeleteModal
+              body="All data associated with this client will be deleted. This action cannot be undone."
+              title="Delete client?"
+              onDelete={deleteClientFunction}
+              button={
+                <Button
+                  accessibilityHint="deletes client"
+                  title="Delete Client"
+                  variant="negative"
+                  size="full"
+                  mt="xs"
+                />
+              }
+            />
+          )}
         </MainScrollContainer>
         <BottomActions
           submitTitle="Update"
