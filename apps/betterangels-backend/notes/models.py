@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
-from common.models import Attachment, BaseModel, Location
+from common.models import BaseAttachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
-from django.db.models import Q
+from django.db.models import ForeignKey, Q
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -25,6 +25,36 @@ from .enums import (
 
 if TYPE_CHECKING:
     from pghistory.models import Events
+
+
+class Attachment(BaseAttachment):
+    """
+    Represents an attachment any model instance within the app.
+
+    Attributes:
+        associated_with: The User with whom the attachment is associated, if any.
+    """
+
+    associated_with = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="associated_note_attachments", blank=True, null=True
+    )
+
+    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
+    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
+
+
+class AttachmentUserObjectPermission(UserObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(
+        Attachment,
+        on_delete=models.CASCADE,
+    )
+
+
+class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
+    content_object: ForeignKey = models.ForeignKey(
+        Attachment,
+        on_delete=models.CASCADE,
+    )
 
 
 @pghistory.track(

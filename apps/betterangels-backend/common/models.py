@@ -8,9 +8,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.db import models
-from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 
 class BaseModel(models.Model):
@@ -21,7 +19,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Attachment(BaseModel):
+class BaseAttachment(BaseModel):
     """
     Represents an attachment linked to any model instance within the app.
     Attachments are organized by namespaces to allow for application-specific
@@ -44,25 +42,14 @@ class Attachment(BaseModel):
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
     mime_type = models.CharField()
     original_filename = models.CharField(max_length=255, blank=True, null=True)
-
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey("content_type", "object_id")
-
     namespace = models.CharField(max_length=255, blank=True, null=True)
-
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
-    associated_with = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
-    )
-
-    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
-    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     def __str__(self) -> str:
-        return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"
+        return f"{self.attachment_type} - {self.original_filename}"
 
     class Meta:
+        abstract = True  # Make this model abstract
         indexes = [
             models.Index(
                 fields=[
@@ -217,18 +204,3 @@ class Location(BaseModel):
         )
 
         return location
-
-
-# Permissions
-class AttachmentUserObjectPermission(UserObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )
-
-
-class AttachmentGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: ForeignKey = models.ForeignKey(
-        Attachment,
-        on_delete=models.CASCADE,
-    )

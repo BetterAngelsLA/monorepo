@@ -5,6 +5,22 @@ from notes.enums import ServiceEnum
 from .models import Mood, Note, ServiceRequest, Task
 
 
+class AttachmentAdminMixin:
+    def attachments(self, obj: Model) -> SafeString:
+        attachments = Attachment.objects.filter(
+            content_type=ContentType.objects.get_for_model(obj),
+            object_id=obj.pk,
+        )
+        attachment_links = [
+            '<a href="{}">{}</a>'.format(
+                reverse("admin:common_attachment_change", args=(attachment.id,)),
+                f"Attachment {attachment.id}: {attachment}",
+            )
+            for attachment in attachments
+        ]
+        return format_html("<br>".join(attachment_links))
+
+
 class MoodAdmin(admin.ModelAdmin):
     list_display = (
         "descriptor",
