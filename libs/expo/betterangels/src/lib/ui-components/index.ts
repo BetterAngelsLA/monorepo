@@ -1,5 +1,6 @@
 export { default as Attachments } from './Attachments';
 export { default as AuthContainer } from './AuthContainer';
+export { default as ClientCardModal } from './ClientCardModal';
 export { default as Header } from './Header';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
