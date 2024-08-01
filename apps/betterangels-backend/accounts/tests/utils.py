@@ -4,6 +4,8 @@ from accounts.enums import (
     GenderEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    PronounEnum,
+    RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import HmisProfile
@@ -18,6 +20,42 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        self.client_profile_fields = """
+            id
+            address
+            age
+            dateOfBirth
+            gender
+            hmisId
+            nickname
+            phoneNumber
+            preferredLanguage
+            pronouns
+            spokenLanguages
+            veteranStatus
+            contacts {
+                id
+                name
+                email
+                phoneNumber
+                mailingAddress
+                relationshipToClient
+                relationshipToClientOther
+            }
+            hmisProfiles {
+                id
+                hmisId
+                agency
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
+            }
+        """
+
         self._setup_clients()
 
     def _setup_clients(self) -> None:
@@ -35,6 +73,27 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "middleName": "Tee",
             "email": "mister@pblivin.com",
         }
+        self.client_profile_1_contact_1 = {
+            "name": "Jerry",
+            "email": "jerry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "bestie",
+        }
+        self.client_profile_1_contact_2 = {
+            "name": "Gary",
+            "email": "gary@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_contacts = [
+            self.client_profile_1_contact_1,
+            self.client_profile_1_contact_2,
+        ]
+
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
@@ -45,9 +104,10 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
-                "pronouns": "he/him",
+                "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+                "contacts": self.client_1_contacts,
             }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(
@@ -106,30 +166,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }}
                     }}
                     ... on ClientProfileType {{
-                        id
-                        address
-                        age
-                        dateOfBirth
-                        gender
-                        hmisId
-                        hmisProfiles {{
-                            id
-                            hmisId
-                            agency
-                        }}
-                        nickname
-                        phoneNumber
-                        preferredLanguage
-                        pronouns
-                        spokenLanguages
-                        veteranStatus
-                        user {{
-                            id
-                            firstName
-                            lastName
-                            middleName
-                            email
-                        }}
+                        {self.client_profile_fields}
                     }}
                 }}
             }}

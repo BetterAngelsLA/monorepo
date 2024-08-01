@@ -13,7 +13,7 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, HmisProfile, User
+from .models import ClientContact, ClientProfile, HmisProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -111,7 +111,7 @@ class HmisProfileInput(HmisProfileType):
 
 @strawberry_django.type(Organization)
 class OrganizationType:
-    id: auto
+    id: ID
     name: auto
 
 
@@ -125,7 +125,7 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    id: auto
+    id: ID
     username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
@@ -138,7 +138,7 @@ class CreateUserInput(UserBaseType):
 
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
-    id: auto
+    id: ID
 
 
 @strawberry_django.type(ClientProfile)
@@ -155,10 +155,32 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
+@strawberry_django.type(ClientContact)
+class ClientContactBaseType:
+    name: auto
+    email: auto
+    phone_number: auto
+    mailing_address: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientContact)
+class ClientContactType(ClientContactBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientContact, partial=True)
+class ClientContactInput(ClientContactBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
-    id: auto
+    id: ID
     user: UserType
+    contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
 
     @strawberry.field
@@ -174,6 +196,7 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
 
 
@@ -181,6 +204,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
+    contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
 
 
