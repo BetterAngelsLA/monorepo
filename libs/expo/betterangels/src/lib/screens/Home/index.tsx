@@ -23,7 +23,7 @@ const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<ClientProfileType>();
-  const [open, setOpen] = useState<boolean>(false);
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
@@ -140,7 +140,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
               id={clientProfile.id}
               onPress={() => {
                 setCurrentClient(clientProfile);
-                setOpen(true);
+                setModalIsOpen(true);
               }}
               mb="sm"
               firstName={clientProfile.user.firstName}
@@ -154,8 +154,8 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         ListFooterComponent={renderFooter}
       />
       <ClientCardModal
-        isModalVisible={open}
-        closeModal={() => setOpen(false)}
+        isModalVisible={modalIsOpen}
+        closeModal={() => setModalIsOpen(false)}
         client={currentClient}
       />
     </View>

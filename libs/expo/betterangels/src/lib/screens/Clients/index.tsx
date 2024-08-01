@@ -55,7 +55,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   });
   const [clients, setClients] = useState<IGroupedClients>({});
   const [currentClient, setCurrentClient] = useState<ClientProfileType>();
-  const [open, setOpen] = useState<boolean>(false);
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -240,7 +240,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                     );
                   } else {
                     setCurrentClient(clientProfile);
-                    setOpen(true);
+                    setModalIsOpen(true);
                   }
                 }}
                 mb="sm"
@@ -270,8 +270,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         />
       </View>
       <ClientCardModal
-        isModalVisible={open}
-        closeModal={() => setOpen(false)}
+        isModalVisible={modalIsOpen}
+        closeModal={() => setModalIsOpen(false)}
         client={currentClient}
       />
     </View>
