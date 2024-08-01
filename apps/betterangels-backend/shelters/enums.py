@@ -26,23 +26,23 @@ class PopulationChoices(models.TextChoices):
     BOYS = "boys", _("Boys")
     CHILDREN = "children", _("Children")
     DOMESTIC_VIOLENCE = "domestic_violence", _("Domestic Violence (DV/IPV)")
+    ENHANCED_BRIDGE_HOUSING_FOR_OLDER_ADULTS = "enhanced_bridge_housing_older_adults", _(
+        "Enhanced Bridge Housing for Older Adults"
+    )
+    ENHANCED_BRIDGE_HOUSING_FOR_WOMEN = "enhanced_bridge_housing_women", _("Enhanced Bridge Housing for Women")
     FAMILIES = "families", _("Families")
     GIRLS = "girls", _("Girls")
     HIV_AND_AIDS = "hiv_and_aids", _("HIV/AIDS")
     HUMAN_TRAFFICKING = "human_trafficking", _("Human Trafficking")
+    JUSTICE_SYSTEM_EXITING = "justice_system_exiting", _(
+        "B7 Bridge Housing for Persons Exiting Justice System Institutions"
+    )
     LGBTQ = "lgbtq", _("LGBTQ")
     MEN = "men", _("Men")
     SENIORS = "seniors", _("Seniors (55+)")
     VETERANS = "veterans", _("Veterans")
     WOMEN = "women", _("Women")
     YOUTH = "youth", _("Youth (TAY)")
-    JUSTICE_SYSTEM_EXITING = "justice_system_exiting", _(
-        "B7 Bridge Housing for Persons Exiting Justice System Institutions"
-    )
-    ENHANCED_BRIDGE_HOUSING_FOR_WOMEN = "enhanced_bridge_housing_women", _("Enhanced Bridge Housing for Women")
-    ENHANCED_BRIDGE_HOUSING_FOR_OLDER_ADULTS = "enhanced_bridge_housing_older_adults", _(
-        "Enhanced Bridge Housing for Older Adults"
-    )
 
 
 class ImmediateNeedChoices(models.TextChoices):
