@@ -74,6 +74,7 @@ export default function ContactInfo(props: IContactInfoProps) {
           maxLength={10}
           rules={{
             pattern: Regex.number,
+            minLength: 10,
           }}
         />
         <Input
