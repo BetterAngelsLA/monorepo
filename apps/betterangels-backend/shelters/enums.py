@@ -77,13 +77,13 @@ class CareerServiceChoices(models.TextChoices):
 
 
 class FunderChoices(models.TextChoices):
+    CITY_OF_LOS_ANGELES = "city_of_los_angeles", _("City of Los Angeles")
     DHS = "dhs", _("DHS")
     DMH = "dmh", _("DMH")
     FEDERAL_FUNDING = "federal_funding", _("Federal Funding")
     HOPWA = "hopwa", _("HOPWA")
     LAHSA = "lahsa", _("LAHSA")
     PRIVATE = "private", _("Private")
-    CITY_OF_LOS_ANGELES = "city_of_los_angeles", _("City of Los Angeles")
 
 
 class AccessibilityChoices(models.TextChoices):
