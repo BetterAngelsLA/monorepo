@@ -18,6 +18,7 @@ interface IMainModalProps {
       title: string;
       select: string;
     };
+    onPress?: () => void;
   }[];
   bottomSection?: React.ReactNode;
   topSection?: React.ReactNode;
@@ -90,6 +91,9 @@ export default function MainModal(props: IMainModalProps) {
           {actions.map((action, idx: number) => (
             <Pressable
               onPress={() => {
+                if (action.onPress) {
+                  return action.onPress();
+                }
                 closeModal();
                 router.navigate({
                   pathname: action.route,
