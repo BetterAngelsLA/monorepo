@@ -219,8 +219,8 @@ class SPAChoices(models.IntegerChoices):
 
 class PetChoices(models.TextChoices):
     CATS = "cats", _("Cats")
-    DOGS_OVER_25_LBS = "dogs_over_25lbs", _("Dogs >25lbs")
-    DOGS_UNDER_25_LBS = "dogs_under_25lbs", _("Dogs <25lbs")
+    DOGS_OVER_25_LBS = "dogs_over_25lbs", _("Dogs over 25lbs")
+    DOGS_UNDER_25_LBS = "dogs_under_25lbs", _("Dogs under 25lbs")
     EMOTIONAL_SUPPORT = "emotional_support", _("Emotional Support")
     EXOTICS = "exotics", _("Exotics")
     SERVICE_ANIMAL = "service_animal", _("Service Animal")
