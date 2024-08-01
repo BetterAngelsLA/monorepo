@@ -69,6 +69,27 @@ type AuthResponse {
   status_code: String!
 }
 
+input ClientContactInput {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID
+}
+
+type ClientContactType {
+  name: String
+  email: String
+  phoneNumber: String
+  mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID!
+  clientProfile: DjangoModelType!
+}
+
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -96,6 +117,7 @@ type ClientProfileType {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
+  contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType]
   age: Int
 }
@@ -112,6 +134,7 @@ input CreateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
+  contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
 }
 
@@ -218,6 +241,10 @@ type DjangoFileType {
   path: String!
   size: Int!
   url: String!
+}
+
+type DjangoModelType {
+  pk: ID!
 }
 
 enum DueByGroupEnum {
@@ -501,6 +528,23 @@ type Query {
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
 }
 
+enum RelationshipTypeEnum {
+  CURRENT_CASE_MANAGER
+  PAST_CASE_MANAGER
+  ORGANIZATION
+  AUNT
+  CHILD
+  COUSIN
+  FATHER
+  FRIEND
+  GRANDPARENT
+  MOTHER
+  PET
+  SIBLING
+  UNCLE
+  OTHER
+}
+
 input RemoveNoteServiceRequestInput {
   serviceRequestId: ID!
   noteId: ID!
@@ -518,7 +562,7 @@ input RemoveNoteTaskInput {
 union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
-  id: ID
+  id: ID!
   revertBeforeTimestamp: DateTime!
 }
 
@@ -618,13 +662,14 @@ input UpdateClientProfileInput {
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
+  contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
 input UpdateNoteInput {
-  id: ID
+  id: ID!
   title: String
   location: ID
   publicDetails: String
@@ -634,7 +679,7 @@ input UpdateNoteInput {
 }
 
 input UpdateNoteLocationInput {
-  id: ID
+  id: ID!
   location: LocationInput!
 }
 
@@ -643,7 +688,7 @@ union UpdateNoteLocationPayload = NoteType | OperationInfo
 union UpdateNotePayload = NoteType | OperationInfo
 
 input UpdateServiceRequestInput {
-  id: ID
+  id: ID!
   customService: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
@@ -653,7 +698,7 @@ input UpdateServiceRequestInput {
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 input UpdateTaskInput {
-  id: ID
+  id: ID!
   title: String
   location: ID
   status: TaskStatusEnum
@@ -662,7 +707,7 @@ input UpdateTaskInput {
 }
 
 input UpdateTaskLocationInput {
-  id: ID
+  id: ID!
   location: LocationInput!
 }
 
@@ -675,7 +720,7 @@ input UpdateUserInput {
   lastName: String
   middleName: String
   email: String
-  id: ID
+  id: ID!
 }
 
 scalar Upload
