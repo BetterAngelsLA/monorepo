@@ -6,14 +6,14 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../apollo';
-
+import extractNamesWithErrors from '../../helpers/extractNamesWithErrors';
 interface IContactInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
@@ -22,11 +22,9 @@ interface IContactInfoProps {
 
 export default function ContactInfo(props: IContactInfoProps) {
   const { expanded, setExpanded, scrollRef } = props;
-  const {
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  const { control, watch, formState } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
 
   const email = watch('user.email');
   const phoneNumber = watch('phoneNumber');
@@ -34,9 +32,21 @@ export default function ContactInfo(props: IContactInfoProps) {
 
   const isContactInfo = expanded === 'Contact Info';
 
+  const [fieldsWithErrors, setFieldsWithErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!formState.isValid) {
+      const errorNames = extractNamesWithErrors(
+        formState.errors
+      ) as (keyof UpdateClientProfileInput)[];
+      setFieldsWithErrors(errorNames);
+    }
+  }, [formState]);
+
   return (
     <FieldCard
-      error={errors['user']?.email && 'Enter a valid email address.'}
+      errors={formState.errors}
+      errorNames={fieldsWithErrors}
       scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
@@ -69,27 +79,33 @@ export default function ContactInfo(props: IContactInfoProps) {
           placeholder="Enter Phone Number"
           label="Phone Number"
           name="phoneNumber"
+          error={!!formState.errors['phoneNumber']}
           control={control}
           keyboardType="phone-pad"
           maxLength={10}
           rules={{
-            pattern: Regex.number,
-            minLength: 10,
+            pattern: {
+              value: Regex.number,
+              message: 'Digits only for phone number',
+            },
+            minLength: { value: 10, message: 'Enter a 10-digit phone number' },
           }}
         />
         <Input
-          required
           placeholder="Enter Email"
           label="Email"
           autoCorrect={false}
           autoCapitalize="none"
-          error={!!errors['user']?.email}
+          error={!!formState.errors['user']?.email}
           name="user.email"
           control={control}
           keyboardType="email-address"
           rules={{
             required: true,
-            pattern: Regex.email,
+            pattern: {
+              value: Regex.email,
+              message: 'Enter a valid email address.',
+            },
           }}
         />
       </View>

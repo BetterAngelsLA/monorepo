@@ -1,5 +1,7 @@
+import { ErrorMessage } from '@hookform/error-message';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode, RefObject, useEffect, useState } from 'react';
+import { FieldErrors } from 'react-hook-form';
 import {
   DimensionValue,
   Pressable,
@@ -24,6 +26,8 @@ interface IFieldCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   error?: string | undefined;
+  errors?: FieldErrors;
+  errorNames?: string[];
   expanded: string | undefined | null;
   setExpanded: () => void;
   info?: ReactNode;
@@ -45,6 +49,8 @@ export function FieldCard(props: IFieldCardProps) {
     actionName,
     required,
     error,
+    errors,
+    errorNames,
     expanded,
     setExpanded,
     info,
@@ -112,11 +118,24 @@ export function FieldCard(props: IFieldCardProps) {
         </View>
         {actionName}
       </View>
-      {error && (
-        <TextRegular mt="xs" color={Colors.ERROR}>
-          {error}
-        </TextRegular>
-      )}
+      {errors &&
+        errorNames?.map((fieldName) => (
+          <ErrorMessage
+            key={fieldName}
+            name={fieldName}
+            errors={errors}
+            render={({ messages }) =>
+              messages &&
+              Object.entries(messages).map(([type, message]) => {
+                return (
+                  <TextRegular mt="xs" color={Colors.ERROR} key={type}>
+                    {message}
+                  </TextRegular>
+                );
+              })
+            }
+          />
+        ))}
       <View
         onStartShouldSetResponder={() => true}
         style={{
