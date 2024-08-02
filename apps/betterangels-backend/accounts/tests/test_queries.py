@@ -135,34 +135,16 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_client_profile_query(self) -> None:
         client_profile_id = self.client_profile_1["id"]
-        query = """
-            query ViewClientProfile($id: ID!) {
-                clientProfile(pk: $id) {
-                    id
-                    address
-                    age
-                    dateOfBirth
-                    gender
-                    hmisId
-                    nickname
-                    phoneNumber
-                    preferredLanguage
-                    pronouns
-                    spokenLanguages
-                    veteranStatus
-                    user {
-                        id
-                        firstName
-                        lastName
-                        middleName
-                        email
-                    }
-                }
-            }
+        query = f"""
+            query ViewClientProfile($id: ID!) {{
+                clientProfile(pk: $id) {{
+                    {self.client_profile_fields}
+                }}
+            }}
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 3
+        expected_query_count = 5
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -176,6 +158,37 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": self.client_profile_1_user["middleName"],
             "email": self.client_profile_1_user["email"],
         }
+        expected_client_contact_1 = {
+            "id": self.client_profile_1["contacts"][0]["id"],
+            "name": self.client_profile_1["contacts"][0]["name"],
+            "email": self.client_profile_1["contacts"][0]["email"],
+            "phoneNumber": self.client_profile_1["contacts"][0]["phoneNumber"],
+            "mailingAddress": self.client_profile_1["contacts"][0]["mailingAddress"],
+            "relationshipToClient": self.client_profile_1["contacts"][0]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["contacts"][0]["relationshipToClientOther"],
+        }
+        expected_client_contact_2 = {
+            "id": self.client_profile_1["contacts"][1]["id"],
+            "name": self.client_profile_1["contacts"][1]["name"],
+            "email": self.client_profile_1["contacts"][1]["email"],
+            "phoneNumber": self.client_profile_1["contacts"][1]["phoneNumber"],
+            "mailingAddress": self.client_profile_1["contacts"][1]["mailingAddress"],
+            "relationshipToClient": self.client_profile_1["contacts"][1]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["contacts"][1]["relationshipToClientOther"],
+        }
+        expected_client_contacts = [expected_client_contact_1, expected_client_contact_2]
+        expected_hmis_profiles = [
+            {
+                "id": str(self.client_profile_1_hmis_profile_1.id),
+                "hmisId": self.client_profile_1_hmis_profile_1.hmis_id,
+                "agency": self.client_profile_1_hmis_profile_1.agency.name,
+            },
+            {
+                "id": str(self.client_profile_1_hmis_profile_2.id),
+                "hmisId": self.client_profile_1_hmis_profile_2.hmis_id,
+                "agency": self.client_profile_1_hmis_profile_2.agency.name,
+            },
+        ]
         expected_client = {
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
@@ -183,43 +196,27 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "gender": GenderEnum.MALE.name,
             "hmisId": self.client_profile_1["hmisId"],
+            "hmisProfiles": expected_hmis_profiles,
             "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": self.client_profile_1["pronouns"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+            "contacts": expected_client_contacts,
             "user": expected_user,
         }
-
         self.assertEqual(returned_client, expected_client)
 
     def test_client_profiles_query(self) -> None:
-        query = """
-            query ViewClientProfiles {
-                clientProfiles{
-                    id
-                    address
-                    age
-                    dateOfBirth
-                    gender
-                    hmisId
-                    phoneNumber
-                    preferredLanguage
-                    pronouns
-                    spokenLanguages
-                    veteranStatus
-                    user {
-                        id
-                        firstName
-                        lastName
-                        middleName
-                        email
-                    }
-                }
-            }
+        query = f"""
+            query ViewClientProfiles {{
+                clientProfiles{{
+                    {self.client_profile_fields}
+                }}
+            }}
         """
-        expected_query_count = 3
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -263,13 +260,13 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("pea", False, 0),  # last_name search matching active client + active filter false
             ("pea", True, 1),  # last_name search matching active client + active filter true
             ("tod pea", None, 0),  # no match first_name, last_name search + active filter false
-            ("A1B", None, 2),  # hmis_id search matching both clients
-            ("A1B", False, 1),  # hmis_id search matching both clients + active filter false
-            ("A1B", True, 1),  # hmis_id search matching both clients + active filter true
-            ("A1B2", False, 1),  # hmis_id search matching inactive client
-            ("A1B2", True, 0),  # hmis_id search matching inactive client + active filter true
-            ("A1B3", False, 0),  # hmis_id search matching active client + active filter false
-            ("A1B3", True, 1),  # hmis_id search matching active client + active filter true
+            ("HMISid", None, 2),  # hmis_id search matching both clients
+            ("HMISid", False, 1),  # hmis_id search matching both clients + active filter false
+            ("HMISid", True, 1),  # hmis_id search matching both clients + active filter true
+            ("HMISidL", False, 1),  # hmis_id search matching inactive client
+            ("HMISidL", True, 0),  # hmis_id search matching inactive client + active filter true
+            ("HMISidP", False, 0),  # hmis_id search matching active client + active filter false
+            ("HMISidP", True, 1),  # hmis_id search matching active client + active filter true
         ],
     )
     def test_client_profiles_query_search(
@@ -277,12 +274,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        self.organization = organization_recipe.make()
-        self.client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
-        self.client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+        organization = organization_recipe.make()
+        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
         # Make two notes for Client 1 (Chavez, inactive)
-        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
-        baker.make(Note, organization=self.organization, client=self.client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
 
         query = """
             query ClientProfiles($isActive: Boolean, $search: String) {
@@ -297,11 +294,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             # Make two notes for Client 2 (Peanutbutter, active)
-            baker.make(Note, organization=self.organization, client=self.client_profile_2.user)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
             baker.make(
                 Note,
-                organization=self.organization,
-                client=self.client_profile_2.user,
+                organization=organization,
+                client=client_profile_2.user,
             )
 
             expected_query_count = 3

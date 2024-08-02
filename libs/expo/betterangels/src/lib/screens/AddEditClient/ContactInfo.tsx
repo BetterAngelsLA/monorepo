@@ -77,7 +77,6 @@ export default function ContactInfo(props: IContactInfoProps) {
           }}
         />
         <Input
-          required
           placeholder="Enter Email"
           label="Email"
           autoCorrect={false}
@@ -87,7 +86,6 @@ export default function ContactInfo(props: IContactInfoProps) {
           control={control}
           keyboardType="email-address"
           rules={{
-            required: true,
             pattern: Regex.email,
           }}
         />
