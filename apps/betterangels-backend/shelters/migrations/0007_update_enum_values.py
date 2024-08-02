@@ -298,7 +298,7 @@ def update_enum_values_forward(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("shelters", "0006_alter_shelter_options_shelter_reviewed"),  # Update with the correct previous migration
+        ("shelters", "0006_alter_shelter_options_shelter_reviewed"),
     ]
 
     operations = [
