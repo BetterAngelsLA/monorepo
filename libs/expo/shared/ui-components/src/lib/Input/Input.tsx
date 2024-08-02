@@ -79,7 +79,7 @@ export function Input(props: IInputProps) {
       control={control}
       name={name}
       rules={rules}
-      render={({ field: { value, onBlur, onChange } }) => (
+      render={({ field: { value, onBlur, onChange, ref } }) => (
         <View
           style={[
             styles.inputContainer,
@@ -126,6 +126,7 @@ export function Input(props: IInputProps) {
                   },
                 }),
               }}
+              ref={ref}
               value={value}
               onBlur={() => handleBlur(onBlur)}
               onChangeText={onChange}
