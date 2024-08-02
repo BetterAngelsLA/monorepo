@@ -33,9 +33,9 @@ export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
   const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
 
-  const methods = useForm<
-    UpdateClientProfileInput | CreateClientProfileInput
-  >();
+  const methods = useForm<UpdateClientProfileInput | CreateClientProfileInput>({
+    criteriaMode: 'all',
+  });
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [updateClient] = useUpdateClientProfileMutation();
