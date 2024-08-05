@@ -157,6 +157,7 @@ class PhoneNumberScalar:
         except NumberParseException:
             raise ValueError(f"Invalid phone number format: {value}")
 
+
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
