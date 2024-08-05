@@ -43,10 +43,13 @@ export default function ImageComponent(props: IImageComponentProps) {
   return (
     <View
       style={{
-        height: (width / 3) * 1.3 - Spacings.xs * 2,
+        borderWidth: 1,
+        borderColor: Colors.NEUTRAL_LIGHT,
+        height: width / 3 - Spacings.xs * 2,
         width: width / 3 - Spacings.xs * 2,
         margin: Spacings.xs,
         overflow: 'hidden',
+        borderRadius: Radiuses.xs,
       }}
     >
       <Image
