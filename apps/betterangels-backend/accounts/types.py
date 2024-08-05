@@ -1,4 +1,6 @@
 from datetime import timedelta
+from functools import reduce
+from operator import and_, or_
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -11,7 +13,7 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, User
+from .models import ClientContact, ClientProfile, HmisProfile, User
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -61,17 +63,32 @@ class ClientProfileFilter:
         value: Optional[str],
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
-        if value:
-            return (
-                queryset.filter(
-                    Q(user__first_name__icontains=value)
-                    | Q(user__last_name__icontains=value)
-                    | Q(hmis_id__icontains=value)
-                ),
-                Q(),
-            )
+        if value is None:
+            return queryset, Q()
 
-        return queryset, Q()
+        search_terms = value.split(" ")
+
+        q_objects = []
+        combined_q_search = []
+        searchable_fields = [
+            "hmis_id",
+            "nickname",
+            "user__first_name",
+            "user__last_name",
+            "user__middle_name",
+        ]
+
+        for term in search_terms:
+            q_search = [Q(**{f"{field}__icontains": term}) for field in searchable_fields]
+            combined_q_search.append(reduce(or_, q_search))
+            q_objects.append(Q(*combined_q_search))
+
+        queryset = queryset.filter(reduce(and_, q_objects))
+
+        return (
+            queryset,
+            Q(),
+        )
 
 
 @strawberry.input
@@ -80,9 +97,21 @@ class LoginInput:
     password: str
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType:
+    id: auto
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.input(HmisProfile)
+class HmisProfileInput(HmisProfileType):
+    "See parent"
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
-    id: auto
+    id: ID
     name: auto
 
 
@@ -96,7 +125,7 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    id: auto
+    id: ID
     username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
@@ -104,12 +133,12 @@ class UserType(UserBaseType):
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
-    pass
+    "See parent"
 
 
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
-    id: auto
+    id: ID
 
 
 @strawberry_django.type(ClientProfile)
@@ -126,10 +155,33 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
+@strawberry_django.type(ClientContact)
+class ClientContactBaseType:
+    name: auto
+    email: auto
+    phone_number: auto
+    mailing_address: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientContact)
+class ClientContactType(ClientContactBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientContact, partial=True)
+class ClientContactInput(ClientContactBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
-    id: auto
+    id: ID
     user: UserType
+    contacts: Optional[List[ClientContactType]]
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
 
     @strawberry.field
     def age(self) -> Optional[int]:
@@ -144,12 +196,16 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
 
 
 @strawberry.input

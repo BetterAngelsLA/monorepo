@@ -26,6 +26,16 @@ class UserManagerTestCase(TestCase):
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
+    def test_create_two_users_without_email(self) -> None:
+        User.objects.create_user(username="user_1")
+        User.objects.create_user(username="user_2")
+
+    def test_user_email_unique_constraint(self) -> None:
+        User.objects.create_user(username="user_1", email="a@b.co")
+
+        with self.assertRaises(IntegrityError):
+            User.objects.create_user(username="user_2", email="a@b.co")
+
     def test_create_user_without_username(self) -> None:
         with self.assertRaises(ValueError):
             User.objects.create_user(username=None, email="normal@user.com", password="foo")  # type: ignore[arg-type]

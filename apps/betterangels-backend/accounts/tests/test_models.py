@@ -1,5 +1,7 @@
-from accounts.models import User
+from accounts.enums import HmisAgencyEnum
+from accounts.models import HmisProfile, User
 from accounts.utils import remove_organization_permission_group
+from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -48,3 +50,13 @@ class UserModelTestCase(TestCase):
         self.assertTrue(user_in_both_orgs.is_outreach_authorized)
         self.assertFalse(user_in_unauth_org.is_outreach_authorized)
         self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+
+
+class HmisProfileModelTestCase(TestCase):
+    def test_hmis_profile_unique_constraint(self) -> None:
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID2", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.PASADENA)
+
+        with self.assertRaises(IntegrityError):
+            baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)

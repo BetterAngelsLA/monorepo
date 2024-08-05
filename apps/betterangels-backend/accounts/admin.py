@@ -11,6 +11,7 @@ from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
 from .models import (
     ClientProfile,
     ExtendedOrganizationInvitation,
+    HmisProfile,
     PermissionGroup,
     PermissionGroupTemplate,
     User,
@@ -60,8 +61,19 @@ class UserAdmin(BaseUserAdmin):
         return hasattr(obj, "client_profile")
 
 
+class HmisProfileInline(admin.TabularInline):
+    model = HmisProfile
+    extra = 1
+
+
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "hmis_id"]
+    list_display = ["name", "id"]
+    inlines = [
+        HmisProfileInline,
+    ]
+
+    def name(self, obj: ClientProfile) -> str:
+        return obj.user.full_name
 
 
 @admin.register(PermissionGroup)
