@@ -134,17 +134,16 @@ class UpdateUserInput(UserBaseType):
 class PhoneNumberScalar:
     @staticmethod
     def serialize(phone_number: PhoneNumber) -> str:
-        return str(phone_number)
+        phone = phone_number.__dict__
+        return str(phone['national_number'])
 
     @staticmethod
     def parse_value(value: str) -> PhoneNumber:
         from phonenumbers import NumberParseException, parse
-
         try:
             return PhoneNumber(parse(value))
         except NumberParseException:
             raise ValueError(f"Invalid phone number format: {value}")
-
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
@@ -153,7 +152,7 @@ class ClientProfileBaseType:
     gender: auto
     hmis_id: auto
     nickname: auto
-    phone_number: PhoneNumberScalar
+    phone_number: Optional[PhoneNumberScalar]
     preferred_language: auto
     pronouns: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]

@@ -89,7 +89,7 @@ type ClientProfileType {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: PhoneNumberScalar!
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
@@ -105,7 +105,7 @@ input CreateClientProfileInput {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: PhoneNumberScalar!
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
@@ -592,7 +592,7 @@ input UpdateClientProfileInput {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: PhoneNumberScalar!
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
