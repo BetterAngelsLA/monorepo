@@ -1,8 +1,12 @@
 import {
   MainScrollContainer,
+  NotesDocument,
+  Ordering,
+  NoteNamespaceEnum,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
+  useUser,
   useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -14,7 +18,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
@@ -56,7 +60,7 @@ const renderModal = (
         button={
           <TextButton
             fontSize="sm"
-            accessibilityHint="deletes creation"
+            accessibilityHint="deletes interaction"
             title={buttonTitle}
           />
         }
@@ -67,6 +71,7 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
+  const { user } = useUser();
   const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
@@ -82,7 +87,18 @@ export default function AddNote() {
     nextFetchPolicy: 'cache-first',
   });
   const [updateNote, { error: updateError }] = useUpdateNoteMutation();
-  const [deleteNote] = useDeleteNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation({
+    refetchQueries: [
+      {
+        query: NotesDocument,
+        variables: {
+          pagination: { limit: 10 + 1, offset: 0 },
+          order: { interactedAt: Ordering.Desc },
+          filters: { createdBy: user?.id, search: '' },
+        },
+      },
+    ],
+  });
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
@@ -199,6 +215,26 @@ export default function AddNote() {
     }
   }
 
+  const filterAttachments = (namespace: NoteNamespaceEnum) => {
+    return (
+      data?.note?.attachments?.filter((item) => item.namespace === namespace) ||
+      []
+    );
+  };
+
+  const MoodAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
+    [data]
+  );
+  const RequestedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.RequestedServices),
+    [data]
+  );
+  const ProvidedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.ProvidedServices),
+    [data]
+  );
+
   if (!data || isLoading) {
     return null;
   }
@@ -222,23 +258,17 @@ export default function AddNote() {
         />
         <Purpose purposes={data.note.purposes} {...props} />
         <Mood
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'MOOD_ASSESSMENT'
-          )}
+          attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
         />
         <ProvidedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'PROVIDED_SERVICES'
-          )}
+          attachments={ProvidedAttachments}
           services={data.note.providedServices}
           {...props}
         />
         <RequestedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'REQUESTED_SERVICES'
-          )}
+          attachments={RequestedAttachments}
           services={data.note.requestedServices}
           {...props}
         />
@@ -256,7 +286,7 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <Button
-                accessibilityHint="deletes creation"
+                accessibilityHint="deletes interaction"
                 title="Delete Interaction"
                 variant="negative"
                 size="full"
