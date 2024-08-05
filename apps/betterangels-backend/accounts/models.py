@@ -18,6 +18,7 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from phonenumber_field.modelfields import PhoneNumberField
+from phonenumbers import PhoneNumber
 from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
@@ -104,6 +105,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         ).exists()
 
 
+def phone_number_field_default_value() -> Dict[str, Any]:
+    phone_number = PhoneNumber(country_code=1, national_number=None, extension=None, italian_leading_zero=None, number_of_leading_zeros=None, country_code_source=20, preferred_domestic_carrier_code=None)
+    return phone_number.__dict__
+
+
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
@@ -111,7 +117,7 @@ class ClientProfile(models.Model):
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
-    phone_number = PhoneNumberField(blank=True, null=True)
+    phone_number = models.JSONField(PhoneNumberField(region='US'), default=phone_number_field_default_value, null=True, blank=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = models.CharField(max_length=50, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
