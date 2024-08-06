@@ -5,10 +5,12 @@ from accounts.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
+    RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.groups import GroupTemplateNames
@@ -52,13 +54,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         help_text=("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
         validators=[username_validator],
+        unique=True,
     )
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     middle_name = models.CharField(max_length=50, blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(
         ("staff status"),
@@ -90,11 +93,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
-        return self.email
+        return f"{self.full_name if self.full_name else self.pk}"
 
     @model_property
     def full_name(self: "User") -> str:
-        return f"{self.first_name} {self.last_name}"
+        name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
+        return " ".join(name_parts).strip()
 
     @model_property
     def is_outreach_authorized(self: "User") -> bool:
@@ -110,6 +114,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         return PermissionGroup.objects.filter(
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
+
+
+class HmisProfile(models.Model):
+    client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
+    hmis_id = models.CharField(max_length=50)
+    agency = TextChoicesField(choices_enum=HmisAgencyEnum)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["hmis_id", "agency"], name="unique_hmis_id_agency")]
 
 
 class ClientProfile(models.Model):
@@ -140,6 +153,16 @@ class ClientProfile(models.Model):
         today = timezone.now().date()
         age = relativedelta(today, self.date_of_birth).years
         return age
+
+
+class ClientContact(models.Model):
+    client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
+    name = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    mailing_address = models.TextField(null=True, blank=True)
+    relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
+    relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

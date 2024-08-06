@@ -4,13 +4,15 @@ from accounts.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
+    RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
-from accounts.models import ClientProfile, User
+from accounts.models import ClientProfile, HmisProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
@@ -83,6 +85,31 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
         }
+        client_profile_contact_1 = {
+            "name": "Jerry",
+            "email": "jerry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "bestie",
+        }
+        client_profile_contact_2 = {
+            "name": "Gary",
+            "email": "gary@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        client_contacts = [
+            client_profile_contact_1,
+            client_profile_contact_2,
+        ]
+        client_profile_hmis_profile = {
+            "hmisId": "12345678",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        expected_hmis_profile = {**client_profile_hmis_profile, "id": ANY}
 
         variables = {
             "address": "1234 Main St",
@@ -94,6 +121,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 60.0,
             "hmisId": "12345678",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "hmisProfiles": [client_profile_hmis_profile],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
@@ -103,42 +131,84 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
+            "contacts": client_contacts,
         }
 
         response = self._create_client_profile_fixture(variables)
-        client = response["data"]["createClientProfile"]
+
+        client_profile = response["data"]["createClientProfile"]
+
+        expected_client_profile_contact_1 = {"id": ANY, **client_profile_contact_1}
+        expected_client_profile_contact_2 = {"id": ANY, **client_profile_contact_2}
+        expected_client_contacts = [expected_client_profile_contact_1, expected_client_profile_contact_2]
+        expected_user = {"id": ANY, **client_profile_user}
         expected_client_profile = {
+            **variables,  # Needs to be first because we're overwriting some fields
             "id": ANY,
-            "address": "1234 Main St",
             "age": self.EXPECTED_CLIENT_AGE,
-            "cityOfBirth": "Los Angeles",
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "eyeColor": EyeColorEnum.BROWN.name,
-            "gender": GenderEnum.FEMALE.name,
-            "hairColor": HairColorEnum.BROWN.name,
-            "heightInInches": 60.0,
-            "hmisId": "12345678",
-            "maritalStatus": MaritalStatusEnum.SINGLE.name,
-            "nickname": "Fasty",
-            "phoneNumber": "2125551212",
-            "physicalDescription": "eerily cat-like",
-            "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": PronounEnum.SHE_HER_HERS.name,
-            "race": RaceEnum.ASIAN.name,
-            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
-            "user": {
-                "id": ANY,
-                "firstName": "Firsty",
-                "lastName": "Lasty",
-                "middleName": "Middly",
-                "email": "firsty_lasty@example.com",
-            },
+            "contacts": expected_client_contacts,
+            "user": expected_user,
+            "hmisProfiles": [expected_hmis_profile],
         }
 
-        self.assertEqual(client, expected_client_profile)
+        self.assertEqual(client_profile, expected_client_profile)
 
     def test_update_client_profile_mutation(self) -> None:
+        client_profile_user = {
+            "id": self.client_profile_1["user"]["id"],
+            "firstName": "Firstey",
+            "lastName": "Lastey",
+            "middleName": "Middley",
+            "email": "firstey_lastey@example.com",
+        }
+        client_profile_contact_1 = {
+            "id": self.client_profile_1["contacts"][0]["id"],
+            "name": "Jerryyy",
+            "email": "jerryyy@example.co",
+            "phoneNumber": "6465551212",
+            "mailingAddress": "1235 Main Street",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "bff",
+        }
+        client_profile_contact_2 = {
+            "id": self.client_profile_1["contacts"][1]["id"],
+            "name": "Garyyy",
+            "email": "garyyy@example.co",
+            "phoneNumber": "6465551212",
+            "mailingAddress": "1235 Main Street",
+            "relationshipToClient": RelationshipTypeEnum.PET.name,
+            "relationshipToClientOther": None,
+        }
+
+        # Make sure we can add a new contact while updating existing contacts
+        client_profile_contact_3 = {
+            "name": "New guy",
+            "email": "new_guy@example.co",
+            "phoneNumber": "3475551212",
+            "mailingAddress": "1236 Main Street",
+            "relationshipToClient": RelationshipTypeEnum.UNCLE.name,
+            "relationshipToClientOther": None,
+        }
+        client_contacts = [
+            client_profile_contact_1,
+            client_profile_contact_2,
+            client_profile_contact_3,
+        ]
+        hmis_profile_to_update = {
+            "id": str(self.client_profile_1_hmis_profile_1.id),
+            "hmisId": "UPDATEDHMISID",
+            "agency": HmisAgencyEnum.SANTA_MONICA.name,
+        }
+        hmis_profile_to_create = {
+            "hmisId": "NEWHMISPROFILEID",
+            "agency": HmisAgencyEnum.VASH.name,
+        }
+        hmis_profiles = [
+            hmis_profile_to_update,
+            hmis_profile_to_create,
+        ]
+
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
@@ -150,6 +220,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 60.5,
             "hmisId": "12345678",
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
+            "hmisProfiles": hmis_profiles,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "normally cat-like",
@@ -158,52 +229,29 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
-            "user": {
-                "id": self.client_profile_1["user"]["id"],
-                "firstName": "Firstey",
-                "lastName": "Lastey",
-                "middleName": "Middley",
-                "email": "firstey_lastey@example.com",
-            },
+            "contacts": client_contacts,
+            "user": client_profile_user,
         }
-
         response = self._update_client_profile_fixture(variables)
         client = response["data"]["updateClientProfile"]
-        expected_client_profile = {
-            "id": self.client_profile_1["id"],
-            "address": "1234 Main St",
-            "age": self.EXPECTED_CLIENT_AGE,
-            "cityOfBirth": "Los Angeles, CA",
-            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "eyeColor": EyeColorEnum.GRAY.name,
-            "gender": GenderEnum.FEMALE.name,
-            "hairColor": HairColorEnum.GRAY.name,
-            "heightInInches": 60.5,
-            "hmisId": "12345678",
-            "maritalStatus": MaritalStatusEnum.SEPARATED.name,
-            "nickname": "Fasty",
-            "phoneNumber": "2125551212",
-            "physicalDescription": "normally cat-like",
-            "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": PronounEnum.THEY_THEM_THEIRS.name,
-            "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
-            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
-            "user": {
-                "id": ANY,
-                "firstName": "Firstey",
-                "lastName": "Lastey",
-                "middleName": "Middley",
-                "email": "firstey_lastey@example.com",
-            },
-        }
 
-        self.assertEqual(client, expected_client_profile)
+        client_profile_contact_3["id"] = ANY
+        hmis_profile_to_create = {
+            **hmis_profile_to_create,
+            "id": ANY,
+        }
+        expected_client_profile = {
+            **variables,  # Needs to be first because we're overwriting dob
+            "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "age": self.EXPECTED_CLIENT_AGE,
+        }
+        self.assertCountEqual(client, expected_client_profile)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         user = client_profile.user
+        hmis_profile_ids = client_profile.hmis_profiles.values_list("id", flat=True)
 
         mutation = """
             mutation DeleteClientProfile($id: ID!) {
@@ -223,7 +271,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 31
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -234,3 +282,5 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(id=user.pk)
+
+        self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)

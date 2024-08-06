@@ -1,5 +1,7 @@
-from accounts.models import User
+from accounts.enums import HmisAgencyEnum
+from accounts.models import HmisProfile, User
 from accounts.utils import remove_organization_permission_group
+from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
 
@@ -7,9 +9,19 @@ from .baker_recipes import organization_recipe, permission_group_recipe
 
 
 class UserModelTestCase(TestCase):
+    def test_str_method(self) -> None:
+        user_with_name = baker.make(User, first_name="Dale", last_name="Cooper")
+        user_without_name = baker.make(User)
+
+        self.assertEqual(f"{user_with_name}", "Dale Cooper")
+        self.assertEqual(f"{user_without_name}", f"{user_without_name.pk}")
+
     def test_full_name(self) -> None:
-        user = baker.make(User, first_name="Dale", last_name="Cooper")
-        self.assertEqual(user.full_name, "Dale Cooper")
+        user_1 = baker.make(User, first_name="Dale", middle_name=None, last_name="Cooper")
+        self.assertEqual(user_1.full_name, "Dale Cooper")
+
+        user_2 = baker.make(User, first_name="Dale", middle_name="Bartholomew", last_name="Cooper")
+        self.assertEqual(user_2.full_name, "Dale Bartholomew Cooper")
 
     def test_is_outreach_authorized(self) -> None:
         authorized_org = organization_recipe.make(name="authorized org")
@@ -38,3 +50,13 @@ class UserModelTestCase(TestCase):
         self.assertTrue(user_in_both_orgs.is_outreach_authorized)
         self.assertFalse(user_in_unauth_org.is_outreach_authorized)
         self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+
+
+class HmisProfileModelTestCase(TestCase):
+    def test_hmis_profile_unique_constraint(self) -> None:
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID2", agency=HmisAgencyEnum.LAHSA)
+        baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.PASADENA)
+
+        with self.assertRaises(IntegrityError):
+            baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)

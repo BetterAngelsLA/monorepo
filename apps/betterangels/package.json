@@ -63,7 +63,17 @@
     "expo-dev-client": "*",
     "react-native-modal": "*",
     "react-native-picker-select": "*",
-    "react-native-select-dropdown": "*"
+    "react-native-select-dropdown": "*",
+    "@nx/devkit": "*",
+    "@nx/react": "*",
+    "@nx/web": "*",
+    "@nx/webpack": "*",
+    "chalk": "*",
+    "enhanced-resolve": "*",
+    "fs-extra": "*",
+    "metro-resolver": "*",
+    "node-fetch": "*",
+    "tsconfig-paths": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
