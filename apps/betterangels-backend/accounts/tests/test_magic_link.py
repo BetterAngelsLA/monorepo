@@ -22,7 +22,9 @@ class TestMagicLink(TestCase):
     def setUp(self) -> None:
         self.factory = RequestFactory()
         self.client = Client()
-        self.user = get_user_model().objects.create_user(email="testuser@test.com", password="testpassword")
+        self.user = get_user_model().objects.create_user(
+            username="testuser", email="testuser@test.com", password="testpassword"
+        )
 
     def test_magic_link_authentication(self) -> None:
         # Generate a magic login URL for the test user
@@ -66,6 +68,7 @@ class TestMagicLink(TestCase):
         self.assertIn(magic_login_url, found.message)
 
     def test_send_magic_link(self) -> None:
+        assert self.user.email
         query_string = send_magic_link(self.user.email, "http://localhost")
         found = Email.objects.all().first()
         self.assertIn(query_string, found.html_message)
