@@ -146,7 +146,7 @@ class UpdateUserInput(UserBaseType):
 class PhoneNumberScalar:
     @staticmethod
     def serialize(phone_number: PhoneNumber) -> str:
-        return str(phone_number['national_number'])
+        return str(phone_number["national_number"])
 
     @staticmethod
     def parse_value(value: str) -> PhoneNumber:
