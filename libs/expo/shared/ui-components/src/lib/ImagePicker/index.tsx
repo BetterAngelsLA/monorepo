@@ -4,11 +4,18 @@ import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
+import { Dispatch, SetStateAction } from 'react';
 import IconButton from '../IconButton';
 
+interface IImage {
+  id: string | undefined;
+  uri: string;
+  loading?: boolean;
+  abortController?: AbortController;
+}
+
 interface IImagePickerProps {
-  images: { id: string | undefined; uri: string }[];
-  setImages: (images: { id: string | undefined; uri: string }[]) => void;
+  setImages: Dispatch<SetStateAction<IImage[] | undefined>>;
   namespace: 'REQUESTED_SERVICES' | 'PROVIDED_SERVICES' | 'MOOD_ASSESSMENT';
   mr?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   noteId: string | undefined;
@@ -17,8 +24,7 @@ interface IImagePickerProps {
 }
 
 export default function ImagePickerComponent(props: IImagePickerProps) {
-  const { setImages, images, mr, namespace, noteId, setIsLoading, isLoading } =
-    props;
+  const { setImages, mr, namespace, noteId, setIsLoading, isLoading } = props;
   const [createNoteAttachment, { error }] = useMutation(gql`
     mutation CreateNoteAttachment(
       $noteId: ID!
@@ -57,32 +63,67 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
         allowsEditing: false,
         allowsMultipleSelection: true,
       });
+
       if (!result.canceled && result.assets) {
-        const uploadPromises = result.assets.map(async (asset) => {
+        const newImages = result.assets.map((asset) => ({
+          id: undefined,
+          uri: asset.uri,
+          loading: true,
+          abortController: new AbortController(),
+        }));
+
+        setImages((prevImages) => {
+          if (prevImages) {
+            return [...prevImages, ...newImages];
+          }
+          return newImages;
+        });
+
+        const uploadPromises = newImages.map(async (image) => {
+          const asset = result.assets.find((a) => a.uri === image.uri);
+          if (!asset) return;
           const resizedPhoto = await resizeImage({ uri: asset.uri });
           const file = new ReactNativeFile({
             uri: resizedPhoto.uri,
             name: asset?.fileName || Date.now().toString(),
-            type: asset.mimeType || 'changeme',
+            type: asset?.mimeType || 'changeme',
           });
-          const { data } = await createNoteAttachment({
-            variables: {
-              namespace,
-              file,
-              noteId,
-            },
-          });
-          if (!data) throw new Error(`Error uploading image: ${error}`);
 
-          return {
-            id: data.createNoteAttachment.id,
-            uri: asset.uri,
-          };
+          try {
+            const { data } = await createNoteAttachment({
+              variables: {
+                namespace,
+                file,
+                noteId,
+              },
+              context: {
+                fetchOptions: {
+                  signal: image.abortController.signal,
+                },
+              },
+            });
+
+            if (!data) throw new Error(`Error uploading image: ${error}`);
+
+            setImages((prevImages) =>
+              prevImages?.map((img) =>
+                img.uri === asset?.uri
+                  ? { ...img, id: data.createNoteAttachment.id, loading: false }
+                  : img
+              )
+            );
+          } catch (err) {
+            console.error(err);
+
+            setImages((prevImages) =>
+              prevImages?.map((img) =>
+                img.uri === asset?.uri ? { ...img, loading: false } : img
+              )
+            );
+          }
         });
 
-        const uploadedImages = await Promise.all(uploadPromises);
-
-        setImages([...images, ...uploadedImages]);
+        await Promise.all(uploadPromises);
       }
       setIsLoading(false);
     } catch (err) {

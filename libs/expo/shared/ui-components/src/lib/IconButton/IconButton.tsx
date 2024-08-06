@@ -52,6 +52,7 @@ const Height = {
 
 const Width = {
   xs: 20,
+  sm: 32,
   md: 40,
   full: '100%',
 } as const;
@@ -75,7 +76,7 @@ interface IIconButtonProps {
   ml?: TSpacing;
   mr?: TSpacing;
   borderColor?: string;
-  width?: 'xs' | 'md' | 'full';
+  width?: 'xs' | 'md' | 'full' | 'sm';
   height?: 'xs' | 'sm' | 'md';
   accessibilityLabel: string;
   accessibilityHint: string;

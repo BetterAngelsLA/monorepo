@@ -4304,7 +4304,6 @@ __metadata:
     "@yarnpkg/sdks": "npm:^3.0.0-rc.48"
     apollo-link-rest: "npm:^0.9.0"
     apollo-upload-client: "npm:^18.0.1"
-    axios: "npm:^1.7.2"
     babel-jest: "npm:^29.4.1"
     babel-plugin-react-native-web: "npm:^0.19.8"
     babel-preset-expo: "npm:11.0.12"
@@ -10062,7 +10061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.0, axios@npm:^1.6.7, axios@npm:^1.7.2":
+"axios@npm:^1.6.0, axios@npm:^1.6.7":
   version: 1.7.2
   resolution: "axios@npm:1.7.2"
   dependencies:
