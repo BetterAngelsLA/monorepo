@@ -3,8 +3,6 @@ from typing import Any, Dict, Optional
 
 from accounts.models import User
 from common.enums import AttachmentType
-from common.permissions.enums import AddressPermissions
-from common.permissions.utils import permission_enums_to_django_meta_permissions
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
