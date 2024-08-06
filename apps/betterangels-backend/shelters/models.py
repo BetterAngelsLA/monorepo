@@ -1,3 +1,4 @@
+import pghistory
 from common.models import Address, Attachment, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -136,6 +137,11 @@ class SleepingOption(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter.add"),
+    pghistory.UpdateEvent("shelter.update"),
+    pghistory.DeleteEvent("shelter.remove"),
+)
 class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
