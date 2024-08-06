@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
+from phonenumber_field.phonenumber import PhoneNumber
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
@@ -141,6 +142,22 @@ class UpdateUserInput(UserBaseType):
     id: ID
 
 
+@strawberry.scalar(description="A custom scalar to represent a phone number")
+class PhoneNumberScalar:
+    @staticmethod
+    def serialize(phone_number: PhoneNumber) -> str:
+        return str(phone_number['national_number'])
+
+    @staticmethod
+    def parse_value(value: str) -> PhoneNumber:
+        from phonenumbers import NumberParseException
+
+        try:
+            return PhoneNumber(national_number=value)
+        except NumberParseException:
+            raise ValueError(f"Invalid phone number format: {value}")
+
+
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
@@ -148,7 +165,7 @@ class ClientProfileBaseType:
     gender: auto
     hmis_id: auto
     nickname: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]
     preferred_language: auto
     pronouns: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
@@ -159,7 +176,7 @@ class ClientProfileBaseType:
 class ClientContactBaseType:
     name: auto
     email: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
