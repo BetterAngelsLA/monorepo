@@ -73,8 +73,7 @@
     "fs-extra": "*",
     "metro-resolver": "*",
     "node-fetch": "*",
-    "tsconfig-paths": "*",
-    "@lifeomic/axios-fetch": "*"
+    "tsconfig-paths": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",

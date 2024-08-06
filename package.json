@@ -16,6 +16,7 @@
     "@react-native-community/datetimepicker": "^8.2.0",
     "apollo-link-rest": "^0.9.0",
     "apollo-upload-client": "^18.0.1",
+    "axios": "^1.7.3",
     "date-fns": "^3.6.0",
     "expo": "51.0.22",
     "expo-apple-authentication": "~6.4.2",
@@ -120,5 +121,6 @@
   },
   "engines": {
     "node": "20.12.2"
-  }
+  },
+  "packageManager": "yarn@4.2.2+sha256.1aa43a5304405be7a7cb9cb5de7b97de9c4e8ddd3273e4dad00d6ae3eb39f0ef"
 }
