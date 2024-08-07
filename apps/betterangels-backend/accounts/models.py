@@ -24,7 +24,6 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from phonenumber_field.modelfields import PhoneNumberField
-from phonenumber_field.phonenumber import PhoneNumber
 from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
