@@ -17,7 +17,6 @@ class Migration(migrations.Migration):
             name="phone_number",
             field=models.JSONField(
                 blank=True,
-                default=accounts.models.phone_number_field_default_value,
                 null=True,
                 verbose_name=phonenumber_field.modelfields.PhoneNumberField(max_length=128, region="US"),
             ),
