@@ -72,7 +72,7 @@ type AuthResponse {
 input ClientContactInput {
   name: String
   email: String
-  phoneNumber: String
+  phoneNumber: PhoneNumberScalar
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
@@ -82,7 +82,7 @@ input ClientContactInput {
 type ClientContactType {
   name: String
   email: String
-  phoneNumber: String
+  phoneNumber: PhoneNumberScalar
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
@@ -110,7 +110,7 @@ type ClientProfileType {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
@@ -128,7 +128,7 @@ input CreateClientProfileInput {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
@@ -510,6 +510,9 @@ type OrganizationType {
   name: String!
 }
 
+"""A custom scalar to represent a phone number"""
+scalar PhoneNumberScalar
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
@@ -655,7 +658,7 @@ input UpdateClientProfileInput {
   gender: GenderEnum
   hmisId: String
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumberScalar
   preferredLanguage: LanguageEnum
   pronouns: String
   spokenLanguages: [LanguageEnum]
