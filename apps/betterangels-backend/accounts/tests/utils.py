@@ -1,10 +1,14 @@
 from typing import Any, Dict
 
 from accounts.enums import (
+    EyeColorEnum,
     GenderEnum,
+    HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    MaritalStatusEnum,
     PronounEnum,
+    RaceEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
@@ -24,11 +28,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             id
             address
             age
+            cityOfBirth
             dateOfBirth
+            heightInInches
+            eyeColor
             gender
+            hairColor
             hmisId
+            maritalStatus
             nickname
+            race
             phoneNumber
+            physicalDescription
             preferredLanguage
             pronouns
             spokenLanguages
@@ -98,13 +109,20 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
+                "cityOfBirth": "Los Angeles, CA",
                 "dateOfBirth": self.date_of_birth,
+                "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
+                "hairColor": HairColorEnum.BROWN.name,
+                "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA1",
+                "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
+                "physicalDescription": "A human",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
+                "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
                 "contacts": self.client_1_contacts,
@@ -114,13 +132,20 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_2_user,
                 "address": None,
+                "cityOfBirth": None,
                 "dateOfBirth": None,
+                "eyeColor": None,
                 "gender": None,
+                "hairColor": None,
+                "heightInInches": None,
                 "hmisId": "HMISidPASADENA1",
+                "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
+                "physicalDescription": None,
                 "preferredLanguage": None,
                 "pronouns": None,
+                "race": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }

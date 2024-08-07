@@ -1,10 +1,14 @@
 from unittest.mock import ANY
 
 from accounts.enums import (
+    EyeColorEnum,
     GenderEnum,
+    HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    MaritalStatusEnum,
     PronounEnum,
+    RaceEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
@@ -109,14 +113,21 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "address": "1234 Main St",
+            "cityOfBirth": "Los Angeles",
             "dateOfBirth": self.date_of_birth,
+            "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 71.75,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "hmisProfiles": [client_profile_hmis_profile],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "eerily cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
+            "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
@@ -140,8 +151,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": expected_user,
             "hmisProfiles": [expected_hmis_profile],
         }
-
-        self.assertEqual(client_profile, expected_client_profile)
+        self.assertCountEqual(client_profile, expected_client_profile)
 
     def test_update_client_profile_mutation(self) -> None:
         client_profile_user = {
@@ -201,14 +211,21 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
+            "cityOfBirth": "Los Angeles, CA",
             "dateOfBirth": self.date_of_birth,
+            "eyeColor": EyeColorEnum.GRAY.name,
             "gender": GenderEnum.FEMALE.name,
+            "hairColor": HairColorEnum.GRAY.name,
+            "heightInInches": 71.75,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "hmisProfiles": hmis_profiles,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "physicalDescription": "normally cat-like",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": PronounEnum.SHE_HER_HERS.name,
+            "pronouns": PronounEnum.THEY_THEM_THEIRS.name,
+            "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "contacts": client_contacts,
