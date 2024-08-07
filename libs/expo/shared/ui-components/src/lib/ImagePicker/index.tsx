@@ -86,7 +86,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
           const file = new ReactNativeFile({
             uri: resizedPhoto.uri,
             name: asset?.fileName || Date.now().toString(),
-            type: asset?.mimeType || 'changeme',
+            type: asset?.mimeType || 'image/jpeg',
           });
 
           try {
