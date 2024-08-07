@@ -14,7 +14,7 @@ export default function DeleteModal({
   button,
 }: {
   title: string;
-  body: string;
+  body?: string;
   onDelete: () => void;
   button: ReactElement;
 }) {
@@ -36,7 +36,7 @@ export default function DeleteModal({
         <TextBold size="xl" mb="sm">
           {title}
         </TextBold>
-        <TextRegular mb="md">{body}</TextRegular>
+        {body && <TextRegular mb="md">{body}</TextRegular>}
         <View
           style={{
             flexDirection: 'row',

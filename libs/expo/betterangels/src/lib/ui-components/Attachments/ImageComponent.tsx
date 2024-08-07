@@ -3,6 +3,7 @@ import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   CircularLoading,
+  DeleteModal,
   IconButton,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction } from 'react';
@@ -112,26 +113,27 @@ export default function ImageComponent(props: IImageComponentProps) {
         accessibilityIgnoresInvertColors
       />
       {!image.loading && (
-        <View
-          style={{
-            backgroundColor: Colors.WHITE,
-            borderRadius: Radiuses.xxxl,
-            position: 'absolute',
-            top: 5,
-            right: 5,
-          }}
-        >
-          <IconButton
-            onPress={onDelete}
-            variant="transparent"
-            height="xs"
-            width="xs"
-            accessibilityLabel="delete"
-            accessibilityHint="deletes the image"
-          >
-            <PlusIcon size="sm" rotate="45deg" />
-          </IconButton>
-        </View>
+        <DeleteModal
+          title="Are you sure you want to delete this item?"
+          onDelete={onDelete}
+          button={
+            <IconButton
+              borderRadius={Radiuses.xxxl}
+              style={{
+                position: 'absolute',
+                top: 5,
+                right: 5,
+              }}
+              variant="secondary"
+              height="xs"
+              width="xs"
+              accessibilityLabel="delete"
+              accessibilityHint="deletes the image"
+            >
+              <PlusIcon size="sm" rotate="45deg" />
+            </IconButton>
+          }
+        />
       )}
     </View>
   );
