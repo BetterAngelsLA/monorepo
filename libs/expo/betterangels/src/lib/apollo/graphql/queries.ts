@@ -55,6 +55,8 @@ export const GET_NOTES = gql`
         id
         email
         username
+        firstName
+        lastName
       }
       interactedAt
     }
