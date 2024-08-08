@@ -47,14 +47,29 @@ Run the following on the host machine (not in the container):
 
    > ```
    > export NVM_DIR="$HOME/.nvm"
-   > [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
-   > [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+   > [ -s "$(brew --prefix)/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh" # This loads nvm
+   > [ -s "$(brew --prefix)/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
    > ```
+
+1. Reload your shell profile or restart your terminal for the changes to take effect
+   ```bash
+   source ~/.zshrc
+   ```
 
 1. Install node version 20.12.2
 
    ```bash
    nvm install 20.12.2
+   ```
+
+1. Clone the monorepo
+   a. [Setup SSH (optional)](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+      ```bash
+      git clone git@github.com:BetterAngelsLA/monorepo.git
+      ```
+   b. Alternatively use https
+   ```bash
+   git clone https://github.com/BetterAngelsLA/monorepo.git
    ```
 
 1. Go to the monorepo and run yarn install
@@ -75,6 +90,7 @@ Run the following on the host machine (not in the container):
 #### Starting Expo
 
 1. Open a new integrated terminal (local) and run the following to start Expo in your local environment
+   *Note: You should have development builds (linked above) installed on your device*
 
    Start the Outreach app
 
