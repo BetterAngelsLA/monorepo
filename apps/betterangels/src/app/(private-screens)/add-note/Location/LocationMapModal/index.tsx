@@ -295,7 +295,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       const { data: locationData } = await updateNoteLocation({
         variables: {
           data: {
-            id: noteId,
+            id: noteId || '',
             location: {
               point: [longitude, latitude],
               address: {

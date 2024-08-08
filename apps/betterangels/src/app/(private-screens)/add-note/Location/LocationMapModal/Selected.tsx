@@ -72,7 +72,7 @@ export default function Selected(props: ISelectedProps) {
         const { data } = await updateNoteLocation({
           variables: {
             data: {
-              id: noteId,
+              id: noteId || '',
               location: {
                 point: [currentLocation.longitude, currentLocation.latitude],
                 address: {
