@@ -33,15 +33,18 @@ export default function DeleteModal({
     <>
       {clonedButton}
       <BasicModal visible={visible} setVisible={setVisible}>
-        <TextBold size="xl" mb="sm">
-          {title}
-        </TextBold>
-        {body && <TextRegular mb="md">{body}</TextRegular>}
+        <TextBold size="lg">{title}</TextBold>
+        {body && (
+          <TextRegular size="sm" mt="sm">
+            {body}
+          </TextRegular>
+        )}
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            marginTop: Spacings.lg,
           }}
         >
           <View
@@ -57,6 +60,7 @@ export default function DeleteModal({
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
+              fontSize="sm"
               size="full"
               accessibilityHint="deletes the interaction"
               onPress={async () => {

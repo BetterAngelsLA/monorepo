@@ -118,6 +118,7 @@ export default function ImageComponent(props: IImageComponentProps) {
           onDelete={onDelete}
           button={
             <IconButton
+              borderColor="transparent"
               borderRadius={Radiuses.xxxl}
               style={{
                 position: 'absolute',

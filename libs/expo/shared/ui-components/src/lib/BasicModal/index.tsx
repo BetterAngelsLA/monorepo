@@ -37,10 +37,9 @@ export default function BasicModal(props: IBasicModalProps) {
             }}
             style={{
               backgroundColor: Colors.WHITE,
-              paddingLeft: Spacings.md,
+              padding: Spacings.md,
+              paddingTop: Spacings.xs,
               paddingRight: Spacings.xs,
-              paddingTop: Spacings.md,
-              paddingBottom: Spacings.xl,
               borderRadius: Radiuses.xs,
               zIndex: 1,
             }}

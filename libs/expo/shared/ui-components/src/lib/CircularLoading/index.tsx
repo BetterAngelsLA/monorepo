@@ -1,3 +1,4 @@
+import { Colors } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -32,11 +33,20 @@ const CircularLoading = () => {
             cx="50"
             cy="50"
             r="40"
-            stroke="#00FF00"
+            stroke={Colors.NEUTRAL_LIGHT}
             strokeWidth="8"
             strokeLinecap="round"
             fill="none"
-            strokeDasharray="110 50"
+          />
+          <Circle
+            cx="50"
+            cy="50"
+            r="40"
+            stroke={Colors.PRIMARY}
+            strokeWidth="8"
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray="50 250"
             strokeDashoffset="0"
           />
         </Svg>
