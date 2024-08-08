@@ -4,14 +4,21 @@ import {
   ImagePicker,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { NoteNamespaceEnum } from '../../apollo/graphql/__generated__/types';
 import ImageComponent from './ImageComponent';
 
+interface IImage {
+  id: string | undefined;
+  uri: string;
+  loading?: boolean;
+  abortController?: AbortController;
+}
+
 interface IAttachmentsProps {
-  images: { id: string | undefined; uri: string }[];
-  setImages: (images: { id: string | undefined; uri: string }[]) => void;
+  images: IImage[] | undefined;
+  setImages: Dispatch<SetStateAction<IImage[] | undefined>>;
   namespace:
     | NoteNamespaceEnum.MoodAssessment
     | NoteNamespaceEnum.ProvidedServices
@@ -41,7 +48,6 @@ export default function Attachments(props: IAttachmentsProps) {
             namespace={namespace}
             mr="xs"
             setImages={setImages}
-            images={images}
           />
           <CameraPicker
             isLoading={isLoading}
@@ -49,7 +55,6 @@ export default function Attachments(props: IAttachmentsProps) {
             noteId={noteId}
             namespace={namespace}
             setImages={setImages}
-            images={images}
           />
         </View>
       </View>

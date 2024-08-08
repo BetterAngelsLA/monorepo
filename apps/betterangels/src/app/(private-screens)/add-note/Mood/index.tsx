@@ -33,6 +33,13 @@ import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
 
+interface IImage {
+  id: string | undefined;
+  uri: string;
+  loading?: boolean;
+  abortController?: AbortController;
+}
+
 interface Mood {
   Icon: ComponentType<IIconProps>;
   title: string;
@@ -212,9 +219,7 @@ export default function Mood(props: IMoodProps) {
     scrollRef,
   } = props;
 
-  const [images, setImages] = useState<
-    Array<{ id: string | undefined; uri: string }> | undefined
-  >(undefined);
+  const [images, setImages] = useState<IImage[] | undefined>(undefined);
   const [moods, setMoods] = useState<
     | {
         id: string | undefined;
