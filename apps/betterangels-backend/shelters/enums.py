@@ -64,7 +64,11 @@ class GeneralServiceChoices(models.TextChoices):
 
 
 class HealthServiceChoices(models.TextChoices):
+    DENTAL = "dental", _("Dental")
+    GENERAL = "general", _("General")
+    HEALTH_LINKAGES = "health_linkages", _("Health Linkages")
     MEDICATION_ADMINISTRATION = "medication_administration", _("Medication Administration")
+    MEDICATION_MANAGEMENT = "medication_management", _("Medication Management")
     MEDICATION_MONITORING = "medication_monitoring", _("Medication Monitoring")
     MENTAL_HEALTH = "mental_health", _("Mental Health")
     SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
