@@ -101,6 +101,21 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_contact_1,
             client_profile_contact_2,
         ]
+        client_household_member_1 = {
+            "name": "Daffodil",
+            "dateOfBirth": "1900-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "cartoon friend",
+        }
+        client_household_member_2 = {
+            "name": "Tulips",
+            "dateOfBirth": "1901-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        client_household_members = [client_household_member_1, client_household_member_2]
         client_profile_hmis_profile = {
             "hmisId": "12345678",
             "agency": HmisAgencyEnum.LAHSA.name,
@@ -121,15 +136,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
             "contacts": client_contacts,
+            "householdMembers": client_household_members,
         }
 
         response = self._create_client_profile_fixture(variables)
 
         client_profile = response["data"]["createClientProfile"]
-
         expected_client_profile_contact_1 = {"id": ANY, **client_profile_contact_1}
         expected_client_profile_contact_2 = {"id": ANY, **client_profile_contact_2}
         expected_client_contacts = [expected_client_profile_contact_1, expected_client_profile_contact_2]
+        expected_client_household_member_1 = {"id": ANY, **client_household_member_1}
+        expected_client_household_member_2 = {"id": ANY, **client_household_member_2}
+        expected_client_household_members = [expected_client_household_member_1, expected_client_household_member_2]
         expected_user = {"id": ANY, **client_profile_user}
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting some fields
@@ -139,8 +157,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "contacts": expected_client_contacts,
             "user": expected_user,
             "hmisProfiles": [expected_hmis_profile],
+            "householdMembers": expected_client_household_members,
         }
-
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_update_client_profile_mutation(self) -> None:
@@ -184,6 +202,28 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_contact_2,
             client_profile_contact_3,
         ]
+        client_household_member_1 = {
+            "name": "Daffodil",
+            "dateOfBirth": "1900-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "cartoon friend",
+        }
+        client_household_member_2 = {
+            "name": "Tulips",
+            "dateOfBirth": "1901-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        client_household_member_3 = {
+            "name": "Roses",
+            "dateOfBirth": "1902-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.MOTHER.name,
+            "relationshipToClientOther": None,
+        }
+        client_household_members = [client_household_member_1, client_household_member_2, client_household_member_3]
         hmis_profile_to_update = {
             "id": str(self.client_profile_1_hmis_profile_1.id),
             "hmisId": "UPDATEDHMISID",
@@ -213,6 +253,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "contacts": client_contacts,
             "user": client_profile_user,
+            "householdMembers": client_household_members,
         }
         response = self._update_client_profile_fixture(variables)
         client = response["data"]["updateClientProfile"]
@@ -253,7 +294,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 34
+        expected_query_count = 35
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
