@@ -42,6 +42,8 @@ export default function BasicModal(props: IBasicModalProps) {
               paddingRight: Spacings.xs,
               borderRadius: Radiuses.xs,
               zIndex: 1,
+              width: '100%',
+              maxWidth: 400,
             }}
           >
             <IconButton
