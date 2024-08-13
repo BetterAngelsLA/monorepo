@@ -189,9 +189,11 @@ class Mutation:
                         contact_updates_by_id[str(contact.id)],
                     )
 
-            if household_members_data:
-                household_member_updates_by_id = {c["id"]: c for c in household_members_data if c.get("id")}
-                household_members_to_create = [c for c in household_members_data if not c.get("id")]
+            if household_members:
+                household_member_updates_by_id = {
+                    member["id"]: member for member in household_members if member.get("id")
+                }
+                household_members_to_create = [member for member in household_members if not member.get("id")]
                 household_members_to_update = ClientContact.objects.filter(
                     id__in=household_member_updates_by_id.keys(), client_profile=client_profile
                 )
