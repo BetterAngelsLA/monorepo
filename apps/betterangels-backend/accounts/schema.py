@@ -142,14 +142,15 @@ class Mutation:
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
 
-            client_user = resolvers.update(
-                info,
-                client_user,
-                {
-                    **user_data,
-                    "id": client_profile.user.id,
-                },
-            )
+            if user_data:
+                client_user = resolvers.update(
+                    info,
+                    client_user,
+                    {
+                        **user_data,
+                        "id": client_profile.user.id,
+                    },
+                )
 
             if contacts_data:
                 contact_updates_by_id = {c["id"]: c for c in contacts_data if c.get("id")}
