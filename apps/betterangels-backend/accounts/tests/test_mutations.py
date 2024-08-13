@@ -126,9 +126,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         response = self._create_client_profile_fixture(variables)
 
         client_profile = response["data"]["createClientProfile"]
+        # from IPython import embed
 
-        expected_client_profile_contact_1 = {"id": ANY, **client_profile_contact_1}
-        expected_client_profile_contact_2 = {"id": ANY, **client_profile_contact_2}
+        # embed()
+        expected_client_profile_contact_1 = {
+            "id": ANY,
+            **client_profile_contact_1,
+            # "defaultPhoneNumber": "2125551212",
+        }
+        expected_client_profile_contact_2 = {
+            "id": ANY,
+            **client_profile_contact_2,
+            # "defaultPhoneNumber": "2125551212",
+        }
         expected_client_contacts = [expected_client_profile_contact_1, expected_client_profile_contact_2]
         expected_user = {"id": ANY, **client_profile_user}
         expected_client_profile = {
@@ -137,10 +147,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "contacts": expected_client_contacts,
+            # "defaultPhoneNumber": "2125551212",
+            "phoneNumber": "2125551212",
             "user": expected_user,
             "hmisProfiles": [expected_hmis_profile],
         }
-
+        self.maxDiff = None
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_update_client_profile_mutation(self) -> None:

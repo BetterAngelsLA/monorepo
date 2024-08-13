@@ -1,7 +1,7 @@
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
@@ -10,7 +10,8 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
-from phonenumber_field.phonenumber import PhoneNumber
+from phonenumber_field.modelfields import PhoneNumber
+from phonenumbers import parse
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
@@ -142,20 +143,61 @@ class UpdateUserInput(UserBaseType):
     id: ID
 
 
-@strawberry.scalar(description="A custom scalar to represent a phone number")
-class PhoneNumberScalar:
-    @staticmethod
-    def serialize(phone_number: PhoneNumber) -> str:
-        return str(phone_number["national_number"])
+# @strawberry.scalar(description="A custom scalar to represent a phone number")
+# class PhoneNumberScalar(serializers.Serializer):
+#     @staticmethod
+#     def serialize(phone_number: PhoneNumber) -> str:
+#         return format_number(phone_number.national_number, PhoneNumberFormat.E164)
 
-    @staticmethod
-    def parse_value(value: str) -> PhoneNumber:
-        from phonenumbers import NumberParseException
+#     @staticmethod
+#     def parse_value(value: str) -> PhoneNumber:
 
-        try:
-            return PhoneNumber(national_number=value)
-        except NumberParseException:
-            raise ValueError(f"Invalid phone number format: {value}")
+#         try:
+#             return parse(value)
+#         except NumberParseException:
+#             raise ValueError(f"Invalid phone number format: {value}")
+
+
+# @strawberry.scalar(description="A custom scalar to represent a phone number")
+# class PhoneNumberScalar:
+#     @staticmethod
+#     def serialize(phone_number: PhoneNumber) -> str:
+#         return str(phone_number.as_e164)  # Serialize to E.164 format for consistency
+
+#     @staticmethod
+#     def parse_value(value: str) -> PhoneNumber:
+#         try:
+#             return parse(value, "US")  # Assuming US as the default region
+#         except NumberParseException:
+#             raise ValueError(f"Invalid phone number format: {value}")
+
+PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
+    PhoneNumber,
+    serialize=lambda v: str(v.national_number),
+    parse_value=lambda v: parse(v, "US"),
+)
+
+
+@strawberry_django.type(PhoneNumber)
+class PhoneNumberType:
+    # @strawberry.field
+    def as_national(self) -> str:
+        return str(self.as_national)
+
+    # @strawberry.field
+    def as_e164(self) -> str:
+        return str(self.as_e164)
+
+    # @strawberry.field
+    def as_international(self) -> str:
+        return str(self.as_international)
+
+    # @strawberry.field
+    def as_rfc3966(self) -> str:
+        return str(self.as_rfc3966)
+
+    def national_number(self) -> str:
+        return str(self.national_number)
 
 
 @strawberry_django.type(ClientProfile)
@@ -186,6 +228,7 @@ class ClientContactBaseType:
 class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
+    # default_phone_number: auto
 
 
 @strawberry_django.input(ClientContact, partial=True)
@@ -199,6 +242,7 @@ class ClientProfileType(ClientProfileBaseType):
     user: UserType
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    # default_phone_number: auto
 
     @strawberry.field
     def age(self) -> Optional[int]:
