@@ -123,7 +123,12 @@ class Mutation:
             if household_members:
                 for household_member in household_members:
                     resolvers.create(
-                        info, ClientHouseholdMember, {**household_member, "client_profile": client_profile}
+                        info,
+                        ClientHouseholdMember,
+                        {
+                            **household_member,
+                            "client_profile": client_profile,
+                        },
                     )
 
             permissions = [
