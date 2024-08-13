@@ -159,7 +159,7 @@ class Mutation:
             user_data = client_profile_data.pop("user", {})
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members_data = client_profile_data.pop("household_members", [])
+            household_members = client_profile_data.pop("household_members", [])
 
             client_user = resolvers.update(
                 info,
