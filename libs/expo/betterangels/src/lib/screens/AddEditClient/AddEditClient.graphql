@@ -34,6 +34,15 @@ query GetClientProfile($id: ID!) {
         middleName
         lastName
       }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
+      }
     }
   }
 }
