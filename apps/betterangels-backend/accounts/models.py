@@ -42,6 +42,10 @@ if TYPE_CHECKING:
 class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
 
+    email = models.EmailField(unique=True, null=True, blank=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
     username = models.CharField(
         ("username"),
         max_length=150,
@@ -49,19 +53,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[username_validator],
         unique=True,
     )
-    first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
-    last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
-    middle_name = models.CharField(max_length=50, blank=True, null=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(null=True, blank=True)
-    email = models.EmailField(unique=True, null=True, blank=True)
-    is_superuser = models.BooleanField(default=False)
-    is_staff = models.BooleanField(
-        ("staff status"),
-        default=False,
-        help_text=("Designates whether the user can log into this admin site."),
-    )
 
+    date_joined = models.DateTimeField(auto_now_add=True)
+    has_accepted_privacy_policy = models.BooleanField(default=False)
+    has_accepted_tos = models.BooleanField(default=False)
+    last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(
         ("active"),
         default=True,
@@ -69,6 +65,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             "Designates whether this user should be treated as active. " "Unselect this instead of deleting accounts."
         ),
     )
+    is_staff = models.BooleanField(
+        ("staff status"),
+        default=False,
+        help_text=("Designates whether the user can log into this admin site."),
+    )
+    is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -97,7 +99,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_outreach_authorized(self: "User") -> bool:
         user_organizations = self.organizations_organization.all()
 
-        if not user_organizations:
+        if not (user_organizations and self.has_accepted_tos and self.has_accepted_privacy_policy):
             return False
 
         # TODO: This is a temporary approach while we have just one permission group.
