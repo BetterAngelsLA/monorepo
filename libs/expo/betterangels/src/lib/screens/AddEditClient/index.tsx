@@ -95,31 +95,31 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
-    const input = {
-      ...values,
-    };
-
     if (values.dateOfBirth) {
-      input.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
+      values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
     try {
       let operationResult;
 
       if (id) {
+        const input = {
+          ...(values as UpdateClientProfileInput),
+          id,
+        };
         if (!data || !('clientProfile' in data)) return;
-
         const updateResponse = await updateClient({
           variables: {
             data: {
-              id,
               ...input,
             },
           },
         });
+
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
       } else {
+        const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
           variables: { data: input as CreateClientProfileInput },
         });
@@ -152,6 +152,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         router.replace('/');
       }
     } catch (err) {
+      console.log(err);
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };

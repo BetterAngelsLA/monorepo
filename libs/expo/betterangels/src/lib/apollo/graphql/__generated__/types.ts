@@ -94,6 +94,26 @@ export type ClientContactType = {
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
 };
 
+export type ClientHouseholdMemberInput = {
+  dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  gender?: InputMaybe<GenderEnum>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientHouseholdMemberType = {
+  __typename?: 'ClientHouseholdMemberType';
+  clientProfile: DjangoModelType;
+  dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  gender?: Maybe<GenderEnum>;
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  relationshipToClient?: Maybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
 export type ClientProfileFilter = {
   AND?: InputMaybe<ClientProfileFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -117,6 +137,7 @@ export type ClientProfileType = {
   gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
   hmisProfiles?: Maybe<Array<Maybe<HmisProfileType>>>;
+  householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   nickname?: Maybe<Scalars['String']['output']>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
@@ -134,6 +155,7 @@ export type CreateClientProfileInput = {
   gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
@@ -894,6 +916,7 @@ export type UpdateClientProfileInput = {
   gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
