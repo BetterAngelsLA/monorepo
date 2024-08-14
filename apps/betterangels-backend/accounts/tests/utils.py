@@ -65,6 +65,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 middleName
                 email
             }
+            householdMembers {
+                id
+                name
+                dateOfBirth
+                gender
+                relationshipToClient
+                relationshipToClientOther
+            }
         """
 
         self._setup_clients()
@@ -104,7 +112,24 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_contact_1,
             self.client_profile_1_contact_2,
         ]
-
+        self.client_profile_1_household_member_1 = {
+            "name": "Daffodil",
+            "dateOfBirth": "1900-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "cartoon friend",
+        }
+        self.client_profile_1_household_member_2 = {
+            "name": "Tulips",
+            "dateOfBirth": "1901-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_household_members = [
+            self.client_profile_1_household_member_1,
+            self.client_profile_1_household_member_2,
+        ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
@@ -126,6 +151,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
                 "contacts": self.client_1_contacts,
+                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(

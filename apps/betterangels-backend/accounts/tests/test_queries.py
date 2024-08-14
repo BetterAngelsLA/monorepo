@@ -153,7 +153,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 5
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -186,6 +186,23 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClientOther": self.client_profile_1["contacts"][1]["relationshipToClientOther"],
         }
         expected_client_contacts = [expected_client_contact_1, expected_client_contact_2]
+        expected_client_household_member_1 = {
+            "id": self.client_profile_1["householdMembers"][0]["id"],
+            "name": self.client_profile_1["householdMembers"][0]["name"],
+            "gender": self.client_profile_1["householdMembers"][0]["gender"],
+            "dateOfBirth": self.client_profile_1["householdMembers"][0]["dateOfBirth"],
+            "relationshipToClient": self.client_profile_1["householdMembers"][0]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["householdMembers"][0]["relationshipToClientOther"],
+        }
+        expected_client_household_member_2 = {
+            "id": self.client_profile_1["householdMembers"][1]["id"],
+            "name": self.client_profile_1["householdMembers"][1]["name"],
+            "gender": self.client_profile_1["householdMembers"][1]["gender"],
+            "dateOfBirth": self.client_profile_1["householdMembers"][1]["dateOfBirth"],
+            "relationshipToClient": self.client_profile_1["householdMembers"][1]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["householdMembers"][1]["relationshipToClientOther"],
+        }
+        expected_client_household_members = [expected_client_household_member_1, expected_client_household_member_2]
         expected_hmis_profiles = [
             {
                 "id": str(self.client_profile_1_hmis_profile_1.id),
@@ -221,6 +238,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "contacts": expected_client_contacts,
             "user": expected_user,
+            "householdMembers": expected_client_household_members,
         }
         self.assertEqual(returned_client, expected_client)
 
@@ -232,7 +250,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 5
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

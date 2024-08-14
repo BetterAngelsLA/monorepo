@@ -165,6 +165,15 @@ class ClientContact(models.Model):
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
 
 
+class ClientHouseholdMember(models.Model):
+    client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
+    name = models.CharField(max_length=100, null=True, blank=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
+    relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
+
+
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)
 

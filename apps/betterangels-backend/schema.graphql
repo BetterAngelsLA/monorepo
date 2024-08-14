@@ -90,6 +90,25 @@ type ClientContactType {
   clientProfile: DjangoModelType!
 }
 
+input ClientHouseholdMemberInput {
+  name: String
+  dateOfBirth: Date
+  gender: GenderEnum
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID
+}
+
+type ClientHouseholdMemberType {
+  name: String
+  dateOfBirth: Date
+  gender: GenderEnum
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID!
+  clientProfile: DjangoModelType!
+}
+
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -127,6 +146,7 @@ type ClientProfileType {
   user: UserType!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType]
+  householdMembers: [ClientHouseholdMemberType!]
 }
 
 input CreateClientProfileInput {
@@ -151,6 +171,7 @@ input CreateClientProfileInput {
   user: CreateUserInput!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
+  householdMembers: [ClientHouseholdMemberInput!]
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -732,6 +753,7 @@ input UpdateClientProfileInput {
   user: UpdateUserInput
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
+  householdMembers: [ClientHouseholdMemberInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo

@@ -12,7 +12,13 @@ from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientContact, ClientProfile, HmisProfile, User
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    User,
+)
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -183,12 +189,33 @@ class ClientContactInput(ClientContactBaseType):
     id: auto
 
 
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberBaseType:
+    name: auto
+    date_of_birth: auto
+    gender: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientHouseholdMember, partial=True)
+class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    household_members: Optional[List[ClientHouseholdMemberType]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -196,6 +223,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -204,6 +232,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     user: Optional[UpdateUserInput]
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry.input
