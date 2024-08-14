@@ -9,10 +9,39 @@ from accounts.enums import (
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import ClientProfile, HmisProfile, User
-from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
+from accounts.tests.utils import (
+    ClientProfileGraphQLBaseTestCase,
+    UserGraphQLBaseTestCase,
+)
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
 from test_utils.mixins import GraphQLTestCaseMixin
+
+
+class UserGraphQLTests(UserGraphQLBaseTestCase):
+    def test_update_user_mutation(self) -> None:
+        variables = {
+            "id": str(self.user.pk),
+            "firstName": "Daley",
+            "lastName": "Coopery",
+            "middleName": "Barty",
+            "email": "dale@example.co",
+            "hasAcceptedTos": True,
+            "hasAcceptedPrivacyPolicy": True,
+        }
+
+        self.graphql_client.force_login(self.user)
+        response = self._update_user_fixture(variables)
+        user = response["data"]["updateUser"]
+        expected_user = {
+            **variables,
+            "isOutreachAuthorized": True,
+            "organizations": [
+                {"id": str(self.user_organization.pk), "name": self.user_organization.name},
+            ],
+        }
+
+        self.assertEqual(user, expected_user)
 
 
 @ignore_warnings(category=UserWarning)
