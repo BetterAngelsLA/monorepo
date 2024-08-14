@@ -108,15 +108,12 @@ export default function AddEditClient({ id }: { id?: string }) {
 
       if (id) {
         if (!data || !('clientProfile' in data)) return;
+
         const updateResponse = await updateClient({
           variables: {
             data: {
               id,
               ...input,
-              user: {
-                id: data.clientProfile.user.id,
-                ...input.user,
-              },
             },
           },
         });

@@ -39,7 +39,6 @@ export default function RelativeContacts(props: IRelativeContactsProps) {
   const handleRemove = (index: number) => {
     remove(index);
     if (contacts?.length === 1) {
-      console.log('setting contacts to empty array');
       setValue('contacts', []);
     }
   };
