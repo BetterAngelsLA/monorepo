@@ -61,9 +61,6 @@ export default function LoginForm() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.warning}>
-        Warning: This should only be enabled in development!
-      </Text>
       <Text style={styles.label}>Username</Text>
       <TextInput
         style={styles.input}

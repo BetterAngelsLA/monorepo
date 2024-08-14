@@ -14,7 +14,6 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   googleClientId,
-  isLoginFormEnabled,
   privacyPolicyUrl,
   redirectUri,
   termsOfServiceUrl,
@@ -35,9 +34,7 @@ export default function SignIn() {
     <AuthContainer Logo={Logo}>
       <View style={styles.container}>
         {isLoading ? (
-          <View
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-          >
+          <View style={styles.loadingContainer}>
             <Loading size="large" />
           </View>
         ) : (
@@ -47,9 +44,16 @@ export default function SignIn() {
               clientId={googleClientId}
               redirectUri={redirectUri}
               setIsLoading={setIsLoading}
-            ></GoogleSignIn>
+            />
           </>
         )}
+
+        <View style={styles.orContainer}>
+          <TextRegular style={styles.orText}>Or</TextRegular>
+        </View>
+
+        <LoginForm />
+
         <TextRegular textAlign="center" size="sm" color={Colors.WHITE} mt="xl">
           By continuing, you agree to our{' '}
           <Link
@@ -67,7 +71,6 @@ export default function SignIn() {
           </Link>
         </TextRegular>
       </View>
-      {isLoginFormEnabled && <LoginForm />}
     </AuthContainer>
   );
 }
@@ -78,5 +81,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     width: '100%',
     paddingBottom: 60,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  orText: {
+    fontSize: 16,
+    color: Colors.WHITE,
   },
 });
