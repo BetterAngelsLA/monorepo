@@ -270,6 +270,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         self.assertCountEqual(client, expected_client_profile)
 
+    def test_partial_update_client_profile_mutation(self) -> None:
+        variables = {
+            "id": self.client_profile_1["id"],
+        }
+        response = self._update_client_profile_fixture(variables)
+        client = response["data"]["updateClientProfile"]
+
+        self.assertCountEqual(client, self.client_profile_1)
+
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
