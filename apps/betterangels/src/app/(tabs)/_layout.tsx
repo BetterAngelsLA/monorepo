@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [validTos, setValidTos] = useState(false);
   const router = useRouter();
 
   const { user, isLoading } = useUser();
@@ -49,6 +50,15 @@ export default function TabLayout() {
 
   if (user && (!user.organizations || user.organizations.length < 1)) {
     return <Redirect href="/welcome" />;
+  }
+
+  // TODO: When PR #515 / DEV-673 is merged then delete `validTos` hook; https://github.com/BetterAngelsLA/monorepo/pull/515
+  // if (user && (!user.hasAcceptedTos || !user.hasAcceptedPrivacyPolicy)) {
+  //   return <Redirect href="/terms-of-service" />;
+  // }
+
+  if (!validTos) {
+    return <Redirect href="/terms-of-service" />;
   }
 
   return (
