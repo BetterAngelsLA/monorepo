@@ -18,7 +18,7 @@ from organizations.models import OrganizationUser
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
-class UserGraphQLBaseTestCase(GraphQLBaseTestCase):
+class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.setup_users()
@@ -52,14 +52,14 @@ class UserGraphQLBaseTestCase(GraphQLBaseTestCase):
         permission_group_recipe.make(organization=self.user_organization)
         baker.make(OrganizationUser, user=self.user, organization=self.user_organization)
 
-    def _update_user_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_user_fixture("update", variables)
+    def _update_current_user_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_current_user_fixture("update", variables)
 
-    def _create_or_update_user_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_or_update_current_user_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
-            mutation {operation.capitalize()}User($data: {operation.capitalize()}UserInput!) {{ # noqa: B950
-                {operation}User(data: $data) {{
+            mutation {operation.capitalize()}CurrentUser($data: {operation.capitalize()}UserInput!) {{ # noqa: B950
+                {operation}CurrentUser(data: $data) {{
                     ... on OperationInfo {{
                         messages {{
                             kind

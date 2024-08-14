@@ -78,7 +78,7 @@ class Mutation:
         return MagicLinkResponse(message="Email link sent.")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_user(self, info: Info, data: UpdateUserInput) -> UserType:
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
         current_user = get_current_user(info)
         if str(current_user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")
