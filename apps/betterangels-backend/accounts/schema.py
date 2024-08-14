@@ -79,13 +79,11 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
-        current_user = get_current_user(info)
-        if str(current_user.pk) != str(data.id):
+        user = cast(User, get_current_user(info))
+        if str(user.pk) != str(data.id):
             raise PermissionError("You do not have permission to modify this user.")
 
         user_data: dict = strawberry.asdict(data)
-
-        user = User.objects.get(id=data.id)
 
         user = resolvers.update(
             info,
