@@ -2,7 +2,13 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
-from accounts.models import ClientContact, ClientProfile, HmisProfile, User
+from accounts.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    User,
+)
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -80,6 +86,7 @@ class Mutation:
             user_data = client_profile_data.pop("user", {})
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
+            household_members = client_profile_data.pop("household_members", [])
             client_user = User.objects.create_client(**user_data)
 
             client_profile = resolvers.create(
@@ -113,6 +120,17 @@ class Mutation:
                         },
                     )
 
+            if household_members:
+                for household_member in household_members:
+                    resolvers.create(
+                        info,
+                        ClientHouseholdMember,
+                        {
+                            **household_member,
+                            "client_profile": client_profile,
+                        },
+                    )
+
             permissions = [
                 ClientProfilePermissions.VIEW,
                 ClientProfilePermissions.CHANGE,
@@ -141,6 +159,7 @@ class Mutation:
             user_data = client_profile_data.pop("user", {})
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
+            household_members = client_profile_data.pop("household_members", [])
 
             if user_data:
                 client_user = resolvers.update(
@@ -174,6 +193,32 @@ class Mutation:
                         info,
                         contact,
                         contact_updates_by_id[str(contact.id)],
+                    )
+
+            if household_members:
+                household_member_updates_by_id = {
+                    member["id"]: member for member in household_members if member.get("id")
+                }
+                household_members_to_create = [member for member in household_members if not member.get("id")]
+                household_members_to_update = ClientContact.objects.filter(
+                    id__in=household_member_updates_by_id.keys(), client_profile=client_profile
+                )
+
+                for household_member in household_members_to_create:
+                    resolvers.create(
+                        info,
+                        ClientHouseholdMember,
+                        {
+                            **household_member,
+                            "client_profile": client_profile,
+                        },
+                    )
+
+                for household_member in household_members_to_update:
+                    resolvers.update(
+                        info,
+                        household_member,
+                        household_member_updates_by_id[str(household_member.id)],
                     )
 
             client_profile = resolvers.update(
