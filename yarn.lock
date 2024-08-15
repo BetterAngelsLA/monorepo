@@ -2445,16 +2445,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/metro-runtime@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@expo/metro-runtime@npm:3.2.1"
-  peerDependencies:
-    react-native: "*"
-  checksum: 10/faaaa79831f75528ead4e3a2747b1157c56d48c5d968467941aa5770eb0d4380d760faefb9725c2c1dda011e98ad724e9643c67038c73329056ff3b88bc29288
-  languageName: node
-  linkType: hard
-
-"@expo/metro-runtime@npm:3.2.3":
+"@expo/metro-runtime@npm:3.2.3, @expo/metro-runtime@npm:~3.2.3":
   version: 3.2.3
   resolution: "@expo/metro-runtime@npm:3.2.3"
   peerDependencies:
@@ -4273,7 +4264,7 @@ __metadata:
     "@apollo/client": "npm:^3.11.1"
     "@config-plugins/detox": "npm:8.0.0"
     "@expo/metro-config": "npm:~0.18.11"
-    "@expo/metro-runtime": "npm:3.2.1"
+    "@expo/metro-runtime": "npm:~3.2.3"
     "@graphql-codegen/cli": "npm:^5.0.2"
     "@graphql-codegen/client-preset": "npm:^4.3.2"
     "@graphql-codegen/near-operation-file-preset": "npm:^3.0.0"

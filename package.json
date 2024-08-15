@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@config-plugins/detox": "8.0.0",
-    "@expo/metro-runtime": "3.2.1",
+    "@expo/metro-runtime": "~3.2.3",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/client-preset": "^4.3.2",
     "@graphql-codegen/near-operation-file-preset": "^3.0.0",
