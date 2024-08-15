@@ -32,9 +32,19 @@ export default function LoginForm() {
   const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isButtonDisabled = !isValidEmail(username) || password.length < 8;
+
   const handleLogin = async () => {
-    if (username === '' || password === '') {
-      Alert.alert('Error', 'Please enter both username and password');
+    if (isButtonDisabled) {
+      Alert.alert(
+        'Error',
+        'Please enter a valid email address and a password with at least 8 characters.'
+      );
       return;
     }
 
@@ -61,18 +71,17 @@ export default function LoginForm() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Username</Text>
       <TextInput
         style={styles.input}
         value={username}
         onChangeText={setUsername}
-        placeholder="Enter your username"
+        placeholder="Enter your email address"
         placeholderTextColor="#D3D3D3"
         autoCapitalize="none"
+        keyboardType="email-address"
         accessibilityLabel="Username input field"
-        accessibilityHint="Enter your username here"
+        accessibilityHint="Enter your email address here"
       />
-      <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
         value={password}
@@ -85,11 +94,12 @@ export default function LoginForm() {
       />
       <TouchableOpacity
         onPress={handleLogin}
-        style={styles.button}
-        accessibilityLabel="Login button"
-        accessibilityHint="Press to login with the entered username and password"
+        style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
+        disabled={isButtonDisabled}
+        accessibilityLabel="Sign in button"
+        accessibilityHint="Press to sign in with the entered username and password"
       >
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>Sign In</Text>
       </TouchableOpacity>
     </View>
   );
@@ -100,22 +110,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: Spacings.sm,
-    backgroundColor: '#333',
-  },
-  warning: {
-    color: 'red',
-    fontSize: FontSizes.sm.fontSize,
-    marginBottom: Spacings.sm,
-    textAlign: 'center',
-  },
-  label: {
-    color: '#FFF',
-    fontSize: FontSizes.md.fontSize,
-    marginBottom: Spacings.xs,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
     color: '#D3D3D3',
     padding: Spacings.xs,
     marginBottom: Spacings.sm,
@@ -127,6 +123,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: Radiuses.xxs,
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#A9A9A9',
   },
   buttonText: {
     color: '#FFF',
