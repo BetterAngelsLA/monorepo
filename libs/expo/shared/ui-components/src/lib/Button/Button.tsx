@@ -262,8 +262,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-
-    paddingHorizontal: Spacings.xs,
+    paddingHorizontal: Spacings.sm,
   },
   text: {
     letterSpacing: 0.4,
