@@ -6,7 +6,7 @@ from django.test import TestCase
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from .baker_recipes import organization_recipe, permission_group_recipe
+from .baker_recipes import organization_recipe
 
 
 class UserModelTestCase(ParametrizedTestCase, TestCase):
