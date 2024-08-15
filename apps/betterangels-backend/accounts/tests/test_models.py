@@ -25,21 +25,17 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
         self.assertEqual(user_2.full_name, "Dale Bartholomew Cooper")
 
     @parametrize(
-        "user_is_in_authorized_org, user_is_in_unauthorized_org, user_has_accepted_tos, user_has_accepted_privacy_policy, should_succeed",
+        "user_is_in_authorized_org, user_is_in_unauthorized_org, should_succeed",
         [
-            (True, True, True, True, True),
-            (True, False, True, True, True),
-            (False, True, True, True, False),
-            (True, True, False, True, False),
-            (True, True, True, False, False),
+            (True, True, True),
+            (True, False, True),
+            (False, True, False),
         ],
     )
     def test_is_outreach_authorized(
         self,
         user_is_in_authorized_org: bool,
         user_is_in_unauthorized_org: bool,
-        user_has_accepted_tos: bool,
-        user_has_accepted_privacy_policy: bool,
         should_succeed: bool,
     ) -> None:
         authorized_org = organization_recipe.make(name="authorized org")
@@ -47,8 +43,6 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
 
         user = baker.make(
             User,
-            has_accepted_tos=user_has_accepted_tos,
-            has_accepted_privacy_policy=user_has_accepted_privacy_policy,
         )
 
         if user_is_in_authorized_org:

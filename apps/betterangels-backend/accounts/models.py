@@ -106,11 +106,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         # Once this list grows, we'll need to create an actual list of authorized groups.
         authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
-        user_in_authorized_org = PermissionGroup.objects.filter(
+        return PermissionGroup.objects.filter(
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
-
-        return user_in_authorized_org and self.has_accepted_tos and self.has_accepted_privacy_policy
 
 
 class HmisProfile(models.Model):
