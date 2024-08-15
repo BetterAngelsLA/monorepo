@@ -30,6 +30,7 @@ from .enums import (
 
 
 # Advanced Info
+@pghistory.track(pghistory.InsertEvent("shelter_type.add"), pghistory.DeleteEvent("shelter_type.remove"))
 class ShelterType(models.Model):
     name = TextChoicesField(choices_enum=ShelterChoices, unique=True, blank=True, null=True)
 
@@ -37,6 +38,7 @@ class ShelterType(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("population.add"), pghistory.DeleteEvent("population.remove"))
 class Population(models.Model):
     name = TextChoicesField(choices_enum=PopulationChoices, unique=True, blank=True, null=True)
 
@@ -44,6 +46,7 @@ class Population(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("immediate_need.add"), pghistory.DeleteEvent("immediate_need.remove"))
 class ImmediateNeed(models.Model):
     name = TextChoicesField(choices_enum=ImmediateNeedChoices, unique=True, blank=True, null=True)
 
@@ -51,6 +54,7 @@ class ImmediateNeed(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("general_service.add"), pghistory.DeleteEvent("general_service.remove"))
 class GeneralService(models.Model):
     name = TextChoicesField(choices_enum=GeneralServiceChoices, unique=True, blank=True, null=True)
 
@@ -58,6 +62,7 @@ class GeneralService(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("health_service.add"), pghistory.DeleteEvent("health_service.remove"))
 class HealthService(models.Model):
     name = TextChoicesField(choices_enum=HealthServiceChoices, unique=True, blank=True, null=True)
 
@@ -65,6 +70,7 @@ class HealthService(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("career_service.add"), pghistory.DeleteEvent("career_service.remove"))
 class CareerService(models.Model):
     name = TextChoicesField(choices_enum=CareerServiceChoices, unique=True, blank=True, null=True)
 
@@ -72,6 +78,7 @@ class CareerService(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("funder.add"), pghistory.DeleteEvent("funder.remove"))
 class Funder(models.Model):
     name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
 
@@ -79,6 +86,7 @@ class Funder(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("accessibility.add"), pghistory.DeleteEvent("accessibility.remove"))
 class Accessibility(models.Model):
     name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
 
@@ -86,6 +94,7 @@ class Accessibility(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("storage.add"), pghistory.DeleteEvent("storage.remove"))
 class Storage(models.Model):
     name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
 
@@ -93,6 +102,7 @@ class Storage(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("parking.add"), pghistory.DeleteEvent("parking.remove"))
 class Parking(models.Model):
     name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
 
@@ -101,6 +111,7 @@ class Parking(models.Model):
 
 
 # Restrictions
+@pghistory.track(pghistory.InsertEvent("entry_requirement.add"), pghistory.DeleteEvent("entry_requirement.remove"))
 class EntryRequirement(models.Model):
     name = TextChoicesField(choices_enum=EntryRequirementChoices, unique=True, blank=True, null=True)
 
@@ -108,6 +119,7 @@ class EntryRequirement(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("cities.add"), pghistory.DeleteEvent("cities.remove"))
 class City(models.Model):
     name = TextChoicesField(choices_enum=CityChoices, unique=True, blank=True, null=True)
 
@@ -115,6 +127,7 @@ class City(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("spa.add"), pghistory.DeleteEvent("spa.remove"))
 class SPA(models.Model):
     name = IntegerChoicesField(choices_enum=SPAChoices, unique=True, blank=True, null=True)
 
@@ -122,6 +135,7 @@ class SPA(models.Model):
         return str(self.name)
 
 
+@pghistory.track(pghistory.InsertEvent("pet.add"), pghistory.DeleteEvent("pet.remove"))
 class Pet(models.Model):
     name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
 
@@ -130,6 +144,7 @@ class Pet(models.Model):
 
 
 # Sleeping Info
+@pghistory.track(pghistory.InsertEvent("sleeping_option.add"), pghistory.DeleteEvent("sleeping_option.remove"))
 class SleepingOption(models.Model):
     name = TextChoicesField(choices_enum=SleepingChoices, unique=True, blank=True, null=True)
 
