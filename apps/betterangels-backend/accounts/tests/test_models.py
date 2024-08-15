@@ -4,11 +4,12 @@ from accounts.utils import remove_organization_permission_group
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from .baker_recipes import organization_recipe, permission_group_recipe
+from .baker_recipes import organization_recipe
 
 
-class UserModelTestCase(TestCase):
+class UserModelTestCase(ParametrizedTestCase, TestCase):
     def test_str_method(self) -> None:
         user_with_name = baker.make(User, first_name="Dale", last_name="Cooper")
         user_without_name = baker.make(User)
@@ -23,33 +24,41 @@ class UserModelTestCase(TestCase):
         user_2 = baker.make(User, first_name="Dale", middle_name="Bartholomew", last_name="Cooper")
         self.assertEqual(user_2.full_name, "Dale Bartholomew Cooper")
 
-    def test_is_outreach_authorized(self) -> None:
+    @parametrize(
+        "user_is_in_authorized_org, user_is_in_unauthorized_org, user_has_accepted_tos, user_has_accepted_privacy_policy, should_succeed",
+        [
+            (True, True, True, True, True),
+            (True, False, True, True, True),
+            (False, True, True, True, False),
+            (True, True, False, True, False),
+            (True, True, True, False, False),
+        ],
+    )
+    def test_is_outreach_authorized(
+        self,
+        user_is_in_authorized_org: bool,
+        user_is_in_unauthorized_org: bool,
+        user_has_accepted_tos: bool,
+        user_has_accepted_privacy_policy: bool,
+        should_succeed: bool,
+    ) -> None:
         authorized_org = organization_recipe.make(name="authorized org")
         unauthorized_org = organization_recipe.make(name="unauthorized org")
 
-        (
-            user_in_auth_org,
-            user_in_unauth_org,
-            user_in_both_orgs,
-            user_in_no_orgs,
-        ) = baker.make(User, _quantity=4)
-
-        authorized_org.add_user(user_in_auth_org)
-        authorized_org.add_user(user_in_both_orgs)
-        unauthorized_org.add_user(user_in_both_orgs)
-        unauthorized_org.add_user(user_in_unauth_org)
-
-        remove_organization_permission_group(unauthorized_org)
-
-        permission_group_recipe.make(
-            name="unauthorized permission group",
-            organization=unauthorized_org,
+        user = baker.make(
+            User,
+            has_accepted_tos=user_has_accepted_tos,
+            has_accepted_privacy_policy=user_has_accepted_privacy_policy,
         )
 
-        self.assertTrue(user_in_auth_org.is_outreach_authorized)
-        self.assertTrue(user_in_both_orgs.is_outreach_authorized)
-        self.assertFalse(user_in_unauth_org.is_outreach_authorized)
-        self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+        if user_is_in_authorized_org:
+            authorized_org.add_user(user)
+
+        if user_is_in_unauthorized_org:
+            unauthorized_org.add_user(user)
+
+        remove_organization_permission_group(unauthorized_org)
+        self.assertEqual(user.is_outreach_authorized, should_succeed)
 
 
 class HmisProfileModelTestCase(TestCase):

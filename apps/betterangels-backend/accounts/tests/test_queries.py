@@ -57,7 +57,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
         """
-        user = baker.make(User, email="test@example.com", username="testuser")
+        user = baker.make(
+            User,
+            email="test@example.com",
+            username="testuser",
+            has_accepted_tos=True,
+            has_accepted_privacy_policy=True,
+        )
         self.graphql_client.force_login(user)
 
         expected_organizations = []
@@ -71,11 +77,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         query = """
         query {
             currentUser {
-                email
                 username
                 firstName
-                middleName
                 lastName
+                middleName
+                email
+                hasAcceptedTos
+                hasAcceptedPrivacyPolicy
                 isOutreachAuthorized
                 organizations: organizationsOrganization {
                     id
