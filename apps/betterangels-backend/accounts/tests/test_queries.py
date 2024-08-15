@@ -130,6 +130,14 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             is_outreach_authorized,
         )
         self.assertEqual(
+            response["data"]["currentUser"]["hasAcceptedTos"],
+            user.has_accepted_tos,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["hasAcceptedPrivacyPolicy"],
+            user.has_accepted_privacy_policy,
+        )
+        self.assertEqual(
             len(response["data"]["currentUser"]["organizations"]),
             organization_count,
         )
