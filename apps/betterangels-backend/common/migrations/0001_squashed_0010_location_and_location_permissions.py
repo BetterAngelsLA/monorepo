@@ -98,7 +98,7 @@ class Migration(migrations.Migration):
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("file", models.FileField(upload_to=common.utils.get_unique_file_path)),
+                ("file", models.FileField(upload_to=common.utils.get_interaction_attachment_file_path)),
                 (
                     "attachment_type",
                     django_choices_field.fields.TextChoicesField(
