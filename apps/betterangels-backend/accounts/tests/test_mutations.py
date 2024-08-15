@@ -87,7 +87,7 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
 
         response = self.execute_graphql(mutation)["data"]["deleteCurrentUser"]
         self.assertEqual(response["id"], self.user.pk)
-        self.assertEqual(initial_user_count - 1, User.objects.count())
+        self.assertEqual(User.objects.count(), initial_user_count - 1)
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
