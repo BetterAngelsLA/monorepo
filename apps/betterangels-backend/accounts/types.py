@@ -5,12 +5,15 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum
+from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from common.graphql.types import AttachmentInterface
+from common.models import Attachment
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
 
 from .models import (
@@ -30,6 +33,18 @@ class AuthInput:
     code_verifier: Optional[str] = strawberry.field(name="code_verifier")
     id_token: Optional[str] = strawberry.field(name="id_token")
     redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
+
+
+@strawberry_django.type(Attachment, pagination=True)
+class ClientDocumentType(AttachmentInterface):
+    namespace: ClientDocumentNamespaceEnum
+
+
+@strawberry_django.input(Attachment)
+class CreateClientDocumentInput:
+    client_profile: ID
+    file: Upload
+    namespace: ClientDocumentNamespaceEnum
 
 
 @strawberry.type

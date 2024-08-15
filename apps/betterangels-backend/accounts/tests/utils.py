@@ -11,6 +11,7 @@ from accounts.enums import (
 from accounts.models import HmisProfile, User
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from model_bakery import baker
 from organizations.models import OrganizationUser
@@ -259,3 +260,42 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_client_document_fixture(
+        self,
+        client_profile_id: str,
+        namespace: str,
+        file_content: bytes,
+        file_name: str = "test_file.txt",
+    ) -> Dict[str, Any]:
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        response = self.execute_graphql(
+            """
+            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
+                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentType {
+                        id
+                        attachmentType
+                        file {
+                            name
+                        }
+                        originalFilename
+                        namespace
+                    }
+                }
+            }
+            """,
+            variables={
+                "clientProfileId": client_profile_id,
+                "namespace": namespace,
+            },
+            files={"file": file},
+        )
+        return response

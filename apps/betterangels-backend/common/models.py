@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict, Optional
 
-from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_interaction_attachment_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -51,9 +50,11 @@ class Attachment(BaseModel):
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
 
-    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
+    uploaded_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
+    )
     associated_with = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
+        "accounts.User", on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
     )
 
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
