@@ -4,7 +4,7 @@ import uuid
 from django.db.models import Model
 
 
-def get_unique_file_path(instance: Model, filename: str) -> str:
+def get_interaction_attachment_file_path(instance: Model, filename: str) -> str:
     """
     Generates a unique path for storing an uploaded file by appending a UUID to the
     file's original name, preserving its extension. Designed for use in Django's
@@ -22,7 +22,7 @@ def get_unique_file_path(instance: Model, filename: str) -> str:
 
     Example:
         Use in a Django model to ensure uploaded files are uniquely named and organized.
-        file = models.FileField(upload_to=get_unique_file_path)
+        file = models.FileField(upload_to=get_interaction_attachment_file_path)
     """
     ext = filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{ext}"

@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from accounts.models import User
 from common.enums import AttachmentType
-from common.utils import get_unique_file_path
+from common.utils import get_interaction_attachment_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -40,7 +40,7 @@ class Attachment(BaseModel):
         associated_with: The User with whom the attachment is associated, if any.
     """
 
-    file = models.FileField(upload_to=get_unique_file_path)
+    file = models.FileField(upload_to=get_interaction_attachment_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
     mime_type = models.CharField()
     original_filename = models.CharField(max_length=255, blank=True, null=True)
