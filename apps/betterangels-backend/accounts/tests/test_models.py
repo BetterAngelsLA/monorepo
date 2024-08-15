@@ -57,12 +57,7 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
         if user_is_in_unauthorized_org:
             unauthorized_org.add_user(user)
 
-        permission_group_recipe.make(
-            name="unauthorized permission group",
-            organization=unauthorized_org,
-        )
         remove_organization_permission_group(unauthorized_org)
-
         self.assertEqual(user.is_outreach_authorized, should_succeed)
 
 

@@ -99,16 +99,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_outreach_authorized(self: "User") -> bool:
         user_organizations = self.organizations_organization.all()
 
-        if not (user_organizations and self.has_accepted_tos and self.has_accepted_privacy_policy):
+        if not user_organizations:
             return False
 
         # TODO: This is a temporary approach while we have just one permission group.
         # Once this list grows, we'll need to create an actual list of authorized groups.
         authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
-        return PermissionGroup.objects.filter(
+        user_in_authorized_org = PermissionGroup.objects.filter(
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
+
+        if not (user_in_authorized_org and self.has_accepted_tos and self.has_accepted_privacy_policy):
+            return False
+
+        return True
 
 
 class HmisProfile(models.Model):
