@@ -2,12 +2,17 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    ClientDocumentNamespaceEnum,
+    GenderEnum,
+    LanguageEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import OrganizationUser
@@ -325,3 +330,68 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        self.client_document_1 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DOC_READY.name,
+            b"Client document 1",
+            "client_document_1.txt",
+        )
+        self.client_document_2 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DOC_READY.name,
+            b"Client document 2",
+            "client_document_2.txt",
+        )
+
+    def test_view_client_document_permission(self) -> None:
+        query = """
+            query ViewClientDocument($id: ID!) {
+                clientDocument(pk: $id) {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        variables = {"id": self.client_document_1["data"]["createClientDocument"]["id"]}
+        response = self.execute_graphql(query, variables)
+
+        self.assertEqual(
+            response["data"]["clientDocument"],
+            self.client_document_1["data"]["createClientDocument"],
+        )
+
+    def test_view_client_documents_permission(self) -> None:
+        query = """
+            query ViewClientDocuments {
+                clientDocuments {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertEqual(
+            response["data"]["clientDocuments"],
+            [
+                self.client_document_1["data"]["createClientDocument"],
+                self.client_document_2["data"]["createClientDocument"],
+            ],
+        )

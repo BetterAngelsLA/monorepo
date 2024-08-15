@@ -111,3 +111,10 @@ class HmisAgencyEnum(models.TextChoices):
     PASADENA = "pasadena", _("Pasadena")
     CHAMP = "champ", _("CHAMP")
     VASH = "vash", _("VASH")
+
+
+@strawberry.enum
+class ClientDocumentNamespaceEnum(models.TextChoices):
+    DOC_READY = "doc_ready", "Doc-Ready"
+    CONSENT_FORMS = "consent_forms", "Consent Forms"
+    OTHER = "other", "Other"

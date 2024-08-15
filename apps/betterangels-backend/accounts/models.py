@@ -10,6 +10,7 @@ from accounts.enums import (
 )
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
+from common.models import Attachment
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -17,6 +18,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
@@ -121,6 +123,7 @@ class HmisProfile(models.Model):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
+    documents = GenericRelation(Attachment)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
