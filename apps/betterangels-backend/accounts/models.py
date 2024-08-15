@@ -110,10 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
 
-        if not (user_in_authorized_org and self.has_accepted_tos and self.has_accepted_privacy_policy):
-            return False
-
-        return True
+        return user_in_authorized_org and self.has_accepted_tos and self.has_accepted_privacy_policy
 
 
 class HmisProfile(models.Model):
