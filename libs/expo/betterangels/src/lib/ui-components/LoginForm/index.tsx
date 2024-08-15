@@ -1,14 +1,7 @@
 import { gql } from '@apollo/client';
-import { FontSizes, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
 import { useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
 
@@ -31,8 +24,9 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const isValidEmail = (email: string) => {
+  const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -41,10 +35,7 @@ export default function LoginForm() {
 
   const handleLogin = async () => {
     if (isButtonDisabled) {
-      Alert.alert(
-        'Error',
-        'Please enter a valid email address and a password with at least 8 characters.'
-      );
+      setErrorMessage('Either email or password is incorrect.');
       return;
     }
 
@@ -57,78 +48,83 @@ export default function LoginForm() {
       });
 
       if (error) {
-        Alert.alert('Error', 'Something went wrong. Please try again.');
+        setErrorMessage('Something went wrong. Please try again.');
       }
       if (!loading && data && 'login' in data) {
         refetchUser();
       } else {
-        Alert.alert('Error', 'Invalid credentials');
+        setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      setErrorMessage('Something went wrong. Please try again.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        placeholder="Enter your email address"
-        placeholderTextColor="#D3D3D3"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        accessibilityLabel="Username input field"
-        accessibilityHint="Enter your email address here"
-      />
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Enter your password"
-        placeholderTextColor="#D3D3D3"
-        secureTextEntry
-        accessibilityLabel="Password input field"
-        accessibilityHint="Enter your password here"
-      />
-      <TouchableOpacity
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Enter email address"
+          placeholderTextColor="#A9A9A9"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          accessibilityLabel="Username input field"
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Enter password"
+          placeholderTextColor="#A9A9A9"
+          secureTextEntry
+          accessibilityLabel="Password input field"
+        />
+      </View>
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+      <Button
+        borderWidth={0}
+        borderRadius={50} // Matching the rounded style of the Google button
+        accessibilityHint="Sign in with email and password"
+        size="full"
+        title="Sign In"
+        align="center"
+        variant="blue" // Assuming "blue" is a variant that matches your design, adjust if needed
         onPress={handleLogin}
-        style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
         disabled={isButtonDisabled}
-        accessibilityLabel="Sign in button"
-        accessibilityHint="Press to sign in with the entered username and password"
-      >
-        <Text style={styles.buttonText}>Sign In</Text>
-      </TouchableOpacity>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: Spacings.sm,
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   input: {
-    color: '#D3D3D3',
-    padding: Spacings.xs,
-    marginBottom: Spacings.sm,
-    borderRadius: Radiuses.xxs,
-    backgroundColor: '#555',
+    flex: 1,
+    marginLeft: 10,
+    color: '#000',
   },
-  button: {
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: Radiuses.xxs,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#A9A9A9',
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: FontSizes.md.fontSize,
+  errorText: {
+    color: 'red',
+    marginTop: 10,
   },
 });

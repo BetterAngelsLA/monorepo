@@ -3,15 +3,13 @@ import {
   AuthContainer,
   GoogleSignIn,
   LoginForm,
+  useUser,
 } from '@monorepo/expo/betterangels';
-import { Platform } from 'react-native';
-
-import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import {
   googleClientId,
   privacyPolicyUrl,
@@ -45,30 +43,33 @@ export default function SignIn() {
               redirectUri={redirectUri}
               setIsLoading={setIsLoading}
             />
+            <View style={styles.orContainer}>
+              <TextRegular style={styles.orText}>OR</TextRegular>
+            </View>
+            <LoginForm />
+            <TextRegular
+              textAlign="center"
+              size="sm"
+              color={Colors.BLACK}
+              mt="xl"
+            >
+              By continuing, you agree to our{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={termsOfServiceUrl}
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={privacyPolicyUrl}
+              >
+                Privacy Policy.
+              </Link>
+            </TextRegular>
           </>
         )}
-
-        <View style={styles.orContainer}>
-          <TextRegular style={styles.orText}>Or</TextRegular>
-        </View>
-
-        <LoginForm />
-        <TextRegular textAlign="center" size="sm" color={Colors.WHITE} mt="xl">
-          By continuing, you agree to our{' '}
-          <Link
-            style={{ textDecorationLine: 'underline' }}
-            href={termsOfServiceUrl}
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link
-            style={{ textDecorationLine: 'underline' }}
-            href={privacyPolicyUrl}
-          >
-            Privacy Policy.
-          </Link>
-        </TextRegular>
       </View>
     </AuthContainer>
   );
@@ -76,9 +77,11 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     justifyContent: 'flex-end',
     width: '100%',
-    paddingBottom: 60,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -91,6 +94,6 @@ const styles = StyleSheet.create({
   },
   orText: {
     fontSize: 16,
-    color: Colors.WHITE,
+    color: Colors.BLACK,
   },
 });
