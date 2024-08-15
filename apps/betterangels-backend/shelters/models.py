@@ -1,7 +1,6 @@
 import pghistory
-from common.models import Address, Attachment, BaseModel
+from common.models import Address, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
-from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
@@ -212,11 +211,6 @@ class Shelter(BaseModel):
     fees = CKEditor5Field(blank=True, null=True)
     total_beds = models.PositiveIntegerField(blank=True, null=True)
     sleeping_options = models.ManyToManyField(SleepingOption)
-
-    # Visuals
-    attachments = GenericRelation(
-        Attachment,
-    )
 
     # Administration
     is_reviewed = models.BooleanField(default=False)

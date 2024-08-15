@@ -8,11 +8,72 @@ from accounts.enums import (
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
-from accounts.models import HmisProfile
+from accounts.models import HmisProfile, User
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from model_bakery import baker
+from organizations.models import OrganizationUser
+
+from .baker_recipes import organization_recipe, permission_group_recipe
+
+
+class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.setup_users()
+
+        self.user_fields = """
+            id
+            firstName
+            lastName
+            middleName
+            email
+            hasAcceptedTos
+            hasAcceptedPrivacyPolicy
+            isOutreachAuthorized
+            organizations: organizationsOrganization {
+                id
+                name
+            }
+        """
+
+    def setup_users(self) -> None:
+        self.user = baker.make(
+            User,
+            first_name="Dale",
+            last_name="Cooper",
+            middle_name="Bartholomew",
+            email="coop@example.co",
+            has_accepted_tos=False,
+            has_accepted_privacy_policy=False,
+        )
+        self.user_organization = organization_recipe.make(name="Twin Peaks Sheriff's Department")
+        permission_group_recipe.make(organization=self.user_organization)
+        baker.make(OrganizationUser, user=self.user, organization=self.user_organization)
+
+    def _update_current_user_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_current_user_fixture("update", variables)
+
+    def _create_or_update_current_user_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}CurrentUser($data: {operation.capitalize()}UserInput!) {{ # noqa: B950
+                {operation}CurrentUser(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on UserType {{
+                        {self.user_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -54,6 +115,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 middleName
                 email
             }
+            householdMembers {
+                id
+                name
+                dateOfBirth
+                gender
+                relationshipToClient
+                relationshipToClientOther
+            }
         """
 
         self._setup_clients()
@@ -93,7 +162,24 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_contact_1,
             self.client_profile_1_contact_2,
         ]
-
+        self.client_profile_1_household_member_1 = {
+            "name": "Daffodil",
+            "dateOfBirth": "1900-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "cartoon friend",
+        }
+        self.client_profile_1_household_member_2 = {
+            "name": "Tulips",
+            "dateOfBirth": "1901-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_household_members = [
+            self.client_profile_1_household_member_1,
+            self.client_profile_1_household_member_2,
+        ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
@@ -108,6 +194,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
                 "contacts": self.client_1_contacts,
+                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(

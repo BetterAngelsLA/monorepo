@@ -57,7 +57,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         Test querying the currentUser with a logged-in user.
         Expect no errors and the currentUser data to match the logged-in user's details.
         """
-        user = baker.make(User, email="test@example.com", username="testuser")
+        user = baker.make(
+            User,
+            email="test@example.com",
+            username="testuser",
+            has_accepted_tos=True,
+            has_accepted_privacy_policy=True,
+        )
         self.graphql_client.force_login(user)
 
         expected_organizations = []
@@ -71,11 +77,13 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         query = """
         query {
             currentUser {
-                email
                 username
                 firstName
-                middleName
                 lastName
+                middleName
+                email
+                hasAcceptedTos
+                hasAcceptedPrivacyPolicy
                 isOutreachAuthorized
                 organizations: organizationsOrganization {
                     id
@@ -122,6 +130,14 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             is_outreach_authorized,
         )
         self.assertEqual(
+            response["data"]["currentUser"]["hasAcceptedTos"],
+            user.has_accepted_tos,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["hasAcceptedPrivacyPolicy"],
+            user.has_accepted_privacy_policy,
+        )
+        self.assertEqual(
             len(response["data"]["currentUser"]["organizations"]),
             organization_count,
         )
@@ -144,7 +160,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 5
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -177,6 +193,23 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClientOther": self.client_profile_1["contacts"][1]["relationshipToClientOther"],
         }
         expected_client_contacts = [expected_client_contact_1, expected_client_contact_2]
+        expected_client_household_member_1 = {
+            "id": self.client_profile_1["householdMembers"][0]["id"],
+            "name": self.client_profile_1["householdMembers"][0]["name"],
+            "gender": self.client_profile_1["householdMembers"][0]["gender"],
+            "dateOfBirth": self.client_profile_1["householdMembers"][0]["dateOfBirth"],
+            "relationshipToClient": self.client_profile_1["householdMembers"][0]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["householdMembers"][0]["relationshipToClientOther"],
+        }
+        expected_client_household_member_2 = {
+            "id": self.client_profile_1["householdMembers"][1]["id"],
+            "name": self.client_profile_1["householdMembers"][1]["name"],
+            "gender": self.client_profile_1["householdMembers"][1]["gender"],
+            "dateOfBirth": self.client_profile_1["householdMembers"][1]["dateOfBirth"],
+            "relationshipToClient": self.client_profile_1["householdMembers"][1]["relationshipToClient"],
+            "relationshipToClientOther": self.client_profile_1["householdMembers"][1]["relationshipToClientOther"],
+        }
+        expected_client_household_members = [expected_client_household_member_1, expected_client_household_member_2]
         expected_hmis_profiles = [
             {
                 "id": str(self.client_profile_1_hmis_profile_1.id),
@@ -205,6 +238,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "contacts": expected_client_contacts,
             "user": expected_user,
+            "householdMembers": expected_client_household_members,
         }
         self.assertEqual(returned_client, expected_client)
 
@@ -216,7 +250,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 5
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
