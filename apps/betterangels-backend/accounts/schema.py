@@ -33,6 +33,7 @@ from .types import (
     MagicLinkInput,
     MagicLinkResponse,
     UpdateClientProfileInput,
+    UpdateUserInput,
     UserType,
 )
 
@@ -75,6 +76,25 @@ class Mutation:
         base_url = request.build_absolute_uri()
         send_magic_link(data.email, base_url)
         return MagicLinkResponse(message="Email link sent.")
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+        user = cast(User, get_current_user(info))
+        if str(user.pk) != str(data.id):
+            raise PermissionError("You do not have permission to modify this user.")
+
+        user_data: dict = strawberry.asdict(data)
+
+        user = resolvers.update(
+            info,
+            user,
+            {
+                **user_data,
+                "id": user.pk,
+            },
+        )
+
+        return cast(UserType, user)
 
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
