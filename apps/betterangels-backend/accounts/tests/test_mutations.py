@@ -56,7 +56,7 @@ class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
         user = response["data"]["updateCurrentUser"]
         expected_user = {
             **variables,
-            "isOutreachAuthorized": False,
+            "isOutreachAuthorized": True,
             "organizations": [
                 {"id": str(self.user_organization.pk), "name": self.user_organization.name},
             ],
