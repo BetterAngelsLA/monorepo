@@ -11,7 +11,7 @@ import { ScrollView } from 'react-native';
 import { ISectionProps } from './types';
 
 export default function Section(props: ISectionProps) {
-  const { setTab, title, subtitle, onSubmit } = props;
+  const { setTab, title, subtitle, onSubmit, children } = props;
   return (
     <>
       <ScrollView
@@ -34,6 +34,7 @@ export default function Section(props: ISectionProps) {
         <TextRegular size="sm" mb="md">
           {subtitle}
         </TextRegular>
+        {children}
       </ScrollView>
       <BottomActions
         cancel={
