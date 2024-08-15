@@ -34,7 +34,7 @@ def get_client_document_file_path(instance: Model, filename: str) -> str:
     Generates a unique path for storing an uploaded file by appending a UUID to the
     file's original name, preserving its extension. Designed for use in Django's
     FileField or ImageField 'upload_to' parameter, it ensures each file has a unique
-    name and organizes files in the 'attachments/' directory.
+    name and organizes files in the 'client_documents/' directory.
 
     Parameters:
     - instance (models.Model): The model instance the file is attached to. Not used in
@@ -42,7 +42,7 @@ def get_client_document_file_path(instance: Model, filename: str) -> str:
     - filename (str): The original filename, used to keep the file extension.
 
     Returns:
-    - str: The unique file storage path, combining 'attachments/' and the UUID-named
+    - str: The unique file storage path, combining 'client_documents/' and the UUID-named
       file.
 
     Example:
