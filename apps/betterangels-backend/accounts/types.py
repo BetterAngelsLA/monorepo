@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum
+from accounts.enums import LanguageEnum, VehicleEnum
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
@@ -154,7 +154,6 @@ class UpdateUserInput(UserBaseType):
 class ClientProfileBaseType:
     address: auto
     age: auto
-    place_of_birth: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
@@ -165,11 +164,13 @@ class ClientProfileBaseType:
     nickname: auto
     phone_number: auto
     physical_description: auto
+    place_of_birth: auto
     preferred_language: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
+    vehicles: Optional[List[Optional[VehicleEnum]]]
     veteran_status: auto
 
 

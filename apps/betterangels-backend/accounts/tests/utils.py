@@ -10,6 +10,7 @@ from accounts.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import User
@@ -107,6 +108,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             pronouns
             pronounsOther
             spokenLanguages
+            vehicles
             veteranStatus
             contacts {
                 id
@@ -122,13 +124,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 hmisId
                 agency
             }
-            user {
-                id
-                firstName
-                lastName
-                middleName
-                email
-            }
             householdMembers {
                 id
                 name
@@ -136,6 +131,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 gender
                 relationshipToClient
                 relationshipToClientOther
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
             }
         """
 
@@ -216,33 +218,33 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
-                "placeOfBirth": "Los Angeles, CA",
+                "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA1",
+                "hmisProfiles": self.client_1_hmis_profiles,
+                "householdMembers": self.client_1_household_members,
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "physicalDescription": "A human",
+                "placeOfBirth": "Los Angeles, CA",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+                "user": self.client_profile_1_user,
+                "vehicles": [VehicleEnum.BICYCLE.name, VehicleEnum.CAR.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
-                "contacts": self.client_1_contacts,
-                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_2_user,
                 "address": None,
-                "placeOfBirth": None,
                 "contacts": [self.client_profile_2_contact_1],
                 "dateOfBirth": None,
                 "eyeColor": None,
@@ -250,14 +252,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisId": "HMISidPASADENA2",
+                "householdMembers": [],
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
                 "physicalDescription": None,
+                "placeOfBirth": None,
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
                 "spokenLanguages": [],
+                "user": self.client_profile_2_user,
+                "vehicles": [],
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]

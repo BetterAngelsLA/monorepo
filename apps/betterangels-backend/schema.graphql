@@ -126,7 +126,6 @@ input ClientProfileOrder {
 type ClientProfileType {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -137,11 +136,13 @@ type ClientProfileType {
   nickname: String
   phoneNumber: String
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
+  vehicles: [VehicleEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
@@ -155,7 +156,6 @@ type ClientProfileType {
 input CreateClientProfileInput {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -166,11 +166,13 @@ input CreateClientProfileInput {
   nickname: String
   phoneNumber: String
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
+  vehicles: [VehicleEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
   contacts: [ClientContactInput!]
@@ -738,7 +740,6 @@ enum TaskTypeEnum {
 input UpdateClientProfileInput {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -749,11 +750,13 @@ input UpdateClientProfileInput {
   nickname: String
   phoneNumber: String
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
+  vehicles: [VehicleEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
@@ -836,6 +839,14 @@ type UserType {
   organizationsOrganization: [OrganizationType!]
   hasAcceptedTos: Boolean!
   hasAcceptedPrivacyPolicy: Boolean!
+}
+
+enum VehicleEnum {
+  BICYCLE
+  CAR
+  MOTORCYCLE
+  RV
+  OTHER
 }
 
 enum YesNoPreferNotToSayEnum {

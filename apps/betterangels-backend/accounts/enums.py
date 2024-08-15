@@ -17,7 +17,8 @@ class GenderEnum(models.TextChoices):
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
-class VehicleTypeEnum(models.TextChoices):
+@strawberry.enum
+class VehicleEnum(models.TextChoices):
     BICYCLE = "bicycle", _("Bicycle")
     CAR = "car", _("Car")
     MOTORCYCLE = "motorcycle", _("Motorcycle")

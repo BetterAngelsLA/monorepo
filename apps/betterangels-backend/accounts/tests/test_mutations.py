@@ -10,6 +10,7 @@ from accounts.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import ClientProfile, HmisProfile, User
@@ -169,6 +170,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+            "vehicles": [VehicleEnum.RV.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
         }
@@ -200,8 +202,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
 
         client_differences = DeepDiff(
-            client_profile,
             expected_client_profile,
+            client_profile,
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
@@ -278,10 +280,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_household_member_new,
         ]
         client_profile_hmis_profile_1 = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
             "hmisId": "UPDATEDHMISidSANTAMONICA1",
             "agency": HmisAgencyEnum.SANTA_MONICA.name,
         }
         client_profile_hmis_profile_2 = {
+            "id": self.client_profile_1["hmisProfiles"][1]["id"],
             "hmisId": "UPDATEDHMISidCHAMP1",
             "agency": HmisAgencyEnum.CHAMP.name,
         }
@@ -298,7 +302,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
-            "placeOfBirth": "Los Angeles, CA",
             "contacts": client_profile_contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.GRAY.name,
@@ -312,13 +315,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "normally cat-like",
+            "placeOfBirth": "Los Angeles, CA",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
+            "vehicles": [VehicleEnum.RV.name],
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
