@@ -60,9 +60,6 @@ export default {
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
-          networkSecurityConfig: {
-            cleartextTrafficPermitted: IS_PRODUCTION ? false : true,
-          },
         },
       },
       versionCode: 13, // Does this number reset when you bump the version number?
@@ -83,7 +80,7 @@ export default {
         '@config-plugins/detox',
         {
           skipProguard: false,
-          subdomains: ['10.0.2.2', 'localhost'],
+          subdomains: '*',
         },
       ],
       'expo-router',
