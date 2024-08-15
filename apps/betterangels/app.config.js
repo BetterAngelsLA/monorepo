@@ -80,7 +80,7 @@ export default {
         '@config-plugins/detox',
         {
           skipProguard: false,
-          subdomains: ['10.0.2.2', 'localhost'],
+          subdomains: IS_PRODUCTION ? ['10.0.2.2', 'localhost'] : '*',
         },
       ],
       'expo-router',
