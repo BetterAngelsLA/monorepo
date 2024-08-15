@@ -221,6 +221,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "cityOfBirth": self.client_profile_1["cityOfBirth"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "displayPronouns": PronounEnum.HE_HIM_HIS.name,
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
             "hairColor": HairColorEnum.BROWN.name,

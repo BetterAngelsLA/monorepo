@@ -30,6 +30,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             age
             cityOfBirth
             dateOfBirth
+            displayPronouns
             heightInInches
             eyeColor
             gender

@@ -141,6 +141,7 @@ class ClientProfile(models.Model):
     physical_description = models.TextField(blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
+    pronouns_other = models.CharField(max_length=100, null=True, blank=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
@@ -152,7 +153,15 @@ class ClientProfile(models.Model):
 
         today = timezone.now().date()
         age = relativedelta(today, self.date_of_birth).years
+
         return age
+
+    @model_property
+    def display_pronouns(self) -> Optional[str]:
+        if self.pronouns == PronounEnum.OTHER:
+            return self.pronouns_other
+
+        return self.pronouns
 
 
 class ClientContact(models.Model):

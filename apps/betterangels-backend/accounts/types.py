@@ -214,6 +214,7 @@ class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
+    display_pronouns: auto
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
 

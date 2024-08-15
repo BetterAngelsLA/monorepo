@@ -129,6 +129,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {
             "address": "1234 Main St",
             "cityOfBirth": "Los Angeles",
+            "contacts": client_contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.FEMALE.name,
@@ -137,6 +138,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "hmisProfiles": [client_profile_hmis_profile],
+            "householdMembers": client_household_members,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
@@ -146,8 +148,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": client_profile_user,
-            "contacts": client_contacts,
-            "householdMembers": client_household_members,
         }
 
         response = self._create_client_profile_fixture(variables)
@@ -165,10 +165,11 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "id": ANY,
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "contacts": expected_client_contacts,
-            "user": expected_user,
+            "displayPronouns": PronounEnum.HE_HIM_HIS.name,
             "hmisProfiles": [expected_hmis_profile],
             "householdMembers": expected_client_household_members,
+            "contacts": expected_client_contacts,
+            "user": expected_user,
         }
         self.assertCountEqual(client_profile, expected_client_profile)
 
