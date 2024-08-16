@@ -26,7 +26,7 @@ export default function LoginForm() {
   const { refetchUser } = useUser();
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isValidEmail = (email) => {
+  const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
