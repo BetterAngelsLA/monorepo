@@ -163,6 +163,7 @@ class ClientProfileBaseType:
     physical_description: auto
     preferred_language: auto
     pronouns: auto
+    pronouns_other: auto
     race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto

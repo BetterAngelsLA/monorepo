@@ -158,10 +158,13 @@ class ClientProfile(models.Model):
 
     @model_property
     def display_pronouns(self) -> Optional[str]:
+        if not self.pronouns:
+            return None
+
         if self.pronouns == PronounEnum.OTHER:
             return self.pronouns_other
 
-        return self.pronouns
+        return self.pronouns.label
 
 
 class ClientContact(models.Model):

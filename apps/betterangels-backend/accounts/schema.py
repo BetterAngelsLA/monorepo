@@ -200,7 +200,7 @@ class Mutation:
                     member["id"]: member for member in household_members if member.get("id")
                 }
                 household_members_to_create = [member for member in household_members if not member.get("id")]
-                household_members_to_update = ClientContact.objects.filter(
+                household_members_to_update = ClientHouseholdMember.objects.filter(
                     id__in=household_member_updates_by_id.keys(), client_profile=client_profile
                 )
 
@@ -221,17 +221,9 @@ class Mutation:
                         household_member_updates_by_id[str(household_member.id)],
                     )
 
-            client_profile = resolvers.update(
-                info,
-                client_profile,
-                {
-                    **client_profile_data,
-                },
-            )
-
             if hmis_profiles:
                 hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles if hp.get("id") is None]
+                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
                 hmis_profiles_to_update = HmisProfile.objects.filter(
                     id__in=hmis_profile_updates_by_id, client_profile=client_profile
                 )
@@ -252,6 +244,14 @@ class Mutation:
                         hmis_profile,
                         hmis_profile_updates_by_id[str(hmis_profile.id)],
                     )
+
+            client_profile = resolvers.update(
+                info,
+                client_profile,
+                {
+                    **client_profile_data,
+                },
+            )
 
             return cast(ClientProfileType, client_profile)
 

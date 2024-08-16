@@ -12,11 +12,9 @@ from accounts.enums import (
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
-from accounts.models import HmisProfile
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from model_bakery import baker
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -43,6 +41,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             physicalDescription
             preferredLanguage
             pronouns
+            pronounsOther
             spokenLanguages
             veteranStatus
             contacts {
@@ -113,6 +112,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_contact_1,
             self.client_profile_1_contact_2,
         ]
+        self.client_profile_1_hmis_profile_1 = {
+            "hmisId": "HMISidLAHSA1",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        self.client_profile_1_hmis_profile_2 = {
+            "hmisId": "HMISidPASADENA1",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
+        self.client_1_hmis_profiles = [
+            self.client_profile_1_hmis_profile_1,
+            self.client_profile_1_hmis_profile_2,
+        ]
         self.client_profile_1_household_member_1 = {
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
@@ -121,7 +132,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "relationshipToClientOther": "cartoon friend",
         }
         self.client_profile_1_household_member_2 = {
-            "name": "Tulips",
+            "name": "Tulip",
             "dateOfBirth": "1901-01-01",
             "gender": GenderEnum.NON_BINARY.name,
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
@@ -165,7 +176,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "gender": None,
                 "hairColor": None,
                 "heightInInches": None,
-                "hmisId": "HMISidPASADENA1",
+                "hmisId": "HMISidPASADENA2",
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
@@ -177,24 +188,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
-        self.client_profile_1_hmis_profile_1 = baker.make(
-            HmisProfile,
-            client_profile_id=self.client_profile_1["id"],
-            hmis_id="HMISidLAHSA1",
-            agency=HmisAgencyEnum.LAHSA,
-        )
-        self.client_profile_1_hmis_profile_2 = baker.make(
-            HmisProfile,
-            client_profile_id=self.client_profile_1["id"],
-            hmis_id="HMISidPASADENA1",
-            agency=HmisAgencyEnum.PASADENA,
-        )
-        self.client_profile_2_hmis_profile = baker.make(
-            HmisProfile,
-            client_profile_id=self.client_profile_2["id"],
-            hmis_id="HMISidPASADENA2",
-            agency=HmisAgencyEnum.PASADENA,
-        )
 
         # Logout after setting up the clients
         self.graphql_client.logout()

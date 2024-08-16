@@ -139,6 +139,7 @@ type ClientProfileType {
   physicalDescription: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
+  pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
@@ -166,6 +167,7 @@ input CreateClientProfileInput {
   physicalDescription: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
+  pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
@@ -747,6 +749,7 @@ input UpdateClientProfileInput {
   physicalDescription: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
+  pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
