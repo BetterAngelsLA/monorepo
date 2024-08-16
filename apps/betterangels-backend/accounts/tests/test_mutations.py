@@ -172,6 +172,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "contacts": expected_client_profile_contacts,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": PronounEnum.SHE_HER_HERS.label,
+            "displayCaseManager": self.client_profile_1_contact_2["name"],
             "hmisProfiles": [expected_hmis_profile],
             "householdMembers": expected_client_profile_household_members,
             "user": expected_user,
@@ -303,6 +304,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": "she/her/theirs",
+            "displayCaseManager": self.client_profile_1_contact_2["name"],
         }
         client_differences = DeepDiff(
             expected_client_profile,

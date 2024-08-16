@@ -157,6 +157,15 @@ class ClientProfile(models.Model):
         return age
 
     @model_property
+    def display_case_manager(self) -> Optional[str]:
+        return (
+            self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER)
+            .values_list("name", flat=True)
+            .last()
+            or "Not Assigned"
+        )
+
+    @model_property
     def display_pronouns(self) -> Optional[str]:
         if not self.pronouns:
             return None

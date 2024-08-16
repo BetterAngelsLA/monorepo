@@ -147,6 +147,7 @@ type ClientProfileType {
   user: UserType!
   contacts: [ClientContactType!]
   displayPronouns: String
+  displayCaseManager: String
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
 }

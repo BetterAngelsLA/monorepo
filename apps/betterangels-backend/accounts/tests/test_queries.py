@@ -153,7 +153,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 6
+        expected_query_count = 7
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -167,6 +167,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": PronounEnum.HE_HIM_HIS.label,
+            "displayCaseManager": self.client_profile_1_contact_2["name"],
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
             "hairColor": HairColorEnum.BROWN.name,

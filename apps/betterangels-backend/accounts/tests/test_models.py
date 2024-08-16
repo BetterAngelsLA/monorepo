@@ -1,14 +1,15 @@
-from accounts.enums import HmisAgencyEnum
-from accounts.models import HmisProfile, User
+from accounts.enums import HmisAgencyEnum, PronounEnum, RelationshipTypeEnum
+from accounts.models import ClientContact, ClientProfile, HmisProfile, User
 from accounts.utils import remove_organization_permission_group
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
-class UserModelTestCase(TestCase):
+class UserModelTestCase(ParametrizedTestCase, TestCase):
     def test_str_method(self) -> None:
         user_with_name = baker.make(User, first_name="Dale", last_name="Cooper")
         user_without_name = baker.make(User)
@@ -50,6 +51,31 @@ class UserModelTestCase(TestCase):
         self.assertTrue(user_in_both_orgs.is_outreach_authorized)
         self.assertFalse(user_in_unauth_org.is_outreach_authorized)
         self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+
+    def test_display_case_manager(self) -> None:
+        client_profile = baker.make(ClientProfile)
+        self.assertEqual(client_profile.display_case_manager, "Not Assigned")
+
+        case_manager = baker.make(
+            ClientContact,
+            name="Casey Managey",
+            client_profile=client_profile,
+            relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER,
+        )
+        self.assertEqual(client_profile.display_case_manager, case_manager.name)
+
+    def test_display_pronouns(self) -> None:
+        client_profile = baker.make(ClientProfile)
+        self.assertIsNone(client_profile.display_pronouns)
+
+        client_profile.pronouns = PronounEnum.HE_HIM_HIS
+        client_profile.save()
+        self.assertEqual(client_profile.display_pronouns, PronounEnum.HE_HIM_HIS.label)
+
+        client_profile.pronouns = PronounEnum.OTHER
+        client_profile.pronouns_other = "she/her/their"
+        client_profile.save()
+        self.assertEqual(client_profile.display_pronouns, "she/her/their")
 
 
 class HmisProfileModelTestCase(TestCase):

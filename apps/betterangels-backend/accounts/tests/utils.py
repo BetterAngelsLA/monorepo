@@ -28,6 +28,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             age
             cityOfBirth
             dateOfBirth
+            displayCaseManager
             displayPronouns
             heightInInches
             eyeColor
@@ -105,7 +106,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "email": "gary@example.co",
             "phoneNumber": "2125551212",
             "mailingAddress": "1235 Main St",
-            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
             "relationshipToClientOther": None,
         }
         self.client_1_contacts = [
