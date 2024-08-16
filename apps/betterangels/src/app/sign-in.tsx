@@ -11,7 +11,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { googleClientId, redirectUri } from '../../config';
 
 export default function SignIn() {
@@ -25,8 +25,8 @@ export default function SignIn() {
   }, [user]);
 
   return (
-    <ScrollView
-      contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
+    <View
+      // contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
       style={styles.container}
     >
       {isLoading ? (
@@ -76,7 +76,7 @@ export default function SignIn() {
           <LoginForm />
         </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 

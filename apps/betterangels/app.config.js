@@ -70,6 +70,14 @@ export default {
     },
     plugins: [
       [
+        'expo-build-properties',
+        {
+          android: {
+            kotlinVersion: '1.6.21',
+          },
+        },
+      ],
+      [
         'expo-dev-launcher',
         {
           launchMode: 'launcher',
