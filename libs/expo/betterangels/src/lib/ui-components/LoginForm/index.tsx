@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
-import { Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
+import { BasicInput, Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
 
@@ -62,40 +62,45 @@ export default function LoginForm() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Enter email address"
-          placeholderTextColor="#A9A9A9"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          accessibilityLabel="Username input field"
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter password"
-          placeholderTextColor="#A9A9A9"
-          secureTextEntry
-          accessibilityLabel="Password input field"
-        />
-      </View>
+      <BasicInput
+        label="Email"
+        borderRadius={50}
+        height={44}
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Enter email address"
+        placeholderTextColor="#A9A9A9"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        accessibilityLabel="Username input field"
+        accessibilityHint="Enter your email address"
+        mb="xs"
+      />
+
+      <BasicInput
+        height={44}
+        label="Password"
+        borderRadius={50}
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Enter password"
+        placeholderTextColor="#A9A9A9"
+        secureTextEntry
+        accessibilityLabel="Password input field"
+        accessibilityHint="Password input field"
+      />
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
       <Button
-        borderWidth={0}
-        borderRadius={50} // Matching the rounded style of the Google button
+        mt="md"
+        height="lg"
+        borderRadius={50}
         accessibilityHint="Sign in with email and password"
         size="full"
         title="Sign In"
         align="center"
-        variant="blue" // Assuming "blue" is a variant that matches your design, adjust if needed
+        variant="primary"
         onPress={handleLogin}
         disabled={isButtonDisabled}
       />
