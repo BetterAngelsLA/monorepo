@@ -26,7 +26,7 @@ export default function SignIn() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ justifyContent: 'space-between' }}
+      contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
       style={styles.container}
     >
       {isLoading ? (
