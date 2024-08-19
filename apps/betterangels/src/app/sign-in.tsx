@@ -33,10 +33,16 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'position' : 'position'}
+      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
       contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: Spacings.sm,
+          paddingBottom: Spacings.md,
+        }}
+      >
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <Loading size="large" />
@@ -93,8 +99,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    paddingBottom: 40,
-    paddingHorizontal: 20,
+    // paddingBottom: 40,
     backgroundColor: Colors.WHITE,
   },
   loadingContainer: {
