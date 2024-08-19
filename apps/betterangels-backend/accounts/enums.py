@@ -121,7 +121,9 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
     BIRTH_CERTIFICATE = "birth_certificate", "Birth Certificate"
     SOCIAL_SECURITY_CARD = "social_security_card", "Social Security Card"
     OTHER_DOC_READY = "other_doc_ready", "Other Doc-Ready"
+
     CONSENT_FORM = "consent_form", "Consent Form"
     HMIS_FORM = "hmis_form", "HMIS Form"
     OTHER_FORM = "other_form", "Other Form"
+
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"
