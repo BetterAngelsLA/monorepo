@@ -1,7 +1,6 @@
 import { gql, useMutation } from '@apollo/client';
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { ImagesIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
 import { Dispatch, SetStateAction } from 'react';
@@ -142,7 +141,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       variant="transparent"
     >
       <ImagesIcon
-        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        // color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         size="md"
       />
     </IconButton>

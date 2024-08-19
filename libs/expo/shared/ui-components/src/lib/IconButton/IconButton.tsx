@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 
 type TVariants = {
   [key in
@@ -104,7 +104,7 @@ export function IconButton(props: IIconButtonProps) {
     borderRadius = Radiuses.xs,
   } = props;
   return (
-    <Pressable
+    <TouchableOpacity
       accessible
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
@@ -131,7 +131,7 @@ export function IconButton(props: IIconButtonProps) {
       onPress={onPress}
     >
       {children}
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 

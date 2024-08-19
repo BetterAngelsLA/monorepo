@@ -278,7 +278,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
       onPress={getPermissionsAndOpenCamera}
     >
       <CameraIcon
-        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        // color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         size="md"
       />
     </IconButton>
