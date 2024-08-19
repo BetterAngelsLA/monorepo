@@ -4305,7 +4305,6 @@ __metadata:
     expo: "npm:~51.0.28"
     expo-apple-authentication: "npm:~6.4.2"
     expo-auth-session: "npm:~5.5.2"
-    expo-build-properties: "npm:~0.12.5"
     expo-camera: "npm:~15.0.14"
     expo-clipboard: "npm:~6.0.3"
     expo-constants: "npm:~16.0.2"
@@ -4336,7 +4335,6 @@ __metadata:
     react-hook-form: "npm:^7.52.1"
     react-native: "npm:0.74.5"
     react-native-gesture-handler: "npm:~2.16.1"
-    react-native-keyboard-controller: "npm:^1.13.0"
     react-native-maps: "npm:1.14.0"
     react-native-modal: "npm:^13.0.1"
     react-native-open-maps: "npm:^0.4.3"
@@ -13751,7 +13749,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-build-properties@npm:~0.12.1, expo-build-properties@npm:~0.12.5":
+"expo-build-properties@npm:~0.12.1":
   version: 0.12.5
   resolution: "expo-build-properties@npm:0.12.5"
   dependencies:
@@ -21355,17 +21353,6 @@ __metadata:
   peerDependencies:
     react: ^16.6.0 || ^17.0.0 || ^18.0.0
   checksum: 10/217bd0eaa61d426a512634369c70c44ce8b92127ec626dc40c65b72b1be1534ed3ed00ba2dd1a9ad77d1716ce8fd1e6db3f7209534303a652d9932a962d2c830
-  languageName: node
-  linkType: hard
-
-"react-native-keyboard-controller@npm:^1.13.0":
-  version: 1.13.0
-  resolution: "react-native-keyboard-controller@npm:1.13.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-reanimated: ">=3.0.0"
-  checksum: 10/65c0973849ed930074310e065b87fdc338fe812d6cc50818e8a72789b2af0579c4bbdebc064ccdbb5deb7857e4afef5151da49d7ae595703e0254acdbc7e7bb2
   languageName: node
   linkType: hard
 
