@@ -147,6 +147,44 @@ class Mutation:
 
         return cast(UserType, user)
 
+    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
+        with transaction.atomic():
+            user = cast(User, get_current_user(info))
+            client_profile = filter_for_user(
+                ClientProfile.objects.all(),
+                user,
+                [ClientProfilePermissions.CHANGE],
+            ).get(id=data.client_profile)
+
+            permission_group = get_user_permission_group(user)
+
+            content_type = ContentType.objects.get_for_model(ClientProfile)
+            client_document = Attachment.objects.create(
+                file=data.file,
+                namespace=data.namespace,
+                content_type=content_type,
+                object_id=client_profile.id,
+                uploaded_by=user,
+                associated_with=client_profile.user,
+            )
+
+            permissions = [
+                AttachmentPermissions.VIEW,
+                AttachmentPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, client_document)
+
+            return cast(ClientDocumentType, client_document)
+
+    delete_client_document: ClientDocumentType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+        ],
+    )
+
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
