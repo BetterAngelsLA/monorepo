@@ -372,7 +372,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
     def test_delete_client_document(self) -> None:
-        client_document_id = self.client_profile_1_document["id"]
+        client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
         expected_query_count = 14

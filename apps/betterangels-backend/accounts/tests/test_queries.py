@@ -2,12 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import (
-    ClientDocumentNamespaceEnum,
-    GenderEnum,
-    LanguageEnum,
-    YesNoPreferNotToSayEnum,
-)
+from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -352,21 +347,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-        self.client_document_1 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Client document 1",
-            "client_document_1.txt",
-        )
-        self.client_document_2 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Client document 2",
-            "client_document_2.txt",
-        )
 
     def test_view_client_document_permission(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocument($id: ID!) {
                 clientDocument(pk: $id) {
@@ -380,15 +363,16 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": self.client_document_1["data"]["createClientDocument"]["id"]}
+        variables = {"id": self.client_profile_1_document_1["id"]}
         response = self.execute_graphql(query, variables)
 
         self.assertEqual(
             response["data"]["clientDocument"],
-            self.client_document_1["data"]["createClientDocument"],
+            self.client_profile_1_document_1,
         )
 
     def test_view_client_documents_permission(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocuments {
                 clientDocuments {
@@ -407,7 +391,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(
             response["data"]["clientDocuments"],
             [
-                self.client_document_1["data"]["createClientDocument"],
-                self.client_document_2["data"]["createClientDocument"],
+                self.client_profile_1_document_1,
+                self.client_profile_1_document_2,
             ],
         )

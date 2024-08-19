@@ -237,11 +237,17 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         )
 
     def _setup_client_documents(self) -> None:
-        self.client_profile_1_document = self._create_client_document_fixture(
-            client_profile_id=self.client_profile_1["id"],
-            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            file_content=b"Test client document content",
-            file_name="test_client_document.txt",
+        self.client_profile_1_document_1 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            b"Client document 1",
+            "client_profile_1_document_1.txt",
+        )["data"]["createClientDocument"]
+        self.client_profile_1_document_2 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
+            b"Client document 2",
+            "client_profile_1_document_2.txt",
         )["data"]["createClientDocument"]
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
