@@ -10,15 +10,16 @@ from accounts.enums import (
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import ClientProfile, HmisProfile, User
-from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
+from accounts.tests.utils import (
+    ClientProfileGraphQLBaseTestCase,
+    CurrentUserGraphQLBaseTestCase,
+)
 from common.models import Attachment
 from django.test import TestCase, ignore_warnings, override_settings
-from model_bakery import baker
-from test_utils.mixins import GraphQLTestCaseMixin
 
 
 @ignore_warnings(category=UserWarning)
-class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
+class CurrentUserGraphQLTests(CurrentUserGraphQLBaseTestCase, TestCase):
     def test_anonymous_user_logout(self) -> None:
         query = """
         mutation {
@@ -30,8 +31,7 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertFalse(response["data"]["logout"])
 
     def test_logged_in_user_logout(self) -> None:
-        user = baker.make(User, email="test@example.com", username="testuser")
-        self.graphql_client.force_login(user)
+        self.graphql_client.force_login(self.user)
 
         query = """
         mutation {
@@ -42,12 +42,33 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         self.assertIsNone(response.get("errors"))
         self.assertTrue(response["data"]["logout"])
 
+    def test_update_current_user_mutation(self) -> None:
+        variables = {
+            "id": str(self.user.pk),
+            "firstName": "Daley",
+            "lastName": "Coopery",
+            "middleName": "Barty",
+            "email": "dale@example.co",
+            "hasAcceptedTos": False,
+            "hasAcceptedPrivacyPolicy": False,
+        }
+
+        self.graphql_client.force_login(self.user)
+        response = self._update_current_user_fixture(variables)
+        user = response["data"]["updateCurrentUser"]
+        expected_user = {
+            **variables,
+            "isOutreachAuthorized": True,
+            "organizations": [
+                {"id": str(self.user_organization.pk), "name": self.user_organization.name},
+            ],
+        }
+
+        self.assertEqual(user, expected_user)
+
     def test_delete_current_user(self) -> None:
         initial_user_count = User.objects.count()
-        user = baker.make(User)
-        self.assertEqual(initial_user_count + 1, User.objects.count())
-
-        self.graphql_client.force_login(user)
+        self.graphql_client.force_login(self.user)
 
         mutation: str = """
             mutation DeleteCurrentUser {
@@ -67,8 +88,8 @@ class CurrentUserGraphQLTests(GraphQLTestCaseMixin, TestCase):
         """
 
         response = self.execute_graphql(mutation)["data"]["deleteCurrentUser"]
-        self.assertEqual(response["id"], user.pk)
-        self.assertEqual(initial_user_count, User.objects.count())
+        self.assertEqual(response["id"], self.user.pk)
+        self.assertEqual(User.objects.count(), initial_user_count - 1)
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):

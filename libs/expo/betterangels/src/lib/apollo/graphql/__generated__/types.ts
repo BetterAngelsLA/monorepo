@@ -72,6 +72,63 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
+export type ClientContactInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  mailingAddress?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  phoneNumber?: InputMaybe<Scalars['String']['input']>;
+  relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientContactType = {
+  __typename?: 'ClientContactType';
+  clientProfile: DjangoModelType;
+  email?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  mailingAddress?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  phoneNumber?: Maybe<Scalars['String']['output']>;
+  relationshipToClient?: Maybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
+export enum ClientDocumentNamespaceEnum {
+  ConsentForms = 'CONSENT_FORMS',
+  DocReady = 'DOC_READY',
+  Other = 'OTHER'
+}
+
+export type ClientDocumentType = AttachmentInterface & {
+  __typename?: 'ClientDocumentType';
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  namespace: ClientDocumentNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
+};
+
+export type ClientHouseholdMemberInput = {
+  dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  gender?: InputMaybe<GenderEnum>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ClientHouseholdMemberType = {
+  __typename?: 'ClientHouseholdMemberType';
+  clientProfile: DjangoModelType;
+  dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  gender?: Maybe<GenderEnum>;
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  relationshipToClient?: Maybe<RelationshipTypeEnum>;
+  relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
 export type ClientProfileFilter = {
   AND?: InputMaybe<ClientProfileFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -90,9 +147,12 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   gender?: Maybe<GenderEnum>;
   hmisId?: Maybe<Scalars['String']['output']>;
+  hmisProfiles?: Maybe<Array<Maybe<HmisProfileType>>>;
+  householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   nickname?: Maybe<Scalars['String']['output']>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
@@ -103,11 +163,22 @@ export type ClientProfileType = {
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
 
+export type CreateClientDocumentInput = {
+  clientProfile: Scalars['ID']['input'];
+  file: Scalars['Upload']['input'];
+  namespace: ClientDocumentNamespaceEnum;
+};
+
+export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
+
 export type CreateClientProfileInput = {
   address?: InputMaybe<Scalars['String']['input']>;
+  contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
+  hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
@@ -187,6 +258,8 @@ export type CreateUserInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
+
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
 export type DeleteCurrentUserPayload = DeletedObjectType | OperationInfo;
@@ -216,6 +289,11 @@ export type DjangoFileType = {
   path: Scalars['String']['output'];
   size: Scalars['Int']['output'];
   url: Scalars['String']['output'];
+};
+
+export type DjangoModelType = {
+  __typename?: 'DjangoModelType';
+  pk: Scalars['ID']['output'];
 };
 
 export enum DueByGroupEnum {
@@ -248,6 +326,27 @@ export enum GenderEnum {
   Other = 'OTHER',
   PreferNotToSay = 'PREFER_NOT_TO_SAY'
 }
+
+export enum HmisAgencyEnum {
+  Champ = 'CHAMP',
+  Lahsa = 'LAHSA',
+  Pasadena = 'PASADENA',
+  SantaMonica = 'SANTA_MONICA',
+  Vash = 'VASH'
+}
+
+export type HmisProfileInput = {
+  agency: HmisAgencyEnum;
+  hmisId: Scalars['String']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type HmisProfileType = {
+  __typename?: 'HmisProfileType';
+  agency: HmisAgencyEnum;
+  hmisId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+};
 
 export enum LanguageEnum {
   Arabic = 'ARABIC',
@@ -327,6 +426,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
+  createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
@@ -335,6 +435,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteMood: DeleteMoodPayload;
@@ -350,6 +451,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientProfile: UpdateClientProfilePayload;
+  updateCurrentUser: UpdateCurrentUserPayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -365,6 +467,11 @@ export type MutationAddNoteTaskArgs = {
 
 export type MutationAppleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationCreateClientDocumentArgs = {
+  data: CreateClientDocumentInput;
 };
 
 
@@ -405,6 +512,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteClientDocumentArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 
@@ -470,6 +582,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
+};
+
+
+export type MutationUpdateCurrentUserArgs = {
+  data: UpdateUserInput;
 };
 
 
@@ -640,6 +757,8 @@ export type PermDefinition = {
 
 export type Query = {
   __typename?: 'Query';
+  clientDocument: ClientDocumentType;
+  clientDocuments: Array<ClientDocumentType>;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
@@ -652,6 +771,16 @@ export type Query = {
   serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
+};
+
+
+export type QueryClientDocumentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -710,6 +839,23 @@ export type QueryTasksArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export enum RelationshipTypeEnum {
+  Aunt = 'AUNT',
+  Child = 'CHILD',
+  Cousin = 'COUSIN',
+  CurrentCaseManager = 'CURRENT_CASE_MANAGER',
+  Father = 'FATHER',
+  Friend = 'FRIEND',
+  Grandparent = 'GRANDPARENT',
+  Mother = 'MOTHER',
+  Organization = 'ORGANIZATION',
+  Other = 'OTHER',
+  PastCaseManager = 'PAST_CASE_MANAGER',
+  Pet = 'PET',
+  Sibling = 'SIBLING',
+  Uncle = 'UNCLE'
+}
+
 export type RemoveNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
   serviceRequestId: Scalars['ID']['input'];
@@ -727,7 +873,7 @@ export type RemoveNoteTaskInput = {
 export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   revertBeforeTimestamp: Scalars['DateTime']['input'];
 };
 
@@ -820,9 +966,12 @@ export enum TaskTypeEnum {
 
 export type UpdateClientProfileInput = {
   address?: InputMaybe<Scalars['String']['input']>;
+  contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
+  hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
+  householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['String']['input']>;
@@ -835,8 +984,10 @@ export type UpdateClientProfileInput = {
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 
+export type UpdateCurrentUserPayload = OperationInfo | UserType;
+
 export type UpdateNoteInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<Scalars['ID']['input']>;
@@ -846,7 +997,7 @@ export type UpdateNoteInput = {
 };
 
 export type UpdateNoteLocationInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   location: LocationInput;
 };
 
@@ -858,7 +1009,7 @@ export type UpdateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   status?: InputMaybe<ServiceRequestStatusEnum>;
 };
 
@@ -867,14 +1018,14 @@ export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 export type UpdateTaskInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   location?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTaskLocationInput = {
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id: Scalars['ID']['input'];
   location: LocationInput;
 };
 
@@ -885,7 +1036,9 @@ export type UpdateTaskPayload = OperationInfo | TaskType;
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  hasAcceptedPrivacyPolicy?: InputMaybe<Scalars['Boolean']['input']>;
+  hasAcceptedTos?: InputMaybe<Scalars['Boolean']['input']>;
+  id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
@@ -894,6 +1047,8 @@ export type UserType = {
   __typename?: 'UserType';
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  hasAcceptedPrivacyPolicy: Scalars['Boolean']['output'];
+  hasAcceptedTos: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
