@@ -20,6 +20,7 @@ from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 from strawberry_django.utils.requests import get_request
@@ -48,6 +49,24 @@ class Query:
     client_profiles: List[ClientProfileType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
+
+    # @straweberry.query(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])])
+    # def client_profiles(self) -> List[ClientProfileType]:
+    #     return ClientProfile.objects.prefetch_related(
+    #         Prefetch(
+    #             "contacts",
+    #             queryset=Contact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
+    #         )
+    #     )
+
+    # @strawberry_django.field(
+    #     extensions=[
+    #         HasRetvalPerm(perms=[ClientProfilePermissions.VIEW]),
+    #         DjangoOptimizerExtension(select_related=[], prefetch_related=["contacts"]),
+    #     ]
+    # )
+    # def client_profiles(self) -> List[ClientProfileType]:
+    #     return ClientProfile.objects.all()
 
 
 @strawberry.type

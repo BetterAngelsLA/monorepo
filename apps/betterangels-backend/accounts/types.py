@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum
+from accounts.enums import LanguageEnum, RelationshipTypeEnum
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
@@ -216,9 +216,30 @@ class ClientProfileType(ClientProfileBaseType):
     user: UserType
     contacts: Optional[List[ClientContactType]]
     display_pronouns: auto
-    display_case_manager: auto
+    # display_case_manager: auto
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
+
+    @strawberry.field
+    def display_case_manager(self: ClientProfile) -> Optional[str]:
+        # from IPython import embed
+
+        # embed()
+        return (
+            self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER)
+            .values_list("name", flat=True)
+            .last()
+            or "Not Assigned"
+        )
+
+    # @
+    # def display_case_manager(self) -> Optional[str]:
+    #     return (
+    #         self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER)
+    #         .values_list("name", flat=True)
+    #         .last()
+    #         or "Not Assigned"
+    #     )
 
 
 @strawberry_django.input(ClientProfile, partial=True)

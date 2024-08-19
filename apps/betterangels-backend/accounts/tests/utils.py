@@ -109,6 +109,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
             "relationshipToClientOther": None,
         }
+        self.client_profile_2_contact_1 = {
+            "name": "Harry",
+            "email": "hrry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
         self.client_1_contacts = [
             self.client_profile_1_contact_1,
             self.client_profile_1_contact_2,
@@ -172,6 +180,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "user": self.client_profile_2_user,
                 "address": None,
                 "cityOfBirth": None,
+                "contacts": [self.client_profile_2_contact_1],
                 "dateOfBirth": None,
                 "eyeColor": None,
                 "gender": None,
