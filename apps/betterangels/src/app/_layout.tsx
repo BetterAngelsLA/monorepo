@@ -92,6 +92,7 @@ function RootLayoutNav() {
             }}
           />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="oauthredirect" options={{ headerShown: false }} />
         </Stack>
         {/* </ThemeProvider> */}
       </UserProvider>

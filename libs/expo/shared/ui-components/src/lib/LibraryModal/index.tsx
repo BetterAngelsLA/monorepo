@@ -77,7 +77,11 @@ export default function LibraryModal(props: ILibraryModalProps) {
       useNativeDriverForBackdrop={true}
     >
       {isCameraOpen ? (
-        <LibCamera setIsCameraOpen={setIsCameraOpen} onCapture={onCapture} />
+        <LibCamera
+          setModalVisible={setModalVisible}
+          setIsCameraOpen={setIsCameraOpen}
+          onCapture={onCapture}
+        />
       ) : (
         <>
           <View

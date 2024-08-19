@@ -16,10 +16,11 @@ import TextMedium from '../TextMedium';
 interface ILibCameraProps {
   onCapture: (file: ReactNativeFile) => void;
   setIsCameraOpen: (isCameraOpen: boolean) => void;
+  setModalVisible: (isModalVisible: boolean) => void;
 }
 
 export default function LibCamera(props: ILibCameraProps) {
-  const { onCapture, setIsCameraOpen } = props;
+  const { onCapture, setIsCameraOpen, setModalVisible } = props;
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
 
@@ -44,6 +45,7 @@ export default function LibCamera(props: ILibCameraProps) {
         onCapture(file);
       }
       setIsCameraOpen(false);
+      setModalVisible(false);
     } catch (err) {
       console.log(err);
     }
@@ -72,7 +74,7 @@ export default function LibCamera(props: ILibCameraProps) {
             accessibilityHint="enables flash"
             variant="transparent"
           >
-            <BoltSlashIcon size="lg" color={Colors.WHITE} />
+            <BoltSlashIcon size="md" color={Colors.WHITE} />
           </IconButton>
         ) : (
           <IconButton
@@ -81,7 +83,7 @@ export default function LibCamera(props: ILibCameraProps) {
             accessibilityHint="disables flash"
             variant="transparent"
           >
-            <BoltIcon color={Colors.WHITE} />
+            <BoltIcon size="md" color={Colors.WHITE} />
           </IconButton>
         )}
       </View>

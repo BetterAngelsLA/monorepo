@@ -148,7 +148,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
               accessibilityHint="enables flash"
               variant="transparent"
             >
-              <BoltSlashIcon size="lg" color={Colors.WHITE} />
+              <BoltSlashIcon size="md" color={Colors.WHITE} />
             </IconButton>
           ) : (
             <IconButton
@@ -157,7 +157,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
               accessibilityHint="disables flash"
               variant="transparent"
             >
-              <BoltIcon color={Colors.WHITE} />
+              <BoltIcon size="md" color={Colors.WHITE} />
             </IconButton>
           )}
         </View>

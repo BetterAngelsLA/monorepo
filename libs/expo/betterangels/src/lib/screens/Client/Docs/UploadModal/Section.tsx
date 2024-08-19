@@ -7,13 +7,16 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { ISectionProps } from './types';
 
 export default function Section(props: ISectionProps) {
   const { setTab, title, subtitle, onSubmit, children } = props;
   return (
-    <>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
       <ScrollView
         style={{
           paddingHorizontal: Spacings.sm,
@@ -26,7 +29,8 @@ export default function Section(props: ISectionProps) {
           mb="sm"
           accessibilityHint="closes the modal"
           accessibilityLabel="close"
-          variant={'secondary'}
+          alignItems="flex-start"
+          variant={'transparent'}
           borderColor="transparent"
         >
           <ChevronLeftIcon size="sm" />
@@ -47,6 +51,6 @@ export default function Section(props: ISectionProps) {
         }
         onSubmit={onSubmit}
       />
-    </>
+    </KeyboardAvoidingView>
   );
 }

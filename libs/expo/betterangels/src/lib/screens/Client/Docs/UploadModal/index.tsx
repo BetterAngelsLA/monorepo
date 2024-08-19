@@ -102,6 +102,7 @@ export default function UploadModal(props: IUploadModalProps) {
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
               <TextBold>Doc-Ready</TextBold>
               <Button
+                weight="regular"
                 onPress={() => setTab('dl')}
                 height="md"
                 align="flex-start"

@@ -79,6 +79,7 @@ interface IIconButtonProps {
   height?: 'xs' | 'sm' | 'md';
   accessibilityLabel: string;
   accessibilityHint: string;
+  alignItems?: 'center' | 'flex-start';
 }
 
 export function IconButton(props: IIconButtonProps) {
@@ -99,6 +100,7 @@ export function IconButton(props: IIconButtonProps) {
     height = 'md',
     accessibilityLabel,
     accessibilityHint,
+    alignItems = 'center',
   } = props;
   return (
     <Pressable
@@ -113,6 +115,7 @@ export function IconButton(props: IIconButtonProps) {
         {
           height: Height[height],
           width: Width[width],
+          alignItems,
           borderWidth: 1,
           borderRadius: Radiuses.xs,
           backgroundColor: VARIANTS[variant].bg,
@@ -134,7 +137,6 @@ export function IconButton(props: IIconButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    alignItems: 'center',
     justifyContent: 'center',
   },
 });
