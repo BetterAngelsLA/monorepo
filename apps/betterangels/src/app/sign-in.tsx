@@ -11,7 +11,13 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import React, { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { googleClientId, redirectUri } from '../../config';
 
 export default function SignIn() {
@@ -25,58 +31,62 @@ export default function SignIn() {
   }, [user]);
 
   return (
-    <View
-      // contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
+    <KeyboardAvoidingView
       style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }}
     >
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <Loading size="large" />
-        </View>
-      ) : (
-        <>
-          <TextBold mb="xs" size="xl">
-            Welcome!
-          </TextBold>
-          <TextRegular size="sm" mb="xl">
-            Log in for Better Angels and start making a difference in the LA
-            community.
-          </TextRegular>
-          {Platform.OS === 'ios' && <AppleSignIn />}
-          <GoogleSignIn
-            clientId={googleClientId}
-            redirectUri={redirectUri}
-            setIsLoading={setIsLoading}
-          />
-          <View style={styles.orContainer}>
-            <View
-              style={{
-                width: 50,
-                backgroundColor: Colors.WHITE,
-                position: 'relative',
-                zIndex: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <TextRegular size="sm" style={styles.orText}>
-                OR
-              </TextRegular>
-            </View>
-            <View
-              style={{
-                width: '100%',
-                zIndex: 2,
-                height: 1,
-                backgroundColor: Colors.NEUTRAL_LIGHT,
-                position: 'absolute',
-              }}
-            />
+      <ScrollView>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Loading size="large" />
           </View>
-          <LoginForm />
-        </>
-      )}
-    </View>
+        ) : (
+          <>
+            <TextBold mb="xs" size="xl">
+              Welcome!
+            </TextBold>
+            <TextRegular size="sm" mb="xl">
+              Log in for Better Angels and start making a difference in the LA
+              community.
+            </TextRegular>
+            {Platform.OS === 'ios' && <AppleSignIn />}
+            <GoogleSignIn
+              clientId={googleClientId}
+              redirectUri={redirectUri}
+              setIsLoading={setIsLoading}
+            />
+            <View style={styles.orContainer}>
+              <View
+                style={{
+                  width: 50,
+                  backgroundColor: Colors.WHITE,
+                  position: 'relative',
+                  zIndex: 10,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <TextRegular size="sm" style={styles.orText}>
+                  OR
+                </TextRegular>
+              </View>
+              <View
+                style={{
+                  width: '100%',
+                  zIndex: 2,
+                  height: 1,
+                  backgroundColor: Colors.NEUTRAL_LIGHT,
+                  position: 'absolute',
+                }}
+              />
+            </View>
+            <LoginForm />
+          </>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
