@@ -34,7 +34,7 @@ export default function SignIn() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-      contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <ScrollView
         contentContainerStyle={{
@@ -97,10 +97,9 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     width: '100%',
-    // paddingBottom: 40,
     backgroundColor: Colors.WHITE,
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,
