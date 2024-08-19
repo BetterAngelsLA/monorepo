@@ -14,14 +14,20 @@ import {
   FlashMode,
   useCameraPermissions,
 } from 'expo-camera';
-import { useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useRef, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 import TextMedium from '../TextMedium';
+
+interface IImage {
+  id: string | undefined;
+  uri: string;
+  loading?: boolean;
+  abortController?: AbortController;
+}
 interface ICameraPickerProps {
-  images: { id: string | undefined; uri: string }[];
-  setImages: (images: { id: string | undefined; uri: string }[]) => void;
+  setImages: Dispatch<SetStateAction<IImage[] | undefined>>;
   namespace: string;
   noteId: string | undefined;
   setIsLoading: (isLoading: boolean) => void;
@@ -29,8 +35,7 @@ interface ICameraPickerProps {
 }
 
 export default function CameraPicker(props: ICameraPickerProps) {
-  const { setImages, images, namespace, noteId, setIsLoading, isLoading } =
-    props;
+  const { setImages, namespace, noteId, setIsLoading, isLoading } = props;
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -90,10 +95,15 @@ export default function CameraPicker(props: ICameraPickerProps) {
           return;
         }
         if ('id' in data.createNoteAttachment) {
-          setImages([
-            ...images,
-            { uri: photo.uri, id: data.createNoteAttachment.id },
-          ]);
+          setImages((prevState: IImage[] | undefined) => {
+            if (prevState) {
+              return [
+                ...prevState,
+                { uri: photo.uri, id: data.createNoteAttachment.id },
+              ];
+            }
+            return [{ uri: photo.uri, id: data.createNoteAttachment.id }];
+          });
         }
       }
       setIsCameraOpen(false);
@@ -268,7 +278,7 @@ export default function CameraPicker(props: ICameraPickerProps) {
       onPress={getPermissionsAndOpenCamera}
     >
       <CameraIcon
-        color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+        // color={isLoading ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         size="md"
       />
     </IconButton>
