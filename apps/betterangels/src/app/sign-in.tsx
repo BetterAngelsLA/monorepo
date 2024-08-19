@@ -33,11 +33,10 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }}
+      behavior={Platform.OS === 'ios' ? 'position' : 'position'}
+      contentContainerStyle={{ justifyContent: 'flex-start', flexGrow: 1 }}
     >
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <Loading size="large" />
