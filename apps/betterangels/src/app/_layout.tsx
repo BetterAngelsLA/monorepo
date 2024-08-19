@@ -2,11 +2,11 @@ import 'expo-dev-client';
 
 import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
-import { Link, Stack } from 'expo-router';
+import { Link, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -49,6 +49,7 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const router = useRouter();
   return (
     <ApolloProvider client={client}>
       <UserProvider>
@@ -88,7 +89,18 @@ function RootLayoutNav() {
           <Stack.Screen
             name="sign-in"
             options={{
-              headerShown: false,
+              headerLeft: () => (
+                <IconButton
+                  onPress={() => router.back()}
+                  variant="transparent"
+                  accessibilityLabel="goes to get started screen"
+                  accessibilityHint="goes to get started screen"
+                >
+                  <ArrowLeftIcon />
+                </IconButton>
+              ),
+              headerShadowVisible: false,
+              title: '',
             }}
           />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
