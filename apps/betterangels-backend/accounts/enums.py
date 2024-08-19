@@ -115,6 +115,12 @@ class HmisAgencyEnum(models.TextChoices):
 
 @strawberry.enum
 class ClientDocumentNamespaceEnum(models.TextChoices):
-    DOC_READY = "doc_ready", "Doc-Ready"
-    CONSENT_FORMS = "consent_forms", "Consent Forms"
-    OTHER = "other", "Other"
+    DRIVERS_LICENSE = "drivers_license", "Driver's License"
+    PHOTO_ID = "photo_id", "Photo ID"
+    BIRTH_CERTIFICATE = "birth_certificate", "Birth Certificate"
+    SOCIAL_SECURITY_CARD = "social_security_card", "Social Security Card"
+    OTHER_DOC_READY = "other_doc_ready", "Other Doc-Ready"
+    CONSENT_FORM = "consent_form", "Consent Form"
+    HMIS_FORM = "hmis_form", "HMIS Form"
+    OTHER_FORM = "other_form", "Other Form"
+    OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"

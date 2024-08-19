@@ -355,7 +355,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DOC_READY.name,
+                ClientDocumentNamespaceEnum.DRIVERS_LICENSE.name,
                 file_content,
                 file_name,
             )
