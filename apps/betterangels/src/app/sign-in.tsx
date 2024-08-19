@@ -10,6 +10,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -18,7 +19,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { googleClientId, redirectUri } from '../../config';
+import {
+  googleClientId,
+  privacyPolicyUrl,
+  redirectUri,
+  termsOfServiceUrl,
+} from '../../config';
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +94,27 @@ export default function SignIn() {
               />
             </View>
             <LoginForm />
+            <TextRegular
+              textAlign="center"
+              size="sm"
+              color={Colors.BLACK}
+              mt="xl"
+            >
+              By continuing, you agree to our{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={termsOfServiceUrl}
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                style={{ textDecorationLine: 'underline' }}
+                href={privacyPolicyUrl}
+              >
+                Privacy Policy.
+              </Link>
+            </TextRegular>
           </>
         )}
       </ScrollView>
