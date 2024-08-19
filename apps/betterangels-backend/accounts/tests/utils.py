@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from accounts.enums import (
+    ClientDocumentNamespaceEnum,
     GenderEnum,
     HmisAgencyEnum,
     LanguageEnum,
@@ -126,11 +127,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
 
+        # Force login the case manager to create client fixtures
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self._setup_clients()
+        self._setup_client_documents()
+        # Logout after setting up client fixtures
+        self.graphql_client.logout()
 
     def _setup_clients(self) -> None:
-        # Force login the case manager to create clients
-        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.client_profile_1_user = {
             "firstName": "Todd",
             "lastName": "Chavez",
@@ -232,8 +236,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             agency=HmisAgencyEnum.PASADENA,
         )
 
-        # Logout after setting up the clients
-        self.graphql_client.logout()
+    def _setup_client_documents(self) -> None:
+        self.client_profile_1_document = self._create_client_document_fixture(
+            client_profile_id=self.client_profile_1["id"],
+            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            file_content=b"Test client document content",
+            file_name="test_client_document.txt",
+        )["data"]["createClientDocument"]
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_client_profile_fixture("create", variables)
@@ -297,5 +306,27 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "namespace": namespace,
             },
             files={"file": file},
+        )
+        return response
+
+    def _delete_client_document_fixture(self, document_id: int) -> Dict[str, Any]:
+        response = self.execute_graphql(
+            """
+            mutation DeleteClientDocument($documentId: ID!) {
+                deleteClientDocument(data: { id: $documentId }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentType {
+                        id
+                    }
+                }
+            }
+            """,
+            variables={"documentId": document_id},
         )
         return response

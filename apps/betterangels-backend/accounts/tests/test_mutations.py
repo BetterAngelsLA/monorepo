@@ -326,7 +326,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 36
+        expected_query_count = 39
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -369,4 +369,17 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertTrue(
             Attachment.objects.filter(id=client_document_id).exists(),
             "The client document should have been created and exist in the database.",
+        )
+
+    def test_delete_client_document(self) -> None:
+        client_document_id = self.client_profile_1_document["id"]
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+        expected_query_count = 14
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            self._delete_client_document_fixture(client_document_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The document should have been deleted from the database.",
         )
