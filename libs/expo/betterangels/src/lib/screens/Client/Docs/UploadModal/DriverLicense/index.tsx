@@ -1,5 +1,5 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
-import { CheckIcon, UploadIcon } from '@monorepo/expo/shared/icons';
+import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -42,34 +42,11 @@ export default function DriverLicense({
           }}
         >
           <TextRegular>Is this a CA Driver's License?</TextRegular>
-          <View
-            style={{
-              position: 'relative',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Switch
-              style={{
-                transform: [{ scaleX: 0.774 }, { scaleY: 0.774 }],
-                zIndex: 1,
-              }}
-              value={isCaLicense}
-              onChange={() => setIsCaLicense(!isCaLicense)}
-            />
-            {isCaLicense && (
-              <View
-                style={{
-                  position: 'absolute',
-                  right: 10,
-                  zIndex: 2,
-                  pointerEvents: 'box-none',
-                }}
-              >
-                <CheckIcon color={Colors.SUCCESS} size="sm" />
-              </View>
-            )}
-          </View>
+
+          <Switch
+            value={isCaLicense}
+            onChange={() => setIsCaLicense(!isCaLicense)}
+          />
         </View>
         <View
           style={{

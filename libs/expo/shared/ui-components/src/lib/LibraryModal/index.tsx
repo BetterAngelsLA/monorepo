@@ -74,6 +74,7 @@ export default function LibraryModal(props: ILibraryModalProps) {
       onBackdropPress={closeModal}
       isVisible={isModalVisible}
       style={{ justifyContent: 'flex-end', margin: isCameraOpen ? 0 : 20 }}
+      useNativeDriverForBackdrop={true}
     >
       {isCameraOpen ? (
         <LibCamera setIsCameraOpen={setIsCameraOpen} onCapture={onCapture} />
