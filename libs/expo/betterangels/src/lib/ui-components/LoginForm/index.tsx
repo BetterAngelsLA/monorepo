@@ -19,12 +19,19 @@ export const LOGIN_FORM_MUTATION = gql`
   }
 `;
 
-export default function LoginForm() {
+export default function LoginForm({
+  setIsLoading,
+  errorMessage,
+  setErrorMessage,
+}: {
+  setIsLoading: (isLoading: boolean) => void;
+  errorMessage: string;
+  setErrorMessage: (errorMessage: string) => void;
+}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
-  const [errorMessage, setErrorMessage] = useState('');
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,7 +45,7 @@ export default function LoginForm() {
       setErrorMessage('Either email or password is incorrect.');
       return;
     }
-
+    setIsLoading(true);
     try {
       const { data } = await loginForm({
         variables: {
@@ -57,6 +64,7 @@ export default function LoginForm() {
       }
     } catch (error) {
       setErrorMessage('Something went wrong. Please try again.');
+      setIsLoading(false);
     }
   };
 
