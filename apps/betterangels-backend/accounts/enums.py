@@ -115,7 +115,8 @@ class HmisAgencyEnum(models.TextChoices):
 
 @strawberry.enum
 class ClientDocumentNamespaceEnum(models.TextChoices):
-    DRIVERS_LICENSE = "drivers_license", "Driver's License"
+    DRIVERS_LICENSE_FRONT = "drivers_license_front", "Driver's License Front"
+    DRIVERS_LICENSE_BACK = "drivers_license_back", "Driver's License Back"
     PHOTO_ID = "photo_id", "Photo ID"
     BIRTH_CERTIFICATE = "birth_certificate", "Birth Certificate"
     SOCIAL_SECURITY_CARD = "social_security_card", "Social Security Card"

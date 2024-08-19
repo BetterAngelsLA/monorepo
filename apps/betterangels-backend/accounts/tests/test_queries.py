@@ -355,13 +355,13 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
         self.client_document_1 = self._create_client_document_fixture(
             self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE.name,
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
             b"Client document 1",
             "client_document_1.txt",
         )
         self.client_document_2 = self._create_client_document_fixture(
             self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE.name,
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
             b"Client document 2",
             "client_document_2.txt",
         )

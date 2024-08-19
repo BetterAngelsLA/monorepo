@@ -91,9 +91,16 @@ type ClientContactType {
 }
 
 enum ClientDocumentNamespaceEnum {
-  DOC_READY
-  CONSENT_FORMS
-  OTHER
+  DRIVERS_LICENSE_FRONT
+  DRIVERS_LICENSE_BACK
+  PHOTO_ID
+  BIRTH_CERTIFICATE
+  SOCIAL_SECURITY_CARD
+  OTHER_DOC_READY
+  CONSENT_FORM
+  HMIS_FORM
+  OTHER_FORM
+  OTHER_CLIENT_DOCUMENT
 }
 
 type ClientDocumentType implements AttachmentInterface {
