@@ -19,6 +19,7 @@ export default function Section(props: ISectionProps) {
           paddingHorizontal: Spacings.sm,
           flex: 1,
         }}
+        contentContainerStyle={{ paddingBottom: Spacings.xl }}
       >
         <IconButton
           onPress={() => setTab(undefined)}
@@ -31,7 +32,7 @@ export default function Section(props: ISectionProps) {
           <ChevronLeftIcon size="sm" />
         </IconButton>
         <TextBold size="lg">{title}</TextBold>
-        <TextRegular size="sm" mb="md">
+        <TextRegular size="sm" mb="sm">
           {subtitle}
         </TextRegular>
         {children}
