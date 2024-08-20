@@ -150,7 +150,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "address": "1234 Main St",
-            "cityOfBirth": "Los Angeles",
+            "placeOfBirth": "Los Angeles",
             "contacts": client_profile_contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
@@ -192,7 +192,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_client_profile_contacts,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayPronouns": str(PronounEnum.SHE_HER_HERS.label),  # str necessary for deepdiff
+            "displayPronouns": "She/Her/Hers",
             "displayCaseManager": "Not Assigned",
             "hmisProfiles": [expected_hmis_profile],
             "householdMembers": expected_client_profile_household_members,
@@ -298,7 +298,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
-            "cityOfBirth": "Los Angeles, CA",
+            "placeOfBirth": "Los Angeles, CA",
             "contacts": client_profile_contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.GRAY.name,

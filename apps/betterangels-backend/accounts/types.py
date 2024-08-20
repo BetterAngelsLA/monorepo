@@ -154,7 +154,7 @@ class UpdateUserInput(UserBaseType):
 class ClientProfileBaseType:
     address: auto
     age: auto
-    city_of_birth: auto
+    place_of_birth: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto

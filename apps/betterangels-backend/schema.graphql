@@ -126,7 +126,7 @@ input ClientProfileOrder {
 type ClientProfileType {
   address: String
   age: Int
-  cityOfBirth: String
+  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -155,7 +155,7 @@ type ClientProfileType {
 input CreateClientProfileInput {
   address: String
   age: Int
-  cityOfBirth: String
+  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -738,7 +738,7 @@ enum TaskTypeEnum {
 input UpdateClientProfileInput {
   address: String
   age: Int
-  cityOfBirth: String
+  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum

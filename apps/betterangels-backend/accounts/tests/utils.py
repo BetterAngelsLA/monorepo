@@ -89,7 +89,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             id
             address
             age
-            cityOfBirth
+            placeOfBirth
             dateOfBirth
             displayCaseManager
             displayPronouns
@@ -218,7 +218,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
-                "cityOfBirth": "Los Angeles, CA",
+                "placeOfBirth": "Los Angeles, CA",
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
@@ -242,7 +242,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "user": self.client_profile_2_user,
                 "address": None,
-                "cityOfBirth": None,
+                "placeOfBirth": None,
                 "contacts": [self.client_profile_2_contact_1],
                 "dateOfBirth": None,
                 "eyeColor": None,

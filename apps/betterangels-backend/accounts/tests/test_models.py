@@ -60,7 +60,7 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
 
         client_profile.pronouns = PronounEnum.HE_HIM_HIS
         client_profile.save()
-        self.assertEqual(client_profile.display_pronouns, PronounEnum.HE_HIM_HIS.label)
+        self.assertEqual(client_profile.display_pronouns, "He/Him/His")
 
         client_profile.pronouns = PronounEnum.OTHER
         client_profile.pronouns_other = "she/her/their"
