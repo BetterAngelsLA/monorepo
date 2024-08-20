@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
 import {
@@ -227,25 +227,6 @@ export default function TabLayout() {
                 )}
                 <TextRegular color={color} size="xs">
                   Calendar
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <View style={{ alignItems: 'center' }}>
-                <View style={styles.profileContainer}>
-                  <Text style={styles.profileText}>
-                    {user.username?.slice(0, 2)}
-                  </Text>
-                </View>
-                <TextRegular color={color} size="xs">
-                  Profile
                 </TextRegular>
               </View>
             ),
