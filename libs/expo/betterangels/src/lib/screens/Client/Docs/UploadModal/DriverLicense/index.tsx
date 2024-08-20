@@ -171,6 +171,7 @@ export default function DriverLicense({
         )}
       </Section>
       <LibraryModal
+        allowMultiple={false}
         onCapture={(file) => {
           if (uploadingType === 'front') {
             setFrontImage(file);
@@ -180,11 +181,11 @@ export default function DriverLicense({
         }}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
-        onFileSelected={(file) => {
+        setFiles={(files) => {
           if (uploadingType === 'front') {
-            setFrontImage(file);
+            setFrontImage(files[0]);
           } else {
-            setBackImage(file);
+            setBackImage(files[0]);
           }
         }}
       />

@@ -115,7 +115,7 @@ export default function UploadModal(props: IUploadModalProps) {
                 onPress={() => setTab('photoId')}
                 height="md"
                 align="flex-start"
-                disabled
+                weight="regular"
                 size="full"
                 variant="secondary"
                 title="Photo ID"
@@ -125,7 +125,7 @@ export default function UploadModal(props: IUploadModalProps) {
                 onPress={() => setTab('bc')}
                 height="md"
                 align="flex-start"
-                disabled
+                weight="regular"
                 size="full"
                 variant="secondary"
                 title="Birth Certificate"
@@ -134,8 +134,8 @@ export default function UploadModal(props: IUploadModalProps) {
               <Button
                 onPress={() => setTab('ssn')}
                 height="md"
+                weight="regular"
                 align="flex-start"
-                disabled
                 size="full"
                 variant="secondary"
                 title="SSN"
@@ -158,7 +158,7 @@ export default function UploadModal(props: IUploadModalProps) {
                 onPress={() => setTab('hmis')}
                 height="md"
                 align="flex-start"
-                disabled
+                weight="regular"
                 size="full"
                 variant="secondary"
                 title="HMIS Form"
@@ -167,8 +167,8 @@ export default function UploadModal(props: IUploadModalProps) {
               <Button
                 onPress={() => setTab('incomeForms')}
                 height="md"
+                weight="regular"
                 align="flex-start"
-                disabled
                 size="full"
                 variant="secondary"
                 title="Income Forms (pay stubs)"

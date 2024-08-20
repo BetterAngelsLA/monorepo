@@ -14,11 +14,18 @@ interface ILibraryModalProps {
   onCapture: (file: ReactNativeFile) => void;
   setModalVisible: (isModalVisible: boolean) => void;
   isModalVisible: boolean;
-  onFileSelected: (file: ReactNativeFile) => void;
+  setFiles: (files: ReactNativeFile[]) => void;
+  allowMultiple?: boolean;
 }
 
 export default function LibraryModal(props: ILibraryModalProps) {
-  const { onCapture, setModalVisible, isModalVisible, onFileSelected } = props;
+  const {
+    onCapture,
+    setModalVisible,
+    isModalVisible,
+    setFiles,
+    allowMultiple = true,
+  } = props;
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -46,19 +53,24 @@ export default function LibraryModal(props: ILibraryModalProps) {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: allowMultiple,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const resizedPhoto = await resizeImage({ uri: asset.uri });
-        const file = new ReactNativeFile({
-          uri: resizedPhoto.uri,
-          name: asset.fileName || `${Date.now()}`,
-          type: asset.mimeType || 'image/jpeg',
-        });
-        onFileSelected(file);
+      if (!result.canceled && result.assets) {
+        const uploadPromises = result.assets.map(async (asset) => {
+          const resizedPhoto = await resizeImage({ uri: asset.uri });
+          const file = new ReactNativeFile({
+            uri: resizedPhoto.uri,
+            name: asset?.fileName || Date.now().toString(),
+            type: asset.mimeType || 'image/jpeg',
+          });
 
+          return file;
+        });
+
+        const uploadedImages = await Promise.all(uploadPromises);
+
+        setFiles(uploadedImages);
         setModalVisible(false);
       }
     } catch (err) {

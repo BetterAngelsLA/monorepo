@@ -16,14 +16,13 @@ export default function ConsentForms({
 }: {
   setTab: (tab: ITab) => void;
 }) {
-  const [formImage, setFormImage] = useState<ReactNativeFile>();
+  const [images, setImages] = useState<ReactNativeFile[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
     <>
       <Section
-        title="Upload Consent Form"
-        // subtitle="You need to upload front and back of the license."
+        title="Upload Consent Forms"
         onSubmit={() => console.log('submit')}
         setTab={setTab}
       >
@@ -64,39 +63,51 @@ export default function ConsentForms({
             </View>
           </Pressable>
         </View>
-        {formImage && (
+        {images && images.length > 0 && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
-              Uploaded Image
+              Uploaded Image{images.length > 1 ? 's' : ''}
             </TextBold>
-            <View style={{ marginBottom: Spacings.md }}>
-              <Image
-                style={{
-                  height: 395,
-                  width: 236,
-                  marginBottom: Spacings.sm,
-                }}
-                source={{ uri: formImage.uri }}
-                resizeMode="cover"
-                accessibilityIgnoresInvertColors
-              />
-              <BasicInput
-                label="File Name"
-                value={formImage.name}
-                onChangeText={(e) => setFormImage({ ...formImage, name: e })}
-              />
-            </View>
+            {images.map((formImage, index) => (
+              <View key={index} style={{ marginBottom: Spacings.md }}>
+                <Image
+                  style={{
+                    height: 395,
+                    width: 236,
+                    marginBottom: Spacings.sm,
+                  }}
+                  source={{ uri: formImage.uri }}
+                  resizeMode="cover"
+                  accessibilityIgnoresInvertColors
+                />
+                <BasicInput
+                  label="File Name"
+                  value={formImage.name}
+                  onChangeText={(e) =>
+                    setImages((prevImages) =>
+                      prevImages.map((img, i) =>
+                        i === index ? { ...img, name: e } : img
+                      )
+                    )
+                  }
+                />
+              </View>
+            ))}
           </View>
         )}
       </Section>
       <LibraryModal
         onCapture={(file) => {
-          setFormImage(file);
+          setImages((prevState) => {
+            return prevState ? [...prevState, file] : [file];
+          });
         }}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
-        onFileSelected={(file) => {
-          setFormImage(file);
+        setFiles={(files) => {
+          setImages((prevState) => {
+            return prevState ? [...prevState, ...files] : [...files];
+          });
         }}
       />
     </>
