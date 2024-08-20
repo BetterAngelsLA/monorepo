@@ -134,6 +134,8 @@ class UserType(UserBaseType):
     username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
+    has_accepted_tos: auto
+    has_accepted_privacy_policy: auto
 
 
 @strawberry_django.input(User, partial=True)
@@ -144,6 +146,8 @@ class CreateUserInput(UserBaseType):
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
     id: ID
+    has_accepted_tos: auto = False
+    has_accepted_privacy_policy: auto = False
 
 
 @strawberry_django.type(ClientProfile)

@@ -446,6 +446,7 @@ type Mutation {
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
+  updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
@@ -763,6 +764,8 @@ input UpdateClientProfileInput {
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 
+union UpdateCurrentUserPayload = UserType | OperationInfo
+
 input UpdateNoteInput {
   id: ID!
   title: String
@@ -816,6 +819,8 @@ input UpdateUserInput {
   middleName: String
   email: String
   id: ID!
+  hasAcceptedTos: Boolean = false
+  hasAcceptedPrivacyPolicy: Boolean = false
 }
 
 scalar Upload
@@ -829,6 +834,8 @@ type UserType {
   username: String!
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
+  hasAcceptedTos: Boolean!
+  hasAcceptedPrivacyPolicy: Boolean!
 }
 
 enum YesNoPreferNotToSayEnum {
