@@ -2,7 +2,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import time_machine
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    EyeColorEnum,
+    GenderEnum,
+    HairColorEnum,
+    LanguageEnum,
+    MaritalStatusEnum,
+    PronounEnum,
+    RaceEnum,
+    YesNoPreferNotToSayEnum,
+)
 from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
@@ -160,87 +169,41 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 6
+        expected_query_count = 7
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        returned_client = response["data"]["clientProfile"]
-
-        expected_user = {
-            "id": str(self.client_profile_1["user"]["id"]),
-            "firstName": self.client_profile_1_user["firstName"],
-            "lastName": self.client_profile_1_user["lastName"],
-            "middleName": self.client_profile_1_user["middleName"],
-            "email": self.client_profile_1_user["email"],
-        }
-        expected_client_contact_1 = {
-            "id": self.client_profile_1["contacts"][0]["id"],
-            "name": self.client_profile_1["contacts"][0]["name"],
-            "email": self.client_profile_1["contacts"][0]["email"],
-            "phoneNumber": self.client_profile_1["contacts"][0]["phoneNumber"],
-            "mailingAddress": self.client_profile_1["contacts"][0]["mailingAddress"],
-            "relationshipToClient": self.client_profile_1["contacts"][0]["relationshipToClient"],
-            "relationshipToClientOther": self.client_profile_1["contacts"][0]["relationshipToClientOther"],
-        }
-        expected_client_contact_2 = {
-            "id": self.client_profile_1["contacts"][1]["id"],
-            "name": self.client_profile_1["contacts"][1]["name"],
-            "email": self.client_profile_1["contacts"][1]["email"],
-            "phoneNumber": self.client_profile_1["contacts"][1]["phoneNumber"],
-            "mailingAddress": self.client_profile_1["contacts"][1]["mailingAddress"],
-            "relationshipToClient": self.client_profile_1["contacts"][1]["relationshipToClient"],
-            "relationshipToClientOther": self.client_profile_1["contacts"][1]["relationshipToClientOther"],
-        }
-        expected_client_contacts = [expected_client_contact_1, expected_client_contact_2]
-        expected_client_household_member_1 = {
-            "id": self.client_profile_1["householdMembers"][0]["id"],
-            "name": self.client_profile_1["householdMembers"][0]["name"],
-            "gender": self.client_profile_1["householdMembers"][0]["gender"],
-            "dateOfBirth": self.client_profile_1["householdMembers"][0]["dateOfBirth"],
-            "relationshipToClient": self.client_profile_1["householdMembers"][0]["relationshipToClient"],
-            "relationshipToClientOther": self.client_profile_1["householdMembers"][0]["relationshipToClientOther"],
-        }
-        expected_client_household_member_2 = {
-            "id": self.client_profile_1["householdMembers"][1]["id"],
-            "name": self.client_profile_1["householdMembers"][1]["name"],
-            "gender": self.client_profile_1["householdMembers"][1]["gender"],
-            "dateOfBirth": self.client_profile_1["householdMembers"][1]["dateOfBirth"],
-            "relationshipToClient": self.client_profile_1["householdMembers"][1]["relationshipToClient"],
-            "relationshipToClientOther": self.client_profile_1["householdMembers"][1]["relationshipToClientOther"],
-        }
-        expected_client_household_members = [expected_client_household_member_1, expected_client_household_member_2]
-        expected_hmis_profiles = [
-            {
-                "id": str(self.client_profile_1_hmis_profile_1.id),
-                "hmisId": self.client_profile_1_hmis_profile_1.hmis_id,
-                "agency": self.client_profile_1_hmis_profile_1.agency.name,
-            },
-            {
-                "id": str(self.client_profile_1_hmis_profile_2.id),
-                "hmisId": self.client_profile_1_hmis_profile_2.hmis_id,
-                "agency": self.client_profile_1_hmis_profile_2.agency.name,
-            },
-        ]
+        client = response["data"]["clientProfile"]
         expected_client = {
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
+            "placeOfBirth": self.client_profile_1["placeOfBirth"],
+            "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "displayPronouns": "He/Him/His",
+            "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 71.75,
             "hmisId": self.client_profile_1["hmisId"],
-            "hmisProfiles": expected_hmis_profiles,
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "hmisProfiles": self.client_profile_1["hmisProfiles"],
+            "householdMembers": self.client_profile_1["householdMembers"],
             "nickname": self.client_profile_1["nickname"],
             "phoneNumber": self.client_profile_1["phoneNumber"],
+            "physicalDescription": "A human",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "pronouns": self.client_profile_1["pronouns"],
+            "pronouns": PronounEnum.HE_HIM_HIS.name,
+            "pronounsOther": None,
+            "race": RaceEnum.WHITE_CAUCASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
-            "contacts": expected_client_contacts,
-            "user": expected_user,
-            "householdMembers": expected_client_household_members,
+            "user": self.client_profile_1["user"],
         }
-        self.assertEqual(returned_client, expected_client)
+        self.assertEqual(client, expected_client)
 
     def test_client_profiles_query(self) -> None:
         query = f"""
