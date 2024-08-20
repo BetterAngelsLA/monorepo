@@ -53,6 +53,7 @@ export default function SignIn() {
       }}
       bottomOffset={50}
       extraKeyboardSpace={20}
+      keyboardShouldPersistTaps="handled"
     >
       <TextBold mb="xs" size="xl">
         Welcome!
