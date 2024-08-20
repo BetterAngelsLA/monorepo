@@ -1,5 +1,5 @@
-from accounts.enums import HmisAgencyEnum, PronounEnum, RelationshipTypeEnum
-from accounts.models import ClientContact, ClientProfile, HmisProfile, User
+from accounts.enums import HmisAgencyEnum, PronounEnum
+from accounts.models import ClientProfile, HmisProfile, User
 from accounts.utils import remove_organization_permission_group
 from django.db import IntegrityError
 from django.test import TestCase
@@ -51,18 +51,6 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
         self.assertTrue(user_in_both_orgs.is_outreach_authorized)
         self.assertFalse(user_in_unauth_org.is_outreach_authorized)
         self.assertFalse(user_in_no_orgs.is_outreach_authorized)
-
-    # def test_display_case_manager(self) -> None:
-    #     client_profile = baker.make(ClientProfile)
-    #     self.assertEqual(client_profile.display_case_manager, "Not Assigned")
-
-    #     case_manager = baker.make(
-    #         ClientContact,
-    #         name="Casey Managey",
-    #         client_profile=client_profile,
-    #         relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER,
-    #     )
-    #     self.assertEqual(client_profile.display_case_manager, case_manager.name)
 
     def test_display_pronouns(self) -> None:
         client_profile = baker.make(ClientProfile)

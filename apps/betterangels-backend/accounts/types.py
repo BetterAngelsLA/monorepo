@@ -1,11 +1,11 @@
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum, RelationshipTypeEnum
+from accounts.enums import LanguageEnum
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
@@ -216,40 +216,15 @@ class ClientProfileType(ClientProfileBaseType):
     user: UserType
     contacts: Optional[List[ClientContactType]]
     display_pronouns: auto
-    # display_case_manager: auto
-    # case_managers: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
 
-    @strawberry_django.field
-    def case_managers(self, info: Info) -> str:
-        cms = getattr(self, "case_managers", None)
-        from IPython import embed
-
-        embed()
-        if cms:
-            return cms[-1].name
+    @strawberry.field
+    def display_case_manager(self, info: Info) -> str:
+        if case_managers := getattr(self, "case_managers", None):
+            return str(case_managers[-1].name)
 
         return "Not Assigned"
-
-    # @strawberry.field
-    # def case_managers(self, info: Info) -> List["ClientContactType"]:
-    #     cms = self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER)
-    #     return cast(List["ClientContactType"], cms)
-
-    # @strawberry.field
-    # def display_case_manager(self, info: Info) -> str:
-    #     return self.display_case_manager or "Not Assigned"
-
-    #     # if display_case_manager := getattr(self, "display_case_manager", None):
-    #     #     return str(display_case_manager.last().name)
-
-    #     # return "Not Assigned"
-
-    # @strawberry.field
-    # def current_case_manager_name(self) -> str:
-    #     # This method would return the field's value if it was prefetched
-    #     return getattr(self, "current_case_manager_name", "Not Assigned")
 
 
 @strawberry_django.input(ClientProfile, partial=True)

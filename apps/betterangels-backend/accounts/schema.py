@@ -16,13 +16,12 @@ from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
-from strawberry_django.optimizer import DjangoOptimizerExtension
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 from strawberry_django.utils.requests import get_request
@@ -48,35 +47,19 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    # client_profiles: List[ClientProfileType] = strawberry_django.field(
-    #     extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    # )
-
     @strawberry_django.field(permission_classes=[IsAuthenticated])
     def client_profiles(self) -> List[ClientProfileType]:
         client_profiles = ClientProfile.objects.prefetch_related(
             Prefetch(
                 "contacts",
-                queryset=ClientContact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
+                queryset=ClientContact.objects.filter(
+                    relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER
+                ).order_by("created_at"),
                 to_attr="case_managers",
             )
-            # Prefetch(
-            #     "contacts",
-            #     queryset=ClientContact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
-            #     to_attr="display_case_manager",
-            # )
         )
 
         return cast(List[ClientProfileType], client_profiles)
-
-    # @strawberry_django.field(
-    #     extensions=[
-    #         HasRetvalPerm(perms=[ClientProfilePermissions.VIEW]),
-    #         DjangoOptimizerExtension(select_related=[], prefetch_related=["contacts"]),
-    #     ]
-    # )
-    # def client_profiles(self) -> List[ClientProfileType]:
-    #     return ClientProfile.objects.all()
 
 
 @strawberry.type

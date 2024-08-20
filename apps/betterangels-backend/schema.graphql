@@ -133,9 +133,9 @@ type ClientProfileType {
   user: UserType!
   contacts: [ClientContactType!]
   displayPronouns: String
-  caseManagers: [ClientContactType!]
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
+  displayCaseManager: String!
 }
 
 input CreateClientProfileInput {

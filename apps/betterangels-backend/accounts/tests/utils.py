@@ -26,9 +26,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             id
             address
             age
-            caseManagers
             cityOfBirth
             dateOfBirth
+            displayCaseManager
             displayPronouns
             heightInInches
             eyeColor

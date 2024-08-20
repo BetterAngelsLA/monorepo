@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
 
 import pghistory
 from accounts.enums import (
@@ -27,7 +27,6 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
-from django.test import Client
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
@@ -157,20 +156,6 @@ class ClientProfile(models.Model):
         age = relativedelta(today, self.date_of_birth).years
 
         return age
-
-    # @model_property
-    # def case_managers(self) -> List["ClientContact"]:
-    #     return list(self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER))
-
-    # @model_property
-    # def display_case_manager(self) -> str:
-    #     return (
-    #         self.contacts.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER)
-    #         .order_by("created_at")
-    #         .values_list("name", flat=True)
-    #         .last()
-    #         or "Not Assigned"
-    #     )
 
     @model_property
     def display_pronouns(self) -> Optional[str]:
