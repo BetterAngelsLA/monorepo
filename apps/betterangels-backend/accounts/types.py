@@ -226,6 +226,9 @@ class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
+    doc_ready_documents: List[ClientDocumentType]
+    consent_form_documents: List[ClientDocumentType]
+    other_documents: List[ClientDocumentType]
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
 

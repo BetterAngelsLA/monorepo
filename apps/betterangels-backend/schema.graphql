@@ -158,6 +158,9 @@ type ClientProfileType {
   id: ID!
   user: UserType!
   contacts: [ClientContactType!]
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
   age: Int

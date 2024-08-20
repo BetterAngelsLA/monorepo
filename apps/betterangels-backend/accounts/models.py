@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Tuple
 
 import pghistory
 from accounts.enums import (
+    ClientDocumentNamespaceEnum,
     GenderEnum,
     HmisAgencyEnum,
     LanguageEnum,
@@ -34,6 +35,20 @@ if TYPE_CHECKING:
         ServiceRequestUserObjectPermission,
         TaskUserObjectPermission,
     )
+
+DOC_READY_NAMESPACES = [
+    ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
+    ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
+    ClientDocumentNamespaceEnum.PHOTO_ID,
+    ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE,
+    ClientDocumentNamespaceEnum.SOCIAL_SECURITY_CARD,
+    ClientDocumentNamespaceEnum.OTHER_DOC_READY,
+]
+CONSENT_FORM_NAMESPACES = [
+    ClientDocumentNamespaceEnum.CONSENT_FORM,
+    ClientDocumentNamespaceEnum.HMIS_FORM,
+    ClientDocumentNamespaceEnum.OTHER_FORM,
+]
 
 
 @pghistory.track(
@@ -135,6 +150,18 @@ class ClientProfile(models.Model):
     pronouns = models.CharField(max_length=50, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
+
+    @model_property
+    def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []
+
+    @model_property
+    def consent_form_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES) or []
+
+    @model_property
+    def other_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []
 
 
 class ClientContact(models.Model):

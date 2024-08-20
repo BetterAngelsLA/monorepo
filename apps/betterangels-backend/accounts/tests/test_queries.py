@@ -151,24 +151,37 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_client_profile_query(self) -> None:
         client_profile_id = self.client_profile_1["id"]
+        document_fields = """{
+            id
+            file {
+                name
+            }
+            attachmentType
+            originalFilename
+            namespace
+        }
+        """
         query = f"""
             query ViewClientProfile($id: ID!) {{
                 clientProfile(pk: $id) {{
                     {self.client_profile_fields}
+                    docReadyDocuments {document_fields}
+                    consentFormDocuments {document_fields}
+                    otherDocuments {document_fields}
                 }}
             }}
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 6
+        expected_query_count = 9
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         returned_client = response["data"]["clientProfile"]
-
+        client_user_id = self.client_profile_1["user"]["id"]
         expected_user = {
-            "id": str(self.client_profile_1["user"]["id"]),
+            "id": str(client_user_id),
             "firstName": self.client_profile_1_user["firstName"],
             "lastName": self.client_profile_1_user["lastName"],
             "middleName": self.client_profile_1_user["middleName"],
@@ -222,11 +235,17 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 "agency": self.client_profile_1_hmis_profile_2.agency.name,
             },
         ]
+        expected_doc_ready_documents = [self.client_profile_1_document_1, self.client_profile_1_document_2]
+        expected_consent_form_documents = [self.client_profile_1_document_3]
+        expected_other_documents = [self.client_profile_1_document_4]
         expected_client = {
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "docReadyDocuments": expected_doc_ready_documents,
+            "consentFormDocuments": expected_consent_form_documents,
+            "otherDocuments": expected_other_documents,
             "gender": GenderEnum.MALE.name,
             "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": expected_hmis_profiles,
@@ -348,7 +367,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    def test_view_client_document_permission(self) -> None:
+    def test_client_document_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocument($id: ID!) {
@@ -371,7 +390,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self.client_profile_1_document_1,
         )
 
-    def test_view_client_documents_permission(self) -> None:
+    def test_client_documents_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocuments {
@@ -393,5 +412,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             [
                 self.client_profile_1_document_1,
                 self.client_profile_1_document_2,
+                self.client_profile_1_document_3,
+                self.client_profile_1_document_4,
             ],
         )
