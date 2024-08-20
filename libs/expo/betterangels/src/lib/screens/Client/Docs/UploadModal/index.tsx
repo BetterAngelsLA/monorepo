@@ -148,8 +148,8 @@ export default function UploadModal(props: IUploadModalProps) {
                 onPress={() => setTab('consentForms')}
                 height="md"
                 align="flex-start"
-                disabled
                 size="full"
+                weight="regular"
                 variant="secondary"
                 title="Consent Forms"
                 accessibilityHint="goes to consent forms upload"
