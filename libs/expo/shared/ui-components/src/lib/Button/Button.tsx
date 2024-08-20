@@ -155,6 +155,7 @@ interface IButtonProps {
   borderWidth?: 1 | 0;
   loading?: boolean;
   weight?: 'regular' | 'bold';
+  containerStyle?: ViewStyle;
 }
 
 export function Button(props: IButtonProps) {
@@ -183,11 +184,13 @@ export function Button(props: IButtonProps) {
     borderWidth = 1,
     loading,
     weight = 'bold',
+    containerStyle,
   } = props;
   return (
     <View
       style={[
         styles.container,
+        containerStyle,
         {
           height: HEIGHT[height],
         },
