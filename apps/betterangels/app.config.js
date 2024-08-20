@@ -29,7 +29,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.14', // Does this number reset when you bump the version number?
+      buildNumber: '1.0.15', // Does this number reset when you bump the version number?
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -62,13 +62,21 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 14, // Does this number reset when you bump the version number?
+      versionCode: 15, // Does this number reset when you bump the version number?
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
       bundler: 'metro',
     },
     plugins: [
+      [
+        'expo-build-properties',
+        {
+          android: {
+            kotlinVersion: '1.6.21',
+          },
+        },
+      ],
       [
         'expo-dev-launcher',
         {
