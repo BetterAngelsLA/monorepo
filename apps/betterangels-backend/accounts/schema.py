@@ -2,6 +2,7 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
+from accounts.enums import RelationshipTypeEnum
 from accounts.models import (
     ClientContact,
     ClientHouseholdMember,
@@ -15,6 +16,7 @@ from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
+from django.db.models import Prefetch, QuerySet
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import auth
@@ -46,18 +48,26 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    client_profiles: List[ClientProfileType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    )
+    # client_profiles: List[ClientProfileType] = strawberry_django.field(
+    #     extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+    # )
 
-    # @straweberry.query(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])])
-    # def client_profiles(self) -> List[ClientProfileType]:
-    #     return ClientProfile.objects.prefetch_related(
-    #         Prefetch(
-    #             "contacts",
-    #             queryset=Contact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
-    #         )
-    #     )
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def client_profiles(self) -> List[ClientProfileType]:
+        client_profiles = ClientProfile.objects.prefetch_related(
+            Prefetch(
+                "contacts",
+                queryset=ClientContact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
+                to_attr="case_managers",
+            )
+            # Prefetch(
+            #     "contacts",
+            #     queryset=ClientContact.objects.filter(relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER),
+            #     to_attr="display_case_manager",
+            # )
+        )
+
+        return cast(List[ClientProfileType], client_profiles)
 
     # @strawberry_django.field(
     #     extensions=[
