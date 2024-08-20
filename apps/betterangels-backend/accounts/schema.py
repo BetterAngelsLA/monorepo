@@ -43,13 +43,9 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    client_profile: ClientProfileType = strawberry_django.field(
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    )
-
-    @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def client_profiles(self) -> List[ClientProfileType]:
-        client_profiles = ClientProfile.objects.prefetch_related(
+    @strawberry_django.field(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])])
+    def client_profile(self, info: Info, pk: strawberry.ID) -> ClientProfileType:
+        client_profile = ClientProfile.objects.prefetch_related(
             Prefetch(
                 "contacts",
                 queryset=ClientContact.objects.filter(
@@ -59,7 +55,11 @@ class Query:
             )
         )
 
-        return cast(List[ClientProfileType], client_profiles)
+        return cast(ClientProfileType, client_profile)
+
+    client_profiles: List[ClientProfileType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+    )
 
 
 @strawberry.type

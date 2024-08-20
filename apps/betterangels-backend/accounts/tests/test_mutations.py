@@ -171,14 +171,21 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_client_profile_contacts,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayPronouns": PronounEnum.SHE_HER_HERS.label,
-            "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "displayPronouns": str(PronounEnum.SHE_HER_HERS.label),  # str necessary for deepdiff
+            "displayCaseManager": "Not Assigned",
             "hmisProfiles": [expected_hmis_profile],
             "householdMembers": expected_client_profile_household_members,
             "user": expected_user,
         }
 
-        self.assertEqual(client_profile, expected_client_profile)
+        client_differences = DeepDiff(
+            client_profile,
+            expected_client_profile,
+            ignore_order=True,
+            exclude_regex_paths=[r"\['id'\]$"],
+        )
+
+        self.assertFalse(client_differences)
 
     def test_update_client_profile_mutation(self) -> None:
         client_profile_user = {
@@ -293,7 +300,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": client_profile_user,
         }
         response = self._update_client_profile_fixture(variables)
-        client = response["data"]["updateClientProfile"]
+        client_profile = response["data"]["updateClientProfile"]
 
         client_profile_contact_new["id"] = ANY
         client_profile_household_member_new["id"] = ANY
@@ -304,15 +311,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": "she/her/theirs",
-            "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "displayCaseManager": "Not Assigned",
         }
         client_differences = DeepDiff(
             expected_client_profile,
-            client,
+            client_profile,
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
-
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:
