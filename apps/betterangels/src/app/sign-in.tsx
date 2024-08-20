@@ -46,14 +46,13 @@ export default function SignIn() {
   }
 
   return (
-    <KeyboardAwareScrollView
+    <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.WHITE }}
       contentContainerStyle={{
         paddingHorizontal: Spacings.sm,
         paddingBottom: Spacings.md,
       }}
-      enableOnAndroid={true}
-      keyboardOpeningTime={0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={{
