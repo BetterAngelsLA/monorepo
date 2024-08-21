@@ -13,6 +13,8 @@ export type TUser = {
   email?: string | null;
   organizations: TOrganization[] | null;
   isOutreachAuthorized: boolean;
+  hasAcceptedTos: boolean;
+  hasAcceptedPrivacyPolicy: boolean;
 };
 
 export interface IUserProviderValue {
