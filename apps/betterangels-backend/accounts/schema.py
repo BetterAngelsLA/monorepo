@@ -51,36 +51,6 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
-    # @strawberry_django.field(permission_classes=[IsAuthenticated])
-    # def client_profile(self, info: Info, id: strawberry.ID) -> ClientProfileType:
-    #     user = get_current_user(info)
-    #     client_profile = (
-    #         filter_for_user(
-    #             ClientProfile.objects.all(),
-    #             user,
-    #             [ClientProfilePermissions.VIEW],
-    #         ).filter(id=id)
-    #         # .prefetch_related(
-    #         #     Prefetch(
-    #         #         "documents",
-    #         #         queryset=Attachment.objects.filter(namespace__in=DOC_READY_NAMESPACES),
-    #         #         to_attr="doc_ready_documents",
-    #         #     ),
-    #         #     Prefetch(
-    #         #         "documents",
-    #         #         queryset=Attachment.objects.filter(namespace__in=CONSENT_FORM_NAMESPACES),
-    #         #         to_attr="consent_form_documents",
-    #         #     ),
-    #         #     Prefetch(
-    #         #         "documents",
-    #         #         queryset=Attachment.objects.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT),
-    #         #         to_attr="other_documents",
-    #         #     ),
-    #         # )
-    #     )
-
-    #     return cast(ClientProfileType, client_profile)
-
     client_profiles: List[ClientProfileType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
