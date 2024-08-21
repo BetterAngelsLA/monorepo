@@ -80,7 +80,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         if: ${{ env.BRANCH_NAME == 'main' }}
 
-      Build and Push Monorepo Image for each commit using GitHub Actions cache
+      # Build and Push Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
         with:
