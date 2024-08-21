@@ -16,7 +16,7 @@ from accounts.models import ClientProfile, User
 from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
 from accounts.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
 from model_bakery import baker
 from notes.models import Note
 from organizations.models import OrganizationUser
@@ -160,28 +160,44 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_client_profile_query(self) -> None:
         client_profile_id = self.client_profile_1["id"]
+        document_fields = """{
+            id
+            file {
+                name
+            }
+            attachmentType
+            originalFilename
+            namespace
+        }
+        """
         query = f"""
             query ViewClientProfile($id: ID!) {{
                 clientProfile(pk: $id) {{
                     {self.client_profile_fields}
+                    docReadyDocuments {document_fields}
+                    consentFormDocuments {document_fields}
+                    otherDocuments {document_fields}
                 }}
             }}
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 7
+        expected_query_count = 10
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        client = response["data"]["clientProfile"]
-        expected_client = {
+        client_profile = response["data"]["clientProfile"]
+        expected_client_profile = {
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
+            "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
+            "consentFormDocuments": [self.client_profile_1_document_3],
+            "otherDocuments": [self.client_profile_1_document_4],
             "displayPronouns": "He/Him/His",
             "displayCaseManager": self.client_profile_1_contact_2["name"],
             "eyeColor": EyeColorEnum.BROWN.name,
@@ -203,7 +219,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": self.client_profile_1["user"],
         }
-        self.assertEqual(client, expected_client)
+        self.assertEqual(client_profile, expected_client_profile)
 
     def test_client_profiles_query(self) -> None:
         query = f"""
@@ -304,3 +320,59 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_client_document_query(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        query = """
+            query ViewClientDocument($id: ID!) {
+                clientDocument(pk: $id) {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        variables = {"id": self.client_profile_1_document_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        self.assertEqual(
+            response["data"]["clientDocument"],
+            self.client_profile_1_document_1,
+        )
+
+    def test_client_documents_query(self) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        query = """
+            query ViewClientDocuments {
+                clientDocuments {
+                    id
+                    file {
+                        name
+                    }
+                    attachmentType
+                    originalFilename
+                    namespace
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertEqual(
+            response["data"]["clientDocuments"],
+            [
+                self.client_profile_1_document_1,
+                self.client_profile_1_document_2,
+                self.client_profile_1_document_3,
+                self.client_profile_1_document_4,
+            ],
+        )

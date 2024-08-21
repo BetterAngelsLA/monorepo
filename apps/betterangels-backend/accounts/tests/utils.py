@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from accounts.enums import (
+    ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -15,6 +16,7 @@ from accounts.enums import (
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from model_bakery import baker
 from organizations.models import OrganizationUser
@@ -139,11 +141,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         """
 
+        # Force login the case manager to create client fixtures
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self._setup_clients()
+        self._setup_client_documents()
+        # Logout after setting up client fixtures
+        self.graphql_client.logout()
 
     def _setup_clients(self) -> None:
-        # Force login the case manager to create clients
-        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.client_profile_1_user = {
             "firstName": "Todd",
             "lastName": "Chavez",
@@ -262,8 +267,31 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
         )["data"]["createClientProfile"]
 
-        # Logout after setting up the clients
-        self.graphql_client.logout()
+    def _setup_client_documents(self) -> None:
+        self.client_profile_1_document_1 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            b"Client 1 license front",
+            "client_profile_1_document_1.txt",
+        )["data"]["createClientDocument"]
+        self.client_profile_1_document_2 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
+            b"Client 1 license back",
+            "client_profile_1_document_2.txt",
+        )["data"]["createClientDocument"]
+        self.client_profile_1_document_3 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.HMIS_FORM.name,
+            b"Client 1 hmis form",
+            "client_profile_1_document_3.txt",
+        )["data"]["createClientDocument"]
+        self.client_profile_1_document_4 = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            b"Client 1 other doc",
+            "client_profile_1_document_4.txt",
+        )["data"]["createClientDocument"]
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_client_profile_fixture("create", variables)
@@ -290,3 +318,64 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_client_document_fixture(
+        self,
+        client_profile_id: str,
+        namespace: str,
+        file_content: bytes,
+        file_name: str = "test_file.txt",
+    ) -> Dict[str, Any]:
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        response = self.execute_graphql(
+            """
+            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
+                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentType {
+                        id
+                        attachmentType
+                        file {
+                            name
+                        }
+                        originalFilename
+                        namespace
+                    }
+                }
+            }
+            """,
+            variables={
+                "clientProfileId": client_profile_id,
+                "namespace": namespace,
+            },
+            files={"file": file},
+        )
+        return response
+
+    def _delete_client_document_fixture(self, document_id: int) -> Dict[str, Any]:
+        response = self.execute_graphql(
+            """
+            mutation DeleteClientDocument($documentId: ID!) {
+                deleteClientDocument(data: { id: $documentId }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentType {
+                        id
+                    }
+                }
+            }
+            """,
+            variables={"documentId": document_id},
+        )
+        return response

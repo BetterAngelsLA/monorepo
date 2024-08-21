@@ -90,6 +90,27 @@ type ClientContactType {
   clientProfile: DjangoModelType!
 }
 
+enum ClientDocumentNamespaceEnum {
+  DRIVERS_LICENSE_FRONT
+  DRIVERS_LICENSE_BACK
+  PHOTO_ID
+  BIRTH_CERTIFICATE
+  SOCIAL_SECURITY_CARD
+  OTHER_DOC_READY
+  CONSENT_FORM
+  HMIS_FORM
+  OTHER_FORM
+  OTHER_CLIENT_DOCUMENT
+}
+
+type ClientDocumentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+  namespace: ClientDocumentNamespaceEnum!
+}
+
 input ClientHouseholdMemberInput {
   name: String
   dateOfBirth: Date
@@ -146,11 +167,22 @@ type ClientProfileType {
   id: ID!
   user: UserType!
   contacts: [ClientContactType!]
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
   displayPronouns: String
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
   displayCaseManager: String!
 }
+
+input CreateClientDocumentInput {
+  clientProfile: ID!
+  file: Upload!
+  namespace: ClientDocumentNamespaceEnum!
+}
+
+union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input CreateClientProfileInput {
   address: String
@@ -253,6 +285,8 @@ scalar Date
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
 
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
@@ -441,12 +475,14 @@ type MoodType {
 }
 
 type Mutation {
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
@@ -592,6 +628,8 @@ enum PronounEnum {
 type Query {
   currentUser: UserType!
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
