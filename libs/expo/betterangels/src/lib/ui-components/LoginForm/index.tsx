@@ -1,14 +1,7 @@
 import { gql } from '@apollo/client';
-import { FontSizes, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { BasicInput, Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
 import { useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
 
@@ -26,18 +19,33 @@ export const LOGIN_FORM_MUTATION = gql`
   }
 `;
 
-export default function LoginForm() {
+export default function LoginForm({
+  setIsLoading,
+  errorMessage,
+  setErrorMessage,
+}: {
+  setIsLoading: (isLoading: boolean) => void;
+  errorMessage: string;
+  setErrorMessage: (errorMessage: string) => void;
+}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isButtonDisabled = !isValidEmail(username) || password.length < 8;
+
   const handleLogin = async () => {
-    if (username === '' || password === '') {
-      Alert.alert('Error', 'Please enter both username and password');
+    if (isButtonDisabled) {
+      setErrorMessage('Either email or password is incorrect.');
       return;
     }
-
+    setIsLoading(true);
     try {
       const { data } = await loginForm({
         variables: {
@@ -47,92 +55,89 @@ export default function LoginForm() {
       });
 
       if (error) {
-        Alert.alert('Error', 'Something went wrong. Please try again.');
+        setErrorMessage('Something went wrong. Please try again.');
       }
       if (!loading && data && 'login' in data) {
         refetchUser();
       } else {
-        Alert.alert('Error', 'Invalid credentials');
+        setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      setErrorMessage('Something went wrong. Please try again.');
+      setIsLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.warning}>
-        Warning: This should only be enabled in development!
-      </Text>
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
+      <BasicInput
+        label="Email"
+        borderRadius={50}
+        height={44}
         value={username}
         onChangeText={setUsername}
-        placeholder="Enter your username"
-        placeholderTextColor="#D3D3D3"
+        placeholder="Enter email address"
+        placeholderTextColor="#A9A9A9"
         autoCapitalize="none"
+        keyboardType="email-address"
         accessibilityLabel="Username input field"
-        accessibilityHint="Enter your username here"
+        accessibilityHint="Enter your email address"
+        mb="xs"
       />
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
+
+      <BasicInput
+        height={44}
+        label="Password"
+        borderRadius={50}
         value={password}
         onChangeText={setPassword}
-        placeholder="Enter your password"
-        placeholderTextColor="#D3D3D3"
+        placeholder="Enter password"
+        placeholderTextColor="#A9A9A9"
         secureTextEntry
         accessibilityLabel="Password input field"
-        accessibilityHint="Enter your password here"
+        accessibilityHint="Password input field"
       />
-      <TouchableOpacity
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+      <Button
+        mt="md"
+        height="lg"
+        borderRadius={50}
+        accessibilityHint="Sign in with email and password"
+        size="full"
+        title="Sign In"
+        align="center"
+        variant="primary"
         onPress={handleLogin}
-        style={styles.button}
-        accessibilityLabel="Login button"
-        accessibilityHint="Press to login with the entered username and password"
-      >
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        disabled={isButtonDisabled}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: Spacings.sm,
-    backgroundColor: '#333',
+    width: '100%',
   },
-  warning: {
-    color: 'red',
-    fontSize: FontSizes.sm.fontSize,
-    marginBottom: Spacings.sm,
-    textAlign: 'center',
-  },
-  label: {
-    color: '#FFF',
-    fontSize: FontSizes.md.fontSize,
-    marginBottom: Spacings.xs,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    color: '#D3D3D3',
-    padding: Spacings.xs,
-    marginBottom: Spacings.sm,
-    borderRadius: Radiuses.xxs,
-    backgroundColor: '#555',
+    flex: 1,
+    marginLeft: 10,
+    color: '#000',
   },
-  button: {
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: Radiuses.xxs,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: FontSizes.md.fontSize,
+  errorText: {
+    color: 'red',
+    marginTop: 10,
   },
 });
