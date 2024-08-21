@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read # Required to find the last successful workflow run
-      contents: read # Required for actions/checkout
+      contents: write # Required for actions/checkout
       id-token: write # Required for requesting the JWT
       pull-requests: write # Required for graphql inspect out of org PRs
       checks: write # Required for graphql inspector
