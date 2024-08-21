@@ -6,7 +6,6 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.enums import LanguageEnum
-from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
@@ -154,13 +153,22 @@ class UpdateUserInput(UserBaseType):
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
+    age: auto
+    place_of_birth: auto
     date_of_birth: auto
+    eye_color: auto
     gender: auto
+    hair_color: auto
+    height_in_inches: auto
     hmis_id: auto
+    marital_status: auto
     nickname: auto
     phone_number: auto
+    physical_description: auto
     preferred_language: auto
     pronouns: auto
+    pronouns_other: auto
+    race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
@@ -211,17 +219,16 @@ class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
+    display_pronouns: auto
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
+    def display_case_manager(self, info: Info) -> str:
+        if case_managers := getattr(self, "case_managers", None):
+            return str(case_managers[-1].name)
 
-        today = timezone.now().date()
-        age = relativedelta(today, self.date_of_birth).years
-        return age
+        return "Not Assigned"
 
 
 @strawberry_django.input(ClientProfile, partial=True)
