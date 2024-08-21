@@ -28,6 +28,8 @@ export default function UserProvider({ children }: UserProviderProps) {
           email,
           organizations,
           isOutreachAuthorized,
+          hasAcceptedPrivacyPolicy,
+          hasAcceptedTos,
         } = response.data.currentUser;
         setUser({
           id,
@@ -37,7 +39,10 @@ export default function UserProvider({ children }: UserProviderProps) {
           email,
           organizations: organizations || null,
           isOutreachAuthorized: isOutreachAuthorized || false,
+          hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
+          hasAcceptedTos: hasAcceptedTos || false,
         });
+        console.log('HELLO ===> ', response.data.currentUser);
       }
     } catch (err) {
       console.error('Error refetching user data:', err);
@@ -54,6 +59,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations,
         isOutreachAuthorized,
+        hasAcceptedPrivacyPolicy,
+        hasAcceptedTos,
       } = data.currentUser;
       setUser({
         id,
@@ -63,6 +70,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations: organizations || null,
         isOutreachAuthorized: isOutreachAuthorized || false,
+        hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
+        hasAcceptedTos: hasAcceptedTos || false,
       });
     }
   }, [data, isLoading]);
