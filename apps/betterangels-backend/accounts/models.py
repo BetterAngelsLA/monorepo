@@ -1,17 +1,23 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
 
 import pghistory
 from accounts.enums import (
     ClientDocumentNamespaceEnum,
+    EyeColorEnum,
     GenderEnum,
+    HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    MaritalStatusEnum,
+    PronounEnum,
+    RaceEnum,
     RelationshipTypeEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
-from common.models import Attachment
+from common.models import Attachment, BaseModel
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import (
     AbstractBaseUser,
     Group,
@@ -23,6 +29,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
+from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
@@ -140,14 +147,22 @@ class HmisProfile(models.Model):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
+    place_of_birth = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
+    eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
+    height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    physical_description = models.TextField(blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
-    pronouns = models.CharField(max_length=50, blank=True, null=True)
+    pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
+    pronouns_other = models.CharField(max_length=100, null=True, blank=True)
+    race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 
@@ -163,8 +178,28 @@ class ClientProfile(models.Model):
     def other_documents(self: "ClientProfile") -> List[Attachment]:
         return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []
 
+    @model_property
+    def age(self) -> Optional[int]:
+        if not self.date_of_birth:
+            return None
 
-class ClientContact(models.Model):
+        today = timezone.now().date()
+        age = relativedelta(today, self.date_of_birth).years
+
+        return age
+
+    @model_property
+    def display_pronouns(self) -> Optional[str]:
+        if not self.pronouns:
+            return None
+
+        if self.pronouns == PronounEnum.OTHER:
+            return self.pronouns_other
+
+        return self.pronouns.label
+
+
+class ClientContact(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
