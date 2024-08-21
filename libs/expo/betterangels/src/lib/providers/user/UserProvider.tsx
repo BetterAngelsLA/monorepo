@@ -42,7 +42,6 @@ export default function UserProvider({ children }: UserProviderProps) {
           hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
           hasAcceptedTos: hasAcceptedTos || false,
         });
-        console.log('HELLO ===> ', response.data.currentUser);
       }
     } catch (err) {
       console.error('Error refetching user data:', err);
