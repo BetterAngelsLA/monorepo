@@ -148,6 +148,9 @@ jobs:
 
       - name: 🕵🏻‍♂️ GraphQL Inspector
         uses: kamilkisiela/graphql-inspector@master
+        # Warning: This now skips schema breaking checks in forked repositories.
+        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           schema: main:apps/betterangels-backend/schema.graphql
