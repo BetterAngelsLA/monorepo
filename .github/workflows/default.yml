@@ -168,6 +168,7 @@ jobs:
           EOF
 
       - name: 🛠️ Build and Push Artifacts
+        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
