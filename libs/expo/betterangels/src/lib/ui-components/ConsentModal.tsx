@@ -10,6 +10,8 @@ import { DimensionValue, Image, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
+import { useUpdateCurrentUserMutation } from '../providers';
+import { TUser } from '../providers/user/UserContext';
 
 interface IMainModalProps {
   isModalVisible: boolean;
@@ -20,6 +22,7 @@ interface IMainModalProps {
   height?: DimensionValue;
   privacyPolicyUrl: string;
   termsOfServiceUrl: string;
+  user: TUser;
 }
 
 export default function ConsentModal(props: IMainModalProps) {
@@ -32,12 +35,32 @@ export default function ConsentModal(props: IMainModalProps) {
     privacyPolicyUrl,
     termsOfServiceUrl,
     closeModal,
+    user,
   } = props;
+
+  const [updateCurrentUser, { error }] = useUpdateCurrentUserMutation();
 
   const [checkedItems, setCheckedItems] = useState({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,
   });
+
+  const submitAgreements = async () => {
+    const { data } = await updateCurrentUser({
+      variables: {
+        data: {
+          id: user.id,
+          hasAcceptedTos: checkedItems.isTosChecked,
+          hasAcceptedPrivacyPolicy: checkedItems.isPrivacyPolicyChecked,
+        },
+      },
+    });
+    if (!data) {
+      console.log('Error updating user', error);
+      return;
+    }
+    closeModal();
+  };
 
   const { signOut } = useSignOut();
 
@@ -126,7 +149,7 @@ export default function ConsentModal(props: IMainModalProps) {
           <View>
             <Button
               accessibilityHint="Submits agreement and goes to welcome screen"
-              onPress={closeModal}
+              onPress={submitAgreements}
               disabled={
                 !checkedItems.isPrivacyPolicyChecked ||
                 !checkedItems.isTosChecked
