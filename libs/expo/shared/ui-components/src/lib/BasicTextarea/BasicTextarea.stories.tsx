@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -9,8 +10,8 @@ const BasicTextareaMeta: ComponentMeta<typeof BasicTextarea> = {
   decorators: [
     (Story) => {
       return (
-        <View style={{ padding: 16 }}>
-          <View style={{ padding: 16 }}>
+        <View style={{ padding: Spacings.sm }}>
+          <View style={{ padding: Spacings.sm }}>
             <Story />
           </View>
         </View>

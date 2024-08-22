@@ -14,13 +14,11 @@ function loadConfig() {
   if (!googleClientId || !apiUrl || !redirectUri) {
     throw new Error('One or more environment variables are undefined.');
   }
-  const isLoginFormEnabled = process.env.EXPO_PUBLIC_IS_LOGIN_FORM_ENABLED;
 
-  return { apiUrl, googleClientId, redirectUri, isLoginFormEnabled };
+  return { apiUrl, googleClientId, redirectUri };
 }
 
-const { apiUrl, googleClientId, redirectUri, isLoginFormEnabled } =
-  loadConfig();
+const { apiUrl, googleClientId, redirectUri } = loadConfig();
 
 const privacyPolicyUrl = `${apiUrl}/legal/privacy-policy`;
 const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
@@ -28,7 +26,6 @@ const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
 export {
   apiUrl,
   googleClientId,
-  isLoginFormEnabled,
   privacyPolicyUrl,
   redirectUri,
   termsOfServiceUrl,

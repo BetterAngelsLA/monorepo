@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StatusBar } from 'expo-status-bar';
 import { ElementType, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -30,7 +30,7 @@ export default function AuthContainer({
       >
         {Logo && (
           <View style={{ position: 'absolute' }}>
-            <Logo width={160} height={24} />
+            <Logo width={160} height={Spacings.md} />
           </View>
         )}
         {children}
@@ -42,7 +42,7 @@ export default function AuthContainer({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacings.sm,
     backgroundColor: Colors.PRIMARY,
   },
 });

@@ -249,12 +249,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
               })}
 
             {customServices && customServices.length > 0 && (
-              <PlusIcon
-                mr="xs"
-                size="md"
-                color={Colors.PRIMARY_EXTRA_DARK}
-                key="plusIcon"
-              />
+              <PlusIcon mr="xs" size="md" key="plusIcon" />
             )}
             {isGreaterThanZeroProvidedServiceImages && (
               <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />

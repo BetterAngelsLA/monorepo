@@ -1,8 +1,13 @@
-import { LocationDotIcon, TentIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  LocationDotIcon,
+  TentIcon,
+  ThreeDotIcon,
+} from '@monorepo/expo/shared/icons';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
+import IconButton from '../IconButton';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
@@ -25,6 +30,7 @@ interface IClientCardProps {
   onPress?: () => void;
   id: string;
   select?: string;
+  arrivedFrom?: string;
 }
 
 export function ClientCard(props: IClientCardProps) {
@@ -43,6 +49,7 @@ export function ClientCard(props: IClientCardProps) {
     onPress,
     id,
     select = 'false',
+    arrivedFrom,
   } = props;
 
   const router = useRouter();
@@ -50,7 +57,14 @@ export function ClientCard(props: IClientCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.navigate(`/client/${id}`)}
+      onPress={() =>
+        router.navigate({
+          pathname: `/client/${id}`,
+          params: {
+            arrivedFrom,
+          },
+        })
+      }
       style={({ pressed }) => [
         styles.container,
         {
@@ -90,12 +104,23 @@ export function ClientCard(props: IClientCardProps) {
         )}
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
-        <TextButton
-          fontSize="sm"
-          title={select === 'true' ? 'Select' : 'Add Interaction'}
-          onPress={onPress}
-          accessibilityHint={`Add a interaction for client ${firstName} ${lastName}`}
-        />
+        {select === 'true' ? (
+          <TextButton
+            fontSize="sm"
+            title={'Select'}
+            onPress={onPress}
+            accessibilityHint={`Add a interaction for client ${firstName} ${lastName}`}
+          />
+        ) : (
+          <IconButton
+            onPress={onPress}
+            variant="transparent"
+            accessibilityLabel={'open client details modal'}
+            accessibilityHint={'open client details modal'}
+          >
+            <ThreeDotIcon />
+          </IconButton>
+        )}
       </View>
     </Pressable>
   );
@@ -103,7 +128,7 @@ export function ClientCard(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     padding: Spacings.xs,
     flexDirection: 'row',
     justifyContent: 'space-between',

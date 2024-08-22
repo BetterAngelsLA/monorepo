@@ -4,21 +4,31 @@ import {
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { RefObject } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  UpdateClientProfileInput,
+} from '../../apollo';
 
 interface IDobProps {
-  client: CreateClientProfileInput;
-  setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
 
 export default function Dob(props: IDobProps) {
-  const { expanded, setExpanded, client, setClient, scrollRef } = props;
+  const { expanded, setExpanded, scrollRef } = props;
+
+  const { setValue, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
+
+  const dateOfBirth = watch('dateOfBirth');
   const isDob = expanded === 'Date of Birth';
+
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -28,10 +38,12 @@ export default function Dob(props: IDobProps) {
       }}
       mb="xs"
       actionName={
-        !client.dateOfBirth && !isDob ? (
+        !dateOfBirth && !isDob ? (
           <TextMedium size="sm">Add DoB</TextMedium>
         ) : (
-          <TextMedium size="sm">{client.dateOfBirth}</TextMedium>
+          <TextMedium size="sm">
+            {dateOfBirth && format(dateOfBirth, 'MM/dd/yyyy')}
+          </TextMedium>
         )
       }
       title="Date of Birth"
@@ -46,18 +58,13 @@ export default function Dob(props: IDobProps) {
         <DatePicker
           disabled
           maxDate={new Date()}
-          initialDate={new Date()}
           pattern={Regex.date}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
           mt="xs"
-          onSave={(date) =>
-            setClient({
-              ...client,
-              dateOfBirth: date,
-            })
-          }
+          value={dateOfBirth || new Date()}
+          setValue={(date) => setValue('dateOfBirth', date)}
         />
       </View>
     </FieldCard>

@@ -3,6 +3,8 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels-e2e/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["betterangels"],
   "targets": {
     "build-ios": {
       "executor": "@nx/detox:build",
@@ -81,7 +83,5 @@
         ]
       }
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["betterangels"]
+  }
 }

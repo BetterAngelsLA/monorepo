@@ -40,7 +40,7 @@ RUN ARCH=$(uname -m) && \
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
-ENV NODE_VERSION 20.12.2
+ENV NODE_VERSION=20.12.2
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
@@ -100,7 +100,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && apt-get install -y \
     libpq5 \
     gdal-bin
-ENV PATH /workspace/.venv/bin:$PATH:$HOME/.local/bin
+ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
 RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
     && chown -R betterangels:betterangels /workspace
 WORKDIR /workspace
@@ -108,7 +108,7 @@ USER betterangels
 
 # Development Build
 # Add session manager to allow Fargate sshing
-FROM base as development
+FROM base AS development
 USER root
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
@@ -124,7 +124,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 USER betterangels
 
-FROM base as poetry
+FROM base AS poetry
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)
 COPY --chown=betterangels poetry.lock poetry.toml pyproject.toml /workspace/
 COPY --chown=betterangels apps/betterangels-backend/pyproject.toml /workspace/apps/betterangels-backend/pyproject.toml
@@ -132,7 +132,7 @@ COPY --chown=betterangels apps/betterangels-backend/betterangels_backend/__init_
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoetry \
     poetry install --no-interaction --no-ansi
 
-FROM base as yarn
+FROM base AS yarn
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
 COPY --chown=betterangels .yarn /workspace/.yarn
 RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \

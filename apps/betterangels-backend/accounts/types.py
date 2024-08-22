@@ -1,17 +1,24 @@
 from datetime import timedelta
+from functools import reduce
+from operator import and_, or_
 from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from accounts.enums import LanguageEnum
-from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.filters import filter
 
-from .models import ClientProfile, User
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    User,
+)
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -61,17 +68,32 @@ class ClientProfileFilter:
         value: Optional[str],
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
-        if value:
-            return (
-                queryset.filter(
-                    Q(user__first_name__icontains=value)
-                    | Q(user__last_name__icontains=value)
-                    | Q(hmis_id__icontains=value)
-                ),
-                Q(),
-            )
+        if value is None:
+            return queryset, Q()
 
-        return queryset, Q()
+        search_terms = value.split(" ")
+
+        q_objects = []
+        combined_q_search = []
+        searchable_fields = [
+            "hmis_id",
+            "nickname",
+            "user__first_name",
+            "user__last_name",
+            "user__middle_name",
+        ]
+
+        for term in search_terms:
+            q_search = [Q(**{f"{field}__icontains": term}) for field in searchable_fields]
+            combined_q_search.append(reduce(or_, q_search))
+            q_objects.append(Q(*combined_q_search))
+
+        queryset = queryset.filter(reduce(and_, q_objects))
+
+        return (
+            queryset,
+            Q(),
+        )
 
 
 @strawberry.input
@@ -80,9 +102,21 @@ class LoginInput:
     password: str
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType:
+    id: auto
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.input(HmisProfile)
+class HmisProfileInput(HmisProfileType):
+    "See parent"
+
+
 @strawberry_django.type(Organization)
 class OrganizationType:
-    id: auto
+    id: ID
     name: auto
 
 
@@ -96,60 +130,122 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    id: auto
+    id: ID
     username: auto
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
+    has_accepted_tos: auto
+    has_accepted_privacy_policy: auto
 
 
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
-    pass
+    "See parent"
 
 
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
-    id: auto
+    id: ID
+    has_accepted_tos: auto = False
+    has_accepted_privacy_policy: auto = False
 
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
+    age: auto
+    place_of_birth: auto
     date_of_birth: auto
+    eye_color: auto
     gender: auto
+    hair_color: auto
+    height_in_inches: auto
     hmis_id: auto
+    marital_status: auto
     nickname: auto
     phone_number: auto
+    physical_description: auto
     preferred_language: auto
     pronouns: auto
+    pronouns_other: auto
+    race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
 
+@strawberry_django.type(ClientContact)
+class ClientContactBaseType:
+    name: auto
+    email: auto
+    phone_number: auto
+    mailing_address: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientContact)
+class ClientContactType(ClientContactBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientContact, partial=True)
+class ClientContactInput(ClientContactBaseType):
+    id: auto
+
+
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberBaseType:
+    name: auto
+    date_of_birth: auto
+    gender: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientHouseholdMember, partial=True)
+class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
-    id: auto
+    id: ID
     user: UserType
+    contacts: Optional[List[ClientContactType]]
+    display_pronouns: auto
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
+    def display_case_manager(self, info: Info) -> str:
+        if case_managers := getattr(self, "case_managers", None):
+            return str(case_managers[-1].name)
 
-        today = timezone.now().date()
-        age = relativedelta(today, self.date_of_birth).years
-        return age
+        return "Not Assigned"
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
     user: Optional[UpdateUserInput]
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry.input

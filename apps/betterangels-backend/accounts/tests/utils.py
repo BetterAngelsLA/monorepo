@@ -1,9 +1,83 @@
 from typing import Any, Dict
 
-from accounts.enums import GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum
+from accounts.enums import (
+    EyeColorEnum,
+    GenderEnum,
+    HairColorEnum,
+    HmisAgencyEnum,
+    LanguageEnum,
+    MaritalStatusEnum,
+    PronounEnum,
+    RaceEnum,
+    RelationshipTypeEnum,
+    YesNoPreferNotToSayEnum,
+)
+from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from model_bakery import baker
+from organizations.models import OrganizationUser
+
+from .baker_recipes import organization_recipe, permission_group_recipe
+
+
+class CurrentUserGraphQLBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.setup_users()
+
+        self.user_fields = """
+            id
+            firstName
+            lastName
+            middleName
+            email
+            hasAcceptedTos
+            hasAcceptedPrivacyPolicy
+            isOutreachAuthorized
+            organizations: organizationsOrganization {
+                id
+                name
+            }
+        """
+
+    def setup_users(self) -> None:
+        self.user = baker.make(
+            User,
+            first_name="Dale",
+            last_name="Cooper",
+            middle_name="Bartholomew",
+            email="coop@example.co",
+            has_accepted_tos=False,
+            has_accepted_privacy_policy=False,
+        )
+        self.user_organization = organization_recipe.make(name="Twin Peaks Sheriff's Department")
+        permission_group_recipe.make(organization=self.user_organization)
+        baker.make(OrganizationUser, user=self.user, organization=self.user_organization)
+
+    def _update_current_user_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_current_user_fixture("update", variables)
+
+    def _create_or_update_current_user_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}CurrentUser($data: {operation.capitalize()}UserInput!) {{ # noqa: B950
+                {operation}CurrentUser(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on UserType {{
+                        {self.user_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
 
 
 class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
@@ -11,6 +85,60 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        self.client_profile_fields = """
+            id
+            address
+            age
+            placeOfBirth
+            dateOfBirth
+            displayCaseManager
+            displayPronouns
+            heightInInches
+            eyeColor
+            gender
+            hairColor
+            hmisId
+            maritalStatus
+            nickname
+            race
+            phoneNumber
+            physicalDescription
+            preferredLanguage
+            pronouns
+            pronounsOther
+            spokenLanguages
+            veteranStatus
+            contacts {
+                id
+                name
+                email
+                phoneNumber
+                mailingAddress
+                relationshipToClient
+                relationshipToClientOther
+            }
+            hmisProfiles {
+                id
+                hmisId
+                agency
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
+            }
+            householdMembers {
+                id
+                name
+                dateOfBirth
+                gender
+                relationshipToClient
+                relationshipToClientOther
+            }
+        """
+
         self._setup_clients()
 
     def _setup_clients(self) -> None:
@@ -25,41 +153,115 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_2_user = {
             "firstName": "Mister",
             "lastName": "Peanutbutter",
-            "middleName": "T",
+            "middleName": "Tee",
             "email": "mister@pblivin.com",
         }
-
+        self.client_profile_1_contact_1 = {
+            "name": "Jerry",
+            "email": "jerry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "bestie",
+        }
+        self.client_profile_1_contact_2 = {
+            "name": "Gary",
+            "email": "gary@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_profile_2_contact_1 = {
+            "name": "Harry",
+            "email": "hrry@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "1235 Main St",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_contacts = [
+            self.client_profile_1_contact_1,
+            self.client_profile_1_contact_2,
+        ]
+        self.client_profile_1_hmis_profile_1 = {
+            "hmisId": "HMISidLAHSA1",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        self.client_profile_1_hmis_profile_2 = {
+            "hmisId": "HMISidPASADENA1",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
+        self.client_1_hmis_profiles = [
+            self.client_profile_1_hmis_profile_1,
+            self.client_profile_1_hmis_profile_2,
+        ]
+        self.client_profile_1_household_member_1 = {
+            "name": "Daffodil",
+            "dateOfBirth": "1900-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "cartoon friend",
+        }
+        self.client_profile_1_household_member_2 = {
+            "name": "Tulip",
+            "dateOfBirth": "1901-01-01",
+            "gender": GenderEnum.NON_BINARY.name,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+        self.client_1_household_members = [
+            self.client_profile_1_household_member_1,
+            self.client_profile_1_household_member_2,
+        ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
+                "placeOfBirth": "Los Angeles, CA",
                 "dateOfBirth": self.date_of_birth,
+                "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
-                "hmisId": "A1B2C3",
+                "hairColor": HairColorEnum.BROWN.name,
+                "heightInInches": 71.75,
+                "hmisId": "HMISidLAHSA1",
+                "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
+                "physicalDescription": "A human",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
-                "pronouns": "he/him",
+                "pronouns": PronounEnum.HE_HIM_HIS.name,
+                "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+                "contacts": self.client_1_contacts,
+                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
-
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_2_user,
                 "address": None,
+                "placeOfBirth": None,
+                "contacts": [self.client_profile_2_contact_1],
                 "dateOfBirth": None,
+                "eyeColor": None,
                 "gender": None,
-                "hmisId": "A1B3C4",
+                "hairColor": None,
+                "heightInInches": None,
+                "hmisId": "HMISidPASADENA2",
+                "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
+                "physicalDescription": None,
                 "preferredLanguage": None,
                 "pronouns": None,
+                "race": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
+
         # Logout after setting up the clients
         self.graphql_client.logout()
 
@@ -82,25 +284,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }}
                     }}
                     ... on ClientProfileType {{
-                        id
-                        address
-                        age
-                        dateOfBirth
-                        gender
-                        hmisId
-                        nickname
-                        phoneNumber
-                        preferredLanguage
-                        pronouns
-                        spokenLanguages
-                        veteranStatus
-                        user {{
-                            id
-                            firstName
-                            lastName
-                            middleName
-                            email
-                        }}
+                        {self.client_profile_fields}
                     }}
                 }}
             }}

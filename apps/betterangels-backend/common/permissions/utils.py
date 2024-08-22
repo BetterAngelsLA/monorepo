@@ -5,22 +5,25 @@ from django.db.models import TextChoices
 from strawberry_django.auth.utils import get_current_user
 
 
-def permission_enum_to_django_meta_permissions(
-    permission_enum: Type[TextChoices],
+def permission_enums_to_django_meta_permissions(
+    permission_enums: list[Type[TextChoices]],
 ) -> Tuple[Tuple[str, str], ...]:
     """
-    Converts a TextChoices permissions mapping to the format required for Django's Meta
+    Converts a list of TextChoices permissions mappings to the format required for Django's Meta
     class permissions. This function extracts the permission codename and its verbose
-    name.
+    name from each enum in the list.
 
     Args:
-        permissions_mapping (TextChoices): A TextChoices instance mapping permissions to
+        permission_enums (List[Type[TextChoices]]): A list of TextChoices instances mapping permissions to
         their descriptions.
 
     Returns:
-        A tuple suitable for Django's Meta.permissions.
+        Tuple[Tuple[str, str], ...]: A tuple suitable for Django's Meta.permissions.
     """
-    return tuple((perm.value.split(".")[-1], perm.label) for perm in permission_enum)
+    permissions: list[Tuple[str, str]] = []
+    for permission_enum in permission_enums:
+        permissions.extend((perm.value.split(".")[-1], perm.label) for perm in permission_enum)
+    return tuple(permissions)
 
 
 class IsAuthenticated(strawberry.BasePermission):

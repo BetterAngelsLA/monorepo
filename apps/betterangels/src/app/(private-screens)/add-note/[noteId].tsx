@@ -1,8 +1,12 @@
 import {
   MainScrollContainer,
+  NotesDocument,
+  Ordering,
+  NoteNamespaceEnum,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
+  useUser,
   useViewNoteQuery,
 } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -13,9 +17,8 @@ import {
   RevertModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
@@ -24,6 +27,7 @@ import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
+import SubmittedModal from './SubmittedModal';
 import Title from './Title';
 
 const renderModal = (
@@ -56,7 +60,7 @@ const renderModal = (
         button={
           <TextButton
             fontSize="sm"
-            accessibilityHint="deletes creation"
+            accessibilityHint="deletes interaction"
             title={buttonTitle}
           />
         }
@@ -67,9 +71,11 @@ const renderModal = (
 
 export default function AddNote() {
   const router = useRouter();
-  const { noteId, revertBeforeTimestamp } = useLocalSearchParams<{
+  const { user } = useUser();
+  const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
+    arrivedFrom: string;
   }>();
 
   if (!noteId) {
@@ -81,7 +87,18 @@ export default function AddNote() {
     nextFetchPolicy: 'cache-first',
   });
   const [updateNote, { error: updateError }] = useUpdateNoteMutation();
-  const [deleteNote] = useDeleteNoteMutation();
+  const [deleteNote] = useDeleteNoteMutation({
+    refetchQueries: [
+      {
+        query: NotesDocument,
+        variables: {
+          pagination: { limit: 10 + 1, offset: 0 },
+          order: { interactedAt: Ordering.Desc },
+          filters: { createdBy: user?.id, search: '' },
+        },
+      },
+    ],
+  });
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
@@ -91,6 +108,7 @@ export default function AddNote() {
     time: false,
   });
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
+  const [isSubmitted, setSubmitted] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const navigation = useNavigation();
 
@@ -105,8 +123,9 @@ export default function AddNote() {
             onRevert={revertNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="discards changes and reverts interaction to previous state"
                 title="Back"
               />
@@ -119,8 +138,9 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <TextButton
+                regular
                 color={Colors.WHITE}
-                fontSize="sm"
+                fontSize="md"
                 accessibilityHint="deletes creation"
                 title="Back"
               />
@@ -137,7 +157,7 @@ export default function AddNote() {
           data: { id: noteId || '' },
         },
       });
-      router.replace('/interactions');
+      arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
     }
@@ -185,11 +205,35 @@ export default function AddNote() {
         console.error(`Failed to update interaction: ${updateError}`);
         return;
       }
-      router.replace('/');
+
+      if (revertBeforeTimestamp) {
+        return router.replace('/');
+      }
+      setSubmitted(true);
     } catch (err) {
       console.error(err);
     }
   }
+
+  const filterAttachments = (namespace: NoteNamespaceEnum) => {
+    return (
+      data?.note?.attachments?.filter((item) => item.namespace === namespace) ||
+      []
+    );
+  };
+
+  const MoodAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
+    [data]
+  );
+  const RequestedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.RequestedServices),
+    [data]
+  );
+  const ProvidedAttachments = useMemo(
+    () => filterAttachments(NoteNamespaceEnum.ProvidedServices),
+    [data]
+  );
 
   if (!data || isLoading) {
     return null;
@@ -214,23 +258,17 @@ export default function AddNote() {
         />
         <Purpose purposes={data.note.purposes} {...props} />
         <Mood
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'MOOD_ASSESSMENT'
-          )}
+          attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
         />
         <ProvidedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'PROVIDED_SERVICES'
-          )}
+          attachments={ProvidedAttachments}
           services={data.note.providedServices}
           {...props}
         />
         <RequestedServices
-          attachments={data.note.attachments.filter(
-            (item) => item.namespace === 'REQUESTED_SERVICES'
-          )}
+          attachments={RequestedAttachments}
           services={data.note.requestedServices}
           {...props}
         />
@@ -248,7 +286,7 @@ export default function AddNote() {
             onDelete={deleteNoteFunction}
             button={
               <Button
-                accessibilityHint="deletes creation"
+                accessibilityHint="deletes interaction"
                 title="Delete Interaction"
                 variant="negative"
                 size="full"
@@ -277,6 +315,15 @@ export default function AddNote() {
           )
         }
         onSubmit={submitNote}
+      />
+
+      <SubmittedModal
+        firstName={data.note.client?.firstName}
+        closeModal={() => {
+          setSubmitted(false);
+          router.navigate('/');
+        }}
+        isModalVisible={isSubmitted}
       />
     </View>
   );

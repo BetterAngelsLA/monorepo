@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { Alert, View } from 'react-native';
 import { Copy } from './Copy';
@@ -11,7 +12,7 @@ const CopyMeta: ComponentMeta<typeof Copy> = {
   },
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: Spacings.sm }}>
         <Story />
       </View>
     ),

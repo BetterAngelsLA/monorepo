@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
 import {
   Avatar,
@@ -65,7 +65,7 @@ export default function UserProfile() {
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
         <DeleteModal
-          body={`All data associated with your account will be deleted. This action canont be undone.`}
+          body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
           onDelete={deleteCurrentUserFunction}
           button={
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     padding: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
   },
 });

@@ -20,6 +20,8 @@ export default function DateComponent(props: IDateProps) {
   const dateValue = watch('date');
   const isDate = expanded === 'Date';
 
+  console.log(dateValue);
+
   return (
     <FieldCard
       expanded={expanded}
@@ -42,7 +44,8 @@ export default function DateComponent(props: IDateProps) {
           format="MM/dd/yy"
           mb="md"
           maxDate={endOfDay}
-          onSave={(e) => console.log(e)}
+          value={dateValue}
+          setValue={(e) => console.log(e)}
         />
       )}
     </FieldCard>

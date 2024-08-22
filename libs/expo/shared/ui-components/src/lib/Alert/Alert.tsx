@@ -1,5 +1,5 @@
 import { SirenIcon, WarningIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 import TextRegular from '../TextRegular';
 
@@ -58,7 +58,7 @@ export function Alert(props: IAlertProps) {
       style={{
         padding: Spacings.sm,
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: Radiuses.xs,
         borderColor: VARIANTS[variant].borderColor,
         backgroundColor: VARIANTS[variant].backgroundColor,
         alignItems: 'center',

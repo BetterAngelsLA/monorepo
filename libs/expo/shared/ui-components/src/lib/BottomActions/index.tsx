@@ -34,12 +34,10 @@ export default function BottomActions(props: IBottomActionsProps) {
         {optionalAction}
         <Button
           fontSize="sm"
-          size="full"
           height="md"
           variant="primary"
           accessibilityHint="submit the form"
           title={submitTitle}
-          style={{ maxWidth: 85 }}
           onPress={onSubmit}
         />
       </View>

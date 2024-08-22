@@ -1,4 +1,4 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
@@ -40,7 +40,7 @@ export default function NoteCardClient(props: INoteCardClientProps) {
         <View
           style={{
             backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-            paddingHorizontal: 4,
+            paddingHorizontal: Spacings.xxs,
             borderRadius: 20,
           }}
         >

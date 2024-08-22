@@ -18,30 +18,32 @@ include = "betterangels_backend"
 
 [tool.poetry.dependencies]
 python = "3.12.2"
-psycopg = "^3.1.18"
-django = "^5.0.4"
+psycopg = "^3.2.1"
+django = "^5.0.7"
 django-environ = "^0.11.2"
 gunicorn = { extras = ["gevent"], version = "^22.0.0" }
 django-extensions = "^3.2.3"
 dj-rest-auth = { extras = ["with-social"], version = "^6.0.0" }
-django-cors-headers = "^4.3.1"
-whitenoise = "^6.6.0"
-django-post-office = "^3.8.0"
+django-cors-headers = "^4.4.0"
+whitenoise = "^6.7.0"
+django-post-office = "^3.9.0"
 celery-redbeat = "^2.2.0"
 celery = { extras = ["redis"], version = "^5.4.0" }
-django-ses = "^4.0.0"
+django-ses = "^4.1.0"
 hiredis = "^2.3.2"
 django-jazzmin = "^3.0.0"
 django-organizations = "^2.4.1"
 django-sesame = "^3.2.2"
-strawberry-graphql-django = "^0.44.0"
+strawberry-graphql-django = "^0.46.2"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.3.0"
 django-pghistory = "^3.2.0"
-django-storages = { extras = ["s3"], version = "^1.14.2" }
+django-storages = { extras = ["s3"], version = "^1.14.4" }
 django-waffle = "^4.1.0"
-django-structlog = "^8.0.0"
+django-structlog = "^8.1.0"
 deepdiff = "^7.0.1"
+django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.0.0" }
+django-ckeditor-5 = "^0.2.13"
 
 [build-system]
 requires = ["poetry-core"]

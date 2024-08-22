@@ -1,5 +1,5 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Checkbox,
   Input,
@@ -119,7 +119,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
         icon={<PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />}
         mt="xs"
         name="otherCategory"
-        height={40}
+        height={Spacings.xl}
         control={control}
       />
     </>

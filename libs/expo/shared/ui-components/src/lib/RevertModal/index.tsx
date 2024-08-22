@@ -33,15 +33,14 @@ export default function RevertModal({
     <>
       {clonedButton}
       <BasicModal visible={visible} setVisible={setVisible}>
-        <TextBold size="xl" mb="sm">
-          {title}
-        </TextBold>
-        <TextRegular mb="md">{body}</TextRegular>
+        <TextBold size="lg">{title}</TextBold>
+        <TextRegular mt="sm">{body}</TextRegular>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            marginTop: Spacings.lg,
           }}
         >
           <View
@@ -58,6 +57,7 @@ export default function RevertModal({
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               size="full"
+              fontSize="sm"
               accessibilityHint="reverts interaction to earlier state"
               onPress={async () => {
                 onRevert();

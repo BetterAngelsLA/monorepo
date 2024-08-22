@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict, Optional
 
-from accounts.models import User
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -42,6 +41,7 @@ class Attachment(BaseModel):
 
     file = models.FileField(upload_to=get_unique_file_path)
     attachment_type = TextChoicesField(choices_enum=AttachmentType)
+    mime_type = models.CharField()
     original_filename = models.CharField(max_length=255, blank=True, null=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -50,11 +50,11 @@ class Attachment(BaseModel):
 
     namespace = models.CharField(max_length=255, blank=True, null=True)
 
-    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments")
+    uploaded_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
+    )
     associated_with = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="associated_attachments",
+        "accounts.User", on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
     )
 
     attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
@@ -88,6 +88,7 @@ class Attachment(BaseModel):
 
             # Determine the MIME type of the file
             mime_type = self.file.file.content_type
+            self.mime_type = mime_type
             # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
                 self.attachment_type = AttachmentType.IMAGE
@@ -106,6 +107,7 @@ class Address(BaseModel):
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=10, blank=True, null=True)
+    confidential = models.BooleanField(null=True, blank=True)
 
     address_components = models.JSONField(blank=True, null=True)
     formatted_address = models.CharField(max_length=255, blank=True, null=True)

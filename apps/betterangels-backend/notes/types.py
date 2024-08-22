@@ -41,7 +41,7 @@ class CreateNoteAttachmentInput:
 
 @strawberry_django.type(models.ServiceRequest, pagination=True)
 class ServiceRequestType:
-    id: auto
+    id: ID
     service: auto
     custom_service: auto
     status: auto
@@ -70,7 +70,7 @@ class CreateNoteServiceRequestInput:
 
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
-    id: auto
+    id: ID
     custom_service: auto
     status: auto
     due_by: auto
@@ -84,7 +84,7 @@ class TaskOrder:
 
 @strawberry_django.type(models.Task, pagination=True, order=TaskOrder)  # type: ignore[literal-required]
 class TaskType:
-    id: auto
+    id: ID
     title: auto
     location: Optional[LocationType]
     status: auto
@@ -114,7 +114,7 @@ class CreateNoteTaskInput:
 
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
-    id: auto
+    id: ID
     title: auto
     location: Optional[ID]
     status: auto
@@ -124,7 +124,7 @@ class UpdateTaskInput:
 
 @strawberry_django.type(models.Mood)
 class MoodType:
-    id: auto
+    id: ID
     descriptor: auto
 
 
@@ -193,7 +193,7 @@ class NoteFilter:
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
-    id: auto
+    id: ID
     title: auto
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
@@ -240,7 +240,7 @@ class CreateNoteInput:
 
 @strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
-    id: auto
+    id: ID
     title: auto
     location: Optional[ID]
     public_details: auto
@@ -251,17 +251,17 @@ class UpdateNoteInput:
 
 @strawberry_django.input(models.Note)
 class UpdateNoteLocationInput:
-    id: auto
+    id: ID
     location: LocationInput
 
 
 @strawberry_django.input(models.Task)
 class UpdateTaskLocationInput:
-    id: auto
+    id: ID
     location: LocationInput
 
 
 @strawberry_django.input(models.Note)
 class RevertNoteInput:
-    id: auto
+    id: ID
     revert_before_timestamp: datetime

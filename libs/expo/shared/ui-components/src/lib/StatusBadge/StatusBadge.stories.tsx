@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { StatusBadge } from './StatusBadge';
@@ -10,7 +11,7 @@ const StatusBadgeMeta: ComponentMeta<typeof StatusBadge> = {
   },
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: Spacings.sm }}>
         <Story />
       </View>
     ),

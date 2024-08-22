@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { Checkbox } from './Checkbox';
@@ -11,7 +12,7 @@ const CheckboxMeta: ComponentMeta<typeof Checkbox> = {
   },
   decorators: [
     (Story) => (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: Spacings.sm }}>
         <Story />
       </View>
     ),

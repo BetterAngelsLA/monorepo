@@ -1,5 +1,10 @@
 import { CalendarLineIcon, ClockIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
 import { useState } from 'react';
@@ -46,8 +51,9 @@ interface IDatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
-  onSave: (e: string) => void;
+  setValue: (e: Date) => void;
   initialDate?: Date;
+  value: Date;
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -70,24 +76,13 @@ export function DatePicker(props: IDatePickerProps) {
     placeholder,
     format = 'MM/dd/yyyy',
     pattern,
-    onSave,
+    setValue,
     initialDate,
+    value,
     ...rest
   } = props;
-  const [value, setValue] = useState('');
-  const [picker, setPicker] = useState(false);
-  const [pickerDate, setPickerDate] = useState(
-    initialDate ? new Date(initialDate) : new Date()
-  );
 
-  function setDate(onChange: (e: string) => void, date: Date | undefined) {
-    setPicker(false);
-    if (date) {
-      const formattedDate = dateFnsFormat(date, format);
-      onChange(formattedDate);
-      setValue(formattedDate);
-    }
-  }
+  const [picker, setPicker] = useState(false);
 
   return (
     <View
@@ -123,10 +118,10 @@ export function DatePicker(props: IDatePickerProps) {
           maxLength={18}
           style={{
             color: Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: 16,
+            paddingLeft: Spacings.sm,
             paddingRight: 38,
             fontFamily: 'Poppins-Regular',
-            fontSize: 16,
+            fontSize: FontSizes.md.fontSize,
             height,
             ...Platform.select({
               web: {
@@ -134,7 +129,7 @@ export function DatePicker(props: IDatePickerProps) {
               },
             }),
           }}
-          value={value}
+          value={dateFnsFormat(value, format)}
           editable={!disabled}
           {...rest}
         />
@@ -144,7 +139,6 @@ export function DatePicker(props: IDatePickerProps) {
           accessibilityLabel="open date picker"
           accessibilityHint="Opens the date picker to select a date"
           onPress={() => {
-            // value && setPicker(value);
             setPicker(true);
             Keyboard.dismiss();
           }}
@@ -166,33 +160,35 @@ export function DatePicker(props: IDatePickerProps) {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
               }
-              setPickerDate(date || new Date());
-              Platform.OS !== 'ios' && setDate(onSave, date);
+
+              setValue(date);
+              Platform.OS !== 'ios' && setPicker(false);
             }}
             style={{
               backgroundColor: Colors.WHITE,
-              borderRadius: 8,
+              borderRadius: Radiuses.xs,
               overflow: 'hidden',
             }}
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             mode={mode}
             minimumDate={minDate}
             maximumDate={maxDate}
-            value={pickerDate}
+            value={value}
           />
           {Platform.OS === 'ios' && (
-            <Button
-              mt="xs"
-              style={{ alignSelf: 'flex-end' }}
-              variant="primary"
-              size="sm"
-              height="sm"
-              accessibilityHint="save date"
-              onPress={() => {
-                setDate(onSave, pickerDate);
-              }}
-              title="Done"
-            />
+            <View style={{ marginTop: Spacings.xs }}>
+              <Button
+                style={{ alignSelf: 'flex-end' }}
+                variant="primary"
+                size="sm"
+                height="sm"
+                accessibilityHint="save date"
+                onPress={() => {
+                  setPicker(false);
+                }}
+                title="Done"
+              />
+            </View>
           )}
         </View>
       )}
@@ -211,7 +207,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     justifyContent: 'center',
   },
   label: {

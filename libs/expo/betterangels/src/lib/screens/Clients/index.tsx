@@ -3,7 +3,7 @@ import {
   UserAddIcon,
   UserSearchIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
@@ -16,8 +16,8 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
-import { Ordering } from '../../apollo';
-import { Header } from '../../ui-components';
+import { ClientProfileType, Ordering } from '../../apollo';
+import { ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -54,6 +54,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>({});
+  const [currentClient, setCurrentClient] = useState<ClientProfileType>();
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -62,7 +64,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
   }
-
   async function createNoteFunction(
     id: string,
     firstName: string | undefined | null
@@ -181,7 +182,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
-          placeholder="Search Client Name"
+          placeholder="Search by name or HMIS ID"
+          autoCorrect={false}
           onChangeText={onChange}
           onDelete={() => {
             setSearch('');
@@ -204,7 +206,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 width: 90,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 100,
+                borderRadius: Radiuses.xxxl,
                 backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                 marginBottom: Spacings.md,
               }}
@@ -227,14 +229,20 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
+                arrivedFrom="/clients"
                 select={select as string}
                 id={clientProfile.id}
-                onPress={() =>
-                  createNoteFunction(
-                    clientProfile.user.id,
-                    clientProfile.user.firstName
-                  )
-                }
+                onPress={() => {
+                  if (select === 'true') {
+                    createNoteFunction(
+                      clientProfile.id,
+                      clientProfile.user.firstName
+                    );
+                  } else {
+                    setCurrentClient(clientProfile);
+                    setModalIsOpen(true);
+                  }
+                }}
                 mb="sm"
                 firstName={clientProfile.user.firstName}
                 lastName={clientProfile.user.lastName}
@@ -261,6 +269,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           accessibilityHint="adding new client"
         />
       </View>
+      <ClientCardModal
+        isModalVisible={modalIsOpen}
+        closeModal={() => setModalIsOpen(false)}
+        client={currentClient}
+      />
     </View>
   );
 }

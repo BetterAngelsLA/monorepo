@@ -37,8 +37,13 @@
         "quotes": [
           "error",
           "single",
-          { "allowTemplateLiterals": true, "avoidEscape": true }
-        ]
+          {
+            "allowTemplateLiterals": true,
+            "avoidEscape": true
+          }
+        ],
+        "@typescript-eslint/no-extra-semi": "error",
+        "no-extra-semi": "off"
       }
     },
     {
@@ -49,14 +54,19 @@
         "quotes": [
           "error",
           "single",
-          { "allowTemplateLiterals": true, "avoidEscape": true }
+          {
+            "allowTemplateLiterals": true,
+            "avoidEscape": true
+          }
         ],
         "no-multiple-empty-lines": [
           "error",
           {
             "max": 1
           }
-        ]
+        ],
+        "@typescript-eslint/no-extra-semi": "error",
+        "no-extra-semi": "off"
       }
     },
     {

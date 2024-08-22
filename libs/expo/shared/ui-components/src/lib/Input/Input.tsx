@@ -1,16 +1,20 @@
-import { XmarkIcon } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
 import {
-  NativeSyntheticEvent,
   Platform,
   Pressable,
   StyleProp,
   StyleSheet,
   Text,
   TextInput,
-  TextInputSubmitEditingEventData,
+  TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,7 +26,7 @@ type TRules = Omit<
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface IInputProps {
+interface IInputProps extends TextInputProps {
   label?: string;
   control?: Control<any>;
   height?: 40 | 56 | 200;
@@ -39,11 +43,7 @@ interface IInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
-  placeholder?: string;
   icon?: ReactNode;
-  onSubmitEditing?:
-    | ((e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void)
-    | undefined;
 }
 
 export function Input(props: IInputProps) {
@@ -56,7 +56,6 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
-    placeholder,
     height = 56,
     mb,
     mt,
@@ -74,6 +73,7 @@ export function Input(props: IInputProps) {
       props.onBlur();
     }
   };
+
   return (
     <Controller
       control={control}
@@ -110,7 +110,6 @@ export function Input(props: IInputProps) {
           >
             {icon && icon}
             <TextInput
-              placeholder={placeholder}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
@@ -119,7 +118,7 @@ export function Input(props: IInputProps) {
                 paddingRight: 38,
                 flex: 1,
                 fontFamily: 'Poppins-Regular',
-                fontSize: 16,
+                fontSize: FontSizes.md.fontSize,
                 height,
                 ...Platform.select({
                   web: {
@@ -140,9 +139,11 @@ export function Input(props: IInputProps) {
                 accessibilityLabel="delete icon"
                 accessibilityHint="deletes input's value"
                 onPress={() => onChange('')}
-                style={styles.icon}
+                style={styles.pressable}
               >
-                <XmarkIcon color={Colors.PRIMARY_EXTRA_DARK} size="xs" />
+                <View style={styles.icon}>
+                  <PlusIcon size="xs" rotate="45deg" />
+                </View>
               </Pressable>
             )}
           </View>
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -182,13 +183,19 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     color: 'red',
   },
-  icon: {
+  pressable: {
     position: 'absolute',
-    right: 16,
-    height: 16,
-    width: 16,
+    right: Spacings.xs,
+    height: Spacings.lg,
+    width: Spacings.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    height: Spacings.sm,
+    width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: 100,
+    borderRadius: Radiuses.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
   },

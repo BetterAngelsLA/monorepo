@@ -6,30 +6,30 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
+  UpdateClientProfileInput,
   YesNoPreferNotToSayEnum,
 } from '../../apollo';
+import { enumDisplayVeteran } from '../../static/enumDisplayMapping';
 
 interface IVeteranStatusProps {
-  client: CreateClientProfileInput;
-  setClient: (client: CreateClientProfileInput) => void;
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
 }
 
 export default function VeteranStatus(props: IVeteranStatusProps) {
-  const { expanded, setExpanded, client, scrollRef, setClient } = props;
+  const { expanded, setExpanded, scrollRef } = props;
+  const { setValue, watch } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
 
-  const enumDisplayMap: { [key in YesNoPreferNotToSayEnum]: string } = {
-    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-    [YesNoPreferNotToSayEnum.No]: 'No',
-    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-  };
+  const veteranStatus = watch('veteranStatus');
+
   const isVeteranStatus = expanded === 'Veteran Status';
-
   return (
     <FieldCard
       scrollRef={scrollRef}
@@ -39,11 +39,11 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
       }}
       mb="xs"
       actionName={
-        !client.veteranStatus && !isVeteranStatus ? (
+        !veteranStatus && !isVeteranStatus ? (
           <TextMedium size="sm">Add Veteran Status</TextMedium>
         ) : (
           <TextMedium size="sm">
-            {client.veteranStatus && enumDisplayMap[client.veteranStatus]}
+            {veteranStatus && enumDisplayVeteran[veteranStatus]}
           </TextMedium>
         )
       }
@@ -68,22 +68,22 @@ export default function VeteranStatus(props: IVeteranStatusProps) {
             flex: 1,
           }}
         >
-          {Object.entries(enumDisplayMap).map(([enumValue, displayValue]) => (
-            <BasicRadio
-              label={displayValue}
-              accessibilityHint={`Select ${displayValue}`}
-              key={enumValue}
-              value={
-                client.veteranStatus && enumDisplayMap[client.veteranStatus]
-              }
-              onPress={() =>
-                setClient({
-                  ...client,
-                  veteranStatus: enumValue as YesNoPreferNotToSayEnum,
-                })
-              }
-            />
-          ))}
+          {Object.entries(enumDisplayVeteran).map(
+            ([enumValue, displayValue]) => (
+              <BasicRadio
+                label={displayValue}
+                accessibilityHint={`Select ${displayValue}`}
+                key={enumValue}
+                value={veteranStatus && enumDisplayVeteran[veteranStatus]}
+                onPress={() =>
+                  setValue(
+                    'veteranStatus',
+                    enumValue as YesNoPreferNotToSayEnum
+                  )
+                }
+              />
+            )
+          )}
         </View>
       </View>
     </FieldCard>

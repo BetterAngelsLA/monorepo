@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from common.models import Attachment, BaseModel, Location
-from common.permissions.utils import permission_enum_to_django_meta_permissions
+from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Q
@@ -190,6 +190,24 @@ class Note(BaseModel):
     def __str__(self) -> str:
         return self.title
 
+    @property
+    def label_with_client(self) -> str:
+        if client := self.client:
+            client_label = client.full_name or client.id
+        else:
+            client_label = "Client"
+
+        return f"Note {self.id}: {self.title} (with {client_label} {self.interacted_at.date()})"
+
+    @property
+    def label_with_created_by(self) -> str:
+        if created_by := self.created_by:
+            created_by_label = created_by.full_name or created_by.id
+        else:
+            created_by_label = "Case Manager"
+
+        return f"Note {self.id}: {self.title} (by {created_by_label} {self.interacted_at.date()})"
+
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
             case "update":
@@ -201,7 +219,7 @@ class Note(BaseModel):
                 raise Exception(f"Action {action} is not revertable")
 
     class Meta:
-        permissions = permission_enum_to_django_meta_permissions(PrivateDetailsPermissions)
+        permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
 
 
 @pghistory.track(

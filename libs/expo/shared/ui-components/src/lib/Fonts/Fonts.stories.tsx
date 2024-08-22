@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { View } from 'react-native';
 import { Font } from './Font';
@@ -9,7 +10,7 @@ const FontMeta: ComponentMeta<typeof Font> = {
   decorators: [
     (Story) => (
       <FontLoader>
-        <View style={{ padding: 16 }}>
+        <View style={{ padding: Spacings.sm }}>
           <Story />
         </View>
       </FontLoader>

@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   ClientCard,
   Loading,
@@ -12,17 +12,18 @@ import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
-import { Header } from '../../ui-components';
+import { ClientProfileType } from '../../apollo';
+import { ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
-  useCreateNoteMutation,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
-  const [createNote] = useCreateNoteMutation();
+  const [currentClient, setCurrentClient] = useState<ClientProfileType>();
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
@@ -37,27 +38,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const router = useRouter();
-
-  async function createNoteFunction(
-    id: string,
-    firstName: string | undefined | null
-  ) {
-    try {
-      const { data } = await createNote({
-        variables: {
-          data: {
-            title: `Session with ${firstName || 'Client'}`,
-            client: id,
-          },
-        },
-      });
-      if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data?.createNote.id}`);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
 
   function loadMoreClients() {
     if (hasMore && !loading) {
@@ -113,13 +93,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             >
               <TextMedium size="lg">Active Clients</TextMedium>
               <TextButton
-              accessibilityHint="goes to all active clients list"
-              color={Colors.PRIMARY}
-              fontSize="sm"
-              regular={true}
-              title="All Clients"
-              onPress={() => router.navigate('/clients')}
-            />
+                accessibilityHint="goes to all active clients list"
+                color={Colors.PRIMARY}
+                fontSize="sm"
+                regular={true}
+                title="All Clients"
+                onPress={() => router.navigate('/clients')}
+              />
             </View>
             {!loading && clients.length < 1 && (
               <View
@@ -136,7 +116,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
                     width: 90,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 100,
+                    borderRadius: Radiuses.xxxl,
                     backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
                     marginBottom: Spacings.md,
                   }}
@@ -156,13 +136,12 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         renderItem={({ item: clientProfile }) =>
           clients ? (
             <ClientCard
+              arrivedFrom="/"
               id={clientProfile.id}
-              onPress={() =>
-                createNoteFunction(
-                  clientProfile.user.id,
-                  clientProfile.user.firstName
-                )
-              }
+              onPress={() => {
+                setCurrentClient(clientProfile);
+                setModalIsOpen(true);
+              }}
               mb="sm"
               firstName={clientProfile.user.firstName}
               lastName={clientProfile.user.lastName}
@@ -173,6 +152,11 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
+      />
+      <ClientCardModal
+        isModalVisible={modalIsOpen}
+        closeModal={() => setModalIsOpen(false)}
+        client={currentClient}
       />
     </View>
   );

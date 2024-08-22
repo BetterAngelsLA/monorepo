@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
@@ -21,7 +21,13 @@ const hasServicesOrMoods = (note: ViewNoteQuery['note']) => {
   );
 };
 
-export default function Note({ id }: { id: string }) {
+export default function Note({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useViewNoteQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
@@ -42,6 +48,7 @@ export default function Note({ id }: { id: string }) {
               pathname: `/add-note/${id}`,
               params: {
                 revertBeforeTimestamp: new Date().toISOString(),
+                arrivedFrom,
               },
             })
           }
@@ -96,7 +103,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.md,
     gap: Spacings.sm,
-    borderRadius: 8,
+    borderRadius: Radiuses.xs,
     borderColor: Colors.NEUTRAL_LIGHT,
     borderWidth: 1,
   },
