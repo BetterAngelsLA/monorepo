@@ -361,7 +361,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         notes_to_create = 20
         organization = organization_recipe.make()
-        baker.make(Note, _quantity=notes_to_create, organization=organization)
+        for _ in range(notes_to_create):
+            baker.make(Note, organization=organization)
 
         query = """
             query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
