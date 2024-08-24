@@ -26,7 +26,7 @@ export default function Interactions() {
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
-      order: { interactedAt: Ordering.Desc },
+      order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: { createdBy: user?.id, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',

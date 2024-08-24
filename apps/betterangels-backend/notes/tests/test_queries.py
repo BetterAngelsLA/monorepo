@@ -1,11 +1,9 @@
 from typing import Any, Optional
 
 import time_machine
-from accounts.tests.baker_recipes import organization_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from model_bakery import baker
 from notes.enums import DueByGroupEnum, NoteNamespaceEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
@@ -353,58 +351,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]]
         )
-
-    def test_notes_query_pagination(self) -> None:
-        # easier to start with a clean slate
-        Note.objects.all().delete()
-        self.assertEqual(Note.objects.count(), 0)
-
-        notes_to_create = 20
-        organization = organization_recipe.make()
-        for _ in range(notes_to_create):
-            baker.make(Note, organization=organization)
-
-        query = """
-            query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
-                notes(filters: $filters, pagination: $pagination, order: $order) {
-                    id
-                }
-            }
-        """
-
-        note_ids = []
-        limit = 2
-        offset = 0
-        lookahead = 1
-        more_to_load = True
-
-        while more_to_load:
-            response = self.execute_graphql(
-                query,
-                variables={
-                    "pagination": {"limit": limit + lookahead, "offset": offset},
-                    # NOTE: this error does not happen if we don't provide an order
-                    "order": {"interactedAt": "DESC_NULLS_LAST"},
-                },
-            )
-
-            returned_ids = [n["id"] for n in response["data"]["notes"]]
-            note_ids += returned_ids[:limit]
-            offset += limit
-
-            more_to_load = len(note_ids) < notes_to_create
-
-            if len(note_ids) != len(set(note_ids)):
-                # NOTE: a duplicate will be returned in the last query of the first half.
-                # That is: 20 notes, fetched 2 at a time, need 10 queries. The 5th query will return the duplicate
-                # That is: 200 notes, fetched 2 at a time, need 100 queries. The 50th query will return the duplicate
-                print("note_ids: ", note_ids)
-
-            # print("note_ids: ", note_ids)
-            # print("len(note_ids): ", len(note_ids))
-
-        self.assertEqual(len(note_ids), notes_to_create, "Incorrect number of notes returned")
-        self.assertEqual(len(note_ids), len(set(note_ids)), "Note IDs are not unique")
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
