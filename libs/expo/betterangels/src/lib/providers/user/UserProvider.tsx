@@ -58,6 +58,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations,
         isOutreachAuthorized,
+        hasAcceptedTos,
+        hasAcceptedPrivacyPolicy,
       } = data.currentUser;
       setUser({
         id,
@@ -67,6 +69,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations: organizations || null,
         isOutreachAuthorized: isOutreachAuthorized || false,
+        hasAcceptedTos: hasAcceptedTos || false,
+        hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
       });
     }
   }, [data, isLoading]);

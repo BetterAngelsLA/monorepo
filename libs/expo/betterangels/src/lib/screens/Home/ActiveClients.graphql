@@ -18,6 +18,8 @@ mutation CreateNote($data: CreateNoteInput!) {
         firstName
         lastName
         email
+        hasAcceptedPrivacyPolicy
+        hasAcceptedTos
       }
       createdAt
       createdBy {

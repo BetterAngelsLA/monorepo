@@ -8,7 +8,7 @@ export type CreateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title: string, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null, hasAcceptedPrivacyPolicy: boolean, hasAcceptedTos: boolean } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type ClientProfilesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientProfileFilter>;
@@ -40,6 +40,8 @@ export const CreateNoteDocument = gql`
         firstName
         lastName
         email
+        hasAcceptedPrivacyPolicy
+        hasAcceptedTos
       }
       createdAt
       createdBy {
