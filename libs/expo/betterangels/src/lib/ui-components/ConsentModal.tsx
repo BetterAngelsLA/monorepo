@@ -1,4 +1,9 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   Button,
   Checkbox,
@@ -12,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
 import { useUpdateCurrentUserMutation } from '../providers';
 import { TUser } from '../providers/user/UserContext';
+import React = require('react');
 
 interface IMainModalProps {
   isModalVisible: boolean;
@@ -25,11 +31,24 @@ interface IMainModalProps {
   user: TUser;
 }
 
+interface CheckboxData {
+  key: keyof CheckedItems; // Assuming CheckedItems is an interface for checkedItems
+  accessibilityHint: string;
+  labelText: string;
+  linkText: string;
+  url: string;
+}
+
+interface CheckedItems {
+  isTosChecked: boolean;
+  isPrivacyPolicyChecked: boolean;
+}
+
 export default function ConsentModal(props: IMainModalProps) {
   const {
     isModalVisible,
     opacity = 0,
-    vertical = false,
+    vertical = true,
     ml = 0,
     height = 'auto',
     privacyPolicyUrl,
@@ -74,6 +93,52 @@ export default function ConsentModal(props: IMainModalProps) {
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
 
+  const checkboxData: CheckboxData[] = [
+    {
+      key: 'isTosChecked',
+      accessibilityHint: 'Accept the terms of service',
+      labelText: 'I accept the',
+      linkText: 'Terms of Service',
+      url: termsOfServiceUrl,
+    },
+    {
+      key: 'isPrivacyPolicyChecked',
+      accessibilityHint: 'Accept the privacy policy',
+      labelText: 'I accept the',
+      linkText: 'Privacy Policy',
+      url: privacyPolicyUrl,
+    },
+  ];
+
+  const renderCheckboxes = () => {
+    return checkboxData.map((item) => (
+      <Checkbox
+        key={item.key}
+        isChecked={checkedItems[item.key]}
+        isConsent={true}
+        hasBorder={false}
+        onCheck={() => handleCheck(item.key)}
+        accessibilityHint={item.accessibilityHint}
+        labelFirst={false}
+        size="sm"
+        label={
+          <View style={styles.labelContainer}>
+            <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
+              I accept the{' '}
+            </TextRegular>
+            <Link
+              style={styles.link}
+              href={item.url}
+              onPress={() => handleCheck(item.key)}
+            >
+              {item.linkText}
+            </Link>
+          </View>
+        }
+      />
+    ));
+  };
+
   return (
     <Modal
       style={{
@@ -104,48 +169,36 @@ export default function ConsentModal(props: IMainModalProps) {
             source={require('../../../../shared/images/consent.png')}
             accessibilityIgnoresInvertColors={true}
           />
-          <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
-            Welcome to BetterAngels Outreach app!
+          <TextRegular
+            size={'sm'}
+            style={{
+              fontFamily: 'Poppins',
+              fontWeight: '500',
+            }}
+            color={Colors.PRIMARY_EXTRA_DARK}
+          >
+            Welcome to
           </TextRegular>
-          <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
+          <TextRegular
+            size={'lg'}
+            color={Colors.PRIMARY_EXTRA_DARK}
+            style={{
+              fontFamily: 'Poppins',
+              fontWeight: '600',
+            }}
+          >
+            BetterAngels Outreach app!
+          </TextRegular>
+          <TextRegular
+            size={'sm'}
+            color={Colors.PRIMARY_EXTRA_DARK}
+            style={{
+              fontWeight: '400',
+            }}
+          >
             Please confirm the following:
           </TextRegular>
-          <Checkbox
-            isChecked={checkedItems.isTosChecked}
-            hasBorder
-            onCheck={() => handleCheck('isTosChecked')}
-            accessibilityHint={'Accept the terms of service'}
-            label={
-              <View style={styles.labelContainer}>
-                <TextRegular ml="xs">I accept the </TextRegular>
-                <Link
-                  style={{ textDecorationLine: 'underline' }}
-                  href={termsOfServiceUrl}
-                  onPress={() => handleCheck('isTosChecked')}
-                >
-                  Terms of Service
-                </Link>
-              </View>
-            }
-          />
-          <Checkbox
-            isChecked={checkedItems.isPrivacyPolicyChecked}
-            hasBorder
-            onCheck={() => handleCheck('isPrivacyPolicyChecked')}
-            accessibilityHint={'Accept the privacy policy'}
-            label={
-              <View style={styles.labelContainer}>
-                <TextRegular ml="xs">I accept the </TextRegular>
-                <Link
-                  style={{ textDecorationLine: 'underline' }}
-                  href={privacyPolicyUrl}
-                  onPress={() => handleCheck('isPrivacyPolicyChecked')}
-                >
-                  Privacy Policy
-                </Link>
-              </View>
-            }
-          />
+          {renderCheckboxes()}
           <View>
             <Button
               accessibilityHint="Submits agreement and goes to welcome screen"
@@ -193,5 +246,12 @@ const styles = StyleSheet.create({
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  link: {
+    fontFamily: 'Poppins',
+    fontSize: FontSizes['sm'].fontSize,
+    textDecorationLine: 'underline',
+    fontWeight: '400',
+    color: Colors.PRIMARY,
   },
 });
