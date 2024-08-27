@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
 import { useUpdateCurrentUserMutation } from '../providers';
 import { TUser } from '../providers/user/UserContext';
-import React = require('react');
 
 interface IMainModalProps {
   isModalVisible: boolean;
@@ -91,7 +90,6 @@ export default function ConsentModal(props: IMainModalProps) {
   };
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-  const topOffset = insets.top;
 
   const checkboxData: CheckboxData[] = [
     {
@@ -121,6 +119,8 @@ export default function ConsentModal(props: IMainModalProps) {
         accessibilityHint={item.accessibilityHint}
         labelFirst={false}
         size="sm"
+        justifyContent="flex-start"
+        mb="sm"
         label={
           <View style={styles.labelContainer}>
             <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
@@ -145,6 +145,7 @@ export default function ConsentModal(props: IMainModalProps) {
         margin: 0,
         marginLeft: ml,
         flex: 1,
+        flexDirection: 'column',
         justifyContent: 'flex-end',
       }}
       animationIn={vertical ? 'slideInUp' : 'slideInRight'}
@@ -155,9 +156,9 @@ export default function ConsentModal(props: IMainModalProps) {
     >
       <View
         style={{
+          zIndex: 1,
           borderTopLeftRadius: Radiuses.md,
           borderTopRightRadius: Radiuses.md,
-          paddingTop: topOffset + Spacings.xs,
           paddingHorizontal: Spacings.md,
           paddingBottom: 175 + bottomOffset,
           backgroundColor: Colors.WHITE,
@@ -165,64 +166,89 @@ export default function ConsentModal(props: IMainModalProps) {
         }}
       >
         <View style={styles.modalOverlay}>
+          <View
+            style={{
+              width: 18,
+              height: 5,
+              borderRadius: 50,
+              backgroundColor: Colors.GRAY_PRESSED,
+              transform: [{ scaleX: 2 }],
+              alignSelf: 'center',
+              marginVertical: 5,
+            }}
+          />
+          <TextRegular size={'lg'} style={styles.consent}>
+            Consent
+          </TextRegular>
+          <View
+            style={{
+              height: 1,
+              width: '100%',
+              backgroundColor: Colors.GRAY_PRESSED,
+            }}
+          />
           <Image
             source={require('../../../../shared/images/consent.png')}
             accessibilityIgnoresInvertColors={true}
           />
-          <TextRegular
-            size={'sm'}
-            style={{
-              fontFamily: 'Poppins',
-              fontWeight: '500',
-            }}
-            color={Colors.PRIMARY_EXTRA_DARK}
-          >
-            Welcome to
-          </TextRegular>
-          <TextRegular
-            size={'lg'}
-            color={Colors.PRIMARY_EXTRA_DARK}
-            style={{
-              fontFamily: 'Poppins',
-              fontWeight: '600',
-            }}
-          >
-            BetterAngels Outreach app!
-          </TextRegular>
-          <TextRegular
-            size={'sm'}
-            color={Colors.PRIMARY_EXTRA_DARK}
-            style={{
-              fontWeight: '400',
-            }}
-          >
-            Please confirm the following:
-          </TextRegular>
-          {renderCheckboxes()}
-          <View>
-            <Button
-              accessibilityHint="Submits agreement and goes to welcome screen"
-              onPress={submitAgreements}
-              disabled={
-                !checkedItems.isPrivacyPolicyChecked ||
-                !checkedItems.isTosChecked
-                  ? true
-                  : false
-              }
-              title="Get Started"
-              size="full"
-              variant="primaryDark"
-              borderWidth={0}
-            />
-            <Button
-              accessibilityHint="Cancels agreement"
-              onPress={signOut}
-              title="Cancel"
-              size="full"
-              variant="primary"
-              borderWidth={0}
-            />
-          </View>
+        </View>
+        <TextRegular
+          size={'sm'}
+          mb="xs"
+          style={{
+            fontFamily: 'Poppins',
+            fontWeight: '500',
+          }}
+          color={Colors.PRIMARY_EXTRA_DARK}
+        >
+          Welcome to
+        </TextRegular>
+        <TextRegular
+          size={'lg'}
+          mb="xs"
+          color={Colors.PRIMARY_EXTRA_DARK}
+          style={{
+            fontFamily: 'Poppins',
+            fontWeight: '600',
+          }}
+        >
+          BetterAngels Outreach app!
+        </TextRegular>
+        <TextRegular
+          size={'sm'}
+          mb="md"
+          color={Colors.PRIMARY_EXTRA_DARK}
+          style={{
+            fontWeight: '400',
+          }}
+        >
+          Please confirm the following:
+        </TextRegular>
+        {renderCheckboxes()}
+        <View style={styles.buttons}>
+          <Button
+            accessibilityHint="Submits agreement and goes to welcome screen"
+            onPress={submitAgreements}
+            disabled={
+              !checkedItems.isPrivacyPolicyChecked || !checkedItems.isTosChecked
+                ? true
+                : false
+            }
+            mt="lg"
+            title="Get Started"
+            size="full"
+            variant="primary"
+            borderWidth={0}
+          />
+          <Button
+            mt="xl"
+            accessibilityHint="Cancels agreement"
+            onPress={signOut}
+            title="Cancel"
+            size="full"
+            borderWidth={0}
+            variant="secondary"
+          />
         </View>
       </View>
     </Modal>
@@ -230,22 +256,21 @@ export default function ConsentModal(props: IMainModalProps) {
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    backgroundColor: Colors.WHITE,
-    position: 'relative',
-    width: '100%',
-    marginLeft: 'auto',
-    marginRight: 'auto',
+  consent: {
+    padding: 10,
+    fontFamily: 'Poppins',
+    fontWeight: '700',
   },
-  container: {
-    flexDirection: 'row',
+  modalOverlay: {
     alignItems: 'center',
   },
   labelContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+  },
+  buttons: {
+    flex: 1,
+    position: 'relative',
+    bottom: -40,
   },
   link: {
     fontFamily: 'Poppins',
