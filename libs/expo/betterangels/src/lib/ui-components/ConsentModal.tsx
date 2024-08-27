@@ -122,7 +122,7 @@ export default function ConsentModal(props: IMainModalProps) {
         justifyContent="flex-start"
         mb="sm"
         label={
-          <View style={styles.labelContainer}>
+          <View style={styles.checkbox}>
             <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
               I accept the{' '}
             </TextRegular>
@@ -165,7 +165,7 @@ export default function ConsentModal(props: IMainModalProps) {
           height,
         }}
       >
-        <View style={styles.modalOverlay}>
+        <View style={styles.header}>
           <View
             style={{
               width: 18,
@@ -261,10 +261,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins',
     fontWeight: '700',
   },
-  modalOverlay: {
+  header: {
     alignItems: 'center',
   },
-  labelContainer: {
+  checkbox: {
     flexDirection: 'row',
   },
   buttons: {
