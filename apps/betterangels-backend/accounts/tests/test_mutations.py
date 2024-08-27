@@ -419,7 +419,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
         self.assertTrue(
             Attachment.objects.filter(id=client_document_id).exists(),
-            "The client document should have been created and exist in the database.",
+            "The client document should have been created and persisted in the database.",
         )
 
     def test_delete_client_document(self) -> None:
