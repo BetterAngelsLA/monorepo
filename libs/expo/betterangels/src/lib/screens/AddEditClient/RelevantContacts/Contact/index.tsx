@@ -29,7 +29,7 @@ export default function Contact(props: IContactProps) {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
   const [edit, setEdit] = useState(false);
-  console.log(item, index);
+
   const contacts = watch('contacts');
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
