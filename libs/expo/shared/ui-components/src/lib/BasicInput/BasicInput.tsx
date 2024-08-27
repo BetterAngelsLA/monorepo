@@ -22,7 +22,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IBasicInputProps extends TextInputProps {
   label?: string;
-  height?: 40 | 56 | 200;
+  height?: 40 | 44 | 56 | 200;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -35,6 +35,7 @@ interface IBasicInputProps extends TextInputProps {
   mr?: TSpacing;
   icon?: ReactNode;
   onDelete?: () => void;
+  borderRadius?: number;
 }
 
 export function BasicInput(props: IBasicInputProps) {
@@ -55,6 +56,7 @@ export function BasicInput(props: IBasicInputProps) {
     value,
     onDelete,
     autoCorrect = true,
+    borderRadius = Radiuses.xs,
     ...rest
   } = props;
 
@@ -84,6 +86,7 @@ export function BasicInput(props: IBasicInputProps) {
           styles.inputBasic,
           {
             borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+            borderRadius,
           },
         ]}
       >
@@ -138,7 +141,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
   },

@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 
 type TVariants = {
   [key in
@@ -52,6 +52,7 @@ const Height = {
 
 const Width = {
   xs: 20,
+  sm: 32,
   md: 40,
   full: '100%',
 } as const;
@@ -75,10 +76,11 @@ interface IIconButtonProps {
   ml?: TSpacing;
   mr?: TSpacing;
   borderColor?: string;
-  width?: 'xs' | 'md' | 'full';
+  width?: 'xs' | 'md' | 'full' | 'sm';
   height?: 'xs' | 'sm' | 'md';
   accessibilityLabel: string;
   accessibilityHint: string;
+  borderRadius?: number;
 }
 
 export function IconButton(props: IIconButtonProps) {
@@ -99,9 +101,10 @@ export function IconButton(props: IIconButtonProps) {
     height = 'md',
     accessibilityLabel,
     accessibilityHint,
+    borderRadius = Radiuses.xs,
   } = props;
   return (
-    <Pressable
+    <TouchableOpacity
       accessible
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
@@ -114,7 +117,7 @@ export function IconButton(props: IIconButtonProps) {
           height: Height[height],
           width: Width[width],
           borderWidth: 1,
-          borderRadius: Radiuses.xs,
+          borderRadius,
           backgroundColor: VARIANTS[variant].bg,
           borderColor: borderColor ? borderColor : VARIANTS[variant].border,
           marginBottom: mb && Spacings[mb],
@@ -128,7 +131,7 @@ export function IconButton(props: IIconButtonProps) {
       onPress={onPress}
     >
       {children}
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 

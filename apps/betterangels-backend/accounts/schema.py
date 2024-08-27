@@ -2,6 +2,7 @@ from typing import List, cast
 
 import strawberry
 import strawberry_django
+from accounts.enums import RelationshipTypeEnum
 from accounts.models import (
     ClientContact,
     ClientHouseholdMember,
@@ -15,6 +16,7 @@ from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
+from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import auth
@@ -33,6 +35,7 @@ from .types import (
     MagicLinkInput,
     MagicLinkResponse,
     UpdateClientProfileInput,
+    UpdateUserInput,
     UserType,
 )
 
@@ -41,9 +44,19 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    client_profile: ClientProfileType = strawberry_django.field(
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    )
+    @strawberry_django.field(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])])
+    def client_profile(self, info: Info, pk: strawberry.ID) -> ClientProfileType:
+        client_profile = ClientProfile.objects.prefetch_related(
+            Prefetch(
+                "contacts",
+                queryset=ClientContact.objects.filter(
+                    relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER
+                ).order_by("created_at"),
+                to_attr="case_managers",
+            )
+        )
+
+        return cast(ClientProfileType, client_profile)
 
     client_profiles: List[ClientProfileType] = strawberry_django.field(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
@@ -75,6 +88,25 @@ class Mutation:
         base_url = request.build_absolute_uri()
         send_magic_link(data.email, base_url)
         return MagicLinkResponse(message="Email link sent.")
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
+        user = cast(User, get_current_user(info))
+        if str(user.pk) != str(data.id):
+            raise PermissionError("You do not have permission to modify this user.")
+
+        user_data: dict = strawberry.asdict(data)
+
+        user = resolvers.update(
+            info,
+            user,
+            {
+                **user_data,
+                "id": user.pk,
+            },
+        )
+
+        return cast(UserType, user)
 
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
@@ -200,7 +232,7 @@ class Mutation:
                     member["id"]: member for member in household_members if member.get("id")
                 }
                 household_members_to_create = [member for member in household_members if not member.get("id")]
-                household_members_to_update = ClientContact.objects.filter(
+                household_members_to_update = ClientHouseholdMember.objects.filter(
                     id__in=household_member_updates_by_id.keys(), client_profile=client_profile
                 )
 
@@ -221,17 +253,9 @@ class Mutation:
                         household_member_updates_by_id[str(household_member.id)],
                     )
 
-            client_profile = resolvers.update(
-                info,
-                client_profile,
-                {
-                    **client_profile_data,
-                },
-            )
-
             if hmis_profiles:
                 hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles if hp.get("id") is None]
+                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
                 hmis_profiles_to_update = HmisProfile.objects.filter(
                     id__in=hmis_profile_updates_by_id, client_profile=client_profile
                 )
@@ -252,6 +276,14 @@ class Mutation:
                         hmis_profile,
                         hmis_profile_updates_by_id[str(hmis_profile.id)],
                     )
+
+            client_profile = resolvers.update(
+                info,
+                client_profile,
+                {
+                    **client_profile_data,
+                },
+            )
 
             return cast(ClientProfileType, client_profile)
 

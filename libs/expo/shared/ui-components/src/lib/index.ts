@@ -9,6 +9,7 @@ export { default as BottomActions } from './BottomActions';
 export { default as Button } from './Button';
 export { default as CameraPicker } from './CameraPicker';
 export { default as Checkbox } from './Checkbox';
+export { default as CircularLoading } from './CircularLoading';
 export { default as ClientCard } from './ClientCard';
 export { default as Copy } from './Copy';
 export { default as DatePicker } from './DatePicker';
