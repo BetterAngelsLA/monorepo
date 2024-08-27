@@ -30,7 +30,7 @@ import Gender from './Gender';
 import HMIS from './HMIS';
 import Language from './Language';
 import Name from './Name';
-import RelativeContacts from './RelativeContacts';
+import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
 
 export default function AddEditClient({ id }: { id?: string }) {
@@ -220,7 +220,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
-          <RelativeContacts {...props} />
+          <RelevantContacts {...props} />
           {id && (
             <DeleteModal
               body="All data associated with this client will be deleted. This action cannot be undone."

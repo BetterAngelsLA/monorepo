@@ -37,7 +37,7 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
 
-export const enumDisplayRelative: { [key in RelationshipTypeEnum]: string } = {
+export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
   [RelationshipTypeEnum.Aunt]: 'Aunt',
   [RelationshipTypeEnum.Child]: 'Child',
   [RelationshipTypeEnum.Cousin]: 'Cousing',

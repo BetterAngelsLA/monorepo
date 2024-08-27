@@ -18,6 +18,7 @@ interface ISelectProps {
   placeholder?: string;
   onValueChange: (value: string) => void;
   items: { displayValue: string; value?: string }[];
+  defaultValue?: string;
 }
 
 export function Select(props: ISelectProps) {
@@ -32,12 +33,15 @@ export function Select(props: ISelectProps) {
     label,
     onValueChange,
     placeholder = '',
+    defaultValue,
   } = props;
 
   const containerStyle: ViewStyle = {
     width: '100%',
     maxWidth: 600,
   };
+
+  const selectedItem = items.find((item) => item.value === defaultValue);
 
   return (
     <View
@@ -59,6 +63,7 @@ export function Select(props: ISelectProps) {
         </TextRegular>
       )}
       <SelectDropdown
+        defaultValue={selectedItem}
         data={items}
         onSelect={(selectedItem, index) => {
           onValueChange(selectedItem.value);
