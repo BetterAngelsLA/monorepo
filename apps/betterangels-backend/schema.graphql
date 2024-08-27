@@ -869,11 +869,11 @@ type UserType {
   middleName: String
   email: String
   id: ID!
-  username: String!
-  isOutreachAuthorized: Boolean
-  organizationsOrganization: [OrganizationType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
+  isOutreachAuthorized: Boolean
+  organizationsOrganization: [OrganizationType!]
+  username: String!
 }
 
 enum YesNoPreferNotToSayEnum {

@@ -45,7 +45,7 @@ query ClientProfiles(
         lastName
         username
       }
-      displayCaseManager
+      displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
     }
   }
 }
