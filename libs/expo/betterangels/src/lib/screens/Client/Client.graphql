@@ -1,10 +1,11 @@
-query ClientProfile($id: ID!) {
+export query ClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
       hmisId
       gender
       dateOfBirth
+      displayCaseManager
       preferredLanguage
       age
       user {

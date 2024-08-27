@@ -18,8 +18,6 @@ mutation CreateNote($data: CreateNoteInput!) {
         firstName
         lastName
         email
-        hasAcceptedPrivacyPolicy
-        hasAcceptedTos
       }
       createdAt
       createdBy {
@@ -47,6 +45,7 @@ query ClientProfiles(
         lastName
         username
       }
+      displayCaseManager
     }
   }
 }

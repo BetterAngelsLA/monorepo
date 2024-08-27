@@ -167,9 +167,9 @@ type ClientProfileType {
   id: ID!
   user: UserType!
   contacts: [ClientContactType!]
-  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
-  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
-  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   displayPronouns: String
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
@@ -872,8 +872,8 @@ type UserType {
   username: String!
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
-  hasAcceptedTos: Boolean!
-  hasAcceptedPrivacyPolicy: Boolean!
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
 }
 
 enum YesNoPreferNotToSayEnum {

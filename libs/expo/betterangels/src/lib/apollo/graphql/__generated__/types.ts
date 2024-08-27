@@ -154,12 +154,12 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
-  consentFormDocuments: Array<ClientDocumentType>;
+  consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayCaseManager: Scalars['String']['output'];
   displayPronouns?: Maybe<Scalars['String']['output']>;
-  docReadyDocuments: Array<ClientDocumentType>;
+  docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
   eyeColor?: Maybe<EyeColorEnum>;
   gender?: Maybe<GenderEnum>;
   hairColor?: Maybe<HairColorEnum>;
@@ -170,7 +170,7 @@ export type ClientProfileType = {
   id: Scalars['ID']['output'];
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
-  otherDocuments: Array<ClientDocumentType>;
+  otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
@@ -1145,8 +1145,8 @@ export type UserType = {
   __typename?: 'UserType';
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
-  hasAcceptedPrivacyPolicy: Scalars['Boolean']['output'];
-  hasAcceptedTos: Scalars['Boolean']['output'];
+  hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
+  hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;

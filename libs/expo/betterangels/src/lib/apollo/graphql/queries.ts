@@ -50,8 +50,6 @@ export const GET_NOTES = gql`
         username
         firstName
         lastName
-        # hasAcceptedTos
-        # hasAcceptedPrivacyPolicy
       }
       createdBy {
         id

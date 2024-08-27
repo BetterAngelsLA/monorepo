@@ -145,12 +145,14 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
+    # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
+    # Temporary fix while we figure out type generation
     id: ID
-    username: auto
+    has_accepted_tos: Optional[bool]
+    has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
-    has_accepted_tos: auto
-    has_accepted_privacy_policy: auto
+    username: auto
 
 
 @strawberry_django.input(User, partial=True)
@@ -234,11 +236,11 @@ class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
-    doc_ready_documents: List[ClientDocumentType]
-    consent_form_documents: List[ClientDocumentType]
-    other_documents: List[ClientDocumentType]
+    doc_ready_documents: Optional[List[ClientDocumentType]]
+    consent_form_documents: Optional[List[ClientDocumentType]]
+    other_documents: Optional[List[ClientDocumentType]]
     display_pronouns: auto
-    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]]
     household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field
