@@ -1,7 +1,7 @@
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
@@ -11,6 +11,8 @@ from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
+from phonenumber_field.modelfields import PhoneNumber
+from phonenumbers import parse
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
@@ -167,6 +169,13 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto = False
 
 
+PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
+    PhoneNumber,
+    serialize=lambda v: str(v.national_number),
+    parse_value=lambda v: parse(v, "US"),
+)
+
+
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
@@ -180,7 +189,7 @@ class ClientProfileBaseType:
     hmis_id: auto
     marital_status: auto
     nickname: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     preferred_language: auto
     pronouns: auto
@@ -194,7 +203,7 @@ class ClientProfileBaseType:
 class ClientContactBaseType:
     name: auto
     email: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto

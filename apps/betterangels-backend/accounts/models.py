@@ -33,6 +33,7 @@ from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+from phonenumber_field.modelfields import PhoneNumberField
 from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
@@ -157,7 +158,7 @@ class ClientProfile(models.Model):
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    phone_number = PhoneNumberField(region="US", blank=True, null=True)
     physical_description = models.TextField(blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
@@ -203,7 +204,7 @@ class ClientContact(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    phone_number = PhoneNumberField(region="US", blank=True, null=True)
     mailing_address = models.TextField(null=True, blank=True)
     relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
