@@ -197,6 +197,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "physicalDescription": "A human",
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "profilePhoto": {"name": self.client_profile_1_photo_name},
             "pronouns": PronounEnum.HE_HIM_HIS.name,
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,

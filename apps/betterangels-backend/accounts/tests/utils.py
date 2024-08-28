@@ -91,23 +91,26 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             id
             address
             age
-            placeOfBirth
             dateOfBirth
             displayCaseManager
             displayPronouns
-            heightInInches
             eyeColor
             gender
             hairColor
+            heightInInches
             hmisId
             maritalStatus
             nickname
-            race
             phoneNumber
             physicalDescription
+            placeOfBirth
             preferredLanguage
+            profilePhoto {
+                name
+            }
             pronouns
             pronounsOther
+            race
             spokenLanguages
             vehicles
             veteranStatus
@@ -243,6 +246,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
+        self.client_profile_1_photo_name = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
+            "data"
+        ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "address": None,
@@ -301,7 +307,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _update_client_profile_photo_fixture(
         self,
         client_profile_id: str,
-        photo_content: bytes,
+        photo_content: bytes = b"test photo content",
         photo_name: str = "test_photo.jpg",
     ) -> Dict[str, Any]:
         photo = SimpleUploadedFile(name=photo_name, content=photo_content)
