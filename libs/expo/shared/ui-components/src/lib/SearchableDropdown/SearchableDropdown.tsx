@@ -94,7 +94,6 @@ export function SearchableDropdown({
   const containerStyle: ViewStyle = {
     position: 'relative',
     width: '100%',
-    maxWidth: 600,
     ...(Platform.OS === 'ios' && showDropdown ? { zIndex: 10 } : null),
   };
 

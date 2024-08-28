@@ -36,7 +36,6 @@ export function Select(props: ISelectProps) {
 
   const containerStyle: ViewStyle = {
     width: '100%',
-    maxWidth: 600,
   };
 
   return (
