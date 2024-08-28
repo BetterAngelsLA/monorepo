@@ -16,6 +16,7 @@ from accounts.enums import (
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from model_bakery import baker
 from organizations.models import OrganizationUser
@@ -296,3 +297,37 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _update_client_profile_photo_fixture(
+        self,
+        client_profile_id: str,
+        photo_content: bytes,
+        photo_name: str = "test_photo.jpg",
+    ) -> Dict[str, Any]:
+        photo = SimpleUploadedFile(name=photo_name, content=photo_content)
+
+        return self.execute_graphql(
+            """
+            mutation UpdateClientProfilePhoto($clientProfileId: ID!, $photo: Upload!) {  # noqa: B950
+                updateClientProfilePhoto(data: { clientProfile: $clientProfileId, photo: $photo }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientProfileType {
+                        id
+                        profilePhoto {
+                            name
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "clientProfileId": client_profile_id,
+            },
+            files={"photo": photo},
+        )

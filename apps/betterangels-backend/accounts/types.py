@@ -10,6 +10,7 @@ from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
 
 from .models import (
@@ -223,6 +224,7 @@ class ClientProfileType(ClientProfileBaseType):
     display_pronouns: auto
     hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
     household_members: Optional[List[ClientHouseholdMemberType]]
+    profile_photo: auto
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -230,6 +232,12 @@ class ClientProfileType(ClientProfileBaseType):
             return str(case_managers[-1].name)
 
         return "Not Assigned"
+
+
+@strawberry.input
+class ClientProfilePhotoInput:
+    client_profile: ID
+    photo: Upload
 
 
 @strawberry_django.input(ClientProfile, partial=True)

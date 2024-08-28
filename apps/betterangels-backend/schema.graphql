@@ -123,6 +123,11 @@ input ClientProfileOrder {
   user_LastName: Ordering
 }
 
+input ClientProfilePhotoInput {
+  clientProfile: ID!
+  photo: Upload!
+}
+
 type ClientProfileType {
   address: String
   age: Int
@@ -150,6 +155,7 @@ type ClientProfileType {
   displayPronouns: String
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -283,6 +289,15 @@ type DjangoFileType {
   path: String!
   size: Int!
   url: String!
+}
+
+type DjangoImageType {
+  name: String!
+  path: String!
+  size: Int!
+  url: String!
+  width: Int!
+  height: Int!
 }
 
 type DjangoModelType {
@@ -449,6 +464,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
@@ -766,6 +782,8 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
+
+union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | OperationInfo
 

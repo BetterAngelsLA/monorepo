@@ -19,7 +19,7 @@ from accounts.tests.utils import (
     CurrentUserGraphQLBaseTestCase,
 )
 from deepdiff import DeepDiff
-from django.test import TestCase, ignore_warnings
+from django.test import TestCase, ignore_warnings, override_settings
 
 
 @ignore_warnings(category=UserWarning)
@@ -393,3 +393,31 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             User.objects.get(id=user.pk)
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
+
+    @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+    def test_update_client_profile_photo(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+        photo_content = b"profile_photo"
+        photo_name = "profile_photo.jpg"
+
+        expected_query_count = 10
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_client_profile_photo_fixture(
+                client_profile_id,
+                photo_content,
+                photo_name,
+            )
+
+        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertEqual(client_profile.profile_photo.name, photo_name)
+
+        response = self._update_client_profile_photo_fixture(
+            client_profile_id,
+            photo_content,
+            photo_name,
+        )
+
+        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        client_profile.refresh_from_db()
+        self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
