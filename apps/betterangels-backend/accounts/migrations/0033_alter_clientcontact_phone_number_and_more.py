@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0031_clientcontact_demo_fields"),
+        ("accounts", "0032_clientprofile_clear_pronouns"),
     ]
 
     operations = [
