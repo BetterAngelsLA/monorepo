@@ -1,4 +1,3 @@
-import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion, Button } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
@@ -42,7 +41,6 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
       {isRelevant && (
         <View
           style={{
-            gap: Spacings.sm,
             height: isRelevant ? 'auto' : 0,
             overflow: 'hidden',
           }}

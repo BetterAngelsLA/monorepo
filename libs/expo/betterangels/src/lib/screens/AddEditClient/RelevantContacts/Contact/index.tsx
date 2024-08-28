@@ -45,7 +45,7 @@ export default function Contact(props: IContactProps) {
   return (
     <View
       style={{
-        marginBottom: Spacings.sm,
+        marginBottom: Spacings.xs,
         gap: Spacings.sm,
         borderRadius: Radiuses.xs,
         borderColor: Colors.NEUTRAL_LIGHT,
