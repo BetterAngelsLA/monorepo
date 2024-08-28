@@ -28,8 +28,8 @@ export default function UserProvider({ children }: UserProviderProps) {
           email,
           organizations,
           isOutreachAuthorized,
-          hasAcceptedPrivacyPolicy,
           hasAcceptedTos,
+          hasAcceptedPrivacyPolicy,
         } = response.data.currentUser;
         setUser({
           id,
@@ -39,8 +39,8 @@ export default function UserProvider({ children }: UserProviderProps) {
           email,
           organizations: organizations || null,
           isOutreachAuthorized: isOutreachAuthorized || false,
-          hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
           hasAcceptedTos: hasAcceptedTos || false,
+          hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
         });
       }
     } catch (err) {
@@ -58,8 +58,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations,
         isOutreachAuthorized,
-        hasAcceptedPrivacyPolicy,
         hasAcceptedTos,
+        hasAcceptedPrivacyPolicy,
       } = data.currentUser;
       setUser({
         id,
@@ -69,8 +69,8 @@ export default function UserProvider({ children }: UserProviderProps) {
         email,
         organizations: organizations || null,
         isOutreachAuthorized: isOutreachAuthorized || false,
-        hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
         hasAcceptedTos: hasAcceptedTos || false,
+        hasAcceptedPrivacyPolicy: hasAcceptedPrivacyPolicy || false,
       });
     }
   }, [data, isLoading]);

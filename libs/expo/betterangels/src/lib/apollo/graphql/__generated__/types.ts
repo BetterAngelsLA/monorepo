@@ -1,26 +1,39 @@
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
   /** Date (isoformat) */
-  Date: { input: any; output: any; }
+  Date: { input: any; output: any };
   /** Date with time (isoformat) */
-  DateTime: { input: any; output: any; }
+  DateTime: { input: any; output: any };
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
-  JSON: { input: any; output: any; }
+  JSON: { input: any; output: any };
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
-  Point: { input: any; output: any; }
-  Upload: { input: any; output: any; }
+  Point: { input: any; output: any };
+  Upload: { input: any; output: any };
 };
 
 export type AddNoteTaskInput = {
@@ -57,7 +70,7 @@ export enum AttachmentType {
   Document = 'DOCUMENT',
   Image = 'IMAGE',
   Unknown = 'UNKNOWN',
-  Video = 'VIDEO'
+  Video = 'VIDEO',
 }
 
 export type AuthInput = {
@@ -92,6 +105,28 @@ export type ClientContactType = {
   phoneNumber?: Maybe<Scalars['String']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
+export enum ClientDocumentNamespaceEnum {
+  BirthCertificate = 'BIRTH_CERTIFICATE',
+  ConsentForm = 'CONSENT_FORM',
+  DriversLicenseBack = 'DRIVERS_LICENSE_BACK',
+  DriversLicenseFront = 'DRIVERS_LICENSE_FRONT',
+  HmisForm = 'HMIS_FORM',
+  OtherClientDocument = 'OTHER_CLIENT_DOCUMENT',
+  OtherDocReady = 'OTHER_DOC_READY',
+  OtherForm = 'OTHER_FORM',
+  PhotoId = 'PHOTO_ID',
+  SocialSecurityCard = 'SOCIAL_SECURITY_CARD',
+}
+
+export type ClientDocumentType = AttachmentInterface & {
+  __typename?: 'ClientDocumentType';
+  attachmentType: AttachmentType;
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+  namespace: ClientDocumentNamespaceEnum;
+  originalFilename?: Maybe<Scalars['String']['output']>;
 };
 
 export type ClientHouseholdMemberInput = {
@@ -132,10 +167,12 @@ export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayCaseManager: Scalars['String']['output'];
   displayPronouns?: Maybe<Scalars['String']['output']>;
+  docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
   eyeColor?: Maybe<EyeColorEnum>;
   gender?: Maybe<GenderEnum>;
   hairColor?: Maybe<HairColorEnum>;
@@ -146,6 +183,7 @@ export type ClientProfileType = {
   id: Scalars['ID']['output'];
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
+  otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
@@ -157,6 +195,26 @@ export type ClientProfileType = {
   user: UserType;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
+
+export type ClientProfileTypeConsentFormDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ClientProfileTypeDocReadyDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ClientProfileTypeOtherDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type CreateClientDocumentInput = {
+  clientProfile: Scalars['ID']['input'];
+  file: Scalars['Upload']['input'];
+  namespace: ClientDocumentNamespaceEnum;
+};
+
+export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientProfileInput = {
   address?: InputMaybe<Scalars['String']['input']>;
@@ -217,7 +275,9 @@ export type CreateNoteServiceRequestInput = {
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
-export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+export type CreateNoteServiceRequestPayload =
+  | OperationInfo
+  | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
@@ -253,6 +313,8 @@ export type CreateUserInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
@@ -296,7 +358,7 @@ export enum DueByGroupEnum {
   NoDueDate = 'NO_DUE_DATE',
   Overdue = 'OVERDUE',
   Today = 'TODAY',
-  Tomorrow = 'TOMORROW'
+  Tomorrow = 'TOMORROW',
 }
 
 export enum EyeColorEnum {
@@ -305,7 +367,7 @@ export enum EyeColorEnum {
   Gray = 'GRAY',
   Green = 'GREEN',
   Hazel = 'HAZEL',
-  Other = 'OTHER'
+  Other = 'OTHER',
 }
 
 export type FeatureControlData = {
@@ -327,7 +389,7 @@ export enum GenderEnum {
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
   Other = 'OTHER',
-  PreferNotToSay = 'PREFER_NOT_TO_SAY'
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
 }
 
 export enum HairColorEnum {
@@ -338,7 +400,7 @@ export enum HairColorEnum {
   Gray = 'GRAY',
   Other = 'OTHER',
   Red = 'RED',
-  White = 'WHITE'
+  White = 'WHITE',
 }
 
 export enum HmisAgencyEnum {
@@ -346,7 +408,7 @@ export enum HmisAgencyEnum {
   Lahsa = 'LAHSA',
   Pasadena = 'PASADENA',
   SantaMonica = 'SANTA_MONICA',
-  Vash = 'VASH'
+  Vash = 'VASH',
 }
 
 export type HmisProfileInput = {
@@ -376,7 +438,7 @@ export enum LanguageEnum {
   Spanish = 'SPANISH',
   Tagalog = 'TAGALOG',
   TraditionalChinese = 'TRADITIONAL_CHINESE',
-  Vietnamese = 'VIETNAMESE'
+  Vietnamese = 'VIETNAMESE',
 }
 
 export type LocationInput = {
@@ -412,7 +474,7 @@ export enum MaritalStatusEnum {
   Married = 'MARRIED',
   Separated = 'SEPARATED',
   Single = 'SINGLE',
-  Widowed = 'WIDOWED'
+  Widowed = 'WIDOWED',
 }
 
 export enum MoodEnum {
@@ -435,7 +497,7 @@ export enum MoodEnum {
   Personable = 'PERSONABLE',
   Pleasant = 'PLEASANT',
   Restless = 'RESTLESS',
-  Suicidal = 'SUICIDAL'
+  Suicidal = 'SUICIDAL',
 }
 
 export type MoodType = {
@@ -448,6 +510,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
+  createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
@@ -456,6 +519,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteMood: DeleteMoodPayload;
@@ -479,146 +543,125 @@ export type Mutation = {
   updateTaskLocation: UpdateTaskLocationPayload;
 };
 
-
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
 };
-
 
 export type MutationAppleAuthArgs = {
   input: AuthInput;
 };
 
+export type MutationCreateClientDocumentArgs = {
+  data: CreateClientDocumentInput;
+};
 
 export type MutationCreateClientProfileArgs = {
   data: CreateClientProfileInput;
 };
 
-
 export type MutationCreateNoteArgs = {
   data: CreateNoteInput;
 };
-
 
 export type MutationCreateNoteAttachmentArgs = {
   data: CreateNoteAttachmentInput;
 };
 
-
 export type MutationCreateNoteMoodArgs = {
   data: CreateNoteMoodInput;
 };
-
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
 };
 
-
 export type MutationCreateNoteTaskArgs = {
   data: CreateNoteTaskInput;
 };
-
 
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
 };
 
-
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
 
+export type MutationDeleteClientDocumentArgs = {
+  data: DeleteDjangoObjectInput;
+};
 
 export type MutationDeleteClientProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationDeleteMoodArgs = {
   data: DeleteDjangoObjectInput;
 };
-
 
 export type MutationDeleteNoteArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationDeleteNoteAttachmentArgs = {
   data: DeleteDjangoObjectInput;
 };
-
 
 export type MutationDeleteServiceRequestArgs = {
   data: DeleteDjangoObjectInput;
 };
 
-
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
-
 
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
 };
 
-
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
 };
-
 
 export type MutationLoginArgs = {
   input: LoginInput;
 };
 
-
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
-
 
 export type MutationRemoveNoteTaskArgs = {
   data: RemoveNoteTaskInput;
 };
 
-
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
 };
-
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
 };
 
-
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
 };
-
 
 export type MutationUpdateNoteArgs = {
   data: UpdateNoteInput;
 };
 
-
 export type MutationUpdateNoteLocationArgs = {
   data: UpdateNoteLocationInput;
 };
-
 
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
 };
 
-
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
-
 
 export type MutationUpdateTaskLocationArgs = {
   data: UpdateTaskLocationInput;
@@ -656,7 +699,7 @@ export type NoteFilter = {
 export enum NoteNamespaceEnum {
   MoodAssessment = 'MOOD_ASSESSMENT',
   ProvidedServices = 'PROVIDED_SERVICES',
-  RequestedServices = 'REQUESTED_SERVICES'
+  RequestedServices = 'REQUESTED_SERVICES',
 }
 
 export type NoteOrder = {
@@ -683,29 +726,24 @@ export type NoteType = {
   title: Scalars['String']['output'];
 };
 
-
 export type NoteTypeAttachmentsArgs = {
   filters?: InputMaybe<NoteAttachmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type NoteTypeNextStepsArgs = {
   order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type NoteTypeProvidedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type NoteTypePurposesArgs = {
   order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -739,7 +777,7 @@ export enum OperationMessageKind {
   Info = 'INFO',
   Permission = 'PERMISSION',
   Validation = 'VALIDATION',
-  Warning = 'WARNING'
+  Warning = 'WARNING',
 }
 
 export enum Ordering {
@@ -748,7 +786,7 @@ export enum Ordering {
   AscNullsLast = 'ASC_NULLS_LAST',
   Desc = 'DESC',
   DescNullsFirst = 'DESC_NULLS_FIRST',
-  DescNullsLast = 'DESC_NULLS_LAST'
+  DescNullsLast = 'DESC_NULLS_LAST',
 }
 
 export type OrganizationType = {
@@ -769,11 +807,13 @@ export enum PronounEnum {
   HeHimHis = 'HE_HIM_HIS',
   Other = 'OTHER',
   SheHerHers = 'SHE_HER_HERS',
-  TheyThemTheirs = 'THEY_THEM_THEIRS'
+  TheyThemTheirs = 'THEY_THEM_THEIRS',
 }
 
 export type Query = {
   __typename?: 'Query';
+  clientDocument: ClientDocumentType;
+  clientDocuments: Array<ClientDocumentType>;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
   currentUser: UserType;
@@ -788,11 +828,17 @@ export type Query = {
   tasks: Array<TaskType>;
 };
 
+export type QueryClientDocumentArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+export type QueryClientDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
 
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
@@ -800,22 +846,18 @@ export type QueryClientProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryNoteAttachmentArgs = {
   pk: Scalars['ID']['input'];
 };
 
-
 export type QueryNoteAttachmentsArgs = {
   filters?: InputMaybe<NoteAttachmentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
-
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
@@ -823,21 +865,17 @@ export type QueryNotesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryServiceRequestArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryServiceRequestsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
-
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
-
 
 export type QueryTasksArgs = {
   order?: InputMaybe<TaskOrder>;
@@ -851,7 +889,7 @@ export enum RaceEnum {
   HispanicLatino = 'HISPANIC_LATINO',
   NativeHawaiianPacificIslander = 'NATIVE_HAWAIIAN_PACIFIC_ISLANDER',
   Other = 'OTHER',
-  WhiteCaucasian = 'WHITE_CAUCASIAN'
+  WhiteCaucasian = 'WHITE_CAUCASIAN',
 }
 
 export enum RelationshipTypeEnum {
@@ -868,7 +906,7 @@ export enum RelationshipTypeEnum {
   PastCaseManager = 'PAST_CASE_MANAGER',
   Pet = 'PET',
   Sibling = 'SIBLING',
-  Uncle = 'UNCLE'
+  Uncle = 'UNCLE',
 }
 
 export type RemoveNoteServiceRequestInput = {
@@ -919,12 +957,12 @@ export enum ServiceEnum {
   Stabilize = 'STABILIZE',
   Storage = 'STORAGE',
   Transport = 'TRANSPORT',
-  Water = 'WATER'
+  Water = 'WATER',
 }
 
 export enum ServiceRequestStatusEnum {
   Completed = 'COMPLETED',
-  ToDo = 'TO_DO'
+  ToDo = 'TO_DO',
 }
 
 export type ServiceRequestType = {
@@ -942,7 +980,7 @@ export type ServiceRequestType = {
 
 export enum ServiceRequestTypeEnum {
   Provided = 'PROVIDED',
-  Requested = 'REQUESTED'
+  Requested = 'REQUESTED',
 }
 
 export type SwitchType = {
@@ -958,7 +996,7 @@ export type TaskOrder = {
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
-  ToDo = 'TO_DO'
+  ToDo = 'TO_DO',
 }
 
 export type TaskType = {
@@ -976,7 +1014,7 @@ export type TaskType = {
 
 export enum TaskTypeEnum {
   NextStep = 'NEXT_STEP',
-  Purpose = 'PURPOSE'
+  Purpose = 'PURPOSE',
 }
 
 export type UpdateClientProfileInput = {
@@ -1071,8 +1109,8 @@ export type UserType = {
   __typename?: 'UserType';
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
-  hasAcceptedPrivacyPolicy: Scalars['Boolean']['output'];
-  hasAcceptedTos: Scalars['Boolean']['output'];
+  hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
+  hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['String']['output']>;
@@ -1084,5 +1122,5 @@ export type UserType = {
 export enum YesNoPreferNotToSayEnum {
   No = 'NO',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
-  Yes = 'YES'
+  Yes = 'YES',
 }

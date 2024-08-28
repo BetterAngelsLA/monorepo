@@ -5,11 +5,14 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum
+from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from common.graphql.types import AttachmentInterface
+from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
 from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
 
 from .models import (
@@ -29,6 +32,18 @@ class AuthInput:
     code_verifier: Optional[str] = strawberry.field(name="code_verifier")
     id_token: Optional[str] = strawberry.field(name="id_token")
     redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
+
+
+@strawberry_django.type(Attachment, pagination=True)
+class ClientDocumentType(AttachmentInterface):
+    namespace: ClientDocumentNamespaceEnum
+
+
+@strawberry_django.input(Attachment)
+class CreateClientDocumentInput:
+    client_profile: ID
+    file: Upload
+    namespace: ClientDocumentNamespaceEnum
 
 
 @strawberry.type
@@ -130,12 +145,14 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
+    # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
+    # Temporary fix while we figure out type generation
     id: ID
-    username: auto
+    has_accepted_tos: Optional[bool]
+    has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
-    has_accepted_tos: auto
-    has_accepted_privacy_policy: auto
+    username: auto
 
 
 @strawberry_django.input(User, partial=True)
@@ -219,8 +236,11 @@ class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
+    doc_ready_documents: Optional[List[ClientDocumentType]]
+    consent_form_documents: Optional[List[ClientDocumentType]]
+    other_documents: Optional[List[ClientDocumentType]]
     display_pronouns: auto
-    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]]
     household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field

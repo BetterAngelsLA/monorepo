@@ -1,32 +1,48 @@
 import * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 const defaultOptions = {} as const;
-export type CurrentUserQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type CurrentUserQueryVariables = Types.Exact<{ [key: string]: never }>;
 
-
-export type CurrentUserQuery = { __typename?: 'Query', currentUser: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null, isOutreachAuthorized?: boolean | null, hasAcceptedTos: boolean, hasAcceptedPrivacyPolicy: boolean, organizations?: Array<{ __typename?: 'OrganizationType', id: string, name: string }> | null } };
-
+export type CurrentUserQuery = {
+  __typename?: 'Query';
+  currentUser: {
+    __typename?: 'UserType';
+    id: string;
+    username: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    isOutreachAuthorized?: boolean | null;
+    hasAcceptedTos?: boolean | null;
+    hasAcceptedPrivacyPolicy?: boolean | null;
+    organizations?: Array<{
+      __typename?: 'OrganizationType';
+      id: string;
+      name: string;
+    }> | null;
+  };
+};
 
 export const CurrentUserDocument = gql`
-    query currentUser {
-  currentUser {
-    id
-    username
-    firstName
-    lastName
-    email
-    organizations: organizationsOrganization {
+  query currentUser {
+    currentUser {
       id
-      name
+      username
+      firstName
+      lastName
+      email
+      organizations: organizationsOrganization {
+        id
+        name
+      }
+      isOutreachAuthorized
+      hasAcceptedTos
+      hasAcceptedPrivacyPolicy
     }
-    isOutreachAuthorized
-    hasAcceptedTos
-    hasAcceptedPrivacyPolicy
   }
-}
-    `;
+`;
 
 /**
  * __useCurrentUserQuery__
@@ -43,19 +59,50 @@ export const CurrentUserDocument = gql`
  *   },
  * });
  */
-export function useCurrentUserQuery(baseOptions?: Apollo.QueryHookOptions<CurrentUserQuery, CurrentUserQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<CurrentUserQuery, CurrentUserQueryVariables>(CurrentUserDocument, options);
-      }
-export function useCurrentUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CurrentUserQuery, CurrentUserQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<CurrentUserQuery, CurrentUserQueryVariables>(CurrentUserDocument, options);
-        }
-export function useCurrentUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CurrentUserQuery, CurrentUserQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<CurrentUserQuery, CurrentUserQueryVariables>(CurrentUserDocument, options);
-        }
+export function useCurrentUserQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    CurrentUserQuery,
+    CurrentUserQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<CurrentUserQuery, CurrentUserQueryVariables>(
+    CurrentUserDocument,
+    options
+  );
+}
+export function useCurrentUserLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    CurrentUserQuery,
+    CurrentUserQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<CurrentUserQuery, CurrentUserQueryVariables>(
+    CurrentUserDocument,
+    options
+  );
+}
+export function useCurrentUserSuspenseQuery(
+  baseOptions?: Apollo.SuspenseQueryHookOptions<
+    CurrentUserQuery,
+    CurrentUserQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<CurrentUserQuery, CurrentUserQueryVariables>(
+    CurrentUserDocument,
+    options
+  );
+}
 export type CurrentUserQueryHookResult = ReturnType<typeof useCurrentUserQuery>;
-export type CurrentUserLazyQueryHookResult = ReturnType<typeof useCurrentUserLazyQuery>;
-export type CurrentUserSuspenseQueryHookResult = ReturnType<typeof useCurrentUserSuspenseQuery>;
-export type CurrentUserQueryResult = Apollo.QueryResult<CurrentUserQuery, CurrentUserQueryVariables>;
+export type CurrentUserLazyQueryHookResult = ReturnType<
+  typeof useCurrentUserLazyQuery
+>;
+export type CurrentUserSuspenseQueryHookResult = ReturnType<
+  typeof useCurrentUserSuspenseQuery
+>;
+export type CurrentUserQueryResult = Apollo.QueryResult<
+  CurrentUserQuery,
+  CurrentUserQueryVariables
+>;
