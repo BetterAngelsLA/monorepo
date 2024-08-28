@@ -89,6 +89,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+  const topOffset = insets.top;
 
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
@@ -343,7 +344,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         style={{
           borderTopEndRadius: 10,
           borderTopLeftRadius: 10,
-          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
+          marginTop: Platform.OS === 'ios' ? topOffset : '5%',
           overflow: 'hidden',
           flex: 1,
         }}
