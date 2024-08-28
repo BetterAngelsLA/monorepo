@@ -401,7 +401,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
-        photo_content = b"profile_photo"
+        photo_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
         photo_name = "profile_photo.jpg"
 
         expected_query_count = 8
