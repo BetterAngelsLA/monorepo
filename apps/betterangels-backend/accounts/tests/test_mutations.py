@@ -198,9 +198,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayCaseManager": "Not Assigned",
             "hmisProfiles": [expected_hmis_profile],
             "householdMembers": expected_client_profile_household_members,
+            "profilePhoto": None,
             "user": expected_user,
         }
-
         client_differences = DeepDiff(
             expected_client_profile,
             client_profile,
@@ -338,6 +338,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": "she/her/theirs",
             "displayCaseManager": "Not Assigned",
+            "profilePhoto": {"name": self.client_profile_1_photo_name},
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -348,13 +349,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:
+        # Manually update profile photo because it's created after the client profile fixture.
+        self.client_profile_1["profilePhoto"] = {"name": self.client_profile_1_photo_name}
+
         variables = {
             "id": self.client_profile_1["id"],
         }
         response = self._update_client_profile_fixture(variables)
-        client = response["data"]["updateClientProfile"]
+        client_profile = response["data"]["updateClientProfile"]
 
-        self.assertEqual(client, self.client_profile_1)
+        self.assertEqual(client_profile, self.client_profile_1)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
@@ -400,7 +404,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         photo_content = b"profile_photo"
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 10
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
