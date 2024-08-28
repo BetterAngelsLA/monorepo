@@ -278,10 +278,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             client_profile_household_member_new,
         ]
         client_profile_hmis_profile_1 = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
             "hmisId": "UPDATEDHMISidSANTAMONICA1",
             "agency": HmisAgencyEnum.SANTA_MONICA.name,
         }
         client_profile_hmis_profile_2 = {
+            "id": self.client_profile_1["hmisProfiles"][1]["id"],
             "hmisId": "UPDATEDHMISidCHAMP1",
             "agency": HmisAgencyEnum.CHAMP.name,
         }
@@ -388,3 +390,32 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             User.objects.get(id=user.pk)
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
+
+    def test_delete_client_related_objects(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+
+        self.assertEqual(client_profile.contacts.count(), 2)
+        self.assertEqual(client_profile.household_members.count(), 2)
+        self.assertEqual(client_profile.hmis_profiles.count(), 2)
+
+        variables = {
+            "id": client_profile_id,
+            "contacts": [self.client_profile_1_contact_2],
+            "householdMembers": [self.client_profile_1_household_member_2],
+            "hmisProfiles": [self.client_profile_1_hmis_profile_2],
+        }
+
+        expected_query_count = 20
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_client_profile_fixture(variables)
+
+        client_profile.refresh_from_db()
+        self.assertEqual(client_profile.contacts.count(), 1)
+        self.assertEqual(client_profile.household_members.count(), 1)
+        self.assertEqual(client_profile.hmis_profiles.count(), 1)
+
+        client = response["data"]["updateClientProfile"]
+        self.assertEqual(client["contacts"], [self.client_profile_1_contact_2])
+        self.assertEqual(client["householdMembers"], [self.client_profile_1_household_member_2])
+        self.assertEqual(client["hmisProfiles"], [self.client_profile_1_hmis_profile_2])
