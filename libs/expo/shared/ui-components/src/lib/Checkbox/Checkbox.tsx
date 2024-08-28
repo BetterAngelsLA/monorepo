@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     color: Colors.WHITE,
+    position: 'absolute',
   },
   label: {
     fontSize: FontSizes.md.fontSize,
