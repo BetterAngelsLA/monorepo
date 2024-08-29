@@ -35,7 +35,7 @@ interface ISelectedProps {
   setSelected: (selected: boolean) => void;
   closeModal: (hasLocation: boolean) => void;
   setLocation: (location: TLocation) => void;
-  noteId: string | undefined;
+  noteId: string;
   minimizeModal: boolean;
 }
 
