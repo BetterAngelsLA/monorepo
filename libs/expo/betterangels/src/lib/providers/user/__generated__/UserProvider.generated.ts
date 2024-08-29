@@ -6,7 +6,7 @@ const defaultOptions = {} as const;
 export type CurrentUserQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type CurrentUserQuery = { __typename?: 'Query', currentUser: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null, isOutreachAuthorized?: boolean | null, organizations?: Array<{ __typename?: 'OrganizationType', id: string, name: string }> | null } };
+export type CurrentUserQuery = { __typename?: 'Query', currentUser: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null, isOutreachAuthorized?: boolean | null, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null, organizations?: Array<{ __typename?: 'OrganizationType', id: string, name: string }> | null } };
 
 
 export const CurrentUserDocument = gql`
@@ -22,6 +22,8 @@ export const CurrentUserDocument = gql`
       name
     }
     isOutreachAuthorized
+    hasAcceptedTos
+    hasAcceptedPrivacyPolicy
   }
 }
     `;

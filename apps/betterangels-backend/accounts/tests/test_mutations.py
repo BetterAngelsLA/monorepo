@@ -1,6 +1,7 @@
 from unittest.mock import ANY
 
 from accounts.enums import (
+    ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -18,6 +19,7 @@ from accounts.tests.utils import (
     ClientProfileGraphQLBaseTestCase,
     CurrentUserGraphQLBaseTestCase,
 )
+from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import TestCase, ignore_warnings, override_settings
 
@@ -384,7 +386,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 35
+        expected_query_count = 39
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -428,3 +430,47 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         client_profile.refresh_from_db()
         self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_client_document(self) -> None:
+        file_content = b"Test client document content"
+        file_name = "test_client_document.txt"
+
+        expected_query_count = 23
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._create_client_document_fixture(
+                self.client_profile_1["id"],
+                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content,
+                file_name,
+            )
+
+        client_document_id = response["data"]["createClientDocument"]["id"]
+        self.assertEqual(
+            response["data"]["createClientDocument"]["originalFilename"],
+            file_name,
+        )
+        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
+        self.assertTrue(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The client document should have been created and persisted in the database.",
+        )
+
+    def test_delete_client_document(self) -> None:
+        client_document_id = self.client_profile_1_document_1["id"]
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+        expected_query_count = 14
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            self._delete_client_document_fixture(client_document_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The document should have been deleted from the database.",
+        )
