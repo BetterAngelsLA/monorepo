@@ -392,6 +392,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
     def test_delete_client_related_objects(self) -> None:
+        """Verifies that related objects are created and deleted when updating client profile."""
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
 
@@ -399,23 +400,54 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile.household_members.count(), 2)
         self.assertEqual(client_profile.hmis_profiles.count(), 2)
 
-        variables = {
-            "id": client_profile_id,
-            "contacts": [self.client_profile_1_contact_2],
-            "householdMembers": [self.client_profile_1_household_member_2],
-            "hmisProfiles": [self.client_profile_1_hmis_profile_2],
+        client_profile_contact_new = {
+            "name": "new contact",
+            "email": "new_contact@example.co",
+            "phoneNumber": "2125551212",
+            "mailingAddress": "new contact address",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "new contact",
+        }
+        client_profile_household_member_new = {
+            "name": "new household member",
+            "dateOfBirth": "2024-08-28",
+            "gender": GenderEnum.FEMALE.name,
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "new household member",
+        }
+        client_profile_hmis_profile_new = {
+            "hmisId": "UpdateDeleteTestHmisId",
+            "agency": HmisAgencyEnum.LAHSA.name,
         }
 
-        expected_query_count = 20
+        variables = {
+            "id": client_profile_id,
+            "contacts": [client_profile_contact_new, self.client_profile_1_contact_2],
+            "householdMembers": [client_profile_household_member_new, self.client_profile_1_household_member_2],
+            "hmisProfiles": [client_profile_hmis_profile_new, self.client_profile_1_hmis_profile_2],
+        }
+
+        expected_query_count = 48
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_fixture(variables)
 
-        client_profile.refresh_from_db()
-        self.assertEqual(client_profile.contacts.count(), 1)
-        self.assertEqual(client_profile.household_members.count(), 1)
-        self.assertEqual(client_profile.hmis_profiles.count(), 1)
+        self.client_profile_1_contact_2["id"] = ANY
+        self.client_profile_1_household_member_2["id"] = ANY
+        self.client_profile_1_hmis_profile_2["id"] = ANY
+        client_profile_contact_new["id"] = ANY
+        client_profile_household_member_new["id"] = ANY
+        client_profile_hmis_profile_new["id"] = ANY
 
         client = response["data"]["updateClientProfile"]
-        self.assertEqual(client["contacts"], [self.client_profile_1_contact_2])
-        self.assertEqual(client["householdMembers"], [self.client_profile_1_household_member_2])
-        self.assertEqual(client["hmisProfiles"], [self.client_profile_1_hmis_profile_2])
+        self.assertCountEqual(
+            client["contacts"],
+            [client_profile_contact_new, self.client_profile_1_contact_2],
+        )
+        self.assertCountEqual(
+            client["householdMembers"],
+            [client_profile_household_member_new, self.client_profile_1_household_member_2],
+        )
+        self.assertCountEqual(
+            client["hmisProfiles"],
+            [client_profile_hmis_profile_new, self.client_profile_1_hmis_profile_2],
+        )

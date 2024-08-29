@@ -209,6 +209,7 @@ class Mutation:
                 contacts_to_update = ClientContact.objects.filter(
                     id__in=contact_updates_by_id.keys(), client_profile=client_profile
                 )
+                ClientContact.objects.exclude(id__in=contact_updates_by_id).delete()
 
                 for contact in contacts_to_create:
                     resolvers.create(
@@ -235,6 +236,7 @@ class Mutation:
                 household_members_to_update = ClientHouseholdMember.objects.filter(
                     id__in=household_member_updates_by_id.keys(), client_profile=client_profile
                 )
+                ClientHouseholdMember.objects.exclude(id__in=household_member_updates_by_id).delete()
 
                 for household_member in household_members_to_create:
                     resolvers.create(
@@ -259,6 +261,7 @@ class Mutation:
                 hmis_profiles_to_update = HmisProfile.objects.filter(
                     id__in=hmis_profile_updates_by_id, client_profile=client_profile
                 )
+                HmisProfile.objects.exclude(id__in=hmis_profile_updates_by_id).delete()
 
                 for hmis_profile in hmis_profiles_to_create:
                     resolvers.create(
