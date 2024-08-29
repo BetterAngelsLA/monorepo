@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     position: 'relative',
     width: '100%',
-    maxWidth: 600,
   },
   input: {
     position: 'relative',
