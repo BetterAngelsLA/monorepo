@@ -165,14 +165,15 @@ type ClientProfileType {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
-  user: UserType!
-  contacts: [ClientContactType!]
-  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  contacts: [ClientContactType!]
   displayPronouns: String
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   hmisProfiles: [HmisProfileType]
   householdMembers: [ClientHouseholdMemberType!]
+  socialMediaProfiles: [SocialMediaProfileType!]
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  user: UserType!
   displayCaseManager: String!
 }
 
@@ -204,10 +205,11 @@ input CreateClientProfileInput {
   race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
-  user: CreateUserInput!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  socialMediaProfiles: [SocialMediaProfileInput!]
+  user: CreateUserInput!
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -572,6 +574,10 @@ input OffsetPaginationInput {
   limit: Int! = -1
 }
 
+input OneToManyInput {
+  set: ID
+}
+
 type OperationInfo {
   """List of messages returned by the operation."""
   messages: [OperationMessage!]!
@@ -743,6 +749,30 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+enum SocialMediaEnum {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  SNAPCHAT
+  TIKTOK
+  TWITTER
+  WHATSAPP
+}
+
+input SocialMediaProfileInput {
+  id: ID
+  clientProfile: OneToManyInput
+  platform: SocialMediaEnum
+  platformUserId: String
+}
+
+type SocialMediaProfileType {
+  id: ID
+  clientProfile: DjangoModelType!
+  platform: SocialMediaEnum!
+  platformUserId: String!
+}
+
 type SwitchType {
   name: String!
   isActive: Boolean!
@@ -796,10 +826,11 @@ input UpdateClientProfileInput {
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
-  user: UpdateUserInput
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  socialMediaProfiles: [SocialMediaProfileInput!]
+  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo

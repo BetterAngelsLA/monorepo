@@ -118,16 +118,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "bestie",
         }
+        hmis_profile = {
+            "hmisId": "12345678",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
         household_member = {
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
             "gender": GenderEnum.FEMALE.name,
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
-        }
-        hmis_profile = {
-            "hmisId": "12345678",
-            "agency": HmisAgencyEnum.LAHSA.name,
         }
         social_media_profile = {
             "platform": SocialMediaEnum.INSTAGRAM.name,
@@ -143,9 +143,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
             "hmisId": "12345678",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
-            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
@@ -159,14 +159,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
-
         response = self._create_client_profile_fixture(variables)
-
         client_profile = response["data"]["createClientProfile"]
-        expected_contacts = [{"id": ANY, **contact}]
-        expected_household_members = [{"id": ANY, **household_member}]
-        expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
 
+        expected_contacts = [{"id": ANY, **contact}]
+        expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
+        expected_household_members = [{"id": ANY, **household_member}]
         expected_user = {"id": ANY, **user}
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting some fields
@@ -227,6 +225,22 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         contacts = [contact_1, contact_2, contact_new]
 
+        hmis_profile_1 = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
+            "hmisId": "UPDATEDHMISidSANTAMONICA1",
+            "agency": HmisAgencyEnum.SANTA_MONICA.name,
+        }
+        hmis_profile_2 = {
+            "id": self.client_profile_1["hmisProfiles"][1]["id"],
+            "hmisId": "UPDATEDHMISidCHAMP1",
+            "agency": HmisAgencyEnum.CHAMP.name,
+        }
+        hmis_profile_new = {
+            "hmisId": "NEWHMISid1",
+            "agency": HmisAgencyEnum.VASH.name,
+        }
+        hmis_profiles = [hmis_profile_1, hmis_profile_2, hmis_profile_new]
+
         household_member_1 = {
             "id": self.client_profile_1["householdMembers"][0]["id"],
             "name": "Daffodils",
@@ -252,42 +266,21 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         household_members = [household_member_1, household_member_2, household_member_new]
 
-        hmis_profile_1 = {
-            "id": self.client_profile_1["hmisProfiles"][0]["id"],
-            "hmisId": "UPDATEDHMISidSANTAMONICA1",
-            "agency": HmisAgencyEnum.SANTA_MONICA.name,
-        }
-        hmis_profile_2 = {
-            "id": self.client_profile_1["hmisProfiles"][1]["id"],
-            "hmisId": "UPDATEDHMISidCHAMP1",
-            "agency": HmisAgencyEnum.CHAMP.name,
-        }
-        hmis_profile_new = {
-            "hmisId": "NEWHMISid1",
-            "agency": HmisAgencyEnum.VASH.name,
-        }
-        hmis_profiles = [hmis_profile_1, hmis_profile_2, hmis_profile_new]
-
         social_media_profile_1 = {
-            "id": self.client_profile_1["socialMediaProfiles"][1]["id"],
+            "id": self.client_profile_1["socialMediaProfiles"][0]["id"],
             "platform": SocialMediaEnum.INSTAGRAM.name,
             "platformUserId": "instatoad",
         }
         social_media_profile_2 = {
             "id": self.client_profile_1["socialMediaProfiles"][1]["id"],
-            "platform": SocialMediaEnum.LINKEDIN.name,
-            "platformUserId": "example.co/in/tchavez",
+            "platform": SocialMediaEnum.SNAPCHAT.name,
+            "platformUserId": "snap",
         }
         social_media_profile_new = {
-            "id": self.client_profile_1["socialMediaProfiles"][1]["id"],
             "platform": SocialMediaEnum.LINKEDIN.name,
             "platformUserId": "example.co/in/tchavez",
         }
-
-        social_media_profiles = [
-            social_media_profile_1,
-            social_media_profile_2,
-        ]
+        social_media_profiles = [social_media_profile_1, social_media_profile_2, social_media_profile_new]
 
         variables = {
             "id": self.client_profile_1["id"],
@@ -310,17 +303,13 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
-            "socialMediaProfiles": [SocialMediaEnum.INSTAGRAM.name, SocialMediaEnum.TWITTER.name],
+            "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": user,
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
-
-        contact_new["id"] = ANY
-        household_member_new["id"] = ANY
-        hmis_profile_new["id"] = ANY
 
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting dob

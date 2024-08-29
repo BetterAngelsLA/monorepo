@@ -249,6 +249,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA1",
+                "hmisProfiles": self.client_1_hmis_profiles,
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",

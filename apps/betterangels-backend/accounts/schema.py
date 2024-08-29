@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 import strawberry
 import strawberry_django
@@ -18,6 +18,7 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Prefetch
@@ -44,6 +45,36 @@ from .types import (
     UpdateUserInput,
     UserType,
 )
+
+
+def _update_client_related_object(
+    info: Info,
+    model_class_string: str,
+    data: List[Dict[str, Any]],
+    client_profile: ClientProfile,
+) -> None:
+    model_class = apps.get_model("accounts", model_class_string)
+
+    item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
+    items_to_create = [item for item in data if not item.get("id")]
+    items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+
+    for item in items_to_create:
+        resolvers.create(
+            info,
+            model_class,
+            {
+                **item,
+                "client_profile": client_profile,
+            },
+        )
+
+    for item in items_to_update:
+        resolvers.update(
+            info,
+            item,
+            item_updates_by_id[str(item.id)],
+        )
 
 
 @strawberry.type
@@ -253,13 +284,8 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user", {})
-            contacts_data = client_profile_data.pop("contacts", [])
-            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members = client_profile_data.pop("household_members", [])
-            social_media_profiles = client_profile_data.pop("social_media_profiles", [])
 
-            if user_data:
+            if user_data := client_profile_data.pop("user", {}):
                 client_user = resolvers.update(
                     info,
                     client_user,
@@ -269,102 +295,20 @@ class Mutation:
                     },
                 )
 
-            if contacts_data:
-                contact_updates_by_id = {c["id"]: c for c in contacts_data if c.get("id")}
-                contacts_to_create = [c for c in contacts_data if not c.get("id")]
-                contacts_to_update = ClientContact.objects.filter(
-                    id__in=contact_updates_by_id.keys(), client_profile=client_profile
-                )
+            related_object_model_map = {
+                "contacts": "ClientContact",
+                "hmis_profiles": "HmisProfile",
+                "household_members": "ClientHouseholdMember",
+                "social_media_profiles": "SocialMediaProfile",
+            }
 
-                for contact in contacts_to_create:
-                    resolvers.create(
+            for related_object, related_object_class in related_object_model_map.items():
+                if related_object_data := client_profile_data.pop(related_object):
+                    _update_client_related_object(
                         info,
-                        ClientContact,
-                        {
-                            **contact,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for contact in contacts_to_update:
-                    resolvers.update(
-                        info,
-                        contact,
-                        contact_updates_by_id[str(contact.id)],
-                    )
-
-            if household_members:
-                household_member_updates_by_id = {
-                    member["id"]: member for member in household_members if member.get("id")
-                }
-                household_members_to_create = [member for member in household_members if not member.get("id")]
-                household_members_to_update = ClientHouseholdMember.objects.filter(
-                    id__in=household_member_updates_by_id.keys(), client_profile=client_profile
-                )
-
-                for household_member in household_members_to_create:
-                    resolvers.create(
-                        info,
-                        ClientHouseholdMember,
-                        {
-                            **household_member,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for household_member in household_members_to_update:
-                    resolvers.update(
-                        info,
-                        household_member,
-                        household_member_updates_by_id[str(household_member.id)],
-                    )
-
-            if hmis_profiles:
-                hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
-                hmis_profiles_to_update = HmisProfile.objects.filter(
-                    id__in=hmis_profile_updates_by_id, client_profile=client_profile
-                )
-
-                for hmis_profile in hmis_profiles_to_create:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **hmis_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for hmis_profile in hmis_profiles_to_update:
-                    resolvers.update(
-                        info,
-                        hmis_profile,
-                        hmis_profile_updates_by_id[str(hmis_profile.id)],
-                    )
-
-            if social_media_profiles:
-                social_media_profile_updates_by_id = {hp["id"]: hp for hp in social_media_profiles if hp.get("id")}
-                social_media_profiles_to_create = [hp for hp in social_media_profiles if not hp.get("id")]
-                social_media_profiles_to_update = HmisProfile.objects.filter(
-                    id__in=social_media_profile_updates_by_id, client_profile=client_profile
-                )
-
-                for social_media_profile in social_media_profiles_to_create:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **social_media_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for social_media_profile in social_media_profiles_to_update:
-                    resolvers.update(
-                        info,
-                        social_media_profile,
-                        social_media_profile_updates_by_id[str(social_media_profile.id)],
+                        related_object_class,
+                        related_object_data,
+                        client_profile,
                     )
 
             client_profile = resolvers.update(
