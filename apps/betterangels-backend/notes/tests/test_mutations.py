@@ -1560,7 +1560,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIsNotNone(create_response["data"]["createNoteAttachment"]["file"]["name"])
         self.assertTrue(
             Attachment.objects.filter(id=attachment_id).exists(),
-            "The attachment should have been created and exist in the database.",
+            "The attachment should have been created and persisted in the database.",
         )
 
     def test_delete_note_attachment(self) -> None:
