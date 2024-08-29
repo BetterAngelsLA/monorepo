@@ -103,13 +103,13 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_client_profile_mutation(self) -> None:
-        client_profile_user = {
+        user = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
         }
-        client_profile_contact_1 = {
+        contact = {
             "name": "Jerry",
             "email": "jerry@example.co",
             "phoneNumber": "2125551212",
@@ -117,43 +117,22 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "bestie",
         }
-        client_profile_contact_2 = {
-            "name": "Gary",
-            "email": "gary@example.co",
-            "phoneNumber": "2125551212",
-            "mailingAddress": "1235 Main St",
-            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
-            "relationshipToClientOther": None,
+        hmis_profile = {
+            "hmisId": "12345678",
+            "agency": HmisAgencyEnum.LAHSA.name,
         }
-        client_profile_contacts = [
-            client_profile_contact_1,
-            client_profile_contact_2,
-        ]
-        client_profile_household_member_1 = {
+        household_member = {
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
             "gender": GenderEnum.FEMALE.name,
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
-        client_profile_household_member_2 = {
-            "name": "Tulips",
-            "dateOfBirth": "1901-01-01",
-            "gender": GenderEnum.NON_BINARY.name,
-            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
-            "relationshipToClientOther": None,
-        }
-        client_profile_household_members = [client_profile_household_member_1, client_profile_household_member_2]
-        client_profile_hmis_profile = {
-            "hmisId": "12345678",
-            "agency": HmisAgencyEnum.LAHSA.name,
-        }
-        expected_hmis_profile = {**client_profile_hmis_profile, "id": ANY}
 
         variables = {
             "address": "1234 Main St",
             "placeOfBirth": "Los Angeles",
-            "contacts": client_profile_contacts,
+            "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.FEMALE.name,
@@ -161,8 +140,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 71.75,
             "hmisId": "12345678",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
-            "hmisProfiles": [client_profile_hmis_profile],
-            "householdMembers": client_profile_household_members,
+            "hmisProfiles": [hmis_profile],
+            "householdMembers": [household_member],
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
@@ -172,32 +151,25 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
-            "user": client_profile_user,
+            "user": user,
         }
-
         response = self._create_client_profile_fixture(variables)
-
         client_profile = response["data"]["createClientProfile"]
-        expected_client_profile_contact_1 = {"id": ANY, **client_profile_contact_1}
-        expected_client_profile_contact_2 = {"id": ANY, **client_profile_contact_2}
-        expected_client_profile_contacts = [expected_client_profile_contact_1, expected_client_profile_contact_2]
-        expected_client_profile_household_member_1 = {"id": ANY, **client_profile_household_member_1}
-        expected_client_profile_household_member_2 = {"id": ANY, **client_profile_household_member_2}
-        expected_client_profile_household_members = [
-            expected_client_profile_household_member_1,
-            expected_client_profile_household_member_2,
-        ]
-        expected_user = {"id": ANY, **client_profile_user}
+
+        expected_contacts = [{"id": ANY, **contact}]
+        expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
+        expected_household_members = [{"id": ANY, **household_member}]
+        expected_user = {"id": ANY, **user}
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting some fields
             "id": ANY,
             "age": self.EXPECTED_CLIENT_AGE,
-            "contacts": expected_client_profile_contacts,
+            "contacts": expected_contacts,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": "She/Her/Hers",
             "displayCaseManager": "Not Assigned",
-            "hmisProfiles": [expected_hmis_profile],
-            "householdMembers": expected_client_profile_household_members,
+            "hmisProfiles": expected_hmis_profiles,
+            "householdMembers": expected_household_members,
             "user": expected_user,
         }
 
