@@ -42,7 +42,7 @@ interface ILocationMapModalProps {
   isModalVisible: boolean;
   toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
-  noteId: string | undefined;
+  noteId: string;
   setLocation: (location: TLocation) => void;
   location: TLocation;
   setError: (error: boolean) => void;

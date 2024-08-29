@@ -111,3 +111,19 @@ class HmisAgencyEnum(models.TextChoices):
     PASADENA = "pasadena", _("Pasadena")
     CHAMP = "champ", _("CHAMP")
     VASH = "vash", _("VASH")
+
+
+@strawberry.enum
+class ClientDocumentNamespaceEnum(models.TextChoices):
+    DRIVERS_LICENSE_FRONT = "drivers_license_front", "Driver's License Front"
+    DRIVERS_LICENSE_BACK = "drivers_license_back", "Driver's License Back"
+    PHOTO_ID = "photo_id", "Photo ID"
+    BIRTH_CERTIFICATE = "birth_certificate", "Birth Certificate"
+    SOCIAL_SECURITY_CARD = "social_security_card", "Social Security Card"
+    OTHER_DOC_READY = "other_doc_ready", "Other Doc-Ready"
+
+    CONSENT_FORM = "consent_form", "Consent Form"
+    HMIS_FORM = "hmis_form", "HMIS Form"
+    OTHER_FORM = "other_form", "Other Form"
+
+    OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"

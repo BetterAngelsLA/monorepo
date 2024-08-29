@@ -10,5 +10,7 @@ query currentUser {
       name
     }
     isOutreachAuthorized
+    hasAcceptedTos
+    hasAcceptedPrivacyPolicy
   }
 }
