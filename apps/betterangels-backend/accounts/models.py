@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
 
 import pghistory
 from accounts.enums import (
+    ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -15,7 +16,7 @@ from accounts.enums import (
 )
 from accounts.groups import GroupTemplateNames
 from accounts.managers import UserManager
-from common.models import BaseModel
+from common.models import Attachment, BaseModel
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -24,6 +25,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import ValidationError
@@ -31,6 +33,7 @@ from django.utils import timezone
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
+from phonenumber_field.modelfields import PhoneNumberField
 from strawberry_django.descriptors import model_property
 
 if TYPE_CHECKING:
@@ -40,6 +43,20 @@ if TYPE_CHECKING:
         ServiceRequestUserObjectPermission,
         TaskUserObjectPermission,
     )
+
+DOC_READY_NAMESPACES = [
+    ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
+    ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
+    ClientDocumentNamespaceEnum.PHOTO_ID,
+    ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE,
+    ClientDocumentNamespaceEnum.SOCIAL_SECURITY_CARD,
+    ClientDocumentNamespaceEnum.OTHER_DOC_READY,
+]
+CONSENT_FORM_NAMESPACES = [
+    ClientDocumentNamespaceEnum.CONSENT_FORM,
+    ClientDocumentNamespaceEnum.HMIS_FORM,
+    ClientDocumentNamespaceEnum.OTHER_FORM,
+]
 
 
 @pghistory.track(
@@ -133,6 +150,7 @@ class ClientProfile(models.Model):
     address = models.TextField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
+    documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
@@ -140,7 +158,7 @@ class ClientProfile(models.Model):
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    phone_number = PhoneNumberField(region="US", blank=True, null=True)
     physical_description = models.TextField(blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
@@ -148,6 +166,18 @@ class ClientProfile(models.Model):
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
+
+    @model_property
+    def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []
+
+    @model_property
+    def consent_form_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES) or []
+
+    @model_property
+    def other_documents(self: "ClientProfile") -> List[Attachment]:
+        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []
 
     @model_property
     def age(self) -> Optional[int]:
@@ -174,7 +204,7 @@ class ClientContact(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    phone_number = PhoneNumberField(region="US", blank=True, null=True)
     mailing_address = models.TextField(null=True, blank=True)
     relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)

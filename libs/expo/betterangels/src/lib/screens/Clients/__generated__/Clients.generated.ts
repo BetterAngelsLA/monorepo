@@ -17,7 +17,7 @@ export type ClientProfilesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, hmisId?: string | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, hmisId?: string | null, displayCaseManager: string, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
 
 
 export const CreateNoteDocument = gql`
@@ -90,6 +90,7 @@ export const ClientProfilesDocument = gql`
         lastName
         username
       }
+      displayCaseManager
     }
   }
 }
