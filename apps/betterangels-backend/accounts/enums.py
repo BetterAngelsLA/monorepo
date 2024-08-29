@@ -1,6 +1,7 @@
 import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from regex import F
 
 
 class YesNoPreferNotToSayEnum(models.TextChoices):
@@ -15,6 +16,16 @@ class GenderEnum(models.TextChoices):
     NON_BINARY = "non_binary", _("Non-binary")
     OTHER = "other", _("Other")
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
+
+
+class SocialMediaEnum(models.TextChoices):
+    FACEBOOK = "facebook", _("Facebook")
+    INSTAGRAM = "instagram", _("Instagram")
+    LINKEDIN = "linkedin", _("LinkedIn")
+    SNAPCHAT = "snapchat", _("Snapchat")
+    TIKTOK = "tiktok", _("TikTok")
+    TWITTER = "twitter", _("Twitter")
+    WHATSAPP = "whatsapp", _("WhatsApp")
 
 
 class VehicleTypeEnum(models.TextChoices):

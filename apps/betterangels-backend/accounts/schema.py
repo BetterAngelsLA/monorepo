@@ -8,6 +8,7 @@ from accounts.models import (
     ClientHouseholdMember,
     ClientProfile,
     HmisProfile,
+    SocialMediaProfile,
     User,
 )
 from accounts.permissions import ClientProfilePermissions
@@ -170,6 +171,8 @@ class Mutation:
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
             household_members = client_profile_data.pop("household_members", [])
+            social_media_profiles = client_profile_data.pop("social_media_profiles", [])
+
             client_user = User.objects.create_client(**user_data)
 
             client_profile = resolvers.create(
@@ -214,6 +217,17 @@ class Mutation:
                         },
                     )
 
+            if social_media_profiles:
+                for social_media_profile in social_media_profiles:
+                    resolvers.create(
+                        info,
+                        SocialMediaProfile,
+                        {
+                            **social_media_profile,
+                            "client_profile": client_profile,
+                        },
+                    )
+
             permissions = [
                 ClientProfilePermissions.VIEW,
                 ClientProfilePermissions.CHANGE,
@@ -243,6 +257,7 @@ class Mutation:
             contacts_data = client_profile_data.pop("contacts", [])
             hmis_profiles = client_profile_data.pop("hmis_profiles", [])
             household_members = client_profile_data.pop("household_members", [])
+            social_media_profiles = client_profile_data.pop("social_media_profiles", [])
 
             if user_data:
                 client_user = resolvers.update(
@@ -326,6 +341,30 @@ class Mutation:
                         info,
                         hmis_profile,
                         hmis_profile_updates_by_id[str(hmis_profile.id)],
+                    )
+
+            if social_media_profiles:
+                social_media_profile_updates_by_id = {hp["id"]: hp for hp in social_media_profiles if hp.get("id")}
+                social_media_profiles_to_create = [hp for hp in social_media_profiles if not hp.get("id")]
+                social_media_profiles_to_update = HmisProfile.objects.filter(
+                    id__in=social_media_profile_updates_by_id, client_profile=client_profile
+                )
+
+                for social_media_profile in social_media_profiles_to_create:
+                    resolvers.create(
+                        info,
+                        HmisProfile,
+                        {
+                            **social_media_profile,
+                            "client_profile": client_profile,
+                        },
+                    )
+
+                for social_media_profile in social_media_profiles_to_update:
+                    resolvers.update(
+                        info,
+                        social_media_profile,
+                        social_media_profile_updates_by_id[str(social_media_profile.id)],
                     )
 
             client_profile = resolvers.update(

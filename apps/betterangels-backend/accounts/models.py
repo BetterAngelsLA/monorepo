@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Text, Tuple
 
 import pghistory
 from accounts.enums import (
@@ -12,6 +12,7 @@ from accounts.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.groups import GroupTemplateNames
@@ -217,6 +218,12 @@ class ClientHouseholdMember(models.Model):
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
+
+
+class SocialMediaProfile(models.Model):
+    client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
+    platform = TextChoicesField(choices_enum=SocialMediaEnum)
+    platform_user_id = models.CharField(max_length=100)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

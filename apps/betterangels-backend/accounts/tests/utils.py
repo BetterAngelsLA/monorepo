@@ -11,6 +11,7 @@ from accounts.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import User
@@ -124,13 +125,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 hmisId
                 agency
             }
-            user {
-                id
-                firstName
-                lastName
-                middleName
-                email
-            }
             householdMembers {
                 id
                 name
@@ -138,6 +132,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 gender
                 relationshipToClient
                 relationshipToClientOther
+            }
+            socialMediaProfiles {
+                id
+                platform
+                platformUserId
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
             }
         """
 
@@ -219,6 +225,19 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_household_member_1,
             self.client_profile_1_household_member_2,
         ]
+        self.client_1_social_media_profile_1 = {
+            "platform": SocialMediaEnum.INSTAGRAM.name,
+            "platformUserId": "toadman",
+        }
+        self.client_1_social_media_profile_2 = {
+            "platform": SocialMediaEnum.TWITTER.name,
+            "platformUserId": "birdman",
+        }
+        self.client_1_social_media_profiles = [
+            self.client_1_social_media_profile_1,
+            self.client_1_social_media_profile_2,
+        ]
+
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "user": self.client_profile_1_user,
@@ -237,6 +256,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
+                "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
                 "contacts": self.client_1_contacts,
@@ -262,6 +282,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
+                "socialMediaProfiles": None,
                 "spokenLanguages": [],
                 "veteranStatus": None,
             }

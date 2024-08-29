@@ -182,7 +182,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 10
+        expected_query_count = 11
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -192,29 +192,30 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "id": str(client_profile_id),
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
-            "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "consentFormDocuments": [self.client_profile_1_document_3],
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayPronouns": "He/Him/His",
             "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "displayPronouns": "He/Him/His",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
             "hmisId": self.client_profile_1["hmisId"],
-            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "physicalDescription": "A human",
+            "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.HE_HIM_HIS.name,
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,
+            "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             "user": self.client_profile_1["user"],
@@ -229,7 +230,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 6
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
