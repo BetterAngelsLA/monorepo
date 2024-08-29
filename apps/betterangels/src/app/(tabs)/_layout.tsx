@@ -249,6 +249,7 @@ export default function TabLayout() {
       <MainPlusModal closeModal={closeModal} isModalVisible={isModalVisible} />
       <ConsentModal
         user={user}
+        height={'90%'}
         isModalVisible={tosModalIsOpen}
         closeModal={() => setTosModalIsOpen(false)}
         privacyPolicyUrl={privacyPolicyUrl}
