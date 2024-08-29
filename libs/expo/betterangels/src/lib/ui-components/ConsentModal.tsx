@@ -7,6 +7,7 @@ import {
 import {
   Button,
   Checkbox,
+  TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Link } from 'expo-router';
@@ -18,7 +19,7 @@ import { useSignOut } from '../hooks';
 import { useUpdateCurrentUserMutation } from '../providers';
 import { TUser } from '../providers/user/UserContext';
 
-interface IMainModalProps {
+interface IConsentModalProps {
   isModalVisible: boolean;
   closeModal: () => void;
   opacity?: number;
@@ -31,7 +32,7 @@ interface IMainModalProps {
 }
 
 interface CheckboxData {
-  key: keyof CheckedItems; // Assuming CheckedItems is an interface for checkedItems
+  key: keyof CheckedItems;
   accessibilityHint: string;
   labelText: string;
   linkText: string;
@@ -43,13 +44,13 @@ interface CheckedItems {
   isPrivacyPolicyChecked: boolean;
 }
 
-export default function ConsentModal(props: IMainModalProps) {
+export default function ConsentModal(props: IConsentModalProps) {
   const {
     isModalVisible,
     opacity = 0,
     vertical = true,
     ml = 0,
-    height = 'auto',
+    height,
     privacyPolicyUrl,
     termsOfServiceUrl,
     closeModal,
@@ -188,44 +189,24 @@ export default function ConsentModal(props: IMainModalProps) {
             }}
           />
           <Image
+            style={{
+              marginTop: '10%',
+            }}
             source={require('../../../../shared/images/consent.png')}
             accessibilityIgnoresInvertColors={true}
           />
         </View>
-        <TextRegular
-          size={'sm'}
-          mb="xs"
-          style={{
-            fontFamily: 'Poppins',
-            fontWeight: '500',
-          }}
-          color={Colors.PRIMARY_EXTRA_DARK}
-        >
+        <TextBold size={'sm'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
           Welcome to
-        </TextRegular>
-        <TextRegular
-          size={'lg'}
-          mb="xs"
-          color={Colors.PRIMARY_EXTRA_DARK}
-          style={{
-            fontFamily: 'Poppins',
-            fontWeight: '600',
-          }}
-        >
+        </TextBold>
+        <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
           BetterAngels Outreach app!
-        </TextRegular>
-        <TextRegular
-          size={'sm'}
-          mb="md"
-          color={Colors.PRIMARY_EXTRA_DARK}
-          style={{
-            fontWeight: '400',
-          }}
-        >
+        </TextBold>
+        <TextRegular size={'sm'} mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
           Please confirm the following:
         </TextRegular>
         {renderCheckboxes()}
-        <View style={styles.buttons}>
+        <View style={styles.buttonsContainer}>
           <Button
             accessibilityHint="Submits agreement and goes to welcome screen"
             onPress={submitAgreements}
@@ -267,10 +248,11 @@ const styles = StyleSheet.create({
   checkbox: {
     flexDirection: 'row',
   },
-  buttons: {
-    flex: 1,
-    position: 'relative',
-    bottom: -40,
+  buttonsContainer: {
+    position: 'absolute',
+    bottom: 80,
+    right: 25,
+    width: '100%',
   },
   link: {
     fontFamily: 'Poppins',
