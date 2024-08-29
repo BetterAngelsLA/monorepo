@@ -22,7 +22,7 @@ interface ILocationProps {
     time: boolean;
   }) => void;
   setExpanded: (expanded: string | undefined | null) => void;
-  noteId: string | undefined;
+  noteId: string;
   point?: number[] | null;
   address?:
     | {
