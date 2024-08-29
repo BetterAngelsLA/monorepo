@@ -94,22 +94,23 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
-    const input = {
-      ...values,
-    };
-
     if (values.dateOfBirth) {
-      input.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
+      values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
     try {
       let operationResult;
+      if (id) {
+        const input = {
+          ...(values as UpdateClientProfileInput),
+          id,
+        };
 
-      if (id && data?.clientProfile.user.id) {
+        if (!data || !('clientProfile' in data)) return;
+
         const updateResponse = await updateClient({
           variables: {
             data: {
-              id,
               ...input,
               user: {
                 id: data?.clientProfile.user.id,
@@ -121,6 +122,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
       } else {
+        const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
           variables: { data: input as CreateClientProfileInput },
         });

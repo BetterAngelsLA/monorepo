@@ -1,7 +1,12 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { MainPlusModal, hexToRGBA, useUser } from '@monorepo/expo/betterangels';
+import {
+  ConsentModal,
+  hexToRGBA,
+  MainPlusModal,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import {
   CalendarLineIcon,
   CalendarSolidIcon,
@@ -17,15 +22,23 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, FontSizes } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [tosModalIsOpen, setTosModalIsOpen] = useState<boolean>(false);
   const router = useRouter();
 
   const { user, isLoading } = useUser();
+
+  useEffect(() => {
+    if (user && (!user.hasAcceptedTos || !user.hasAcceptedPrivacyPolicy)) {
+      setTosModalIsOpen(true);
+    }
+  }, [user]);
 
   const openModal = () => {
     setModalVisible(true);
@@ -232,27 +245,15 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            href: null,
-            tabBarIcon: ({ color }) => (
-              <View style={{ alignItems: 'center' }}>
-                <View style={styles.profileContainer}>
-                  <Text style={styles.profileText}>
-                    {user.username?.slice(0, 2)}
-                  </Text>
-                </View>
-                <TextRegular color={color} size="xs">
-                  Profile
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
       </Tabs>
       <MainPlusModal closeModal={closeModal} isModalVisible={isModalVisible} />
+      <ConsentModal
+        user={user}
+        isModalVisible={tosModalIsOpen}
+        closeModal={() => setTosModalIsOpen(false)}
+        privacyPolicyUrl={privacyPolicyUrl}
+        termsOfServiceUrl={termsOfServiceUrl}
+      />
     </>
   );
 }

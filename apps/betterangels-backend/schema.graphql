@@ -72,7 +72,7 @@ type AuthResponse {
 input ClientContactInput {
   name: String
   email: String
-  phoneNumber: String
+  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
@@ -82,8 +82,48 @@ input ClientContactInput {
 type ClientContactType {
   name: String
   email: String
-  phoneNumber: String
+  phoneNumber: PhoneNumber
   mailingAddress: String
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID!
+  clientProfile: DjangoModelType!
+}
+
+enum ClientDocumentNamespaceEnum {
+  DRIVERS_LICENSE_FRONT
+  DRIVERS_LICENSE_BACK
+  PHOTO_ID
+  BIRTH_CERTIFICATE
+  SOCIAL_SECURITY_CARD
+  OTHER_DOC_READY
+  CONSENT_FORM
+  HMIS_FORM
+  OTHER_FORM
+  OTHER_CLIENT_DOCUMENT
+}
+
+type ClientDocumentType implements AttachmentInterface {
+  id: ID!
+  file: DjangoFileType!
+  attachmentType: AttachmentType!
+  originalFilename: String
+  namespace: ClientDocumentNamespaceEnum!
+}
+
+input ClientHouseholdMemberInput {
+  name: String
+  dateOfBirth: Date
+  gender: GenderEnum
+  relationshipToClient: RelationshipTypeEnum
+  relationshipToClientOther: String
+  id: ID
+}
+
+type ClientHouseholdMemberType {
+  name: String
+  dateOfBirth: Date
+  gender: GenderEnum
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
@@ -106,36 +146,68 @@ input ClientProfileOrder {
 
 type ClientProfileType {
   address: String
+  age: Int
+  placeOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumber
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  pronounsOther: String
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
   contacts: [ClientContactType!]
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  displayPronouns: String
   hmisProfiles: [HmisProfileType]
-  age: Int
+  householdMembers: [ClientHouseholdMemberType!]
+  displayCaseManager: String!
 }
+
+input CreateClientDocumentInput {
+  clientProfile: ID!
+  file: Upload!
+  namespace: ClientDocumentNamespaceEnum!
+}
+
+union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input CreateClientProfileInput {
   address: String
+  age: Int
+  placeOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumber
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  pronounsOther: String
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
+  householdMembers: [ClientHouseholdMemberInput!]
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -214,6 +286,8 @@ scalar Date
 """Date with time (isoformat)"""
 scalar DateTime
 
+union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
+
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
@@ -256,6 +330,15 @@ enum DueByGroupEnum {
   NO_DUE_DATE
 }
 
+enum EyeColorEnum {
+  BLUE
+  BROWN
+  GREEN
+  GRAY
+  HAZEL
+  OTHER
+}
+
 type FeatureControlData {
   flags: [FlagType!]!
   switches: [SwitchType!]!
@@ -274,6 +357,17 @@ enum GenderEnum {
   NON_BINARY
   OTHER
   PREFER_NOT_TO_SAY
+}
+
+enum HairColorEnum {
+  BLACK
+  BLONDE
+  BROWN
+  GRAY
+  RED
+  WHITE
+  BALD
+  OTHER
 }
 
 enum HmisAgencyEnum {
@@ -344,6 +438,14 @@ type MagicLinkResponse {
   message: String!
 }
 
+enum MaritalStatusEnum {
+  DIVORCED
+  MARRIED
+  SEPARATED
+  SINGLE
+  WIDOWED
+}
+
 enum MoodEnum {
   AGITATED
   AGREEABLE
@@ -373,11 +475,14 @@ type MoodType {
 }
 
 type Mutation {
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
+  updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
@@ -510,13 +615,24 @@ type OrganizationType {
   name: String!
 }
 
+scalar PhoneNumber
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
+enum PronounEnum {
+  HE_HIM_HIS
+  SHE_HER_HERS
+  THEY_THEM_THEIRS
+  OTHER
+}
+
 type Query {
   currentUser: UserType!
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
@@ -526,6 +642,16 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+}
+
+enum RaceEnum {
+  AMERICAN_INDIAN_ALASKA_NATIVE
+  ASIAN
+  BLACK_AFRICAN_AMERICAN
+  HISPANIC_LATINO
+  NATIVE_HAWAIIAN_PACIFIC_ISLANDER
+  WHITE_CAUCASIAN
+  OTHER
 }
 
 enum RelationshipTypeEnum {
@@ -651,22 +777,34 @@ enum TaskTypeEnum {
 
 input UpdateClientProfileInput {
   address: String
+  age: Int
+  placeOfBirth: String
   dateOfBirth: Date
+  eyeColor: EyeColorEnum
   gender: GenderEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
   hmisId: String
+  maritalStatus: MaritalStatusEnum
   nickname: String
-  phoneNumber: String
+  phoneNumber: PhoneNumber
+  physicalDescription: String
   preferredLanguage: LanguageEnum
-  pronouns: String
+  pronouns: PronounEnum
+  pronounsOther: String
+  race: RaceEnum
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
+  householdMembers: [ClientHouseholdMemberInput!]
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
+
+union UpdateCurrentUserPayload = UserType | OperationInfo
 
 input UpdateNoteInput {
   id: ID!
@@ -721,6 +859,8 @@ input UpdateUserInput {
   middleName: String
   email: String
   id: ID!
+  hasAcceptedTos: Boolean = false
+  hasAcceptedPrivacyPolicy: Boolean = false
 }
 
 scalar Upload
@@ -731,9 +871,11 @@ type UserType {
   middleName: String
   email: String
   id: ID!
-  username: String!
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
+  username: String!
 }
 
 enum YesNoPreferNotToSayEnum {

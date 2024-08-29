@@ -1,19 +1,29 @@
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
-from accounts.enums import LanguageEnum
-from dateutil.relativedelta import relativedelta
+from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from common.graphql.types import AttachmentInterface
+from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
 from organizations.models import Organization
+from phonenumber_field.modelfields import PhoneNumber
+from phonenumbers import parse
 from strawberry import ID, Info, auto
+from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
 
-from .models import ClientContact, ClientProfile, HmisProfile, User
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    User,
+)
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -24,6 +34,18 @@ class AuthInput:
     code_verifier: Optional[str] = strawberry.field(name="code_verifier")
     id_token: Optional[str] = strawberry.field(name="id_token")
     redirect_uri: Optional[str] = strawberry.field(name="redirect_uri")
+
+
+@strawberry_django.type(Attachment, pagination=True)
+class ClientDocumentType(AttachmentInterface):
+    namespace: ClientDocumentNamespaceEnum
+
+
+@strawberry_django.input(Attachment)
+class CreateClientDocumentInput:
+    client_profile: ID
+    file: Upload
+    namespace: ClientDocumentNamespaceEnum
 
 
 @strawberry.type
@@ -125,10 +147,14 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
+    # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
+    # Temporary fix while we figure out type generation
     id: ID
-    username: auto
+    has_accepted_tos: Optional[bool]
+    has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
+    username: auto
 
 
 @strawberry_django.input(User, partial=True)
@@ -139,18 +165,36 @@ class CreateUserInput(UserBaseType):
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
     id: ID
+    has_accepted_tos: auto = False
+    has_accepted_privacy_policy: auto = False
+
+
+PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
+    PhoneNumber,
+    serialize=lambda v: str(v.national_number),
+    parse_value=lambda v: parse(v, "US"),
+)
 
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
+    age: auto
+    place_of_birth: auto
     date_of_birth: auto
+    eye_color: auto
     gender: auto
+    hair_color: auto
+    height_in_inches: auto
     hmis_id: auto
+    marital_status: auto
     nickname: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
+    physical_description: auto
     preferred_language: auto
     pronouns: auto
+    pronouns_other: auto
+    race: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
@@ -159,7 +203,7 @@ class ClientProfileBaseType:
 class ClientContactBaseType:
     name: auto
     email: auto
-    phone_number: auto
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
@@ -176,21 +220,44 @@ class ClientContactInput(ClientContactBaseType):
     id: auto
 
 
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberBaseType:
+    name: auto
+    date_of_birth: auto
+    gender: auto
+    relationship_to_client: auto
+    relationship_to_client_other: auto
+
+
+@strawberry_django.type(ClientHouseholdMember)
+class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
+    id: ID
+    client_profile: auto
+
+
+@strawberry_django.input(ClientHouseholdMember, partial=True)
+class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
+    id: auto
+
+
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     user: UserType
     contacts: Optional[List[ClientContactType]]
-    hmis_profiles: Optional[List[Optional[HmisProfileType]]] = strawberry_django.field()
+    doc_ready_documents: Optional[List[ClientDocumentType]]
+    consent_form_documents: Optional[List[ClientDocumentType]]
+    other_documents: Optional[List[ClientDocumentType]]
+    display_pronouns: auto
+    hmis_profiles: Optional[List[Optional[HmisProfileType]]]
+    household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
+    def display_case_manager(self, info: Info) -> str:
+        if case_managers := getattr(self, "case_managers", None):
+            return str(case_managers[-1].name)
 
-        today = timezone.now().date()
-        age = relativedelta(today, self.date_of_birth).years
-        return age
+        return "Not Assigned"
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -198,6 +265,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     user: CreateUserInput
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -206,6 +274,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     user: Optional[UpdateUserInput]
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
 
 
 @strawberry.input

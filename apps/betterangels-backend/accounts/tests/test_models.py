@@ -1,14 +1,15 @@
-from accounts.enums import HmisAgencyEnum
-from accounts.models import HmisProfile, User
+from accounts.enums import HmisAgencyEnum, PronounEnum
+from accounts.models import ClientProfile, HmisProfile, User
 from accounts.utils import remove_organization_permission_group
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
+from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from .baker_recipes import organization_recipe, permission_group_recipe
+from .baker_recipes import organization_recipe
 
 
-class UserModelTestCase(TestCase):
+class UserModelTestCase(ParametrizedTestCase, TestCase):
     def test_str_method(self) -> None:
         user_with_name = baker.make(User, first_name="Dale", last_name="Cooper")
         user_without_name = baker.make(User)
@@ -23,33 +24,48 @@ class UserModelTestCase(TestCase):
         user_2 = baker.make(User, first_name="Dale", middle_name="Bartholomew", last_name="Cooper")
         self.assertEqual(user_2.full_name, "Dale Bartholomew Cooper")
 
-    def test_is_outreach_authorized(self) -> None:
+    @parametrize(
+        "user_is_in_authorized_org, user_is_in_unauthorized_org, should_succeed",
+        [
+            (True, True, True),
+            (True, False, True),
+            (False, True, False),
+        ],
+    )
+    def test_is_outreach_authorized(
+        self,
+        user_is_in_authorized_org: bool,
+        user_is_in_unauthorized_org: bool,
+        should_succeed: bool,
+    ) -> None:
         authorized_org = organization_recipe.make(name="authorized org")
         unauthorized_org = organization_recipe.make(name="unauthorized org")
 
-        (
-            user_in_auth_org,
-            user_in_unauth_org,
-            user_in_both_orgs,
-            user_in_no_orgs,
-        ) = baker.make(User, _quantity=4)
-
-        authorized_org.add_user(user_in_auth_org)
-        authorized_org.add_user(user_in_both_orgs)
-        unauthorized_org.add_user(user_in_both_orgs)
-        unauthorized_org.add_user(user_in_unauth_org)
-
-        remove_organization_permission_group(unauthorized_org)
-
-        permission_group_recipe.make(
-            name="unauthorized permission group",
-            organization=unauthorized_org,
+        user = baker.make(
+            User,
         )
 
-        self.assertTrue(user_in_auth_org.is_outreach_authorized)
-        self.assertTrue(user_in_both_orgs.is_outreach_authorized)
-        self.assertFalse(user_in_unauth_org.is_outreach_authorized)
-        self.assertFalse(user_in_no_orgs.is_outreach_authorized)
+        if user_is_in_authorized_org:
+            authorized_org.add_user(user)
+
+        if user_is_in_unauthorized_org:
+            unauthorized_org.add_user(user)
+
+        remove_organization_permission_group(unauthorized_org)
+        self.assertEqual(user.is_outreach_authorized, should_succeed)
+
+    def test_display_pronouns(self) -> None:
+        client_profile = baker.make(ClientProfile)
+        self.assertIsNone(client_profile.display_pronouns)
+
+        client_profile.pronouns = PronounEnum.HE_HIM_HIS
+        client_profile.save()
+        self.assertEqual(client_profile.display_pronouns, "He/Him/His")
+
+        client_profile.pronouns = PronounEnum.OTHER
+        client_profile.pronouns_other = "she/her/their"
+        client_profile.save()
+        self.assertEqual(client_profile.display_pronouns, "she/her/their")
 
 
 class HmisProfileModelTestCase(TestCase):

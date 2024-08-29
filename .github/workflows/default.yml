@@ -70,6 +70,7 @@ jobs:
 
       - name: 🐳 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ env.BRANCH_NAME == 'main' }}
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -77,21 +78,19 @@ jobs:
 
       - name: 🐳 Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+        if: ${{ env.BRANCH_NAME == 'main' }}
 
-      # Build and Push Monorepo Image for each commit
+      # Build and Push Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: Dockerfile
-          push: true
-          platforms: linux/amd64
-          cache-from: |
-            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }}
-            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-main
-          cache-to: |
-            type=registry,ref=${{ env.MONOREPO_IMAGE }}:buildcache-${{ env.BRANCH_NAME }},image-manifest=true,mode=max
+          load: true
+          push: ${{ env.BRANCH_NAME == 'main' }}
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: 🔑 Prep Container Permissions
         run: |
@@ -149,6 +148,9 @@ jobs:
 
       - name: 🕵🏻‍♂️ GraphQL Inspector
         uses: kamilkisiela/graphql-inspector@master
+        # Warning: This now skips schema breaking checks in forked repositories.
+        # Resolve in: https://betterangels.atlassian.net/browse/DEV-690
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           schema: main:apps/betterangels-backend/schema.graphql
@@ -169,6 +171,7 @@ jobs:
           EOF
 
       - name: 🛠️ Build and Push Artifacts
+        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
@@ -179,7 +182,7 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🚀 Deploy Changes
-        if: env.BRANCH_NAME == 'main'
+        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
