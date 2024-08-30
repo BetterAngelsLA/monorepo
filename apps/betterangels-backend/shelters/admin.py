@@ -107,25 +107,25 @@ class ShelterForm(forms.ModelForm):
             "pets": Pet,
             "sleeping_options": SleepingOption,
         }
-        for field_name, model_class in fields_to_clean.items():
-            cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+        for field_name, model_cls in fields_to_clean.items():
+            cleaned_data[field_name] = self._clean_choices(field_name, model_cls)
 
         return cleaned_data
 
-    def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
+    def _clean_choices(self, field_name: str, model_cls: Type[T]) -> list[T]:
         choices: list[str] = self.cleaned_data.get(field_name, [])
 
         if not choices:
             return []
 
         # Retrieve existing objects and their names
-        existing_objects = list(model_class.objects.filter(name__in=choices))  # type: ignore[attr-defined]
+        existing_objects = list(model_cls.objects.filter(name__in=choices))  # type: ignore[attr-defined]
         existing_entries = {str(obj) for obj in existing_objects}
 
         # Create missing objects
-        missing_choices = [model_class(name=choice) for choice in choices if choice not in existing_entries]
+        missing_choices = [model_cls(name=choice) for choice in choices if choice not in existing_entries]
         if missing_choices:
-            new_objects = model_class.objects.bulk_create(missing_choices)  # type: ignore[attr-defined]
+            new_objects = model_cls.objects.bulk_create(missing_choices)  # type: ignore[attr-defined]
             existing_objects.extend(new_objects)
 
         return existing_objects

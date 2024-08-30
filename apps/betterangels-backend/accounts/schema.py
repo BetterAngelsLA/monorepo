@@ -39,7 +39,7 @@ from .types import (
     UserType,
 )
 
-CLIENT_RELATED_OBJECT_MODEL_MAP = {
+CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
     "contacts": "ClientContact",
     "hmis_profiles": "HmisProfile",
     "household_members": "ClientHouseholdMember",
@@ -48,21 +48,21 @@ CLIENT_RELATED_OBJECT_MODEL_MAP = {
 
 def _upsert_client_related_object(
     info: Info,
-    model_class_string: str,
+    model_cls_name: str,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
 ) -> None:
-    model_class = apps.get_model("accounts", model_class_string)
+    model_cls = apps.get_model("accounts", model_cls_name)
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
-    model_class.objects.exclude(id__in=item_updates_by_id).delete()
+    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+    model_cls.objects.exclude(id__in=item_updates_by_id).delete()
 
     for item in items_to_create:
         resolvers.create(
             info,
-            model_class,
+            model_cls,
             {
                 **item,
                 "client_profile": client_profile,
@@ -244,12 +244,12 @@ class Mutation:
                     },
                 )
 
-            for related_object, related_object_class in CLIENT_RELATED_OBJECT_MODEL_MAP.items():
-                if related_object_data := client_profile_data.pop(related_object):
+            for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
+                if data := client_profile_data.pop(related_name):
                     _upsert_client_related_object(
                         info,
-                        related_object_class,
-                        related_object_data,
+                        related_cls_name,
+                        data,
                         client_profile,
                     )
 
