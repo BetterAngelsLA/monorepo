@@ -859,8 +859,8 @@ input UpdateUserInput {
   middleName: String
   email: String
   id: ID!
-  hasAcceptedTos: Boolean = false
-  hasAcceptedPrivacyPolicy: Boolean = false
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
 }
 
 scalar Upload
