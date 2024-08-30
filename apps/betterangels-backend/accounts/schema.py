@@ -46,12 +46,16 @@ CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
 }
 
 
-def _upsert_client_related_object(
+def upsert_or_delete_client_related_object(
     info: Info,
     model_cls_name: str,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
 ) -> None:
+    """Creates, updates, or deletes a client's related objects.
+
+    Expects a list of related objects. Missing elements will be deleted.
+    """
     model_cls = apps.get_model("accounts", model_cls_name)
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
@@ -246,7 +250,7 @@ class Mutation:
 
             for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if data := client_profile_data.pop(related_name):
-                    _upsert_client_related_object(
+                    upsert_or_delete_client_related_object(
                         info,
                         related_cls_name,
                         data,
