@@ -57,6 +57,7 @@ def _upsert_client_related_object(
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+    model_class.objects.exclude(id__in=item_updates_by_id).delete()
 
     for item in items_to_create:
         resolvers.create(

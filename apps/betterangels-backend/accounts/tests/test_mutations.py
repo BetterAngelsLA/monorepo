@@ -199,16 +199,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "bff",
         }
-        contact_2 = {
-            "id": self.client_profile_1["contacts"][1]["id"],
-            "name": "Garyyy",
-            "email": "garyyy@example.co",
-            "phoneNumber": "6465551212",
-            "mailingAddress": "1235 Main Street",
-            "relationshipToClient": RelationshipTypeEnum.PET.name,
-            "relationshipToClientOther": None,
-        }
-        # Make sure we can add a new contact while updating existing contacts
         contact_new = {
             "name": "New guy",
             "email": "new_guy@example.co",
@@ -217,7 +207,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.UNCLE.name,
             "relationshipToClientOther": None,
         }
-        contacts = [contact_1, contact_2, contact_new]
+        contacts = [contact_1, contact_new]
 
         household_member_1 = {
             "id": self.client_profile_1["householdMembers"][0]["id"],
@@ -227,14 +217,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
         }
-        household_member_2 = {
-            "id": self.client_profile_1["householdMembers"][1]["id"],
-            "name": "Tulips",
-            "dateOfBirth": "1901-01-02",
-            "gender": GenderEnum.MALE.name,
-            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
-            "relationshipToClientOther": "it's complicated",
-        }
         household_member_new = {
             "name": "Rose",
             "dateOfBirth": "1902-01-01",
@@ -242,23 +224,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.MOTHER.name,
             "relationshipToClientOther": None,
         }
-        household_members = [household_member_1, household_member_2, household_member_new]
+        household_members = [household_member_1, household_member_new]
 
         hmis_profile_1 = {
             "id": self.client_profile_1["hmisProfiles"][0]["id"],
             "hmisId": "UPDATEDHMISidSANTAMONICA1",
             "agency": HmisAgencyEnum.SANTA_MONICA.name,
         }
-        hmis_profile_2 = {
-            "id": self.client_profile_1["hmisProfiles"][1]["id"],
-            "hmisId": "UPDATEDHMISidCHAMP1",
-            "agency": HmisAgencyEnum.CHAMP.name,
-        }
         hmis_profile_new = {
             "hmisId": "NEWHMISid1",
             "agency": HmisAgencyEnum.VASH.name,
         }
-        hmis_profiles = [hmis_profile_1, hmis_profile_2, hmis_profile_new]
+        hmis_profiles = [hmis_profile_1, hmis_profile_new]
 
         variables = {
             "id": self.client_profile_1["id"],
