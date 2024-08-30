@@ -3,14 +3,7 @@ from typing import Any, Dict, List, cast
 import strawberry
 import strawberry_django
 from accounts.enums import RelationshipTypeEnum
-from accounts.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    SocialMediaProfile,
-    User,
-)
+from accounts.models import ClientContact, ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -45,6 +38,43 @@ from .types import (
     UpdateUserInput,
     UserType,
 )
+
+CLIENT_RELATED_OBJECT_MODEL_MAP = {
+    "contacts": "ClientContact",
+    "hmis_profiles": "HmisProfile",
+    "household_members": "ClientHouseholdMember",
+}
+
+
+def _upsert_client_related_object(
+    info: Info,
+    model_class_string: str,
+    data: List[Dict[str, Any]],
+    client_profile: ClientProfile,
+) -> None:
+    model_class = apps.get_model("accounts", model_class_string)
+
+    item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
+    items_to_create = [item for item in data if not item.get("id")]
+    items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+    model_class.objects.exclude(id__in=item_updates_by_id).delete()
+
+    for item in items_to_create:
+        resolvers.create(
+            info,
+            model_class,
+            {
+                **item,
+                "client_profile": client_profile,
+            },
+        )
+
+    for item in items_to_update:
+        resolvers.update(
+            info,
+            item,
+            item_updates_by_id[str(item.id)],
+        )
 
 
 def _update_client_related_object(
@@ -196,16 +226,9 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
-
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user", {})
-            contacts_data = client_profile_data.pop("contacts", [])
-            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members = client_profile_data.pop("household_members", [])
-            social_media_profiles = client_profile_data.pop("social_media_profiles", [])
-
+            user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
-
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -214,50 +237,6 @@ class Mutation:
                     "user": client_user,
                 },
             )
-
-            if contacts_data:
-                for contact in contacts_data:
-                    resolvers.create(
-                        info,
-                        ClientContact,
-                        {
-                            **contact,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if hmis_profiles:
-                for hmis_profile in hmis_profiles:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **hmis_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if household_members:
-                for household_member in household_members:
-                    resolvers.create(
-                        info,
-                        ClientHouseholdMember,
-                        {
-                            **household_member,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if social_media_profiles:
-                for social_media_profile in social_media_profiles:
-                    resolvers.create(
-                        info,
-                        SocialMediaProfile,
-                        {
-                            **social_media_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -295,16 +274,9 @@ class Mutation:
                     },
                 )
 
-            related_object_model_map = {
-                "contacts": "ClientContact",
-                "hmis_profiles": "HmisProfile",
-                "household_members": "ClientHouseholdMember",
-                "social_media_profiles": "SocialMediaProfile",
-            }
-
-            for related_object, related_object_class in related_object_model_map.items():
+            for related_object, related_object_class in CLIENT_RELATED_OBJECT_MODEL_MAP.items():
                 if related_object_data := client_profile_data.pop(related_object):
-                    _update_client_related_object(
+                    _upsert_client_related_object(
                         info,
                         related_object_class,
                         related_object_data,
