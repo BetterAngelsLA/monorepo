@@ -43,6 +43,7 @@ CLIENT_RELATED_OBJECT_MODEL_MAP = {
     "contacts": "ClientContact",
     "hmis_profiles": "HmisProfile",
     "household_members": "ClientHouseholdMember",
+    "social_media_profiles": "SocialMediaProfile",
 }
 
 
@@ -58,36 +59,6 @@ def _upsert_client_related_object(
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
     model_class.objects.exclude(id__in=item_updates_by_id).delete()
-
-    for item in items_to_create:
-        resolvers.create(
-            info,
-            model_class,
-            {
-                **item,
-                "client_profile": client_profile,
-            },
-        )
-
-    for item in items_to_update:
-        resolvers.update(
-            info,
-            item,
-            item_updates_by_id[str(item.id)],
-        )
-
-
-def _update_client_related_object(
-    info: Info,
-    model_class_string: str,
-    data: List[Dict[str, Any]],
-    client_profile: ClientProfile,
-) -> None:
-    model_class = apps.get_model("accounts", model_class_string)
-
-    item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
-    items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_class.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
 
     for item in items_to_create:
         resolvers.create(
@@ -226,6 +197,7 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
+
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)

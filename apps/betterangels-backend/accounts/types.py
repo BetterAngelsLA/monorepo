@@ -285,10 +285,10 @@ class ClientProfileType(ClientProfileBaseType):
 @strawberry_django.input(ClientProfile, partial=True)
 class ClientProfileInput(ClientProfileBaseType):
     id: Optional[ID]
-    contacts: Optional[List[ClientContactInput]]
-    hmis_profiles: Optional[List[HmisProfileInput]]
-    household_members: Optional[List[ClientHouseholdMemberInput]]
-    social_media_profiles: Optional[List[SocialMediaProfileInput]]
+    contacts: List[ClientContactInput]
+    hmis_profiles: List[HmisProfileInput]
+    household_members: List[ClientHouseholdMemberInput]
+    social_media_profiles: List[SocialMediaProfileInput]
     user: Optional[UpdateUserInput]
 
 
