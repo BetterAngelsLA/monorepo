@@ -221,27 +221,27 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
-                "placeOfBirth": "Los Angeles, CA",
+                "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
-                "hmisId": "HMISidLAHSA1",
+                "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
+                "householdMembers": self.client_1_household_members,
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "physicalDescription": "A human",
+                "placeOfBirth": "Los Angeles, CA",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+                "user": self.client_profile_1_user,
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
-                "contacts": self.client_1_contacts,
-                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(

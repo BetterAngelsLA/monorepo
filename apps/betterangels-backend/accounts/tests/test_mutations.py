@@ -131,7 +131,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "address": "1234 Main St",
-            "placeOfBirth": "Los Angeles",
             "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
@@ -139,19 +138,20 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
             "hmisId": "12345678",
-            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
+            "placeOfBirth": "Los Angeles",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": user,
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]

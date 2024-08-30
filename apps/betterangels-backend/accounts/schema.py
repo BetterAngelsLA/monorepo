@@ -3,13 +3,7 @@ from typing import Any, Dict, List, cast
 import strawberry
 import strawberry_django
 from accounts.enums import RelationshipTypeEnum
-from accounts.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    User,
-)
+from accounts.models import ClientContact, ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -45,8 +39,14 @@ from .types import (
     UserType,
 )
 
+CLIENT_RELATED_OBJECT_MODEL_MAP = {
+    "contacts": "ClientContact",
+    "hmis_profiles": "HmisProfile",
+    "household_members": "ClientHouseholdMember",
+}
 
-def _update_client_related_object(
+
+def _upsert_client_related_object(
     info: Info,
     model_class_string: str,
     data: List[Dict[str, Any]],
@@ -195,14 +195,9 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
-
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user", {})
-            contacts_data = client_profile_data.pop("contacts", [])
-            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members = client_profile_data.pop("household_members", [])
+            user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
-
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -211,39 +206,6 @@ class Mutation:
                     "user": client_user,
                 },
             )
-
-            if contacts_data:
-                for contact in contacts_data:
-                    resolvers.create(
-                        info,
-                        ClientContact,
-                        {
-                            **contact,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if hmis_profiles:
-                for hmis_profile in hmis_profiles:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **hmis_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if household_members:
-                for household_member in household_members:
-                    resolvers.create(
-                        info,
-                        ClientHouseholdMember,
-                        {
-                            **household_member,
-                            "client_profile": client_profile,
-                        },
-                    )
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -281,15 +243,9 @@ class Mutation:
                     },
                 )
 
-            related_object_model_map = {
-                "contacts": "ClientContact",
-                "household_members": "ClientHouseholdMember",
-                "hmis_profiles": "HmisProfile",
-            }
-
-            for related_object, related_object_class in related_object_model_map.items():
+            for related_object, related_object_class in CLIENT_RELATED_OBJECT_MODEL_MAP.items():
                 if related_object_data := client_profile_data.pop(related_object):
-                    _update_client_related_object(
+                    _upsert_client_related_object(
                         info,
                         related_object_class,
                         related_object_data,
