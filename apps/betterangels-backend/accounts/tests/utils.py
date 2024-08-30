@@ -246,24 +246,26 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         )["data"]["createClientProfile"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_2_user,
                 "address": None,
-                "placeOfBirth": None,
-                "contacts": [self.client_profile_2_contact_1],
+                "contacts": [],
                 "dateOfBirth": None,
                 "eyeColor": None,
                 "gender": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisId": "HMISidPASADENA2",
+                "hmisProfiles": [],
+                "householdMembers": [],
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
                 "physicalDescription": None,
+                "placeOfBirth": None,
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
-                "spokenLanguages": [],
+                "spokenLanguages": None,
+                "user": self.client_profile_2_user,
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
