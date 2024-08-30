@@ -120,18 +120,6 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.type(HmisProfile)
-class HmisProfileType:
-    id: auto
-    hmis_id: auto
-    agency: auto
-
-
-@strawberry_django.input(HmisProfile)
-class HmisProfileInput(HmisProfileType):
-    "See parent"
-
-
 @strawberry_django.type(Organization)
 class OrganizationType:
     id: ID
@@ -144,24 +132,6 @@ class UserBaseType:
     last_name: auto
     middle_name: auto
     email: auto
-
-
-@strawberry_django.type(SocialMediaProfile)
-class SocialMediaProfileBaseType:
-    id: Optional[ID]
-    client_profile: auto
-    platform: auto
-    platform_user_id: auto
-
-
-@strawberry_django.type(SocialMediaProfile)
-class SocialMediaProfileType(SocialMediaProfileBaseType):
-    "See parent"
-
-
-@strawberry_django.input(SocialMediaProfile, partial=True)
-class SocialMediaProfileInput(SocialMediaProfileBaseType):
-    "See parent"
 
 
 @strawberry_django.type(User)
@@ -234,6 +204,36 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
 @strawberry_django.input(ClientHouseholdMember, partial=True)
 class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
     id: auto
+
+
+@strawberry_django.type(HmisProfile)
+class HmisProfileType:
+    id: auto
+    hmis_id: auto
+    agency: auto
+
+
+@strawberry_django.input(HmisProfile)
+class HmisProfileInput(HmisProfileType):
+    "See parent"
+
+
+@strawberry_django.type(SocialMediaProfile)
+class SocialMediaProfileBaseType:
+    id: Optional[ID]
+    client_profile: auto
+    platform: auto
+    platform_user_id: auto
+
+
+@strawberry_django.type(SocialMediaProfile)
+class SocialMediaProfileType(SocialMediaProfileBaseType):
+    "See parent"
+
+
+@strawberry_django.input(SocialMediaProfile, partial=True)
+class SocialMediaProfileInput(SocialMediaProfileBaseType):
+    "See parent"
 
 
 @strawberry_django.type(ClientProfile)
