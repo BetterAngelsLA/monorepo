@@ -154,6 +154,7 @@ type ClientProfileType {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  mailingAddress: String
   maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: PhoneNumber
@@ -162,6 +163,7 @@ type ClientProfileType {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
@@ -195,6 +197,7 @@ input CreateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  mailingAddress: String
   maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: PhoneNumber
@@ -203,6 +206,7 @@ input CreateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   contacts: [ClientContactInput!]
@@ -815,6 +819,7 @@ input UpdateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  mailingAddress: String
   maritalStatus: MaritalStatusEnum
   nickname: String
   phoneNumber: PhoneNumber
@@ -823,6 +828,7 @@ input UpdateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!

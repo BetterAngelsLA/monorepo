@@ -101,14 +101,16 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             gender
             hairColor
             hmisId
+            mailingAddress
             maritalStatus
             nickname
-            race
             phoneNumber
             physicalDescription
             preferredLanguage
             pronouns
             pronounsOther
+            race
+            residenceAddress
             spokenLanguages
             veteranStatus
             contacts {
@@ -250,6 +252,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
                 "householdMembers": self.client_1_household_members,
+                "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
@@ -258,6 +261,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
+                "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "user": self.client_profile_1_user,
@@ -278,6 +282,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisId": "HMISidPASADENA2",
                 "hmisProfiles": [],
                 "householdMembers": [],
+                "mailingAddress": None,
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
@@ -285,6 +290,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
+                "residenceAddress": None,
                 "socialMediaProfiles": [],
                 "spokenLanguages": [],
                 "veteranStatus": None,

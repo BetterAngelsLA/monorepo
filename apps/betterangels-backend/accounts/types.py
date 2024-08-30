@@ -247,6 +247,7 @@ class ClientProfileBaseType:
     hair_color: auto
     height_in_inches: auto
     hmis_id: auto
+    mailing_address: auto
     marital_status: auto
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
@@ -255,6 +256,7 @@ class ClientProfileBaseType:
     pronouns: auto
     pronouns_other: auto
     race: auto
+    residence_address: auto
     spoken_languages: Optional[List[Optional[LanguageEnum]]]
     veteran_status: auto
 
