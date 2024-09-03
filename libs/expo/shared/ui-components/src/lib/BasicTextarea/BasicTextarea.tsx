@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
   inputBasicContainer: {
     position: 'relative',
     width: '100%',
-    maxWidth: 600,
   },
   inputBasic: {
     position: 'relative',
