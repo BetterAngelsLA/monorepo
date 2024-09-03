@@ -167,8 +167,8 @@ type ClientProfileType {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
-  spokenLanguages: [LanguageEnum]
-  vehicles: [VehicleEnum]
+  spokenLanguages: [LanguageEnum!]
+  vehicles: [VehicleEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
@@ -177,7 +177,7 @@ type ClientProfileType {
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   displayPronouns: String
-  hmisProfiles: [HmisProfileType]
+  hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
   profilePhoto: DjangoImageType
   displayCaseManager: String!
@@ -209,8 +209,8 @@ input CreateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
-  spokenLanguages: [LanguageEnum]
-  vehicles: [VehicleEnum]
+  spokenLanguages: [LanguageEnum!]
+  vehicles: [VehicleEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
   contacts: [ClientContactInput!]
@@ -811,8 +811,8 @@ input UpdateClientProfileInput {
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
-  spokenLanguages: [LanguageEnum]
-  vehicles: [VehicleEnum]
+  spokenLanguages: [LanguageEnum!]
+  vehicles: [VehicleEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
@@ -880,8 +880,8 @@ input UpdateUserInput {
   middleName: String
   email: String
   id: ID!
-  hasAcceptedTos: Boolean = false
-  hasAcceptedPrivacyPolicy: Boolean = false
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
 }
 
 scalar Upload

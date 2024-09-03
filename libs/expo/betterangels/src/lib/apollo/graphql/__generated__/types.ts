@@ -171,7 +171,7 @@ export type ClientProfileType = {
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisId?: Maybe<Scalars['String']['output']>;
-  hmisProfiles?: Maybe<Array<Maybe<HmisProfileType>>>;
+  hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   maritalStatus?: Maybe<MaritalStatusEnum>;
@@ -185,9 +185,9 @@ export type ClientProfileType = {
   pronouns?: Maybe<PronounEnum>;
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
-  spokenLanguages?: Maybe<Array<Maybe<LanguageEnum>>>;
+  spokenLanguages?: Maybe<Array<LanguageEnum>>;
   user: UserType;
-  vehicles?: Maybe<Array<Maybe<VehicleEnum>>>;
+  vehicles?: Maybe<Array<VehicleEnum>>;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -235,9 +235,9 @@ export type CreateClientProfileInput = {
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
-  spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
+  spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user: CreateUserInput;
-  vehicles?: InputMaybe<Array<InputMaybe<VehicleEnum>>>;
+  vehicles?: InputMaybe<Array<VehicleEnum>>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -1100,9 +1100,9 @@ export type UpdateClientProfileInput = {
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
-  spokenLanguages?: InputMaybe<Array<InputMaybe<LanguageEnum>>>;
+  spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user?: InputMaybe<UpdateUserInput>;
-  vehicles?: InputMaybe<Array<InputMaybe<VehicleEnum>>>;
+  vehicles?: InputMaybe<Array<VehicleEnum>>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
