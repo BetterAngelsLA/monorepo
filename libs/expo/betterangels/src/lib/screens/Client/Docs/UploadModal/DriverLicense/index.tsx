@@ -18,7 +18,6 @@ import {
 } from '../../../__generated__/Client.generated';
 import Section from '../Section';
 import { Docs, ITab } from '../types';
-import React = require('react');
 
 export default function DriverLicense({
   setTab,
@@ -102,10 +101,6 @@ export default function DriverLicense({
       });
     }
   };
-
-  React.useEffect(() => {
-    console.log(docs);
-  }, [docs]);
 
   return (
     <>
