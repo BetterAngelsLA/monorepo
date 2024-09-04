@@ -165,8 +165,8 @@ class CreateUserInput(UserBaseType):
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
     id: ID
-    has_accepted_tos: auto = False
-    has_accepted_privacy_policy: auto = False
+    has_accepted_tos: auto
+    has_accepted_privacy_policy: auto
 
 
 PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
@@ -195,7 +195,7 @@ class ClientProfileBaseType:
     pronouns: auto
     pronouns_other: auto
     race: auto
-    spoken_languages: Optional[List[Optional[LanguageEnum]]]
+    spoken_languages: Optional[List[LanguageEnum]]
     veteran_status: auto
 
 
@@ -249,7 +249,7 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
     display_pronouns: auto
-    hmis_profiles: Optional[List[Optional[HmisProfileType]]]
+    hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
 
     @strawberry.field
@@ -275,6 +275,17 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+
+
+# TODO: refactor frontend to use ClientProfileInput instead of CreateClientProfileInput and UpdateClientProfileInput.
+# Then, remove CreateClientProfileInput and UpdateClientProfileInput
+@strawberry_django.input(ClientProfile, partial=True)
+class ClientProfileInput(ClientProfileBaseType):
+    id: Optional[ID]
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
+    user: Optional[UpdateUserInput]
 
 
 @strawberry.input
