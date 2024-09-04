@@ -11,7 +11,7 @@ import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { ISectionProps } from './types';
 
 export default function Section(props: ISectionProps) {
-  const { setTab, title, subtitle, onSubmit, children } = props;
+  const { onCancel, title, subtitle, onSubmit, children, loading } = props;
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -25,7 +25,7 @@ export default function Section(props: ISectionProps) {
         contentContainerStyle={{ paddingBottom: Spacings.xl }}
       >
         <IconButton
-          onPress={() => setTab(undefined)}
+          onPress={onCancel}
           mb="sm"
           accessibilityHint="closes the modal"
           accessibilityLabel="close"
@@ -42,10 +42,11 @@ export default function Section(props: ISectionProps) {
         {children}
       </ScrollView>
       <BottomActions
+        isLoading={loading}
         cancel={
           <TextButton
             title="Cancel"
-            onPress={() => setTab(undefined)}
+            onPress={onCancel}
             accessibilityHint="Cancel upload"
           />
         }

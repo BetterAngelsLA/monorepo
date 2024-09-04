@@ -1,26 +1,89 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
-import { UploadIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
+  IconButton,
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
+import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import {
+  ClientProfileDocument,
+  ClientProfileQuery,
+  useCreateClientDocumentMutation,
+} from '../../../__generated__/Client.generated';
 import Section from '../Section';
-import { ITab } from '../types';
+import { Docs, ITab } from '../types';
 
-export default function PhotoId({ setTab }: { setTab: (tab: ITab) => void }) {
-  const [image, setImage] = useState<ReactNativeFile>();
+export default function PhotoId({
+  setTab,
+  client,
+  setDocs,
+  docs,
+}: {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
+}) {
+  const [createDocument, { loading }] = useCreateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: client?.clientProfile.id,
+        },
+      },
+    ],
+  });
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const uploadDocument = async () => {
+    if (!docs?.photoId || !client) {
+      return;
+    }
+
+    const fileToUpload = new ReactNativeFile({
+      uri: docs.photoId.uri,
+      type: docs.photoId.type,
+      name: docs.photoId.name,
+    });
+
+    await createDocument({
+      variables: {
+        data: {
+          file: fileToUpload,
+          clientProfile: client.clientProfile.id,
+          namespace: ClientDocumentNamespaceEnum.PhotoId,
+        },
+      },
+    });
+    setTab(undefined);
+  };
+
+  const onDelete = () => {
+    setDocs({
+      ...docs,
+      photoId: undefined,
+    });
+  };
 
   return (
     <>
       <Section
+        loading={loading}
         title="Upload Photo ID"
-        onSubmit={() => console.log('submit')}
-        setTab={setTab}
+        onSubmit={uploadDocument}
+        onCancel={() => {
+          setDocs({
+            ...docs,
+            photoId: undefined,
+          });
+          setTab(undefined);
+        }}
       >
         <View
           style={{
@@ -59,27 +122,67 @@ export default function PhotoId({ setTab }: { setTab: (tab: ITab) => void }) {
             </View>
           </Pressable>
         </View>
-        {image && (
+        {docs.photoId && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
               Uploaded Image
             </TextBold>
             <View style={{ marginBottom: Spacings.md }}>
-              <Image
+              <View
                 style={{
+                  position: 'relative',
                   height: 86.5,
                   width: 129,
-                  borderRadius: Radiuses.xs,
                   marginBottom: Spacings.sm,
                 }}
-                source={{ uri: image.uri }}
-                resizeMode="cover"
-                accessibilityIgnoresInvertColors
-              />
+              >
+                <IconButton
+                  borderColor="transparent"
+                  borderRadius={Radiuses.xxxl}
+                  onPress={() => onDelete()}
+                  style={{
+                    position: 'absolute',
+                    top: 5,
+                    right: 5,
+                    zIndex: 1000,
+                  }}
+                  variant="secondary"
+                  height="xs"
+                  width="xs"
+                  accessibilityLabel="delete"
+                  accessibilityHint="deletes the image"
+                >
+                  <PlusIcon size="sm" rotate="45deg" />
+                </IconButton>
+                <Image
+                  style={{
+                    height: 86.5,
+                    width: 129,
+                    borderRadius: Radiuses.xs,
+                  }}
+                  source={{ uri: docs.photoId?.uri }}
+                  resizeMode="cover"
+                  accessibilityIgnoresInvertColors
+                />
+              </View>
               <BasicInput
                 label="File Name"
-                value={image.name}
-                onChangeText={(e) => setImage({ ...image, name: e })}
+                value={docs.photoId?.name || ''}
+                onChangeText={(e) => {
+                  const updatedPhotoId = {
+                    ...docs.photoId,
+                    name: e,
+                    uri: docs.photoId?.uri || '', // Ensure it's a string
+                    type: docs.photoId?.type || '', // Ensure it's a string
+                  };
+
+                  console.log('Updated photoId object:', updatedPhotoId);
+
+                  setDocs((prevDocs) => ({
+                    ...prevDocs,
+                    photoId: updatedPhotoId,
+                  }));
+                }}
               />
             </View>
           </View>
@@ -88,12 +191,18 @@ export default function PhotoId({ setTab }: { setTab: (tab: ITab) => void }) {
       <LibraryModal
         allowMultiple={false}
         onCapture={(file) => {
-          setImage(file);
+          setDocs({
+            ...docs,
+            photoId: file,
+          });
         }}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
-          setImage(files[0]);
+          setDocs({
+            ...docs,
+            photoId: files[0],
+          });
         }}
       />
     </>

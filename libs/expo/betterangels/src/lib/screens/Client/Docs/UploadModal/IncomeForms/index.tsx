@@ -6,26 +6,86 @@ import {
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import {
+  ClientProfileDocument,
+  ClientProfileQuery,
+  useCreateClientDocumentMutation,
+} from '../../../__generated__/Client.generated';
 import Section from '../Section';
-import { ITab } from '../types';
+import { Docs, ITab } from '../types';
 
 export default function IncomeForms({
   setTab,
+  client,
+  setDocs,
+  docs,
 }: {
   setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
 }) {
-  const [images, setImages] = useState<ReactNativeFile[]>([]);
+  const [createDocument, { loading }] = useCreateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: client?.clientProfile.id,
+        },
+      },
+    ],
+  });
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const uploadDocuments = async () => {
+    if (!docs.incomeForms || docs.incomeForms?.length < 1 || !client) {
+      return;
+    }
+
+    try {
+      const uploads = docs.incomeForms.map((form) => {
+        const fileToUploadFront = new ReactNativeFile({
+          uri: form.uri,
+          type: form.type,
+          name: form.name,
+        });
+
+        return createDocument({
+          variables: {
+            data: {
+              file: fileToUploadFront,
+              clientProfile: client.clientProfile.id,
+              namespace: ClientDocumentNamespaceEnum.IncomeForm,
+            },
+          },
+        });
+      });
+
+      await Promise.all(uploads);
+    } catch (err) {
+      console.error('error uploading income forms: ', err);
+    }
+
+    setTab(undefined);
+  };
 
   return (
     <>
       <Section
+        loading={loading}
         title="Upload Income Forms (pay stubs)"
-        onSubmit={() => console.log('submit')}
-        setTab={setTab}
+        onSubmit={uploadDocuments}
+        onCancel={() => {
+          setDocs({
+            ...docs,
+            incomeForms: [],
+          });
+          setTab(undefined);
+        }}
       >
         <View
           style={{
@@ -64,12 +124,12 @@ export default function IncomeForms({
             </View>
           </Pressable>
         </View>
-        {images && images.length > 0 && (
+        {docs.incomeForms && docs.incomeForms.length > 0 && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
-              Uploaded Image{images.length > 1 ? 's' : ''}
+              Uploaded Image{docs.incomeForms.length > 1 ? 's' : ''}
             </TextBold>
-            {images.map((formImage, index) => (
+            {docs.incomeForms.map((formImage, index) => (
               <View key={index} style={{ marginBottom: Spacings.md }}>
                 <Image
                   style={{
@@ -85,11 +145,12 @@ export default function IncomeForms({
                   label="File Name"
                   value={formImage.name}
                   onChangeText={(e) =>
-                    setImages((prevImages) =>
-                      prevImages.map((img, i) =>
+                    setDocs({
+                      ...docs,
+                      incomeForms: docs.incomeForms?.map((img, i) =>
                         i === index ? { ...img, name: e } : img
-                      )
-                    )
+                      ),
+                    })
                   }
                 />
               </View>
@@ -99,15 +160,21 @@ export default function IncomeForms({
       </Section>
       <LibraryModal
         onCapture={(file) => {
-          setImages((prevState) => {
-            return prevState ? [...prevState, file] : [file];
+          setDocs({
+            ...docs,
+            incomeForms: docs.incomeForms
+              ? [...docs.incomeForms, file]
+              : [file],
           });
         }}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
-          setImages((prevState) => {
-            return prevState ? [...prevState, ...files] : [...files];
+          setDocs({
+            ...docs,
+            incomeForms: docs.incomeForms
+              ? [...docs.incomeForms, ...files]
+              : [...files],
           });
         }}
       />

@@ -6,25 +6,84 @@ import {
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
+import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import {
+  ClientProfileDocument,
+  ClientProfileQuery,
+  useCreateClientDocumentMutation,
+} from '../../../__generated__/Client.generated';
 import Section from '../Section';
-import { ITab } from '../types';
+import { Docs, ITab } from '../types';
 
 export default function ConsentForms({
   setTab,
+  client,
+  setDocs,
+  docs,
 }: {
   setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
 }) {
-  const [images, setImages] = useState<ReactNativeFile[]>([]);
+  const [createDocument, { loading }] = useCreateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: client?.clientProfile.id,
+        },
+      },
+    ],
+  });
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const uploadDocuments = async () => {
+    if (!docs.consentForms || docs.consentForms?.length < 1 || !client) {
+      return;
+    }
+
+    try {
+      const uploads = docs.consentForms.map((form) => {
+        const fileToUploadFront = new ReactNativeFile({
+          uri: form.uri,
+          type: form.type,
+          name: form.name,
+        });
+        return createDocument({
+          variables: {
+            data: {
+              file: fileToUploadFront,
+              clientProfile: client.clientProfile.id,
+              namespace: ClientDocumentNamespaceEnum.ConsentForm,
+            },
+          },
+        });
+      });
+
+      await Promise.all(uploads);
+    } catch (err) {
+      console.error('error uploading consent forms: ', err);
+    }
+
+    setTab(undefined);
+  };
 
   return (
     <>
       <Section
+        loading={loading}
         title="Upload Consent Forms"
-        onSubmit={() => console.log('submit')}
-        setTab={setTab}
+        onSubmit={uploadDocuments}
+        onCancel={() => {
+          setDocs({
+            ...docs,
+            consentForms: [],
+          });
+          setTab(undefined);
+        }}
       >
         <View
           style={{
@@ -63,12 +122,12 @@ export default function ConsentForms({
             </View>
           </Pressable>
         </View>
-        {images && images.length > 0 && (
+        {docs.consentForms && docs.consentForms.length > 0 && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
-              Uploaded Image{images.length > 1 ? 's' : ''}
+              Uploaded Image{docs.consentForms.length > 1 ? 's' : ''}
             </TextBold>
-            {images.map((formImage, index) => (
+            {docs.consentForms.map((formImage, index) => (
               <View key={index} style={{ marginBottom: Spacings.md }}>
                 <Image
                   style={{
@@ -84,11 +143,12 @@ export default function ConsentForms({
                   label="File Name"
                   value={formImage.name}
                   onChangeText={(e) =>
-                    setImages((prevImages) =>
-                      prevImages.map((img, i) =>
+                    setDocs({
+                      ...docs,
+                      consentForms: docs.consentForms?.map((img, i) =>
                         i === index ? { ...img, name: e } : img
-                      )
-                    )
+                      ),
+                    })
                   }
                 />
               </View>
@@ -98,15 +158,21 @@ export default function ConsentForms({
       </Section>
       <LibraryModal
         onCapture={(file) => {
-          setImages((prevState) => {
-            return prevState ? [...prevState, file] : [file];
+          setDocs({
+            ...docs,
+            consentForms: docs.consentForms
+              ? [...docs.consentForms, file]
+              : [file],
           });
         }}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
-          setImages((prevState) => {
-            return prevState ? [...prevState, ...files] : [...files];
+          setDocs({
+            ...docs,
+            consentForms: docs.consentForms
+              ? [...docs.consentForms, ...files]
+              : [...files],
           });
         }}
       />

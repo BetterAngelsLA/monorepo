@@ -6,22 +6,86 @@ import {
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import {
+  ClientProfileDocument,
+  ClientProfileQuery,
+  useCreateClientDocumentMutation,
+} from '../../../__generated__/Client.generated';
 import Section from '../Section';
-import { ITab } from '../types';
+import { Docs, ITab } from '../types';
 
-export default function HmisForms({ setTab }: { setTab: (tab: ITab) => void }) {
-  const [image, setImage] = useState<ReactNativeFile>();
+export default function HmisForms({
+  setTab,
+  client,
+  setDocs,
+  docs,
+}: {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
+}) {
+  const [createDocument, { loading }] = useCreateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: client?.clientProfile.id,
+        },
+      },
+    ],
+  });
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const uploadDocuments = async () => {
+    if (!docs.hmisForms || docs.hmisForms?.length < 1 || !client) {
+      return;
+    }
+
+    try {
+      const uploads = docs.hmisForms.map((form) => {
+        const fileToUploadFront = new ReactNativeFile({
+          uri: form.uri,
+          type: form.type,
+          name: form.name,
+        });
+
+        return createDocument({
+          variables: {
+            data: {
+              file: fileToUploadFront,
+              clientProfile: client.clientProfile.id,
+              namespace: ClientDocumentNamespaceEnum.HmisForm,
+            },
+          },
+        });
+      });
+
+      await Promise.all(uploads);
+    } catch (err) {
+      console.error('error uploading hmis forms: ', err);
+    }
+
+    setTab(undefined);
+  };
 
   return (
     <>
       <Section
+        loading={loading}
         title="Upload HMIS Form"
-        onSubmit={() => console.log('submit')}
-        setTab={setTab}
+        onSubmit={uploadDocuments}
+        onCancel={() => {
+          setDocs({
+            ...docs,
+            hmisForms: [],
+          });
+          setTab(undefined);
+        }}
       >
         <View
           style={{
@@ -60,40 +124,56 @@ export default function HmisForms({ setTab }: { setTab: (tab: ITab) => void }) {
             </View>
           </Pressable>
         </View>
-        {image && (
+        {docs.hmisForms && docs.hmisForms.length > 0 && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
-              Uploaded Image
+              Uploaded Image{docs.hmisForms.length > 1 ? 's' : ''}
             </TextBold>
-            <View style={{ marginBottom: Spacings.md }}>
-              <Image
-                style={{
-                  height: 395,
-                  width: 236,
-                  marginBottom: Spacings.sm,
-                }}
-                source={{ uri: image.uri }}
-                resizeMode="cover"
-                accessibilityIgnoresInvertColors
-              />
-              <BasicInput
-                label="File Name"
-                value={image.name}
-                onChangeText={(e) => setImage({ ...image, name: e })}
-              />
-            </View>
+            {docs.hmisForms.map((formImage, index) => (
+              <View key={index} style={{ marginBottom: Spacings.md }}>
+                <Image
+                  style={{
+                    height: 395,
+                    width: 236,
+                    marginBottom: Spacings.sm,
+                  }}
+                  source={{ uri: formImage.uri }}
+                  resizeMode="cover"
+                  accessibilityIgnoresInvertColors
+                />
+                <BasicInput
+                  label="File Name"
+                  value={formImage.name}
+                  onChangeText={(e) =>
+                    setDocs({
+                      ...docs,
+                      hmisForms: docs.hmisForms?.map((img, i) =>
+                        i === index ? { ...img, name: e } : img
+                      ),
+                    })
+                  }
+                />
+              </View>
+            ))}
           </View>
         )}
       </Section>
       <LibraryModal
         onCapture={(file) => {
-          setImage(file);
+          setDocs({
+            ...docs,
+            hmisForms: docs.hmisForms ? [...docs.hmisForms, file] : [file],
+          });
         }}
-        allowMultiple={false}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
-          setImage(files[0]);
+          setDocs({
+            ...docs,
+            hmisForms: docs.hmisForms
+              ? [...docs.hmisForms, ...files]
+              : [...files],
+          });
         }}
       />
     </>

@@ -1,4 +1,5 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
+import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Button,
@@ -6,9 +7,11 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import BirthCertificate from './BirthCertificate';
 import ConsentForms from './ConsentForms';
 import DriverLicense from './DriverLicense';
@@ -16,33 +19,77 @@ import HmisForms from './HmisForms';
 import IncomeForms from './IncomeForms';
 import PhotoId from './PhotoId';
 import SocialSecurity from './SocialSecurity';
-import { ITab } from './types';
-
-interface IUploadModalProps {
-  isModalVisible: boolean;
-  closeModal: () => void;
-  bottomSection?: React.ReactNode;
-  topSection?: React.ReactNode;
-  opacity?: number;
-}
+import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { isModalVisible, closeModal, opacity = 0 } = props;
+  const { isModalVisible, closeModal, opacity = 0, client } = props;
   const [tab, setTab] = React.useState<undefined | ITab>();
+  const [docs, setDocs] = React.useState<Docs>({
+    driverLicenseFront: undefined,
+    driverLicenseBack: undefined,
+    birthCertificate: undefined,
+    photoId: undefined,
+    ssn: undefined,
+    consentForms: [],
+    hmisForms: [],
+    incomeForms: [],
+  });
+
+  const docProps = {
+    setTab,
+    client,
+    docs,
+    setDocs,
+  };
 
   const TABS = {
-    dl: <DriverLicense setTab={setTab} />,
-    bc: <BirthCertificate setTab={setTab} />,
-    photoId: <PhotoId setTab={setTab} />,
-    ssn: <SocialSecurity setTab={setTab} />,
-    consentForms: <ConsentForms setTab={setTab} />,
-    hmis: <HmisForms setTab={setTab} />,
-    incomeForms: <IncomeForms setTab={setTab} />,
+    dl: <DriverLicense {...docProps} />,
+    bc: <BirthCertificate {...docProps} />,
+    photoId: <PhotoId {...docProps} />,
+    ssn: <SocialSecurity {...docProps} />,
+    consentForms: <ConsentForms {...docProps} />,
+    hmis: <HmisForms {...docProps} />,
+    incomeForms: <IncomeForms {...docProps} />,
   };
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
+
+  useEffect(() => {
+    const photoId = client?.clientProfile.docReadyDocuments?.find(
+      (item) => item.namespace === ClientDocumentNamespaceEnum.PhotoId
+    )?.file as ReactNativeFile | undefined;
+
+    const driverLicenseFront = client?.clientProfile.docReadyDocuments?.find(
+      (item) =>
+        item.namespace === ClientDocumentNamespaceEnum.DriversLicenseFront
+    )?.file as ReactNativeFile | undefined;
+
+    const ssn = client?.clientProfile.docReadyDocuments?.find(
+      (item) =>
+        item.namespace === ClientDocumentNamespaceEnum.SocialSecurityCard
+    )?.file as ReactNativeFile | undefined;
+
+    const birthCertificate = client?.clientProfile.docReadyDocuments?.find(
+      (item) => item.namespace === ClientDocumentNamespaceEnum.BirthCertificate
+    )?.file as ReactNativeFile | undefined;
+
+    const driverLicenseBack = client?.clientProfile.docReadyDocuments?.find(
+      (item) =>
+        item.namespace === ClientDocumentNamespaceEnum.DriversLicenseBack
+    )?.file as ReactNativeFile | undefined;
+
+    setDocs({
+      ...docs,
+      driverLicenseFront,
+      driverLicenseBack,
+      ssn,
+      photoId,
+      birthCertificate,
+    });
+  }, [client]);
+
   return (
     <Modal
       style={{
@@ -112,12 +159,24 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor:
+                      !!docs.driverLicenseFront && !!docs.driverLicenseBack
+                        ? Colors.SUCCESS
+                        : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.driverLicenseFront && !!docs.driverLicenseBack && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={
+                    !!docs.driverLicenseFront && !!docs.driverLicenseBack
+                  }
                   containerStyle={{ flex: 1 }}
                   weight="regular"
                   onPress={() => setTab('dl')}
@@ -140,12 +199,21 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor: docs.photoId
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.photoId && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={!!docs.photoId}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('photoId')}
                   height="md"
@@ -168,12 +236,21 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor: docs.birthCertificate
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.birthCertificate && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={!!docs.birthCertificate}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('bc')}
                   height="md"
@@ -196,12 +273,19 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor: docs.ssn
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.ssn && <CheckIcon size="sm" color={Colors.WHITE} />}
+                </View>
 
                 <Button
+                  disabled={!!docs.ssn}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('ssn')}
                   height="md"
@@ -227,12 +311,22 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor:
+                      docs.consentForms && docs.consentForms.length > 0
+                        ? Colors.SUCCESS
+                        : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.consentForms && docs.consentForms.length > 0 && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={docs.consentForms && docs.consentForms.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('consentForms')}
                   height="md"
