@@ -1,8 +1,9 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
-import { UploadIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
+  IconButton,
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
@@ -73,6 +74,13 @@ export default function IncomeForms({
     setTab(undefined);
   };
 
+  const onDelete = (index: number) => {
+    setDocs({
+      ...docs,
+      incomeForms: docs.incomeForms?.filter((_, i) => i !== index),
+    });
+  };
+
   return (
     <>
       <Section
@@ -131,16 +139,42 @@ export default function IncomeForms({
             </TextBold>
             {docs.incomeForms.map((formImage, index) => (
               <View key={index} style={{ marginBottom: Spacings.md }}>
-                <Image
+                <View
                   style={{
+                    position: 'relative',
                     height: 395,
                     width: 236,
                     marginBottom: Spacings.sm,
                   }}
-                  source={{ uri: formImage.uri }}
-                  resizeMode="cover"
-                  accessibilityIgnoresInvertColors
-                />
+                >
+                  <IconButton
+                    borderColor="transparent"
+                    borderRadius={Radiuses.xxxl}
+                    onPress={() => onDelete(index)}
+                    style={{
+                      position: 'absolute',
+                      top: 5,
+                      right: 5,
+                      zIndex: 1000,
+                    }}
+                    variant="secondary"
+                    height="xs"
+                    width="xs"
+                    accessibilityLabel="delete"
+                    accessibilityHint="deletes the image"
+                  >
+                    <PlusIcon size="sm" rotate="45deg" />
+                  </IconButton>
+                  <Image
+                    style={{
+                      height: 395,
+                      width: 236,
+                    }}
+                    source={{ uri: formImage.uri }}
+                    resizeMode="cover"
+                    accessibilityIgnoresInvertColors
+                  />
+                </View>
                 <BasicInput
                   label="File Name"
                   value={formImage.name}

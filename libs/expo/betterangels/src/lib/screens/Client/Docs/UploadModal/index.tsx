@@ -369,12 +369,22 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor:
+                      docs.hmisForms && docs.hmisForms.length > 0
+                        ? Colors.SUCCESS
+                        : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.hmisForms && docs.hmisForms.length > 0 && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={docs.hmisForms && docs.hmisForms.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('hmis')}
                   height="md"
@@ -397,12 +407,22 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.NEUTRAL_LIGHT,
+                    backgroundColor:
+                      docs.incomeForms && docs.incomeForms.length > 0
+                        ? Colors.SUCCESS
+                        : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                ></View>
+                >
+                  {!!docs.incomeForms && docs.incomeForms.length > 0 && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
 
                 <Button
+                  disabled={docs.incomeForms && docs.incomeForms.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('incomeForms')}
                   height="md"
