@@ -24,13 +24,17 @@ query ClientProfile($id: ID!) {
       }
       consentFormDocuments {
         id
+        namespace
         file {
+          url
           name
         }
       }
       otherDocuments {
         id
+        namespace
         file {
+          url
           name
         }
       }

@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, hmisId?: string | null, gender?: Types.GenderEnum | null, dateOfBirth?: any | null, preferredLanguage?: Types.LanguageEnum | null, age?: number | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string }, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, file: { __typename?: 'DjangoFileType', name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, file: { __typename?: 'DjangoFileType', name: string } }> | null } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, hmisId?: string | null, gender?: Types.GenderEnum | null, dateOfBirth?: any | null, preferredLanguage?: Types.LanguageEnum | null, age?: number | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string }, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
 
 export type CreateClientDocumentMutationVariables = Types.Exact<{
   data: Types.CreateClientDocumentInput;
@@ -45,13 +45,17 @@ export const ClientProfileDocument = gql`
       }
       consentFormDocuments {
         id
+        namespace
         file {
+          url
           name
         }
       }
       otherDocuments {
         id
+        namespace
         file {
+          url
           name
         }
       }
