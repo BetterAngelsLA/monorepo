@@ -101,6 +101,7 @@ export enum ClientDocumentNamespaceEnum {
   DriversLicenseBack = 'DRIVERS_LICENSE_BACK',
   DriversLicenseFront = 'DRIVERS_LICENSE_FRONT',
   HmisForm = 'HMIS_FORM',
+  IncomeForm = 'INCOME_FORM',
   OtherClientDocument = 'OTHER_CLIENT_DOCUMENT',
   OtherDocReady = 'OTHER_DOC_READY',
   OtherForm = 'OTHER_FORM',
