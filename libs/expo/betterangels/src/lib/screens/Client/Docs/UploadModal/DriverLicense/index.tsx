@@ -45,19 +45,19 @@ export default function DriverLicense({
   });
 
   const uploadDocument = async () => {
-    if (!docs?.driverLicenseFront || !docs.driverLicenseBack || !client) {
+    if (!docs?.DriversLicenseFront || !docs.DriversLicenseBack || !client) {
       return;
     }
     const fileToUploadFront = new ReactNativeFile({
-      uri: docs.driverLicenseFront.uri,
-      type: docs.driverLicenseFront.type,
-      name: docs.driverLicenseFront.name,
+      uri: docs.DriversLicenseFront.uri,
+      type: docs.DriversLicenseFront.type,
+      name: docs.DriversLicenseFront.name,
     });
 
     const fileToUploadBack = new ReactNativeFile({
-      uri: docs.driverLicenseBack.uri,
-      type: docs.driverLicenseBack.type,
-      name: docs.driverLicenseBack.name,
+      uri: docs.DriversLicenseBack.uri,
+      type: docs.DriversLicenseBack.type,
+      name: docs.DriversLicenseBack.name,
     });
 
     try {
@@ -92,12 +92,12 @@ export default function DriverLicense({
     if (type === 'front') {
       setDocs({
         ...docs,
-        driverLicenseFront: undefined,
+        DriversLicenseFront: undefined,
       });
     } else {
       setDocs({
         ...docs,
-        driverLicenseBack: undefined,
+        DriversLicenseBack: undefined,
       });
     }
   };
@@ -112,8 +112,8 @@ export default function DriverLicense({
         onCancel={() => {
           setDocs({
             ...docs,
-            driverLicenseFront: undefined,
-            driverLicenseBack: undefined,
+            DriversLicenseFront: undefined,
+            DriversLicenseBack: undefined,
           });
           setTab(undefined);
         }}
@@ -205,12 +205,12 @@ export default function DriverLicense({
             </View>
           </Pressable>
         </View>
-        {(docs?.driverLicenseFront || docs?.driverLicenseBack) && (
+        {(docs?.DriversLicenseFront || docs?.DriversLicenseBack) && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
               Uploaded Image
             </TextBold>
-            {docs.driverLicenseFront && (
+            {docs.DriversLicenseFront && (
               <View style={{ marginBottom: Spacings.md, position: 'relative' }}>
                 <TextBold size="sm">Front</TextBold>
                 <View
@@ -245,29 +245,29 @@ export default function DriverLicense({
                       width: 129,
                       borderRadius: Radiuses.xs,
                     }}
-                    source={{ uri: docs.driverLicenseFront.uri }}
+                    source={{ uri: docs.DriversLicenseFront.uri }}
                     resizeMode="cover"
                     accessibilityIgnoresInvertColors
                   />
                 </View>
                 <BasicInput
                   label="File Name"
-                  value={docs.driverLicenseFront.name}
+                  value={docs.DriversLicenseFront.name}
                   onChangeText={(e) =>
                     setDocs({
                       ...docs,
-                      driverLicenseFront: {
-                        ...docs.driverLicenseFront,
+                      DriversLicenseFront: {
+                        ...docs.DriversLicenseFront,
                         name: e,
-                        uri: docs.driverLicenseFront?.uri || '',
-                        type: docs.driverLicenseFront?.type || '',
+                        uri: docs.DriversLicenseFront?.uri || '',
+                        type: docs.DriversLicenseFront?.type || '',
                       },
                     })
                   }
                 />
               </View>
             )}
-            {docs.driverLicenseBack && (
+            {docs.DriversLicenseBack && (
               <View>
                 <TextBold size="sm">Back</TextBold>
                 <View
@@ -302,22 +302,22 @@ export default function DriverLicense({
                       width: 129,
                       borderRadius: Radiuses.xs,
                     }}
-                    source={{ uri: docs.driverLicenseBack.uri }}
+                    source={{ uri: docs.DriversLicenseBack.uri }}
                     resizeMode="cover"
                     accessibilityIgnoresInvertColors
                   />
                 </View>
                 <BasicInput
                   label="File Name"
-                  value={docs.driverLicenseBack.name}
+                  value={docs.DriversLicenseBack.name}
                   onChangeText={(e) =>
                     setDocs({
                       ...docs,
-                      driverLicenseBack: {
-                        ...docs.driverLicenseBack,
+                      DriversLicenseBack: {
+                        ...docs.DriversLicenseBack,
                         name: e,
-                        uri: docs.driverLicenseBack?.uri || '',
-                        type: docs.driverLicenseBack?.type || '',
+                        uri: docs.DriversLicenseBack?.uri || '',
+                        type: docs.DriversLicenseBack?.type || '',
                       },
                     })
                   }
@@ -333,12 +333,12 @@ export default function DriverLicense({
           if (uploadingType === 'front') {
             setDocs({
               ...docs,
-              driverLicenseFront: file,
+              DriversLicenseFront: file,
             });
           } else {
             setDocs({
               ...docs,
-              driverLicenseBack: file,
+              DriversLicenseBack: file,
             });
           }
         }}
@@ -348,12 +348,12 @@ export default function DriverLicense({
           if (uploadingType === 'front') {
             setDocs({
               ...docs,
-              driverLicenseFront: files[0],
+              DriversLicenseFront: files[0],
             });
           } else {
             setDocs({
               ...docs,
-              driverLicenseBack: files[0],
+              DriversLicenseBack: files[0],
             });
           }
         }}

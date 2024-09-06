@@ -1,34 +1,26 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import {
   ClientProfileDocument,
-  ClientProfileQuery,
   useCreateClientDocumentMutation,
-} from '../../../__generated__/Client.generated';
-import Section from '../Section';
-import { Docs, ITab } from '../types';
+} from '../../__generated__/Client.generated';
+import Section from './Section';
+import { ISingleDocUploadsProps } from './types';
 
-export default function PhotoId({
-  setTab,
-  client,
-  setDocs,
-  docs,
-}: {
-  setTab: (tab: ITab) => void;
-  client: ClientProfileQuery | undefined;
-  docs: Docs;
-  setDocs: Dispatch<SetStateAction<Docs>>;
-}) {
+export default function SingleDocUploads(props: ISingleDocUploadsProps) {
+  const { setTab, client, setDocs, docs, title, docType } = props;
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -39,35 +31,37 @@ export default function PhotoId({
       },
     ],
   });
-  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const uploadDocument = async () => {
-    if (!docs?.photoId || !client) {
+    if (!docs?.[docType] || !client) {
       return;
     }
+    try {
+      const fileToUpload = new ReactNativeFile({
+        uri: docs[docType]!.uri,
+        type: docs[docType]!.type,
+        name: docs[docType]!.name,
+      });
 
-    const fileToUpload = new ReactNativeFile({
-      uri: docs.photoId.uri,
-      type: docs.photoId.type,
-      name: docs.photoId.name,
-    });
-
-    await createDocument({
-      variables: {
-        data: {
-          file: fileToUpload,
-          clientProfile: client.clientProfile.id,
-          namespace: ClientDocumentNamespaceEnum.PhotoId,
+      await createDocument({
+        variables: {
+          data: {
+            file: fileToUpload,
+            clientProfile: client.clientProfile.id,
+            namespace: ClientDocumentNamespaceEnum[docType],
+          },
         },
-      },
-    });
-    setTab(undefined);
+      });
+      setTab(undefined);
+    } catch (err) {
+      console.error(`error uploading ${docType} forms: `, err);
+    }
   };
 
   const onDelete = () => {
     setDocs({
       ...docs,
-      photoId: undefined,
+      [docType]: undefined,
     });
   };
 
@@ -75,12 +69,12 @@ export default function PhotoId({
     <>
       <Section
         loading={loading}
-        title="Upload Photo ID"
+        title={title}
         onSubmit={uploadDocument}
         onCancel={() => {
           setDocs({
             ...docs,
-            photoId: undefined,
+            [docType]: undefined,
           });
           setTab(undefined);
         }}
@@ -122,7 +116,7 @@ export default function PhotoId({
             </View>
           </Pressable>
         </View>
-        {docs.photoId && (
+        {docs[docType] && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
               Uploaded Image
@@ -131,8 +125,8 @@ export default function PhotoId({
               <View
                 style={{
                   position: 'relative',
-                  height: 86.5,
-                  width: 129,
+                  height: 395,
+                  width: 236,
                   marginBottom: Spacings.sm,
                 }}
               >
@@ -156,52 +150,47 @@ export default function PhotoId({
                 </IconButton>
                 <Image
                   style={{
-                    height: 86.5,
-                    width: 129,
-                    borderRadius: Radiuses.xs,
+                    height: 395,
+                    width: 236,
                   }}
-                  source={{ uri: docs.photoId?.uri }}
+                  source={{ uri: docs?.[docType]?.uri }}
                   resizeMode="cover"
                   accessibilityIgnoresInvertColors
                 />
               </View>
               <BasicInput
                 label="File Name"
-                value={docs.photoId?.name || ''}
-                onChangeText={(e) => {
-                  const updatedPhotoId = {
-                    ...docs.photoId,
-                    name: e,
-                    uri: docs.photoId?.uri || '', // Ensure it's a string
-                    type: docs.photoId?.type || '', // Ensure it's a string
-                  };
-
-                  console.log('Updated photoId object:', updatedPhotoId);
-
-                  setDocs((prevDocs) => ({
-                    ...prevDocs,
-                    photoId: updatedPhotoId,
-                  }));
-                }}
+                value={docs?.[docType]?.name}
+                onChangeText={(e) =>
+                  setDocs({
+                    ...docs,
+                    [docType]: {
+                      ...docs[docType],
+                      name: e,
+                      uri: docs[docType]?.uri || '',
+                      type: docs[docType]?.type || '',
+                    },
+                  })
+                }
               />
             </View>
           </View>
         )}
       </Section>
       <LibraryModal
-        allowMultiple={false}
         onCapture={(file) => {
           setDocs({
             ...docs,
-            photoId: file,
+            [docType]: file,
           });
         }}
+        allowMultiple={false}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
           setDocs({
             ...docs,
-            photoId: files[0],
+            [docType]: files[0],
           });
         }}
       />

@@ -1,5 +1,5 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
-import { ReactNode } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
 export interface ISectionProps {
@@ -20,23 +20,50 @@ export interface IUploadModalProps {
   client: ClientProfileQuery | undefined;
 }
 
+export interface IIdDocUploadsProps {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
+  title: string;
+  docType: 'SocialSecurityCard' | 'PhotoId';
+}
+
+export interface IMultipleDocUploadsProps {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
+  title: string;
+  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm';
+}
+
+export interface ISingleDocUploadsProps {
+  setTab: (tab: ITab) => void;
+  client: ClientProfileQuery | undefined;
+  docs: Docs;
+  setDocs: Dispatch<SetStateAction<Docs>>;
+  title: string;
+  docType: 'BirthCertificate';
+}
+
 export type Docs = {
-  driverLicenseFront: ReactNativeFile | undefined;
-  driverLicenseBack: ReactNativeFile | undefined;
-  birthCertificate: ReactNativeFile | undefined;
-  photoId: ReactNativeFile | undefined;
-  ssn: ReactNativeFile | undefined;
-  consentForms: ReactNativeFile[] | undefined;
-  hmisForms: ReactNativeFile[] | undefined;
-  incomeForms: ReactNativeFile[] | undefined;
+  DriversLicenseFront: ReactNativeFile | undefined;
+  DriversLicenseBack: ReactNativeFile | undefined;
+  BirthCertificate: ReactNativeFile | undefined;
+  PhotoId: ReactNativeFile | undefined;
+  SocialSecurityCard: ReactNativeFile | undefined;
+  ConsentForm: ReactNativeFile[] | undefined;
+  HmisForm: ReactNativeFile[] | undefined;
+  IncomeForm: ReactNativeFile[] | undefined;
 };
 
 export type ITab =
-  | 'dl'
-  | 'bc'
-  | 'photoId'
-  | 'ssn'
-  | 'consentForms'
-  | 'hmis'
-  | 'incomeForms'
+  | 'DriversLicense'
+  | 'BirthCertificate'
+  | 'PhotoId'
+  | 'SocialSecurityCard'
+  | 'ConsentForm'
+  | 'HmisForm'
+  | 'IncomeForm'
   | undefined;

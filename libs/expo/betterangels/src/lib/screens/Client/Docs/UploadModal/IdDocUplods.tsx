@@ -1,36 +1,24 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import {
   ClientProfileDocument,
-  ClientProfileQuery,
   useCreateClientDocumentMutation,
-} from '../../../__generated__/Client.generated';
-import Section from '../Section';
-import { Docs, ITab } from '../types';
+} from '../../__generated__/Client.generated';
+import Section from './Section';
+import { IIdDocUploadsProps } from './types';
 
-export default function BirthCertificate({
-  setTab,
-  client,
-  setDocs,
-  docs,
-}: {
-  setTab: (tab: ITab) => void;
-  client: ClientProfileQuery | undefined;
-  docs: Docs;
-  setDocs: Dispatch<SetStateAction<Docs>>;
-}) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+export default function IdDocUploads(props: IIdDocUploadsProps) {
+  const { setTab, client, setDocs, docs, title, docType } = props;
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -41,34 +29,38 @@ export default function BirthCertificate({
       },
     ],
   });
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const uploadDocument = async () => {
-    if (!docs?.birthCertificate || !client) {
+    if (!docs?.[docType] || !client) {
       return;
     }
+    try {
+      const fileToUpload = new ReactNativeFile({
+        uri: docs[docType]!.uri,
+        type: docs[docType]!.type,
+        name: docs[docType]!.name,
+      });
 
-    const fileToUploadFront = new ReactNativeFile({
-      uri: docs.birthCertificate.uri,
-      type: docs.birthCertificate.type,
-      name: docs.birthCertificate.name,
-    });
-
-    await createDocument({
-      variables: {
-        data: {
-          file: fileToUploadFront,
-          clientProfile: client.clientProfile.id,
-          namespace: ClientDocumentNamespaceEnum.BirthCertificate,
+      await createDocument({
+        variables: {
+          data: {
+            file: fileToUpload,
+            clientProfile: client.clientProfile.id,
+            namespace: ClientDocumentNamespaceEnum[docType],
+          },
         },
-      },
-    });
-    setTab(undefined);
+      });
+      setTab(undefined);
+    } catch (err) {
+      console.error(`error uploading ${docType} forms: `, err);
+    }
   };
 
   const onDelete = () => {
     setDocs({
       ...docs,
-      birthCertificate: undefined,
+      [docType]: undefined,
     });
   };
 
@@ -76,12 +68,12 @@ export default function BirthCertificate({
     <>
       <Section
         loading={loading}
-        title="Upload Birth Certificate"
+        title={title}
         onSubmit={uploadDocument}
         onCancel={() => {
           setDocs({
             ...docs,
-            birthCertificate: undefined,
+            [docType]: undefined,
           });
           setTab(undefined);
         }}
@@ -123,7 +115,7 @@ export default function BirthCertificate({
             </View>
           </Pressable>
         </View>
-        {docs.birthCertificate && (
+        {docs[docType] && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
               Uploaded Image
@@ -132,8 +124,8 @@ export default function BirthCertificate({
               <View
                 style={{
                   position: 'relative',
-                  height: 395,
-                  width: 236,
+                  height: 86.5,
+                  width: 129,
                   marginBottom: Spacings.sm,
                 }}
               >
@@ -157,47 +149,50 @@ export default function BirthCertificate({
                 </IconButton>
                 <Image
                   style={{
-                    height: 395,
-                    width: 236,
+                    height: 86.5,
+                    width: 129,
+                    borderRadius: Radiuses.xs,
                   }}
-                  source={{ uri: docs.birthCertificate.uri }}
+                  source={{ uri: docs?.[docType]?.uri }}
                   resizeMode="cover"
                   accessibilityIgnoresInvertColors
                 />
               </View>
               <BasicInput
                 label="File Name"
-                value={docs.birthCertificate.name}
-                onChangeText={(e) =>
-                  setDocs({
-                    ...docs,
-                    birthCertificate: {
-                      ...docs.birthCertificate,
-                      name: e,
-                      uri: docs.birthCertificate?.uri || '',
-                      type: docs.birthCertificate?.type || '',
-                    },
-                  })
-                }
+                value={docs?.[docType]?.name || ''}
+                onChangeText={(e) => {
+                  const updated = {
+                    ...docs[docType],
+                    name: e,
+                    uri: docs[docType]?.uri || '',
+                    type: docs[docType]?.type || '',
+                  };
+
+                  setDocs((prevDocs) => ({
+                    ...prevDocs,
+                    [docType]: updated,
+                  }));
+                }}
               />
             </View>
           </View>
         )}
       </Section>
       <LibraryModal
+        allowMultiple={false}
         onCapture={(file) => {
           setDocs({
             ...docs,
-            birthCertificate: file,
+            [docType]: file,
           });
         }}
-        allowMultiple={false}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {
           setDocs({
             ...docs,
-            birthCertificate: files[0],
+            [docType]: files[0],
           });
         }}
       />

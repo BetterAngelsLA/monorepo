@@ -1,34 +1,25 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
   LibraryModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import {
   ClientProfileDocument,
-  ClientProfileQuery,
   useCreateClientDocumentMutation,
-} from '../../../__generated__/Client.generated';
-import Section from '../Section';
-import { Docs, ITab } from '../types';
+} from '../../__generated__/Client.generated';
+import Section from './Section';
+import { IMultipleDocUploadsProps } from './types';
 
-export default function ConsentForms({
-  setTab,
-  client,
-  setDocs,
-  docs,
-}: {
-  setTab: (tab: ITab) => void;
-  client: ClientProfileQuery | undefined;
-  docs: Docs;
-  setDocs: Dispatch<SetStateAction<Docs>>;
-}) {
+export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
+  const { setTab, client, setDocs, docs, title, docType } = props;
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -42,23 +33,25 @@ export default function ConsentForms({
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const uploadDocuments = async () => {
-    if (!docs.consentForms || docs.consentForms?.length < 1 || !client) {
+    const documents = docs?.[docType];
+    if (!documents || documents.length < 1 || !client) {
       return;
     }
 
     try {
-      const uploads = docs.consentForms.map((form) => {
-        const fileToUploadFront = new ReactNativeFile({
+      const uploads = documents.map((form) => {
+        const fileToUpload = new ReactNativeFile({
           uri: form.uri,
           type: form.type,
           name: form.name,
         });
+
         return createDocument({
           variables: {
             data: {
-              file: fileToUploadFront,
+              file: fileToUpload,
               clientProfile: client.clientProfile.id,
-              namespace: ClientDocumentNamespaceEnum.ConsentForm,
+              namespace: ClientDocumentNamespaceEnum[docType],
             },
           },
         });
@@ -66,7 +59,7 @@ export default function ConsentForms({
 
       await Promise.all(uploads);
     } catch (err) {
-      console.error('error uploading consent forms: ', err);
+      console.error(`error uploading ${docType} forms: `, err);
     }
 
     setTab(undefined);
@@ -75,7 +68,7 @@ export default function ConsentForms({
   const onDelete = (index: number) => {
     setDocs({
       ...docs,
-      consentForms: docs.consentForms?.filter((_, i) => i !== index),
+      [docType]: docs[docType]?.filter((_, i) => i !== index),
     });
   };
 
@@ -83,12 +76,12 @@ export default function ConsentForms({
     <>
       <Section
         loading={loading}
-        title="Upload Consent Forms"
+        title={title}
         onSubmit={uploadDocuments}
         onCancel={() => {
           setDocs({
             ...docs,
-            consentForms: [],
+            [docType]: [],
           });
           setTab(undefined);
         }}
@@ -130,12 +123,12 @@ export default function ConsentForms({
             </View>
           </Pressable>
         </View>
-        {docs.consentForms && docs.consentForms.length > 0 && (
+        {docs[docType] && docs[docType]!.length > 0 && (
           <View style={{ paddingTop: Spacings.sm }}>
             <TextBold mb="sm" size="md">
-              Uploaded Image{docs.consentForms.length > 1 ? 's' : ''}
+              Uploaded Image{docs[docType]!.length > 1 ? 's' : ''}
             </TextBold>
-            {docs.consentForms.map((formImage, index) => (
+            {docs[docType]!.map((formImage, index) => (
               <View key={index} style={{ marginBottom: Spacings.md }}>
                 <View
                   style={{
@@ -179,7 +172,7 @@ export default function ConsentForms({
                   onChangeText={(e) =>
                     setDocs({
                       ...docs,
-                      consentForms: docs.consentForms?.map((img, i) =>
+                      [docType]: docs[docType]?.map((img, i) =>
                         i === index ? { ...img, name: e } : img
                       ),
                     })
@@ -194,9 +187,7 @@ export default function ConsentForms({
         onCapture={(file) => {
           setDocs({
             ...docs,
-            consentForms: docs.consentForms
-              ? [...docs.consentForms, file]
-              : [file],
+            [docType]: [...(docs[docType] ?? []), file],
           });
         }}
         setModalVisible={setIsModalVisible}
@@ -204,9 +195,7 @@ export default function ConsentForms({
         setFiles={(files) => {
           setDocs({
             ...docs,
-            consentForms: docs.consentForms
-              ? [...docs.consentForms, ...files]
-              : [...files],
+            [docType]: [...(docs[docType] ?? []), ...files],
           });
         }}
       />
