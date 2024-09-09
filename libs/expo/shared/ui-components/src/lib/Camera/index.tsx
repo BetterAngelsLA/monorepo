@@ -13,18 +13,26 @@ import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 import TextMedium from '../TextMedium';
 
-interface ILibCameraProps {
+interface ICameraProps {
   onCapture: (file: ReactNativeFile) => void;
   setIsCameraOpen: (isCameraOpen: boolean) => void;
   setModalVisible: (isModalVisible: boolean) => void;
 }
 
-export default function LibCamera(props: ILibCameraProps) {
+export default function Camera(props: ICameraProps) {
   const { onCapture, setIsCameraOpen, setModalVisible } = props;
   const [type, setType] = useState<CameraType>('back');
   const [flash, setFlash] = useState<FlashMode>('off');
 
   const cameraRef = useRef<CameraView | null>(null);
+
+  const toggleFlashLight = () => {
+    setFlash((current) => (current === 'off' ? 'on' : 'off'));
+  };
+
+  const toggleCameraType = () => {
+    setType((current) => (current === 'back' ? 'front' : 'back'));
+  };
 
   const closeCamera = () => {
     setIsCameraOpen(false);
@@ -51,13 +59,6 @@ export default function LibCamera(props: ILibCameraProps) {
     }
   };
 
-  const toggleFlashLight = () => {
-    setFlash((current) => (current === 'off' ? 'on' : 'off'));
-  };
-
-  const toggleCameraType = () => {
-    setType((current) => (current === 'back' ? 'front' : 'back'));
-  };
   return (
     <>
       <View
