@@ -1,4 +1,5 @@
-import { Accordion, Button } from '@monorepo/expo/shared/ui-components';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Accordion, TextButton } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
@@ -45,16 +46,19 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
             overflow: 'hidden',
           }}
         >
-          {fields.map((item, index) => (
-            <Contact remove={remove} key={index} item={item} index={index} />
+          {fields.map((_, index) => (
+            <Contact remove={remove} key={index} index={index} />
           ))}
-          <Button
-            onPress={() => append({ name: '' })}
-            variant="primary"
-            title="Add Relevant Contact"
-            accessibilityLabel={'add Relevant contact'}
-            accessibilityHint={'add Relevant contact'}
-          />
+          <View style={{ alignItems: 'flex-start', marginTop: Spacings.sm }}>
+            <TextButton
+              onPress={() => append({ name: '' })}
+              title="Add Relevant Contact"
+              color={Colors.PRIMARY}
+              fontSize="sm"
+              accessibilityLabel={'add Relevant contact'}
+              accessibilityHint={'add Relevant contact'}
+            />
+          </View>
         </View>
       )}
     </Accordion>
