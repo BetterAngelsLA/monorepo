@@ -90,6 +90,7 @@ export default function ConsentModal(props: IConsentModalProps) {
   };
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+  const topOffset = insets.top;
 
   const checkboxData: CheckboxData[] = [
     {
@@ -147,6 +148,8 @@ export default function ConsentModal(props: IConsentModalProps) {
         flex: 1,
         flexDirection: 'column',
         justifyContent: 'flex-end',
+        height: '100%',
+        paddingTop: topOffset + 10,
       }}
       animationIn={vertical ? 'slideInUp' : 'slideInRight'}
       animationOut={vertical ? 'slideOutDown' : 'slideOutRight'}
@@ -156,57 +159,61 @@ export default function ConsentModal(props: IConsentModalProps) {
     >
       <View
         style={{
+          flexGrow: 1,
           zIndex: 1,
           borderTopLeftRadius: Radiuses.xs,
           borderTopRightRadius: Radiuses.xs,
           paddingHorizontal: Spacings.md,
-          paddingBottom: bottomOffset + 30,
+          paddingBottom: bottomOffset + Spacings.xs,
           backgroundColor: Colors.WHITE,
+          justifyContent: 'space-between',
         }}
       >
-        <View style={styles.header}>
-          <View
-            style={{
-              width: 18,
-              height: 5,
-              borderRadius: 50,
-              backgroundColor: '#3C3C434D',
-              transform: [{ scaleX: 2 }],
-              alignSelf: 'center',
-              marginVertical: 5,
-            }}
-          />
-          <TextRegular size={'lg'} style={styles.consent}>
-            Consent
+        <View>
+          <View style={styles.header}>
+            <View
+              style={{
+                width: 18,
+                height: 5,
+                borderRadius: 50,
+                backgroundColor: '#3C3C434D',
+                transform: [{ scaleX: 2 }],
+                alignSelf: 'center',
+                marginVertical: 5,
+              }}
+            />
+            <TextRegular size={'lg'} style={styles.consent}>
+              Consent
+            </TextRegular>
+            <View
+              style={{
+                height: 1,
+                width: '100%',
+                backgroundColor: '#3C3C434D',
+                marginBottom: Spacings.sm,
+              }}
+            />
+            <Image
+              source={require('../../../../shared/images/consent.png')}
+              accessibilityIgnoresInvertColors={true}
+            />
+          </View>
+          <TextBold
+            size={'sm'}
+            mb={'xs'}
+            mt={'sm'}
+            color={Colors.PRIMARY_EXTRA_DARK}
+          >
+            Welcome to
+          </TextBold>
+          <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
+            BetterAngels Outreach app!
+          </TextBold>
+          <TextRegular size={'sm'} mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
+            Please confirm the following:
           </TextRegular>
-          <View
-            style={{
-              height: 1,
-              width: '100%',
-              backgroundColor: '#3C3C434D',
-              marginBottom: '10%',
-            }}
-          />
-          <Image
-            source={require('../../../../shared/images/consent.png')}
-            accessibilityIgnoresInvertColors={true}
-          />
+          {renderCheckboxes()}
         </View>
-        <TextBold
-          size={'sm'}
-          mb={'xs'}
-          mt={'sm'}
-          color={Colors.PRIMARY_EXTRA_DARK}
-        >
-          Welcome to
-        </TextBold>
-        <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
-          BetterAngels Outreach app!
-        </TextBold>
-        <TextRegular size={'sm'} mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
-          Please confirm the following:
-        </TextRegular>
-        {renderCheckboxes()}
         <View>
           <Button
             accessibilityHint="Submits agreement and goes to welcome screen"
@@ -216,18 +223,18 @@ export default function ConsentModal(props: IConsentModalProps) {
                 ? true
                 : false
             }
-            mt="lg"
+            mb="sm"
             title="Get Started"
             size="full"
             variant="primary"
             borderWidth={0}
           />
           <Button
-            mt="xl"
             accessibilityHint="Cancels agreement"
             onPress={signOut}
             title="Cancel"
             size="full"
+            mb="sm"
             borderWidth={0}
             variant="secondary"
           />
