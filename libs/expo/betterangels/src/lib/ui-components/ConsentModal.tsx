@@ -34,7 +34,6 @@ interface IConsentModalProps {
 interface CheckboxData {
   key: keyof CheckedItems;
   accessibilityHint: string;
-  labelText: string;
   linkText: string;
   url: string;
 }
@@ -96,14 +95,12 @@ export default function ConsentModal(props: IConsentModalProps) {
     {
       key: 'isTosChecked',
       accessibilityHint: 'Accept the terms of service',
-      labelText: 'I accept the',
       linkText: 'Terms of Service',
       url: termsOfServiceUrl,
     },
     {
       key: 'isPrivacyPolicyChecked',
       accessibilityHint: 'Accept the privacy policy',
-      labelText: 'I accept the',
       linkText: 'Privacy Policy',
       url: privacyPolicyUrl,
     },
