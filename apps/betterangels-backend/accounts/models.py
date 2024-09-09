@@ -60,6 +60,7 @@ DOC_READY_NAMESPACES = [
 CONSENT_FORM_NAMESPACES = [
     ClientDocumentNamespaceEnum.CONSENT_FORM,
     ClientDocumentNamespaceEnum.HMIS_FORM,
+    ClientDocumentNamespaceEnum.INCOME_FORM,
     ClientDocumentNamespaceEnum.OTHER_FORM,
 ]
 

@@ -125,6 +125,7 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
 
     CONSENT_FORM = "consent_form", "Consent Form"
     HMIS_FORM = "hmis_form", "HMIS Form"
+    INCOME_FORM = "income_form", "Income Form"
     OTHER_FORM = "other_form", "Other Form"
 
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"
