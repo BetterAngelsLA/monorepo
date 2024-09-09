@@ -50,7 +50,6 @@ export default function ConsentModal(props: IConsentModalProps) {
     opacity = 0,
     vertical = true,
     ml = 0,
-    height,
     privacyPolicyUrl,
     termsOfServiceUrl,
     closeModal,
@@ -158,12 +157,11 @@ export default function ConsentModal(props: IConsentModalProps) {
       <View
         style={{
           zIndex: 1,
-          borderTopLeftRadius: Radiuses.md,
-          borderTopRightRadius: Radiuses.md,
+          borderTopLeftRadius: Radiuses.xs,
+          borderTopRightRadius: Radiuses.xs,
           paddingHorizontal: Spacings.md,
-          paddingBottom: 175 + bottomOffset,
+          paddingBottom: bottomOffset + 30,
           backgroundColor: Colors.WHITE,
-          height,
         }}
       >
         <View style={styles.header}>
@@ -172,7 +170,7 @@ export default function ConsentModal(props: IConsentModalProps) {
               width: 18,
               height: 5,
               borderRadius: 50,
-              backgroundColor: Colors.GRAY_PRESSED,
+              backgroundColor: '#3C3C434D',
               transform: [{ scaleX: 2 }],
               alignSelf: 'center',
               marginVertical: 5,
@@ -185,18 +183,21 @@ export default function ConsentModal(props: IConsentModalProps) {
             style={{
               height: 1,
               width: '100%',
-              backgroundColor: Colors.GRAY_PRESSED,
+              backgroundColor: '#3C3C434D',
+              marginBottom: '10%',
             }}
           />
           <Image
-            style={{
-              marginTop: '10%',
-            }}
             source={require('../../../../shared/images/consent.png')}
             accessibilityIgnoresInvertColors={true}
           />
         </View>
-        <TextBold size={'sm'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextBold
+          size={'sm'}
+          mb={'xs'}
+          mt={'sm'}
+          color={Colors.PRIMARY_EXTRA_DARK}
+        >
           Welcome to
         </TextBold>
         <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
@@ -206,7 +207,7 @@ export default function ConsentModal(props: IConsentModalProps) {
           Please confirm the following:
         </TextRegular>
         {renderCheckboxes()}
-        <View style={styles.buttonsContainer}>
+        <View>
           <Button
             accessibilityHint="Submits agreement and goes to welcome screen"
             onPress={submitAgreements}
@@ -248,17 +249,11 @@ const styles = StyleSheet.create({
   checkbox: {
     flexDirection: 'row',
   },
-  buttonsContainer: {
-    position: 'absolute',
-    bottom: 80,
-    right: 25,
-    width: '100%',
-  },
   link: {
     fontFamily: 'Poppins',
     fontSize: FontSizes['sm'].fontSize,
     textDecorationLine: 'underline',
     fontWeight: '400',
-    color: Colors.PRIMARY,
+    color: '#052B73',
   },
 });
