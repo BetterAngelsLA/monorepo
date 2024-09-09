@@ -201,6 +201,5 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
-    maxWidth: 600,
   },
 });

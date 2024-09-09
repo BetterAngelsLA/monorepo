@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
   TextareaContainer: {
     position: 'relative',
     width: '100%',
-    maxWidth: 600,
   },
   Textarea: {
     position: 'relative',
