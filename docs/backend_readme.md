@@ -239,16 +239,12 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 
 #### Aliases
 
----
-
-For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
+- For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
 
 #### Resetting DB
 
----
-
 1. If an error occurs where the local database doesn't reflect accurately after the migrations, run:
 
-> ```bash
-> yarn nx run betterangels-backend:reset_db
-> ```
+```bash
+yarn nx run betterangels-backend:reset_db
+```
