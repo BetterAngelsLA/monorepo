@@ -14,3 +14,6 @@ class ClientProfilePermissions(models.TextChoices):
     CHANGE = "accounts.change_clientprofile", _("Can change clientprofile")
     DELETE = "accounts.delete_clientprofile", _("Can delete clientprofile")
     ADD = "accounts.add_clientprofile", _("Can add clientprofile")
+
+
+HIPAA_APPROVED = "accounts.hippa_approved"

@@ -11,17 +11,19 @@ def move_address_and_point_to_location(apps, schema_editor) -> None:
     Task = apps.get_model("notes", "Task")
     Location = apps.get_model("common", "Location")
 
-    notes = Note.objects.all()
+    db_alias = schema_editor.connection.alias
+    notes = Note.objects.using(db_alias).all()
+
     for note in notes:
         if note.address or note.point:
-            location, _ = Location.objects.get_or_create(address=note.address, point=note.point)
+            location, _ = Location.objects.using(db_alias).get_or_create(address=note.address, point=note.point)
             note.location = location
             note.save()
 
     tasks = Task.objects.all()
     for task in tasks:
         if task.address or task.point:
-            location, _ = Location.objects.get_or_create(address=task.address, point=task.point)
+            location, _ = Location.objects.using(db_alias).get_or_create(address=task.address, point=task.point)
             task.location = location
             task.save()
 

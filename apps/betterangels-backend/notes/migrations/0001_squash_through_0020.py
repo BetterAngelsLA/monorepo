@@ -24,7 +24,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     PRIVATE_NOTE_PERM_MAP = {perm.split(".")[1]: perm.label for perm in PrivateDetailsPermissions}
 
     for codename, name in NOTE_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
+        cur_perm, _ = Permission.objects.get_or_create(
             codename=codename,
             content_type=NoteContentType,
         )
@@ -32,7 +32,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
         cur_perm.save()
 
     for codename, name in PRIVATE_NOTE_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
+        cur_perm, _ = Permission.objects.get_or_create(
             codename=codename,
             content_type=NoteContentType,
         )
@@ -45,7 +45,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     SERVICE_REQUEST_PERM_MAP = {perm.split(".")[1]: perm.label for perm in ServiceRequestPermissions}
 
     for codename, name in SERVICE_REQUEST_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
+        cur_perm, _ = Permission.objects.get_or_create(
             codename=codename,
             content_type=ServiceRequestContentType,
         )
@@ -58,7 +58,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     TASK_PERM_MAP = {perm.split(".")[1]: perm.label for perm in TaskPermissions}
 
     for codename, name in TASK_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
+        cur_perm, _ = Permission.objects.get_or_create(
             codename=codename,
             content_type=TaskContentType,
         )
