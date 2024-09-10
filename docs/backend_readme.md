@@ -235,4 +235,20 @@ To track the historical events for a certain model based on their id and timesta
 Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
-</details>
+### Troubleshooting
+
+#### Aliases
+
+---
+
+For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
+
+#### Resetting DB
+
+---
+
+1. If an error occurs where the local database doesn't reflect accurately after the migrations, run:
+
+> ```bash
+> yarn nx run betterangels-backend:reset_db
+> ```
