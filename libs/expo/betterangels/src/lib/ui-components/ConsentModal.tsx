@@ -124,11 +124,7 @@ export default function ConsentModal(props: IConsentModalProps) {
             <TextRegular size="sm" style={{ fontWeight: '400' }} ml="xs">
               I accept the{' '}
             </TextRegular>
-            <Link
-              style={styles.link}
-              href={item.url}
-              onPress={() => handleCheck(item.key)}
-            >
+            <Link style={styles.link} href={item.url}>
               {item.linkText}
             </Link>
           </View>
