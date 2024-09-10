@@ -200,6 +200,9 @@ class ClientProfile(models.Model):
 
         return self.pronouns.label
 
+    class Meta:
+        ordering = ["user__first_name"]
+
 
 class ClientContact(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
