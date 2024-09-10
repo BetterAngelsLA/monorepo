@@ -20,7 +20,7 @@ def move_address_and_point_to_location(apps, schema_editor) -> None:
             note.location = location
             note.save()
 
-    tasks = Task.objects.all()
+    tasks = Task.objects.using(db_alias).all()
     for task in tasks:
         if task.address or task.point:
             location, _ = Location.objects.using(db_alias).get_or_create(address=task.address, point=task.point)
@@ -175,5 +175,4 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
-        migrations.RunPython(move_address_and_point_to_location),
     ]

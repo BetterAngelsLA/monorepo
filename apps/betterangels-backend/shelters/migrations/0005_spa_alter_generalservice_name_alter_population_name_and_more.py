@@ -16,11 +16,12 @@ def update_enum_values_forward(apps, schema_editor):
 
 
 def migrate_spa_field(apps, schema_editor):
+    db_alias = schema_editor.connection.alias
     Shelter = apps.get_model("shelters", "Shelter")
     SPA = apps.get_model("shelters", "spa")
 
     # Create SPA instances for existing SPA field values in Shelter
-    for shelter in Shelter.objects.all():
+    for shelter in Shelter.objects.using(db_alias).all():
         if shelter.spa:
             spa_instance, created = SPA.objects.get_or_create(name=shelter.spa)
             shelter.spa_new.add(spa_instance)
