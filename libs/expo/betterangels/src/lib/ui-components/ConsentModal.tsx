@@ -12,7 +12,13 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { DimensionValue, Image, StyleSheet, View } from 'react-native';
+import {
+  DimensionValue,
+  Dimensions,
+  Image,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
@@ -90,6 +96,9 @@ export default function ConsentModal(props: IConsentModalProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   const topOffset = insets.top;
+
+  const dimensions = Dimensions.get('window');
+  const windowHeight = dimensions.height;
 
   const checkboxData: CheckboxData[] = [
     {
@@ -187,6 +196,10 @@ export default function ConsentModal(props: IConsentModalProps) {
               }}
             />
             <Image
+              style={{
+                height: windowHeight * 0.325,
+              }}
+              resizeMode="contain"
               source={require('../../../../shared/images/consent.png')}
               accessibilityIgnoresInvertColors={true}
             />
