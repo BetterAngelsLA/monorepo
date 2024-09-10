@@ -245,7 +245,7 @@ For a list of command aliases, refer to [.bash_aliases](https://github.com/Bette
 
 #### Resetting DB
 
-If an error occurs where the local database doesn't reflect accurately after the migrations, run:
+If an error occurs where the local database doesn't accurately reflect the new migration(s), run:
 
 ```bash
 yarn nx run betterangels-backend:reset_db
