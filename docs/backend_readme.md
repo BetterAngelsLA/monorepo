@@ -235,6 +235,8 @@ To track the historical events for a certain model based on their id and timesta
 Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
+---
+
 ### Troubleshooting
 
 #### Aliases
