@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 from common.utils import get_current_request
+from django.contrib.auth import get_user_model
 from django.db.models import Model
 
 from .permissions import HIPAA_APPROVED
@@ -12,23 +13,27 @@ class AuthRouter:
     auth and contenttypes applications.
     """
 
-    route_app_labels = {"auth", "contenttypes"}
+    # route_app_labels = {"auth", "contenttypes"}
 
     def db_for_read(self, model, **hints):
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
-        if model._meta.app_label in self.route_app_labels:
+        if model == get_user_model():
             return "default"
-        return None
+        # if model._meta.app_label in self.route_app_labels:
+        #     return "default"
+        # return None
 
     def db_for_write(self, model, **hints):
         """
         Attempts to write auth and contenttypes models go to auth_db.
         """
-        if model._meta.app_label in self.route_app_labels:
+        if model == get_user_model():
             return "default"
-        return None
+        # if model._meta.app_label in self.route_app_labels:
+        #     return "default"
+        # return None
 
     def allow_relation(self, obj1, obj2, **hints):
         """
