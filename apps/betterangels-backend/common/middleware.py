@@ -1,6 +1,7 @@
 import zoneinfo
-from typing import Callable
+from typing import Any, Callable, Dict
 
+from common.utils import set_current_request
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 
@@ -42,3 +43,24 @@ class TimezoneMiddleware:
             timezone.deactivate()
 
         return self.get_response(request)
+
+
+class ThreadLocalRequestMiddleware:
+    """
+    Middleware that stores the current request in thread-local storage (greenlet-local for gevent).
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        # Store the current request in thread-local (greenlet-local) storage
+        set_current_request(request)
+
+        # Process the request and generate the response
+        response = self.get_response(request)
+
+        # Clear the request from thread-local storage after the response
+        set_current_request(None)
+
+        return response

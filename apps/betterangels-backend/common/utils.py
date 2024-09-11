@@ -1,7 +1,10 @@
 import os
+import threading
 import uuid
+from typing import Optional
 
 from django.db.models import Model
+from django.http import HttpRequest
 
 
 def get_unique_file_path(instance: Model, filename: str) -> str:
@@ -27,3 +30,25 @@ def get_unique_file_path(instance: Model, filename: str) -> str:
     ext = filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{ext}"
     return os.path.join("attachments/", unique_filename)
+
+
+# Create thread-local storage (will be greenlet-local in a gevent environment)
+_local = threading.local()
+
+
+def set_current_request(request: Optional[HttpRequest]) -> None:
+    """
+    Set the current request object in thread-local (greenlet-local) storage.
+
+    :param request: The current HTTP request or None to clear the storage.
+    """
+    _local.request = request
+
+
+def get_current_request() -> Optional[HttpRequest]:
+    """
+    Get the current request object from thread-local (greenlet-local) storage.
+
+    :return: The current request if set, otherwise None.
+    """
+    return getattr(_local, "request", None)

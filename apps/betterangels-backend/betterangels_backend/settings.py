@@ -142,6 +142,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     # Our Middleware
+    "common.middleware.ThreadLocalRequestMiddleware",
     "common.middleware.TimezoneMiddleware",
 ]
 
@@ -265,14 +266,14 @@ DATABASES = {
         "PASSWORD": env("HIPAA_DB_PASSWORD"),
         "HOST": env("HIPAA_DB_HOST"),
         "PORT": "5432",
-        "CONN_MAX_AGE": env("CONN_MAX_AGE"),
+        "CONN_MAX_AGE": env("CONN_MAX_AGE"),  # this needs to be db specific
         "IAM_SETTINGS": {
-            "ENABLED": env("USE_IAM_AUTH"),
-            "REGION_NAME": env("AWS_REGION"),
+            "ENABLED": env("USE_IAM_AUTH"),  # this needs to be db specific
+            "REGION_NAME": env("AWS_REGION"),  # this needs to be db specific
         },
     },
 }
-DATABASE_ROUTERS = ["accounts.routers.HIPAADatabaseRouter"]
+DATABASE_ROUTERS = ["accounts.routers.AuthRouter", "accounts.routers.HIPAADatabaseRouter"]
 DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
 

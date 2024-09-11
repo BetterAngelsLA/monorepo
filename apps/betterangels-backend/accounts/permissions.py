@@ -16,4 +16,4 @@ class ClientProfilePermissions(models.TextChoices):
     ADD = "accounts.add_clientprofile", _("Can add clientprofile")
 
 
-HIPAA_APPROVED = "accounts.hippa_approved"
+HIPAA_APPROVED = "accounts.hipaa_approved"
