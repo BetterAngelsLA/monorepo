@@ -3678,6 +3678,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/error-message@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@hookform/error-message@npm:2.0.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+    react-hook-form: ^7.0.0
+  checksum: 10/96665a078471f68a9fcc78f55a024f4caf1db2e32b5ff36d1755b3e9bfbb54a4f114c76d7da27147cca281e96dc0773bcd904760e96df1fd5c336ff182b02633
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.14":
   version: 0.11.14
   resolution: "@humanwhocodes/config-array@npm:0.11.14"
@@ -4270,6 +4281,7 @@ __metadata:
     "@graphql-codegen/near-operation-file-preset": "npm:^3.0.0"
     "@graphql-codegen/typescript-react-apollo": "npm:^4.3.0"
     "@graphql-eslint/eslint-plugin": "npm:^3.20.1"
+    "@hookform/error-message": "npm:^2.0.1"
     "@iarna/toml": "npm:^2.2.5"
     "@nx-tools/container-metadata": "npm:^5.0.3"
     "@nx-tools/nx-container": "npm:5.1.0"
