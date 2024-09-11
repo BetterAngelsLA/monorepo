@@ -13,29 +13,25 @@ class AuthRouter:
     auth and contenttypes applications.
     """
 
-    # route_app_labels = {"auth", "contenttypes"}
+    route_app_labels = {"auth", "accounts", "contenttypes", "organizations"}
 
-    def db_for_read(self, model, **hints):
+    def db_for_read(self, model: Model, **hints: Any) -> Optional[str]:
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
-        if model == get_user_model():
+        if model._meta.app_label in self.route_app_labels or model == get_user_model():
             return "default"
-        # if model._meta.app_label in self.route_app_labels:
-        #     return "default"
-        # return None
+        return None
 
-    def db_for_write(self, model, **hints):
+    def db_for_write(self, model: Model, **hints: Any) -> Optional[str]:
         """
         Attempts to write auth and contenttypes models go to auth_db.
         """
-        if model == get_user_model():
+        if model._meta.app_label in self.route_app_labels or model == get_user_model():
             return "default"
-        # if model._meta.app_label in self.route_app_labels:
-        #     return "default"
-        # return None
+        return None
 
-    def allow_relation(self, obj1, obj2, **hints):
+    def allow_relation(self, obj1: Model, obj2: Model, **hints: Any) -> Optional[bool]:
         """
         Allow relations if a model in the auth or contenttypes apps is
         involved.
@@ -44,10 +40,10 @@ class AuthRouter:
             return True
         return None
 
-    def allow_migrate(self, db, app_label, model_name=None, **hints):
+    def allow_migrate(self, db: str, app_label: str, model_name: Optional[str] = None, **hints: Any) -> Optional[bool]:
         """
         Make sure the auth and contenttypes apps only appear in the
-        'auth_db' database.
+        'default' database.
         """
         if app_label in self.route_app_labels:
             return db == "default"

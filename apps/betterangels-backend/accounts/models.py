@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         TaskUserObjectPermission,
     )
 
+# This is a footgun, we need to directly create the list from the enum. :(
 DOC_READY_NAMESPACES = [
     ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
     ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
@@ -52,6 +53,7 @@ DOC_READY_NAMESPACES = [
     ClientDocumentNamespaceEnum.SOCIAL_SECURITY_CARD,
     ClientDocumentNamespaceEnum.OTHER_DOC_READY,
 ]
+# This is a footgun, we need to directly create the list from the enum. :(
 CONSENT_FORM_NAMESPACES = [
     ClientDocumentNamespaceEnum.CONSENT_FORM,
     ClientDocumentNamespaceEnum.HMIS_FORM,
