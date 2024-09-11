@@ -1,10 +1,12 @@
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 from common.utils import get_current_request
 from django.contrib.auth import get_user_model
 from django.db.models import Model
 
 from .permissions import HIPAA_APPROVED
+
+# likely should move this to a different app.
 
 
 class AuthRouter:
@@ -13,9 +15,11 @@ class AuthRouter:
     auth and contenttypes applications.
     """
 
+    # We need to split out any client specific stuff from accounts
+    # Accounts needs to be a slim project.
     route_app_labels = {"auth", "accounts", "contenttypes", "organizations"}
 
-    def db_for_read(self, model: Model, **hints: Any) -> Optional[str]:
+    def db_for_read(self, model: Type[Model], **hints: Any) -> Optional[str]:
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
@@ -23,7 +27,7 @@ class AuthRouter:
             return "default"
         return None
 
-    def db_for_write(self, model: Model, **hints: Any) -> Optional[str]:
+    def db_for_write(self, model: Type[Model], **hints: Any) -> Optional[str]:
         """
         Attempts to write auth and contenttypes models go to auth_db.
         """
