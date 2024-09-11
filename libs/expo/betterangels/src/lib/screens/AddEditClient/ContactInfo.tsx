@@ -1,4 +1,5 @@
-import { Regex, Spacings } from '@monorepo/expo/shared/static';
+import { ErrorMessage } from '@hookform/error-message';
+import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   Input,
@@ -71,6 +72,25 @@ export default function ContactInfo(props: IContactInfoProps) {
           name="phoneNumber"
           control={control}
           keyboardType="phone-pad"
+          maxLength={10}
+          rules={{
+            pattern: {
+              value: Regex.phoneNumber,
+              message:
+                'Enter a 10-digit phone number without space or special characters',
+            },
+          }}
+        />
+        <ErrorMessage
+          errors={errors}
+          name="phoneNumber"
+          render={({ message }) => {
+            return (
+              <TextRegular size="sm" color={Colors.ERROR}>
+                {message}
+              </TextRegular>
+            );
+          }}
         />
         <Input
           placeholder="Enter Email"
