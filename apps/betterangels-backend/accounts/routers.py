@@ -6,7 +6,9 @@ from django.db.models import Model
 
 from .permissions import HIPAA_APPROVED
 
-# likely should move this to a different app.
+User = get_user_model()
+
+# likely should move these routers to a different app or create one.
 
 
 class AuthRouter:
@@ -23,7 +25,7 @@ class AuthRouter:
         """
         Attempts to read auth and contenttypes models go to auth_db.
         """
-        if model._meta.app_label in self.route_app_labels or model == get_user_model():
+        if model._meta.app_label in self.route_app_labels or model == User:
             return "default"
         return None
 
@@ -31,7 +33,7 @@ class AuthRouter:
         """
         Attempts to write auth and contenttypes models go to auth_db.
         """
-        if model._meta.app_label in self.route_app_labels or model == get_user_model():
+        if model._meta.app_label in self.route_app_labels or model == User:
             return "default"
         return None
 
@@ -54,6 +56,7 @@ class AuthRouter:
         return None
 
 
+# We should convert this to a demo account router.
 class HIPAADatabaseRouter:
     """
     A Django database router that routes database operations to either the default database
