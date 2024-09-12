@@ -10,7 +10,7 @@ import LibCamera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
-interface ILibraryModalProps {
+interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
   setModalVisible: (isModalVisible: boolean) => void;
   isModalVisible: boolean;
@@ -18,7 +18,7 @@ interface ILibraryModalProps {
   allowMultiple?: boolean;
 }
 
-export default function LibraryModal(props: ILibraryModalProps) {
+export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const {
     onCapture,
     setModalVisible,

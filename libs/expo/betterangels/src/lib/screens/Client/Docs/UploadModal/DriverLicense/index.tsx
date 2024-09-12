@@ -4,7 +4,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
-  LibraryModal,
+  MediaPickerModal,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -327,7 +327,7 @@ export default function DriverLicense({
           </View>
         )}
       </Section>
-      <LibraryModal
+      <MediaPickerModal
         allowMultiple={false}
         onCapture={(file) => {
           if (uploadingType === 'front') {

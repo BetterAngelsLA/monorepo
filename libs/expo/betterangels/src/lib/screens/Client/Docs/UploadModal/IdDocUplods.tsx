@@ -4,7 +4,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
-  LibraryModal,
+  MediaPickerModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
@@ -179,7 +179,7 @@ export default function IdDocUploads(props: IIdDocUploadsProps) {
           </View>
         )}
       </Section>
-      <LibraryModal
+      <MediaPickerModal
         allowMultiple={false}
         onCapture={(file) => {
           setDocs({
