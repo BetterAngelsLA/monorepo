@@ -7,6 +7,14 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       preferredLanguage
       age
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       user {
         id
         email
