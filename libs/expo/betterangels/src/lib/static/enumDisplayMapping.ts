@@ -41,7 +41,7 @@ export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
   [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
   [RelationshipTypeEnum.Aunt]: 'Aunt',
   [RelationshipTypeEnum.Child]: 'Child',
-  [RelationshipTypeEnum.Cousin]: 'Cousing',
+  [RelationshipTypeEnum.Cousin]: 'Cousin',
   [RelationshipTypeEnum.Father]: 'Father',
   [RelationshipTypeEnum.Friend]: 'Friend',
   [RelationshipTypeEnum.Grandparent]: 'Grandparent',
