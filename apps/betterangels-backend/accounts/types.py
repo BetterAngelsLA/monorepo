@@ -5,7 +5,11 @@ from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
-from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from accounts.enums import (
+    ClientDocumentNamespaceEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+)
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
@@ -180,7 +184,6 @@ PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
 class ClientProfileBaseType:
     address: auto
     age: auto
-    place_of_birth: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
@@ -191,11 +194,13 @@ class ClientProfileBaseType:
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
+    place_of_birth: auto
     preferred_language: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
     spoken_languages: Optional[List[LanguageEnum]]
+    living_situation: Optional[LivingSituationEnum]
     veteran_status: auto
 
 
@@ -251,6 +256,7 @@ class ClientProfileType(ClientProfileBaseType):
     display_pronouns: auto
     hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
+    profile_photo: auto
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -258,6 +264,12 @@ class ClientProfileType(ClientProfileBaseType):
             return str(case_managers[-1].name)
 
         return "Not Assigned"
+
+
+@strawberry.input
+class ClientProfilePhotoInput:
+    client_profile: ID
+    photo: Upload
 
 
 @strawberry_django.input(ClientProfile, partial=True)

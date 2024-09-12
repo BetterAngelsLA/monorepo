@@ -17,11 +17,13 @@ class GenderEnum(models.TextChoices):
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
-class VehicleTypeEnum(models.TextChoices):
-    BICYCLE = "bicycle", _("Bicycle")
-    CAR = "car", _("Car")
-    MOTORCYCLE = "motorcycle", _("Motorcycle")
-    RV = "rv", _("RV")
+@strawberry.enum
+class LivingSituationEnum(models.TextChoices):
+    HOUSING = "housing", _("Housing")
+    OPEN_AIR = "open_air", _("Open Air")
+    SHELTER = "shelter", _("Shelter")
+    TENT = "tent", _("Tent")
+    VEHICLE = "vehicle", _("Vehicle")
     OTHER = "other", _("Other")
 
 
