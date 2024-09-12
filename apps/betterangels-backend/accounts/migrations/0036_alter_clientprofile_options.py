@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0034_clientprofile_clientcontact_clear_phonenumber"),
+        ("accounts", "0035_clientprofile_living_situation_and_profile_photo"),
     ]
 
     operations = [
