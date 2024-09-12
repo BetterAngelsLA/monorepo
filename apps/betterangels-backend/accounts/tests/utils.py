@@ -7,6 +7,7 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
@@ -91,23 +92,27 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             id
             address
             age
-            placeOfBirth
             dateOfBirth
             displayCaseManager
             displayPronouns
-            heightInInches
             eyeColor
             gender
             hairColor
+            heightInInches
             hmisId
+            livingSituation
             maritalStatus
             nickname
-            race
             phoneNumber
             physicalDescription
+            placeOfBirth
             preferredLanguage
+            profilePhoto {
+                name
+            }
             pronouns
             pronounsOther
+            race
             spokenLanguages
             veteranStatus
             contacts {
@@ -124,13 +129,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 hmisId
                 agency
             }
-            user {
-                id
-                firstName
-                lastName
-                middleName
-                email
-            }
             householdMembers {
                 id
                 name
@@ -138,6 +136,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 gender
                 relationshipToClient
                 relationshipToClientOther
+            }
+            user {
+                id
+                firstName
+                lastName
+                middleName
+                email
             }
         """
 
@@ -221,48 +226,56 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_1_user,
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
-                "placeOfBirth": "Los Angeles, CA",
+                "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
-                "hmisId": "HMISidLAHSA1",
+                "hmisId": "HMISidLAHSA0",
+                "hmisProfiles": self.client_1_hmis_profiles,
+                "householdMembers": self.client_1_household_members,
+                "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "physicalDescription": "A human",
+                "placeOfBirth": "Los Angeles, CA",
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+                "user": self.client_profile_1_user,
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
-                "contacts": self.client_1_contacts,
-                "householdMembers": self.client_1_household_members,
             }
         )["data"]["createClientProfile"]
+        self.client_profile_1_photo_name = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
+            "data"
+        ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
-                "user": self.client_profile_2_user,
                 "address": None,
-                "placeOfBirth": None,
-                "contacts": [self.client_profile_2_contact_1],
+                "contacts": [],
                 "dateOfBirth": None,
                 "eyeColor": None,
                 "gender": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisId": "HMISidPASADENA2",
+                "hmisProfiles": [],
+                "householdMembers": [],
+                "livingSituation": None,
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
                 "physicalDescription": None,
+                "placeOfBirth": None,
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
                 "spokenLanguages": [],
+                "user": self.client_profile_2_user,
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
@@ -379,3 +392,37 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             variables={"documentId": document_id},
         )
         return response
+
+    def _update_client_profile_photo_fixture(
+        self,
+        client_profile_id: str,
+        photo_content: bytes = b"test photo content",
+        photo_name: str = "test_photo.jpg",
+    ) -> Dict[str, Any]:
+        photo = SimpleUploadedFile(name=photo_name, content=photo_content)
+
+        return self.execute_graphql(
+            """
+            mutation UpdateClientProfilePhoto($clientProfileId: ID!, $photo: Upload!) {  # noqa: B950
+                updateClientProfilePhoto(data: { clientProfile: $clientProfileId, photo: $photo }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientProfileType {
+                        id
+                        profilePhoto {
+                            name
+                        }
+                    }
+                }
+            }
+            """,
+            variables={
+                "clientProfileId": client_profile_id,
+            },
+            files={"photo": photo},
+        )

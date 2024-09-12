@@ -48,6 +48,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       },
       order: {
         user_FirstName: Ordering.AscNullsFirst,
+        id: Ordering.Desc,
       },
     },
     fetchPolicy: 'cache-and-network',

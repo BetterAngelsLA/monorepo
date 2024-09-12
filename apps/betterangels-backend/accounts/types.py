@@ -5,7 +5,11 @@ from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
-from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from accounts.enums import (
+    ClientDocumentNamespaceEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+)
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
@@ -57,6 +61,7 @@ class AuthResponse:
 class ClientProfileOrder:
     user__first_name: auto
     user__last_name: auto
+    id: auto
 
 
 @filter(ClientProfile)
@@ -165,8 +170,8 @@ class CreateUserInput(UserBaseType):
 @strawberry_django.input(User, partial=True)
 class UpdateUserInput(UserBaseType):
     id: ID
-    has_accepted_tos: auto = False
-    has_accepted_privacy_policy: auto = False
+    has_accepted_tos: auto
+    has_accepted_privacy_policy: auto
 
 
 PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
@@ -180,7 +185,6 @@ PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
 class ClientProfileBaseType:
     address: auto
     age: auto
-    place_of_birth: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
@@ -191,11 +195,13 @@ class ClientProfileBaseType:
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
+    place_of_birth: auto
     preferred_language: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
-    spoken_languages: Optional[List[Optional[LanguageEnum]]]
+    spoken_languages: Optional[List[LanguageEnum]]
+    living_situation: Optional[LivingSituationEnum]
     veteran_status: auto
 
 
@@ -249,8 +255,9 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
     display_pronouns: auto
-    hmis_profiles: Optional[List[Optional[HmisProfileType]]]
+    hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
+    profile_photo: auto
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -258,6 +265,12 @@ class ClientProfileType(ClientProfileBaseType):
             return str(case_managers[-1].name)
 
         return "Not Assigned"
+
+
+@strawberry.input
+class ClientProfilePhotoInput:
+    client_profile: ID
+    photo: Upload
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -275,6 +288,17 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+
+
+# TODO: refactor frontend to use ClientProfileInput instead of CreateClientProfileInput and UpdateClientProfileInput.
+# Then, remove CreateClientProfileInput and UpdateClientProfileInput
+@strawberry_django.input(ClientProfile, partial=True)
+class ClientProfileInput(ClientProfileBaseType):
+    id: Optional[ID]
+    contacts: Optional[List[ClientContactInput]]
+    hmis_profiles: Optional[List[HmisProfileInput]]
+    household_members: Optional[List[ClientHouseholdMemberInput]]
+    user: Optional[UpdateUserInput]
 
 
 @strawberry.input

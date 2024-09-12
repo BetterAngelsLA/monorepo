@@ -1,3 +1,5 @@
+import os
+import uuid
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
 
 import pghistory
@@ -8,6 +10,7 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
@@ -44,6 +47,8 @@ if TYPE_CHECKING:
         TaskUserObjectPermission,
     )
 
+from django.db.models import Model
+
 DOC_READY_NAMESPACES = [
     ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
     ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
@@ -55,8 +60,34 @@ DOC_READY_NAMESPACES = [
 CONSENT_FORM_NAMESPACES = [
     ClientDocumentNamespaceEnum.CONSENT_FORM,
     ClientDocumentNamespaceEnum.HMIS_FORM,
+    ClientDocumentNamespaceEnum.INCOME_FORM,
     ClientDocumentNamespaceEnum.OTHER_FORM,
 ]
+
+
+def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
+    """
+    Generates a unique path for storing an uploaded file by appending a UUID to the
+    file's original name, preserving its extension. Designed for use in Django's
+    FileField or ImageField 'upload_to' parameter, it ensures each file has a unique
+    name and organizes files in the 'client_profile_photos/' directory.
+
+    Parameters:
+    - instance (models.Model): The model instance the file is attached to. Not used in
+      this function, but required for 'upload_to'.
+    - filename (str): The original filename, used to keep the file extension.
+
+    Returns:
+    - str: The unique file storage path, combining 'client_profile_photos/' and the UUID-named
+      file.
+
+    Example:
+        Use in a Django model to ensure uploaded files are uniquely named and organized.
+        file = models.FileField(upload_to=get_client_profile_photo_file_path)
+    """
+    ext = filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join("client_profile_photos/", unique_filename)
 
 
 @pghistory.track(
@@ -148,7 +179,6 @@ class HmisProfile(models.Model):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
-    place_of_birth = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
@@ -156,11 +186,14 @@ class ClientProfile(models.Model):
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     physical_description = models.TextField(blank=True, null=True)
+    place_of_birth = models.CharField(max_length=100, blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
+    profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
@@ -198,6 +231,9 @@ class ClientProfile(models.Model):
             return self.pronouns_other
 
         return self.pronouns.label
+
+    class Meta:
+        ordering = ["user__first_name"]
 
 
 class ClientContact(BaseModel):
