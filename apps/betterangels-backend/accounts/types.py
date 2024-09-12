@@ -5,7 +5,11 @@ from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
-from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum, VehicleEnum
+from accounts.enums import (
+    ClientDocumentNamespaceEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+)
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
@@ -196,7 +200,7 @@ class ClientProfileBaseType:
     pronouns_other: auto
     race: auto
     spoken_languages: Optional[List[LanguageEnum]]
-    vehicles: Optional[List[VehicleEnum]]
+    living_situation: Optional[LivingSituationEnum]
     veteran_status: auto
 
 

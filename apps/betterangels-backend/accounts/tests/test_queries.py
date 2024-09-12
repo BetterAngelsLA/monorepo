@@ -7,10 +7,10 @@ from accounts.enums import (
     GenderEnum,
     HairColorEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
-    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import ClientProfile, User
@@ -206,6 +206,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
+            "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
@@ -219,7 +220,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "race": RaceEnum.WHITE_CAUCASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
-            "vehicles": [VehicleEnum.BICYCLE.name, VehicleEnum.CAR.name],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
         }
         self.assertEqual(client_profile, expected_client_profile)

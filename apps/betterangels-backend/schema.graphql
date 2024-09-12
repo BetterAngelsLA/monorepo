@@ -169,7 +169,7 @@ type ClientProfileType {
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
-  vehicles: [VehicleEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
@@ -211,7 +211,7 @@ input CreateClientProfileInput {
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
-  vehicles: [VehicleEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
   contacts: [ClientContactInput!]
@@ -428,6 +428,15 @@ enum LanguageEnum {
   TAGALOG
   TRADITIONAL_CHINESE
   VIETNAMESE
+}
+
+enum LivingSituationEnum {
+  HOUSING
+  OPEN_AIR
+  SHELTER
+  TENT
+  VEHICLE
+  OTHER
 }
 
 input LocationInput {
@@ -813,7 +822,7 @@ input UpdateClientProfileInput {
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
-  vehicles: [VehicleEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
@@ -898,14 +907,6 @@ type UserType {
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
   username: String!
-}
-
-enum VehicleEnum {
-  BICYCLE
-  CAR
-  MOTORCYCLE
-  RV
-  OTHER
 }
 
 enum YesNoPreferNotToSayEnum {

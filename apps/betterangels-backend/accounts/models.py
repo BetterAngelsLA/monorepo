@@ -10,11 +10,11 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
-    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.groups import GroupTemplateNames
@@ -186,6 +186,7 @@ class ClientProfile(models.Model):
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
@@ -197,7 +198,6 @@ class ClientProfile(models.Model):
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
-    vehicles = ArrayField(base_field=TextChoicesField(choices_enum=VehicleEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 
     @model_property

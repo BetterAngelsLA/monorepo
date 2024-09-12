@@ -7,11 +7,11 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
-    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import ClientProfile, HmisProfile, User
@@ -141,6 +141,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
@@ -151,7 +152,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "vehicles": [VehicleEnum.RV.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
@@ -252,6 +252,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
             "householdMembers": household_members,
+            "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
@@ -263,7 +264,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
-            "vehicles": [VehicleEnum.RV.name],
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)

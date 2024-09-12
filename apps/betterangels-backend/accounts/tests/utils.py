@@ -7,11 +7,11 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
-    VehicleEnum,
     YesNoPreferNotToSayEnum,
 )
 from accounts.models import User
@@ -100,6 +100,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             hairColor
             heightInInches
             hmisId
+            livingSituation
             maritalStatus
             nickname
             phoneNumber
@@ -113,7 +114,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             pronounsOther
             race
             spokenLanguages
-            vehicles
             veteranStatus
             contacts {
                 id
@@ -236,6 +236,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
                 "householdMembers": self.client_1_household_members,
+                "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
@@ -246,7 +247,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "user": self.client_profile_1_user,
-                "vehicles": [VehicleEnum.BICYCLE.name, VehicleEnum.CAR.name],
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -265,6 +265,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisId": "HMISidPASADENA2",
                 "hmisProfiles": [],
                 "householdMembers": [],
+                "livingSituation": None,
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
@@ -275,7 +276,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "race": None,
                 "spokenLanguages": [],
                 "user": self.client_profile_2_user,
-                "vehicles": [],
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]

@@ -101,6 +101,7 @@ export enum ClientDocumentNamespaceEnum {
   DriversLicenseBack = 'DRIVERS_LICENSE_BACK',
   DriversLicenseFront = 'DRIVERS_LICENSE_FRONT',
   HmisForm = 'HMIS_FORM',
+  IncomeForm = 'INCOME_FORM',
   OtherClientDocument = 'OTHER_CLIENT_DOCUMENT',
   OtherDocReady = 'OTHER_DOC_READY',
   OtherForm = 'OTHER_FORM',
@@ -174,6 +175,7 @@ export type ClientProfileType = {
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
+  livingSituation?: Maybe<LivingSituationEnum>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
@@ -187,7 +189,6 @@ export type ClientProfileType = {
   race?: Maybe<RaceEnum>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   user: UserType;
-  vehicles?: Maybe<Array<VehicleEnum>>;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -226,6 +227,7 @@ export type CreateClientProfileInput = {
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
+  livingSituation?: InputMaybe<LivingSituationEnum>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -237,7 +239,6 @@ export type CreateClientProfileInput = {
   race?: InputMaybe<RaceEnum>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user: CreateUserInput;
-  vehicles?: InputMaybe<Array<VehicleEnum>>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -446,6 +447,15 @@ export enum LanguageEnum {
   Tagalog = 'TAGALOG',
   TraditionalChinese = 'TRADITIONAL_CHINESE',
   Vietnamese = 'VIETNAMESE'
+}
+
+export enum LivingSituationEnum {
+  Housing = 'HOUSING',
+  OpenAir = 'OPEN_AIR',
+  Other = 'OTHER',
+  Shelter = 'SHELTER',
+  Tent = 'TENT',
+  Vehicle = 'VEHICLE'
 }
 
 export type LocationInput = {
@@ -1091,6 +1101,7 @@ export type UpdateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
+  livingSituation?: InputMaybe<LivingSituationEnum>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -1102,7 +1113,6 @@ export type UpdateClientProfileInput = {
   race?: InputMaybe<RaceEnum>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user?: InputMaybe<UpdateUserInput>;
-  vehicles?: InputMaybe<Array<VehicleEnum>>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
@@ -1182,14 +1192,6 @@ export type UserType = {
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
 };
-
-export enum VehicleEnum {
-  Bicycle = 'BICYCLE',
-  Car = 'CAR',
-  Motorcycle = 'MOTORCYCLE',
-  Other = 'OTHER',
-  Rv = 'RV'
-}
 
 export enum YesNoPreferNotToSayEnum {
   No = 'NO',
