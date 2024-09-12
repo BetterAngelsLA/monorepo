@@ -8,7 +8,7 @@ export type UpdateCurrentUserMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateCurrentUserMutation = { __typename?: 'Mutation', updateCurrentUser: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'UserType', id: string, hasAcceptedTos: boolean, hasAcceptedPrivacyPolicy: boolean } };
+export type UpdateCurrentUserMutation = { __typename?: 'Mutation', updateCurrentUser: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'UserType', id: string, hasAcceptedTos?: boolean | null, hasAcceptedPrivacyPolicy?: boolean | null } };
 
 
 export const UpdateCurrentUserDocument = gql`
