@@ -7,6 +7,7 @@ from accounts.enums import (
     HairColorEnum,
     HmisAgencyEnum,
     LanguageEnum,
+    LivingSituationEnum,
     MaritalStatusEnum,
     PronounEnum,
     RaceEnum,
@@ -140,6 +141,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
@@ -170,12 +172,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayCaseManager": "Not Assigned",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
+            "profilePhoto": None,
             "user": expected_user,
         }
-
         client_differences = DeepDiff(
-            client_profile,
             expected_client_profile,
+            client_profile,
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
@@ -190,6 +192,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "middleName": "Middley",
             "email": "firstey_lastey@example.com",
         }
+
         contact_1 = {
             "id": self.client_profile_1["contacts"][0]["id"],
             "name": "Jerryyy",
@@ -209,6 +212,17 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         contacts = [contact_1, contact_new]
 
+        hmis_profile_1 = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
+            "hmisId": "UPDATEDHMISidSANTAMONICA1",
+            "agency": HmisAgencyEnum.SANTA_MONICA.name,
+        }
+        hmis_profile_new = {
+            "hmisId": "NEWHMISid1",
+            "agency": HmisAgencyEnum.VASH.name,
+        }
+        hmis_profiles = [hmis_profile_1, hmis_profile_new]
+
         household_member_1 = {
             "id": self.client_profile_1["householdMembers"][0]["id"],
             "name": "Daffodils",
@@ -226,21 +240,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         household_members = [household_member_1, household_member_new]
 
-        hmis_profile_1 = {
-            "id": self.client_profile_1["hmisProfiles"][0]["id"],
-            "hmisId": "UPDATEDHMISidSANTAMONICA1",
-            "agency": HmisAgencyEnum.SANTA_MONICA.name,
-        }
-        hmis_profile_new = {
-            "hmisId": "NEWHMISid1",
-            "agency": HmisAgencyEnum.VASH.name,
-        }
-        hmis_profiles = [hmis_profile_1, hmis_profile_new]
-
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
-            "placeOfBirth": "Los Angeles, CA",
             "contacts": contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.GRAY.name,
@@ -250,17 +252,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
             "householdMembers": household_members,
+            "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "normally cat-like",
+            "placeOfBirth": "Los Angeles, CA",
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
             "user": user,
+            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
@@ -271,6 +275,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayPronouns": "she/her/theirs",
             "displayCaseManager": "Not Assigned",
+            "profilePhoto": {"name": self.client_profile_1_photo_name},
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -281,13 +286,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:
+        # Manually update profile photo because it's created after the client profile fixture.
+        self.client_profile_1["profilePhoto"] = {"name": self.client_profile_1_photo_name}
+
         variables = {
             "id": self.client_profile_1["id"],
         }
         response = self._update_client_profile_fixture(variables)
-        client = response["data"]["updateClientProfile"]
+        client_profile = response["data"]["updateClientProfile"]
 
-        self.assertEqual(client, self.client_profile_1)
+        self.assertEqual(client_profile, self.client_profile_1)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
@@ -326,6 +334,37 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             User.objects.get(id=user.pk)
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
+
+    @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+    def test_update_client_profile_photo(self) -> None:
+        client_profile_id = self.client_profile_1["id"]
+        photo_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
+        photo_name = "profile_photo.jpg"
+
+        expected_query_count = 8
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_client_profile_photo_fixture(
+                client_profile_id,
+                photo_content,
+                photo_name,
+            )
+
+        photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        client_profile = ClientProfile.objects.get(id=client_profile_id)
+        self.assertEqual(client_profile.profile_photo.name, photo_name)
+
+        response = self._update_client_profile_photo_fixture(
+            client_profile_id,
+            photo_content,
+            photo_name,
+        )
+
+        updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
+        client_profile.refresh_from_db()
+        self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

@@ -153,6 +153,11 @@ export type ClientProfileOrder = {
   user_LastName?: InputMaybe<Ordering>;
 };
 
+export type ClientProfilePhotoInput = {
+  clientProfile: Scalars['ID']['input'];
+  photo: Scalars['Upload']['input'];
+};
+
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
   address?: Maybe<Scalars['String']['output']>;
@@ -171,6 +176,7 @@ export type ClientProfileType = {
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
+  livingSituation?: Maybe<LivingSituationEnum>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
@@ -178,6 +184,7 @@ export type ClientProfileType = {
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredLanguage?: Maybe<LanguageEnum>;
+  profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
@@ -221,6 +228,7 @@ export type CreateClientProfileInput = {
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
+  livingSituation?: InputMaybe<LivingSituationEnum>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -338,6 +346,16 @@ export type DjangoFileType = {
   url: Scalars['String']['output'];
 };
 
+export type DjangoImageType = {
+  __typename?: 'DjangoImageType';
+  height: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  size: Scalars['Int']['output'];
+  url: Scalars['String']['output'];
+  width: Scalars['Int']['output'];
+};
+
 export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
@@ -430,6 +448,15 @@ export enum LanguageEnum {
   Tagalog = 'TAGALOG',
   TraditionalChinese = 'TRADITIONAL_CHINESE',
   Vietnamese = 'VIETNAMESE'
+}
+
+export enum LivingSituationEnum {
+  Housing = 'HOUSING',
+  OpenAir = 'OPEN_AIR',
+  Other = 'OTHER',
+  Shelter = 'SHELTER',
+  Tent = 'TENT',
+  Vehicle = 'VEHICLE'
 }
 
 export type LocationInput = {
@@ -526,6 +553,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientProfile: UpdateClientProfilePayload;
+  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -657,6 +685,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
+};
+
+
+export type MutationUpdateClientProfilePhotoArgs = {
+  data: ClientProfilePhotoInput;
 };
 
 
@@ -1071,6 +1104,7 @@ export type UpdateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
+  livingSituation?: InputMaybe<LivingSituationEnum>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -1086,6 +1120,8 @@ export type UpdateClientProfileInput = {
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
+
+export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = OperationInfo | UserType;
 
