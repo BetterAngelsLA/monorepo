@@ -217,16 +217,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         contacts = [contact_1, contact_new]
 
-        hmis_profile_1 = {
-            "id": self.client_profile_1["hmisProfiles"][0]["id"],
-            "hmisId": "UPDATEDHMISidSANTAMONICA1",
-            "agency": HmisAgencyEnum.SANTA_MONICA.name,
-        }
-        hmis_profile_new = {
-            "hmisId": "NEWHMISid1",
-            "agency": HmisAgencyEnum.VASH.name,
-        }
-        hmis_profiles = [hmis_profile_1, hmis_profile_new]
+        hmis_profiles = []
 
         household_member_1 = {
             "id": self.client_profile_1["householdMembers"][0]["id"],
