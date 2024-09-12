@@ -44,8 +44,14 @@ export interface ISingleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'BirthCertificate';
+  docType: 'BirthCertificate' | 'SocialSecurityCard' | 'PhotoId';
+  thumbnailSize: TThumbnailSize;
 }
+
+export type TThumbnailSize = {
+  height: number;
+  width: number;
+};
 
 export type Docs = {
   DriversLicenseFront: ReactNativeFile | undefined;

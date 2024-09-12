@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import Modal from 'react-native-modal';
-import LibCamera from '../Camera';
+import Camera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
@@ -89,7 +89,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
       useNativeDriverForBackdrop={true}
     >
       {isCameraOpen ? (
-        <LibCamera
+        <Camera
           setModalVisible={setModalVisible}
           setIsCameraOpen={setIsCameraOpen}
           onCapture={onCapture}

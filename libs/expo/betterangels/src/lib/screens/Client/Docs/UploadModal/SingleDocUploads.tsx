@@ -19,7 +19,8 @@ import Section from './UploadSection';
 import { ISingleDocUploadsProps } from './types';
 
 export default function SingleDocUploads(props: ISingleDocUploadsProps) {
-  const { setTab, client, setDocs, docs, title, docType } = props;
+  const { setTab, client, setDocs, docs, title, docType, thumbnailSize } =
+    props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
@@ -125,9 +126,8 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
               <View
                 style={{
                   position: 'relative',
-                  height: 395,
-                  width: 236,
                   marginBottom: Spacings.sm,
+                  ...thumbnailSize,
                 }}
               >
                 <IconButton
@@ -150,8 +150,7 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
                 </IconButton>
                 <Image
                   style={{
-                    height: 395,
-                    width: 236,
+                    ...thumbnailSize,
                   }}
                   source={{ uri: docs?.[docType]?.uri }}
                   resizeMode="cover"

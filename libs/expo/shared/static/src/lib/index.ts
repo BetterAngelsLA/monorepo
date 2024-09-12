@@ -4,3 +4,4 @@ export { Radiuses } from './radiuses';
 export { Regex } from './regex';
 export { Shadow } from './shadow';
 export { Spacings } from './spacings';
+export { thumbnailSizes } from './thumbnail';

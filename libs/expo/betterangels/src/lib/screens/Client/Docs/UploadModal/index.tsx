@@ -1,6 +1,11 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  thumbnailSizes,
+} from '@monorepo/expo/shared/static';
 import {
   Button,
   TextBold,
@@ -13,7 +18,6 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import DriversLicense from './DriverLicense';
-import IdDocUploads from './IdDocUplods';
 import MultipleDocUploads from './MultipeDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
@@ -43,16 +47,23 @@ export default function UploadModal(props: IUploadModalProps) {
     DriversLicense: <DriversLicense {...docProps} />,
     BirthCertificate: (
       <SingleDocUploads
+        thumbnailSize={thumbnailSizes.BirthCertificate}
         docType="BirthCertificate"
         title="Upload Birth Certificate"
         {...docProps}
       />
     ),
     PhotoId: (
-      <IdDocUploads docType="PhotoId" title="Upload Photo ID" {...docProps} />
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.PhotoId}
+        docType="PhotoId"
+        title="Upload Photo ID"
+        {...docProps}
+      />
     ),
     SocialSecurityCard: (
-      <IdDocUploads
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.SocialSecurityCard}
         docType="SocialSecurityCard"
         title="Upload Social Security Card"
         {...docProps}
