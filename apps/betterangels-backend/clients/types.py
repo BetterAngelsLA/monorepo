@@ -5,8 +5,8 @@ from typing import List, Optional, Tuple, Union
 
 import strawberry
 import strawberry_django
-from accounts.enums import ClientDocumentNamespaceEnum, LanguageEnum
 from accounts.types import CreateUserInput, UpdateUserInput, UserType
+from clients.enums import ClientDocumentNamespaceEnum, LanguageEnum
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
