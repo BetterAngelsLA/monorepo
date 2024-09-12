@@ -81,6 +81,9 @@ class ServiceRequest(BaseModel):
             return note.id
         return None
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 @pghistory.track(
     pghistory.InsertEvent("task.add"),
@@ -152,6 +155,9 @@ class Task(BaseModel):
 
         return DueByGroupEnum.FUTURE_TASKS
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 @pghistory.track(
     pghistory.InsertEvent("note.add"),
@@ -220,6 +226,7 @@ class Note(BaseModel):
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
+        ordering = ["-interacted_at"]
 
 
 @pghistory.track(
