@@ -269,13 +269,12 @@ class Mutation:
                 )
 
             for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
-                if data := client_profile_data.pop(related_name):
-                    upsert_or_delete_client_related_object(
-                        info,
-                        related_cls_name,
-                        data,
-                        client_profile,
-                    )
+                upsert_or_delete_client_related_object(
+                    info,
+                    related_cls_name,
+                    client_profile_data.pop(related_name),
+                    client_profile,
+                )
 
             client_profile = resolvers.update(
                 info,
