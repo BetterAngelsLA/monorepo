@@ -1,10 +1,11 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Accordion, TextButton } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { RefObject, useMemo } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
+  RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../apollo';
 import Contact from './Contact';
@@ -29,6 +30,29 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
 
   const isRelevant = expanded === 'Relevant Contacts';
 
+  const sortedContacts = useMemo(() => {
+    const caseManagerContact = fields.find(
+      (contact) =>
+        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+    );
+
+    const otherContacts = fields
+      .filter(
+        (contact) =>
+          contact.relationshipToClient !==
+          RelationshipTypeEnum.CurrentCaseManager
+      )
+      .sort((a, b) =>
+        (a.relationshipToClient ?? '').localeCompare(
+          b.relationshipToClient ?? ''
+        )
+      );
+
+    return caseManagerContact
+      ? [caseManagerContact, ...otherContacts]
+      : otherContacts;
+  }, [fields]);
+
   return (
     <Accordion
       scrollRef={scrollRef}
@@ -46,7 +70,7 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
             overflow: 'hidden',
           }}
         >
-          {fields.map((_, index) => (
+          {sortedContacts.map((_, index) => (
             <Contact remove={remove} key={index} index={index} />
           ))}
           <View style={{ alignItems: 'flex-start', marginTop: Spacings.sm }}>
