@@ -17,11 +17,13 @@ class GenderEnum(models.TextChoices):
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
-class VehicleTypeEnum(models.TextChoices):
-    BICYCLE = "bicycle", _("Bicycle")
-    CAR = "car", _("Car")
-    MOTORCYCLE = "motorcycle", _("Motorcycle")
-    RV = "rv", _("RV")
+@strawberry.enum
+class LivingSituationEnum(models.TextChoices):
+    HOUSING = "housing", _("Housing")
+    OPEN_AIR = "open_air", _("Open Air")
+    SHELTER = "shelter", _("Shelter")
+    TENT = "tent", _("Tent")
+    VEHICLE = "vehicle", _("Vehicle")
     OTHER = "other", _("Other")
 
 
@@ -124,6 +126,7 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
 
     CONSENT_FORM = "consent_form", "Consent Form"
     HMIS_FORM = "hmis_form", "HMIS Form"
+    INCOME_FORM = "income_form", "Income Form"
     OTHER_FORM = "other_form", "Other Form"
 
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"

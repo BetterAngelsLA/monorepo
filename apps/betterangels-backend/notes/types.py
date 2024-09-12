@@ -80,6 +80,7 @@ class UpdateServiceRequestInput:
 @strawberry_django.ordering.order(models.Task)
 class TaskOrder:
     due_by: auto
+    id: auto
 
 
 @strawberry_django.type(models.Task, pagination=True, order=TaskOrder)  # type: ignore[literal-required]
@@ -158,6 +159,7 @@ class CreateNoteMoodInput:
 @strawberry_django.ordering.order(models.Note)
 class NoteOrder:
     interacted_at: auto
+    id: auto
 
 
 @strawberry_django.filters.filter(models.Note)

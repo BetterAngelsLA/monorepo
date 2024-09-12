@@ -1,15 +1,9 @@
-from typing import List, cast
+from typing import Any, Dict, List, cast
 
 import strawberry
 import strawberry_django
 from accounts.enums import RelationshipTypeEnum
-from accounts.models import (
-    ClientContact,
-    ClientHouseholdMember,
-    ClientProfile,
-    HmisProfile,
-    User,
-)
+from accounts.models import ClientContact, ClientProfile, User
 from accounts.permissions import ClientProfilePermissions
 from accounts.services import send_magic_link
 from accounts.utils import get_user_permission_group
@@ -17,6 +11,7 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Prefetch
@@ -33,6 +28,7 @@ from .types import (
     AuthInput,
     AuthResponse,
     ClientDocumentType,
+    ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientProfileInput,
@@ -43,6 +39,47 @@ from .types import (
     UpdateUserInput,
     UserType,
 )
+
+CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
+    "contacts": "ClientContact",
+    "hmis_profiles": "HmisProfile",
+    "household_members": "ClientHouseholdMember",
+}
+
+
+def upsert_or_delete_client_related_object(
+    info: Info,
+    model_cls_name: str,
+    data: List[Dict[str, Any]],
+    client_profile: ClientProfile,
+) -> None:
+    """Creates, updates, or deletes a client's related objects.
+
+    Expects a list of related objects. Missing elements will be deleted.
+    """
+    model_cls = apps.get_model("accounts", model_cls_name)
+
+    item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
+    items_to_create = [item for item in data if not item.get("id")]
+    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+    model_cls.objects.exclude(id__in=item_updates_by_id).delete()
+
+    for item in items_to_create:
+        resolvers.create(
+            info,
+            model_cls,
+            {
+                **item,
+                "client_profile": client_profile,
+            },
+        )
+
+    for item in items_to_update:
+        resolvers.update(
+            info,
+            item,
+            item_updates_by_id[str(item.id)],
+        )
 
 
 @strawberry.type
@@ -121,6 +158,25 @@ class Mutation:
 
         return cast(UserType, user)
 
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
+    def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.CHANGE],
+                ).get(id=data.client_profile)
+
+                client_profile.profile_photo = data.photo
+                client_profile.save()
+
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
+
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
@@ -164,14 +220,9 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
-
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user", {})
-            contacts_data = client_profile_data.pop("contacts", [])
-            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members = client_profile_data.pop("household_members", [])
+            user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
-
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -180,39 +231,6 @@ class Mutation:
                     "user": client_user,
                 },
             )
-
-            if contacts_data:
-                for contact in contacts_data:
-                    resolvers.create(
-                        info,
-                        ClientContact,
-                        {
-                            **contact,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if hmis_profiles:
-                for hmis_profile in hmis_profiles:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **hmis_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-            if household_members:
-                for household_member in household_members:
-                    resolvers.create(
-                        info,
-                        ClientHouseholdMember,
-                        {
-                            **household_member,
-                            "client_profile": client_profile,
-                        },
-                    )
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -239,12 +257,8 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-            user_data = client_profile_data.pop("user", {})
-            contacts_data = client_profile_data.pop("contacts", [])
-            hmis_profiles = client_profile_data.pop("hmis_profiles", [])
-            household_members = client_profile_data.pop("household_members", [])
 
-            if user_data:
+            if user_data := client_profile_data.pop("user", {}):
                 client_user = resolvers.update(
                     info,
                     client_user,
@@ -254,78 +268,13 @@ class Mutation:
                     },
                 )
 
-            if contacts_data:
-                contact_updates_by_id = {c["id"]: c for c in contacts_data if c.get("id")}
-                contacts_to_create = [c for c in contacts_data if not c.get("id")]
-                contacts_to_update = ClientContact.objects.filter(
-                    id__in=contact_updates_by_id.keys(), client_profile=client_profile
-                )
-
-                for contact in contacts_to_create:
-                    resolvers.create(
+            for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
+                if data := client_profile_data.pop(related_name):
+                    upsert_or_delete_client_related_object(
                         info,
-                        ClientContact,
-                        {
-                            **contact,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for contact in contacts_to_update:
-                    resolvers.update(
-                        info,
-                        contact,
-                        contact_updates_by_id[str(contact.id)],
-                    )
-
-            if household_members:
-                household_member_updates_by_id = {
-                    member["id"]: member for member in household_members if member.get("id")
-                }
-                household_members_to_create = [member for member in household_members if not member.get("id")]
-                household_members_to_update = ClientHouseholdMember.objects.filter(
-                    id__in=household_member_updates_by_id.keys(), client_profile=client_profile
-                )
-
-                for household_member in household_members_to_create:
-                    resolvers.create(
-                        info,
-                        ClientHouseholdMember,
-                        {
-                            **household_member,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for household_member in household_members_to_update:
-                    resolvers.update(
-                        info,
-                        household_member,
-                        household_member_updates_by_id[str(household_member.id)],
-                    )
-
-            if hmis_profiles:
-                hmis_profile_updates_by_id = {hp["id"]: hp for hp in hmis_profiles if hp.get("id")}
-                hmis_profiles_to_create = [hp for hp in hmis_profiles if not hp.get("id")]
-                hmis_profiles_to_update = HmisProfile.objects.filter(
-                    id__in=hmis_profile_updates_by_id, client_profile=client_profile
-                )
-
-                for hmis_profile in hmis_profiles_to_create:
-                    resolvers.create(
-                        info,
-                        HmisProfile,
-                        {
-                            **hmis_profile,
-                            "client_profile": client_profile,
-                        },
-                    )
-
-                for hmis_profile in hmis_profiles_to_update:
-                    resolvers.update(
-                        info,
-                        hmis_profile,
-                        hmis_profile_updates_by_id[str(hmis_profile.id)],
+                        related_cls_name,
+                        data,
+                        client_profile,
                     )
 
             client_profile = resolvers.update(
