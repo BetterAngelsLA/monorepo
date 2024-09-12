@@ -98,6 +98,9 @@ export default function AddEditClient({ id }: { id?: string }) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
+    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
+    delete values.displayPronouns;
+
     try {
       let operationResult;
 

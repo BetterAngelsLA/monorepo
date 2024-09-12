@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, hmisId?: string | null, gender?: Types.GenderEnum | null, dateOfBirth?: any | null, preferredLanguage?: Types.LanguageEnum | null, age?: number | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, hmisId?: string | null, nickname?: string | null, preferredLanguage?: Types.LanguageEnum | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } } };
 
 
 export const ClientProfileDocument = gql`
@@ -16,11 +16,12 @@ export const ClientProfileDocument = gql`
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      hmisId
-      gender
-      dateOfBirth
-      preferredLanguage
       age
+      dateOfBirth
+      gender
+      hmisId
+      nickname
+      preferredLanguage
       user {
         id
         email

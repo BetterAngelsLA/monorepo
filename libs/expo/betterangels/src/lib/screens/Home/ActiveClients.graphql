@@ -38,6 +38,7 @@ query ClientProfiles(
     ... on ClientProfileType {
       id
       hmisId
+      nickname
       user {
         id
         email
