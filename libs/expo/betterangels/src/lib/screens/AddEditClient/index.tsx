@@ -52,6 +52,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           },
           order: {
             user_FirstName: Ordering.AscNullsFirst,
+            id: Ordering.Desc,
           },
         },
       },
@@ -69,6 +70,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           },
           order: {
             user_FirstName: Ordering.AscNullsFirst,
+            id: Ordering.Desc,
           },
         },
       },
