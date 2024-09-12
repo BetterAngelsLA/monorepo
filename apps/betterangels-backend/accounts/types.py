@@ -61,6 +61,7 @@ class AuthResponse:
 class ClientProfileOrder:
     user__first_name: auto
     user__last_name: auto
+    id: auto
 
 
 @filter(ClientProfile)
