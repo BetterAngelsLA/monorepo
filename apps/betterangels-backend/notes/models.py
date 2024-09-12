@@ -87,7 +87,7 @@ class ServiceRequest(BaseModel):
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):
+class Task(BaseModel):  # type: ignore[django-manager-missing]
     title = models.CharField(max_length=100, blank=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
