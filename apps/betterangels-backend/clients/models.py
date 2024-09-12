@@ -73,15 +73,15 @@ class ClientProfile(models.Model):
 
     @model_property
     def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []  # type: ignore[attr-defined]
+        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []
 
     @model_property
     def consent_form_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES) or []  # type: ignore[attr-defined]
+        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES) or []
 
     @model_property
     def other_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []  # type: ignore[attr-defined]
+        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []
 
     @model_property
     def age(self) -> Optional[int]:
