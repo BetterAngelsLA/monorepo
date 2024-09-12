@@ -14,7 +14,7 @@ import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
-import Section from './Section';
+import Section from './UploadSection';
 import { IIdDocUploadsProps } from './types';
 
 export default function IdDocUploads(props: IIdDocUploadsProps) {

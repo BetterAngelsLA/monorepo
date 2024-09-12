@@ -8,9 +8,9 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { ISectionProps } from './types';
+import { IUploadSectionProps } from './types';
 
-export default function Section(props: ISectionProps) {
+export default function UploadSection(props: IUploadSectionProps) {
   const { onCancel, title, subtitle, onSubmit, children, loading } = props;
   return (
     <KeyboardAvoidingView

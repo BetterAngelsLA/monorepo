@@ -377,7 +377,6 @@ export default function UploadModal(props: IUploadModalProps) {
                 </View>
 
                 <Button
-                  disabled={docs.ConsentForm && docs.ConsentForm.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('ConsentForm')}
                   height="md"
@@ -415,7 +414,6 @@ export default function UploadModal(props: IUploadModalProps) {
                 </View>
 
                 <Button
-                  disabled={docs.HmisForm && docs.HmisForm.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('HmisForm')}
                   height="md"
@@ -453,7 +451,6 @@ export default function UploadModal(props: IUploadModalProps) {
                 </View>
 
                 <Button
-                  disabled={docs.IncomeForm && docs.IncomeForm.length > 0}
                   containerStyle={{ flex: 1 }}
                   onPress={() => setTab('IncomeForm')}
                   height="md"

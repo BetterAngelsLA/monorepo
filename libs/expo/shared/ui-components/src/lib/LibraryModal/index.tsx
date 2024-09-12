@@ -1,5 +1,5 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Shadow, Spacings } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -82,7 +82,7 @@ export default function LibraryModal(props: ILibraryModalProps) {
     <Modal
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      backdropOpacity={0.5}
+      backdropOpacity={0}
       onBackdropPress={closeModal}
       isVisible={isModalVisible}
       style={{ justifyContent: 'flex-end', margin: isCameraOpen ? 0 : 20 }}
@@ -101,14 +101,7 @@ export default function LibraryModal(props: ILibraryModalProps) {
               backgroundColor: Colors.WHITE,
               marginBottom: Spacings.xs,
               borderRadius: 8,
-              shadowColor: Colors.BLACK,
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
+              ...Shadow,
             }}
           >
             <Pressable
@@ -144,14 +137,7 @@ export default function LibraryModal(props: ILibraryModalProps) {
               borderRadius: 8,
               padding: Spacings.sm,
               alignItems: 'center',
-              shadowColor: Colors.BLACK,
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
+              ...Shadow,
             }}
             accessibilityRole="button"
             accessibilityHint="close map selection"

@@ -16,7 +16,7 @@ import {
   ClientProfileQuery,
   useCreateClientDocumentMutation,
 } from '../../../__generated__/Client.generated';
-import Section from '../Section';
+import Section from '../UploadSection';
 import { Docs, ITab } from '../types';
 
 export default function DriverLicense({

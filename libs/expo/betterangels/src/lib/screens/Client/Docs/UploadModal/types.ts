@@ -2,7 +2,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
-export interface ISectionProps {
+export interface IUploadSectionProps {
   onCancel: () => void;
   title: string;
   subtitle?: string;
