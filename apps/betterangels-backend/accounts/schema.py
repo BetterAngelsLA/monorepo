@@ -247,13 +247,12 @@ class Mutation:
                 )
 
             for related_object, related_object_class in CLIENT_RELATED_OBJECT_MODEL_MAP.items():
-                if related_object_data := client_profile_data.pop(related_object):
-                    _upsert_client_related_object(
-                        info,
-                        related_object_class,
-                        related_object_data,
-                        client_profile,
-                    )
+                _upsert_client_related_object(
+                    info,
+                    related_object_class,
+                    client_profile_data.pop(related_object),
+                    client_profile,
+                )
 
             client_profile = resolvers.update(
                 info,
