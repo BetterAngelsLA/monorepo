@@ -16,7 +16,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
-from strawberry_django import auth, mutations
+from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
@@ -29,7 +29,6 @@ from .types import (
     CreateClientDocumentInput,
     CreateClientProfileInput,
     UpdateClientProfileInput,
-    UserType,
 )
 
 CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
@@ -76,8 +75,6 @@ def upsert_or_delete_client_related_object(
 
 @strawberry.type
 class Query:
-    current_user: UserType = auth.current_user()  # type: ignore
-
     @strawberry_django.field(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])])
     def client_profile(self, info: Info, pk: strawberry.ID) -> ClientProfileType:
         client_profile = ClientProfile.objects.prefetch_related(
