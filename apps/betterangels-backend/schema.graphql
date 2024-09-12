@@ -143,6 +143,7 @@ input ClientProfileFilter {
 input ClientProfileOrder {
   user_FirstName: Ordering
   user_LastName: Ordering
+  id: Ordering
 }
 
 input ClientProfilePhotoInput {
@@ -574,6 +575,7 @@ enum NoteNamespaceEnum {
 
 input NoteOrder {
   interactedAt: Ordering
+  id: Ordering
 }
 
 type NoteType {
@@ -779,6 +781,7 @@ type SwitchType {
 
 input TaskOrder {
   dueBy: Ordering
+  id: Ordering
 }
 
 enum TaskStatusEnum {

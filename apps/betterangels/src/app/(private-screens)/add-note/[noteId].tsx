@@ -93,7 +93,7 @@ export default function AddNote() {
         query: NotesDocument,
         variables: {
           pagination: { limit: 10 + 1, offset: 0 },
-          order: { interactedAt: Ordering.Desc },
+          order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
           filters: { createdBy: user?.id, search: '' },
         },
       },

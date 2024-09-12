@@ -148,6 +148,7 @@ export type ClientProfileFilter = {
 };
 
 export type ClientProfileOrder = {
+  id?: InputMaybe<Ordering>;
   user_FirstName?: InputMaybe<Ordering>;
   user_LastName?: InputMaybe<Ordering>;
 };
@@ -757,6 +758,7 @@ export enum NoteNamespaceEnum {
 }
 
 export type NoteOrder = {
+  id?: InputMaybe<Ordering>;
   interactedAt?: InputMaybe<Ordering>;
 };
 
@@ -1063,6 +1065,7 @@ export type SwitchType = {
 
 export type TaskOrder = {
   dueBy?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
 };
 
 export enum TaskStatusEnum {
