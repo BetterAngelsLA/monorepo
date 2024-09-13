@@ -269,11 +269,11 @@ class Mutation:
                 )
 
             for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
-                if data := client_profile_data.pop(related_name):
+                if client_profile_data[related_name] is not strawberry.UNSET:
                     upsert_or_delete_client_related_object(
                         info,
                         related_cls_name,
-                        data,
+                        client_profile_data.pop(related_name),
                         client_profile,
                     )
 
