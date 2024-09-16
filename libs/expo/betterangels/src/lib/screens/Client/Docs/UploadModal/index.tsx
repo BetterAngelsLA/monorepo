@@ -17,9 +17,8 @@ import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import DocumentUpload from './DocumentUpload';
 import DriversLicense from './DriverLicense';
-import MultipleDocUploads from './MultipeDocUploads';
-import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
@@ -46,7 +45,8 @@ export default function UploadModal(props: IUploadModalProps) {
   const TABS = {
     DriversLicense: <DriversLicense {...docProps} />,
     BirthCertificate: (
-      <SingleDocUploads
+      <DocumentUpload
+        allowMultiple={false}
         thumbnailSize={thumbnailSizes.BirthCertificate}
         docType="BirthCertificate"
         title="Upload Birth Certificate"
@@ -54,7 +54,8 @@ export default function UploadModal(props: IUploadModalProps) {
       />
     ),
     PhotoId: (
-      <SingleDocUploads
+      <DocumentUpload
+        allowMultiple={false}
         thumbnailSize={thumbnailSizes.PhotoId}
         docType="PhotoId"
         title="Upload Photo ID"
@@ -62,7 +63,8 @@ export default function UploadModal(props: IUploadModalProps) {
       />
     ),
     SocialSecurityCard: (
-      <SingleDocUploads
+      <DocumentUpload
+        allowMultiple={false}
         thumbnailSize={thumbnailSizes.SocialSecurityCard}
         docType="SocialSecurityCard"
         title="Upload Social Security Card"
@@ -70,21 +72,27 @@ export default function UploadModal(props: IUploadModalProps) {
       />
     ),
     ConsentForm: (
-      <MultipleDocUploads
+      <DocumentUpload
+        allowMultiple={true}
+        thumbnailSize={thumbnailSizes.SocialSecurityCard}
         docType="ConsentForm"
         title="Upload Consent Forms"
         {...docProps}
       />
     ),
     HmisForm: (
-      <MultipleDocUploads
+      <DocumentUpload
+        allowMultiple={true}
+        thumbnailSize={thumbnailSizes.SocialSecurityCard}
         docType="HmisForm"
         title="Upload HMIS Form"
         {...docProps}
       />
     ),
     IncomeForm: (
-      <MultipleDocUploads
+      <DocumentUpload
+        allowMultiple={true}
+        thumbnailSize={thumbnailSizes.SocialSecurityCard}
         docType="IncomeForm"
         title="Upload Income Forms (pay stubs)"
         {...docProps}
