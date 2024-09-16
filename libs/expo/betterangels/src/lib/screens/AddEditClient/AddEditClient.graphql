@@ -22,11 +22,17 @@ query GetClientProfile($id: ID!) {
       dateOfBirth
       gender
       hmisId
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
       nickname
       phoneNumber
       preferredLanguage
       pronouns
       veteranStatus
+      livingSituation
       user {
         id
         email
