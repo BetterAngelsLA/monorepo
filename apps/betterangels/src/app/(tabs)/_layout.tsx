@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   ConsentModal,
-  hexToRGBA,
   MainPlusModal,
   useUser,
 } from '@monorepo/expo/betterangels';
@@ -288,11 +287,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: hexToRGBA(Colors.SECONDARY_EXTRA_DARK, 0.97),
   },
 });
