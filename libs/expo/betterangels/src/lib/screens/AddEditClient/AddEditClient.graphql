@@ -18,6 +18,7 @@ query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
+      age
       address
       dateOfBirth
       gender
