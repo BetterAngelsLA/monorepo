@@ -99,7 +99,8 @@ export default function Client({
     );
   }
 
-  if (error) throw new Error('Something went wrong. Please try again.');
+  if (error)
+    throw new Error(`Something went wrong. Please try again. ${error}`);
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>

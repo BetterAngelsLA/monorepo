@@ -9,7 +9,7 @@ interface IClientTabsProps {
 
 const TABS = [
   'Profile',
-  // 'Docs',
+  'Docs',
   'Interactions',
   // 'Tasks',
   // 'Services',
