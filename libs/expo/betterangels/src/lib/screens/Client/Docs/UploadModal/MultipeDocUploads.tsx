@@ -1,10 +1,6 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import {
-  Radiuses,
-  Spacings,
-  thumbnailSizes,
-} from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
@@ -19,11 +15,10 @@ import {
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
 import Section from './UploadSection';
-import { IDocumentUploadProps } from './types';
+import { IMultipleDocUploadsProps } from './types';
 
-export default function DocumentUpload(props: IDocumentUploadProps) {
-  const { setTab, client, setDocs, docs, title, docType, allowMultiple } =
-    props;
+export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
+  const { setTab, client, setDocs, docs, title, docType } = props;
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -137,8 +132,9 @@ export default function DocumentUpload(props: IDocumentUploadProps) {
                 <View
                   style={{
                     position: 'relative',
+                    height: 395,
+                    width: 236,
                     marginBottom: Spacings.sm,
-                    ...thumbnailSizes[docType],
                   }}
                 >
                   <IconButton
@@ -161,7 +157,8 @@ export default function DocumentUpload(props: IDocumentUploadProps) {
                   </IconButton>
                   <Image
                     style={{
-                      ...thumbnailSizes[docType],
+                      height: 395,
+                      width: 236,
                     }}
                     source={{ uri: formImage.uri }}
                     resizeMode="cover"
@@ -200,7 +197,6 @@ export default function DocumentUpload(props: IDocumentUploadProps) {
             [docType]: [...(docs[docType] ?? []), file],
           });
         }}
-        allowMultiple={allowMultiple}
         setModalVisible={setIsModalVisible}
         isModalVisible={isModalVisible}
         setFiles={(files) => {

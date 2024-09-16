@@ -29,22 +29,13 @@ export interface IIdDocUploadsProps {
   docType: 'SocialSecurityCard' | 'PhotoId';
 }
 
-export interface IDocumentUploadProps {
+export interface IMultipleDocUploadsProps {
   setTab: (tab: ITab) => void;
   client: ClientProfileQuery | undefined;
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  allowMultiple: boolean;
-  // docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm';
-  thumbnailSize: TThumbnailSize;
-  docType:
-    | 'BirthCertificate'
-    | 'SocialSecurityCard'
-    | 'PhotoId'
-    | 'ConsentForm'
-    | 'HmisForm'
-    | 'IncomeForm';
+  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm';
 }
 
 export interface ISingleDocUploadsProps {
