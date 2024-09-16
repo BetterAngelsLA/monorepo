@@ -253,6 +253,17 @@ export default function DriverLicense({
                 <BasicInput
                   label="File Name"
                   value={docs.DriversLicenseFront.name}
+                  onDelete={() =>
+                    setDocs({
+                      ...docs,
+                      DriversLicenseFront: {
+                        ...docs.DriversLicenseFront,
+                        name: '',
+                        uri: docs.DriversLicenseFront?.uri || '',
+                        type: docs.DriversLicenseFront?.type || '',
+                      },
+                    })
+                  }
                   onChangeText={(e) =>
                     setDocs({
                       ...docs,
@@ -310,6 +321,17 @@ export default function DriverLicense({
                 <BasicInput
                   label="File Name"
                   value={docs.DriversLicenseBack.name}
+                  onDelete={() =>
+                    setDocs({
+                      ...docs,
+                      DriversLicenseBack: {
+                        ...docs.DriversLicenseBack,
+                        name: '',
+                        uri: docs.DriversLicenseBack?.uri || '',
+                        type: docs.DriversLicenseBack?.type || '',
+                      },
+                    })
+                  }
                   onChangeText={(e) =>
                     setDocs({
                       ...docs,

@@ -1,6 +1,6 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
 import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
-import { Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   IconButton,
@@ -9,7 +9,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import {
   ClientProfileDocument,
@@ -160,6 +159,17 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
               <BasicInput
                 label="File Name"
                 value={docs?.[docType]?.name}
+                onDelete={() =>
+                  setDocs({
+                    ...docs,
+                    [docType]: {
+                      ...docs[docType],
+                      name: '',
+                      uri: docs[docType]?.uri || '',
+                      type: docs[docType]?.type || '',
+                    },
+                  })
+                }
                 onChangeText={(e) =>
                   setDocs({
                     ...docs,
