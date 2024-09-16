@@ -48,7 +48,7 @@ def upsert_or_delete_client_related_object(
 
     Expects a list of related objects. Missing elements will be deleted.
     """
-    model_cls = apps.get_model("accounts", model_cls_name)
+    model_cls = apps.get_model("clients", model_cls_name)
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
