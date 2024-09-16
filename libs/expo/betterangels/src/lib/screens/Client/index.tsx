@@ -17,14 +17,19 @@ import Profile from './Profile';
 import Schedule from './Schedule';
 import Services from './Services';
 import Tasks from './Tasks';
-import { useClientProfileQuery } from './__generated__/Client.generated';
+import {
+  ClientProfileQuery,
+  useClientProfileQuery,
+} from './__generated__/Client.generated';
 
 const getTabComponent = (
   key: string,
-  userId: string | undefined
+  client: ClientProfileQuery | undefined
 ): ReactElement => {
   const components: {
-    [key: string]: (props: { userId: string | undefined }) => JSX.Element;
+    [key: string]: (props: {
+      client: ClientProfileQuery | undefined;
+    }) => JSX.Element;
   } = {
     Profile,
     Interactions,
@@ -36,7 +41,7 @@ const getTabComponent = (
   };
 
   const Component = components[key];
-  return <Component userId={userId} />;
+  return <Component client={client} />;
 };
 
 export default function Client({
@@ -107,7 +112,7 @@ export default function Client({
         age={data?.clientProfile.age}
       />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, data?.clientProfile.user.id)}
+      {getTabComponent(tab, data)}
     </MainContainer>
   );
 }

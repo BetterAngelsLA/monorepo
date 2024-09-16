@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, hmisId?: string | null, gender?: Types.GenderEnum | null, dateOfBirth?: any | null, preferredLanguage?: Types.LanguageEnum | null, age?: number | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, age?: number | null, hmisId?: string | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null } };
 
 
 export const ClientProfileDocument = gql`
@@ -16,17 +16,37 @@ export const ClientProfileDocument = gql`
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      hmisId
-      gender
+      address
       dateOfBirth
-      preferredLanguage
+      gender
       age
+      hmisId
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
+      nickname
+      phoneNumber
+      preferredLanguage
+      pronouns
+      veteranStatus
+      livingSituation
       user {
         id
         email
         firstName
+        middleName
         lastName
-        username
+      }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
     }
   }

@@ -12,16 +12,18 @@ export function CardWrapper({
   onReset,
 }: {
   children: ReactNode;
-  title: string | ReactNode;
+  title?: string | ReactNode;
   subtitle?: string;
   onReset?: () => void;
 }) {
   return (
     <View style={styles.container}>
-      <View>
-        <TextBold size="lg">{title}</TextBold>
-        {subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
-      </View>
+      {title && (
+        <View>
+          <TextBold size="lg">{title}</TextBold>
+          {subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
+        </View>
+      )}
       {children}
       {onReset && (
         <View style={styles.resetWrapper}>

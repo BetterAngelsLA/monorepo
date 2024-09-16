@@ -99,8 +99,6 @@ export default function AddEditClient({ id }: { id?: string }) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
-    console.log(values);
-
     try {
       let operationResult;
 
