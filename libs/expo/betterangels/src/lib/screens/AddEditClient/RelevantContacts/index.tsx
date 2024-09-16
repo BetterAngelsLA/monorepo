@@ -60,7 +60,6 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
       setExpanded={() => {
         setExpanded(isRelevant ? null : 'Relevant Contacts');
       }}
-      mb="xs"
       title="Relevant Contacts"
     >
       {isRelevant && (
@@ -68,12 +67,13 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
           style={{
             height: isRelevant ? 'auto' : 0,
             overflow: 'hidden',
+            gap: Spacings.xs,
           }}
         >
           {sortedContacts.map((_, index) => (
             <Contact remove={remove} key={index} index={index} />
           ))}
-          <View style={{ alignItems: 'flex-start', marginTop: Spacings.sm }}>
+          <View style={{ alignItems: 'flex-start' }}>
             <TextButton
               onPress={() => append({ name: '' })}
               title="Add Relevant Contact"

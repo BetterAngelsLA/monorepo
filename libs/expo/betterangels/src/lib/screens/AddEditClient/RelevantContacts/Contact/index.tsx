@@ -57,6 +57,7 @@ export default function Contact(props: IContactProps) {
   if (!relationship) {
     return (
       <Select
+        labelMarginLeft="xs"
         label="Type of Relationship"
         placeholder="Select Relationship"
         defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
@@ -79,7 +80,6 @@ export default function Contact(props: IContactProps) {
   return (
     <View
       style={{
-        marginBottom: Spacings.xs,
         gap: Spacings.sm,
         borderRadius: Radiuses.xs,
         borderColor: Colors.NEUTRAL_LIGHT,
@@ -123,12 +123,13 @@ export default function Contact(props: IContactProps) {
         style={{
           marginTop: Spacings.sm,
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
+          gap: Spacings.md,
         }}
       >
         <TextButton
-          color={Colors.ERROR}
+          color={Colors.PRIMARY}
           title="Remove"
           onPress={() => handleRemove()}
           accessibilityHint="Removes Relevant contact"

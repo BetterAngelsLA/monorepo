@@ -19,6 +19,7 @@ interface ISelectProps {
   onValueChange: (value: string) => void;
   items: { displayValue: string; value?: string }[];
   defaultValue?: string;
+  labelMarginLeft?: TSpacing;
 }
 
 export function Select(props: ISelectProps) {
@@ -34,6 +35,7 @@ export function Select(props: ISelectProps) {
     onValueChange,
     placeholder = '',
     defaultValue,
+    labelMarginLeft,
   } = props;
 
   const containerStyle: ViewStyle = {
@@ -57,7 +59,7 @@ export function Select(props: ISelectProps) {
       ]}
     >
       {label && (
-        <TextRegular mb="xs" size="sm">
+        <TextRegular ml={labelMarginLeft} mb="xs" size="sm">
           {label}
         </TextRegular>
       )}
