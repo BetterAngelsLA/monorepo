@@ -82,7 +82,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     <Modal
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      backdropOpacity={0}
+      backdropOpacity={0.5}
       onBackdropPress={closeModal}
       isVisible={isModalVisible}
       style={{ justifyContent: 'flex-end', margin: isCameraOpen ? 0 : 20 }}
