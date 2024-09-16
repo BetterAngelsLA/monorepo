@@ -21,7 +21,7 @@ interface IContactProps {
 
 export default function Contact(props: IContactProps) {
   const { index, remove } = props;
-  const { control, setValue, watch, resetField } = useFormContext<
+  const { control, setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
@@ -38,16 +38,19 @@ export default function Contact(props: IContactProps) {
   };
 
   const handleReset = () => {
-    resetField(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
+    setValue(
+      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      null
     );
-    resetField(`contacts[${index}].name` as `contacts.${number}.name`);
-    resetField(`contacts[${index}].email` as `contacts.${number}.email`);
-    resetField(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`
+    setValue(`contacts[${index}].name` as `contacts.${number}.name`, null);
+    setValue(`contacts[${index}].email` as `contacts.${number}.email`, null);
+    setValue(
+      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
+      null
     );
-    resetField(
-      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`
+    setValue(
+      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
+      null
     );
   };
 
