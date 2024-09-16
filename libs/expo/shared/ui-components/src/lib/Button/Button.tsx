@@ -154,6 +154,8 @@ interface IButtonProps {
   borderRadius?: 8 | 50;
   borderWidth?: 1 | 0;
   loading?: boolean;
+  weight?: 'regular' | 'bold';
+  containerStyle?: ViewStyle;
 }
 
 export function Button(props: IButtonProps) {
@@ -181,11 +183,14 @@ export function Button(props: IButtonProps) {
     borderRadius = 8,
     borderWidth = 1,
     loading,
+    weight = 'bold',
+    containerStyle,
   } = props;
   return (
     <View
       style={[
         styles.container,
+        containerStyle,
         {
           height: HEIGHT[height],
         },
@@ -243,7 +248,10 @@ export function Button(props: IButtonProps) {
                       ? Colors.NEUTRAL_DARK
                       : VARIANTS[variant].color,
                     marginLeft: icon ? Spacings.xs : 0,
-                    fontFamily: 'Poppins-SemiBold',
+                    fontFamily:
+                      weight === 'regular'
+                        ? 'Poppings-Regular'
+                        : 'Poppins-SemiBold',
                     fontSize: FontSizes[fontSize].fontSize,
                     lineHeight: FontSizes[fontSize].lineHeight,
                   },
@@ -262,8 +270,7 @@ export function Button(props: IButtonProps) {
 const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
-
-    paddingHorizontal: Spacings.xs,
+    paddingHorizontal: Spacings.sm,
   },
   text: {
     letterSpacing: 0.4,
