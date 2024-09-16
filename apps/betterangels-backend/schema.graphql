@@ -143,12 +143,17 @@ input ClientProfileFilter {
 input ClientProfileOrder {
   user_FirstName: Ordering
   user_LastName: Ordering
+  id: Ordering
+}
+
+input ClientProfilePhotoInput {
+  clientProfile: ID!
+  photo: Upload!
 }
 
 type ClientProfileType {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -159,11 +164,13 @@ type ClientProfileType {
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UserType!
@@ -174,6 +181,7 @@ type ClientProfileType {
   displayPronouns: String
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -188,7 +196,6 @@ union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 input CreateClientProfileInput {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -199,11 +206,13 @@ input CreateClientProfileInput {
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   user: CreateUserInput!
   contacts: [ClientContactInput!]
@@ -318,6 +327,15 @@ type DjangoFileType {
   url: String!
 }
 
+type DjangoImageType {
+  name: String!
+  path: String!
+  size: Int!
+  url: String!
+  width: Int!
+  height: Int!
+}
+
 type DjangoModelType {
   pk: ID!
 }
@@ -413,6 +431,15 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+enum LivingSituationEnum {
+  HOUSING
+  OPEN_AIR
+  SHELTER
+  TENT
+  VEHICLE
+  OTHER
+}
+
 input LocationInput {
   address: AddressInput
   point: Point!
@@ -483,6 +510,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
   createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
@@ -547,6 +575,7 @@ enum NoteNamespaceEnum {
 
 input NoteOrder {
   interactedAt: Ordering
+  id: Ordering
 }
 
 type NoteType {
@@ -752,6 +781,7 @@ type SwitchType {
 
 input TaskOrder {
   dueBy: Ordering
+  id: Ordering
 }
 
 enum TaskStatusEnum {
@@ -779,7 +809,6 @@ enum TaskTypeEnum {
 input UpdateClientProfileInput {
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -790,11 +819,13 @@ input UpdateClientProfileInput {
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
   preferredLanguage: LanguageEnum
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
   spokenLanguages: [LanguageEnum!]
+  livingSituation: LivingSituationEnum
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
   user: UpdateUserInput
@@ -804,6 +835,8 @@ input UpdateClientProfileInput {
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
+
+union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | OperationInfo
 

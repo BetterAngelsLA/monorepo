@@ -28,6 +28,7 @@ from .types import (
     AuthInput,
     AuthResponse,
     ClientDocumentType,
+    ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientProfileInput,
@@ -157,6 +158,25 @@ class Mutation:
 
         return cast(UserType, user)
 
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
+    def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.CHANGE],
+                ).get(id=data.client_profile)
+
+                client_profile.profile_photo = data.photo
+                client_profile.save()
+
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
+
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
@@ -249,11 +269,11 @@ class Mutation:
                 )
 
             for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
-                if data := client_profile_data.pop(related_name):
+                if client_profile_data[related_name] is not strawberry.UNSET:
                     upsert_or_delete_client_related_object(
                         info,
                         related_cls_name,
-                        data,
+                        client_profile_data.pop(related_name),
                         client_profile,
                     )
 
