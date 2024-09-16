@@ -3,9 +3,9 @@ from typing import Any, Dict, List, cast
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.permissions import ClientProfilePermissions
 from accounts.utils import get_user_permission_group
 from clients.models import ClientContact, ClientProfile
+from clients.permissions import ClientProfilePermissions
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment
 from common.permissions.enums import AttachmentPermissions

@@ -8,6 +8,12 @@ import django_choices_field.fields
 from django.conf import settings
 
 
+def reassociate_permissions(apps, schema_editor):
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    ContentType.objects.filter(app_label="clients", model="clientprofile").delete()
+    ContentType.objects.filter(app_label="accounts", model="clientprofile").update(app_label="clients")
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -350,4 +356,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.SeparateDatabaseAndState(state_operations=state_operations),
+        migrations.RunPython(reassociate_permissions),
     ]
