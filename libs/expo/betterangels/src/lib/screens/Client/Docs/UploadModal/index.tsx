@@ -18,7 +18,7 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import DriversLicense from './DriverLicense';
-import MultipleDocUploads from './MultipeDocUploads';
+import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
