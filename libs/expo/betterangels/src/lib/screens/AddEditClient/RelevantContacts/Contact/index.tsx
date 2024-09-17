@@ -21,39 +21,46 @@ interface IContactProps {
 
 export default function Contact(props: IContactProps) {
   const { index, remove } = props;
-  const { control, setValue, watch, resetField } = useFormContext<
+  const { control, setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const contacts = watch('contacts');
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
   );
 
+  const contacts = watch('contacts') || [];
+
   const handleRemove = () => {
     remove(index);
-    if (contacts?.length === 1) {
-      setValue('contacts', []);
-    }
   };
 
   const handleReset = () => {
-    resetField(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
+    setValue(
+      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      null
     );
-    resetField(`contacts[${index}].name` as `contacts.${number}.name`);
-    resetField(`contacts[${index}].email` as `contacts.${number}.email`);
-    resetField(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`
+    setValue(`contacts[${index}].name` as `contacts.${number}.name`, null);
+    setValue(`contacts[${index}].email` as `contacts.${number}.email`, null);
+    setValue(
+      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
+      null
     );
-    resetField(
-      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`
+    setValue(
+      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
+      null
+    );
+    setValue(
+      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      null
     );
   };
 
   if (!relationship) {
     return (
       <Select
+        boldLabel
+        labelMarginLeft="xs"
         label="Type of Relationship"
         placeholder="Select Relationship"
         defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
@@ -76,7 +83,6 @@ export default function Contact(props: IContactProps) {
   return (
     <View
       style={{
-        marginBottom: Spacings.xs,
         gap: Spacings.sm,
         borderRadius: Radiuses.xs,
         borderColor: Colors.NEUTRAL_LIGHT,
@@ -90,6 +96,7 @@ export default function Contact(props: IContactProps) {
       <TextBold size="lg">{enumDisplayRelevant[relationship]}</TextBold>
       <Input
         placeholder="Name"
+        autoCorrect={false}
         label="Name"
         name={`contacts[${index}].name`}
         control={control}
@@ -115,17 +122,26 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].mailingAddress`}
         control={control}
       />
+      {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
+        <Input
+          placeholder="Relationship to Client Other"
+          label="Relationship to Client Other"
+          name={`contacts[${index}].relationshipToClientOther`}
+          control={control}
+        />
+      )}
 
       <View
         style={{
           marginTop: Spacings.sm,
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
+          gap: Spacings.md,
         }}
       >
         <TextButton
-          color={Colors.ERROR}
+          color={Colors.PRIMARY}
           title="Remove"
           onPress={() => handleRemove()}
           accessibilityHint="Removes Relevant contact"
@@ -135,7 +151,7 @@ export default function Contact(props: IContactProps) {
           color={Colors.PRIMARY}
           title="Reset"
           onPress={() => handleReset()}
-          accessibilityHint="Removes Relevant contact"
+          accessibilityHint="Clears Relevant contact fields"
         />
       </View>
     </View>

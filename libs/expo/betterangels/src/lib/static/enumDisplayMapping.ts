@@ -70,9 +70,9 @@ export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
   [RelationshipTypeEnum.Grandparent]: 'Grandparent',
   [RelationshipTypeEnum.Mother]: 'Mother',
   [RelationshipTypeEnum.Organization]: 'Organization',
-  [RelationshipTypeEnum.Other]: 'Other',
   [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
   [RelationshipTypeEnum.Pet]: 'Pet',
   [RelationshipTypeEnum.Sibling]: 'Sibling',
   [RelationshipTypeEnum.Uncle]: 'Uncle',
+  [RelationshipTypeEnum.Other]: 'Other',
 };
