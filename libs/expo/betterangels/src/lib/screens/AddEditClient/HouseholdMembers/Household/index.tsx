@@ -136,8 +136,12 @@ export default function Household(props: IHouseholdProps) {
           <Radio
             key={enumValue}
             value={
-              householdMembers[index].gender
-                ? enumDisplayGender[householdMembers[index].gender]
+              householdMembers.length > 0 &&
+              householdMembers[index]?.gender != null
+                ? enumDisplayGender[
+                    householdMembers[index]
+                      .gender as keyof typeof enumDisplayGender
+                  ]
                 : ''
             }
             label={displayValue}
