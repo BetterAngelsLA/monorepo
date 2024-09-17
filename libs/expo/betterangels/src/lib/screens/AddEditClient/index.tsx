@@ -18,19 +18,20 @@ import {
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
-import ContactInfo from './ContactInfo';
-import Dob from './Dob';
-import Gender from './Gender';
-import HMIS from './HMIS';
-import Language from './Language';
-import Name from './Name';
-import VeteranStatus from './VeteranStatus';
 import {
   useCreateClientProfileMutation,
   useDeleteClientProfileMutation,
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
+import ContactInfo from './ContactInfo';
+import Dob from './Dob';
+import Gender from './Gender';
+import HMIS from './HMIS';
+import Language from './Language';
+import Name from './Name';
+import RelevantContacts from './RelevantContacts';
+import VeteranStatus from './VeteranStatus';
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -102,7 +103,6 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     try {
       let operationResult;
-
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -115,9 +115,14 @@ export default function AddEditClient({ id }: { id?: string }) {
           variables: {
             data: {
               ...input,
+              user: {
+                id: data?.clientProfile.user.id,
+                ...input.user,
+              },
             },
           },
         });
+
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
       } else {
@@ -154,6 +159,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         router.replace('/');
       }
     } catch (err) {
+      console.log(err);
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };
@@ -180,7 +186,12 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
-    methods.reset(clientInput);
+    const newInput = clientInput.contacts?.map((contact) => {
+      const { __typename, ...rest } = contact;
+      return rest;
+    });
+
+    methods.reset({ ...clientInput, contacts: newInput });
   }, [data, id]);
 
   const props = {
@@ -216,6 +227,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
+          <RelevantContacts {...props} />
           {id && (
             <DeleteModal
               body="All data associated with this client will be deleted. This action cannot be undone."

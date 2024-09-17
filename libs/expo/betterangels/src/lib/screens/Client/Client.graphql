@@ -7,6 +7,14 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       preferredLanguage
       age
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       user {
         id
         email
@@ -14,6 +22,46 @@ query ClientProfile($id: ID!) {
         lastName
         username
       }
+      docReadyDocuments {
+        id
+        namespace
+        file {
+          url
+          name
+        }
+      }
+      consentFormDocuments {
+        id
+        namespace
+        file {
+          url
+          name
+        }
+      }
+      otherDocuments {
+        id
+        namespace
+        file {
+          url
+          name
+        }
+      }
+    }
+  }
+}
+
+mutation CreateClientDocument($data: CreateClientDocumentInput!) {
+  createClientDocument(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientDocumentType {
+      id
     }
   }
 }

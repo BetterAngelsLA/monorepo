@@ -5,4 +5,6 @@ export default function Page() {
   useEffect(() => {
     router.back();
   }, []);
+
+  return null;
 }
