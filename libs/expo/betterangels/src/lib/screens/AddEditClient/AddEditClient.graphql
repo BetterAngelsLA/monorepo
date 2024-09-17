@@ -20,7 +20,6 @@ query GetClientProfile($id: ID!) {
       id
       address
       dateOfBirth
-      displayPronouns
       gender
       hmisId
       nickname
@@ -34,6 +33,15 @@ query GetClientProfile($id: ID!) {
         firstName
         middleName
         lastName
+      }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
     }
   }
