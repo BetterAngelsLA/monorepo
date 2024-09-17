@@ -25,12 +25,9 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
-import PersonalInfo from './PersonalInfo';
-import Dob from './Dob';
 import Gender from './Gender';
 import HMIS from './HMIS';
-import Language from './Language';
-import Name from './Name';
+import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
 
