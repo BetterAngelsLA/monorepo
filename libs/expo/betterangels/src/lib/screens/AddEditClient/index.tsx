@@ -27,6 +27,7 @@ import {
 import ContactInfo from './ContactInfo';
 import Gender from './Gender';
 import HMIS from './HMIS';
+import HouseholdMembers from './HouseholdMembers';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
@@ -98,6 +99,13 @@ export default function AddEditClient({ id }: { id?: string }) {
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
+
+    values.householdMembers = values.householdMembers?.map((member) => {
+      if (member.dateOfBirth) {
+        member.dateOfBirth = member.dateOfBirth.toISOString().split('T')[0];
+      }
+      return member;
+    });
 
     try {
       let operationResult;
@@ -182,6 +190,26 @@ export default function AddEditClient({ id }: { id?: string }) {
       clientInput.dateOfBirth = parsedDate;
     }
 
+    if (data.clientProfile.householdMembers) {
+      clientInput.householdMembers = data.clientProfile.householdMembers.map(
+        (member) => {
+          const { __typename, ...rest } = member;
+          if (rest.dateOfBirth) {
+            const parsedDate = parse(
+              rest.dateOfBirth,
+              'yyyy-MM-dd',
+              new Date()
+            );
+            return {
+              ...rest,
+              dateOfBirth: parsedDate,
+            };
+          }
+          return rest;
+        }
+      );
+    }
+
     delete clientInput.__typename;
     delete clientInput.user.__typename;
 
@@ -234,6 +262,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
           <RelevantContacts {...props} />
+          <HouseholdMembers {...props} />
           {id && (
             <DeleteModal
               body="All data associated with this client will be deleted. This action cannot be undone."

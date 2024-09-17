@@ -42,6 +42,14 @@ query ClientProfile($id: ID!) {
         relationshipToClient
         relationshipToClientOther
       }
+      householdMembers {
+        dateOfBirth
+        gender
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
+      }
       docReadyDocuments {
         id
         namespace

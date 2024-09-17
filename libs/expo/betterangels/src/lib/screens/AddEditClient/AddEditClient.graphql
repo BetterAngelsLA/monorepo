@@ -41,6 +41,14 @@ query GetClientProfile($id: ID!) {
         middleName
         lastName
       }
+      householdMembers {
+        dateOfBirth
+        gender
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
+      }
       contacts {
         id
         email
