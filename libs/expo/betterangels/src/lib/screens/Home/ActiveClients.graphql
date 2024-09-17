@@ -46,6 +46,14 @@ query ClientProfiles(
         lastName
         username
       }
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
     }
   }

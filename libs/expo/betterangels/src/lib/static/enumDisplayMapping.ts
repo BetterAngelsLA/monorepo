@@ -1,4 +1,9 @@
-import { GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum } from '../apollo';
+import {
+  GenderEnum,
+  LanguageEnum,
+  RelationshipTypeEnum,
+  YesNoPreferNotToSayEnum,
+} from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
@@ -31,3 +36,20 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.No]: 'No',
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
+
+export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
+  [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
+  [RelationshipTypeEnum.Aunt]: 'Aunt',
+  [RelationshipTypeEnum.Child]: 'Child',
+  [RelationshipTypeEnum.Cousin]: 'Cousin',
+  [RelationshipTypeEnum.Father]: 'Father',
+  [RelationshipTypeEnum.Friend]: 'Friend',
+  [RelationshipTypeEnum.Grandparent]: 'Grandparent',
+  [RelationshipTypeEnum.Mother]: 'Mother',
+  [RelationshipTypeEnum.Organization]: 'Organization',
+  [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
+  [RelationshipTypeEnum.Pet]: 'Pet',
+  [RelationshipTypeEnum.Sibling]: 'Sibling',
+  [RelationshipTypeEnum.Uncle]: 'Uncle',
+  [RelationshipTypeEnum.Other]: 'Other',
+};

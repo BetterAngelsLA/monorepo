@@ -230,6 +230,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
+                imageUrl={clientProfile.profilePhoto?.url}
                 arrivedFrom="/clients"
                 select={select as string}
                 id={clientProfile.id}

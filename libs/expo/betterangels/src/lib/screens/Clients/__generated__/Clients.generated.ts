@@ -17,7 +17,7 @@ export type ClientProfilesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, hmisId?: string | null, nickname?: string | null, displayCaseManager: string, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, hmisId?: string | null, nickname?: string | null, displayCaseManager: string, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string }, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null }> };
 
 
 export const CreateNoteDocument = gql`
@@ -90,6 +90,14 @@ export const ClientProfilesDocument = gql`
         firstName
         lastName
         username
+      }
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
       }
       displayCaseManager
     }

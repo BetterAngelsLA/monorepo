@@ -1,6 +1,6 @@
-from accounts.enums import ClientDocumentNamespaceEnum, GenderEnum, LanguageEnum
-from accounts.models import ClientProfile
-from accounts.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, LanguageEnum
+from clients.models import ClientProfile
+from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.models import Attachment
 from django.test import override_settings
 from unittest_parametrize import parametrize
