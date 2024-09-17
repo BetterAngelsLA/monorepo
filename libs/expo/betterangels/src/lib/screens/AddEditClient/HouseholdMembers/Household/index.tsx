@@ -13,7 +13,6 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import {
@@ -70,10 +69,6 @@ export default function Household(props: IHouseholdProps) {
       null
     );
   };
-
-  useEffect(() => {
-    console.log(householdMembers[index].dateOfBirth);
-  }, [householdMembers]);
 
   if (!relationship) {
     return (
