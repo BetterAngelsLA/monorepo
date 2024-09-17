@@ -29,6 +29,8 @@ export default function Contact(props: IContactProps) {
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
   );
 
+  const contacts = watch('contacts') || [];
+
   const handleRemove = () => {
     remove(index);
   };
@@ -120,12 +122,14 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].mailingAddress`}
         control={control}
       />
-      <Input
-        placeholder="Relationship to Client Other"
-        label="Relationship to Client Other"
-        name={`contacts[${index}].relationshipToClientOther`}
-        control={control}
-      />
+      {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
+        <Input
+          placeholder="Relationship to Client Other"
+          label="Relationship to Client Other"
+          name={`contacts[${index}].relationshipToClientOther`}
+          control={control}
+        />
+      )}
 
       <View
         style={{
