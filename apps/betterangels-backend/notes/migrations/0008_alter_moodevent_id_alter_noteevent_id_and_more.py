@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("notes", "0006_fix_caseworker_template_servicerequest_permissions"),
+        ("notes", "0007_alter_note_options_alter_servicerequest_options_and_more"),
     ]
 
     operations = [

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
 
     initial = True
     dependencies = [
-        ("accounts", "0035_remove_client_specific_models"),
+        ("accounts", "0037_remove_client_specific_models"),
     ]
 
     state_operations = [
@@ -84,6 +84,23 @@ class Migration(migrations.Migration):
                 ("height_in_inches", models.FloatField(blank=True, null=True)),
                 ("hmis_id", models.CharField(blank=True, db_index=True, max_length=50, null=True, unique=True)),
                 (
+                    "living_situation",
+                    django_choices_field.fields.TextChoicesField(
+                        blank=True,
+                        choices=[
+                            ("housing", "Housing"),
+                            ("open_air", "Open Air"),
+                            ("shelter", "Shelter"),
+                            ("tent", "Tent"),
+                            ("vehicle", "Vehicle"),
+                            ("other", "Other"),
+                        ],
+                        choices_enum=clients.enums.LivingSituationEnum,
+                        max_length=8,
+                        null=True,
+                    ),
+                ),
+                (
                     "marital_status",
                     django_choices_field.fields.TextChoicesField(
                         blank=True,
@@ -103,6 +120,12 @@ class Migration(migrations.Migration):
                 (
                     "phone_number",
                     phonenumber_field.modelfields.PhoneNumberField(blank=True, max_length=128, null=True, region="US"),
+                ),
+                (
+                    "profile_photo",
+                    models.ImageField(
+                        blank=True, null=True, upload_to=clients.models.get_client_profile_photo_file_path
+                    ),
                 ),
                 ("physical_description", models.TextField(blank=True, null=True)),
                 (
@@ -211,6 +234,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={"ordering": ["user__first_name"]},
         ),
         migrations.CreateModel(
             name="ClientHouseholdMember",

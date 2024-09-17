@@ -554,6 +554,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientProfile: UpdateClientProfilePayload;
+  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -685,6 +686,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientProfileArgs = {
   data: UpdateClientProfileInput;
+};
+
+
+export type MutationUpdateClientProfilePhotoArgs = {
+  data: ClientProfilePhotoInput;
 };
 
 
@@ -882,7 +888,6 @@ export type Query = {
   serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
   tasks: Array<TaskType>;
-  updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
 };
 
 
@@ -949,11 +954,6 @@ export type QueryTaskArgs = {
 export type QueryTasksArgs = {
   order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryUpdateClientProfilePhotoArgs = {
-  data: ClientProfilePhotoInput;
 };
 
 export enum RaceEnum {

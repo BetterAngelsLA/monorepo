@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0035_remove_client_specific_models"),
+        ("accounts", "0037_remove_client_specific_models"),
     ]
 
     operations = [

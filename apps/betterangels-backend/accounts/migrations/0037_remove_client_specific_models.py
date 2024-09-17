@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0034_clientprofile_clientcontact_clear_phonenumber"),
+        ("accounts", "0036_alter_clientprofile_options"),
     ]
 
     database_operations = [
