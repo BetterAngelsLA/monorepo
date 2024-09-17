@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, Union
 import strawberry
 import strawberry_django
 from accounts.types import CreateUserInput, UpdateUserInput, UserType
-from clients.enums import ClientDocumentNamespaceEnum, LanguageEnum
+from clients.enums import ClientDocumentNamespaceEnum, LanguageEnum, LivingSituationEnum
 from common.graphql.types import AttachmentInterface
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
@@ -38,6 +38,7 @@ class CreateClientDocumentInput:
 class ClientProfileOrder:
     user__first_name: auto
     user__last_name: auto
+    id: auto
 
 
 @filter(ClientProfile)
@@ -117,23 +118,31 @@ PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
 class ClientProfileBaseType:
     address: auto
     age: auto
-    place_of_birth: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
     hair_color: auto
     height_in_inches: auto
     hmis_id: auto
+    living_situation: Optional[LivingSituationEnum]
     marital_status: auto
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
+    place_of_birth: auto
     preferred_language: auto
+    profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
     spoken_languages: Optional[List[LanguageEnum]]
     veteran_status: auto
+
+
+@strawberry.input
+class ClientProfilePhotoInput:
+    client_profile: ID
+    photo: Upload
 
 
 @strawberry_django.type(ClientContact)

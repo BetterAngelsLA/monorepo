@@ -8,13 +8,20 @@ interface IBottomActionsProps {
   cancel: ReactNode;
   submitTitle?: string;
   onSubmit: () => void;
+  isLoading?: boolean;
   /**
    * Optional action to be displayed on the right side of the bottom actions.
    */
 }
 
 export default function BottomActions(props: IBottomActionsProps) {
-  const { optionalAction, cancel, onSubmit, submitTitle = 'Submit' } = props;
+  const {
+    optionalAction,
+    cancel,
+    onSubmit,
+    submitTitle = 'Submit',
+    isLoading,
+  } = props;
 
   return (
     <View
@@ -33,6 +40,8 @@ export default function BottomActions(props: IBottomActionsProps) {
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {optionalAction}
         <Button
+          loading={isLoading}
+          disabled={isLoading}
           fontSize="sm"
           height="md"
           variant="primary"

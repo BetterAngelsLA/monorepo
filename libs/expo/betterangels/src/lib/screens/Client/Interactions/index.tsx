@@ -5,15 +5,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
+import { ClientProfileQuery } from '../__generated__/Client.generated';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
 const paginationLimit = 10;
 
 export default function Interactions({
-  userId,
+  client,
 }: {
-  userId: string | undefined;
+  client: ClientProfileQuery | undefined;
 }) {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
@@ -24,7 +25,7 @@ export default function Interactions({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc },
-      filters: { client: userId, search: filterSearch },
+      filters: { client: client?.clientProfile.id, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
