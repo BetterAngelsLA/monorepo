@@ -150,7 +150,7 @@ class NoteReverter:
 
         # If all updates occurred after revert_before_timestamp, revert to Note instance's creation event
         elif update_note_contexts.exists():
-            Note.objects.get(id=self.note_id).events.get(pgh_label="note.add").revert()
+            Note.objects.get(id=self.note_id).events.get(pgh_label="note.add").revert()  # type: ignore[attr-defined]
 
         # Discard contexts that were created after revert_before_timestamp time
         update_note_contexts.filter(metadata__timestamp__gt=revert_before_timestamp).delete()
