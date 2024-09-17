@@ -18,6 +18,14 @@ query ClientProfile($id: ID!) {
       pronouns
       veteranStatus
       livingSituation
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       user {
         id
         email
