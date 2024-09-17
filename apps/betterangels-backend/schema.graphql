@@ -167,6 +167,7 @@ type ClientProfileType {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
   profilePhoto: DjangoImageType
   pronouns: PronounEnum
@@ -212,6 +213,7 @@ input CreateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum
@@ -661,6 +663,16 @@ scalar PhoneNumber
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
+enum PreferredCommunicationEnum {
+  CALL
+  TEXT
+  EMAIL
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+}
+
 enum PronounEnum {
   HE_HIM_HIS
   SHE_HER_HERS
@@ -857,6 +869,7 @@ input UpdateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum

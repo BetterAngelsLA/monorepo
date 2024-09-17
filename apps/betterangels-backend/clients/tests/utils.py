@@ -9,6 +9,7 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
@@ -45,6 +46,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             phoneNumber
             physicalDescription
             placeOfBirth
+            preferredCommunication
             preferredLanguage
             pronouns
             pronounsOther
@@ -200,6 +202,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": "2125551212",
                 "physicalDescription": "A human",
                 "placeOfBirth": "Los Angeles, CA",
+                "preferredCommunication": PreferredCommunicationEnum.CALL.name,
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
@@ -232,6 +235,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumber": None,
                 "physicalDescription": None,
                 "placeOfBirth": None,
+                "preferredCommunication": None,
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,

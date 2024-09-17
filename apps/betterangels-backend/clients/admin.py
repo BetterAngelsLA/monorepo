@@ -9,13 +9,13 @@ class HmisProfileInline(admin.TabularInline):
 
 
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ["id"]
+    list_display = ["name", "id"]
     inlines = [
-        # HmisProfileInline,
+        HmisProfileInline,
     ]
 
-    # def name(self, obj: ClientProfile) -> str:
-    #     return obj.user.full_name
+    def name(self, obj: ClientProfile) -> str:
+        return obj.user.full_name
 
 
 admin.site.register(ClientProfile, ClientProfileAdmin)

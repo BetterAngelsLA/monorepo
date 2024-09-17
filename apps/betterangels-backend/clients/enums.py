@@ -100,6 +100,17 @@ class RelationshipTypeEnum(models.TextChoices):
 
 
 @strawberry.enum
+class PreferredCommunicationEnum(models.TextChoices):
+    CALL = "call", _("Call")
+    TEXT = "text", _("Text")
+    EMAIL = "email", _("Email")
+    WHATSAPP = "whatsapp", _("WhatsApp")
+    INSTAGRAM = "instagram", _("Instagram")
+    FACEBOOK = "facebook", _("Facebook")
+    LINKEDIN = "linkedin", _("LinkedIn")
+
+
+@strawberry.enum
 class LanguageEnum(models.TextChoices):
     ARABIC = "arabic", _("Arabic")
     ARMENIAN = "armenian", _("Armenian")

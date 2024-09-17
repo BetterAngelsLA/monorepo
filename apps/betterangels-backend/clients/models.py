@@ -12,6 +12,7 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
@@ -96,6 +97,7 @@ class ClientProfile(models.Model):
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     physical_description = models.TextField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=100, blank=True, null=True)
+    preferred_communication = TextChoicesField(choices_enum=PreferredCommunicationEnum, blank=True, null=True)
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
     profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)

@@ -155,6 +155,7 @@ class ClientProfileBaseType:
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
+    preferred_communication: auto
     preferred_language: auto
     profile_photo: auto
     pronouns: auto
