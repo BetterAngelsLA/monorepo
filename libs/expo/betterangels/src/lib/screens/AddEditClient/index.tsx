@@ -103,7 +103,6 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     try {
       let operationResult;
-
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -116,6 +115,10 @@ export default function AddEditClient({ id }: { id?: string }) {
           variables: {
             data: {
               ...input,
+              user: {
+                id: data?.clientProfile.user.id,
+                ...input.user,
+              },
             },
           },
         });
