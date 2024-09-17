@@ -1,8 +1,8 @@
 import {
   MainScrollContainer,
+  NoteNamespaceEnum,
   NotesDocument,
   Ordering,
-  NoteNamespaceEnum,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
@@ -168,7 +168,7 @@ export default function AddNote() {
       await revertNote({
         variables: {
           data: {
-            id: noteId,
+            id: noteId || '',
             revertBeforeTimestamp: revertBeforeTimestamp || '',
           },
         },
@@ -196,7 +196,7 @@ export default function AddNote() {
       const result = await updateNote({
         variables: {
           data: {
-            id: noteId,
+            id: noteId || '',
             isSubmitted: true,
           },
         },
