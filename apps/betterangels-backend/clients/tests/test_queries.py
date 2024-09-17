@@ -52,7 +52,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 10
+        expected_query_count = 11
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -76,6 +76,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
             "livingSituation": LivingSituationEnum.VEHICLE.name,
+            "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
@@ -87,6 +88,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "pronouns": PronounEnum.HE_HIM_HIS.name,
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,
+            "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
+            "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
@@ -101,7 +104,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 6
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

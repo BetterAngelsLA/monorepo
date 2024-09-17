@@ -27,6 +27,16 @@ class LivingSituationEnum(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+class SocialMediaEnum(models.TextChoices):
+    FACEBOOK = "facebook", _("Facebook")
+    INSTAGRAM = "instagram", _("Instagram")
+    LINKEDIN = "linkedin", _("LinkedIn")
+    SNAPCHAT = "snapchat", _("Snapchat")
+    TIKTOK = "tiktok", _("TikTok")
+    TWITTER = "twitter", _("Twitter")
+    WHATSAPP = "whatsapp", _("WhatsApp")
+
+
 class PronounEnum(models.TextChoices):
     HE_HIM_HIS = "he_him_his", _("He/Him/His")
     SHE_HER_HERS = "she_her_hers", _("She/Her/Hers")

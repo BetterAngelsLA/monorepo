@@ -15,6 +15,7 @@ from clients.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
 from common.models import Attachment, BaseModel
@@ -89,6 +90,7 @@ class ClientProfile(models.Model):
     height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
+    mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
@@ -99,6 +101,7 @@ class ClientProfile(models.Model):
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
+    residence_address = models.TextField(blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
 
@@ -136,6 +139,12 @@ class ClientProfile(models.Model):
 
     class Meta:
         ordering = ["user__first_name"]
+
+
+class SocialMediaProfile(models.Model):
+    client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
+    platform = TextChoicesField(choices_enum=SocialMediaEnum)
+    platform_user_id = models.CharField(max_length=100)
 
 
 class ClientContact(BaseModel):
