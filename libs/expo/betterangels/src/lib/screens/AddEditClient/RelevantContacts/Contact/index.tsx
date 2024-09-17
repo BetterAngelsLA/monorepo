@@ -25,16 +25,12 @@ export default function Contact(props: IContactProps) {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const contacts = watch('contacts');
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
   );
 
   const handleRemove = () => {
     remove(index);
-    if (contacts?.length === 1) {
-      setValue('contacts', []);
-    }
   };
 
   const handleReset = () => {
@@ -52,11 +48,16 @@ export default function Contact(props: IContactProps) {
       `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
       null
     );
+    setValue(
+      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      null
+    );
   };
 
   if (!relationship) {
     return (
       <Select
+        boldLabel
         labelMarginLeft="xs"
         label="Type of Relationship"
         placeholder="Select Relationship"
@@ -93,6 +94,7 @@ export default function Contact(props: IContactProps) {
       <TextBold size="lg">{enumDisplayRelevant[relationship]}</TextBold>
       <Input
         placeholder="Name"
+        autoCorrect={false}
         label="Name"
         name={`contacts[${index}].name`}
         control={control}
@@ -118,6 +120,12 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].mailingAddress`}
         control={control}
       />
+      <Input
+        placeholder="Relationship to Client Other"
+        label="Relationship to Client Other"
+        name={`contacts[${index}].relationshipToClientOther`}
+        control={control}
+      />
 
       <View
         style={{
@@ -139,7 +147,7 @@ export default function Contact(props: IContactProps) {
           color={Colors.PRIMARY}
           title="Reset"
           onPress={() => handleReset()}
-          accessibilityHint="Removes Relevant contact"
+          accessibilityHint="Clears Relevant contact fields"
         />
       </View>
     </View>

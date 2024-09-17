@@ -28,7 +28,7 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
     name: 'contacts',
   });
 
-  const isRelevant = expanded === 'Relevant Contacts';
+  const isRelevantContacts = expanded === 'Relevant Contacts';
 
   const sortedContacts = useMemo(() => {
     const caseManagerContact = fields.find(
@@ -58,14 +58,14 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
       scrollRef={scrollRef}
       expanded={expanded}
       setExpanded={() => {
-        setExpanded(isRelevant ? null : 'Relevant Contacts');
+        setExpanded(isRelevantContacts ? null : 'Relevant Contacts');
       }}
       title="Relevant Contacts"
     >
-      {isRelevant && (
+      {isRelevantContacts && (
         <View
           style={{
-            height: isRelevant ? 'auto' : 0,
+            height: isRelevantContacts ? 'auto' : 0,
             overflow: 'hidden',
             gap: Spacings.xs,
           }}
