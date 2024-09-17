@@ -1,3 +1,4 @@
+export { default as Accordion } from './Accordion';
 export { default as Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as BasicInput } from './BasicInput';
