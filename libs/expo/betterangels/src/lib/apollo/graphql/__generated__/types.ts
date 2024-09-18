@@ -235,6 +235,7 @@ export type CreateClientProfileInput = {
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
+  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
@@ -1111,6 +1112,7 @@ export type UpdateClientProfileInput = {
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
+  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;

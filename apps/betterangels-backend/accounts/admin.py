@@ -9,9 +9,7 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from .admin_request_mixin import AdminRequestMixin
 from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
 from .models import (
-    ClientProfile,
     ExtendedOrganizationInvitation,
-    HmisProfile,
     PermissionGroup,
     PermissionGroupTemplate,
     User,
@@ -61,21 +59,6 @@ class UserAdmin(BaseUserAdmin):
         return hasattr(obj, "client_profile")
 
 
-class HmisProfileInline(admin.TabularInline):
-    model = HmisProfile
-    extra = 1
-
-
-class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ["name", "id"]
-    inlines = [
-        HmisProfileInline,
-    ]
-
-    def name(self, obj: ClientProfile) -> str:
-        return obj.user.full_name
-
-
 @admin.register(PermissionGroup)
 class PermissionGroupAdmin(admin.ModelAdmin):
     list_display = ("name", "organization", "group", "template")
@@ -104,7 +87,6 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(ClientProfile, ClientProfileAdmin)
 admin.site.unregister(Organization)
 admin.site.unregister(OrganizationUser)
 admin.site.unregister(OrganizationInvitation)

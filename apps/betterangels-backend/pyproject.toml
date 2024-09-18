@@ -31,10 +31,10 @@ celery-redbeat = "^2.2.0"
 celery = { extras = ["redis"], version = "^5.4.0" }
 django-ses = "^4.1.0"
 hiredis = "^2.3.2"
-django-jazzmin = "^3.0.0"
+django-jazzmin = {git = "https://github.com/farridav/django-jazzmin.git", rev = "097720dd9131719b1b6b41af072c5bd27a9c8763"}
 django-organizations = "^2.4.1"
 django-sesame = "^3.2.2"
-strawberry-graphql-django = "^0.46.2"
+strawberry-graphql-django = "^0.47.2"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.3.0"
 django-pghistory = "^3.2.0"

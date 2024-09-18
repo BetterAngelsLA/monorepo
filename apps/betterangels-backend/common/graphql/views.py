@@ -1,6 +1,7 @@
 from typing import Any, Union
 
-from django.http import HttpRequest, HttpResponse, HttpResponseNotAllowed
+from django.http import HttpRequest, HttpResponseNotAllowed
+from django.http.response import HttpResponseBase
 from django.template.response import TemplateResponse
 from strawberry.django.views import GraphQLView
 
@@ -19,5 +20,5 @@ class ProtectedGraphQLView(GraphQLView):
 
     def dispatch(
         self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponse]:
+    ) -> Union[HttpResponseNotAllowed, TemplateResponse, HttpResponseBase]:
         return super().dispatch(request, *args, **kwargs)
