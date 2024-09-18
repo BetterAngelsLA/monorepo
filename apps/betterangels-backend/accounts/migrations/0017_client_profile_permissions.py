@@ -19,7 +19,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     # Generate readable names based on the enum
     PERM_MAP = {perm.split(".")[1]: perm.label for perm in ClientProfilePermissions}
     for codename, name in PERM_MAP.items():
-        Permission.objects.using(db_alias).get_or_create(
+        Permission.objects.get_or_create(
             codename=codename,
             content_type=ClientProfileContentType,
             defaults={"name": name, "content_type": ClientProfileContentType},
