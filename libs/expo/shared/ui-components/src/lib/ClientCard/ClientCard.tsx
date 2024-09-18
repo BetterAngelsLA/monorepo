@@ -18,6 +18,7 @@ interface IClientCardProps {
   imageUrl?: string;
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
+  nickname?: string | null | undefined;
   address?: string;
   progress?: DimensionValue;
   daysActive?: number;
@@ -38,6 +39,7 @@ export function ClientCard(props: IClientCardProps) {
     imageUrl,
     firstName,
     lastName,
+    nickname,
     address,
     daysActive,
     mb,
@@ -88,7 +90,7 @@ export function ClientCard(props: IClientCardProps) {
 
       <View style={{ gap: Spacings.xs, flex: 2 }}>
         <TextBold size="sm">
-          {firstName} {lastName}
+          {firstName} {lastName} {nickname && `(${nickname})`}
         </TextBold>
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
