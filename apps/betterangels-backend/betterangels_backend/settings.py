@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 import sys
-
 from pathlib import Path
 from typing import List
 
