@@ -29,6 +29,7 @@ export default function Name(props: INameProps) {
 
   const firstName = watch('user.firstName');
   const lastName = watch('user.lastName');
+  const nickname = watch('nickname');
 
   const isName = expanded === 'Name';
 
@@ -47,7 +48,7 @@ export default function Name(props: INameProps) {
           <TextMedium size="sm">Add Name</TextMedium>
         ) : (
           <TextMedium size="sm">
-            {firstName} {lastName}
+            {firstName} {lastName} {nickname && `(${nickname})`}
           </TextMedium>
         )
       }
