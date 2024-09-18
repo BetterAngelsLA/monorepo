@@ -9,6 +9,14 @@ class YesNoPreferNotToSayEnum(models.TextChoices):
     PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
 
 
+@strawberry.enum
+class AccommodationEnum(models.TextChoices):
+    HEARING = "hearing", _("Hearing")
+    MOBILITY = "mobility", _("Mobility")
+    VISUAL = "visual", _("Visual")
+    OTHER = "other", _("Other")
+
+
 class GenderEnum(models.TextChoices):
     MALE = "male", _("Male")
     FEMALE = "female", _("Female")

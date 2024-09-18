@@ -22,6 +22,13 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+enum AccommodationEnum {
+  HEARING
+  MOBILITY
+  VISUAL
+  OTHER
+}
+
 input AddNoteTaskInput {
   taskId: ID!
   noteId: ID!
@@ -152,6 +159,7 @@ input ClientProfilePhotoInput {
 }
 
 type ClientProfileType {
+  adaAccommodation: [AccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
@@ -194,6 +202,7 @@ input CreateClientDocumentInput {
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input CreateClientProfileInput {
+  adaAccommodation: [AccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
@@ -808,6 +817,7 @@ enum TaskTypeEnum {
 }
 
 input UpdateClientProfileInput {
+  adaAccommodation: [AccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
