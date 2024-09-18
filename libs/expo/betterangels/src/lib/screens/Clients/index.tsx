@@ -1,12 +1,7 @@
-import {
-  SearchIcon,
-  UserAddIcon,
-  UserSearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { SearchIcon, UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  Button,
   ClientCard,
   Loading,
   TextBold,
@@ -261,15 +256,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           onEndReached={loadMoreClients}
           onEndReachedThreshold={0.05}
           ListFooterComponent={renderFooter}
-        />
-        <Button
-          onPress={() => router.navigate('/add-client')}
-          height="xl"
-          icon={<UserAddIcon size="md" color={Colors.PRIMARY} />}
-          title="Add Client"
-          size="full"
-          variant="secondary"
-          accessibilityHint="adding new client"
         />
       </View>
       <ClientCardModal
