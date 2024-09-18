@@ -20,9 +20,9 @@ services:
     ports:
       - '5433:5432'
     environment:
-      - HIPAA_DB=hipaa
-      - HIPAA_USER=hipaa
-      - HIPAA_PASSWORD=hipaa
+      - POSTGRES_DB=hipaa
+      - POSTGRES_USER=hipaa
+      - POSTGRES_PASSWORD=hipaa
     command: postgres -c log_statement=all -c log_destination=stderr
   redis:
     image: redis:7.2.2
