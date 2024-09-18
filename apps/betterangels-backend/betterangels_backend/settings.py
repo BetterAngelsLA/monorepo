@@ -47,6 +47,10 @@ env = environ.Env(
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
+    HIPAA_DB_NAME=(str, ""),
+    HIPAA_DB_USER=(str, ""),
+    HIPAA_DB_PASSWORD=(str, ""),
+    HIPAA_DB_HOST=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
@@ -254,7 +258,20 @@ DATABASES = {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
         },
-    }
+    },
+    "hipaa_db": {
+        "ENGINE": "common.backends.iam_dbauth.postgis",
+        "NAME": env("HIPAA_DB_NAME"),
+        "USER": env("HIPAA_DB_USER"),
+        "PASSWORD": env("HIPAA_DB_PASSWORD"),
+        "HOST": env("HIPAA_DB_HOST"),
+        "PORT": "5432",
+        "CONN_MAX_AGE": env("CONN_MAX_AGE"),
+        "IAM_SETTINGS": {
+            "ENABLED": env("USE_IAM_AUTH"),
+            "REGION_NAME": env("AWS_REGION"),
+        },
+    },
 }
 DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
