@@ -22,7 +22,6 @@ query GetClientProfile($id: ID!) {
       address
       dateOfBirth
       gender
-      hmisId
       hmisProfiles {
         agency
         hmisId

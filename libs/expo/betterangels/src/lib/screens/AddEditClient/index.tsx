@@ -190,14 +190,14 @@ export default function AddEditClient({ id }: { id?: string }) {
       return rest;
     });
 
-    const newInput = clientInput.contacts?.map((contact) => {
+    const newClients = clientInput.contacts?.map((contact) => {
       const { __typename, ...rest } = contact;
       return rest;
     });
 
     methods.reset({
       ...clientInput,
-      contacts: newInput,
+      contacts: newClients,
       hmisProfiles: newHmisProfiles,
     });
   }, [data, id]);

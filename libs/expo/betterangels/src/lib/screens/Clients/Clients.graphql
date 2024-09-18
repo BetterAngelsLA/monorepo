@@ -37,7 +37,6 @@ query ClientProfiles(
   clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
-      hmisId
       user {
         id
         email

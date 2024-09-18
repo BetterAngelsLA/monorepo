@@ -6,7 +6,6 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       gender
       age
-      hmisId
       hmisProfiles {
         agency
         hmisId
