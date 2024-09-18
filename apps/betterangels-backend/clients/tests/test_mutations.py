@@ -10,9 +10,11 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
 from clients.models import ClientProfile, HmisProfile
@@ -53,6 +55,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
+        social_media_profile = {
+            "platform": SocialMediaEnum.FACEBOOK.name,
+            "platformUserId": "firsty_lasty",
+        }
 
         variables = {
             "address": "1234 Main St",
@@ -66,15 +72,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
             "livingSituation": LivingSituationEnum.VEHICLE.name,
+            "mailingAddress": "1234 Mailing Street",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "eerily cat-like",
             "placeOfBirth": "Los Angeles",
+            "preferredCommunication": PreferredCommunicationEnum.TEXT.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
+            "residenceAddress": "1234 Residence Street",
+            "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
@@ -85,6 +95,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_contacts = [{"id": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
         expected_household_members = [{"id": ANY, **household_member}]
+        expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_user = {"id": ANY, **user}
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting some fields
@@ -97,6 +108,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
             "profilePhoto": None,
+            "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
         }
         client_differences = DeepDiff(
@@ -155,6 +167,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         household_members = [household_member_1, household_member_new]
 
+        client_1_social_media_profile_2 = {
+            "platform": SocialMediaEnum.TWITTER.name,
+            "platformUserId": "bortman",
+        }
+        client_1_social_media_profiles = [client_1_social_media_profile_2]
+
         variables = {
             "id": self.client_profile_1["id"],
             "address": "1234 Main St",
@@ -169,14 +187,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "householdMembers": household_members,
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
+            "mailingAddress": "1234 Mailing St",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
+            "preferredCommunication": PreferredCommunicationEnum.WHATSAPP.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
+            "residenceAddress": "1234 Residence St",
+            "socialMediaProfiles": client_1_social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
@@ -236,7 +258,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 39
+        expected_query_count = 40
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
