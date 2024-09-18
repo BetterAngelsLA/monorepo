@@ -26,7 +26,6 @@ import {
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
 import Gender from './Gender';
-import HMIS from './HMIS';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
@@ -233,7 +232,6 @@ export default function AddEditClient({ id }: { id?: string }) {
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
           <PersonalInfo {...props} />
           <Gender {...props} />
-          <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
           <RelevantContacts {...props} />
