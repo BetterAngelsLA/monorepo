@@ -665,12 +665,12 @@ scalar Point
 
 enum PreferredCommunicationEnum {
   CALL
-  TEXT
   EMAIL
-  WHATSAPP
-  INSTAGRAM
   FACEBOOK
+  INSTAGRAM
   LINKEDIN
+  TEXT
+  WHATSAPP
 }
 
 enum PronounEnum {
