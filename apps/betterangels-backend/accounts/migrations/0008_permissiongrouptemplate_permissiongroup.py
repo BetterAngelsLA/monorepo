@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 def create_caseworker_permission_template(apps, schema_editor):
     PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
-    PermissionGroupTemplate.objects.get_or_create(name="Caseworker")
+    PermissionGroupTemplate.objects.create(name="Caseworker")
 
 
 class Migration(migrations.Migration):

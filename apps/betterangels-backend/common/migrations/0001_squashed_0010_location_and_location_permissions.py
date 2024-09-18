@@ -27,7 +27,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     ATTACHMENT_PERM_MAP = {perm.split(".")[1]: perm.label for perm in AttachmentPermissions}
 
     for codename, name in ATTACHMENT_PERM_MAP.items():
-        cur_perm, _ = Permission.objects.get_or_create(
+        cur_perm = Permission.objects.using(db_alias).create(
             codename=codename,
             content_type=AttachmentContentType,
         )
@@ -39,7 +39,7 @@ def create_permissions_if_not_exist(apps, schema_editor):
     LOCATION_PERM_MAP = {perm.split(".")[1]: perm.label for perm in LocationPermissions}
 
     for codename, name in LOCATION_PERM_MAP.items():
-        cur_perm, _ = Permission.objects.get_or_create(
+        cur_perm = Permission.objects.using(db_alias).create(
             codename=codename,
             content_type=LocationContentType,
         )
