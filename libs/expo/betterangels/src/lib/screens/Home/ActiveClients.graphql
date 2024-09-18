@@ -37,6 +37,7 @@ query ClientProfiles(
   clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
+      nickname
       user {
         id
         email

@@ -31,13 +31,13 @@ const getTabComponent = (
       client: ClientProfileQuery | undefined;
     }) => JSX.Element;
   } = {
-    Profile,
-    Interactions,
-    Tasks,
-    Services,
     Docs,
-    Schedule,
+    Interactions,
     Locations,
+    Profile,
+    Schedule,
+    Services,
+    Tasks,
   };
 
   const Component = components[key];
@@ -105,12 +105,13 @@ export default function Client({
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
-        firstName={data?.clientProfile.user.firstName}
-        lastName={data?.clientProfile.user.lastName}
-        gender={data?.clientProfile.gender}
-        dateOfBirth={data?.clientProfile.dateOfBirth}
-        preferredLanguage={data?.clientProfile.preferredLanguage}
         age={data?.clientProfile.age}
+        dateOfBirth={data?.clientProfile.dateOfBirth}
+        firstName={data?.clientProfile.user.firstName}
+        gender={data?.clientProfile.gender}
+        lastName={data?.clientProfile.user.lastName}
+        nickname={data?.clientProfile.nickname}
+        preferredLanguage={data?.clientProfile.preferredLanguage}
       />
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, data)}
