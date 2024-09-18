@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class BaseModel(models.Model):
@@ -218,6 +219,24 @@ class Location(BaseModel):
         )
 
         return location
+
+
+class PhoneNumber(models.Model):
+    number = PhoneNumberField(region="US", blank=True, null=True)
+    is_preferred = models.BooleanField(default=False)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object: GenericForeignKey = GenericForeignKey("content_type", "object_id")
+
+    objects = models.Manager()
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.is_preferred:
+            PhoneNumber.objects.filter(
+                content_type=self.content_type, object_id=self.object_id, is_preferred=True
+            ).update(is_preferred=False)
+        super().save(*args, **kwargs)
 
 
 # Permissions
