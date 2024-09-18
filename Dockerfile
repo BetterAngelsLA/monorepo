@@ -129,6 +129,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 USER betterangels
+RUN git config --global --add safe.directory "*"
 
 FROM base AS poetry
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)
