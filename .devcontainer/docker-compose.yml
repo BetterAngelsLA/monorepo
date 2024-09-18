@@ -35,7 +35,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  hipaa-db:
+    volumes:
+      - hipaadata:/var/lib/postgresql/data
+
 volumes:
+  hipaadata:
   node_modules:
   pgdata:
   venv:

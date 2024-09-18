@@ -15,5 +15,14 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     command: postgres -c log_statement=all -c log_destination=stderr
+  hipaa-db:
+    image: nickblah/postgis:15-bullseye-postgis-3.4
+    ports:
+      - '5433:5432'
+    environment:
+      - POSTGRES_DB=hipaa
+      - POSTGRES_USER=hipaa
+      - POSTGRES_PASSWORD=hipaa
+    command: postgres -c log_statement=all -c log_destination=stderr
   redis:
     image: redis:7.2.2
