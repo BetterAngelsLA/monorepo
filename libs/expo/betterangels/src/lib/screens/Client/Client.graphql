@@ -2,11 +2,12 @@ query ClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      hmisId
-      gender
-      dateOfBirth
-      preferredLanguage
       age
+      dateOfBirth
+      gender
+      hmisId
+      nickname
+      preferredLanguage
       profilePhoto {
         height
         name

@@ -20,14 +20,22 @@ interface IClientHeaderProps {
   firstName: string | null | undefined;
   lastName: string | null | undefined;
   gender: GenderEnum | null | undefined;
+  nickname: string | null | undefined;
   preferredLanguage: LanguageEnum | null | undefined;
   dateOfBirth: string | null | undefined;
   age: number | null | undefined;
 }
 
 export default function ClientHeader(props: IClientHeaderProps) {
-  const { firstName, lastName, gender, preferredLanguage, dateOfBirth, age } =
-    props;
+  const {
+    age,
+    dateOfBirth,
+    firstName,
+    gender,
+    lastName,
+    nickname,
+    preferredLanguage,
+  } = props;
 
   return (
     <View
@@ -51,7 +59,7 @@ export default function ClientHeader(props: IClientHeaderProps) {
           accessibilityHint={'clients avatar'}
         />
         <TextMedium size="lg">
-          {firstName} {lastName}
+          {firstName} {lastName} {nickname && `(${nickname})`}
         </TextMedium>
       </View>
       <ScrollView
