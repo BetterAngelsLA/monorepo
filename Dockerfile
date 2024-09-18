@@ -24,6 +24,12 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       docker-buildx-plugin \
     && docker --version
 
+# PSQL
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    apt-get install -y postgresql-common \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+    && apt-get install -y postgresql-client-16
+
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
 ENV AWS_CLI_VERSION=2.15.19
 RUN ARCH=$(uname -m) && \
