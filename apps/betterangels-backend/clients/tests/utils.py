@@ -9,9 +9,11 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
 from common.tests.utils import GraphQLBaseTestCase
@@ -38,18 +40,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             heightInInches
             hmisId
             livingSituation
+            mailingAddress
             maritalStatus
             nickname
             phoneNumber
             physicalDescription
             placeOfBirth
+            preferredCommunication
             preferredLanguage
-            profilePhoto {
-                name
-            }
             pronouns
             pronounsOther
             race
+            residenceAddress
             spokenLanguages
             veteranStatus
             contacts {
@@ -73,6 +75,14 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 gender
                 relationshipToClient
                 relationshipToClientOther
+            }
+            profilePhoto {
+                name
+            }
+            socialMediaProfiles {
+                id
+                platform
+                platformUserId
             }
             user {
                 id
@@ -161,6 +171,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_household_member_1,
             self.client_profile_1_household_member_2,
         ]
+        self.client_1_social_media_profile_1 = {
+            "platform": SocialMediaEnum.INSTAGRAM.name,
+            "platformUserId": "toadman",
+        }
+        self.client_1_social_media_profile_2 = {
+            "platform": SocialMediaEnum.TWITTER.name,
+            "platformUserId": "birdman",
+        }
+        self.client_1_social_media_profiles = [
+            self.client_1_social_media_profile_1,
+            self.client_1_social_media_profile_2,
+        ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
@@ -174,14 +196,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisProfiles": self.client_1_hmis_profiles,
                 "householdMembers": self.client_1_household_members,
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
+                "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "physicalDescription": "A human",
                 "placeOfBirth": "Los Angeles, CA",
+                "preferredCommunication": PreferredCommunicationEnum.CALL.name,
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
+                "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
+                "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "user": self.client_profile_1_user,
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
@@ -203,14 +229,18 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "hmisProfiles": [],
                 "householdMembers": [],
                 "livingSituation": None,
+                "mailingAddress": None,
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
                 "physicalDescription": None,
                 "placeOfBirth": None,
+                "preferredCommunication": None,
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,
+                "residenceAddress": None,
+                "socialMediaProfiles": [],
                 "spokenLanguages": [],
                 "user": self.client_profile_2_user,
                 "veteranStatus": None,
