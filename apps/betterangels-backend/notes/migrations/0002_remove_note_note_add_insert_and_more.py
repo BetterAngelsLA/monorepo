@@ -175,4 +175,5 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
+        migrations.RunPython(move_address_and_point_to_location),
     ]
