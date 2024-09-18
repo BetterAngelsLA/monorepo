@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import sys
+
 from pathlib import Path
 from typing import List
 
@@ -81,6 +83,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+
+TESTING = any("pytest" in arg or "test" in arg for arg in sys.argv)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -259,7 +263,10 @@ DATABASES = {
             "REGION_NAME": env("AWS_REGION"),
         },
     },
-    "hipaa_db": {
+}
+
+if not TESTING:
+    DATABASES["hipaa_db"] = {
         "ENGINE": "common.backends.iam_dbauth.postgis",
         "NAME": env("HIPAA_DB_NAME"),
         "USER": env("HIPAA_DB_USER"),
@@ -271,8 +278,8 @@ DATABASES = {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
         },
-    },
-}
+    }
+
 DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
 AUTH_USER_MODEL = "accounts.User"
