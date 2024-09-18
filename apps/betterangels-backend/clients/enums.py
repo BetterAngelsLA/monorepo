@@ -108,10 +108,11 @@ class LanguageEnum(models.TextChoices):
 
 
 class HmisAgencyEnum(models.TextChoices):
-    LAHSA = "lahsa", _("LAHSA")
-    SANTA_MONICA = "santa_monica", _("Santa Monica")
-    PASADENA = "pasadena", _("Pasadena")
     CHAMP = "champ", _("CHAMP")
+    LAHSA = "lahsa", _("LAHSA")
+    LONG_BEACH = "long_beach", _("Long Beach")
+    PASADENA = "pasadena", _("Pasadena")
+    SANTA_MONICA = "santa_monica", _("Santa Monica")
     VASH = "vash", _("VASH")
 
 
