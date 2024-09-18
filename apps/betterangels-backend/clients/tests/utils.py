@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from clients.enums import (
-    AccommodationEnum,
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -187,7 +187,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
-                "adaAccommodation": [AccommodationEnum.HEARING.name],
+                "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,

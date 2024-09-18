@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 @strawberry.enum
-class AccommodationEnum(models.TextChoices):
+class AdaAccommodationEnum(models.TextChoices):
     HEARING = "hearing", _("Hearing")
     MOBILITY = "mobility", _("Mobility")
     VISUAL = "visual", _("Visual")

@@ -7,7 +7,7 @@ import strawberry
 import strawberry_django
 from accounts.types import CreateUserInput, UpdateUserInput, UserType
 from clients.enums import (
-    AccommodationEnum,
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     LanguageEnum,
     LivingSituationEnum,
@@ -145,7 +145,7 @@ PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
-    ada_accommodation: Optional[List[AccommodationEnum]]
+    ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
     age: auto
     date_of_birth: auto

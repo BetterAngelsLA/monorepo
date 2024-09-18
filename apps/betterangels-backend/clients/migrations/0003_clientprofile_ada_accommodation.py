@@ -9,7 +9,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0001_initial"),
+        ("clients", "0002_clientprofile_contact_info"),
     ]
 
     operations = [
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                         ("visual", "Visual"),
                         ("other", "Other"),
                     ],
-                    choices_enum=clients.enums.AccommodationEnum,
+                    choices_enum=clients.enums.AdaAccommodationEnum,
                     max_length=8,
                 ),
                 blank=True,
