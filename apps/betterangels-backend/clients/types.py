@@ -22,7 +22,13 @@ from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
 
-from .models import ClientContact, ClientHouseholdMember, ClientProfile, HmisProfile
+from .models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    SocialMediaProfile,
+)
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 
@@ -112,6 +118,24 @@ class HmisProfileInput(HmisProfileType):
     "See parent"
 
 
+@strawberry_django.type(SocialMediaProfile)
+class SocialMediaProfileBaseType:
+    id: Optional[ID]
+    client_profile: auto
+    platform: auto
+    platform_user_id: auto
+
+
+@strawberry_django.type(SocialMediaProfile)
+class SocialMediaProfileType(SocialMediaProfileBaseType):
+    "See parent"
+
+
+@strawberry_django.input(SocialMediaProfile, partial=True)
+class SocialMediaProfileInput(SocialMediaProfileBaseType):
+    "See parent"
+
+
 PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
     PhoneNumber,
     serialize=lambda v: str(v.national_number),
@@ -132,15 +156,18 @@ class ClientProfileBaseType:
     hmis_id: auto
     living_situation: Optional[LivingSituationEnum]
     marital_status: auto
+    mailing_address: auto
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
+    preferred_communication: auto
     preferred_language: auto
     profile_photo: auto
     pronouns: auto
     pronouns_other: auto
     race: auto
+    residence_address: auto
     spoken_languages: Optional[List[LanguageEnum]]
     veteran_status: auto
 
@@ -195,14 +222,18 @@ class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
-    user: UserType
     contacts: Optional[List[ClientContactType]]
+    hmis_profiles: Optional[List[HmisProfileType]]
+    household_members: Optional[List[ClientHouseholdMemberType]]
+    social_media_profiles: Optional[List[SocialMediaProfileType]]
+
+    display_pronouns: auto
+
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
-    display_pronouns: auto
-    hmis_profiles: Optional[List[HmisProfileType]]
-    household_members: Optional[List[ClientHouseholdMemberType]]
+
+    user: UserType
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -214,19 +245,21 @@ class ClientProfileType(ClientProfileBaseType):
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
-    user: CreateUserInput
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    social_media_profiles: Optional[List[SocialMediaProfileInput]]
+    user: CreateUserInput
 
 
 @strawberry_django.input(ClientProfile, partial=True)
 class UpdateClientProfileInput(ClientProfileBaseType):
     id: ID
-    user: Optional[UpdateUserInput]
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    social_media_profiles: Optional[List[SocialMediaProfileInput]]
+    user: Optional[UpdateUserInput]
 
 
 # TODO: refactor frontend to use ClientProfileInput instead of CreateClientProfileInput and UpdateClientProfileInput.
@@ -237,4 +270,5 @@ class ClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]

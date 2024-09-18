@@ -36,6 +36,7 @@ CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
     "contacts": "ClientContact",
     "hmis_profiles": "HmisProfile",
     "household_members": "ClientHouseholdMember",
+    "social_media_profiles": "SocialMediaProfile",
 }
 
 
