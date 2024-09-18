@@ -18,15 +18,21 @@ query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
+      age
       address
       dateOfBirth
       gender
-      hmisId
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
       nickname
       phoneNumber
       preferredLanguage
       pronouns
       veteranStatus
+      livingSituation
       user {
         id
         email

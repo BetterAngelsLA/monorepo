@@ -177,17 +177,21 @@ export type ClientProfileType = {
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   livingSituation?: Maybe<LivingSituationEnum>;
+  mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
+  preferredCommunication?: Maybe<PreferredCommunicationEnum>;
   preferredLanguage?: Maybe<LanguageEnum>;
   profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
+  residenceAddress?: Maybe<Scalars['String']['output']>;
+  socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   user: UserType;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
@@ -229,16 +233,20 @@ export type CreateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
+  mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
+  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
+  residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user: CreateUserInput;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
@@ -816,6 +824,10 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OneToManyInput = {
+  set?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -864,6 +876,16 @@ export type PermDefinition = {
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum PreferredCommunicationEnum {
+  Call = 'CALL',
+  Email = 'EMAIL',
+  Facebook = 'FACEBOOK',
+  Instagram = 'INSTAGRAM',
+  Linkedin = 'LINKEDIN',
+  Text = 'TEXT',
+  Whatsapp = 'WHATSAPP'
+}
 
 export enum PronounEnum {
   HeHimHis = 'HE_HIM_HIS',
@@ -1057,6 +1079,31 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export enum SocialMediaEnum {
+  Facebook = 'FACEBOOK',
+  Instagram = 'INSTAGRAM',
+  Linkedin = 'LINKEDIN',
+  Snapchat = 'SNAPCHAT',
+  Tiktok = 'TIKTOK',
+  Twitter = 'TWITTER',
+  Whatsapp = 'WHATSAPP'
+}
+
+export type SocialMediaProfileInput = {
+  clientProfile?: InputMaybe<OneToManyInput>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  platform?: InputMaybe<SocialMediaEnum>;
+  platformUserId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SocialMediaProfileType = {
+  __typename?: 'SocialMediaProfileType';
+  clientProfile: DjangoModelType;
+  id?: Maybe<Scalars['ID']['output']>;
+  platform: SocialMediaEnum;
+  platformUserId: Scalars['String']['output'];
+};
+
 export type SwitchType = {
   __typename?: 'SwitchType';
   isActive: Scalars['Boolean']['output'];
@@ -1106,16 +1153,20 @@ export type UpdateClientProfileInput = {
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   livingSituation?: InputMaybe<LivingSituationEnum>;
+  mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
+  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
+  residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   user?: InputMaybe<UpdateUserInput>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;

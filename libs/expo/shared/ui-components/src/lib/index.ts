@@ -8,6 +8,7 @@ export { default as BasicTextarea } from './BasicTextarea';
 export { default as BottomActions } from './BottomActions';
 export { default as Button } from './Button';
 export { default as Camera } from './Camera';
+export { default as CardWrapper } from './CardWrapper';
 export { default as Checkbox } from './Checkbox';
 export { default as CircularLoading } from './CircularLoading';
 export { default as ClientCard } from './ClientCard';
