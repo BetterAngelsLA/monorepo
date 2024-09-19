@@ -26,7 +26,6 @@ import {
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
 import Gender from './Gender';
-import HMIS from './HMIS';
 import HouseholdMembers from './HouseholdMembers';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
@@ -106,6 +105,8 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
       return member;
     });
+    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
+    delete values.displayPronouns;
 
     try {
       let operationResult;
@@ -218,14 +219,14 @@ export default function AddEditClient({ id }: { id?: string }) {
       return rest;
     });
 
-    const newInput = clientInput.contacts?.map((contact) => {
+    const newClients = clientInput.contacts?.map((contact) => {
       const { __typename, ...rest } = contact;
       return rest;
     });
 
     methods.reset({
       ...clientInput,
-      contacts: newInput,
+      contacts: newClients,
       hmisProfiles: newHmisProfiles,
     });
   }, [data, id]);
@@ -258,7 +259,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
           <PersonalInfo {...props} />
           <Gender {...props} />
-          <HMIS {...props} />
+
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
           <RelevantContacts {...props} />

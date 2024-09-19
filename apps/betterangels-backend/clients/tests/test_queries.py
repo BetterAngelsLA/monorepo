@@ -10,6 +10,7 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
+    PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
     YesNoPreferNotToSayEnum,
@@ -52,7 +53,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 10
+        expected_query_count = 11
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -66,31 +67,38 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "displayGender": "Male",
             "displayPronouns": "He/Him/His",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
             "eyeColor": EyeColorEnum.BROWN.name,
             "gender": GenderEnum.MALE.name,
+            "genderOther": None,
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
             "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
             "livingSituation": LivingSituationEnum.VEHICLE.name,
+            "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
             "physicalDescription": "A human",
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
+            "preferredCommunication": PreferredCommunicationEnum.CALL.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "profilePhoto": {"name": self.client_profile_1_photo_name},
             "pronouns": PronounEnum.HE_HIM_HIS.name,
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,
+            "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
+            "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
         }
+
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_client_profiles_query(self) -> None:
@@ -101,7 +109,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 6
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
