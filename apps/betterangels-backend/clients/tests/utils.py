@@ -74,7 +74,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 name
                 dateOfBirth
+                displayGender
                 gender
+                genderOther
                 relationshipToClient
                 relationshipToClientOther
             }
@@ -158,7 +160,8 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1_household_member_1 = {
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "pangender",
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
@@ -166,6 +169,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "name": "Tulip",
             "dateOfBirth": "1901-01-01",
             "gender": GenderEnum.NON_BINARY.name,
+            "genderOther": None,
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
         }

@@ -116,6 +116,7 @@ input ClientHouseholdMemberInput {
   name: String
   dateOfBirth: Date
   gender: GenderEnum
+  genderOther: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
@@ -125,10 +126,12 @@ type ClientHouseholdMemberType {
   name: String
   dateOfBirth: Date
   gender: GenderEnum
+  genderOther: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
+  displayGender: String
 }
 
 input ClientProfileFilter {

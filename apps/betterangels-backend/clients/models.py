@@ -175,5 +175,16 @@ class ClientHouseholdMember(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    gender_other = models.CharField(max_length=100, null=True, blank=True)
     relationship_to_client = TextChoicesField(RelationshipTypeEnum, null=True, blank=True)
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
+
+    @model_property
+    def display_gender(self) -> Optional[str]:
+        if not self.gender:
+            return None
+
+        if self.gender == GenderEnum.OTHER:
+            return self.gender_other
+
+        return self.gender.label
