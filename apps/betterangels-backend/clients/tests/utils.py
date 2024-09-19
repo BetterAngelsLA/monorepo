@@ -33,9 +33,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             age
             dateOfBirth
             displayCaseManager
+            displayGender
             displayPronouns
             eyeColor
             gender
+            genderOther
             hairColor
             heightInInches
             hmisId
@@ -190,6 +192,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,
                 "gender": GenderEnum.MALE.name,
+                "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA0",
@@ -223,6 +226,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "dateOfBirth": None,
                 "eyeColor": None,
                 "gender": None,
+                "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisId": "HMISidPASADENA2",

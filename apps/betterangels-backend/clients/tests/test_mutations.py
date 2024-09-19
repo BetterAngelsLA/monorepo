@@ -65,7 +65,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "genderqueer",
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
             "hmisId": "12345678",
@@ -103,8 +104,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_contacts,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayPronouns": "She/Her/Hers",
             "displayCaseManager": "Not Assigned",
+            "displayGender": "genderqueer",
+            "displayPronouns": "She/Her/Hers",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
             "profilePhoto": None,
@@ -180,6 +182,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.GRAY.name,
             "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
             "hairColor": HairColorEnum.GRAY.name,
             "heightInInches": 71.75,
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
@@ -210,8 +213,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             **variables,  # Needs to be first because we're overwriting dob
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayPronouns": "she/her/theirs",
             "displayCaseManager": "Not Assigned",
+            "displayGender": "Female",
+            "displayPronouns": "she/her/theirs",
             "profilePhoto": {"name": self.client_profile_1_photo_name},
         }
         client_differences = DeepDiff(
