@@ -26,7 +26,7 @@ class PhoneNumberType:
 class PhoneNumberInput:
     id: Optional[ID]
     number: Optional[PhoneNumberScalar]  # type: ignore
-    is_primary: Optional[bool]
+    is_primary: Optional[bool] = False
 
 
 @strawberry.input

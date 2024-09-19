@@ -7,7 +7,7 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientContact, ClientProfile
 from clients.permissions import ClientProfilePermissions
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.models import Attachment
+from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
@@ -152,6 +152,8 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
+            phone_numbers = client_profile_data.pop("phone_numbers", [])
+
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -160,6 +162,16 @@ class Mutation:
                     "user": client_user,
                 },
             )
+
+            content_type = ContentType.objects.get_for_model(ClientProfile)
+
+            for phone_number in phone_numbers:
+                PhoneNumber.objects.create(
+                    content_type=content_type,
+                    object_id=client_profile.id,
+                    number=phone_number["number"],
+                    is_primary=phone_number["is_primary"],
+                )
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -186,6 +198,9 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
+            phone_numbers = client_profile_data.pop("phone_numbers", [])
+
+            # for phone_number in phone_numbers:
 
             if user_data := client_profile_data.pop("user", {}):
                 client_user = resolvers.update(

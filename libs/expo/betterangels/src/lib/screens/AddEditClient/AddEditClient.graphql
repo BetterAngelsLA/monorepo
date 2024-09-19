@@ -29,6 +29,11 @@ query GetClientProfile($id: ID!) {
       }
       nickname
       phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
       preferredLanguage
       pronouns
       veteranStatus

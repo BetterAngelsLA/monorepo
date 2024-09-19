@@ -223,7 +223,7 @@ class Location(BaseModel):
 
 class PhoneNumber(models.Model):
     number = PhoneNumberField(region="US", blank=True, null=True)
-    is_preferred = models.BooleanField(default=False)
+    is_primary = models.BooleanField(default=False)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -232,10 +232,10 @@ class PhoneNumber(models.Model):
     objects = models.Manager()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        if self.is_preferred:
+        if self.is_primary:
             PhoneNumber.objects.filter(
-                content_type=self.content_type, object_id=self.object_id, is_preferred=True
-            ).update(is_preferred=False)
+                content_type=self.content_type, object_id=self.object_id, is_primary=True
+            ).update(is_primary=False)
         super().save(*args, **kwargs)
 
 
