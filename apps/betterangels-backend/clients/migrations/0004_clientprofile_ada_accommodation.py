@@ -9,7 +9,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0002_clientprofile_contact_info"),
+        ("clients", "0003_clientprofile_gender_other"),
     ]
 
     operations = [
