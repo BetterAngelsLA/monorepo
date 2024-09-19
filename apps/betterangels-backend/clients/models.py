@@ -91,6 +91,7 @@ class ClientProfile(models.Model):
     documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    gender_other = models.CharField(max_length=100, null=True, blank=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
@@ -142,6 +143,16 @@ class ClientProfile(models.Model):
             return self.pronouns_other
 
         return self.pronouns.label
+
+    @model_property
+    def display_gender(self) -> Optional[str]:
+        if not self.gender:
+            return None
+
+        if self.gender == GenderEnum.OTHER:
+            return self.gender_other
+
+        return self.gender.label
 
     class Meta:
         ordering = ["user__first_name"]

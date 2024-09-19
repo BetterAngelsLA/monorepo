@@ -165,6 +165,7 @@ type ClientProfileType {
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
@@ -189,6 +190,7 @@ type ClientProfileType {
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
   socialMediaProfiles: [SocialMediaProfileType!]
+  displayGender: String
   displayPronouns: String
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
@@ -212,6 +214,7 @@ input CreateClientProfileInput {
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
@@ -869,6 +872,7 @@ input UpdateClientProfileInput {
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
