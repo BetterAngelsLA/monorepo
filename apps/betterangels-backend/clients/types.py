@@ -145,6 +145,7 @@ class ClientProfileBaseType:
     date_of_birth: auto
     eye_color: auto
     gender: auto
+    gender_other: auto
     hair_color: auto
     height_in_inches: auto
     hmis_id: auto
@@ -221,6 +222,7 @@ class ClientProfileType(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberType]]
     social_media_profiles: Optional[List[SocialMediaProfileType]]
 
+    display_gender: auto
     display_pronouns: auto
 
     doc_ready_documents: Optional[List[ClientDocumentType]]
