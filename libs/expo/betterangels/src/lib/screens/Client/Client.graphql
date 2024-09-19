@@ -5,6 +5,7 @@ query ClientProfile($id: ID!) {
       address
       dateOfBirth
       gender
+      genderOther
       age
       hmisProfiles {
         agency
@@ -44,6 +45,7 @@ query ClientProfile($id: ID!) {
       householdMembers {
         dateOfBirth
         gender
+        genderOther
         name
         relationshipToClient
         relationshipToClientOther
