@@ -5,11 +5,12 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import {
+  clientHouseholdMemberEnumDisplay,
   enumDisplayGender,
-  enumDisplayRelevant,
 } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
 
@@ -53,7 +54,9 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
               <View style={{ gap: Spacings.sm }}>
                 <TextRegular size="sm">
                   {householdMember.relationshipToClient &&
-                    enumDisplayRelevant[householdMember.relationshipToClient]}
+                    clientHouseholdMemberEnumDisplay[
+                      householdMember.relationshipToClient
+                    ]}
                 </TextRegular>
                 {householdMember.relationshipToClient ===
                   RelationshipTypeEnum.Other && (
@@ -72,7 +75,14 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
                 />
                 <InfoRow
                   label="Date of Birth"
-                  value={householdMember.dateOfBirth}
+                  value={
+                    householdMember.dateOfBirth
+                      ? format(
+                          new Date(householdMember.dateOfBirth),
+                          'MM/dd/yyyy'
+                        )
+                      : ''
+                  }
                 />
               </View>
             </CardWrapper>

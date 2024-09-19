@@ -1,30 +1,20 @@
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Colors,
-  Radiuses,
-  Regex,
-  Spacings,
-} from '@monorepo/expo/shared/static';
-import {
-  DatePicker,
   Input,
-  Radio,
   Select,
   TextBold,
   TextButton,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import {
   CreateClientProfileInput,
-  GenderEnum,
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
-import {
-  enumDisplayGender,
-  enumDisplayRelevant,
-} from '../../../../static/enumDisplayMapping';
+import { clientHouseholdMemberEnumDisplay } from '../../../../static/enumDisplayMapping';
+import DateOfBirth from './DateOfBirth';
+import Gender from './Gender';
 
 interface IHouseholdProps {
   index: number;
@@ -84,17 +74,12 @@ export default function Household(props: IHouseholdProps) {
             enumValue as RelationshipTypeEnum
           )
         }
-        items={Object.entries(enumDisplayRelevant)
-          .filter(
-            ([enumValue]) =>
-              enumValue !== 'CURRENT_CASE_MANAGER' &&
-              enumValue !== 'PAST_CASE_MANAGER' &&
-              enumValue !== 'ORGANIZATION'
-          )
-          .map(([enumValue, displayValue]) => ({
+        items={Object.entries(clientHouseholdMemberEnumDisplay).map(
+          ([enumValue, displayValue]) => ({
             displayValue: displayValue,
             value: enumValue,
-          }))}
+          })
+        )}
       />
     );
   }
@@ -112,7 +97,9 @@ export default function Household(props: IHouseholdProps) {
         paddingHorizontal: Spacings.sm,
       }}
     >
-      <TextBold size="lg">{enumDisplayRelevant[relationship]}</TextBold>
+      <TextBold size="lg">
+        {clientHouseholdMemberEnumDisplay[relationship]}
+      </TextBold>
       {householdMembers[index].relationshipToClient ===
         RelationshipTypeEnum.Other && (
         <Input
@@ -129,55 +116,8 @@ export default function Household(props: IHouseholdProps) {
         name={`householdMembers[${index}].name`}
         control={control}
       />
-
-      <View style={{ gap: Spacings.xs }}>
-        <TextRegular size="sm">Gender</TextRegular>
-        {Object.entries(enumDisplayGender).map(([enumValue, displayValue]) => (
-          <Radio
-            key={enumValue}
-            value={
-              householdMembers.length > 0 &&
-              householdMembers[index]?.gender != null
-                ? enumDisplayGender[
-                    householdMembers[index]
-                      .gender as keyof typeof enumDisplayGender
-                  ]
-                : ''
-            }
-            label={displayValue}
-            onPress={() => {
-              const updatedHouseholdMembers = [...householdMembers];
-              updatedHouseholdMembers[index] = {
-                ...updatedHouseholdMembers[index],
-                gender: enumValue as GenderEnum,
-              };
-              setValue('householdMembers', updatedHouseholdMembers);
-            }}
-            accessibilityHint="selects hmis id"
-          />
-        ))}
-      </View>
-
-      <DatePicker
-        label="Date of Birth"
-        disabled
-        maxDate={new Date()}
-        pattern={Regex.date}
-        mode="date"
-        format="MM/dd/yyyy"
-        placeholder="MM/DD/YYYY"
-        mt="xs"
-        value={householdMembers[index].dateOfBirth || new Date()}
-        setValue={(date) => {
-          const updatedHouseholdMembers = [...householdMembers];
-          updatedHouseholdMembers[index] = {
-            ...updatedHouseholdMembers[index],
-            dateOfBirth: date,
-          };
-          setValue('householdMembers', updatedHouseholdMembers);
-        }}
-      />
-
+      <Gender index={index} />
+      <DateOfBirth index={index} />
       <View
         style={{
           marginTop: Spacings.sm,

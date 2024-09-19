@@ -52,7 +52,7 @@ export default function HouseholdMembers(props: IHouseholdMembersProps) {
           <View style={{ alignItems: 'flex-start' }}>
             <TextButton
               onPress={() => append({ name: '' })}
-              title="Add Household"
+              title="Add Household Member"
               color={Colors.PRIMARY}
               fontSize="sm"
               accessibilityLabel={'add Household member'}
