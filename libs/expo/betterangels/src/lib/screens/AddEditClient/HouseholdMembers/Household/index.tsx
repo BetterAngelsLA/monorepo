@@ -51,6 +51,10 @@ export default function Household(props: IHouseholdProps) {
       null
     );
     setValue(
+      `householdMembers[${index}].genderOther` as `householdMembers.${number}.genderOther`,
+      null
+    );
+    setValue(
       `householdMembers[${index}].dateOfBirth` as `householdMembers.${number}.dateOfBirth`,
       null
     );

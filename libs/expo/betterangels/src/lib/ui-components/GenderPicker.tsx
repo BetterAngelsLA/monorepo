@@ -11,11 +11,19 @@ import { View } from 'react-native';
 import { GenderEnum } from '../apollo';
 import { enumDisplayGender } from '../static/enumDisplayMapping';
 
+type NestedKeyOf<T> = T extends object
+  ? {
+      [K in keyof T]: T[K] extends Array<infer U>
+        ? `${K & string}[${number}]${'' | `.${NestedKeyOf<U>}`}`
+        : `${K & string}${'' | `.${NestedKeyOf<T[K]>}`}`;
+    }[keyof T]
+  : '';
+
 interface IGenderPickerProps<T extends FieldValues> {
   value: string | null | undefined;
   onPress: (e: GenderEnum) => void;
   control: Control<T>;
-  otherName: Extract<keyof T, string>;
+  otherName: NestedKeyOf<T>;
   withCard?: boolean;
   cardTitle?: string;
   title?: string;
