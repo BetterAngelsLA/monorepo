@@ -199,6 +199,7 @@ class ClientHouseholdMemberBaseType:
     name: auto
     date_of_birth: auto
     gender: auto
+    gender_other: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
 
@@ -207,6 +208,7 @@ class ClientHouseholdMemberBaseType:
 class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
     id: ID
     client_profile: auto
+    display_gender: auto
 
 
 @strawberry_django.input(ClientHouseholdMember, partial=True)
