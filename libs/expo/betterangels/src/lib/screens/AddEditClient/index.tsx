@@ -25,11 +25,8 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
-import Dob from './Dob';
 import Gender from './Gender';
-import HMIS from './HMIS';
-import Language from './Language';
-import Name from './Name';
+import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
 
@@ -189,12 +186,22 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
-    const newInput = clientInput.contacts?.map((contact) => {
+
+    const newHmisProfiles = clientInput.hmisProfiles?.map((profile) => {
+      const { __typename, ...rest } = profile;
+      return rest;
+    });
+
+    const newClients = clientInput.contacts?.map((contact) => {
       const { __typename, ...rest } = contact;
       return rest;
     });
 
-    methods.reset({ ...clientInput, contacts: newInput });
+    methods.reset({
+      ...clientInput,
+      contacts: newClients,
+      hmisProfiles: newHmisProfiles,
+    });
   }, [data, id]);
 
   const props = {
@@ -223,11 +230,8 @@ export default function AddEditClient({ id }: { id?: string }) {
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-          <Name {...props} />
-          <Dob {...props} />
+          <PersonalInfo {...props} />
           <Gender {...props} />
-          <Language {...props} />
-          <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
           <RelevantContacts {...props} />

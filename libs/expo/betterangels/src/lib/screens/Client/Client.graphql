@@ -2,12 +2,21 @@ query ClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      age
+      address
       dateOfBirth
       gender
-      hmisId
+      age
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
       nickname
+      phoneNumber
       preferredLanguage
+      pronouns
+      veteranStatus
+      livingSituation
       profilePhoto {
         height
         name
@@ -20,8 +29,17 @@ query ClientProfile($id: ID!) {
         id
         email
         firstName
+        middleName
         lastName
-        username
+      }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
       docReadyDocuments {
         id
