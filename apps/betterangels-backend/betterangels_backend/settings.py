@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import List
 
@@ -48,10 +47,6 @@ env = environ.Env(
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
-    HIPAA_DB_NAME=(str, ""),
-    HIPAA_DB_USER=(str, ""),
-    HIPAA_DB_PASSWORD=(str, ""),
-    HIPAA_DB_HOST=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
@@ -83,12 +78,25 @@ IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
 
-TESTING = any("pytest" in arg or "test" in arg for arg in sys.argv)
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
+
+# Django Tenants
+TENANT_MODEL = "accounts.Tenant"
+TENANT_DOMAIN_MODEL = "accounts.Domain"
+SHARED_APPS = (
+    "django_tenants",  # mandatory
+    "accounts",  # you must list the app where your tenant model resides in
+    "django.contrib.contenttypes",
+    # everything below here is optional
+    "django.contrib.auth",
+    "django.contrib.sessions",
+    "django.contrib.sites",
+    "django.contrib.messages",
+    "django.contrib.admin",
+)
 
 # Application definition
 INSTALLED_APPS = [
@@ -145,6 +153,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "django_tenants.middleware.main.TenantMainMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
 ]
@@ -250,7 +259,7 @@ CACHES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "common.backends.iam_dbauth.postgis",
+        "ENGINE": "django_tenants.postgresql_backend",
         "NAME": env("POSTGRES_NAME"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
@@ -263,23 +272,9 @@ DATABASES = {
         },
     },
 }
-
-if not TESTING:
-    DATABASES["hipaa_db"] = {
-        "ENGINE": "common.backends.iam_dbauth.postgis",
-        "NAME": env("HIPAA_DB_NAME"),
-        "USER": env("HIPAA_DB_USER"),
-        "PASSWORD": env("HIPAA_DB_PASSWORD"),
-        "HOST": env("HIPAA_DB_HOST"),
-        "PORT": "5432",
-        "CONN_MAX_AGE": env("CONN_MAX_AGE"),
-        "IAM_SETTINGS": {
-            "ENABLED": env("USE_IAM_AUTH"),
-            "REGION_NAME": env("AWS_REGION"),
-        },
-    }
-
-DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
+DATABASE_ROUTERS = ("django_tenants.routers.TenantSyncRouter",)
+DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["django_tenants.postgresql_backend"]
+ORIGINAL_BACKEND = "common.backends.iam_dbauth.postgis"
 
 AUTH_USER_MODEL = "accounts.User"
 

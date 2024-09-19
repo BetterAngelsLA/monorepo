@@ -863,6 +863,34 @@ celery = ["celery (>=5.1)"]
 commands = ["django-extensions (>=1.4.9)"]
 
 [[package]]
+name = "django-tenant-users"
+version = "2.0.0"
+description = "A Django app to extend django-tenants to incorporate global multi-tenant users"
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+files = [
+    {file = "django_tenant_users-2.0.0-py3-none-any.whl", hash = "sha256:57b0f0bb3ee3e7467d7f6c9ab86d85451c9785da719719132760d538134e7ef8"},
+    {file = "django_tenant_users-2.0.0.tar.gz", hash = "sha256:331dc60d85e3b2650fbcd945b3953e05ccb5ab52c3d2bd611aeb10e034f3e634"},
+]
+
+[package.dependencies]
+Django = ">=4.2"
+django-tenants = ">=3.6,<4.0"
+
+[[package]]
+name = "django-tenants"
+version = "3.7.0"
+description = "Tenant support for Django using PostgreSQL schemas."
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-tenants-3.7.0.tar.gz", hash = "sha256:3836a2bae2c88504889a3226525930dfac8d3621f577cefdfde03db8115e88ac"},
+]
+
+[package.dependencies]
+Django = ">=2.1,<5.2"
+
+[[package]]
 name = "django-waffle"
 version = "4.1.0"
 description = "A feature flipper for Django."
@@ -1867,4 +1895,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.2"
-content-hash = "68a79454108bc1f42a203c022a047e31a9ea55d4aae5066e8622b890958935e7"
+content-hash = "d347fcd3d41e17701344a29cc9315b4777fac6a5947f47361dcc824488c4b6b1"

@@ -12,6 +12,7 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.forms import ValidationError
+from django_tenants.models import DomainMixin, TenantMixin
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
@@ -116,6 +117,18 @@ class ExtendedOrganizationInvitation(OrganizationInvitation):
         parent_link=True,
         related_name="extended_invitation",
     )
+
+
+class Tenant(TenantMixin):
+    name = models.CharField(max_length=100)
+    created_on = models.DateField(auto_now_add=True)
+
+    # default true, schema will be automatically created and synced when it is saved
+    auto_create_schema = True
+
+
+class Domain(DomainMixin):
+    pass
 
 
 class BigGroupObjectPermission(GroupObjectPermissionAbstract):
