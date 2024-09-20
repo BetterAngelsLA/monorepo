@@ -81,11 +81,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 relationshipToClient
                 relationshipToClientOther
             }
-            phoneNumbers {
-                id
-                number
-                isPrimary
-            }
             profilePhoto {
                 name
             }

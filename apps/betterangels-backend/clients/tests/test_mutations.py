@@ -179,6 +179,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         household_members = [household_member_1, household_member_new]
 
+        client_1_phone_number_1 = {
+            "number": "2125551212",
+        }
+        client_1_phone_number_new = {
+            "number": "6465551212",
+            "isPrimary": True,
+        }
+        client_1_phone_numbers = [client_1_phone_number_1, client_1_phone_number_new]
         client_1_social_media_profile_2 = {
             "platform": SocialMediaEnum.TWITTER.name,
             "platformUserId": "bortman",
@@ -203,6 +211,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "mailingAddress": "1234 Mailing St",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "phoneNumbers": client_1_phone_numbers,
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
             "preferredCommunication": PreferredCommunicationEnum.WHATSAPP.name,
