@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Union, cast
 
 import strawberry
 import strawberry_django
@@ -15,6 +15,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
+from IPython import embed
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -33,18 +34,39 @@ from .types import (
 )
 
 CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
-    "contacts": {"module": "clients", "cls_name": "ClientContact"},
-    "hmis_profiles": {"module": "clients", "cls_name": "HmisProfile"},
-    "household_members": {"module": "clients", "cls_name": "ClientHouseholdMember"},
-    "phone_numbers": {"module": "common", "cls_name": "PhoneNumber"},
-    "social_media_profiles": {"module": "clients", "cls_name": "SocialMediaProfile"},
+    "contacts": {
+        "module": "clients",
+        "cls_name": "ClientContact",
+        "generic_relation": False,
+    },
+    "hmis_profiles": {
+        "module": "clients",
+        "cls_name": "HmisProfile",
+        "generic_relation": False,
+    },
+    "household_members": {
+        "module": "clients",
+        "cls_name": "ClientHouseholdMember",
+        "generic_relation": False,
+    },
+    "phone_numbers": {
+        "module": "common",
+        "cls_name": "PhoneNumber",
+        "generic_relation": True,
+    },
+    "social_media_profiles": {
+        "module": "clients",
+        "cls_name": "SocialMediaProfile",
+        "generic_relation": False,
+    },
 }
 
 
-def upsert_or_delete_client_related_object(
+def handle_client_profile_related_object(
     info: Info,
     module: str,
     model_cls_name: str,
+    generic_relation: bool,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
 ) -> None:
@@ -58,6 +80,34 @@ def upsert_or_delete_client_related_object(
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
     model_cls.objects.exclude(id__in=item_updates_by_id).delete()
+
+    if generic_relation:
+        content_type = ContentType.objects.get_for_model(model_cls)
+        items_for_bulk_create = [
+            model_cls(
+                number=item["number"],
+                is_primary=item["is_primary"],
+                content_type=content_type,
+                object_id=client_profile.id,
+            )
+            for item in items_to_create
+        ]
+        model_cls.objects.bulk_create(items_for_bulk_create)
+        # from IPython import embed
+
+        # embed()
+        # PhoneNumber.objects.create(
+        #     content_type=content_type,
+        #     object_id=client_profile.id,
+        #     number=item["number"],
+        #     is_primary=item["is_primary"],
+        # )
+
+        for item in items_to_update:
+            item.number = item_updates_by_id[str(item.id)]["number"]
+            item.is_primary = item_updates_by_id[str(item.id)]["is_primary"]
+
+        return
 
     for item in items_to_create:
         resolvers.create(
@@ -216,12 +266,16 @@ class Mutation:
 
             for related_name, related_cls_map in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if client_profile_data[related_name] is not strawberry.UNSET:
-                    upsert_or_delete_client_related_object(
+                    # from IPython import embed
+
+                    # embed()
+                    handle_client_profile_related_object(
                         info,
-                        related_cls_map["module"],
-                        related_cls_map["cls_name"],
-                        client_profile_data.pop(related_name),
-                        client_profile,
+                        module=related_cls_map["module"],
+                        model_cls_name=related_cls_map["cls_name"],
+                        generic_relation=related_cls_map["generic_relation"],
+                        data=client_profile_data.pop(related_name),
+                        client_profile=client_profile,
                     )
 
             client_profile = resolvers.update(

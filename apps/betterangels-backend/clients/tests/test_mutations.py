@@ -249,6 +249,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
+        from IPython import embed
+
+        embed()
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:
