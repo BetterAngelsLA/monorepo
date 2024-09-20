@@ -61,7 +61,7 @@ CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME: dict[str, dict[str, Any]] = {
 }
 
 
-def handle_client_profile_related_object(
+def upsert_or_delete_client_profile_related_object(
     info: Info,
     module: str,
     model_cls_name: str,
@@ -254,7 +254,7 @@ class Mutation:
 
             for related_name, related_cls_map in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if client_profile_data[related_name] is not strawberry.UNSET:
-                    handle_client_profile_related_object(
+                    upsert_or_delete_client_profile_related_object(
                         info,
                         related_cls_map["module"],
                         related_cls_map["cls_name"],
