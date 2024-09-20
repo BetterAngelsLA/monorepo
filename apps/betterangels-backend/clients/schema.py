@@ -195,7 +195,7 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
-            phone_numbers = client_profile_data.pop("phone_numbers", [])
+            phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
             client_profile = resolvers.create(
                 info,
@@ -241,9 +241,6 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-            # phone_numbers = client_profile_data.pop("phone_numbers", [])
-
-            # for phone_number in phone_numbers:
 
             if user_data := client_profile_data.pop("user", {}):
                 client_user = resolvers.update(
