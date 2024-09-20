@@ -16,12 +16,12 @@ import { clientHouseholdMemberEnumDisplay } from '../../../../static/enumDisplay
 import DateOfBirth from './DateOfBirth';
 import Gender from './Gender';
 
-interface IHouseholdProps {
+interface IHouseholdMemberProps {
   index: number;
   remove: (index: number) => void;
 }
 
-export default function Household(props: IHouseholdProps) {
+export default function HouseholdMember(props: IHouseholdMemberProps) {
   const { index, remove } = props;
   const { control, setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput

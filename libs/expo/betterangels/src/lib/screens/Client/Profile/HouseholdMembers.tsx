@@ -8,10 +8,7 @@ import {
 import { format } from 'date-fns';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
-import {
-  clientHouseholdMemberEnumDisplay,
-  enumDisplayGender,
-} from '../../../static/enumDisplayMapping';
+import { clientHouseholdMemberEnumDisplay } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
 
 const InfoRow = ({
@@ -66,13 +63,7 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
                   />
                 )}
                 <InfoRow label="Name" value={householdMember.name} />
-                <InfoRow
-                  label="Gender"
-                  value={
-                    householdMember.gender &&
-                    enumDisplayGender[householdMember.gender]
-                  }
-                />
+                <InfoRow label="Gender" value={householdMember.displayGender} />
                 <InfoRow
                   label="Date of Birth"
                   value={

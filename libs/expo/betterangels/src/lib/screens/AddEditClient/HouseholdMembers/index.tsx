@@ -7,7 +7,7 @@ import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
-import Household from './Household';
+import HouseholdMember from './HouseholdMember';
 
 interface IHouseholdMembersProps {
   expanded: undefined | string | null;
@@ -47,7 +47,7 @@ export default function HouseholdMembers(props: IHouseholdMembersProps) {
           }}
         >
           {fields.map((_, index) => (
-            <Household remove={remove} key={index} index={index} />
+            <HouseholdMember remove={remove} key={index} index={index} />
           ))}
           <View style={{ alignItems: 'flex-start' }}>
             <TextButton
