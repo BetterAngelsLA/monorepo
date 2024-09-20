@@ -180,7 +180,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         household_members = [household_member_1, household_member_new]
 
         client_1_phone_number_1 = {
+            "id": self.client_profile_1["phoneNumbers"][0]["id"],
             "number": "2125551212",
+            "isPrimary": False,
         }
         client_1_phone_number_new = {
             "number": "6465551212",
@@ -249,9 +251,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
-        from IPython import embed
 
-        embed()
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:

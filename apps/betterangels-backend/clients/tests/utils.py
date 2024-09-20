@@ -189,6 +189,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         }
         self.client_1_phone_number_2 = {
             "number": "7185551212",
+            # "isPrimary": False,
         }
         self.client_profile_1_phone_numbers = [self.client_1_phone_number_1, self.client_1_phone_number_2]
 
@@ -204,6 +205,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_1_social_media_profile_1,
             self.client_1_social_media_profile_2,
         ]
+
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",

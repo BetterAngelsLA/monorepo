@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, cast
 
 import strawberry
 import strawberry_django
@@ -15,7 +15,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
-from IPython import embed
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -82,7 +81,7 @@ def handle_client_profile_related_object(
     model_cls.objects.exclude(id__in=item_updates_by_id).delete()
 
     if generic_relation:
-        content_type = ContentType.objects.get_for_model(model_cls)
+        content_type = ContentType.objects.get_for_model(ClientProfile)
         items_for_bulk_create = [
             model_cls(
                 number=item["number"],
@@ -93,19 +92,11 @@ def handle_client_profile_related_object(
             for item in items_to_create
         ]
         model_cls.objects.bulk_create(items_for_bulk_create)
-        # from IPython import embed
-
-        # embed()
-        # PhoneNumber.objects.create(
-        #     content_type=content_type,
-        #     object_id=client_profile.id,
-        #     number=item["number"],
-        #     is_primary=item["is_primary"],
-        # )
 
         for item in items_to_update:
             item.number = item_updates_by_id[str(item.id)]["number"]
             item.is_primary = item_updates_by_id[str(item.id)]["is_primary"]
+            item.save()
 
         return
 
@@ -266,16 +257,13 @@ class Mutation:
 
             for related_name, related_cls_map in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if client_profile_data[related_name] is not strawberry.UNSET:
-                    # from IPython import embed
-
-                    # embed()
                     handle_client_profile_related_object(
                         info,
-                        module=related_cls_map["module"],
-                        model_cls_name=related_cls_map["cls_name"],
-                        generic_relation=related_cls_map["generic_relation"],
-                        data=client_profile_data.pop(related_name),
-                        client_profile=client_profile,
+                        related_cls_map["module"],
+                        related_cls_map["cls_name"],
+                        related_cls_map["generic_relation"],
+                        client_profile_data.pop(related_name),
+                        client_profile,
                     )
 
             client_profile = resolvers.update(
