@@ -53,6 +53,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "name": "Daffodil",
             "dateOfBirth": "1900-01-01",
             "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
@@ -97,7 +98,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_contacts = [{"id": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
-        expected_household_members = [{"id": ANY, **household_member}]
+        expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_user = {"id": ANY, **user}
         expected_client_profile = {
@@ -159,13 +160,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "name": "Daffodils",
             "dateOfBirth": "1900-01-02",
             "gender": GenderEnum.NON_BINARY.name,
+            "genderOther": None,
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
         }
         household_member_new = {
             "name": "Rose",
             "dateOfBirth": "1902-01-01",
-            "gender": GenderEnum.FEMALE.name,
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "pangender",
             "relationshipToClient": RelationshipTypeEnum.MOTHER.name,
             "relationshipToClientOther": None,
         }
@@ -211,6 +214,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
+
+        # Add display fields to nested objects and update variables
+        expected_household_member_1 = {"displayGender": "Non-binary", **household_member_1}
+        expected_household_member_new = {"displayGender": "pangender", **household_member_new}
+        expected_household_members = [expected_household_member_1, expected_household_member_new]
+        variables["householdMembers"] = expected_household_members
 
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting dob

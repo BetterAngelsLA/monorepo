@@ -100,6 +100,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "user": self.client_profile_1["user"],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
         }
+
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_client_profiles_query(self) -> None:
