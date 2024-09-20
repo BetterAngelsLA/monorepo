@@ -56,6 +56,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
+        phone_number = {
+            "number": "2125551212",
+            "isPrimary": True,
+        }
         social_media_profile = {
             "platform": SocialMediaEnum.FACEBOOK.name,
             "platformUserId": "firsty_lasty",
@@ -78,6 +82,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "phoneNumbers": [phone_number],
             "physicalDescription": "eerily cat-like",
             "placeOfBirth": "Los Angeles",
             "preferredCommunication": PreferredCommunicationEnum.TEXT.name,
@@ -97,6 +102,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_contacts = [{"id": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
         expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
+        expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_user = {"id": ANY, **user}
         expected_client_profile = {
@@ -110,6 +116,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayPronouns": "She/Her/Hers",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
+            "phoneNumbers": expected_phone_numbers,
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
@@ -271,7 +278,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 40
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
