@@ -32,7 +32,7 @@ from .types import (
     UpdateClientProfileInput,
 )
 
-CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
+CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME: dict[str, dict[str, Any]] = {
     "contacts": {
         "module": "clients",
         "cls_name": "ClientContact",
