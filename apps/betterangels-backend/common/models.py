@@ -236,6 +236,7 @@ class PhoneNumber(models.Model):
             PhoneNumber.objects.filter(
                 content_type=self.content_type, object_id=self.object_id, is_primary=True
             ).update(is_primary=False)
+
         super().save(*args, **kwargs)
 
 
