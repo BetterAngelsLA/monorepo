@@ -134,13 +134,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
     "See parent"
 
 
-# PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
-#     PhoneNumber,
-#     serialize=lambda v: str(v.national_number),
-#     parse_value=lambda v: parse(v, "US"),
-# )
-
-
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     address: auto
