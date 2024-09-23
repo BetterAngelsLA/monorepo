@@ -231,6 +231,17 @@ class PhoneNumber(models.Model):
 
     objects = models.Manager()
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=[
+                    "object_id",
+                    "content_type_id",
+                ],
+                name="phonenumber_comp_idx",
+            )
+        ]
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.is_primary:
             PhoneNumber.objects.filter(
