@@ -37,13 +37,21 @@ query ClientProfiles(
   clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
-      hmisId
+      nickname
       user {
         id
         email
         firstName
         lastName
         username
+      }
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
       }
       displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
     }

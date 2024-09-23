@@ -22,6 +22,13 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+enum AdaAccommodationEnum {
+  HEARING
+  MOBILITY
+  VISUAL
+  OTHER
+}
+
 input AddNoteTaskInput {
   taskId: ID!
   noteId: ID!
@@ -116,6 +123,7 @@ input ClientHouseholdMemberInput {
   name: String
   dateOfBirth: Date
   gender: GenderEnum
+  genderOther: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
@@ -125,10 +133,12 @@ type ClientHouseholdMemberType {
   name: String
   dateOfBirth: Date
   gender: GenderEnum
+  genderOther: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
+  displayGender: String
 }
 
 input ClientProfileFilter {
@@ -143,37 +153,52 @@ input ClientProfileFilter {
 input ClientProfileOrder {
   user_FirstName: Ordering
   user_LastName: Ordering
+  id: Ordering
+}
+
+input ClientProfilePhotoInput {
+  clientProfile: ID!
+  photo: Upload!
 }
 
 type ClientProfileType {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
+  mailingAddress: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
+  profilePhoto: DjangoImageType
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
-  user: UserType!
   contacts: [ClientContactType!]
+  hmisProfiles: [HmisProfileType!]
+  householdMembers: [ClientHouseholdMemberType!]
+  socialMediaProfiles: [SocialMediaProfileType!]
+  displayGender: String
+  displayPronouns: String
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  displayPronouns: String
-  hmisProfiles: [HmisProfileType!]
-  householdMembers: [ClientHouseholdMemberType!]
+  user: UserType!
   displayCaseManager: String!
 }
 
@@ -186,29 +211,37 @@ input CreateClientDocumentInput {
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input CreateClientProfileInput {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
+  mailingAddress: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
+  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
-  user: CreateUserInput!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  socialMediaProfiles: [SocialMediaProfileInput!]
+  user: CreateUserInput!
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -318,6 +351,15 @@ type DjangoFileType {
   url: String!
 }
 
+type DjangoImageType {
+  name: String!
+  path: String!
+  size: Int!
+  url: String!
+  width: Int!
+  height: Int!
+}
+
 type DjangoModelType {
   pk: ID!
 }
@@ -413,6 +455,15 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+enum LivingSituationEnum {
+  HOUSING
+  OPEN_AIR
+  SHELTER
+  TENT
+  VEHICLE
+  OTHER
+}
+
 input LocationInput {
   address: AddressInput
   point: Point!
@@ -476,18 +527,19 @@ type MoodType {
 }
 
 type Mutation {
-  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "accounts", permission: "add_clientprofile"}], any: true)
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "accounts", permission: "change_clientprofile"}], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -547,6 +599,7 @@ enum NoteNamespaceEnum {
 
 input NoteOrder {
   interactedAt: Ordering
+  id: Ordering
 }
 
 type NoteType {
@@ -571,6 +624,10 @@ type NoteType {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int! = -1
+}
+
+input OneToManyInput {
+  set: ID
 }
 
 type OperationInfo {
@@ -621,6 +678,16 @@ scalar PhoneNumber
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
+enum PreferredCommunicationEnum {
+  CALL
+  EMAIL
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  TEXT
+  WHATSAPP
+}
+
 enum PronounEnum {
   HE_HIM_HIS
   SHE_HER_HERS
@@ -630,10 +697,10 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "accounts", permission: "view_clientprofile"}], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
@@ -744,6 +811,30 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+enum SocialMediaEnum {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  SNAPCHAT
+  TIKTOK
+  TWITTER
+  WHATSAPP
+}
+
+input SocialMediaProfileInput {
+  id: ID
+  clientProfile: OneToManyInput
+  platform: SocialMediaEnum
+  platformUserId: String
+}
+
+type SocialMediaProfileType {
+  id: ID
+  clientProfile: DjangoModelType!
+  platform: SocialMediaEnum!
+  platformUserId: String!
+}
+
 type SwitchType {
   name: String!
   isActive: Boolean!
@@ -752,6 +843,7 @@ type SwitchType {
 
 input TaskOrder {
   dueBy: Ordering
+  id: Ordering
 }
 
 enum TaskStatusEnum {
@@ -777,33 +869,43 @@ enum TaskTypeEnum {
 }
 
 input UpdateClientProfileInput {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
-  placeOfBirth: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
+  genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
+  mailingAddress: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: PreferredCommunicationEnum
   preferredLanguage: LanguageEnum
+  profilePhoto: Upload
   pronouns: PronounEnum
   pronounsOther: String
   race: RaceEnum
+  residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
   id: ID!
-  user: UpdateUserInput
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  socialMediaProfiles: [SocialMediaProfileInput!]
+  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
+
+union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | OperationInfo
 

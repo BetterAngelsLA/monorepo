@@ -1,7 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  CameraPicker,
   ImagePicker,
+  InteractionCamera,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -49,7 +49,7 @@ export default function Attachments(props: IAttachmentsProps) {
             mr="xs"
             setImages={setImages}
           />
-          <CameraPicker
+          <InteractionCamera
             isLoading={isLoading}
             setIsLoading={setIsLoading}
             noteId={noteId}

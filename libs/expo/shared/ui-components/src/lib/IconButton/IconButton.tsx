@@ -80,6 +80,7 @@ interface IIconButtonProps {
   height?: 'xs' | 'sm' | 'md';
   accessibilityLabel: string;
   accessibilityHint: string;
+  alignItems?: 'center' | 'flex-start';
   borderRadius?: number;
 }
 
@@ -101,6 +102,7 @@ export function IconButton(props: IIconButtonProps) {
     height = 'md',
     accessibilityLabel,
     accessibilityHint,
+    alignItems = 'center',
     borderRadius = Radiuses.xs,
   } = props;
   return (
@@ -116,6 +118,7 @@ export function IconButton(props: IIconButtonProps) {
         {
           height: Height[height],
           width: Width[width],
+          alignItems,
           borderWidth: 1,
           borderRadius,
           backgroundColor: VARIANTS[variant].bg,
@@ -137,7 +140,6 @@ export function IconButton(props: IIconButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    alignItems: 'center',
     justifyContent: 'center',
   },
 });

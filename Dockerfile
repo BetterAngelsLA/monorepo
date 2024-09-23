@@ -24,6 +24,13 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       docker-buildx-plugin \
     && docker --version
 
+# PSQL
+RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
+    apt-get update \
+    && apt-get install -y postgresql-common \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+    && apt-get install -y postgresql-client-16
+
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
 ENV AWS_CLI_VERSION=2.15.19
 RUN ARCH=$(uname -m) && \
@@ -85,7 +92,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # Python
-RUN pip install poetry==1.8.2
+RUN pip install poetry==1.8.3
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -123,6 +130,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 USER betterangels
+RUN git config --global --add safe.directory "*"
 
 FROM base AS poetry
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)

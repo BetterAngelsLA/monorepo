@@ -1,8 +1,8 @@
 import {
   MainScrollContainer,
+  NoteNamespaceEnum,
   NotesDocument,
   Ordering,
-  NoteNamespaceEnum,
   useDeleteNoteMutation,
   useRevertNoteMutation,
   useUpdateNoteMutation,
@@ -93,7 +93,7 @@ export default function AddNote() {
         query: NotesDocument,
         variables: {
           pagination: { limit: 10 + 1, offset: 0 },
-          order: { interactedAt: Ordering.Desc },
+          order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
           filters: { createdBy: user?.id, search: '' },
         },
       },
@@ -168,7 +168,7 @@ export default function AddNote() {
       await revertNote({
         variables: {
           data: {
-            id: noteId,
+            id: noteId || '',
             revertBeforeTimestamp: revertBeforeTimestamp || '',
           },
         },
@@ -196,7 +196,7 @@ export default function AddNote() {
       const result = await updateNote({
         variables: {
           data: {
-            id: noteId,
+            id: noteId || '',
             isSubmitted: true,
           },
         },

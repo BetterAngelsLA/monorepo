@@ -8,8 +8,8 @@ interface IClientTabsProps {
 }
 
 const TABS = [
-  // 'Profile',
-  // 'Docs',
+  'Profile',
+  'Docs',
   'Interactions',
   // 'Tasks',
   // 'Services',
