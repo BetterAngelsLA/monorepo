@@ -18,19 +18,17 @@ import {
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
-import ContactInfo from './ContactInfo';
-import Dob from './Dob';
-import Gender from './Gender';
-import HMIS from './HMIS';
-import Language from './Language';
-import Name from './Name';
-import VeteranStatus from './VeteranStatus';
 import {
   useCreateClientProfileMutation,
   useDeleteClientProfileMutation,
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
+import ContactInfo from './ContactInfo';
+import Gender from './Gender';
+import PersonalInfo from './PersonalInfo';
+import RelevantContacts from './RelevantContacts';
+import VeteranStatus from './VeteranStatus';
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -52,6 +50,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           },
           order: {
             user_FirstName: Ordering.AscNullsFirst,
+            id: Ordering.Desc,
           },
         },
       },
@@ -69,6 +68,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           },
           order: {
             user_FirstName: Ordering.AscNullsFirst,
+            id: Ordering.Desc,
           },
         },
       },
@@ -98,9 +98,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
+    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
+    delete values.displayPronouns;
+
     try {
       let operationResult;
-
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -113,9 +115,14 @@ export default function AddEditClient({ id }: { id?: string }) {
           variables: {
             data: {
               ...input,
+              user: {
+                id: data?.clientProfile.user.id,
+                ...input.user,
+              },
             },
           },
         });
+
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
       } else {
@@ -152,6 +159,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         router.replace('/');
       }
     } catch (err) {
+      console.log(err);
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };
@@ -178,7 +186,22 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
-    methods.reset(clientInput);
+
+    const newHmisProfiles = clientInput.hmisProfiles?.map((profile) => {
+      const { __typename, ...rest } = profile;
+      return rest;
+    });
+
+    const newClients = clientInput.contacts?.map((contact) => {
+      const { __typename, ...rest } = contact;
+      return rest;
+    });
+
+    methods.reset({
+      ...clientInput,
+      contacts: newClients,
+      hmisProfiles: newHmisProfiles,
+    });
   }, [data, id]);
 
   const props = {
@@ -207,13 +230,11 @@ export default function AddEditClient({ id }: { id?: string }) {
     <FormProvider {...methods}>
       <View style={{ flex: 1 }}>
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-          <Name {...props} />
-          <Dob {...props} />
+          <PersonalInfo {...props} />
           <Gender {...props} />
-          <Language {...props} />
-          <HMIS {...props} />
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
+          <RelevantContacts {...props} />
           {id && (
             <DeleteModal
               body="All data associated with this client will be deleted. This action cannot be undone."

@@ -1,4 +1,11 @@
-import { GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum } from '../apollo';
+import {
+  GenderEnum,
+  HmisAgencyEnum,
+  LanguageEnum,
+  LivingSituationEnum,
+  RelationshipTypeEnum,
+  YesNoPreferNotToSayEnum,
+} from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
@@ -17,6 +24,27 @@ export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Vietnamese]: 'Vietnamese',
 };
 
+export const enumDisplayLivingSituation: {
+  [key in LivingSituationEnum]: string;
+} = {
+  [LivingSituationEnum.Housing]: 'Housing',
+  [LivingSituationEnum.Shelter]: 'Shelter',
+  [LivingSituationEnum.Vehicle]: 'Vehicle',
+  [LivingSituationEnum.Tent]: 'Tent',
+  [LivingSituationEnum.OpenAir]: 'Open Air',
+  [LivingSituationEnum.Other]: 'Other',
+};
+
+export const enumDisplayHmisAgency: {
+  [key in HmisAgencyEnum]: string;
+} = {
+  [HmisAgencyEnum.Lahsa]: 'LAHSA',
+  [HmisAgencyEnum.SantaMonica]: 'Santa Monica',
+  [HmisAgencyEnum.Pasadena]: 'Pasadena',
+  [HmisAgencyEnum.Champ]: 'CHAMP',
+  [HmisAgencyEnum.Vash]: 'VASH',
+};
+
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
@@ -31,3 +59,20 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.No]: 'No',
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
+
+export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
+  [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
+  [RelationshipTypeEnum.Aunt]: 'Aunt',
+  [RelationshipTypeEnum.Child]: 'Child',
+  [RelationshipTypeEnum.Cousin]: 'Cousin',
+  [RelationshipTypeEnum.Father]: 'Father',
+  [RelationshipTypeEnum.Friend]: 'Friend',
+  [RelationshipTypeEnum.Grandparent]: 'Grandparent',
+  [RelationshipTypeEnum.Mother]: 'Mother',
+  [RelationshipTypeEnum.Organization]: 'Organization',
+  [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
+  [RelationshipTypeEnum.Pet]: 'Pet',
+  [RelationshipTypeEnum.Sibling]: 'Sibling',
+  [RelationshipTypeEnum.Uncle]: 'Uncle',
+  [RelationshipTypeEnum.Other]: 'Other',
+};
