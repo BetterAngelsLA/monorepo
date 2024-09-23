@@ -114,9 +114,27 @@ export default function Contact(props: IContactProps) {
         placeholder="Phone Number"
         label="Phone Number"
         keyboardType="phone-pad"
-        maxLength={12}
+        maxLength={10}
         name={`contacts[${index}].phoneNumber`}
         control={control}
+        rules={{
+          pattern: {
+            value: Regex.phoneNumber,
+            message:
+              'Enter a 10-digit phone number without space or special characters',
+          },
+        }}
+      />
+      <ErrorMessage
+        errors={errors}
+        name={`contacts[${index}].phoneNumber`}
+        render={({ message }) => {
+          return (
+            <TextRegular size="sm" color={Colors.ERROR}>
+              {message}
+            </TextRegular>
+          );
+        }}
       />
       <Input
         placeholder="Mailing Address"
