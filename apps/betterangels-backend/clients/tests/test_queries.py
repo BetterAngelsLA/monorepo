@@ -4,6 +4,7 @@ from typing import Optional
 import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
+    AdaAccommodationEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -61,6 +62,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile = response["data"]["clientProfile"]
         expected_client_profile = {
             "id": str(client_profile_id),
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
             "consentFormDocuments": [self.client_profile_1_document_3],

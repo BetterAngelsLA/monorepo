@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -29,6 +30,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
         self.client_profile_fields = """
             id
+            adaAccommodation
             address
             age
             dateOfBirth
@@ -191,6 +193,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]
         self.client_profile_1 = self._create_client_profile_fixture(
             {
+                "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
@@ -225,6 +228,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
+                "adaAccommodation": [],
                 "address": None,
                 "contacts": [],
                 "dateOfBirth": None,
