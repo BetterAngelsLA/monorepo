@@ -13,7 +13,7 @@ export default function CityOfBirth() {
   return (
     <CardWrapper title="City of Birth">
       <Input
-        name="cityOfBirth"
+        name="placeOfBirth"
         placeholder="Enter City of Birth"
         control={control}
       />

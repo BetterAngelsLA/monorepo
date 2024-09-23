@@ -13,9 +13,12 @@ import {
 } from '../../../apollo';
 
 export default function Height() {
-  const { setValue, getValues } = useFormContext<
+  const { setValue, getValues, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
+
+  const heightInInchesDefault = watch('heightInInches');
+
   const [height, setHeight] = useState<{ feet: string; inches: string }>({
     feet: '',
     inches: '',
@@ -31,6 +34,14 @@ export default function Height() {
       setValue('heightInInches', heightInInches);
     }
   }, [height, setValue, getValues]);
+
+  useEffect(() => {
+    if (heightInInchesDefault) {
+      const feet = Math.floor(heightInInchesDefault / 12).toString();
+      const inches = (heightInInchesDefault % 12).toString();
+      setHeight({ feet, inches });
+    }
+  }, [heightInInchesDefault]);
 
   return (
     <CardWrapper title="Height">
