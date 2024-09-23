@@ -22,6 +22,7 @@ query GetClientProfile($id: ID!) {
       address
       dateOfBirth
       gender
+      genderOther
       hmisProfiles {
         agency
         hmisId
@@ -39,6 +40,15 @@ query GetClientProfile($id: ID!) {
         firstName
         middleName
         lastName
+      }
+      householdMembers {
+        dateOfBirth
+        gender
+        genderOther
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
       }
       contacts {
         id

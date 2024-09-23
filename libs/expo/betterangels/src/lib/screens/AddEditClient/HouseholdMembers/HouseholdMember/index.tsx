@@ -12,24 +12,26 @@ import {
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
-import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
+import { clientHouseholdMemberEnumDisplay } from '../../../../static/enumDisplayMapping';
+import DateOfBirth from './DateOfBirth';
+import Gender from './Gender';
 
-interface IContactProps {
+interface IHouseholdMemberProps {
   index: number;
   remove: (index: number) => void;
 }
 
-export default function Contact(props: IContactProps) {
+export default function HouseholdMember(props: IHouseholdMemberProps) {
   const { index, remove } = props;
   const { control, setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
   const relationship = watch(
-    `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
+    `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`
   );
 
-  const contacts = watch('contacts') || [];
+  const householdMembers = watch('householdMembers') || [];
 
   const handleRemove = () => {
     remove(index);
@@ -37,21 +39,27 @@ export default function Contact(props: IContactProps) {
 
   const handleReset = () => {
     setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
-      null
-    );
-    setValue(`contacts[${index}].name` as `contacts.${number}.name`, null);
-    setValue(`contacts[${index}].email` as `contacts.${number}.email`, null);
-    setValue(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
+      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
       null
     );
     setValue(
-      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
+      `householdMembers[${index}].name` as `householdMembers.${number}.name`,
       null
     );
     setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      `householdMembers[${index}].gender` as `householdMembers.${number}.gender`,
+      null
+    );
+    setValue(
+      `householdMembers[${index}].genderOther` as `householdMembers.${number}.genderOther`,
+      null
+    );
+    setValue(
+      `householdMembers[${index}].dateOfBirth` as `householdMembers.${number}.dateOfBirth`,
+      null
+    );
+    setValue(
+      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
       null
     );
   };
@@ -66,11 +74,11 @@ export default function Contact(props: IContactProps) {
         defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
         onValueChange={(enumValue) =>
           setValue(
-            `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+            `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
             enumValue as RelationshipTypeEnum
           )
         }
-        items={Object.entries(clientRelevantContactEnumDisplay).map(
+        items={Object.entries(clientHouseholdMemberEnumDisplay).map(
           ([enumValue, displayValue]) => ({
             displayValue: displayValue,
             value: enumValue,
@@ -94,45 +102,26 @@ export default function Contact(props: IContactProps) {
       }}
     >
       <TextBold size="lg">
-        {clientRelevantContactEnumDisplay[relationship]}
+        {clientHouseholdMemberEnumDisplay[relationship]}
       </TextBold>
+      {householdMembers[index].relationshipToClient ===
+        RelationshipTypeEnum.Other && (
+        <Input
+          placeholder="Enter type of relationship"
+          label="Type of Relationship"
+          name={`householdMembers[${index}].relationshipToClientOther`}
+          control={control}
+        />
+      )}
       <Input
         placeholder="Name"
         autoCorrect={false}
         label="Name"
-        name={`contacts[${index}].name`}
+        name={`householdMembers[${index}].name`}
         control={control}
       />
-      <Input
-        placeholder="Email"
-        label="Email"
-        keyboardType="email-address"
-        name={`contacts[${index}].email`}
-        control={control}
-      />
-      <Input
-        placeholder="Phone Number"
-        label="Phone Number"
-        keyboardType="phone-pad"
-        maxLength={12}
-        name={`contacts[${index}].phoneNumber`}
-        control={control}
-      />
-      <Input
-        placeholder="Mailing Address"
-        label="Mailing Address"
-        name={`contacts[${index}].mailingAddress`}
-        control={control}
-      />
-      {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
-        <Input
-          placeholder="Relationship to Client Other"
-          label="Relationship to Client Other"
-          name={`contacts[${index}].relationshipToClientOther`}
-          control={control}
-        />
-      )}
-
+      <Gender index={index} />
+      <DateOfBirth index={index} />
       <View
         style={{
           marginTop: Spacings.sm,
@@ -146,14 +135,14 @@ export default function Contact(props: IContactProps) {
           color={Colors.PRIMARY}
           title="Remove"
           onPress={() => handleRemove()}
-          accessibilityHint="Removes Relevant contact"
+          accessibilityHint="Removes Household"
         />
 
         <TextButton
           color={Colors.PRIMARY}
           title="Reset"
           onPress={() => handleReset()}
-          accessibilityHint="Clears Relevant contact fields"
+          accessibilityHint="Clears Household fields"
         />
       </View>
     </View>
