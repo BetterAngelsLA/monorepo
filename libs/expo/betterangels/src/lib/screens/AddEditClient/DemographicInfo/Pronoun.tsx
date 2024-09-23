@@ -14,7 +14,7 @@ export default function Pronoun() {
   return (
     <PronounPicker
       withCard
-      cardTitle="Pronouns"
+      cardTitle
       value={pronoun}
       onPress={(enumValue) => {
         setValue('pronouns', enumValue);
