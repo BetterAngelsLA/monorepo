@@ -121,6 +121,7 @@ export type ClientDocumentType = AttachmentInterface & {
 export type ClientHouseholdMemberInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
@@ -131,7 +132,9 @@ export type ClientHouseholdMemberType = {
   __typename?: 'ClientHouseholdMemberType';
   clientProfile: DjangoModelType;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  displayGender?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
@@ -166,10 +169,12 @@ export type ClientProfileType = {
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayCaseManager: Scalars['String']['output'];
+  displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
   docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
   eyeColor?: Maybe<EyeColorEnum>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisId?: Maybe<Scalars['String']['output']>;
@@ -227,6 +232,7 @@ export type CreateClientProfileInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
@@ -1146,6 +1152,7 @@ export type UpdateClientProfileInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
