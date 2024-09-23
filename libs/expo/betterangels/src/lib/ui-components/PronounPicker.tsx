@@ -9,8 +9,8 @@ import {
 import { ReactNode } from 'react';
 import { Control, FieldValues } from 'react-hook-form';
 import { View } from 'react-native';
-import { GenderEnum } from '../apollo';
-import { enumDisplayGender } from '../static/enumDisplayMapping';
+import { PronounEnum } from '../apollo';
+import { enumDisplayPronoun } from '../static/enumDisplayMapping';
 
 type NestedKeyOf<T> = T extends object
   ? {
@@ -20,9 +20,9 @@ type NestedKeyOf<T> = T extends object
     }[keyof T]
   : '';
 
-interface IGenderPickerProps<T extends FieldValues> {
+interface IPronounPickerProps<T extends FieldValues> {
   value: string | null | undefined;
-  onPress: (e: GenderEnum) => void;
+  onPress: (e: PronounEnum) => void;
   control: Control<T>;
   otherName: NestedKeyOf<T>;
   withCard?: boolean;
@@ -31,8 +31,8 @@ interface IGenderPickerProps<T extends FieldValues> {
   onReset?: () => void;
 }
 
-export default function GenderPicker<T extends FieldValues>(
-  props: IGenderPickerProps<T>
+export default function PronounPicker<T extends FieldValues>(
+  props: IPronounPickerProps<T>
 ) {
   const {
     value,
@@ -48,7 +48,9 @@ export default function GenderPicker<T extends FieldValues>(
   const Wrapper = ({ children }: { children: ReactNode }) => {
     if (withCard) {
       return (
-        <CardWrapper title={cardTitle ? 'Gender' : ''}>{children}</CardWrapper>
+        <CardWrapper title={cardTitle ? 'Pronouns' : ''}>
+          {children}
+        </CardWrapper>
       );
     }
     return children;
@@ -57,21 +59,21 @@ export default function GenderPicker<T extends FieldValues>(
   return (
     <Wrapper>
       <View style={{ gap: Spacings.xs }}>
-        {title && <TextRegular size="sm">Gender</TextRegular>}
-        {Object.entries(enumDisplayGender).map(([enumValue, displayValue]) => (
+        {title && <TextRegular size="sm">Pronouns</TextRegular>}
+        {Object.entries(enumDisplayPronoun).map(([enumValue, displayValue]) => (
           <Radio
             key={enumValue}
-            value={value ? enumDisplayGender[value as GenderEnum] : ''}
+            value={value ? enumDisplayPronoun[value as PronounEnum] : ''}
             label={displayValue}
-            onPress={() => onPress(enumValue as GenderEnum)}
+            onPress={() => onPress(enumValue as PronounEnum)}
             accessibilityHint={`Select ${displayValue}`}
           />
         ))}
-        {value === GenderEnum.Other && (
+        {value === PronounEnum.Other && (
           <Input
             mt="sm"
-            label="Other Gender"
-            placeholder="Enter Gender"
+            label="Other Pronouns"
+            placeholder="Enter Pronouns"
             name={otherName}
             control={control}
           />

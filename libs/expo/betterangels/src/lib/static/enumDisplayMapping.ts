@@ -1,8 +1,13 @@
 import {
+  EyeColorEnum,
   GenderEnum,
+  HairColorEnum,
   HmisAgencyEnum,
   LanguageEnum,
   LivingSituationEnum,
+  MaritalStatusEnum,
+  PronounEnum,
+  RaceEnum,
   RelationshipTypeEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
@@ -52,6 +57,52 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
 };
+
+export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
+  [PronounEnum.HeHimHis]: 'He/Him/His',
+  [PronounEnum.SheHerHers]: 'She/Her/Hers',
+  [PronounEnum.TheyThemTheirs]: 'They/Them/Theirs',
+  [PronounEnum.Other]: 'Other',
+};
+
+export const enumDisplayRace: { [key in RaceEnum]: string } = {
+  [RaceEnum.WhiteCaucasian]: 'White/Caucasian',
+  [RaceEnum.BlackAfricanAmerican]: 'African American',
+  [RaceEnum.AmericanIndianAlaskaNative]: 'American Indian/Alaska Native',
+  [RaceEnum.Asian]: 'Asian',
+  [RaceEnum.HispanicLatino]: 'Hispanic/Latino',
+  [RaceEnum.NativeHawaiianPacificIslander]: 'Native Hawaiian/Pacific Islander',
+  [RaceEnum.Other]: 'Other',
+};
+
+export const enumDisplayEyeColor: { [key in EyeColorEnum]: string } = {
+  [EyeColorEnum.Blue]: 'Blue',
+  [EyeColorEnum.Brown]: 'Brown',
+  [EyeColorEnum.Gray]: 'Gray',
+  [EyeColorEnum.Green]: 'Green',
+  [EyeColorEnum.Hazel]: 'Hazel',
+  [EyeColorEnum.Other]: 'Other',
+};
+
+export const enumDisplayHairColor: { [key in HairColorEnum]: string } = {
+  [HairColorEnum.Brown]: 'Brown',
+  [HairColorEnum.Black]: 'Black',
+  [HairColorEnum.Blonde]: 'Blonde',
+  [HairColorEnum.Red]: 'Red',
+  [HairColorEnum.Gray]: 'Gray',
+  [HairColorEnum.White]: 'White',
+  [HairColorEnum.Bald]: 'Bald',
+  [HairColorEnum.Other]: 'Other',
+};
+
+export const enumDisplayMaritalStatus: { [key in MaritalStatusEnum]: string } =
+  {
+    [MaritalStatusEnum.Single]: 'Single',
+    [MaritalStatusEnum.Married]: 'Married',
+    [MaritalStatusEnum.Divorced]: 'Divorced',
+    [MaritalStatusEnum.Widowed]: 'Widowed',
+    [MaritalStatusEnum.Separated]: 'Separated',
+  };
 
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
   {

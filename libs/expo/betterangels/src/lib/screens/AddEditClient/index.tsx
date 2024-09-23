@@ -25,7 +25,7 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
-import Gender from './Gender';
+import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
@@ -258,7 +258,7 @@ export default function AddEditClient({ id }: { id?: string }) {
       <View style={{ flex: 1 }}>
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
           <PersonalInfo {...props} />
-          <Gender {...props} />
+          <DemographicInfo {...props} />
 
           <ContactInfo {...props} />
           <VeteranStatus {...props} />

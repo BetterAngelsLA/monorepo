@@ -14,7 +14,7 @@ export default function Gender({ index }: { index: number }) {
 
   return (
     <GenderPicker
-      title="Gender"
+      title
       value={householdMembers.length > 0 ? householdMembers[index]?.gender : ''}
       onPress={(enumValue) => {
         const updatedHouseholdMembers = [...householdMembers];
