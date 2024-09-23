@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from accounts.models import User
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -83,6 +84,9 @@ class HmisProfile(models.Model):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
+    ada_accommodation = ArrayField(
+        base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
+    )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)

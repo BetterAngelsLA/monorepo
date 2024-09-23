@@ -6,7 +6,12 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.types import CreateUserInput, UpdateUserInput, UserType
-from clients.enums import ClientDocumentNamespaceEnum, LanguageEnum, LivingSituationEnum
+from clients.enums import (
+    AdaAccommodationEnum,
+    ClientDocumentNamespaceEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+)
 from common.graphql.types import (
     AttachmentInterface,
     PhoneNumberInput,
@@ -136,6 +141,7 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
+    ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
     age: auto
     date_of_birth: auto

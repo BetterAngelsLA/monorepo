@@ -2,6 +2,7 @@ from unittest.mock import ANY
 
 from accounts.models import User
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -66,6 +67,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
 
         variables = {
+            "adaAccommodation": [AdaAccommodationEnum.VISUAL.name],
             "address": "1234 Main St",
             "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
@@ -197,6 +199,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "id": self.client_profile_1["id"],
+            "adaAccommodation": [AdaAccommodationEnum.VISUAL.name, AdaAccommodationEnum.HEARING.name],
             "address": "1234 Main St",
             "contacts": contacts,
             "dateOfBirth": self.date_of_birth,
