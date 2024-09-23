@@ -259,7 +259,6 @@ export default function AddEditClient({ id }: { id?: string }) {
         <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
           <PersonalInfo {...props} />
           <DemographicInfo {...props} />
-
           <ContactInfo {...props} />
           <VeteranStatus {...props} />
           <RelevantContacts {...props} />
