@@ -6,6 +6,7 @@ import CityOfBirth from './CityOfBirth';
 import EyeColor from './EyeColor';
 import Gender from './Gender';
 import HairColor from './HairColor';
+import Height from './Height';
 import MaritalStatus from './MaritalStatus';
 import PhysicalDescription from './PhysicalDescription';
 import Pronoun from './Pronoun';
@@ -43,6 +44,7 @@ export default function DemographicInfo(props: IDemographicInfoProps) {
           <Pronoun />
           <Race />
           <CityOfBirth />
+          <Height />
           <EyeColor />
           <HairColor />
           <PhysicalDescription />
