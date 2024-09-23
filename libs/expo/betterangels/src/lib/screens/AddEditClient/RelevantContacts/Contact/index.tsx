@@ -1,10 +1,18 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { ErrorMessage } from '@hookform/error-message';
+import {
+  Colors,
+  Radiuses,
+  Regex,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   Input,
   Select,
   TextBold,
   TextButton,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import {
@@ -21,9 +29,25 @@ interface IContactProps {
 
 export default function Contact(props: IContactProps) {
   const { index, remove } = props;
-  const { control, setValue, watch } = useFormContext<
-    UpdateClientProfileInput | CreateClientProfileInput
-  >();
+  const {
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+
+  const contactPhoneNumber = watch(
+    `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`
+  );
+
+  useEffect(() => {
+    if (contactPhoneNumber === '') {
+      setValue(
+        `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
+        null
+      );
+    }
+  }, [contactPhoneNumber, index]);
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
