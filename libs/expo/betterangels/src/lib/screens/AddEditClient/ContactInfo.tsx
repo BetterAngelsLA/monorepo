@@ -7,7 +7,7 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { RefObject, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
@@ -27,6 +27,7 @@ export default function ContactInfo(props: IContactInfoProps) {
     control,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const email = watch('user.email');
@@ -34,6 +35,12 @@ export default function ContactInfo(props: IContactInfoProps) {
   const address = watch('address');
 
   const isContactInfo = expanded === 'Contact Info';
+
+  useEffect(() => {
+    if (phoneNumber === '') {
+      setValue('phoneNumber', null);
+    }
+  }, [phoneNumber]);
 
   return (
     <FieldCard
