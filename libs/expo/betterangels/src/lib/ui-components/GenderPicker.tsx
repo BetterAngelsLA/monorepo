@@ -82,7 +82,7 @@ export default function GenderPicker<T extends FieldValues>(
               mt="sm"
               color={Colors.PRIMARY}
               title="Reset"
-              accessibilityHint="resets pronouns"
+              accessibilityHint="resets gender"
               onPress={onReset}
             />
           </View>
