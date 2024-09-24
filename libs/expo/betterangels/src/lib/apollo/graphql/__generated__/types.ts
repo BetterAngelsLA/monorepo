@@ -195,6 +195,7 @@ export type ClientProfileType = {
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
+  phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredCommunication?: Maybe<PreferredCommunicationEnum>;
@@ -252,6 +253,7 @@ export type CreateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
@@ -892,6 +894,19 @@ export type PermDefinition = {
   permission?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PhoneNumberInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isPrimary?: InputMaybe<Scalars['Boolean']['input']>;
+  number?: InputMaybe<Scalars['PhoneNumber']['input']>;
+};
+
+export type PhoneNumberType = {
+  __typename?: 'PhoneNumberType';
+  id: Scalars['ID']['output'];
+  isPrimary?: Maybe<Scalars['Boolean']['output']>;
+  number?: Maybe<Scalars['PhoneNumber']['output']>;
+};
+
 export enum PreferredCommunicationEnum {
   Call = 'CALL',
   Email = 'EMAIL',
@@ -1174,6 +1189,7 @@ export type UpdateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
