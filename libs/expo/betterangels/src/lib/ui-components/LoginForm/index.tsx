@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
-import { BasicInput, Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
+import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
+import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -30,8 +31,10 @@ export default function LoginForm({
 }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
+  // Import the functions to switch between demo and production API URLs
+  const { setProductionApi, setDemoApi } = useApolloClientContext();
+  const [loginForm, { loading, error }] = useLoginFormMutation();
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,12 +43,28 @@ export default function LoginForm({
 
   const isButtonDisabled = !isValidEmail(username) || password.length < 8;
 
+  // Determine if the user should use the demo API based on their email
+  const checkIfDemoMode = (email: string): boolean => {
+    const demoDomain = '@example.com'; // Use your demo domain here
+    return email.endsWith(demoDomain);
+  };
+
   const handleLogin = async () => {
     if (isButtonDisabled) {
       setErrorMessage('Either email or password is incorrect.');
       return;
     }
+
+    // Switch to the correct API based on the email address
+    console.log(`Username: ${username}`);
+    if (checkIfDemoMode(username)) {
+      setDemoApi(); // Switch to demo API if email ends with @example.com
+    } else {
+      setProductionApi(); // Switch to production API otherwise
+    }
+
     setIsLoading(true);
+
     try {
       const { data } = await loginForm({
         variables: {
@@ -55,15 +74,16 @@ export default function LoginForm({
       });
 
       if (error) {
+        console.log(error.message);
         setErrorMessage('Something went wrong. Please try again.');
-      }
-      if (!loading && data && 'login' in data) {
-        refetchUser();
+      } else if (!loading && data && 'login' in data) {
+        refetchUser(); // Refetch the user after successful login
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
       setErrorMessage('Something went wrong. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -119,22 +139,6 @@ export default function LoginForm({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#000',
   },
   errorText: {
     color: 'red',

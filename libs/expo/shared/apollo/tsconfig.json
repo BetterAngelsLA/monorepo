@@ -2,12 +2,14 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "jsx": "react"
   },
   "files": [],
   "include": [],

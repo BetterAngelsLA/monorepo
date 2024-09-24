@@ -1,7 +1,7 @@
 import 'expo-dev-client';
 
-import { ApolloProvider } from '@apollo/client';
 import { UserProvider } from '@monorepo/expo/betterangels';
+import { ApolloClientProvider } from '@monorepo/expo/shared/apollo';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import client from './apollo';
+import { apiUrl, demoApiUrl } from '../../config';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -52,7 +52,7 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const router = useRouter();
   return (
-    <ApolloProvider client={client}>
+    <ApolloClientProvider apiUrl={apiUrl} demoApiUrl={demoApiUrl}>
       <KeyboardProvider>
         <UserProvider>
           <StatusBar style="light" />
@@ -110,6 +110,6 @@ function RootLayoutNav() {
           {/* </ThemeProvider> */}
         </UserProvider>
       </KeyboardProvider>
-    </ApolloProvider>
+    </ApolloClientProvider>
   );
 }
