@@ -5,18 +5,21 @@ import {
   InMemoryCache,
   NormalizedCacheObject,
 } from '@apollo/client';
+import { setItem } from '@monorepo/expo/shared/utils';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { Platform } from 'react-native';
 import { isReactNativeFileInstance } from './ReactNativeFile';
+import { CSRF_COOKIE_NAME } from './links';
 import { csrfLink } from './links/csrf';
 
 // Function to create Apollo Client
 export const createApolloClient = (
   apiUrl: string
 ): ApolloClient<NormalizedCacheObject> => {
-  const getHeaders = () => {
+  console.log(`apiUrl: ${apiUrl}`);
+  const getHeaders = (): { [key: string]: string } | undefined => {
     if (Platform.OS !== 'web') {
       return {
         Referer: apiUrl,
@@ -39,7 +42,7 @@ export const createApolloClient = (
   });
 
   return new ApolloClient({
-    link: from([csrfLink(`${apiUrl}/accounts/login`), restLink, uploadLink]),
+    link: from([csrfLink(`${apiUrl}/admin/login/`), restLink, uploadLink]),
     cache: new InMemoryCache(),
   });
 };
@@ -84,6 +87,7 @@ export const ApolloClientProvider = ({
     }
   };
   console.log('rendering provider');
+  setItem(CSRF_COOKIE_NAME, '');
   return (
     <ApolloClientContext.Provider
       value={{ switchToProduction, switchToDemo, currentClient }}

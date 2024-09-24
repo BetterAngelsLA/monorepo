@@ -33,7 +33,12 @@ export default function LoginForm({
   const [password, setPassword] = useState('');
   const { refetchUser } = useUser();
   const { switchToProduction, switchToDemo } = useApolloClientContext();
-  const [loginForm, { loading, error }] = useLoginFormMutation();
+  const [loginForm, { loading, error }] = useLoginFormMutation({
+    onError: (error) => {
+      console.log('test');
+      console.log(error.networkError);
+    },
+  });
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,7 +75,7 @@ export default function LoginForm({
     setIsLoading(true);
 
     try {
-      const { data } = await loginForm({
+      const { data, errors } = await loginForm({
         variables: {
           username,
           password,
@@ -79,18 +84,22 @@ export default function LoginForm({
 
       if (error) {
         console.log(error);
-        setErrorMessage('Something went wrong. Please try again.');
-      } else if (!loading && data && 'login' in data) {
+        setErrorMessage('1: Something went wrong. Please try again.');
+      }
+      console.log(JSON.stringify(data, null, 4));
+      console.log(JSON.stringify(errors, null, 4));
+      if (!loading && data && 'login' in data) {
+        console.log('wyuhtwayntofaynuoftoynuftoyunft');
         refetchUser(); // Refetch the user after successful login
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
       console.log(error);
-      setErrorMessage('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
+      console.log(JSON.stringify(error, null, 4));
+      setErrorMessage('2: Something went wrong. Please try again.');
     }
+    setIsLoading(false);
   };
 
   return (

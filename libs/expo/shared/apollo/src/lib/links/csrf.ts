@@ -6,6 +6,7 @@ const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
 
 const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
   let csrfToken = await getItem(CSRF_COOKIE_NAME);
+  console.log(`getItem csrfToken: ${csrfToken}`);
   if (!csrfToken) {
     const response = await customFetch(apiUrl, { credentials: 'include' });
     const cookies = response.headers?.get('Set-Cookie');
@@ -14,6 +15,7 @@ const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
       csrfToken = match[1];
       await setItem(CSRF_COOKIE_NAME, csrfToken);
     }
+    console.log(`setItem csrfToken: ${csrfToken}`);
   }
   return csrfToken;
 };
