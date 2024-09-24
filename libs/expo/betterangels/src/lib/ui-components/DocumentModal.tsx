@@ -21,6 +21,8 @@ interface IDocumentModalProps {
   clientId: string;
 }
 
+const MIME_TYPE = 'application/octet-stream';
+
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
   const [deleteDocument] = useDeleteClientDocumentMutation({
@@ -47,12 +49,12 @@ export default function DocumentModal(props: IDocumentModalProps) {
       });
     } catch (err) {
       console.error('Error deleting document', err);
+      Alert.alert('Error', 'An error occurred while deleting the document.');
     }
   };
 
   const downloadFile = async () => {
     if (!document?.file?.url) {
-      console.log('File URL is missing.');
       return;
     }
 
@@ -60,29 +62,16 @@ export default function DocumentModal(props: IDocumentModalProps) {
       const fileUri = document.file.url;
       const downloadLocation = `${FileSystem.documentDirectory}${document.originalFilename}`;
 
-      console.log('Downloading from:', fileUri);
-      console.log('Saving to:', downloadLocation);
-
       const downloadResumable = FileSystem.createDownloadResumable(
         fileUri,
-        downloadLocation,
-        {},
-        (downloadProgress) => {
-          const progress =
-            downloadProgress.totalBytesWritten /
-            downloadProgress.totalBytesExpectedToWrite;
-          console.log(`Progress: ${(progress * 100).toFixed(2)}%`);
-        }
+        downloadLocation
       );
 
       const data = await downloadResumable.downloadAsync();
 
-      console.log('Download completed! File saved to:', data?.uri);
-      Alert.alert('Download Complete', `File saved to: ${data?.uri}`);
-
       if ((await Sharing.isAvailableAsync()) && data?.uri) {
         await Sharing.shareAsync(data?.uri, {
-          mimeType: 'application/octet-stream',
+          mimeType: MIME_TYPE,
           dialogTitle: 'Save file to Files',
         });
       } else {
