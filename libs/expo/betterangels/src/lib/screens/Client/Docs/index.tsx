@@ -3,7 +3,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { ClientDocumentType } from '../../../apollo';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+import DocReady from './DocReady';
 import UploadModal from './UploadModal';
 
 export default function Docs({
@@ -12,9 +14,16 @@ export default function Docs({
   client: ClientProfileQuery | undefined;
 }) {
   const [isModalVisible, setModalVisible] = useState(false);
+  const [expanded, setExpanded] = useState<undefined | string | null>();
+
+  const props = {
+    expanded,
+    setExpanded,
+  };
   return (
     <ScrollView
-      style={{ paddingVertical: Spacings.lg, paddingHorizontal: Spacings.sm }}
+      contentContainerStyle={{ paddingVertical: Spacings.lg }}
+      style={{ paddingHorizontal: Spacings.sm }}
     >
       <View
         style={{
@@ -39,6 +48,18 @@ export default function Docs({
         isModalVisible={isModalVisible}
         closeModal={() => setModalVisible(false)}
       />
+      <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
+        {client?.clientProfile.docReadyDocuments &&
+          client?.clientProfile.docReadyDocuments?.length > 0 && (
+            <DocReady
+              {...props}
+              data={
+                client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+              }
+              clientId={client?.clientProfile.id}
+            />
+          )}
+      </View>
     </ScrollView>
   );
 }
