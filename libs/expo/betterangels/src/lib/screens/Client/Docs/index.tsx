@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import DocReady from './DocReady';
+import ConsentFormDocuments from './ConsentFormsDocuments';
+import DocReadyDocuments from './DocReadyDocuments';
+import OtherDocuments from './OtherDocuments';
 import UploadModal from './UploadModal';
 
 export default function Docs({
@@ -51,10 +53,32 @@ export default function Docs({
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
         {client?.clientProfile.docReadyDocuments &&
           client?.clientProfile.docReadyDocuments?.length > 0 && (
-            <DocReady
+            <DocReadyDocuments
               {...props}
               data={
                 client?.clientProfile.docReadyDocuments as ClientDocumentType[]
+              }
+              clientId={client?.clientProfile.id}
+            />
+          )}
+        {client?.clientProfile.consentFormDocuments &&
+          client?.clientProfile.consentFormDocuments?.length > 0 && (
+            <ConsentFormDocuments
+              {...props}
+              data={
+                client?.clientProfile
+                  .consentFormDocuments as ClientDocumentType[]
+              }
+              clientId={client?.clientProfile.id}
+            />
+          )}
+        {client?.clientProfile.otherDocuments &&
+          client?.clientProfile.otherDocuments?.length > 0 && (
+            <OtherDocuments
+              {...props}
+              data={
+                client?.clientProfile
+                  .consentFormDocuments as ClientDocumentType[]
               }
               clientId={client?.clientProfile.id}
             />

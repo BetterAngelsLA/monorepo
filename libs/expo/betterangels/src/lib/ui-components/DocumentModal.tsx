@@ -4,6 +4,7 @@ import {
   PencilSolidIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
+import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import { ClientDocumentType } from '../apollo';
 import {
@@ -49,6 +50,20 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
+  const downloadFile = async () => {
+    if (!document?.file?.url) return;
+    try {
+      const fileUri = document.file.url;
+      const downloadLocation = `${FileSystem.documentDirectory}${document.originalFilename}`;
+
+      await FileSystem.downloadAsync(fileUri, downloadLocation);
+
+      closeModal();
+    } catch (error) {
+      console.error('Error downloading the file:', error);
+    }
+  };
+
   const ACTIONS = [
     {
       title: 'View Image',
@@ -63,12 +78,12 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: 'Download this file',
       Icon: DownloadIcon,
-      onPress: () => {},
+      onPress: downloadFile,
     },
     {
       title: 'Delete this file',
       Icon: DeleteIcon,
-      onPress: () => handleDelete(),
+      onPress: handleDelete,
     },
   ];
 

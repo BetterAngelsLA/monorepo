@@ -33,6 +33,8 @@ export function FileCard(props: IFileCardProps) {
           flexDirection: 'row',
           alignItems: 'center',
           gap: Spacings.xs,
+          overflow: 'hidden',
+          flex: 1,
         }}
       >
         <View
@@ -50,9 +52,11 @@ export function FileCard(props: IFileCardProps) {
             accessibilityIgnoresInvertColors
           />
         </View>
-        <TextRegular size="sm">{document.originalFilename}</TextRegular>
+        <TextRegular numberOfLines={1} style={{ flex: 1 }} size="sm">
+          {document.originalFilename}
+        </TextRegular>
       </View>
-      <TextRegular size="xs" color={Colors.NEUTRAL_DARK}>
+      <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
         11/09/23
       </TextRegular>
     </Pressable>
