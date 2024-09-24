@@ -6,23 +6,22 @@ import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
 import { DocumentModal } from '../../../ui-components';
 
-interface IConsentFormDocumentsProps {
+interface IOtherDocumentsProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   data: ClientDocumentType[];
   clientId: string;
+  title: 'Other' | 'Doc-Ready' | 'Consent Form';
 }
 
-export default function ConsentFormDocuments(
-  props: IConsentFormDocumentsProps
-) {
-  const { expanded, setExpanded, data, clientId } = props;
+export default function Documents(props: IOtherDocumentsProps) {
+  const { expanded, setExpanded, data, clientId, title } = props;
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<
     Maybe<ClientDocumentType> | undefined
   >(undefined);
 
-  const isConsentFormDocuments = expanded === 'Consent Form';
+  const isOtherDocuments = expanded === title;
 
   const openModal = (document: ClientDocumentType) => {
     setSelectedDocument(document);
@@ -31,21 +30,21 @@ export default function ConsentFormDocuments(
 
   return (
     <Accordion
-      icon={isConsentFormDocuments ? <FolderOpenIcon /> : <FolderIcon />}
+      icon={isOtherDocuments ? <FolderOpenIcon /> : <FolderIcon />}
       borderWidth={1}
       borderColor={Colors.PRIMARY_LIGHT}
       borderRadius={Radiuses.xs}
       bg={Colors.PRIMARY_EXTRA_LIGHT}
       expanded={expanded}
       setExpanded={() => {
-        setExpanded(isConsentFormDocuments ? null : 'Consent Form');
+        setExpanded(isOtherDocuments ? null : title);
       }}
-      title="Consent Form"
+      title={title}
     >
-      {isConsentFormDocuments && (
+      {isOtherDocuments && (
         <View
           style={{
-            height: isConsentFormDocuments ? 'auto' : 0,
+            height: isOtherDocuments ? 'auto' : 0,
             overflow: 'hidden',
             gap: Spacings.xs,
             paddingVertical: Spacings.sm,
