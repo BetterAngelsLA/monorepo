@@ -140,10 +140,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  errorText: {
-    color: 'red',
-    marginTop: 10,
-  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -159,5 +155,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     color: '#000',
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 10,
   },
 });
