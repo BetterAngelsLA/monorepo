@@ -144,4 +144,20 @@ const styles = StyleSheet.create({
     color: 'red',
     marginTop: 10,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    color: '#000',
+  },
 });
