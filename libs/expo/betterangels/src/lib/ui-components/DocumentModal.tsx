@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import {
@@ -64,6 +65,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
       console.log('Downloading from:', fileUri);
       console.log('Saving to:', downloadLocation);
 
+      // Download the file to the app's document directory
       const downloadResumable = FileSystem.createDownloadResumable(
         fileUri,
         downloadLocation,
@@ -76,10 +78,24 @@ export default function DocumentModal(props: IDocumentModalProps) {
         }
       );
 
+      // Wait for the download to complete
       const data = await downloadResumable.downloadAsync();
 
       console.log('Download completed! File saved to:', data?.uri);
       Alert.alert('Download Complete', `File saved to: ${data?.uri}`);
+
+      // Now, trigger the sharing sheet to allow users to save the file
+      if ((await Sharing.isAvailableAsync()) && data?.uri) {
+        await Sharing.shareAsync(data?.uri, {
+          mimeType: 'application/octet-stream', // Adjust this based on the file type (e.g., image/jpeg for images)
+          dialogTitle: 'Save file to Files',
+        });
+      } else {
+        Alert.alert(
+          'Sharing not available',
+          'Sharing is not supported on this device.'
+        );
+      }
 
       closeModal();
     } catch (error) {
