@@ -54,7 +54,8 @@ export default function OtherDocuments(props: IOtherDocumentsProps) {
           {data?.map((document) => (
             <FileCard
               key={document.id}
-              document={document}
+              filename={document.originalFilename}
+              url={document.file.url}
               onPress={() => openModal(document)}
             />
           ))}

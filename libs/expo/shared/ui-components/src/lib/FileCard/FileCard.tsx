@@ -1,15 +1,15 @@
-import { ClientDocumentType } from '@monorepo/expo/betterangels';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, Pressable, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 interface IFileCardProps {
   onPress: () => void;
-  document: ClientDocumentType;
+  filename?: string | null;
+  url: string;
 }
 
 export function FileCard(props: IFileCardProps) {
-  const { onPress, document } = props;
+  const { onPress, url, filename } = props;
   return (
     <Pressable
       onPress={onPress}
@@ -47,13 +47,13 @@ export function FileCard(props: IFileCardProps) {
         >
           <Image
             style={{ width: 36, height: 36 }}
-            source={{ uri: document.file.url }}
+            source={{ uri: url }}
             resizeMode="cover"
             accessibilityIgnoresInvertColors
           />
         </View>
         <TextRegular numberOfLines={1} style={{ flex: 1 }} size="sm">
-          {document.originalFilename}
+          {filename}
         </TextRegular>
       </View>
       <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>

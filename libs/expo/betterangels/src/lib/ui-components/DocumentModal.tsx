@@ -5,7 +5,6 @@ import {
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
 import * as FileSystem from 'expo-file-system';
-import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
@@ -37,7 +36,6 @@ export default function DocumentModal(props: IDocumentModalProps) {
       closeModal();
     },
   });
-  const router = useRouter();
 
   const handleDelete = async () => {
     if (!document?.id) return;
