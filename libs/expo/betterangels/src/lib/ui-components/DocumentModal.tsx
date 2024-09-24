@@ -65,7 +65,6 @@ export default function DocumentModal(props: IDocumentModalProps) {
       console.log('Downloading from:', fileUri);
       console.log('Saving to:', downloadLocation);
 
-      // Download the file to the app's document directory
       const downloadResumable = FileSystem.createDownloadResumable(
         fileUri,
         downloadLocation,
@@ -78,16 +77,14 @@ export default function DocumentModal(props: IDocumentModalProps) {
         }
       );
 
-      // Wait for the download to complete
       const data = await downloadResumable.downloadAsync();
 
       console.log('Download completed! File saved to:', data?.uri);
       Alert.alert('Download Complete', `File saved to: ${data?.uri}`);
 
-      // Now, trigger the sharing sheet to allow users to save the file
       if ((await Sharing.isAvailableAsync()) && data?.uri) {
         await Sharing.shareAsync(data?.uri, {
-          mimeType: 'application/octet-stream', // Adjust this based on the file type (e.g., image/jpeg for images)
+          mimeType: 'application/octet-stream',
           dialogTitle: 'Save file to Files',
         });
       } else {
