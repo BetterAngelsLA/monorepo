@@ -16,10 +16,13 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IClientCardProps {
   imageUrl?: string;
+  age?: number | null | undefined;
+  dateOfBirth?: string | null | undefined;
   firstName?: string | null | undefined;
+  heightInInches?: number | null | undefined;
   lastName?: string | null | undefined;
   nickname?: string | null | undefined;
-  dateOfBirth?: string | null | undefined;
+  residenceAddress?: string | null | undefined;
   address?: string;
   progress?: DimensionValue;
   daysActive?: number;
@@ -38,10 +41,13 @@ interface IClientCardProps {
 export function ClientCard(props: IClientCardProps) {
   const {
     imageUrl,
+    age,
+    dateOfBirth,
     firstName,
+    heightInInches,
     lastName,
     nickname,
-    dateOfBirth,
+    residenceAddress,
     address,
     daysActive,
     mb,
@@ -57,6 +63,20 @@ export function ClientCard(props: IClientCardProps) {
   } = props;
 
   const router = useRouter();
+  const formatHeight = (inches: number) => {
+    const feet = Math.floor(inches / 12);
+    const remainingInches = inches % 12;
+    return `${feet}' ${remainingInches}"`;
+  };
+  const formatDateOfBirth = (dateOfBirth: string) => {
+    const [year, month, day] = dateOfBirth.split('-');
+    return `${month}/${day}/${year}`;
+  };
+
+  const formattedHeight = heightInInches ? formatHeight(heightInInches) : null;
+  const formattedDateOfBirth = dateOfBirth
+    ? formatDateOfBirth(dateOfBirth)
+    : null;
 
   return (
     <Pressable
@@ -94,9 +114,21 @@ export function ClientCard(props: IClientCardProps) {
         <TextBold size="sm">
           {firstName} {lastName} {nickname && `(${nickname})`}
         </TextBold>
-        <TextRegular size="xs">
-          {firstName} {lastName} {nickname && `(${nickname})`}
-        </TextRegular>
+        <View style={styles.row}>
+          <TextRegular size="xs">{formattedDateOfBirth}</TextRegular>
+          {!!age && <TextRegular size="xs"> ({age})</TextRegular>}
+          {!!heightInInches && (
+            <TextRegular size="xs"> | Height: {formattedHeight}</TextRegular>
+          )}
+        </View>
+        <View style={styles.row}>
+          <TextRegular size="xs">
+            {residenceAddress} residenceAddress
+          </TextRegular>
+        </View>
+        <View style={styles.row}>
+          <TextRegular size="xs">{residenceAddress}</TextRegular>
+        </View>
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
@@ -135,6 +167,7 @@ export function ClientCard(props: IClientCardProps) {
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     borderRadius: Radiuses.xs,
     padding: Spacings.xs,
     flexDirection: 'row',
@@ -150,5 +183,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacings.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.xs,
   },
 });
