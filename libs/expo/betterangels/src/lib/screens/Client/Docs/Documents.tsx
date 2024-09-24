@@ -6,7 +6,7 @@ import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
 import { DocumentModal } from '../../../ui-components';
 
-interface IOtherDocumentsProps {
+interface IDocumentsProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   data: ClientDocumentType[];
@@ -14,7 +14,7 @@ interface IOtherDocumentsProps {
   title: 'Other' | 'Doc-Ready' | 'Consent Form';
 }
 
-export default function Documents(props: IOtherDocumentsProps) {
+export default function Documents(props: IDocumentsProps) {
   const { expanded, setExpanded, data, clientId, title } = props;
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<
