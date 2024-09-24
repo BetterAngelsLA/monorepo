@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import {
   ClientProfileDocument,
@@ -51,16 +52,42 @@ export default function DocumentModal(props: IDocumentModalProps) {
   };
 
   const downloadFile = async () => {
-    if (!document?.file?.url) return;
+    if (!document?.file?.url) {
+      console.log('File URL is missing.');
+      return;
+    }
+
     try {
       const fileUri = document.file.url;
       const downloadLocation = `${FileSystem.documentDirectory}${document.originalFilename}`;
 
-      await FileSystem.downloadAsync(fileUri, downloadLocation);
+      console.log('Downloading from:', fileUri);
+      console.log('Saving to:', downloadLocation);
+
+      const downloadResumable = FileSystem.createDownloadResumable(
+        fileUri,
+        downloadLocation,
+        {},
+        (downloadProgress) => {
+          const progress =
+            downloadProgress.totalBytesWritten /
+            downloadProgress.totalBytesExpectedToWrite;
+          console.log(`Progress: ${(progress * 100).toFixed(2)}%`);
+        }
+      );
+
+      const data = await downloadResumable.downloadAsync();
+
+      console.log('Download completed! File saved to:', data?.uri);
+      Alert.alert('Download Complete', `File saved to: ${data?.uri}`);
 
       closeModal();
     } catch (error) {
       console.error('Error downloading the file:', error);
+      Alert.alert(
+        'Download Error',
+        'An error occurred while downloading the file.'
+      );
     }
   };
 
