@@ -12,7 +12,9 @@ const FileCardMeta: ComponentMeta<typeof FileCard> = {
       },
       originalFilename: 'originalFilename',
     },
-    onPress: () => {},
+    onPress: () => {
+      console.log('press');
+    },
   },
   decorators: [
     (Story: any) => (

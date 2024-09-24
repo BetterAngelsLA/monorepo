@@ -27,6 +27,8 @@ export function FileCard(props: IFileCardProps) {
           backgroundColor: pressed ? Colors.NEUTRAL_EXTRA_LIGHT : Colors.WHITE,
         },
       ]}
+      accessibilityHint="opens document modal"
+      accessibilityLabel="open document modal"
     >
       <View
         style={{
