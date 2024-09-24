@@ -7,7 +7,7 @@ from accounts.utils import get_user_permission_group
 from clients.models import ClientContact, ClientProfile
 from clients.permissions import ClientProfilePermissions
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.models import Attachment
+from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.apps import apps
@@ -32,17 +32,40 @@ from .types import (
     UpdateClientProfileInput,
 )
 
-CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME = {
-    "contacts": "ClientContact",
-    "hmis_profiles": "HmisProfile",
-    "household_members": "ClientHouseholdMember",
-    "social_media_profiles": "SocialMediaProfile",
+CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME: dict[str, dict[str, Any]] = {
+    "contacts": {
+        "module": "clients",
+        "cls_name": "ClientContact",
+        "generic_relation": False,
+    },
+    "hmis_profiles": {
+        "module": "clients",
+        "cls_name": "HmisProfile",
+        "generic_relation": False,
+    },
+    "household_members": {
+        "module": "clients",
+        "cls_name": "ClientHouseholdMember",
+        "generic_relation": False,
+    },
+    "phone_numbers": {
+        "module": "common",
+        "cls_name": "PhoneNumber",
+        "generic_relation": True,
+    },
+    "social_media_profiles": {
+        "module": "clients",
+        "cls_name": "SocialMediaProfile",
+        "generic_relation": False,
+    },
 }
 
 
 def upsert_or_delete_client_related_object(
     info: Info,
+    module: str,
     model_cls_name: str,
+    generic_relation: bool,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
 ) -> None:
@@ -50,12 +73,32 @@ def upsert_or_delete_client_related_object(
 
     Expects a list of related objects. Missing elements will be deleted.
     """
-    model_cls = apps.get_model("clients", model_cls_name)
+    model_cls = apps.get_model(module, model_cls_name)
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys(), client_profile=client_profile)
+    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
     model_cls.objects.exclude(id__in=item_updates_by_id).delete()
+
+    if generic_relation:
+        content_type = ContentType.objects.get_for_model(ClientProfile)
+        items_for_bulk_create = [
+            model_cls(
+                number=item["number"],
+                is_primary=item["is_primary"],
+                content_type=content_type,
+                object_id=client_profile.id,
+            )
+            for item in items_to_create
+        ]
+        model_cls.objects.bulk_create(items_for_bulk_create)
+
+        for item in items_to_update:
+            item.number = item_updates_by_id[str(item.id)]["number"]
+            item.is_primary = item_updates_by_id[str(item.id)]["is_primary"]
+            item.save()
+
+        return
 
     for item in items_to_create:
         resolvers.create(
@@ -152,6 +195,8 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
+            phone_numbers = client_profile_data.pop("phone_numbers", []) or []
+
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -160,6 +205,16 @@ class Mutation:
                     "user": client_user,
                 },
             )
+
+            content_type = ContentType.objects.get_for_model(ClientProfile)
+
+            for phone_number in phone_numbers:
+                PhoneNumber.objects.create(
+                    content_type=content_type,
+                    object_id=client_profile.id,
+                    number=phone_number["number"],
+                    is_primary=phone_number["is_primary"],
+                )
 
             permissions = [
                 ClientProfilePermissions.VIEW,
@@ -197,11 +252,13 @@ class Mutation:
                     },
                 )
 
-            for related_name, related_cls_name in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
+            for related_name, related_cls_map in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if client_profile_data[related_name] is not strawberry.UNSET:
                     upsert_or_delete_client_related_object(
                         info,
-                        related_cls_name,
+                        related_cls_map["module"],
+                        related_cls_map["cls_name"],
+                        related_cls_map["generic_relation"],
                         client_profile_data.pop(related_name),
                         client_profile,
                     )
