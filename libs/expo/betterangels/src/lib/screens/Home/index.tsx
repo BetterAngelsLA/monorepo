@@ -146,6 +146,10 @@ export default function Home({ Logo }: { Logo: ElementType }) {
               firstName={clientProfile.user.firstName}
               lastName={clientProfile.user.lastName}
               nickname={clientProfile.nickname}
+              dateOfBirth={clientProfile.dateOfBirth}
+              age={clientProfile.age}
+              heightInInches={clientProfile.heightInInches}
+              residenceAddress={clientProfile.residenceAddress}
             />
           ) : null
         }

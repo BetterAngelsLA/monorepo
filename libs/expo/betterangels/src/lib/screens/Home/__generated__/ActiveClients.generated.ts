@@ -17,7 +17,7 @@ export type ClientProfilesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, nickname?: string | null, displayCaseManager: string, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string }, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null }> };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, heightInInches?: number | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
 
 
 export const CreateNoteDocument = gql`
@@ -82,13 +82,15 @@ export const ClientProfilesDocument = gql`
   clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
+      age
+      dateOfBirth
+      heightInInches
       nickname
-      user {
+      residenceAddress
+      hmisProfiles {
         id
-        email
-        firstName
-        lastName
-        username
+        agency
+        hmisId
       }
       profilePhoto {
         height
@@ -97,6 +99,13 @@ export const ClientProfilesDocument = gql`
         url
         size
         width
+      }
+      user {
+        id
+        email
+        firstName
+        lastName
+        username
       }
       displayCaseManager
     }

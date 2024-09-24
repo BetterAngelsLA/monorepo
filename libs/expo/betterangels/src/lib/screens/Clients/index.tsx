@@ -244,6 +244,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 firstName={clientProfile.user.firstName}
                 lastName={clientProfile.user.lastName}
                 nickname={clientProfile.nickname}
+                dateOfBirth={clientProfile.dateOfBirth}
               />
             ) : null
           }

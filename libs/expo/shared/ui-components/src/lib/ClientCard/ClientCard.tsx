@@ -19,6 +19,7 @@ interface IClientCardProps {
   firstName?: string | null | undefined;
   lastName?: string | null | undefined;
   nickname?: string | null | undefined;
+  dateOfBirth?: string | null | undefined;
   address?: string;
   progress?: DimensionValue;
   daysActive?: number;
@@ -40,6 +41,7 @@ export function ClientCard(props: IClientCardProps) {
     firstName,
     lastName,
     nickname,
+    dateOfBirth,
     address,
     daysActive,
     mb,
@@ -92,6 +94,9 @@ export function ClientCard(props: IClientCardProps) {
         <TextBold size="sm">
           {firstName} {lastName} {nickname && `(${nickname})`}
         </TextBold>
+        <TextRegular size="xs">
+          {firstName} {lastName} {nickname && `(${nickname})`}
+        </TextRegular>
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
