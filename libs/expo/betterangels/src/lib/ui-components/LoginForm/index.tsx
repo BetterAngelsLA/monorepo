@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
 import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
@@ -32,8 +32,7 @@ export default function LoginForm({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { refetchUser } = useUser();
-  // Import the functions to switch between demo and production API URLs
-  const { setProductionApi, setDemoApi } = useApolloClientContext();
+  const { switchToProduction, switchToDemo } = useApolloClientContext();
   const [loginForm, { loading, error }] = useLoginFormMutation();
 
   const isValidEmail = (email: string) => {
@@ -49,18 +48,23 @@ export default function LoginForm({
     return email.endsWith(demoDomain);
   };
 
+  // useEffect to switch between APIs when the username changes
+  useEffect(() => {
+    if (username) {
+      if (checkIfDemoMode(username)) {
+        console.log('Switching to Demo API');
+        switchToDemo();
+      } else {
+        console.log('Switching to Production API');
+        switchToProduction();
+      }
+    }
+  }, [username, switchToDemo, switchToProduction]);
+
   const handleLogin = async () => {
     if (isButtonDisabled) {
       setErrorMessage('Either email or password is incorrect.');
       return;
-    }
-
-    // Switch to the correct API based on the email address
-    console.log(`Username: ${username}`);
-    if (checkIfDemoMode(username)) {
-      setDemoApi(); // Switch to demo API if email ends with @example.com
-    } else {
-      setProductionApi(); // Switch to production API otherwise
     }
 
     setIsLoading(true);
@@ -68,13 +72,13 @@ export default function LoginForm({
     try {
       const { data } = await loginForm({
         variables: {
-          username: username,
-          password: password,
+          username,
+          password,
         },
       });
 
       if (error) {
-        console.log(error.message);
+        console.log(error);
         setErrorMessage('Something went wrong. Please try again.');
       } else if (!loading && data && 'login' in data) {
         refetchUser(); // Refetch the user after successful login
@@ -82,6 +86,7 @@ export default function LoginForm({
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
+      console.log(error);
       setErrorMessage('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -139,22 +144,6 @@ export default function LoginForm({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#000',
   },
   errorText: {
     color: 'red',

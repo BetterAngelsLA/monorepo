@@ -7,38 +7,15 @@ import {
 } from '@apollo/client';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { Platform } from 'react-native';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { csrfLink } from './links/csrf';
 
-interface ApolloClientContextType {
-  client: ApolloClient<NormalizedCacheObject>;
-  setProductionApi: () => void;
-  setDemoApi: () => void;
-  currentApiUrl: string; // Keep track of the current API URL
-}
-
-const ApolloClientContext = createContext<ApolloClientContextType | undefined>(
-  undefined
-);
-
-interface ApolloClientProviderProps {
-  children: ReactNode;
-  apiUrl: string; // Production API URL
-  demoApiUrl: string; // Demo API URL
-}
-
-const createApolloClient = (
+// Function to create Apollo Client
+export const createApolloClient = (
   apiUrl: string
 ): ApolloClient<NormalizedCacheObject> => {
-  console.log(`URL: ${apiUrl}`);
   const getHeaders = () => {
     if (Platform.OS !== 'web') {
       return {
@@ -67,46 +44,56 @@ const createApolloClient = (
   });
 };
 
+interface ApolloClientContextType {
+  switchToProduction: () => void;
+  switchToDemo: () => void;
+  currentClient: 'production' | 'demo';
+}
+
+const ApolloClientContext = createContext<ApolloClientContextType | undefined>(
+  undefined
+);
+
+interface ApolloClientProviderProps {
+  children: ReactNode;
+  productionClient: ApolloClient<NormalizedCacheObject>;
+  demoClient: ApolloClient<NormalizedCacheObject>;
+}
+
 export const ApolloClientProvider = ({
   children,
-  apiUrl,
-  demoApiUrl,
+  productionClient,
+  demoClient,
 }: ApolloClientProviderProps) => {
-  const [currentApiUrl, setCurrentApiUrl] = useState(apiUrl); // Track the current API URL
-  const [client, setClient] = useState(createApolloClient(apiUrl)); // Create Apollo Client based on initial URL
+  const [activeClient, setActiveClient] = useState(productionClient);
+  const [currentClient, setCurrentClient] = useState<'production' | 'demo'>(
+    'production'
+  );
 
-  useEffect(() => {
-    setClient(createApolloClient(currentApiUrl)); // Update client when the API URL changes
-  }, [currentApiUrl]);
-
-  const setProductionApi = () => {
-    console.log('Set production api');
-    if (currentApiUrl !== apiUrl) {
-      setCurrentApiUrl(apiUrl);
+  const switchToProduction = () => {
+    if (currentClient !== 'production') {
+      setActiveClient(productionClient);
+      setCurrentClient('production');
     }
   };
 
-  const setDemoApi = () => {
-    console.log('Set demo api');
-    if (currentApiUrl !== demoApiUrl) {
-      setCurrentApiUrl(demoApiUrl);
+  const switchToDemo = () => {
+    if (currentClient !== 'demo') {
+      setActiveClient(demoClient);
+      setCurrentClient('demo');
     }
   };
-
+  console.log('rendering provider');
   return (
     <ApolloClientContext.Provider
-      value={{
-        client,
-        setProductionApi,
-        setDemoApi,
-        currentApiUrl, // Provide the current API URL in the context
-      }}
+      value={{ switchToProduction, switchToDemo, currentClient }}
     >
-      <ApolloProvider client={client}>{children}</ApolloProvider>
+      <ApolloProvider client={activeClient}>{children}</ApolloProvider>
     </ApolloClientContext.Provider>
   );
 };
 
+// Hook to use the Apollo Client context
 export const useApolloClientContext = () => {
   const context = useContext(ApolloClientContext);
   if (!context) {

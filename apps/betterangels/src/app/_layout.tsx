@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { apiUrl, demoApiUrl } from '../../config';
+import { demoClient, productionClient } from '../../apollo';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -52,7 +52,10 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const router = useRouter();
   return (
-    <ApolloClientProvider apiUrl={apiUrl} demoApiUrl={demoApiUrl}>
+    <ApolloClientProvider
+      productionClient={productionClient}
+      demoClient={demoClient}
+    >
       <KeyboardProvider>
         <UserProvider>
           <StatusBar style="light" />
