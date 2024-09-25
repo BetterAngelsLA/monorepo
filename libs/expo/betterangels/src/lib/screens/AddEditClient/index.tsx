@@ -10,7 +10,12 @@ import { parse } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { ScrollView, View } from 'react-native';
+import {
+  Keyboard,
+  ScrollView,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import {
   CreateClientProfileInput,
   Ordering,
@@ -25,7 +30,7 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
-import Gender from './Gender';
+import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
@@ -255,45 +260,46 @@ export default function AddEditClient({ id }: { id?: string }) {
 
   return (
     <FormProvider {...methods}>
-      <View style={{ flex: 1 }}>
-        <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-          <PersonalInfo {...props} />
-          <Gender {...props} />
-
-          <ContactInfo {...props} />
-          <VeteranStatus {...props} />
-          <RelevantContacts {...props} />
-          <HouseholdMembers {...props} />
-          {id && (
-            <DeleteModal
-              body="All data associated with this client will be deleted. This action cannot be undone."
-              title="Delete client?"
-              onDelete={deleteClientFunction}
-              button={
-                <Button
-                  accessibilityHint="deletes client"
-                  title="Delete Client"
-                  variant="negative"
-                  size="full"
-                  mt="xs"
-                />
-              }
-            />
-          )}
-        </MainScrollContainer>
-        <BottomActions
-          submitTitle="Update"
-          cancel={
-            <TextButton
-              onPress={router.back}
-              fontSize="sm"
-              accessibilityHint="cancels the update of a new client profile"
-              title="Cancel"
-            />
-          }
-          onSubmit={methods.handleSubmit(onSubmit)}
-        />
-      </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1 }}>
+          <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+            <PersonalInfo {...props} />
+            <DemographicInfo {...props} />
+            <ContactInfo {...props} />
+            <VeteranStatus {...props} />
+            <RelevantContacts {...props} />
+            <HouseholdMembers {...props} />
+            {id && (
+              <DeleteModal
+                body="All data associated with this client will be deleted. This action cannot be undone."
+                title="Delete client?"
+                onDelete={deleteClientFunction}
+                button={
+                  <Button
+                    accessibilityHint="deletes client"
+                    title="Delete Client"
+                    variant="negative"
+                    size="full"
+                    mt="xs"
+                  />
+                }
+              />
+            )}
+          </MainScrollContainer>
+          <BottomActions
+            submitTitle="Update"
+            cancel={
+              <TextButton
+                onPress={router.back}
+                fontSize="sm"
+                accessibilityHint="cancels the update of a new client profile"
+                title="Cancel"
+              />
+            }
+            onSubmit={methods.handleSubmit(onSubmit)}
+          />
+        </View>
+      </TouchableWithoutFeedback>
     </FormProvider>
   );
 }

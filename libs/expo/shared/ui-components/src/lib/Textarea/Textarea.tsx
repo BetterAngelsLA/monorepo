@@ -1,3 +1,4 @@
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
@@ -7,10 +8,12 @@ import {
 import { Control, Controller, ValidationValueMessage } from 'react-hook-form';
 import {
   Platform,
+  Pressable,
   StyleProp,
   StyleSheet,
   Text,
   TextInput,
+  TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
@@ -33,11 +36,9 @@ type TRules = {
 };
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-interface ITextareaProps {
+interface ITextareaProps extends TextInputProps {
   label?: string;
   control: Control<any>;
-  height?: 200;
   name: string;
   required?: boolean;
   disabled?: boolean;
@@ -50,8 +51,6 @@ interface ITextareaProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  textAreaChanged?: boolean;
-  setTextAreaChanged?: (e: boolean) => void;
 }
 
 export function Textarea(props: ITextareaProps) {
@@ -64,15 +63,12 @@ export function Textarea(props: ITextareaProps) {
     required,
     disabled,
     componentStyle,
-    height = 200,
     mb,
     mt,
     my,
     mx,
     ml,
     mr,
-    textAreaChanged,
-    setTextAreaChanged,
     ...rest
   } = props;
 
@@ -105,7 +101,7 @@ export function Textarea(props: ITextareaProps) {
             style={[
               styles.Textarea,
               {
-                borderColor: error ? 'red' : Colors.PRIMARY_EXTRA_DARK,
+                borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
               },
             ]}
           >
@@ -114,11 +110,13 @@ export function Textarea(props: ITextareaProps) {
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
-                paddingHorizontal: Spacings.sm,
+
+                paddingLeft: Spacings.sm,
+                paddingRight: Spacings.lg,
                 fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,
-                height,
+                minHeight: 40,
                 ...Platform.select({
                   web: {
                     outline: 'none',
@@ -128,17 +126,24 @@ export function Textarea(props: ITextareaProps) {
               multiline
               value={value}
               onBlur={onBlur}
-              onChangeText={(e) => {
-                if (!textAreaChanged) {
-                  if (setTextAreaChanged) {
-                    setTextAreaChanged(true);
-                  }
-                }
-                onChange(e);
-              }}
+              onChangeText={onChange}
               editable={!disabled}
               {...rest}
             />
+            {value && (
+              <Pressable
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel="delete icon"
+                accessibilityHint="deletes input's value"
+                onPress={() => onChange('')}
+                style={styles.pressable}
+              >
+                <View style={styles.icon}>
+                  <PlusIcon size="xs" rotate="45deg" />
+                </View>
+              </Pressable>
+            )}
           </View>
         </View>
       )}
@@ -156,7 +161,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     borderRadius: Radiuses.xs,
-    justifyContent: 'center',
   },
   label: {
     flexDirection: 'row',
@@ -172,5 +176,22 @@ const styles = StyleSheet.create({
   required: {
     marginLeft: 2,
     color: 'red',
+  },
+  pressable: {
+    position: 'absolute',
+    right: Spacings.xs,
+    top: Spacings.xs,
+    height: Spacings.lg,
+    width: Spacings.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    height: Spacings.sm,
+    width: Spacings.sm,
+    backgroundColor: Colors.NEUTRAL_LIGHT,
+    borderRadius: Radiuses.xxxl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
