@@ -73,9 +73,9 @@ export default function FileScreenComponent({ id }: { id: string }) {
 
   if (!data)
     return (
-      <TextRegular>
-        <Loading />
-      </TextRegular>
+      <View style={styles.loadingContainer}>
+        <Loading size="large" />
+      </View>
     );
 
   return (
@@ -103,5 +103,10 @@ const styles = StyleSheet.create({
     padding: Spacings.sm,
     borderRadius: Radiuses.xs,
     marginBottom: Spacings.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
