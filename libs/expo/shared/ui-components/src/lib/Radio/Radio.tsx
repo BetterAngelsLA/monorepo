@@ -4,7 +4,7 @@ import {
   Radiuses,
   Spacings,
 } from '@monorepo/expo/shared/static';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -61,7 +61,10 @@ export function Radio(props: IRadioProps) {
           marginVertical: my && Spacings[my],
         },
       ]}
-      onPress={onPress}
+      onPress={() => {
+        Keyboard.dismiss();
+        onPress();
+      }}
     >
       <TextRegular ml="xs">{label}</TextRegular>
       <View style={[styles.radio, value === label && styles.checked]} />

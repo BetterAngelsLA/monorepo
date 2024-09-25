@@ -1,5 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { Keyboard, StyleSheet, View, ViewStyle } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown';
 
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
@@ -73,6 +73,7 @@ export function Select(props: ISelectProps) {
         ))}
 
       <SelectDropdown
+        onFocus={() => Keyboard.dismiss()}
         defaultValue={selectedItem}
         data={items}
         onSelect={(selectedItem, index) => {
