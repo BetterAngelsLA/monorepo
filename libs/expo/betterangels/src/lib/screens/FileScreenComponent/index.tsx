@@ -4,6 +4,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect, useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
@@ -91,7 +92,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
         </TextRegular>
       </View>
       <TextRegular textAlign="right" size="sm">
-        Uploaded on 11/11/2021
+        Uploaded on {format(data.clientDocument.createdAt, 'MM/dd/yyyy')}
       </TextRegular>
     </MainContainer>
   );

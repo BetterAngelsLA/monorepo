@@ -39,8 +39,6 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 @strawberry_django.type(Attachment, pagination=True)
 class ClientDocumentType(AttachmentInterface):
     namespace: ClientDocumentNamespaceEnum
-    created_at: auto
-    updated_at: auto
 
 
 @strawberry_django.input(Attachment)
