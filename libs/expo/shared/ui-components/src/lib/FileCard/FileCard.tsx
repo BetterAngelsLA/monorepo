@@ -1,16 +1,18 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, Pressable, View } from 'react-native';
 import TextRegular from '../TextRegular';
+import { format } from 'date-fns';
 
 interface IFileCardProps {
   onPress: () => void;
   filename?: string | null;
   url: string;
-  createdAt?: string | null;
+  createdAt: string;
 }
 
 export function FileCard(props: IFileCardProps) {
   const { onPress, url, filename, createdAt } = props;
+
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +62,7 @@ export function FileCard(props: IFileCardProps) {
         </TextRegular>
       </View>
       <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
-        {createdAt}
+        {format(new Date(createdAt), 'MM/dd/yyyy')}
       </TextRegular>
     </Pressable>
   );

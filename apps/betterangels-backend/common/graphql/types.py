@@ -70,6 +70,8 @@ class AttachmentInterface:
     file: auto
     attachment_type: auto
     original_filename: auto
+    created_at: auto
+    updated_at: auto
 
     # @strawberry.field
     # def thumbnail(
