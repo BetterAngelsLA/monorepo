@@ -117,28 +117,31 @@ export function ClientCard(props: IClientCardProps) {
         mr="xs"
       />
 
-      <View style={{ gap: Spacings.xs, flex: 2 }}>
+      <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">
           {firstName} {lastName} {nickname && `(${nickname})`}
         </TextBold>
-        <View style={styles.row}>
-          <TextRegular size="xs">{formattedDateOfBirth}</TextRegular>
-          {!!age && <TextRegular size="xs"> ({age})</TextRegular>}
-          {!!heightInInches && (
-            <TextRegular size="xs"> | Height: {formattedHeight}</TextRegular>
-          )}
-        </View>
-        <View style={styles.row}>
-          <TextRegular size="xs">
-            {residenceAddress} residenceAddress
-          </TextRegular>
-        </View>
-        <View style={styles.row}>
-          <TextRegular size="xs">{residenceAddress}</TextRegular>
-        </View>
+        {(age || formattedHeight) && (
+          <View style={styles.row}>
+            <TextRegular size="xs">{formattedDateOfBirth}</TextRegular>
+            {!!age && <TextRegular size="xs"> ({age})</TextRegular>}
+            {!!heightInInches && (
+              <TextRegular size="xs"> | Height: {formattedHeight}</TextRegular>
+            )}
+          </View>
+        )}
+        {!!residenceAddress && (
+          <View style={styles.row}>
+            (
+            <TextRegular size="xs">
+              {residenceAddress} residenceAddress
+            </TextRegular>
+            )
+          </View>
+        )}
         <View style={styles.row}>
           {!!lahsaHmisId && (
-            <TextRegular size="xs">LAHSA HMIS ID: #{lahsaHmisId}</TextRegular>
+            <TextRegular size="xs">LAHSA HMIS ID: {lahsaHmisId}</TextRegular>
           )}
         </View>
         {daysActive && (
@@ -178,6 +181,9 @@ export function ClientCard(props: IClientCardProps) {
 }
 
 const styles = StyleSheet.create({
+  clientCard: {
+
+  }
   container: {
     alignItems: 'center',
     borderRadius: Radiuses.xs,
@@ -199,6 +205,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacings.xxs,
+    marginTop: 0,
+    marginBottom: 0,
   },
 });
