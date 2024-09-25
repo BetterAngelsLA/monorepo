@@ -1,0 +1,13 @@
+query ClientDocument($id: ID!) {
+  clientDocument(pk: $id) {
+    ... on ClientDocumentType {
+      id
+      namespace
+      originalFilename
+      file {
+        url
+        name
+      }
+    }
+  }
+}

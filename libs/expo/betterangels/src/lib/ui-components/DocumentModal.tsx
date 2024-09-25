@@ -1,7 +1,6 @@
 import {
   DeleteIcon,
   DownloadIcon,
-  PencilSolidIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
 import * as FileSystem from 'expo-file-system';
@@ -95,13 +94,13 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: 'View Image',
       Icon: ViewIcon,
-      route: `/image/${document?.id}`,
+      route: `/file/${document?.id}`,
     },
-    {
-      title: 'Edit this file',
-      Icon: PencilSolidIcon,
-      route: `/edit-image/${document?.id}`,
-    },
+    // {
+    //   title: 'Edit this file',
+    //   Icon: PencilSolidIcon,
+    //   route: `/edit-image/${document?.id}`,
+    // },
     {
       title: 'Download this file',
       Icon: DownloadIcon,
