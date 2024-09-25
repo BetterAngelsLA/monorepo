@@ -52,7 +52,7 @@ export default function Docs({
         {client?.clientProfile.docReadyDocuments &&
           client?.clientProfile.docReadyDocuments?.length > 0 && (
             <Documents
-              title="Doc-Ready"
+              title="Doc Ready"
               {...props}
               data={
                 client?.clientProfile.docReadyDocuments as ClientDocumentType[]
@@ -63,7 +63,7 @@ export default function Docs({
         {client?.clientProfile.consentFormDocuments &&
           client?.clientProfile.consentFormDocuments?.length > 0 && (
             <Documents
-              title="Consent Form"
+              title="Forms"
               {...props}
               data={
                 client?.clientProfile

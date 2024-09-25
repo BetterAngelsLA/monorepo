@@ -11,7 +11,7 @@ interface IDocumentsProps {
   setExpanded: (expanded: undefined | string | null) => void;
   data: ClientDocumentType[];
   clientId: string;
-  title: 'Other' | 'Doc-Ready' | 'Consent Form';
+  title: 'Other' | 'Doc Ready' | 'Forms';
 }
 
 export default function Documents(props: IDocumentsProps) {
@@ -58,6 +58,7 @@ export default function Documents(props: IDocumentsProps) {
               filename={document.originalFilename}
               url={document.file.url}
               onPress={() => openModal(document)}
+              createdAt={document.updatedAt}
             />
           ))}
         </View>
