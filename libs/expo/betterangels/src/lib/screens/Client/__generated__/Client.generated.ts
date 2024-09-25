@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, displayGender?: string | null, genderOther?: string | null, age?: number | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, displayGender?: string | null, genderOther?: string | null, age?: number | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
 
 export type CreateClientDocumentMutationVariables = Types.Exact<{
   data: Types.CreateClientDocumentInput;
@@ -16,6 +16,13 @@ export type CreateClientDocumentMutationVariables = Types.Exact<{
 
 
 export type CreateClientDocumentMutation = { __typename?: 'Mutation', createClientDocument: { __typename?: 'ClientDocumentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
+export type DeleteClientDocumentMutationVariables = Types.Exact<{
+  id: Types.Scalars['ID']['input'];
+}>;
+
+
+export type DeleteClientDocumentMutation = { __typename?: 'Mutation', deleteClientDocument: { __typename?: 'ClientDocumentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const ClientProfileDocument = gql`
@@ -36,6 +43,11 @@ export const ClientProfileDocument = gql`
       }
       nickname
       phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
       preferredLanguage
       pronouns
       veteranStatus
@@ -77,6 +89,7 @@ export const ClientProfileDocument = gql`
       docReadyDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -85,6 +98,7 @@ export const ClientProfileDocument = gql`
       consentFormDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -93,6 +107,7 @@ export const ClientProfileDocument = gql`
       otherDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -177,3 +192,45 @@ export function useCreateClientDocumentMutation(baseOptions?: Apollo.MutationHoo
 export type CreateClientDocumentMutationHookResult = ReturnType<typeof useCreateClientDocumentMutation>;
 export type CreateClientDocumentMutationResult = Apollo.MutationResult<CreateClientDocumentMutation>;
 export type CreateClientDocumentMutationOptions = Apollo.BaseMutationOptions<CreateClientDocumentMutation, CreateClientDocumentMutationVariables>;
+export const DeleteClientDocumentDocument = gql`
+    mutation DeleteClientDocument($id: ID!) {
+  deleteClientDocument(data: {id: $id}) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+    `;
+export type DeleteClientDocumentMutationFn = Apollo.MutationFunction<DeleteClientDocumentMutation, DeleteClientDocumentMutationVariables>;
+
+/**
+ * __useDeleteClientDocumentMutation__
+ *
+ * To run a mutation, you first call `useDeleteClientDocumentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteClientDocumentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteClientDocumentMutation, { data, loading, error }] = useDeleteClientDocumentMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteClientDocumentMutation(baseOptions?: Apollo.MutationHookOptions<DeleteClientDocumentMutation, DeleteClientDocumentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteClientDocumentMutation, DeleteClientDocumentMutationVariables>(DeleteClientDocumentDocument, options);
+      }
+export type DeleteClientDocumentMutationHookResult = ReturnType<typeof useDeleteClientDocumentMutation>;
+export type DeleteClientDocumentMutationResult = Apollo.MutationResult<DeleteClientDocumentMutation>;
+export type DeleteClientDocumentMutationOptions = Apollo.BaseMutationOptions<DeleteClientDocumentMutation, DeleteClientDocumentMutationVariables>;

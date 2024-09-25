@@ -74,7 +74,9 @@
     "metro-resolver": "*",
     "node-fetch": "*",
     "tsconfig-paths": "*",
-    "react-native-keyboard-controller": "*"
+    "react-native-keyboard-controller": "*",
+    "expo-file-system": "*",
+    "expo-sharing": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",

@@ -13,7 +13,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.20',
+    version: '1.0.21',
     orientation: 'portrait',
     icon: './src/app/assets/images/icon.png',
     splash: {

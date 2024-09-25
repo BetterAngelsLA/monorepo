@@ -1,10 +1,32 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 import strawberry
 import strawberry_django
-from common.models import Address, Attachment, Location
+from common.models import Address, Attachment, Location, PhoneNumber
+from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
+from phonenumbers import parse
 from strawberry import ID, auto
+
+PhoneNumberScalar: Union[DjangoPhoneNumber, str] = strawberry.scalar(
+    DjangoPhoneNumber,
+    serialize=lambda v: str(v.national_number),
+    parse_value=lambda v: parse(v, "US"),
+)
+
+
+@strawberry_django.type(PhoneNumber)
+class PhoneNumberType:
+    id: ID
+    number: Optional[PhoneNumberScalar]  # type: ignore
+    is_primary: Optional[bool]
+
+
+@strawberry_django.input(PhoneNumber)
+class PhoneNumberInput:
+    id: Optional[ID]
+    number: Optional[PhoneNumberScalar]  # type: ignore
+    is_primary: Optional[bool] = False
 
 
 @strawberry.input

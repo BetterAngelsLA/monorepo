@@ -1,7 +1,7 @@
 from datetime import timedelta
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -12,12 +12,15 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
 )
-from common.graphql.types import AttachmentInterface
+from common.graphql.types import (
+    AttachmentInterface,
+    PhoneNumberInput,
+    PhoneNumberScalar,
+    PhoneNumberType,
+)
 from common.models import Attachment
 from django.db.models import Max, Q, QuerySet
 from django.utils import timezone
-from phonenumber_field.modelfields import PhoneNumber
-from phonenumbers import parse
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
 from strawberry_django.filters import filter
@@ -36,6 +39,8 @@ MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 @strawberry_django.type(Attachment, pagination=True)
 class ClientDocumentType(AttachmentInterface):
     namespace: ClientDocumentNamespaceEnum
+    created_at: auto
+    updated_at: auto
 
 
 @strawberry_django.input(Attachment)
@@ -136,13 +141,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
     "See parent"
 
 
-PhoneNumberScalar: Union[PhoneNumber, str] = strawberry.scalar(
-    PhoneNumber,
-    serialize=lambda v: str(v.national_number),
-    parse_value=lambda v: parse(v, "US"),
-)
-
-
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
     ada_accommodation: Optional[List[AdaAccommodationEnum]]
@@ -228,6 +226,7 @@ class ClientProfileType(ClientProfileBaseType):
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
+    phone_numbers: Optional[List[PhoneNumberType]]
     social_media_profiles: Optional[List[SocialMediaProfileType]]
 
     display_gender: auto
@@ -252,6 +251,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: CreateUserInput
 
@@ -262,6 +262,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]
 
