@@ -110,7 +110,9 @@ export function Textarea(props: ITextareaProps) {
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
-                paddingHorizontal: Spacings.sm,
+
+                paddingLeft: Spacings.sm,
+                paddingRight: Spacings.lg,
                 fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,

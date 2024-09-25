@@ -1,7 +1,14 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode, RefObject, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import TextMedium from '../TextMedium';
 import TextRegular from '../TextRegular';
 
@@ -115,7 +122,9 @@ export function Accordion(props: IAccordionProps) {
           rotate={expanded === title ? '90deg' : '-90deg'}
         />
       </Pressable>
-      <View onStartShouldSetResponder={() => true}>{children}</View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View onStartShouldSetResponder={() => true}>{children}</View>
+      </TouchableWithoutFeedback>
     </View>
   );
 }
