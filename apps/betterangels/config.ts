@@ -12,7 +12,7 @@ function loadConfig() {
       : process.env.EXPO_PUBLIC_REDIRECT_URL;
 
   // Check if any of the environment variables are undefined
-  if (!googleClientId || !apiUrl || !redirectUri || !demoApiUrl) {
+  if (!googleClientId || !apiUrl || !demoApiUrl || !redirectUri) {
     throw new Error('One or more environment variables are undefined.');
   }
 

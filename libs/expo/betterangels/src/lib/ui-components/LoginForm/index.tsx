@@ -43,13 +43,12 @@ export default function LoginForm({
   const isButtonDisabled = !isValidEmail(username) || password.length < 8;
 
   const checkIfDemoMode = (email: string): boolean => {
-    const demoDomain = '@example.com'; // Use your demo domain here
+    const demoDomain = '@example.com';
     return email.endsWith(demoDomain);
   };
 
   const handleUsernameChange = (newUsername: string) => {
     setUsername(newUsername);
-    // Check the environment as the user types
     if (checkIfDemoMode(newUsername)) {
       console.log('Switching to Demo API');
       switchToDemo();
@@ -139,6 +138,22 @@ export default function LoginForm({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    color: '#000',
   },
   errorText: {
     color: 'red',

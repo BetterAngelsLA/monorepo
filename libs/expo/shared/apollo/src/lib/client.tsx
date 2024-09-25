@@ -1,3 +1,4 @@
+// Import necessary modules and components
 import {
   ApolloClient,
   ApolloProvider,
@@ -17,22 +18,21 @@ import React, {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import { isReactNativeFileInstance } from './ReactNativeFile';
 import { CSRF_COOKIE_NAME } from './links';
 import { csrfLink } from './links/csrf';
+import { isReactNativeFileInstance } from './ReactNativeFile';
 
+/**
+ * Creates an Apollo Client instance configured with the provided API URL.
+ *
+ * @param apiUrl - The base URL of the API to connect to.
+ * @returns A configured Apollo Client instance.
+ */
 export const createApolloClient = (
   apiUrl: string
 ): ApolloClient<NormalizedCacheObject> => {
-  console.log(`apiUrl: ${apiUrl}`);
-  const getHeaders = (): { [key: string]: string } | undefined => {
-    if (Platform.OS !== 'web') {
-      return {
-        Referer: apiUrl,
-      };
-    }
-    return undefined;
-  };
+  const getHeaders = () =>
+    Platform.OS !== 'web' ? { Referer: apiUrl } : undefined;
 
   const uploadLink = createUploadLink({
     uri: `${apiUrl}/graphql`,
@@ -69,6 +69,14 @@ interface ApolloClientProviderProps {
   demoClient: ApolloClient<NormalizedCacheObject>;
 }
 
+/**
+ * ApolloClientProvider component that manages the active Apollo Client instance
+ * and provides functions to switch between production and demo clients.
+ * It uses AsyncStorage to persist the current client selection across app reloads.
+ *
+ * @param props - The props for the component, including children and client instances.
+ * @returns A provider component that supplies the Apollo Client context to its children.
+ */
 export const ApolloClientProvider = ({
   children,
   productionClient,
@@ -79,16 +87,14 @@ export const ApolloClientProvider = ({
   >(null);
 
   useEffect(() => {
-    // Load current client from AsyncStorage when component mounts
+    /**
+     * Loads the current client from AsyncStorage.
+     * Defaults to 'production' if no valid value is stored.
+     */
     const loadCurrentClient = async () => {
       try {
         const storedClient = await AsyncStorage.getItem('currentClient');
-        if (storedClient === 'production' || storedClient === 'demo') {
-          setCurrentClient(storedClient);
-        } else {
-          // Default to 'production' if no valid value is stored
-          setCurrentClient('production');
-        }
+        setCurrentClient(storedClient === 'demo' ? 'demo' : 'production');
       } catch (error) {
         console.error('Error loading current client from AsyncStorage', error);
         setCurrentClient('production');
@@ -98,10 +104,16 @@ export const ApolloClientProvider = ({
     loadCurrentClient();
   }, []);
 
+  /**
+   * Switches the active Apollo Client to the specified client ('production' or 'demo').
+   * Updates the current client in state, persists it to AsyncStorage, and clears the CSRF cookie.
+   *
+   * @param client - The client to switch to ('production' or 'demo').
+   */
   const switchClient = async (client: 'production' | 'demo') => {
     if (currentClient !== client) {
-      await setItem(CSRF_COOKIE_NAME, '');
       try {
+        await setItem(CSRF_COOKIE_NAME, '');
         await AsyncStorage.setItem('currentClient', client);
         setCurrentClient(client);
       } catch (error) {
@@ -110,13 +122,8 @@ export const ApolloClientProvider = ({
     }
   };
 
-  const switchToProduction = () => {
-    switchClient('production');
-  };
-
-  const switchToDemo = () => {
-    switchClient('demo');
-  };
+  const switchToProduction = () => switchClient('production');
+  const switchToDemo = () => switchClient('demo');
 
   if (currentClient === null) {
     return null;
@@ -134,6 +141,13 @@ export const ApolloClientProvider = ({
   );
 };
 
+/**
+ * Custom hook to access the Apollo Client context.
+ * Provides functions to switch clients and the current client information.
+ *
+ * @returns The Apollo Client context value.
+ * @throws An error if used outside of the ApolloClientProvider.
+ */
 export const useApolloClientContext = () => {
   const context = useContext(ApolloClientContext);
   if (!context) {
