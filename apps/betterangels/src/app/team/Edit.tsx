@@ -54,7 +54,6 @@ export default function TeamEditScreen(props: ITeamEditScreenProps) {
       <Input mb="md" label="Team Name" control={control} name="name" />
       <Textarea
         mb="md"
-        height={200}
         label="Description"
         control={control}
         name="description"
