@@ -1,3 +1,4 @@
+import { HmisAgencyEnum } from '@monorepo/expo/betterangels';
 import {
   LocationDotIcon,
   TentIcon,
@@ -5,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
-import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import IconButton from '../IconButton';
 import TextBold from '../TextBold';
@@ -20,6 +21,7 @@ interface IClientCardProps {
   dateOfBirth?: string | null | undefined;
   firstName?: string | null | undefined;
   heightInInches?: number | null | undefined;
+  hmisProfiles?: Array<string | HmisAgencyEnum> | null | undefined;
   lastName?: string | null | undefined;
   nickname?: string | null | undefined;
   residenceAddress?: string | null | undefined;
@@ -45,6 +47,7 @@ export function ClientCard(props: IClientCardProps) {
     dateOfBirth,
     firstName,
     heightInInches,
+    hmisProfiles,
     lastName,
     nickname,
     residenceAddress,
@@ -72,11 +75,15 @@ export function ClientCard(props: IClientCardProps) {
     const [year, month, day] = dateOfBirth.split('-');
     return `${month}/${day}/${year}`;
   };
-
+  const getLahsaHmisId = (hmisProfiles) => {
+    console.log(hmisProfiles);
+    return hmisProfiles.find((profile) => profile?.agency === 'LAHSA')?.id;
+  };
   const formattedHeight = heightInInches ? formatHeight(heightInInches) : null;
   const formattedDateOfBirth = dateOfBirth
     ? formatDateOfBirth(dateOfBirth)
     : null;
+  const lahsaHmisId = hmisProfiles ? getLahsaHmisId(hmisProfiles) : null;
 
   return (
     <Pressable
@@ -128,6 +135,11 @@ export function ClientCard(props: IClientCardProps) {
         </View>
         <View style={styles.row}>
           <TextRegular size="xs">{residenceAddress}</TextRegular>
+        </View>
+        <View style={styles.row}>
+          {!!lahsaHmisId && (
+            <TextRegular size="xs">LAHSA HMIS ID: #{lahsaHmisId}</TextRegular>
+          )}
         </View>
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -187,6 +199,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacings.xs,
+    marginBottom: Spacings.xxs,
   },
 });

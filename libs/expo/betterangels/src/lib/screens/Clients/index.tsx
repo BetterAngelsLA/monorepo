@@ -241,10 +241,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   }
                 }}
                 mb="sm"
+                age={clientProfile.age}
+                dateOfBirth={clientProfile.dateOfBirth}
                 firstName={clientProfile.user.firstName}
+                heightInInches={clientProfile.heightInInches}
+                hmisProfiles={clientProfile.hmisProfiles}
                 lastName={clientProfile.user.lastName}
                 nickname={clientProfile.nickname}
-                dateOfBirth={clientProfile.dateOfBirth}
+                residenceAddress={clientProfile.residenceAddress}
               />
             ) : null
           }
