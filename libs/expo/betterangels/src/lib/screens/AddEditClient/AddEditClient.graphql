@@ -44,6 +44,7 @@ query GetClientProfile($id: ID!) {
       }
       preferredLanguage
       pronouns
+      pronounsOther
       veteranStatus
       livingSituation
       user {

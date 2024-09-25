@@ -54,9 +54,9 @@ export const enumDisplayHmisAgency: {
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
-  [GenderEnum.Other]: 'Other',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
+  [GenderEnum.Other]: 'Other',
 };
 
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
