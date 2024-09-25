@@ -77,7 +77,7 @@ export default function LoginForm({
       if (error) {
         setErrorMessage('Something went wrong. Please try again.');
       } else if (!loading && data && 'login' in data) {
-        refetchUser(); // Refetch the user after successful login
+        refetchUser();
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
