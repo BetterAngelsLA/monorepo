@@ -12,7 +12,7 @@ export const LOGOUT_MUTATION = gql`
 export default function useSignOut() {
   const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
   const { setUser } = useUser();
-  const { switchToProduction } = useApolloClientContext(); // Social is only available in production
+  const { switchToProduction } = useApolloClientContext();
 
   const signOut = useCallback(async () => {
     try {
