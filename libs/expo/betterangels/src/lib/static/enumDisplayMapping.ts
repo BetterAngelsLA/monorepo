@@ -1,5 +1,6 @@
 import {
   EyeColorEnum,
+  ClientDocumentNamespaceEnum,
   GenderEnum,
   HairColorEnum,
   HmisAgencyEnum,
@@ -103,6 +104,22 @@ export const enumDisplayMaritalStatus: { [key in MaritalStatusEnum]: string } =
     [MaritalStatusEnum.Widowed]: 'Widowed',
     [MaritalStatusEnum.Separated]: 'Separated',
   };
+
+export const enumDisplayDocumentType: {
+  [key in ClientDocumentNamespaceEnum]: string;
+} = {
+  [ClientDocumentNamespaceEnum.BirthCertificate]: 'Birth Certificate',
+  [ClientDocumentNamespaceEnum.ConsentForm]: 'Consent Form',
+  [ClientDocumentNamespaceEnum.DriversLicenseBack]: `Driver's License Back`,
+  [ClientDocumentNamespaceEnum.DriversLicenseFront]: `Driver's License Front`,
+  [ClientDocumentNamespaceEnum.HmisForm]: 'HMIS Form',
+  [ClientDocumentNamespaceEnum.IncomeForm]: 'Income Form',
+  [ClientDocumentNamespaceEnum.OtherClientDocument]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherDocReady]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherForm]: 'Other Form',
+  [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
+  [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
+};
 
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
   {
