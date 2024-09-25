@@ -1,4 +1,5 @@
 import {
+  ClientDocumentNamespaceEnum,
   GenderEnum,
   HmisAgencyEnum,
   LanguageEnum,
@@ -51,6 +52,22 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Other]: 'Other',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
+};
+
+export const enumDisplayDocumentType: {
+  [key in ClientDocumentNamespaceEnum]: string;
+} = {
+  [ClientDocumentNamespaceEnum.BirthCertificate]: 'Birth Certificate',
+  [ClientDocumentNamespaceEnum.ConsentForm]: 'Consent Form',
+  [ClientDocumentNamespaceEnum.DriversLicenseBack]: `Driver's License Back`,
+  [ClientDocumentNamespaceEnum.DriversLicenseFront]: `Driver's License Front`,
+  [ClientDocumentNamespaceEnum.HmisForm]: 'HMIS Form',
+  [ClientDocumentNamespaceEnum.IncomeForm]: 'Income Form',
+  [ClientDocumentNamespaceEnum.OtherClientDocument]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherDocReady]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherForm]: 'Other Form',
+  [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
+  [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
 };
 
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
