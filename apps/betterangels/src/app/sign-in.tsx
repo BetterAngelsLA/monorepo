@@ -25,11 +25,6 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const [errorMessage, setErrorMessage] = useState('');
-  // const { setProductionApi } = useApolloClientContext();
-
-  // useEffect(() => {
-  //   setProductionApi();
-  // }, []);
 
   useEffect(() => {
     if (user) {

@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
 import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
@@ -33,12 +33,7 @@ export default function LoginForm({
   const [password, setPassword] = useState('');
   const { refetchUser } = useUser();
   const { switchToProduction, switchToDemo } = useApolloClientContext();
-  const [loginForm, { loading, error }] = useLoginFormMutation({
-    onError: (error) => {
-      console.log('test');
-      console.log(error.networkError);
-    },
-  });
+  const [loginForm, { loading, error }] = useLoginFormMutation();
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,24 +42,22 @@ export default function LoginForm({
 
   const isButtonDisabled = !isValidEmail(username) || password.length < 8;
 
-  // Determine if the user should use the demo API based on their email
   const checkIfDemoMode = (email: string): boolean => {
     const demoDomain = '@example.com'; // Use your demo domain here
     return email.endsWith(demoDomain);
   };
 
-  // useEffect to switch between APIs when the username changes
-  useEffect(() => {
-    if (username) {
-      if (checkIfDemoMode(username)) {
-        console.log('Switching to Demo API');
-        switchToDemo();
-      } else {
-        console.log('Switching to Production API');
-        switchToProduction();
-      }
+  const handleUsernameChange = (newUsername: string) => {
+    setUsername(newUsername);
+    // Check the environment as the user types
+    if (checkIfDemoMode(newUsername)) {
+      console.log('Switching to Demo API');
+      switchToDemo();
+    } else {
+      console.log('Switching to Production API');
+      switchToProduction();
     }
-  }, [username, switchToDemo, switchToProduction]);
+  };
 
   const handleLogin = async () => {
     if (isButtonDisabled) {
@@ -75,7 +68,7 @@ export default function LoginForm({
     setIsLoading(true);
 
     try {
-      const { data, errors } = await loginForm({
+      const { data } = await loginForm({
         variables: {
           username,
           password,
@@ -83,21 +76,14 @@ export default function LoginForm({
       });
 
       if (error) {
-        console.log(error);
-        setErrorMessage('1: Something went wrong. Please try again.');
-      }
-      console.log(JSON.stringify(data, null, 4));
-      console.log(JSON.stringify(errors, null, 4));
-      if (!loading && data && 'login' in data) {
-        console.log('wyuhtwayntofaynuoftoynuftoyunft');
+        setErrorMessage('Something went wrong. Please try again.');
+      } else if (!loading && data && 'login' in data) {
         refetchUser(); // Refetch the user after successful login
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
-      console.log(error);
-      console.log(JSON.stringify(error, null, 4));
-      setErrorMessage('2: Something went wrong. Please try again.');
+      setErrorMessage('Something went wrong. Please try again.');
     }
     setIsLoading(false);
   };
@@ -109,7 +95,7 @@ export default function LoginForm({
         borderRadius={50}
         height={44}
         value={username}
-        onChangeText={setUsername}
+        onChangeText={handleUsernameChange}
         placeholder="Enter email address"
         placeholderTextColor="#A9A9A9"
         autoCapitalize="none"

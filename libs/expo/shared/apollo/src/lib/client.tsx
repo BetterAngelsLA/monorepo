@@ -6,15 +6,21 @@ import {
   NormalizedCacheObject,
 } from '@apollo/client';
 import { setItem } from '@monorepo/expo/shared/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { Platform } from 'react-native';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { CSRF_COOKIE_NAME } from './links';
 import { csrfLink } from './links/csrf';
 
-// Function to create Apollo Client
 export const createApolloClient = (
   apiUrl: string
 ): ApolloClient<NormalizedCacheObject> => {
@@ -68,26 +74,57 @@ export const ApolloClientProvider = ({
   productionClient,
   demoClient,
 }: ApolloClientProviderProps) => {
-  const [activeClient, setActiveClient] = useState(productionClient);
-  const [currentClient, setCurrentClient] = useState<'production' | 'demo'>(
-    'production'
-  );
+  const [currentClient, setCurrentClient] = useState<
+    'production' | 'demo' | null
+  >(null);
+
+  useEffect(() => {
+    // Load current client from AsyncStorage when component mounts
+    const loadCurrentClient = async () => {
+      try {
+        const storedClient = await AsyncStorage.getItem('currentClient');
+        if (storedClient === 'production' || storedClient === 'demo') {
+          setCurrentClient(storedClient);
+        } else {
+          // Default to 'production' if no valid value is stored
+          setCurrentClient('production');
+        }
+      } catch (error) {
+        console.error('Error loading current client from AsyncStorage', error);
+        setCurrentClient('production');
+      }
+    };
+
+    loadCurrentClient();
+  }, []);
+
+  const switchClient = async (client: 'production' | 'demo') => {
+    if (currentClient !== client) {
+      await setItem(CSRF_COOKIE_NAME, '');
+      try {
+        await AsyncStorage.setItem('currentClient', client);
+        setCurrentClient(client);
+      } catch (error) {
+        console.error('Error switching client', error);
+      }
+    }
+  };
 
   const switchToProduction = () => {
-    if (currentClient !== 'production') {
-      setActiveClient(productionClient);
-      setCurrentClient('production');
-    }
+    switchClient('production');
   };
 
   const switchToDemo = () => {
-    if (currentClient !== 'demo') {
-      setActiveClient(demoClient);
-      setCurrentClient('demo');
-    }
+    switchClient('demo');
   };
-  console.log('rendering provider');
-  setItem(CSRF_COOKIE_NAME, '');
+
+  if (currentClient === null) {
+    return null;
+  }
+
+  const activeClient =
+    currentClient === 'production' ? productionClient : demoClient;
+
   return (
     <ApolloClientContext.Provider
       value={{ switchToProduction, switchToDemo, currentClient }}
@@ -97,7 +134,6 @@ export const ApolloClientProvider = ({
   );
 };
 
-// Hook to use the Apollo Client context
 export const useApolloClientContext = () => {
   const context = useContext(ApolloClientContext);
   if (!context) {
