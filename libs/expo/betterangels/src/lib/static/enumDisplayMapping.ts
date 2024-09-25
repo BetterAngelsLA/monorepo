@@ -1,6 +1,6 @@
 import {
-  EyeColorEnum,
   ClientDocumentNamespaceEnum,
+  EyeColorEnum,
   GenderEnum,
   HairColorEnum,
   HmisAgencyEnum,
