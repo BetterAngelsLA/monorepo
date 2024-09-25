@@ -52,7 +52,7 @@ export default function Client({
   arrivedFrom?: string;
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
-  const [tab, setTab] = useState('Interactions');
+  const [tab, setTab] = useState('Profile');
 
   const navigation = useNavigation();
   const router = useRouter();

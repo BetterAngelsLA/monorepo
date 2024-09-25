@@ -61,6 +61,7 @@ query ClientProfile($id: ID!) {
       docReadyDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -69,6 +70,7 @@ query ClientProfile($id: ID!) {
       consentFormDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -77,6 +79,7 @@ query ClientProfile($id: ID!) {
       otherDocuments {
         id
         namespace
+        originalFilename
         file {
           url
           name
@@ -96,6 +99,21 @@ mutation CreateClientDocument($data: CreateClientDocumentInput!) {
       }
     }
 
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+
+mutation DeleteClientDocument($id: ID!) {
+  deleteClientDocument(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
     ... on ClientDocumentType {
       id
     }
