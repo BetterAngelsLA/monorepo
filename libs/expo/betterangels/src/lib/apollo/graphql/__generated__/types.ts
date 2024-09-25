@@ -24,6 +24,13 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export enum AdaAccommodationEnum {
+  Hearing = 'HEARING',
+  Mobility = 'MOBILITY',
+  Other = 'OTHER',
+  Visual = 'VISUAL'
+}
+
 export type AddNoteTaskInput = {
   noteId: Scalars['ID']['input'];
   taskId: Scalars['ID']['input'];
@@ -112,15 +119,18 @@ export enum ClientDocumentNamespaceEnum {
 export type ClientDocumentType = AttachmentInterface & {
   __typename?: 'ClientDocumentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientHouseholdMemberInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
@@ -131,7 +141,9 @@ export type ClientHouseholdMemberType = {
   __typename?: 'ClientHouseholdMemberType';
   clientProfile: DjangoModelType;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  displayGender?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
@@ -160,16 +172,19 @@ export type ClientProfilePhotoInput = {
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
+  adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayCaseManager: Scalars['String']['output'];
+  displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
   docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
   eyeColor?: Maybe<EyeColorEnum>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisId?: Maybe<Scalars['String']['output']>;
@@ -182,6 +197,7 @@ export type ClientProfileType = {
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
+  phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredCommunication?: Maybe<PreferredCommunicationEnum>;
@@ -221,12 +237,14 @@ export type CreateClientDocumentInput = {
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
@@ -237,6 +255,7 @@ export type CreateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
@@ -877,6 +896,19 @@ export type PermDefinition = {
   permission?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PhoneNumberInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isPrimary?: InputMaybe<Scalars['Boolean']['input']>;
+  number?: InputMaybe<Scalars['PhoneNumber']['input']>;
+};
+
+export type PhoneNumberType = {
+  __typename?: 'PhoneNumberType';
+  id: Scalars['ID']['output'];
+  isPrimary?: Maybe<Scalars['Boolean']['output']>;
+  number?: Maybe<Scalars['PhoneNumber']['output']>;
+};
+
 export enum PreferredCommunicationEnum {
   Call = 'CALL',
   Email = 'EMAIL',
@@ -1140,12 +1172,14 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
@@ -1157,6 +1191,7 @@ export type UpdateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;

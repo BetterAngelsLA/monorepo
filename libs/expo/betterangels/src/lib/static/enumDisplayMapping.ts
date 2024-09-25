@@ -1,4 +1,5 @@
 import {
+  ClientDocumentNamespaceEnum,
   GenderEnum,
   HmisAgencyEnum,
   LanguageEnum,
@@ -53,6 +54,22 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
 };
 
+export const enumDisplayDocumentType: {
+  [key in ClientDocumentNamespaceEnum]: string;
+} = {
+  [ClientDocumentNamespaceEnum.BirthCertificate]: 'Birth Certificate',
+  [ClientDocumentNamespaceEnum.ConsentForm]: 'Consent Form',
+  [ClientDocumentNamespaceEnum.DriversLicenseBack]: `Driver's License Back`,
+  [ClientDocumentNamespaceEnum.DriversLicenseFront]: `Driver's License Front`,
+  [ClientDocumentNamespaceEnum.HmisForm]: 'HMIS Form',
+  [ClientDocumentNamespaceEnum.IncomeForm]: 'Income Form',
+  [ClientDocumentNamespaceEnum.OtherClientDocument]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherDocReady]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherForm]: 'Other Form',
+  [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
+  [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
+};
+
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
   {
     [YesNoPreferNotToSayEnum.Yes]: 'Yes',
@@ -60,8 +77,9 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
 
-export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
-  [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
+export const clientRelationshipEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
   [RelationshipTypeEnum.Aunt]: 'Aunt',
   [RelationshipTypeEnum.Child]: 'Child',
   [RelationshipTypeEnum.Cousin]: 'Cousin',
@@ -69,10 +87,23 @@ export const enumDisplayRelevant: { [key in RelationshipTypeEnum]: string } = {
   [RelationshipTypeEnum.Friend]: 'Friend',
   [RelationshipTypeEnum.Grandparent]: 'Grandparent',
   [RelationshipTypeEnum.Mother]: 'Mother',
-  [RelationshipTypeEnum.Organization]: 'Organization',
-  [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
-  [RelationshipTypeEnum.Pet]: 'Pet',
   [RelationshipTypeEnum.Sibling]: 'Sibling',
   [RelationshipTypeEnum.Uncle]: 'Uncle',
   [RelationshipTypeEnum.Other]: 'Other',
+};
+
+export const clientRelevantContactEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
+  [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
+  ...clientRelationshipEnumDisplay,
+  [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
+  [RelationshipTypeEnum.Organization]: 'Organization',
+};
+
+export const clientHouseholdMemberEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
+  ...clientRelationshipEnumDisplay,
+  [RelationshipTypeEnum.Pet]: 'Pet',
 };

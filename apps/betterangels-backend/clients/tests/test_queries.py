@@ -4,6 +4,7 @@ from typing import Optional
 import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
+    AdaAccommodationEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -53,7 +54,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 11
+        expected_query_count = 12
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -61,6 +62,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile = response["data"]["clientProfile"]
         expected_client_profile = {
             "id": str(client_profile_id),
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
             "consentFormDocuments": [self.client_profile_1_document_3],
@@ -84,6 +86,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
+            "phoneNumbers": self.client_profile_1["phoneNumbers"],
             "physicalDescription": "A human",
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
             "preferredCommunication": PreferredCommunicationEnum.CALL.name,
@@ -109,7 +112,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 7
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

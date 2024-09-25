@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from accounts.models import User
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -19,7 +20,7 @@ from clients.enums import (
     SocialMediaEnum,
     YesNoPreferNotToSayEnum,
 )
-from common.models import Attachment, BaseModel
+from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -83,6 +84,9 @@ class HmisProfile(models.Model):
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     address = models.TextField(blank=True, null=True)
+    ada_accommodation = ArrayField(
+        base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
+    )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
@@ -96,6 +100,7 @@ class ClientProfile(models.Model):
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
+    phone_numbers = GenericRelation(PhoneNumber)
     physical_description = models.TextField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=100, blank=True, null=True)
     preferred_communication = TextChoicesField(choices_enum=PreferredCommunicationEnum, blank=True, null=True)

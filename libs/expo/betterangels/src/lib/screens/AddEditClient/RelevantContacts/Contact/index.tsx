@@ -12,7 +12,7 @@ import {
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
-import { enumDisplayRelevant } from '../../../../static/enumDisplayMapping';
+import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
 
 interface IContactProps {
   index: number;
@@ -70,7 +70,7 @@ export default function Contact(props: IContactProps) {
             enumValue as RelationshipTypeEnum
           )
         }
-        items={Object.entries(enumDisplayRelevant).map(
+        items={Object.entries(clientRelevantContactEnumDisplay).map(
           ([enumValue, displayValue]) => ({
             displayValue: displayValue,
             value: enumValue,
@@ -93,7 +93,9 @@ export default function Contact(props: IContactProps) {
         paddingHorizontal: Spacings.sm,
       }}
     >
-      <TextBold size="lg">{enumDisplayRelevant[relationship]}</TextBold>
+      <TextBold size="lg">
+        {clientRelevantContactEnumDisplay[relationship]}
+      </TextBold>
       <Input
         placeholder="Name"
         autoCorrect={false}

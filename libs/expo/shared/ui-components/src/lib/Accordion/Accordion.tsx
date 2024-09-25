@@ -19,6 +19,11 @@ interface IAccordionProps {
   expanded: string | undefined | null;
   setExpanded: () => void;
   scrollRef?: RefObject<ScrollView>;
+  bg?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  borderColor?: string;
+  icon?: ReactNode;
 }
 
 export function Accordion(props: IAccordionProps) {
@@ -34,6 +39,11 @@ export function Accordion(props: IAccordionProps) {
     expanded,
     setExpanded,
     scrollRef,
+    bg = Colors.NEUTRAL_EXTRA_LIGHT,
+    borderWidth,
+    borderRadius,
+    borderColor,
+    icon,
   } = props;
   const [place, setPlace] = useState<null | number>(null);
 
@@ -79,18 +89,31 @@ export function Accordion(props: IAccordionProps) {
             marginRight: mr && Spacings[mr],
             marginHorizontal: mx && Spacings[mx],
             marginVertical: my && Spacings[my],
-            backgroundColor: pressed
-              ? Colors.GRAY_PRESSED
-              : Colors.NEUTRAL_EXTRA_LIGHT,
+            backgroundColor: pressed ? Colors.GRAY_PRESSED : bg,
+            borderWidth,
+            borderRadius,
+            borderColor,
           },
         ]}
       >
-        {expanded === title ? (
-          <TextMedium size="md">{title}</TextMedium>
-        ) : (
-          <TextRegular size="sm">{title}</TextRegular>
-        )}
-        <ChevronLeftIcon rotate={expanded === title ? '90deg' : '-90deg'} />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacings.xs,
+          }}
+        >
+          {icon}
+          {expanded === title ? (
+            <TextMedium size="md">{title}</TextMedium>
+          ) : (
+            <TextRegular size="sm">{title}</TextRegular>
+          )}
+        </View>
+        <ChevronLeftIcon
+          size="sm"
+          rotate={expanded === title ? '90deg' : '-90deg'}
+        />
       </Pressable>
       <View onStartShouldSetResponder={() => true}>{children}</View>
     </View>
