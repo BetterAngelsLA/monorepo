@@ -117,6 +117,8 @@ type ClientDocumentType implements AttachmentInterface {
   attachmentType: AttachmentType!
   originalFilename: String
   namespace: ClientDocumentNamespaceEnum!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 input ClientHouseholdMemberInput {

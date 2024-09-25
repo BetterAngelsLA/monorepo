@@ -119,10 +119,12 @@ export enum ClientDocumentNamespaceEnum {
 export type ClientDocumentType = AttachmentInterface & {
   __typename?: 'ClientDocumentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientHouseholdMemberInput = {

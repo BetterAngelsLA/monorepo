@@ -4332,6 +4332,7 @@ __metadata:
     expo-location: "npm:~17.0.1"
     expo-router: "npm:~3.5.23"
     expo-secure-store: "npm:~13.0.2"
+    expo-sharing: "npm:^12.0.1"
     expo-splash-screen: "npm:0.27.5"
     expo-status-bar: "npm:1.12.1"
     expo-updates: "npm:~0.25.22"
@@ -13987,6 +13988,15 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10/920a4ff94831bc327b08e0f429f3eecfc0fb896e6e865b8d3277c427ad58cec8506815cc094f6e0e8ceed97b33126e8b9d11c923839fcdac946d6eeb2c39cde1
+  languageName: node
+  linkType: hard
+
+"expo-sharing@npm:^12.0.1":
+  version: 12.0.1
+  resolution: "expo-sharing@npm:12.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/11f90dbef9a0f9defedeeaf9898a1af7cb25a7c30fed3e19d09f32a1ae218bac7c35a4575235b541daf20145e36597bd8286bf60b98a027cbaf8832424bbada4
   languageName: node
   linkType: hard
 
