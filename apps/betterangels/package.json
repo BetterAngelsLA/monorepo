@@ -75,6 +75,7 @@
     "node-fetch": "*",
     "tsconfig-paths": "*",
     "react-native-keyboard-controller": "*",
+    "@react-native-async-storage/async-storage": "*",
     "expo-file-system": "*",
     "expo-sharing": "*"
   },
