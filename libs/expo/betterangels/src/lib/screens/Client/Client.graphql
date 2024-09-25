@@ -60,6 +60,7 @@ query ClientProfile($id: ID!) {
       }
       docReadyDocuments {
         id
+        createdAt
         namespace
         originalFilename
         file {
@@ -69,6 +70,7 @@ query ClientProfile($id: ID!) {
       }
       consentFormDocuments {
         id
+        createdAt
         namespace
         originalFilename
         file {
@@ -78,6 +80,7 @@ query ClientProfile($id: ID!) {
       }
       otherDocuments {
         id
+        createdAt
         namespace
         originalFilename
         file {

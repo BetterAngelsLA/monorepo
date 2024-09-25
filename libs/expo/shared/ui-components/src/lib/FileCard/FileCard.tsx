@@ -6,11 +6,17 @@ interface IFileCardProps {
   onPress: () => void;
   filename?: string | null;
   url: string;
-  createdAt?: string | null;
+  createdAt: string;
 }
 
 export function FileCard(props: IFileCardProps) {
   const { onPress, url, filename, createdAt } = props;
+  const formatCreatedAt = (createdAt: string) => {
+    const [year, month, day] = createdAt.split('-');
+    return `${month}/${day}/${year}`;
+  };
+  const formattedCreatedAt = formatCreatedAt(createdAt.slice(0, 10));
+
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +66,7 @@ export function FileCard(props: IFileCardProps) {
         </TextRegular>
       </View>
       <TextRegular ellipsizeMode="tail" size="xs" color={Colors.NEUTRAL_DARK}>
-        {createdAt}
+        {formattedCreatedAt}
       </TextRegular>
     </Pressable>
   );

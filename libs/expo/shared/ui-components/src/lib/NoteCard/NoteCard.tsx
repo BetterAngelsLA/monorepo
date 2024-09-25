@@ -43,7 +43,7 @@ export function NoteCard(props: INoteCardProps) {
           mb="xs"
           size="lg"
         />
-        <TextBold>{title}</TextBold>
+        <TextBold>xxxxxxxx{title}</TextBold>
         <View
           style={{
             flexDirection: 'row',

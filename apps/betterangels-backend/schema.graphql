@@ -55,6 +55,8 @@ interface AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum AttachmentType {
@@ -116,9 +118,9 @@ type ClientDocumentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
-  namespace: ClientDocumentNamespaceEnum!
   createdAt: DateTime!
   updatedAt: DateTime!
+  namespace: ClientDocumentNamespaceEnum!
 }
 
 input ClientHouseholdMemberInput {
@@ -581,6 +583,8 @@ type NoteAttachmentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   namespace: NoteNamespaceEnum!
 }
 

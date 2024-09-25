@@ -58,7 +58,7 @@ export default function Documents(props: IDocumentsProps) {
               filename={document.originalFilename}
               url={document.file.url}
               onPress={() => openModal(document)}
-              createdAt={document.updatedAt}
+              createdAt={document.createdAt}
             />
           ))}
         </View>
