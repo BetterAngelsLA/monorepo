@@ -104,15 +104,7 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <ClientHeader
-        age={data?.clientProfile.age}
-        dateOfBirth={data?.clientProfile.dateOfBirth}
-        firstName={data?.clientProfile.user.firstName}
-        gender={data?.clientProfile.gender}
-        lastName={data?.clientProfile.user.lastName}
-        nickname={data?.clientProfile.nickname}
-        preferredLanguage={data?.clientProfile.preferredLanguage}
-      />
+      <ClientHeader client={data?.clientProfile} />
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, data)}
     </MainContainer>

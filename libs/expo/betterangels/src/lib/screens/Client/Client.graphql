@@ -6,6 +6,9 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       gender
       displayGender
+      displayCaseManager
+      displayPronouns
+      residenceAddress
       genderOther
       age
       hmisProfiles {

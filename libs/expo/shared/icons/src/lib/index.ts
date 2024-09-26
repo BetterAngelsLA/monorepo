@@ -61,6 +61,7 @@ export { default as PaperclipIcon } from './components/PaperclipIcon';
 export { default as PawIcon } from './components/PawIcon';
 export { default as PencilSolidIcon } from './components/PencilSolidIcon';
 export { default as PeopleRoofIcon } from './components/PeopleRoofIcon';
+export { default as PersonIcon } from './components/PersonIcon';
 export { default as PlusIcon } from './components/PlusIcon';
 export { default as SearchIcon } from './components/SearchIcon';
 export { default as ShirtIcon } from './components/ShirtIcon';
