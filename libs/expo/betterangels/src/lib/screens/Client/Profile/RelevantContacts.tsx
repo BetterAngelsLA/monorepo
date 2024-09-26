@@ -1,0 +1,104 @@
+import { Spacings } from '@monorepo/expo/shared/static';
+import {
+  Accordion,
+  CardWrapper,
+  TextBold,
+  TextMedium,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { useMemo } from 'react';
+import { View } from 'react-native';
+import { RelationshipTypeEnum } from '../../../apollo';
+import { clientRelevantContactEnumDisplay } from '../../../static/enumDisplayMapping';
+import { IProfileSectionProps } from './types';
+
+const InfoRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) => (
+  <View>
+    <TextRegular size="xs">{label}</TextRegular>
+    <TextMedium size="sm">{value || ''}</TextMedium>
+  </View>
+);
+
+export default function RelevantContacts(props: IProfileSectionProps) {
+  const { expanded, setExpanded, client } = props;
+
+  const isRelevantContacts = expanded === 'Relevant Contacts';
+
+  const sortedContacts = useMemo(() => {
+    const fields = client?.clientProfile.contacts ?? [];
+    const caseManagerContact = fields.find(
+      (contact) =>
+        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+    );
+
+    const otherContacts = fields
+      .filter(
+        (contact) =>
+          contact.relationshipToClient !==
+          RelationshipTypeEnum.CurrentCaseManager
+      )
+      .sort((a, b) =>
+        (a.relationshipToClient ?? '').localeCompare(
+          b.relationshipToClient ?? ''
+        )
+      );
+
+    return caseManagerContact
+      ? [caseManagerContact, ...otherContacts]
+      : otherContacts;
+  }, [client]);
+
+  return (
+    <Accordion
+      expanded={expanded}
+      setExpanded={() => {
+        setExpanded(isRelevantContacts ? null : 'Relevant Contacts');
+      }}
+      mb="xs"
+      title="Relevant Contacts"
+    >
+      {isRelevantContacts && (
+        <View
+          style={{
+            height: isRelevantContacts ? 'auto' : 0,
+            overflow: 'hidden',
+            gap: Spacings.xs,
+          }}
+        >
+          {sortedContacts.map((contact) => (
+            <CardWrapper key={contact.id}>
+              <View style={{ gap: Spacings.sm }}>
+                <TextBold size="sm">
+                  {contact.relationshipToClient &&
+                    clientRelevantContactEnumDisplay[
+                      contact.relationshipToClient
+                    ]}
+                </TextBold>
+                {contact.relationshipToClient ===
+                  RelationshipTypeEnum.Other && (
+                  <InfoRow
+                    label="Type of Relationship"
+                    value={contact.relationshipToClientOther}
+                  />
+                )}
+                <InfoRow label="Name" value={contact.name} />
+                <InfoRow label="Email Address" value={contact.email} />
+                <InfoRow label="Phone Number" value={contact.phoneNumber} />
+                <InfoRow
+                  label="Mailing Address"
+                  value={contact.mailingAddress}
+                />
+              </View>
+            </CardWrapper>
+          ))}
+        </View>
+      )}
+    </Accordion>
+  );
+}

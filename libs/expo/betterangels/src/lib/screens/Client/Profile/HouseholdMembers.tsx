@@ -2,6 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import {
   Accordion,
   CardWrapper,
+  TextBold,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -49,12 +50,12 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
           {client?.clientProfile.householdMembers?.map((householdMember) => (
             <CardWrapper key={householdMember.id}>
               <View style={{ gap: Spacings.sm }}>
-                <TextRegular size="sm">
+                <TextBold size="sm">
                   {householdMember.relationshipToClient &&
                     clientHouseholdMemberEnumDisplay[
                       householdMember.relationshipToClient
                     ]}
-                </TextRegular>
+                </TextBold>
                 {householdMember.relationshipToClient ===
                   RelationshipTypeEnum.Other && (
                   <InfoRow
