@@ -42,6 +42,10 @@ export default {
         foregroundImage: './src/app/assets/images/adaptive-icon.png',
         backgroundColor: '#1E3342',
       },
+      blockedPermissions: [
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+      ], // https://github.com/expo/expo/issues/25361#issuecomment-2363699975
       softwareKeyboardLayoutMode: 'pan',
       package: BUNDLE_IDENTIFIER,
       intentFilters: [
