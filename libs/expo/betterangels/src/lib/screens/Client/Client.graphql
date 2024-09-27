@@ -8,8 +8,17 @@ query ClientProfile($id: ID!) {
       displayGender
       displayCaseManager
       displayPronouns
+      displayPronouns
+      displayCaseManager
       residenceAddress
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      maritalStatus
+      physicalDescription
       genderOther
+      race
       age
       hmisProfiles {
         agency
