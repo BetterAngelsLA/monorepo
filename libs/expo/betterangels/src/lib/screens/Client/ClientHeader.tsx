@@ -16,10 +16,11 @@ import { ClientProfileQuery } from './__generated__/Client.generated';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
+  onCaseManagerPress: () => void;
 }
 
 export default function ClientHeader(props: IClientHeaderProps) {
-  const { client } = props;
+  const { client, onCaseManagerPress } = props;
 
   return (
     <View
@@ -90,7 +91,15 @@ export default function ClientHeader(props: IClientHeaderProps) {
         <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
         <TextRegular>
           Current Case Manager:{' '}
-          <TextRegular textDecorationLine="underline">
+          <TextRegular
+            onPress={() => {
+              if (client?.displayCaseManager !== 'Not Assigned') {
+                return onCaseManagerPress();
+              }
+              return null;
+            }}
+            textDecorationLine="underline"
+          >
             {client?.displayCaseManager}
           </TextRegular>
         </TextRegular>
