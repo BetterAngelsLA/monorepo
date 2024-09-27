@@ -55,9 +55,11 @@ export type AddressType = {
 
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export enum AttachmentType {
@@ -119,10 +121,12 @@ export enum ClientDocumentNamespaceEnum {
 export type ClientDocumentType = AttachmentInterface & {
   __typename?: 'ClientDocumentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientHouseholdMemberInput = {
@@ -760,10 +764,12 @@ export type NoteAttachmentFilter = {
 export type NoteAttachmentType = AttachmentInterface & {
   __typename?: 'NoteAttachmentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type NoteFilter = {
