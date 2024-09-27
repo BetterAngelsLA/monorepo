@@ -3,6 +3,7 @@ import {
   LocationDotIcon,
   TentIcon,
   ThreeDotIcon,
+  UserOutlineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
@@ -123,10 +124,17 @@ export function ClientCard(props: IClientCardProps) {
         </TextBold>
         {(age || formattedHeight) && (
           <View style={styles.row}>
-            <TextRegular size="xs">{formattedDateOfBirth}</TextRegular>
-            {!!age && <TextRegular size="xs"> ({age})</TextRegular>}
+            <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
+            {!!age && (
+              <TextRegular size="xs">
+                {formattedDateOfBirth} ({age})
+              </TextRegular>
+            )}
+            {!!age && !!heightInInches && (
+              <TextRegular size="xs"> | </TextRegular>
+            )}
             {!!heightInInches && (
-              <TextRegular size="xs"> | Height: {formattedHeight}</TextRegular>
+              <TextRegular size="xs">Height: {formattedHeight}</TextRegular>
             )}
           </View>
         )}
@@ -181,9 +189,7 @@ export function ClientCard(props: IClientCardProps) {
 }
 
 const styles = StyleSheet.create({
-  clientCard: {
-
-  }
+  clientCard: {},
   container: {
     alignItems: 'center',
     borderRadius: Radiuses.xs,
