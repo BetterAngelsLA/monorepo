@@ -47,38 +47,48 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
             gap: Spacings.xs,
           }}
         >
-          {client?.clientProfile.householdMembers?.map((householdMember) => (
-            <CardWrapper key={householdMember.id}>
-              <View style={{ gap: Spacings.sm }}>
-                <TextBold size="sm">
-                  {householdMember.relationshipToClient &&
-                    clientHouseholdMemberEnumDisplay[
-                      householdMember.relationshipToClient
-                    ]}
-                </TextBold>
-                {householdMember.relationshipToClient ===
-                  RelationshipTypeEnum.Other && (
-                  <InfoRow
-                    label="Type of Relationship"
-                    value={householdMember.relationshipToClientOther}
-                  />
-                )}
-                <InfoRow label="Name" value={householdMember.name} />
-                <InfoRow label="Gender" value={householdMember.displayGender} />
-                <InfoRow
-                  label="Date of Birth"
-                  value={
-                    householdMember.dateOfBirth
-                      ? format(
-                          new Date(householdMember.dateOfBirth),
-                          'MM/dd/yyyy'
-                        )
-                      : ''
-                  }
-                />
-              </View>
-            </CardWrapper>
-          ))}
+          {client?.clientProfile.householdMembers?.map((householdMember) => {
+            const householdMemberData = [
+              {
+                label: 'Name',
+                value: householdMember.name,
+              },
+              {
+                label: 'Gender',
+                value: householdMember.displayGender,
+              },
+              {
+                label: 'Date of Birth',
+                value: householdMember.dateOfBirth
+                  ? format(new Date(householdMember.dateOfBirth), 'MM/dd/yyyy')
+                  : '',
+              },
+            ];
+            return (
+              <CardWrapper key={householdMember.id}>
+                <View style={{ gap: Spacings.sm }}>
+                  <TextBold size="sm">
+                    {householdMember.relationshipToClient &&
+                      clientHouseholdMemberEnumDisplay[
+                        householdMember.relationshipToClient
+                      ]}
+                  </TextBold>
+                  {householdMember.relationshipToClient ===
+                    RelationshipTypeEnum.Other && (
+                    <InfoRow
+                      label="Type of Relationship"
+                      value={householdMember.relationshipToClientOther}
+                    />
+                  )}
+                  {householdMemberData
+                    .filter(({ value }) => value)
+                    .map(({ label, value }) => (
+                      <InfoRow key={label} label={label} value={value} />
+                    ))}
+                </View>
+              </CardWrapper>
+            );
+          })}
         </View>
       )}
     </Accordion>

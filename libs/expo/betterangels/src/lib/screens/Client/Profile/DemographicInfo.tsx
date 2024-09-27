@@ -35,8 +35,54 @@ export default function DemographicInfo(props: IProfileSectionProps) {
   function convertToFeetAndInches(inches: number | null | undefined): string {
     const feet = Math.floor((inches || 0) / 12);
     const remainingInches = (inches || 0) % 12;
-    return `${feet}'${remainingInches}"`;
+    return `${feet}' ${remainingInches}"`;
   }
+
+  const demographicData = [
+    {
+      label: 'Gender',
+      value: client?.clientProfile.displayGender,
+    },
+    {
+      label: 'Pronouns',
+      value: client?.clientProfile.displayPronouns,
+    },
+    {
+      label: 'Race',
+      value:
+        client?.clientProfile.race &&
+        enumDisplayRace[client?.clientProfile.race],
+    },
+    {
+      label: 'City of Birth',
+      value: client?.clientProfile.placeOfBirth,
+    },
+    {
+      label: 'Height',
+      value: client?.clientProfile.heightInInches
+        ? convertToFeetAndInches(client?.clientProfile.heightInInches)
+        : null,
+    },
+    {
+      label: 'Eye Color',
+      value:
+        client?.clientProfile.eyeColor &&
+        enumDisplayEyeColor[client?.clientProfile.eyeColor],
+    },
+    {
+      label: 'Hair Color',
+      value:
+        client?.clientProfile.hairColor &&
+        enumDisplayHairColor[client?.clientProfile.hairColor],
+    },
+
+    {
+      label: 'Marital Status',
+      value:
+        client?.clientProfile.maritalStatus &&
+        enumDisplayMaritalStatus[client?.clientProfile.maritalStatus],
+    },
+  ];
 
   return (
     <Accordion
@@ -56,63 +102,20 @@ export default function DemographicInfo(props: IProfileSectionProps) {
         >
           <CardWrapper>
             <View style={{ gap: Spacings.lg }}>
-              <InfoRow
-                label="Gender"
-                value={client?.clientProfile.displayGender}
-              />
-              <InfoRow
-                label="Pronouns"
-                value={client?.clientProfile.displayPronouns}
-              />
-              <InfoRow
-                label="Race"
-                value={
-                  client?.clientProfile.race &&
-                  enumDisplayRace[client?.clientProfile.race]
-                }
-              />
-              <InfoRow
-                label="City of Birth"
-                value={client?.clientProfile.placeOfBirth}
-              />
-              <InfoRow
-                label="Height"
-                value={
-                  client?.clientProfile.heightInInches
-                    ? convertToFeetAndInches(
-                        client?.clientProfile.heightInInches
-                      )
-                    : ''
-                }
-              />
-              <InfoRow
-                label="Eye Color"
-                value={
-                  client?.clientProfile.eyeColor &&
-                  enumDisplayEyeColor[client?.clientProfile.eyeColor]
-                }
-              />
-              <InfoRow
-                label="Hair Color"
-                value={
-                  client?.clientProfile.hairColor &&
-                  enumDisplayHairColor[client?.clientProfile.hairColor]
-                }
-              />
+              {demographicData
+                .filter(({ value }) => value)
+                .map(({ label, value }) => (
+                  <InfoRow key={label} label={label} value={value} />
+                ))}
+
               <View>
-                <TextRegular size="xs">Physical Description</TextRegular>
+                <TextRegular mb="xs" size="sm">
+                  Physical Description
+                </TextRegular>
                 <TextBold size="sm">
                   {client?.clientProfile.physicalDescription || ''}
                 </TextBold>
               </View>
-
-              <InfoRow
-                label="Marital Status"
-                value={
-                  client?.clientProfile.maritalStatus &&
-                  enumDisplayMaritalStatus[client?.clientProfile.maritalStatus]
-                }
-              />
             </View>
           </CardWrapper>
         </View>

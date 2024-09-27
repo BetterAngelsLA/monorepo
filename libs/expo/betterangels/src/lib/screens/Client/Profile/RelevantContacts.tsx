@@ -71,32 +71,39 @@ export default function RelevantContacts(props: IProfileSectionProps) {
             gap: Spacings.xs,
           }}
         >
-          {sortedContacts.map((contact) => (
-            <CardWrapper key={contact.id}>
-              <View style={{ gap: Spacings.sm }}>
-                <TextBold size="sm">
-                  {contact.relationshipToClient &&
-                    clientRelevantContactEnumDisplay[
-                      contact.relationshipToClient
-                    ]}
-                </TextBold>
-                {contact.relationshipToClient ===
-                  RelationshipTypeEnum.Other && (
-                  <InfoRow
-                    label="Type of Relationship"
-                    value={contact.relationshipToClientOther}
-                  />
-                )}
-                <InfoRow label="Name" value={contact.name} />
-                <InfoRow label="Email Address" value={contact.email} />
-                <InfoRow label="Phone Number" value={contact.phoneNumber} />
-                <InfoRow
-                  label="Mailing Address"
-                  value={contact.mailingAddress}
-                />
-              </View>
-            </CardWrapper>
-          ))}
+          {sortedContacts.map((contact) => {
+            const contactData = [
+              { label: 'Name', value: contact.name },
+              { label: 'Email Address', value: contact.email },
+              { label: 'Phone Number', value: contact.phoneNumber },
+              { label: 'Mailing Address', value: contact.mailingAddress },
+            ];
+
+            return (
+              <CardWrapper key={contact.id}>
+                <View style={{ gap: Spacings.sm }}>
+                  <TextBold size="sm">
+                    {contact.relationshipToClient &&
+                      clientRelevantContactEnumDisplay[
+                        contact.relationshipToClient
+                      ]}
+                  </TextBold>
+                  {contact.relationshipToClient ===
+                    RelationshipTypeEnum.Other && (
+                    <InfoRow
+                      label="Type of Relationship"
+                      value={contact.relationshipToClientOther}
+                    />
+                  )}
+                  {contactData
+                    .filter(({ value }) => value)
+                    .map(({ label, value }) => (
+                      <InfoRow key={label} label={label} value={value} />
+                    ))}
+                </View>
+              </CardWrapper>
+            );
+          })}
         </View>
       )}
     </Accordion>
