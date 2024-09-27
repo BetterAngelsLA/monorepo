@@ -1,28 +1,28 @@
-import { HmisAgencyEnum } from '@monorepo/expo/betterangels';
 import {
+  IdCardOutlineIcon,
   LocationDotIcon,
   TentIcon,
   ThreeDotIcon,
   UserOutlineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { HmisProfileType } from 'libs/expo/betterangels/src/lib/apollo/graphql/__generated__/types';
+import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import Avatar from '../Avatar';
 import IconButton from '../IconButton';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
 interface IClientCardProps {
   imageUrl?: string;
   age?: number | null | undefined;
   dateOfBirth?: string | null | undefined;
   firstName?: string | null | undefined;
   heightInInches?: number | null | undefined;
-  hmisProfiles?: Array<string | HmisAgencyEnum> | null | undefined;
+  hmisProfiles?: Array<HmisProfileType | null> | null | undefined;
   lastName?: string | null | undefined;
   nickname?: string | null | undefined;
   residenceAddress?: string | null | undefined;
@@ -72,20 +72,11 @@ export function ClientCard(props: IClientCardProps) {
     const remainingInches = inches % 12;
     return `${feet}' ${remainingInches}"`;
   };
-  const formatDateOfBirth = (dateOfBirth: string) => {
-    const [year, month, day] = dateOfBirth.split('-');
-    return `${month}/${day}/${year}`;
-  };
-  const getLahsaHmisId = (hmisProfiles) => {
-    console.log(hmisProfiles);
+  const getLahsaHmisId = (hmisProfiles: Array<HmisProfileType | null>) => {
     return hmisProfiles.find((profile) => profile?.agency === 'LAHSA')?.id;
   };
   const formattedHeight = heightInInches ? formatHeight(heightInInches) : null;
-  const formattedDateOfBirth = dateOfBirth
-    ? formatDateOfBirth(dateOfBirth)
-    : null;
   const lahsaHmisId = hmisProfiles ? getLahsaHmisId(hmisProfiles) : null;
-
   return (
     <Pressable
       accessibilityRole="button"
@@ -122,15 +113,15 @@ export function ClientCard(props: IClientCardProps) {
         <TextBold size="sm">
           {firstName} {lastName} {nickname && `(${nickname})`}
         </TextBold>
-        {(age || formattedHeight) && (
+        {(dateOfBirth || formattedHeight) && (
           <View style={styles.row}>
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
-            {!!age && (
+            {!!dateOfBirth && (
               <TextRegular size="xs">
-                {formattedDateOfBirth} ({age})
+                {format(dateOfBirth, 'MM/dd/yyyy')} ({age})
               </TextRegular>
             )}
-            {!!age && !!heightInInches && (
+            {!!dateOfBirth && !!heightInInches && (
               <TextRegular size="xs"> | </TextRegular>
             )}
             {!!heightInInches && (
@@ -140,18 +131,16 @@ export function ClientCard(props: IClientCardProps) {
         )}
         {!!residenceAddress && (
           <View style={styles.row}>
-            (
-            <TextRegular size="xs">
-              {residenceAddress} residenceAddress
-            </TextRegular>
-            )
+            <LocationDotIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
+            <TextRegular size="xs">{residenceAddress}</TextRegular>
           </View>
         )}
-        <View style={styles.row}>
-          {!!lahsaHmisId && (
+        {!!lahsaHmisId && (
+          <View style={styles.row}>
+            <IdCardOutlineIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
             <TextRegular size="xs">LAHSA HMIS ID: {lahsaHmisId}</TextRegular>
-          )}
-        </View>
+          </View>
+        )}
         {daysActive && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TentIcon size="sm" color={Colors.NEUTRAL_DARK} />
