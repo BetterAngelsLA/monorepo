@@ -2,7 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../helpers/index';
+import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
 import { apiUrl } from '../../../../../../config';
 
 interface IMapProps {

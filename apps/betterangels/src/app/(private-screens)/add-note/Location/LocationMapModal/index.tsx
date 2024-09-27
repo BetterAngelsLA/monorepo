@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MapView } from '../helpers/index';
+import { MapView } from '@monorepo/expo/betterangels';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';

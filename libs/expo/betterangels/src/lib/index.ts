@@ -4,4 +4,4 @@ export * from './hooks';
 export * from './providers';
 export * from './screens';
 export * from './ui-components';
-export * from './maps'
+export * from './maps';
