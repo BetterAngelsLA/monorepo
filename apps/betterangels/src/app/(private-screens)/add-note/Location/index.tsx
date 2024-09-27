@@ -3,12 +3,9 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-// import { MapView, Marker, PROVIDER_GOOGLE } from './helpers/index';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
 import LocationMapModal from './LocationMapModal';
-console.log('MapView: ', MapView)
-console.log('Marker: ', Marker)
-console.log('PROVIDER_GOOGLE: ', PROVIDER_GOOGLE)
+
 interface ILocationProps {
   scrollRef: RefObject<ScrollView>;
   expanded: string | undefined | null;
