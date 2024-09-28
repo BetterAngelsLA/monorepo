@@ -1,0 +1,36 @@
+{
+  "name": "atlantis",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/atlantis",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "platforms": ["linux/amd64"],
+        "context": "apps/atlantis",
+        "file": "apps/atlantis/Dockerfile",
+        "build-args": [
+          "ATLANTIS",
+          "TERRAFORM",
+          "TERRAGRUNT",
+          "TERRAGRUNT_ATLANTIS_CONFIG",
+          "ATLANTIS_USER"
+        ],
+        "push": true,
+        "cache-from": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME}",
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-main"
+        ],
+        "cache-to": [
+          "type=registry,ref=${ECR_REGISTRY}/${APP_NAME}:buildcache-${BRANCH_NAME},image-manifest=true,mode=max"
+        ],
+        "metadata": {
+          "images": ["${ECR_REGISTRY}/${APP_NAME}"],
+          "tags": ["${DOCKER_TAG}"]
+        }
+      }
+    }
+  }
+}
