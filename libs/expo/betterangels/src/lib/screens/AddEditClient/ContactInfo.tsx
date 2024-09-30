@@ -80,13 +80,13 @@ export default function ContactInfo(props: IContactInfoProps) {
           control={control}
           keyboardType="phone-pad"
           maxLength={10}
-          rules={{
-            pattern: {
-              value: Regex.phoneNumber,
-              message:
-                'Enter a 10-digit phone number without space or special characters',
-            },
-          }}
+          // rules={{
+          //   pattern: {
+          //     value: Regex.phoneNumber,
+          //     message:
+          //       'Enter a 10-digit phone number without space or special characters',
+          //   },
+          // }}
         />
         <ErrorMessage
           errors={errors}
