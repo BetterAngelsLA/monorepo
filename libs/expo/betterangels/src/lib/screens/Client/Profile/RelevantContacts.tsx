@@ -6,7 +6,7 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../static/enumDisplayMapping';
@@ -25,87 +25,93 @@ const InfoRow = ({
   </View>
 );
 
-export default function RelevantContacts(props: IProfileSectionProps) {
-  const { expanded, setExpanded, client } = props;
+const RelevantContacts = forwardRef<View, IProfileSectionProps>(
+  (props, ref) => {
+    const { expanded, setExpanded, client } = props;
 
-  const isRelevantContacts = expanded === 'Relevant Contacts';
+    const isRelevantContacts = expanded === 'Relevant Contacts';
 
-  const sortedContacts = useMemo(() => {
-    const fields = client?.clientProfile.contacts ?? [];
-    const caseManagerContact = fields.find(
-      (contact) =>
-        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
-    );
-
-    const otherContacts = fields
-      .filter(
+    const sortedContacts = useMemo(() => {
+      const fields = client?.clientProfile.contacts ?? [];
+      const caseManagerContact = fields.find(
         (contact) =>
-          contact.relationshipToClient !==
+          contact.relationshipToClient ===
           RelationshipTypeEnum.CurrentCaseManager
-      )
-      .sort((a, b) =>
-        (a.relationshipToClient ?? '').localeCompare(
-          b.relationshipToClient ?? ''
-        )
       );
 
-    return caseManagerContact
-      ? [caseManagerContact, ...otherContacts]
-      : otherContacts;
-  }, [client]);
+      const otherContacts = fields
+        .filter(
+          (contact) =>
+            contact.relationshipToClient !==
+            RelationshipTypeEnum.CurrentCaseManager
+        )
+        .sort((a, b) =>
+          (a.relationshipToClient ?? '').localeCompare(
+            b.relationshipToClient ?? ''
+          )
+        );
 
-  return (
-    <Accordion
-      expanded={expanded}
-      setExpanded={() => {
-        setExpanded(isRelevantContacts ? null : 'Relevant Contacts');
-      }}
-      mb="xs"
-      title="Relevant Contacts"
-    >
-      {isRelevantContacts && (
-        <View
-          style={{
-            height: isRelevantContacts ? 'auto' : 0,
-            overflow: 'hidden',
-            gap: Spacings.xs,
-          }}
-        >
-          {sortedContacts.map((contact) => {
-            const contactData = [
-              { label: 'Name', value: contact.name },
-              { label: 'Email Address', value: contact.email },
-              { label: 'Phone Number', value: contact.phoneNumber },
-              { label: 'Mailing Address', value: contact.mailingAddress },
-            ];
+      return caseManagerContact
+        ? [caseManagerContact, ...otherContacts]
+        : otherContacts;
+    }, [client]);
 
-            return (
-              <CardWrapper key={contact.id}>
-                <View style={{ gap: Spacings.sm }}>
-                  <TextBold size="sm">
-                    {contact.relationshipToClient &&
-                      clientRelevantContactEnumDisplay[
-                        contact.relationshipToClient
-                      ]}
-                  </TextBold>
-                  {contact.relationshipToClient ===
-                    RelationshipTypeEnum.Other && (
-                    <InfoRow
-                      label="Type of Relationship"
-                      value={contact.relationshipToClientOther}
-                    />
-                  )}
-                  {contactData
-                    .filter(({ value }) => value)
-                    .map(({ label, value }) => (
-                      <InfoRow key={label} label={label} value={value} />
-                    ))}
-                </View>
-              </CardWrapper>
-            );
-          })}
-        </View>
-      )}
-    </Accordion>
-  );
-}
+    return (
+      <Accordion
+        expanded={expanded}
+        setExpanded={() => {
+          setExpanded(isRelevantContacts ? null : 'Relevant Contacts');
+        }}
+        mb="xs"
+        title="Relevant Contacts"
+      >
+        {isRelevantContacts && (
+          <View
+            ref={ref}
+            style={{
+              height: isRelevantContacts ? 'auto' : 0,
+              overflow: 'hidden',
+              gap: Spacings.xs,
+            }}
+          >
+            {sortedContacts.map((contact) => {
+              const contactData = [
+                { label: 'Name', value: contact.name },
+                { label: 'Email Address', value: contact.email },
+                { label: 'Phone Number', value: contact.phoneNumber },
+                { label: 'Mailing Address', value: contact.mailingAddress },
+              ];
+
+              return (
+                <CardWrapper key={contact.id}>
+                  <View style={{ gap: Spacings.sm }}>
+                    <TextBold size="sm">
+                      {contact.relationshipToClient &&
+                        clientRelevantContactEnumDisplay[
+                          contact.relationshipToClient
+                        ]}
+                    </TextBold>
+                    {contact.relationshipToClient ===
+                      RelationshipTypeEnum.Other && (
+                      <InfoRow
+                        label="Type of Relationship"
+                        value={contact.relationshipToClientOther}
+                      />
+                    )}
+                    {contactData
+                      .filter(({ value }) => value)
+                      .map(({ label, value }) => (
+                        <InfoRow key={label} label={label} value={value} />
+                      ))}
+                  </View>
+                </CardWrapper>
+              );
+            })}
+          </View>
+        )}
+      </Accordion>
+    );
+  }
+);
+
+export default RelevantContacts;
