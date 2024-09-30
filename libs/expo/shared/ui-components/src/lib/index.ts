@@ -11,7 +11,6 @@ export { default as Camera } from './Camera';
 export { default as CardWrapper } from './CardWrapper';
 export { default as Checkbox } from './Checkbox';
 export { default as CircularLoading } from './CircularLoading';
-export { default as ClientCard } from './ClientCard';
 export { default as Copy } from './Copy';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
