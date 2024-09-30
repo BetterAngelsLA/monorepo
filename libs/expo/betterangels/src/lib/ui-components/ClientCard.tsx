@@ -59,7 +59,7 @@ export default function ClientCard(props: IClientCardProps) {
   const getLahsaHmisId = (
     hmisProfiles: Maybe<HmisProfileType[] | undefined>
   ) => {
-    return hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.id;
+    return hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.hmisId;
   };
   const formattedHeight = client.heightInInches
     ? formatHeight(client.heightInInches)
