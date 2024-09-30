@@ -113,7 +113,7 @@ export default function ClientHeader(props: IClientHeaderProps) {
         }}
       >
         <TentIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        <TextRegular>Last Interaction:N/A</TextRegular>
+        <TextRegular>Last Interaction: N/A</TextRegular>
       </View> */}
       {client?.residenceAddress && (
         <View
