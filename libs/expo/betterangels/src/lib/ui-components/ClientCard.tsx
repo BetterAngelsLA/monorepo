@@ -6,15 +6,17 @@ import {
   UserOutlineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Avatar,
+  IconButton,
+  TextBold,
+  TextButton,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { HmisProfileType } from 'libs/expo/betterangels/src/lib/apollo/graphql/__generated__/types';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import Avatar from '../Avatar';
-import IconButton from '../IconButton';
-import TextBold from '../TextBold';
-import TextButton from '../TextButton';
-import TextRegular from '../TextRegular';
+import { HmisProfileType } from '../apollo';
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
   imageUrl?: string;
@@ -41,7 +43,7 @@ interface IClientCardProps {
   arrivedFrom?: string;
 }
 
-export function ClientCard(props: IClientCardProps) {
+export default function ClientCard(props: IClientCardProps) {
   const {
     imageUrl,
     age,

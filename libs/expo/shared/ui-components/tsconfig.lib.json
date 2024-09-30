@@ -14,5 +14,11 @@
     "**/*.stories.tsx"
   ],
   "files": ["../../../../node_modules/@nx/expo/typings/svg.d.ts"],
-  "include": ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+  "include": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    "../../betterangels/src/lib/ui-components/ClientCard.tsx"
+  ]
 }

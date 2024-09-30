@@ -1,6 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ClientCard,
   Loading,
   TextBold,
   TextButton,
@@ -13,7 +12,7 @@ import { FlatList, View } from 'react-native';
 
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientProfileType } from '../../apollo';
-import { ClientCardModal, Header } from '../../ui-components';
+import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
