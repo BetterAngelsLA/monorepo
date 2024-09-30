@@ -28,15 +28,13 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        # Order of fields: id -> direct fields and model properties -> display fields -> related fields
         self.client_profile_fields = """
             id
             adaAccommodation
             address
             age
             dateOfBirth
-            displayCaseManager
-            displayGender
-            displayPronouns
             eyeColor
             gender
             genderOther
@@ -58,6 +56,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             spokenLanguages
             veteranStatus
+            displayCaseManager
+            displayGender
+            displayPronouns
             contacts {
                 id
                 name
@@ -81,6 +82,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 genderOther
                 relationshipToClient
                 relationshipToClientOther
+            }
+            phoneNumbers {
+                id
+                number
+                isPrimary
             }
             profilePhoto {
                 name
@@ -179,6 +185,15 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_household_member_1,
             self.client_profile_1_household_member_2,
         ]
+        self.client_1_phone_number_1 = {
+            "number": "2125551212",
+            "isPrimary": True,
+        }
+        self.client_1_phone_number_2 = {
+            "number": "7185551212",
+        }
+        self.client_profile_1_phone_numbers = [self.client_1_phone_number_1, self.client_1_phone_number_2]
+
         self.client_1_social_media_profile_1 = {
             "platform": SocialMediaEnum.INSTAGRAM.name,
             "platformUserId": "toadman",
@@ -191,6 +206,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_1_social_media_profile_1,
             self.client_1_social_media_profile_2,
         ]
+
         self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
@@ -210,6 +226,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
+                "phoneNumbers": self.client_profile_1_phone_numbers,
                 "physicalDescription": "A human",
                 "placeOfBirth": "Los Angeles, CA",
                 "preferredCommunication": PreferredCommunicationEnum.CALL.name,
@@ -245,6 +262,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
+                "phoneNumbers": [],
                 "physicalDescription": None,
                 "placeOfBirth": None,
                 "preferredCommunication": None,

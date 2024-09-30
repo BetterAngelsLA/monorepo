@@ -4294,6 +4294,7 @@ __metadata:
     "@nx/storybook": "npm:19.5.3"
     "@nx/workspace": "npm:19.5.3"
     "@nxlv/python": "npm:17.0.0"
+    "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-community/datetimepicker": "npm:8.0.1"
     "@storybook/addon-essentials": "npm:^7.6.20"
     "@storybook/addon-react-native-web": "npm:^0.0.24"
@@ -4344,6 +4345,7 @@ __metadata:
     expo-location: "npm:~17.0.1"
     expo-router: "npm:~3.5.23"
     expo-secure-store: "npm:~13.0.2"
+    expo-sharing: "npm:^12.0.1"
     expo-splash-screen: "npm:0.27.5"
     expo-status-bar: "npm:1.12.1"
     expo-updates: "npm:~0.25.22"
@@ -5996,6 +5998,17 @@ __metadata:
   dependencies:
     "@babel/runtime": "npm:^7.13.10"
   checksum: 10/e25492cb8a683246161d781f0f3205f79507280a60f50eb763f06e8b6fa211b940b784aa581131ed76695bd5df5d1033a6246b43a6996cf8959a326fe4d3eb00
+  languageName: node
+  linkType: hard
+
+"@react-native-async-storage/async-storage@npm:1.23.1":
+  version: 1.23.1
+  resolution: "@react-native-async-storage/async-storage@npm:1.23.1"
+  dependencies:
+    merge-options: "npm:^3.0.4"
+  peerDependencies:
+    react-native: ^0.0.0-0 || >=0.60 <1.0
+  checksum: 10/9d0acc7edb0ba9ee414d6e62c656e5d571c9d9615e7e9f4748865b965178998f2e73786b8050387ada00ddb6faaca97b5cf2e010ceaeebe91571991364a0f515
   languageName: node
   linkType: hard
 
@@ -14002,6 +14015,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-sharing@npm:^12.0.1":
+  version: 12.0.1
+  resolution: "expo-sharing@npm:12.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/11f90dbef9a0f9defedeeaf9898a1af7cb25a7c30fed3e19d09f32a1ae218bac7c35a4575235b541daf20145e36597bd8286bf60b98a027cbaf8832424bbada4
+  languageName: node
+  linkType: hard
+
 "expo-splash-screen@npm:0.27.5":
   version: 0.27.5
   resolution: "expo-splash-screen@npm:0.27.5"
@@ -18481,6 +18503,15 @@ __metadata:
   version: 1.0.1
   resolution: "merge-descriptors@npm:1.0.1"
   checksum: 10/5abc259d2ae25bb06d19ce2b94a21632583c74e2a9109ee1ba7fd147aa7362b380d971e0251069f8b3eb7d48c21ac839e21fa177b335e82c76ec172e30c31a26
+  languageName: node
+  linkType: hard
+
+"merge-options@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "merge-options@npm:3.0.4"
+  dependencies:
+    is-plain-obj: "npm:^2.1.0"
+  checksum: 10/d86ddb3dd6e85d558dbf25dc944f3527b6bacb944db3fdda6e84a3f59c4e4b85231095f58b835758b9a57708342dee0f8de0dffa352974a48221487fe9f4584f
   languageName: node
   linkType: hard
 

@@ -55,6 +55,8 @@ interface AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum AttachmentType {
@@ -116,6 +118,8 @@ type ClientDocumentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   namespace: ClientDocumentNamespaceEnum!
 }
 
@@ -192,6 +196,7 @@ type ClientProfileType {
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
+  phoneNumbers: [PhoneNumberType!]
   socialMediaProfiles: [SocialMediaProfileType!]
   displayGender: String
   displayPronouns: String
@@ -240,6 +245,7 @@ input CreateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
 }
@@ -577,6 +583,8 @@ type NoteAttachmentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   namespace: NoteNamespaceEnum!
 }
 
@@ -674,6 +682,18 @@ type OrganizationType {
 }
 
 scalar PhoneNumber
+
+input PhoneNumberInput {
+  id: ID
+  number: PhoneNumber
+  isPrimary: Boolean = false
+}
+
+type PhoneNumberType {
+  id: ID!
+  number: PhoneNumber
+  isPrimary: Boolean
+}
 
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
@@ -899,6 +919,7 @@ input UpdateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
 }

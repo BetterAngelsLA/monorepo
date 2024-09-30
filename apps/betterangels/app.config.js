@@ -13,7 +13,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.20',
+    version: '1.0.22',
     orientation: 'portrait',
     icon: './src/app/assets/images/icon.png',
     splash: {
@@ -29,7 +29,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.17', // Does this number reset when you bump the version number?
+      buildNumber: '1.0.19', // Does this number reset when you bump the version number?
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -42,6 +42,10 @@ export default {
         foregroundImage: './src/app/assets/images/adaptive-icon.png',
         backgroundColor: '#1E3342',
       },
+      blockedPermissions: [
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+      ], // https://github.com/expo/expo/issues/25361#issuecomment-2363699975
       softwareKeyboardLayoutMode: 'pan',
       package: BUNDLE_IDENTIFIER,
       intentFilters: [
@@ -62,7 +66,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 17, // Does this number reset when you bump the version number?
+      versionCode: 19, // Does this number reset when you bump the version number?
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',

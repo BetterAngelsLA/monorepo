@@ -24,6 +24,13 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export enum AdaAccommodationEnum {
+  Hearing = 'HEARING',
+  Mobility = 'MOBILITY',
+  Other = 'OTHER',
+  Visual = 'VISUAL'
+}
+
 export type AddNoteTaskInput = {
   noteId: Scalars['ID']['input'];
   taskId: Scalars['ID']['input'];
@@ -48,9 +55,11 @@ export type AddressType = {
 
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export enum AttachmentType {
@@ -112,10 +121,12 @@ export enum ClientDocumentNamespaceEnum {
 export type ClientDocumentType = AttachmentInterface & {
   __typename?: 'ClientDocumentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientHouseholdMemberInput = {
@@ -163,6 +174,7 @@ export type ClientProfilePhotoInput = {
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
+  adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
@@ -187,6 +199,7 @@ export type ClientProfileType = {
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
+  phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
   preferredCommunication?: Maybe<PreferredCommunicationEnum>;
@@ -226,6 +239,7 @@ export type CreateClientDocumentInput = {
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
@@ -243,6 +257,7 @@ export type CreateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
@@ -749,10 +764,12 @@ export type NoteAttachmentFilter = {
 export type NoteAttachmentType = AttachmentInterface & {
   __typename?: 'NoteAttachmentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type NoteFilter = {
@@ -881,6 +898,19 @@ export type PermDefinition = {
   app?: InputMaybe<Scalars['String']['input']>;
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PhoneNumberInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isPrimary?: InputMaybe<Scalars['Boolean']['input']>;
+  number?: InputMaybe<Scalars['PhoneNumber']['input']>;
+};
+
+export type PhoneNumberType = {
+  __typename?: 'PhoneNumberType';
+  id: Scalars['ID']['output'];
+  isPrimary?: Maybe<Scalars['Boolean']['output']>;
+  number?: Maybe<Scalars['PhoneNumber']['output']>;
 };
 
 export enum PreferredCommunicationEnum {
@@ -1146,6 +1176,7 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
@@ -1164,6 +1195,7 @@ export type UpdateClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
   preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;

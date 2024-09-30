@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
-import { BasicInput, Button } from '@monorepo/expo/shared/ui-components'; // Importing the Button component
+import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
+import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
@@ -30,8 +31,9 @@ export default function LoginForm({
 }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [loginForm, { loading, error }] = useLoginFormMutation();
   const { refetchUser } = useUser();
+  const { switchToProduction, switchToDemo } = useApolloClientContext();
+  const [loginForm, { loading, error }] = useLoginFormMutation();
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,32 +42,49 @@ export default function LoginForm({
 
   const isButtonDisabled = !isValidEmail(username) || password.length < 8;
 
+  const checkIfDemoMode = (email: string): boolean => {
+    const demoDomain = '@example.com';
+    return email.endsWith(demoDomain);
+  };
+
+  const handleUsernameChange = (newUsername: string) => {
+    setUsername(newUsername);
+    if (checkIfDemoMode(newUsername)) {
+      console.log('Switching to Demo API');
+      switchToDemo();
+    } else {
+      console.log('Switching to Production API');
+      switchToProduction();
+    }
+  };
+
   const handleLogin = async () => {
     if (isButtonDisabled) {
       setErrorMessage('Either email or password is incorrect.');
       return;
     }
+
     setIsLoading(true);
+
     try {
       const { data } = await loginForm({
         variables: {
-          username: username,
-          password: password,
+          username,
+          password,
         },
       });
 
       if (error) {
         setErrorMessage('Something went wrong. Please try again.');
-      }
-      if (!loading && data && 'login' in data) {
+      } else if (!loading && data && 'login' in data) {
         refetchUser();
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (error) {
       setErrorMessage('Something went wrong. Please try again.');
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (
@@ -75,7 +94,7 @@ export default function LoginForm({
         borderRadius={50}
         height={44}
         value={username}
-        onChangeText={setUsername}
+        onChangeText={handleUsernameChange}
         placeholder="Enter email address"
         placeholderTextColor="#A9A9A9"
         autoCapitalize="none"
