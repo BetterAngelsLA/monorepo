@@ -23,6 +23,13 @@ query GetClientProfile($id: ID!) {
       dateOfBirth
       gender
       genderOther
+      race
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      physicalDescription
+      maritalStatus
       hmisProfiles {
         agency
         hmisId
@@ -30,8 +37,14 @@ query GetClientProfile($id: ID!) {
       }
       nickname
       phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
       preferredLanguage
       pronouns
+      pronounsOther
       veteranStatus
       livingSituation
       user {

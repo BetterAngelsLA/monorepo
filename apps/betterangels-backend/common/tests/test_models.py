@@ -1,7 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from common.models import Address, Location
+from common.models import Address, Location, PhoneNumber
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 from model_bakery import baker
@@ -237,3 +238,19 @@ class LocationModelTestCase(ParametrizedTestCase, TestCase):
         assert location.address
         self.assertEqual(Address.objects.count(), address_count + 1)
         self.assertEqual(location.address.street, expected_street)
+
+
+class PhoneNumberTestCase(TestCase):
+    def test_save(self) -> None:
+        content_type = ContentType.objects.get_for_model(Address)
+        phone_number_1 = PhoneNumber.objects.create(
+            content_type=content_type, object_id=1, number="2125551212", is_primary=True
+        )
+        self.assertTrue(phone_number_1.is_primary)
+
+        phone_number_2 = PhoneNumber.objects.create(
+            content_type=content_type, object_id=1, number="2125551213", is_primary=True
+        )
+        phone_number_1.refresh_from_db()
+        self.assertFalse(phone_number_1.is_primary)
+        self.assertTrue(phone_number_2.is_primary)

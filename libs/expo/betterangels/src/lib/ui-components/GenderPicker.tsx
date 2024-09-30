@@ -1,8 +1,9 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   CardWrapper,
   Input,
   Radio,
+  TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { ReactNode } from 'react';
@@ -25,19 +26,30 @@ interface IGenderPickerProps<T extends FieldValues> {
   control: Control<T>;
   otherName: NestedKeyOf<T>;
   withCard?: boolean;
-  cardTitle?: string;
-  title?: string;
+  cardTitle?: boolean;
+  title?: boolean;
+  onReset?: () => void;
 }
 
 export default function GenderPicker<T extends FieldValues>(
   props: IGenderPickerProps<T>
 ) {
-  const { value, onPress, otherName, control, withCard, cardTitle, title } =
-    props;
+  const {
+    value,
+    onPress,
+    otherName,
+    control,
+    withCard,
+    cardTitle,
+    title,
+    onReset,
+  } = props;
 
   const Wrapper = ({ children }: { children: ReactNode }) => {
     if (withCard) {
-      return <CardWrapper title={cardTitle}>{children}</CardWrapper>;
+      return (
+        <CardWrapper title={cardTitle ? 'Gender' : ''}>{children}</CardWrapper>
+      );
     }
     return children;
   };
@@ -63,6 +75,17 @@ export default function GenderPicker<T extends FieldValues>(
             name={otherName}
             control={control}
           />
+        )}
+        {onReset && (
+          <View style={{ alignItems: 'flex-end' }}>
+            <TextButton
+              mt="sm"
+              color={Colors.PRIMARY}
+              title="Reset"
+              accessibilityHint="resets gender"
+              onPress={onReset}
+            />
+          </View>
         )}
       </View>
     </Wrapper>

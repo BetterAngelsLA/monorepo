@@ -6,7 +6,16 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       gender
       displayGender
+      displayPronouns
+      displayCaseManager
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      maritalStatus
+      physicalDescription
       genderOther
+      race
       age
       hmisProfiles {
         agency
@@ -15,6 +24,11 @@ query ClientProfile($id: ID!) {
       }
       nickname
       phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
       preferredLanguage
       pronouns
       veteranStatus
@@ -55,7 +69,9 @@ query ClientProfile($id: ID!) {
       }
       docReadyDocuments {
         id
+        createdAt
         namespace
+        originalFilename
         file {
           url
           name
@@ -63,7 +79,9 @@ query ClientProfile($id: ID!) {
       }
       consentFormDocuments {
         id
+        createdAt
         namespace
+        originalFilename
         file {
           url
           name
@@ -71,7 +89,9 @@ query ClientProfile($id: ID!) {
       }
       otherDocuments {
         id
+        createdAt
         namespace
+        originalFilename
         file {
           url
           name
@@ -91,6 +111,21 @@ mutation CreateClientDocument($data: CreateClientDocumentInput!) {
       }
     }
 
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+
+mutation DeleteClientDocument($id: ID!) {
+  deleteClientDocument(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
     ... on ClientDocumentType {
       id
     }

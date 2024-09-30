@@ -12,7 +12,7 @@ interface IMainModalProps {
   closeModal: () => void;
   actions: {
     title: string;
-    route: string;
+    route?: string;
     Icon: React.ElementType;
     params?: {
       title: string;
@@ -95,10 +95,11 @@ export default function MainModal(props: IMainModalProps) {
                   return action.onPress();
                 }
                 closeModal();
-                router.navigate({
-                  pathname: action.route,
-                  params: action.params,
-                });
+                action.route &&
+                  router.navigate({
+                    pathname: action.route,
+                    params: action.params,
+                  });
               }}
               accessibilityRole="button"
               key={idx}
