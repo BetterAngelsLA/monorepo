@@ -136,20 +136,12 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           clients ? (
             <ClientCard
               arrivedFrom="/"
-              id={clientProfile.id}
               onPress={() => {
                 setCurrentClient(clientProfile);
                 setModalIsOpen(true);
               }}
               mb="sm"
-              age={clientProfile.age}
-              dateOfBirth={clientProfile.dateOfBirth}
-              firstName={clientProfile.user.firstName}
-              heightInInches={clientProfile.heightInInches}
-              hmisProfiles={clientProfile.hmisProfiles}
-              lastName={clientProfile.user.lastName}
-              nickname={clientProfile.nickname}
-              residenceAddress={clientProfile.residenceAddress}
+              client={clientProfile}
             />
           ) : null
         }

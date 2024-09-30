@@ -224,10 +224,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
-                imageUrl={clientProfile.profilePhoto?.url}
+                client={clientProfile}
                 arrivedFrom="/clients"
                 select={select as string}
-                id={clientProfile.id}
                 onPress={() => {
                   if (select === 'true') {
                     createNoteFunction(
@@ -240,14 +239,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   }
                 }}
                 mb="sm"
-                age={clientProfile.age}
-                dateOfBirth={clientProfile.dateOfBirth}
-                firstName={clientProfile.user.firstName}
-                heightInInches={clientProfile.heightInInches}
-                hmisProfiles={clientProfile.hmisProfiles}
-                lastName={clientProfile.user.lastName}
-                nickname={clientProfile.nickname}
-                residenceAddress={clientProfile.residenceAddress}
               />
             ) : null
           }
