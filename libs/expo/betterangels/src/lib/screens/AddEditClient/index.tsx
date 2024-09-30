@@ -179,10 +179,12 @@ export default function AddEditClient({ id }: { id?: string }) {
   useEffect(() => {
     if (!data || !('clientProfile' in data) || !id) return;
 
+    const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
+
     const clientInput = {
-      ...data.clientProfile,
+      ...updatedClientInput,
       user: {
-        ...data.clientProfile.user,
+        ...updatedClientInput.user,
       },
     };
 
@@ -218,6 +220,8 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     delete clientInput.__typename;
     delete clientInput.user.__typename;
+    delete clientInput.displayGender;
+    delete clientInput.displayPronouns;
 
     const newHmisProfiles = clientInput.hmisProfiles?.map((profile) => {
       const { __typename, ...rest } = profile;

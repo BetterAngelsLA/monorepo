@@ -6,8 +6,11 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       gender
       displayGender
+      displayCaseManager
+      displayPronouns
       displayPronouns
       displayCaseManager
+      residenceAddress
       placeOfBirth
       heightInInches
       eyeColor
