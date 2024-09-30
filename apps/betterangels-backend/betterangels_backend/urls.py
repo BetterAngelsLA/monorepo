@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+import admin_async_upload.views  # type: ignore
 from betterangels_backend import settings
 from common.graphql.views import ProtectedGraphQLView
 from django.conf.urls.static import static
@@ -33,6 +34,7 @@ urlpatterns = [
     path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
+    path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
 ]
 
 

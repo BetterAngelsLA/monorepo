@@ -1,8 +1,13 @@
+from typing import Any
+
+import django.db.models
+from admin_async_upload.fields import make_resumable_admin_file_fields  # type : ignore
 from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
@@ -71,6 +76,15 @@ class AttachmentAdmin(admin.ModelAdmin):
         "id",
         "attachment_type",
     )
+
+    def formfield_for_dbfield(
+        self: Any,
+        db_field: django.db.models.Field,
+        request: HttpRequest,
+        **kwargs: dict,
+    ) -> Any:
+        kwargs = make_resumable_admin_file_fields(db_field, ["file"], **kwargs)
+        return super(AttachmentAdmin, self).formfield_for_dbfield(db_field, request, **kwargs)
 
     @admin.display(description="Attachment")
     def get_str(self, obj: Attachment) -> str:
