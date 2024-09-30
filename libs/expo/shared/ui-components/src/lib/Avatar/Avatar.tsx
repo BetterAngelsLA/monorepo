@@ -1,4 +1,4 @@
-import { UserIcon } from '@monorepo/expo/shared/icons';
+import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
 
@@ -49,10 +49,10 @@ export function Avatar(props: IAvatarProps) {
   const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
     switch (size) {
       case 'sm':
-        return <UserIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
+        return <UserOutlineIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
       case 'md':
       case 'lg':
-        return <UserIcon color={Colors.PRIMARY_EXTRA_DARK} />;
+        return <UserOutlineIcon color={Colors.PRIMARY_EXTRA_DARK} />;
       default:
         return null;
     }

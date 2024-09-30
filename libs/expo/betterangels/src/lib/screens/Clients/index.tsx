@@ -2,7 +2,6 @@ import { SearchIcon, UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  ClientCard,
   Loading,
   TextBold,
   TextRegular,
@@ -12,7 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
 import { ClientProfileType, Ordering } from '../../apollo';
-import { ClientCardModal, Header } from '../../ui-components';
+import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -225,10 +224,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={({ item: clientProfile }) =>
             clients ? (
               <ClientCard
-                imageUrl={clientProfile.profilePhoto?.url}
+                client={clientProfile}
                 arrivedFrom="/clients"
                 select={select as string}
-                id={clientProfile.id}
                 onPress={() => {
                   if (select === 'true') {
                     createNoteFunction(
@@ -241,9 +239,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   }
                 }}
                 mb="sm"
-                firstName={clientProfile.user.firstName}
-                lastName={clientProfile.user.lastName}
-                nickname={clientProfile.nickname}
               />
             ) : null
           }
