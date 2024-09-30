@@ -179,12 +179,12 @@ export default function AddEditClient({ id }: { id?: string }) {
   useEffect(() => {
     if (!data || !('clientProfile' in data) || !id) return;
 
-    const { displayCaseManager, ...updatedCLientInput } = data.clientProfile;
+    const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
 
     const clientInput = {
-      ...updatedCLientInput,
+      ...updatedClientInput,
       user: {
-        ...updatedCLientInput.user,
+        ...updatedClientInput.user,
       },
     };
 

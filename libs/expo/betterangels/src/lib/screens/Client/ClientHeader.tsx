@@ -104,17 +104,6 @@ export default function ClientHeader(props: IClientHeaderProps) {
           </TextRegular>
         </TextRegular>
       </View>
-      {/* // TODO: last interaction was split out to DEV-761*/}
-      {/* <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: Spacings.xxs,
-        }}
-      >
-        <TentIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        <TextRegular>Last Interaction: N/A</TextRegular>
-      </View> */}
       {client?.residenceAddress && (
         <View
           style={{
