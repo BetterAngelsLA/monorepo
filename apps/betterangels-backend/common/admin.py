@@ -1,4 +1,4 @@
-from common.models import Address, Attachment, Location
+from common.models import Address, Attachment, AttachmentModelForm, Location
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
@@ -71,6 +71,35 @@ class AttachmentAdmin(admin.ModelAdmin):
         "id",
         "attachment_type",
     )
+
+    # N.B.: The below does not work, it seems to get hung up on something involving the CSS import
+    change_form_template = "formset_admin_change_form.html"
+
+    def get_form(self, request, obj=None, **kwargs):
+        return AttachmentModelForm
+
+    def add_view(self, request, form_url="", extra_context=None):
+        if (
+            request.method == "POST"
+            and request.content_type == "multipart/form-data"
+            and "temp_file" in request.FILES
+            and "image_height" in request.POST
+        ):
+            return FileUploadMixin()._receive_uploaded_file(request.FILES["temp_file"], request.POST["image_height"])
+        extra_context = extra_context or {}
+        extra_context["click_actions"] = "disable -> submit -> reload !~ scrollToError"
+        return super().add_view(request, form_url, extra_context)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["osm_data"] = self.get_osm_info()
+        extra_context["click_actions"] = "disable -> submit -> reload !~ scrollToError"
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
 
     @admin.display(description="Attachment")
     def get_str(self, obj: Attachment) -> str:

@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html dir="ltr" lang="{{ LANGUAGE_CODE|default:'en' }}">
+    <head>
+        <meta charset="utf-8" />
+        <script type="module"
+                src="{% if use_monolithic_build %}{% static 'formset/js/django-formset.monolith.js' %}{% else %}{% static 'formset/js/django-formset.js' %}{% endif %}"></script>
+        {% load render_form from formsetify %}
+    </head>
+    <body>
+        <django-formset endpoint="{{ request.path }}"
+        {% if force_submission %}force-submission{% endif %}
+        {% if withhold_feedback %}withhold-feedback="{{ withhold_feedback }}"{% endif %}
+        csrf-token="{{ csrf_token }}">
+        {% include "formset/non_field_errors.html" %}
+        {% render_form form framework form_classes=form_css_classes field_classes=field_css_classes fieldset_classes=fieldset_css_classes label_classes=label_css_classes|default:None control_classes=control_css_classes %}
+        {% include "formset_buttons.html" %}
+        </django-formset>
+        {% if valid_formset_data %}
+            <hr>
+            <h3>Submitted Formset Data:</h3>
+            <pre>{{ valid_formset_data }}</pre>
+        {% endif %}
+    </body>
+</html>

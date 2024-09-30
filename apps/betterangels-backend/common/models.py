@@ -8,7 +8,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import ForeignKey
+from django.forms import ModelForm
 from django_choices_field import TextChoicesField
+from formset.widgets import UploadedFileInput  # ignore : type
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -101,6 +103,15 @@ class Attachment(BaseModel):
                 self.attachment_type = AttachmentType.DOCUMENT
             self.file.seek(0)
         super().save(*args, **kwargs)
+
+
+class AttachmentModelForm(ModelForm):
+    class Meta:
+        model = Attachment
+        fields = "__all__"
+        widgets = {
+            "file": UploadedFileInput,
+        }
 
 
 class Address(BaseModel):

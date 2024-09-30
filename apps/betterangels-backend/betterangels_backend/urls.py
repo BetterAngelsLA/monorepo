@@ -17,12 +17,14 @@ Including another URLconf
 
 from betterangels_backend import settings
 from common.graphql.views import ProtectedGraphQLView
+from common.models import Attachment, AttachmentModelForm
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
 
 from .schema import schema
+from .views import FormsetModelFormView
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
@@ -33,6 +35,7 @@ urlpatterns = [
     path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
+    path("attachment_upload/", FormsetModelFormView.as_view(form_class=AttachmentModelForm, model=Attachment)),
 ]
 
 
