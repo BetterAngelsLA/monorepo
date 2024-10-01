@@ -9,7 +9,7 @@ from phonenumbers import NumberParseException
 from phonenumbers import PhoneNumber as PhoneNumberUS
 from phonenumbers import is_valid_number, parse
 from strawberry import ID, auto
-from strawberry.exceptions import GraphQLError, StrawberryGraphQLError
+from strawberry.exceptions import GraphQLError
 
 PhoneNumberScalar: Union[DjangoPhoneNumber, str] = strawberry.scalar(
     DjangoPhoneNumber,
