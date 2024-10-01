@@ -1,4 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
+import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
 import { useCallback } from 'react';
 import useUser from './useUser';
 
@@ -11,15 +12,17 @@ export const LOGOUT_MUTATION = gql`
 export default function useSignOut() {
   const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
   const { setUser } = useUser();
+  const { switchToProduction } = useApolloClientContext();
 
   const signOut = useCallback(async () => {
     try {
       await logout();
       setUser(undefined);
+      switchToProduction();
     } catch (err) {
       console.error(err);
     }
-  }, [logout, setUser]);
+  }, [logout, setUser, switchToProduction]);
 
   return { signOut, loading, error };
 }

@@ -37,7 +37,25 @@ query ClientProfiles(
   clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
     ... on ClientProfileType {
       id
-      hmisId
+      age
+      dateOfBirth
+      heightInInches
+      mailingAddress
+      nickname
+      residenceAddress
+      hmisProfiles {
+        id
+        agency
+        hmisId
+      }
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       user {
         id
         email

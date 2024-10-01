@@ -2,18 +2,135 @@ query ClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      hmisId
-      gender
+      address
       dateOfBirth
-      preferredLanguage
+      gender
+      displayGender
+      displayCaseManager
+      displayPronouns
+      displayPronouns
+      displayCaseManager
+      residenceAddress
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      maritalStatus
+      physicalDescription
+      genderOther
+      race
       age
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
+      nickname
+      phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      preferredLanguage
+      pronouns
+      veteranStatus
+      livingSituation
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       user {
         id
         email
         firstName
+        middleName
         lastName
-        username
       }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
+      }
+      householdMembers {
+        dateOfBirth
+        gender
+        genderOther
+        displayGender
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
+      }
+      docReadyDocuments {
+        id
+        createdAt
+        namespace
+        originalFilename
+        file {
+          url
+          name
+        }
+      }
+      consentFormDocuments {
+        id
+        createdAt
+        namespace
+        originalFilename
+        file {
+          url
+          name
+        }
+      }
+      otherDocuments {
+        id
+        createdAt
+        namespace
+        originalFilename
+        file {
+          url
+          name
+        }
+      }
+    }
+  }
+}
+
+mutation CreateClientDocument($data: CreateClientDocumentInput!) {
+  createClientDocument(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+
+mutation DeleteClientDocument($id: ID!) {
+  deleteClientDocument(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientDocumentType {
+      id
     }
   }
 }

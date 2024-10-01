@@ -1,115 +1,54 @@
 import * as Types from '../../../apollo/graphql/__generated__/types';
 
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type UpdateClientProfileMutationVariables = Types.Exact<{
   data: Types.UpdateClientProfileInput;
 }>;
 
-export type UpdateClientProfileMutation = {
-  __typename?: 'Mutation';
-  updateClientProfile:
-    | { __typename?: 'ClientProfileType'; id: string }
-    | {
-        __typename?: 'OperationInfo';
-        messages: Array<{
-          __typename?: 'OperationMessage';
-          kind: Types.OperationMessageKind;
-          field?: string | null;
-          message: string;
-        }>;
-      };
-};
+
+export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type GetClientProfileQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
-export type GetClientProfileQuery = {
-  __typename?: 'Query';
-  clientProfile: {
-    __typename?: 'ClientProfileType';
-    id: string;
-    address?: string | null;
-    dateOfBirth?: any | null;
-    displayPronouns?: string | null;
-    gender?: Types.GenderEnum | null;
-    hmisId?: string | null;
-    nickname?: string | null;
-    phoneNumber?: string | null;
-    preferredLanguage?: Types.LanguageEnum | null;
-    pronouns?: Types.PronounEnum | null;
-    veteranStatus?: Types.YesNoPreferNotToSayEnum | null;
-    user: {
-      __typename?: 'UserType';
-      id: string;
-      email?: string | null;
-      firstName?: string | null;
-      middleName?: string | null;
-      lastName?: string | null;
-    };
-  };
-};
+
+export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, age?: number | null, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, race?: Types.RaceEnum | null, placeOfBirth?: string | null, heightInInches?: number | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, physicalDescription?: string | null, displayCaseManager: string, maritalStatus?: Types.MaritalStatusEnum | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, displayPronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null } };
 
 export type CreateClientProfileMutationVariables = Types.Exact<{
   data: Types.CreateClientProfileInput;
 }>;
 
-export type CreateClientProfileMutation = {
-  __typename?: 'Mutation';
-  createClientProfile:
-    | { __typename?: 'ClientProfileType'; id: string }
-    | {
-        __typename?: 'OperationInfo';
-        messages: Array<{
-          __typename?: 'OperationMessage';
-          kind: Types.OperationMessageKind;
-          field?: string | null;
-          message: string;
-        }>;
-      };
-};
+
+export type CreateClientProfileMutation = { __typename?: 'Mutation', createClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type DeleteClientProfileMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
-export type DeleteClientProfileMutation = {
-  __typename?: 'Mutation';
-  deleteClientProfile:
-    | { __typename?: 'DeletedObjectType'; id: number }
-    | {
-        __typename?: 'OperationInfo';
-        messages: Array<{
-          __typename?: 'OperationMessage';
-          kind: Types.OperationMessageKind;
-          field?: string | null;
-          message: string;
-        }>;
-      };
-};
+
+export type DeleteClientProfileMutation = { __typename?: 'Mutation', deleteClientProfile: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
 
 export const UpdateClientProfileDocument = gql`
-  mutation UpdateClientProfile($data: UpdateClientProfileInput!) {
-    updateClientProfile(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on ClientProfileType {
-        id
+    mutation UpdateClientProfile($data: UpdateClientProfileInput!) {
+  updateClientProfile(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
       }
     }
+    ... on ClientProfileType {
+      id
+    }
   }
-`;
-export type UpdateClientProfileMutationFn = Apollo.MutationFunction<
-  UpdateClientProfileMutation,
-  UpdateClientProfileMutationVariables
->;
+}
+    `;
+export type UpdateClientProfileMutationFn = Apollo.MutationFunction<UpdateClientProfileMutation, UpdateClientProfileMutationVariables>;
 
 /**
  * __useUpdateClientProfileMutation__
@@ -128,53 +67,79 @@ export type UpdateClientProfileMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useUpdateClientProfileMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    UpdateClientProfileMutation,
-    UpdateClientProfileMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
-    UpdateClientProfileMutation,
-    UpdateClientProfileMutationVariables
-  >(UpdateClientProfileDocument, options);
-}
-export type UpdateClientProfileMutationHookResult = ReturnType<
-  typeof useUpdateClientProfileMutation
->;
-export type UpdateClientProfileMutationResult =
-  Apollo.MutationResult<UpdateClientProfileMutation>;
-export type UpdateClientProfileMutationOptions = Apollo.BaseMutationOptions<
-  UpdateClientProfileMutation,
-  UpdateClientProfileMutationVariables
->;
+export function useUpdateClientProfileMutation(baseOptions?: Apollo.MutationHookOptions<UpdateClientProfileMutation, UpdateClientProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateClientProfileMutation, UpdateClientProfileMutationVariables>(UpdateClientProfileDocument, options);
+      }
+export type UpdateClientProfileMutationHookResult = ReturnType<typeof useUpdateClientProfileMutation>;
+export type UpdateClientProfileMutationResult = Apollo.MutationResult<UpdateClientProfileMutation>;
+export type UpdateClientProfileMutationOptions = Apollo.BaseMutationOptions<UpdateClientProfileMutation, UpdateClientProfileMutationVariables>;
 export const GetClientProfileDocument = gql`
-  query GetClientProfile($id: ID!) {
-    clientProfile(pk: $id) {
-      ... on ClientProfileType {
-        id
-        address
-        dateOfBirth
-        displayPronouns
-        gender
+    query GetClientProfile($id: ID!) {
+  clientProfile(pk: $id) {
+    ... on ClientProfileType {
+      id
+      age
+      address
+      dateOfBirth
+      gender
+      genderOther
+      displayGender
+      race
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      physicalDescription
+      displayCaseManager
+      maritalStatus
+      hmisProfiles {
+        agency
         hmisId
-        nickname
+        id
+      }
+      nickname
+      phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      preferredLanguage
+      pronouns
+      pronounsOther
+      displayPronouns
+      veteranStatus
+      livingSituation
+      user {
+        id
+        email
+        firstName
+        middleName
+        lastName
+      }
+      householdMembers {
+        dateOfBirth
+        gender
+        genderOther
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
+      }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
         phoneNumber
-        preferredLanguage
-        pronouns
-        veteranStatus
-        user {
-          id
-          email
-          firstName
-          middleName
-          lastName
-        }
+        relationshipToClient
+        relationshipToClientOther
       }
     }
   }
-`;
+}
+    `;
 
 /**
  * __useGetClientProfileQuery__
@@ -192,79 +157,39 @@ export const GetClientProfileDocument = gql`
  *   },
  * });
  */
-export function useGetClientProfileQuery(
-  baseOptions: Apollo.QueryHookOptions<
-    GetClientProfileQuery,
-    GetClientProfileQueryVariables
-  > &
-    (
-      | { variables: GetClientProfileQueryVariables; skip?: boolean }
-      | { skip: boolean }
-    )
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetClientProfileQuery, GetClientProfileQueryVariables>(
-    GetClientProfileDocument,
-    options
-  );
-}
-export function useGetClientProfileLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
-    GetClientProfileQuery,
-    GetClientProfileQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<
-    GetClientProfileQuery,
-    GetClientProfileQueryVariables
-  >(GetClientProfileDocument, options);
-}
-export function useGetClientProfileSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
-    GetClientProfileQuery,
-    GetClientProfileQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<
-    GetClientProfileQuery,
-    GetClientProfileQueryVariables
-  >(GetClientProfileDocument, options);
-}
-export type GetClientProfileQueryHookResult = ReturnType<
-  typeof useGetClientProfileQuery
->;
-export type GetClientProfileLazyQueryHookResult = ReturnType<
-  typeof useGetClientProfileLazyQuery
->;
-export type GetClientProfileSuspenseQueryHookResult = ReturnType<
-  typeof useGetClientProfileSuspenseQuery
->;
-export type GetClientProfileQueryResult = Apollo.QueryResult<
-  GetClientProfileQuery,
-  GetClientProfileQueryVariables
->;
-export const CreateClientProfileDocument = gql`
-  mutation CreateClientProfile($data: CreateClientProfileInput!) {
-    createClientProfile(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
+export function useGetClientProfileQuery(baseOptions: Apollo.QueryHookOptions<GetClientProfileQuery, GetClientProfileQueryVariables> & ({ variables: GetClientProfileQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetClientProfileQuery, GetClientProfileQueryVariables>(GetClientProfileDocument, options);
       }
-      ... on ClientProfileType {
-        id
+export function useGetClientProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetClientProfileQuery, GetClientProfileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetClientProfileQuery, GetClientProfileQueryVariables>(GetClientProfileDocument, options);
+        }
+export function useGetClientProfileSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetClientProfileQuery, GetClientProfileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetClientProfileQuery, GetClientProfileQueryVariables>(GetClientProfileDocument, options);
+        }
+export type GetClientProfileQueryHookResult = ReturnType<typeof useGetClientProfileQuery>;
+export type GetClientProfileLazyQueryHookResult = ReturnType<typeof useGetClientProfileLazyQuery>;
+export type GetClientProfileSuspenseQueryHookResult = ReturnType<typeof useGetClientProfileSuspenseQuery>;
+export type GetClientProfileQueryResult = Apollo.QueryResult<GetClientProfileQuery, GetClientProfileQueryVariables>;
+export const CreateClientProfileDocument = gql`
+    mutation CreateClientProfile($data: CreateClientProfileInput!) {
+  createClientProfile(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
       }
     }
+    ... on ClientProfileType {
+      id
+    }
   }
-`;
-export type CreateClientProfileMutationFn = Apollo.MutationFunction<
-  CreateClientProfileMutation,
-  CreateClientProfileMutationVariables
->;
+}
+    `;
+export type CreateClientProfileMutationFn = Apollo.MutationFunction<CreateClientProfileMutation, CreateClientProfileMutationVariables>;
 
 /**
  * __useCreateClientProfileMutation__
@@ -283,47 +208,30 @@ export type CreateClientProfileMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useCreateClientProfileMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    CreateClientProfileMutation,
-    CreateClientProfileMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
-    CreateClientProfileMutation,
-    CreateClientProfileMutationVariables
-  >(CreateClientProfileDocument, options);
-}
-export type CreateClientProfileMutationHookResult = ReturnType<
-  typeof useCreateClientProfileMutation
->;
-export type CreateClientProfileMutationResult =
-  Apollo.MutationResult<CreateClientProfileMutation>;
-export type CreateClientProfileMutationOptions = Apollo.BaseMutationOptions<
-  CreateClientProfileMutation,
-  CreateClientProfileMutationVariables
->;
-export const DeleteClientProfileDocument = gql`
-  mutation DeleteClientProfile($id: ID!) {
-    deleteClientProfile(data: { id: $id }) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
+export function useCreateClientProfileMutation(baseOptions?: Apollo.MutationHookOptions<CreateClientProfileMutation, CreateClientProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateClientProfileMutation, CreateClientProfileMutationVariables>(CreateClientProfileDocument, options);
       }
-      ... on DeletedObjectType {
-        id
+export type CreateClientProfileMutationHookResult = ReturnType<typeof useCreateClientProfileMutation>;
+export type CreateClientProfileMutationResult = Apollo.MutationResult<CreateClientProfileMutation>;
+export type CreateClientProfileMutationOptions = Apollo.BaseMutationOptions<CreateClientProfileMutation, CreateClientProfileMutationVariables>;
+export const DeleteClientProfileDocument = gql`
+    mutation DeleteClientProfile($id: ID!) {
+  deleteClientProfile(data: {id: $id}) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
       }
     }
+    ... on DeletedObjectType {
+      id
+    }
   }
-`;
-export type DeleteClientProfileMutationFn = Apollo.MutationFunction<
-  DeleteClientProfileMutation,
-  DeleteClientProfileMutationVariables
->;
+}
+    `;
+export type DeleteClientProfileMutationFn = Apollo.MutationFunction<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>;
 
 /**
  * __useDeleteClientProfileMutation__
@@ -342,24 +250,10 @@ export type DeleteClientProfileMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useDeleteClientProfileMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    DeleteClientProfileMutation,
-    DeleteClientProfileMutationVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
-    DeleteClientProfileMutation,
-    DeleteClientProfileMutationVariables
-  >(DeleteClientProfileDocument, options);
-}
-export type DeleteClientProfileMutationHookResult = ReturnType<
-  typeof useDeleteClientProfileMutation
->;
-export type DeleteClientProfileMutationResult =
-  Apollo.MutationResult<DeleteClientProfileMutation>;
-export type DeleteClientProfileMutationOptions = Apollo.BaseMutationOptions<
-  DeleteClientProfileMutation,
-  DeleteClientProfileMutationVariables
->;
+export function useDeleteClientProfileMutation(baseOptions?: Apollo.MutationHookOptions<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>(DeleteClientProfileDocument, options);
+      }
+export type DeleteClientProfileMutationHookResult = ReturnType<typeof useDeleteClientProfileMutation>;
+export type DeleteClientProfileMutationResult = Apollo.MutationResult<DeleteClientProfileMutation>;
+export type DeleteClientProfileMutationOptions = Apollo.BaseMutationOptions<DeleteClientProfileMutation, DeleteClientProfileMutationVariables>;

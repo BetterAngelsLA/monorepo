@@ -1,8 +1,9 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { Keyboard, StyleSheet, View, ViewStyle } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown';
 
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -18,6 +19,9 @@ interface ISelectProps {
   placeholder?: string;
   onValueChange: (value: string) => void;
   items: { displayValue: string; value?: string }[];
+  defaultValue?: string;
+  labelMarginLeft?: TSpacing;
+  boldLabel?: boolean;
 }
 
 export function Select(props: ISelectProps) {
@@ -32,11 +36,16 @@ export function Select(props: ISelectProps) {
     label,
     onValueChange,
     placeholder = '',
+    defaultValue,
+    labelMarginLeft,
+    boldLabel,
   } = props;
 
   const containerStyle: ViewStyle = {
     width: '100%',
   };
+
+  const selectedItem = items.find((item) => item.value === defaultValue);
 
   return (
     <View
@@ -52,12 +61,20 @@ export function Select(props: ISelectProps) {
         },
       ]}
     >
-      {label && (
-        <TextRegular mb="xs" size="sm">
-          {label}
-        </TextRegular>
-      )}
+      {label &&
+        (boldLabel ? (
+          <TextBold ml={labelMarginLeft} mb="xs" size="sm">
+            {label}
+          </TextBold>
+        ) : (
+          <TextRegular ml={labelMarginLeft} mb="xs" size="sm">
+            {label}
+          </TextRegular>
+        ))}
+
       <SelectDropdown
+        onFocus={() => Keyboard.dismiss()}
+        defaultValue={selectedItem}
         data={items}
         onSelect={(selectedItem, index) => {
           onValueChange(selectedItem.value);

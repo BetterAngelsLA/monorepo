@@ -16,6 +16,8 @@ export default function NoteCard(props: INoteCardProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const isInteractionsPage = pathname === '/interactions';
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,7 +35,10 @@ export default function NoteCard(props: INoteCardProps) {
       ]}
     >
       <NoteCardHeader title={note.title} interactedAt={note.interactedAt} />
-      <NoteCardClient client={note.client} isSubmitted={note.isSubmitted} />
+      <NoteCardClient
+        client={isInteractionsPage ? note.client : note.createdBy}
+        isSubmitted={note.isSubmitted}
+      />
       <TextRegular numberOfLines={2} ellipsizeMode="tail" size="sm">
         {note.publicDetails}
       </TextRegular>

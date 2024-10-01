@@ -1,4 +1,17 @@
-import { GenderEnum, LanguageEnum, YesNoPreferNotToSayEnum } from '../apollo';
+import {
+  ClientDocumentNamespaceEnum,
+  EyeColorEnum,
+  GenderEnum,
+  HairColorEnum,
+  HmisAgencyEnum,
+  LanguageEnum,
+  LivingSituationEnum,
+  MaritalStatusEnum,
+  PronounEnum,
+  RaceEnum,
+  RelationshipTypeEnum,
+  YesNoPreferNotToSayEnum,
+} from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
@@ -17,12 +30,95 @@ export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Vietnamese]: 'Vietnamese',
 };
 
+export const enumDisplayLivingSituation: {
+  [key in LivingSituationEnum]: string;
+} = {
+  [LivingSituationEnum.Housing]: 'Housing',
+  [LivingSituationEnum.Shelter]: 'Shelter',
+  [LivingSituationEnum.Vehicle]: 'Vehicle',
+  [LivingSituationEnum.Tent]: 'Tent',
+  [LivingSituationEnum.OpenAir]: 'Open Air',
+  [LivingSituationEnum.Other]: 'Other',
+};
+
+export const enumDisplayHmisAgency: {
+  [key in HmisAgencyEnum]: string;
+} = {
+  [HmisAgencyEnum.Lahsa]: 'LAHSA',
+  [HmisAgencyEnum.SantaMonica]: 'Santa Monica',
+  [HmisAgencyEnum.Pasadena]: 'Pasadena',
+  [HmisAgencyEnum.Champ]: 'CHAMP',
+  [HmisAgencyEnum.Vash]: 'VASH',
+};
+
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
-  [GenderEnum.Other]: 'Other',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
+  [GenderEnum.Other]: 'Other',
+};
+
+export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
+  [PronounEnum.HeHimHis]: 'He/Him/His',
+  [PronounEnum.SheHerHers]: 'She/Her/Hers',
+  [PronounEnum.TheyThemTheirs]: 'They/Them/Theirs',
+  [PronounEnum.Other]: 'Other',
+};
+
+export const enumDisplayRace: { [key in RaceEnum]: string } = {
+  [RaceEnum.WhiteCaucasian]: 'White/Caucasian',
+  [RaceEnum.BlackAfricanAmerican]: 'African American',
+  [RaceEnum.AmericanIndianAlaskaNative]: 'American Indian/Alaska Native',
+  [RaceEnum.Asian]: 'Asian',
+  [RaceEnum.HispanicLatino]: 'Hispanic/Latino',
+  [RaceEnum.NativeHawaiianPacificIslander]: 'Native Hawaiian/Pacific Islander',
+  [RaceEnum.Other]: 'Other',
+};
+
+export const enumDisplayEyeColor: { [key in EyeColorEnum]: string } = {
+  [EyeColorEnum.Blue]: 'Blue',
+  [EyeColorEnum.Brown]: 'Brown',
+  [EyeColorEnum.Gray]: 'Gray',
+  [EyeColorEnum.Green]: 'Green',
+  [EyeColorEnum.Hazel]: 'Hazel',
+  [EyeColorEnum.Other]: 'Other',
+};
+
+export const enumDisplayHairColor: { [key in HairColorEnum]: string } = {
+  [HairColorEnum.Brown]: 'Brown',
+  [HairColorEnum.Black]: 'Black',
+  [HairColorEnum.Blonde]: 'Blonde',
+  [HairColorEnum.Red]: 'Red',
+  [HairColorEnum.Gray]: 'Gray',
+  [HairColorEnum.White]: 'White',
+  [HairColorEnum.Bald]: 'Bald',
+  [HairColorEnum.Other]: 'Other',
+};
+
+export const enumDisplayMaritalStatus: { [key in MaritalStatusEnum]: string } =
+  {
+    [MaritalStatusEnum.Single]: 'Single',
+    [MaritalStatusEnum.Married]: 'Married',
+    [MaritalStatusEnum.Divorced]: 'Divorced',
+    [MaritalStatusEnum.Widowed]: 'Widowed',
+    [MaritalStatusEnum.Separated]: 'Separated',
+  };
+
+export const enumDisplayDocumentType: {
+  [key in ClientDocumentNamespaceEnum]: string;
+} = {
+  [ClientDocumentNamespaceEnum.BirthCertificate]: 'Birth Certificate',
+  [ClientDocumentNamespaceEnum.ConsentForm]: 'Consent Form',
+  [ClientDocumentNamespaceEnum.DriversLicenseBack]: `Driver's License Back`,
+  [ClientDocumentNamespaceEnum.DriversLicenseFront]: `Driver's License Front`,
+  [ClientDocumentNamespaceEnum.HmisForm]: 'HMIS Form',
+  [ClientDocumentNamespaceEnum.IncomeForm]: 'Income Form',
+  [ClientDocumentNamespaceEnum.OtherClientDocument]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherDocReady]: 'Other',
+  [ClientDocumentNamespaceEnum.OtherForm]: 'Other Form',
+  [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
+  [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
 };
 
 export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
@@ -31,3 +127,34 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.No]: 'No',
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
+
+export const clientRelationshipEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
+  [RelationshipTypeEnum.Aunt]: 'Aunt',
+  [RelationshipTypeEnum.Child]: 'Child',
+  [RelationshipTypeEnum.Cousin]: 'Cousin',
+  [RelationshipTypeEnum.Father]: 'Father',
+  [RelationshipTypeEnum.Friend]: 'Friend',
+  [RelationshipTypeEnum.Grandparent]: 'Grandparent',
+  [RelationshipTypeEnum.Mother]: 'Mother',
+  [RelationshipTypeEnum.Sibling]: 'Sibling',
+  [RelationshipTypeEnum.Uncle]: 'Uncle',
+  [RelationshipTypeEnum.Other]: 'Other',
+};
+
+export const clientRelevantContactEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
+  [RelationshipTypeEnum.CurrentCaseManager]: 'Current Case Manager',
+  ...clientRelationshipEnumDisplay,
+  [RelationshipTypeEnum.PastCaseManager]: 'Past Case Manager',
+  [RelationshipTypeEnum.Organization]: 'Organization',
+};
+
+export const clientHouseholdMemberEnumDisplay: Partial<{
+  [key in RelationshipTypeEnum]: string;
+}> = {
+  ...clientRelationshipEnumDisplay,
+  [RelationshipTypeEnum.Pet]: 'Pet',
+};

@@ -5,7 +5,15 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { ReactElement, useLayoutEffect, useState } from 'react';
+import {
+  ComponentType,
+  ForwardRefExoticComponent,
+  ReactElement,
+  RefObject,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
@@ -17,26 +25,41 @@ import Profile from './Profile';
 import Schedule from './Schedule';
 import Services from './Services';
 import Tasks from './Tasks';
-import { useClientProfileQuery } from './__generated__/Client.generated';
+import {
+  ClientProfileQuery,
+  useClientProfileQuery,
+} from './__generated__/Client.generated';
+
+interface ProfileRef {
+  scrollToRelevantContacts: () => void;
+}
 
 const getTabComponent = (
   key: string,
-  userId: string | undefined
-): ReactElement => {
+  client: ClientProfileQuery | undefined,
+  profileRef?: RefObject<ProfileRef>
+): ReactElement | null => {
   const components: {
-    [key: string]: (props: { userId: string | undefined }) => JSX.Element;
+    [key: string]: ForwardRefExoticComponent<any> | ComponentType<any>;
   } = {
-    Profile,
-    Interactions,
-    Tasks,
-    Services,
     Docs,
-    Schedule,
+    Interactions,
     Locations,
+    Profile,
+    Schedule,
+    Services,
+    Tasks,
   };
 
   const Component = components[key];
-  return <Component userId={userId} />;
+
+  if (!Component) return null;
+
+  return key === 'Profile' ? (
+    <Component ref={profileRef} client={client} />
+  ) : (
+    <Component client={client} />
+  );
 };
 
 export default function Client({
@@ -47,7 +70,14 @@ export default function Client({
   arrivedFrom?: string;
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
-  const [tab, setTab] = useState('Interactions');
+  const [tab, setTab] = useState('Profile');
+
+  const profileRef = useRef<ProfileRef | null>(null);
+
+  const handleScrollToRelevantContacts = async () => {
+    await setTab('Profile');
+    profileRef.current?.scrollToRelevantContacts();
+  };
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -94,20 +124,17 @@ export default function Client({
     );
   }
 
-  if (error) throw new Error('Something went wrong. Please try again.');
+  if (error)
+    throw new Error(`Something went wrong. Please try again. ${error}`);
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
-        firstName={data?.clientProfile.user.firstName}
-        lastName={data?.clientProfile.user.lastName}
-        gender={data?.clientProfile.gender}
-        dateOfBirth={data?.clientProfile.dateOfBirth}
-        preferredLanguage={data?.clientProfile.preferredLanguage}
-        age={data?.clientProfile.age}
+        onCaseManagerPress={handleScrollToRelevantContacts}
+        client={data?.clientProfile}
       />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, data?.clientProfile.user.id)}
+      {getTabComponent(tab, data, profileRef)}
     </MainContainer>
   );
 }

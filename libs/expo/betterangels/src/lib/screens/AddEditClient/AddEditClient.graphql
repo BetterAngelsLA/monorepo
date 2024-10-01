@@ -18,22 +18,62 @@ query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
+      age
       address
       dateOfBirth
-      displayPronouns
       gender
-      hmisId
+      genderOther
+      displayGender
+      race
+      placeOfBirth
+      heightInInches
+      eyeColor
+      hairColor
+      physicalDescription
+      displayCaseManager
+      maritalStatus
+      hmisProfiles {
+        agency
+        hmisId
+        id
+      }
       nickname
       phoneNumber
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
       preferredLanguage
       pronouns
+      pronounsOther
+      displayPronouns
       veteranStatus
+      livingSituation
       user {
         id
         email
         firstName
         middleName
         lastName
+      }
+      householdMembers {
+        dateOfBirth
+        gender
+        genderOther
+        name
+        relationshipToClient
+        relationshipToClientOther
+        id
+      }
+      contacts {
+        id
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
     }
   }

@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "waffle",
     # Our Apps
     "accounts",
+    "clients",
     "common",
     "legal",
     "notes",
@@ -253,8 +254,9 @@ DATABASES = {
             "ENABLED": env("USE_IAM_AUTH"),
             "REGION_NAME": env("AWS_REGION"),
         },
-    }
+    },
 }
+
 DJANGO_EXTENSIONS_RESET_DB_POSTGRESQL_ENGINES = ["common.backends.iam_dbauth.postgis"]
 
 AUTH_USER_MODEL = "accounts.User"
