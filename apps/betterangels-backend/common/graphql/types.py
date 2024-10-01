@@ -1,18 +1,33 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location, PhoneNumber
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
-from phonenumbers import parse
+from phonenumbers import NumberParseException
+from phonenumbers import PhoneNumber as PhoneNumberUS
+from phonenumbers import is_valid_number, parse
 from strawberry import ID, auto
+from strawberry.exceptions import GraphQLError, StrawberryGraphQLError
 
 PhoneNumberScalar: Union[DjangoPhoneNumber, str] = strawberry.scalar(
     DjangoPhoneNumber,
     serialize=lambda v: str(v.national_number),
-    parse_value=lambda v: parse(v, "US"),
+    parse_value=lambda v: (validate_phone_number(v)),  # Call a validation function here
 )
+
+
+def validate_phone_number(v: Any) -> PhoneNumberUS:
+    if not isinstance(v, str):
+        raise GraphQLError("The phone number must be a string.")
+    try:
+        phone_number = parse(v, "US")
+        if not is_valid_number(phone_number):
+            raise GraphQLError(extensions={"message": "The phone number is not a valid US number."}, message="")
+        return phone_number
+    except NumberParseException as e:
+        raise GraphQLError(f"Invalid phone number format: {str(e)}")
 
 
 @strawberry_django.type(PhoneNumber)
