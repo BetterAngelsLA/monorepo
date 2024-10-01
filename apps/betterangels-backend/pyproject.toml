@@ -44,6 +44,8 @@ django-structlog = "^8.1.0"
 deepdiff = "^7.0.1"
 django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.0.0" }
 django-ckeditor-5 = "^0.2.13"
+django-admin-async-upload = {git = "https://github.com/Hippocrates/django-admin-async-upload.git"}
+python-magic = "^0.4.27"
 
 [build-system]
 requires = ["poetry-core"]
