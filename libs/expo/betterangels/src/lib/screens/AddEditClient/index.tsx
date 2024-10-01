@@ -1,3 +1,4 @@
+import { ApolloError } from '@apollo/client';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
@@ -8,7 +9,8 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { parse } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { GraphQLFormattedError } from 'graphql';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   Keyboard,
@@ -62,24 +64,90 @@ export default function AddEditClient({ id }: { id?: string }) {
       },
     ],
   });
-  const [updateClient] = useUpdateClientProfileMutation();
-  const [createClient] = useCreateClientProfileMutation({
-    refetchQueries: [
-      {
-        query: ClientProfilesDocument,
-        variables: {
-          pagination: { limit: 20 + 1, offset: 0 },
-          filters: {
-            search: '',
-          },
-          order: {
-            user_FirstName: Ordering.AscNullsFirst,
-            id: Ordering.Desc,
+  const [updateClient, { error: updateMutationError }] =
+    useUpdateClientProfileMutation();
+
+  const [createClient, { error: createMutationError }] =
+    useCreateClientProfileMutation({
+      refetchQueries: [
+        {
+          query: ClientProfilesDocument,
+          variables: {
+            pagination: { limit: 20 + 1, offset: 0 },
+            filters: {
+              search: '',
+            },
+            order: {
+              user_FirstName: Ordering.AscNullsFirst,
+              id: Ordering.Desc,
+            },
           },
         },
-      },
-    ],
-  });
+      ],
+    });
+
+  const extractErrorFields = (errors: ApolloError) => {
+    return errors.graphQLErrors
+      .map((error: GraphQLFormattedError) => {
+        const regex = /data\.(.*?);/;
+        const match = error.message.match(regex);
+        return match ? match[1] : null;
+      })
+      .filter(Boolean);
+  };
+
+  const getMutationError = useCallback(
+    (
+      updateError: typeof updateMutationError,
+      createError: typeof createMutationError
+    ) => {
+      if (updateError) return updateError;
+      if (createError) return createError;
+      return null;
+    },
+    []
+  );
+
+  const handleMutationError = useCallback(
+    (mutationError: ApolloError) => {
+      const extractedFields = extractErrorFields(mutationError).filter(
+        (dataField) => dataField !== null
+      );
+      const extensions = mutationError.cause?.extensions as {
+        message?: string;
+      };
+      if (extensions?.message) {
+        extractedFields.map((dataField) => {
+          return methods.setError(
+            dataField as
+              | keyof UpdateClientProfileInput
+              | keyof CreateClientProfileInput,
+            {
+              type: 'custom',
+              message: extensions.message,
+            }
+          );
+        });
+      }
+    },
+    [methods]
+  );
+
+  useEffect(() => {
+    const mutationError = getMutationError(
+      updateMutationError,
+      createMutationError
+    );
+    if (mutationError) {
+      handleMutationError(mutationError);
+    }
+  }, [
+    createMutationError,
+    getMutationError,
+    handleMutationError,
+    updateMutationError,
+  ]);
+
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -172,6 +240,9 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
     } catch (err) {
       console.log(err);
+      if (methods.formState.errors) {
+        return;
+      }
       throw new Error(`Failed to update a client profile 2: ${err}`);
     }
   };
