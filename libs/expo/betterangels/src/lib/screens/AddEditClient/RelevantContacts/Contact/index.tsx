@@ -33,7 +33,6 @@ export default function Contact(props: IContactProps) {
     control,
     setValue,
     watch,
-    getValues,
     formState: { errors },
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
@@ -48,10 +47,6 @@ export default function Contact(props: IContactProps) {
         null
       );
     }
-    const values = getValues(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`
-    );
-    console.log(typeof values);
   }, [contactPhoneNumber, index]);
 
   const relationship = watch(
@@ -157,7 +152,7 @@ export default function Contact(props: IContactProps) {
       <ErrorMessage
         errors={errors}
         name={`contacts[${index}].phoneNumber`}
-        render={({ message }) => {
+        render={({ message }: { message: string }) => {
           return (
             <TextRegular size="sm" color={Colors.ERROR}>
               {message}
