@@ -85,6 +85,7 @@ DEBUG = env("DEBUG")
 
 # Application definition
 INSTALLED_APPS = [
+    "formset",
     "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
