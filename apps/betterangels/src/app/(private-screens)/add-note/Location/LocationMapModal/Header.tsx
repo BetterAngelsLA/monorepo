@@ -23,7 +23,7 @@ export default function Header(props: IHeaderProps) {
       }}
     >
       <Pressable
-        style={{ marginRight: Spacings.xs, flex: 1 }}
+        style={{ marginRight: Spacings.xs }}
         accessibilityRole="button"
         onPress={() => closeModal(false)}
         accessibilityHint="close map modal"
@@ -32,13 +32,12 @@ export default function Header(props: IHeaderProps) {
       </Pressable>
       <TextBold
         style={{
-          flex: 2,
           textAlign: 'center',
         }}
       >
         Type or Pin Location
       </TextBold>
-      <View style={{ flex: 1 }} />
+      <View style={{ width: 34.5, height: 1 }} />
     </View>
   );
 }

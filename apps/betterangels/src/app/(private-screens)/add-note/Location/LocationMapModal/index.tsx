@@ -9,13 +9,7 @@ import {
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Modal, TouchableOpacity, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiUrl } from '../../../../../../config';
@@ -89,6 +83,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+  const topOffset = insets.top;
 
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
@@ -343,7 +338,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         style={{
           borderTopEndRadius: 10,
           borderTopLeftRadius: 10,
-          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
+          marginTop: topOffset,
           overflow: 'hidden',
           flex: 1,
         }}
