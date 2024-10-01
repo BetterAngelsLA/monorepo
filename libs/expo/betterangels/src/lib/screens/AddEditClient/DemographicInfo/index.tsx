@@ -47,8 +47,8 @@ export default function DemographicInfo(props: IDemographicInfoProps) {
           <Height />
           <EyeColor />
           <HairColor />
-          <PhysicalDescription />
           <MaritalStatus />
+          <PhysicalDescription />
         </View>
       )}
     </Accordion>

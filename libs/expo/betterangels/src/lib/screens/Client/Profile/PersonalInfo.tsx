@@ -35,6 +35,27 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
+  const personalData = [
+    {
+      label: 'Full Name',
+      value: fullName,
+    },
+    {
+      label: 'Nick Name',
+      value: client?.clientProfile.nickname,
+    },
+    {
+      label: 'DoB',
+      value: client?.clientProfile.dateOfBirth,
+    },
+    {
+      label: 'Preferred Language',
+      value:
+        client?.clientProfile.preferredLanguage &&
+        enumDisplayLanguage[client.clientProfile.preferredLanguage],
+    },
+  ];
+
   return (
     <Accordion
       expanded={expanded}
@@ -53,19 +74,11 @@ export default function PersonalInfo(props: IProfileSectionProps) {
         >
           <CardWrapper>
             <View style={{ gap: Spacings.lg }}>
-              <InfoRow label="Full Name" value={fullName} />
-              <InfoRow
-                label="Nick Name"
-                value={client?.clientProfile.nickname}
-              />
-              <InfoRow label="DoB" value={client?.clientProfile.dateOfBirth} />
-              <InfoRow
-                label="Preferred Language"
-                value={
-                  client?.clientProfile.preferredLanguage &&
-                  enumDisplayLanguage[client.clientProfile.preferredLanguage]
-                }
-              />
+              {personalData
+                .filter(({ value }) => value)
+                .map(({ label, value }) => (
+                  <InfoRow key={label} label={label} value={value} />
+                ))}
 
               {client?.clientProfile.hmisProfiles?.map((hmisProfile) => (
                 <InfoRow
