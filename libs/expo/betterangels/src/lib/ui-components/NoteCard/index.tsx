@@ -38,12 +38,11 @@ export default function NoteCard(props: INoteCardProps) {
         client={isInteractionsPage ? note.client : note.createdBy}
         isSubmitted={note.isSubmitted}
       />
-      {(note.moods.length > 0 ||
-        note.providedServices.length > 0 ||
+      {(note.providedServices.length > 0 ||
         note.requestedServices.length > 0) && (
         <NoteCardIcons
           icons={[
-            ...note.moods,
+            // ...note.moods, // TODO: will be back soon
             ...note.providedServices,
             ...note.requestedServices,
           ]}
