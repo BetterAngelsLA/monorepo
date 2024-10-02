@@ -87,7 +87,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": [phone_number],
             "physicalDescription": "eerily cat-like",
             "placeOfBirth": "Los Angeles",
-            "preferredCommunication": PreferredCommunicationEnum.TEXT.name,
+            "preferredCommunication": [],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "pronounsOther": None,
