@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import NoteLocation from './NoteLocation';
-import NoteNextSteps from './NoteNextSteps';
 import NotePublicNote from './NotePublicNote';
 import NotePurpose from './NotePurpose';
 import NoteServices from './NoteServices';
@@ -86,9 +85,6 @@ export default function Note({
         )}
         {data?.note && hasServicesOrMoods(data.note) && (
           <NoteServices note={data?.note} />
-        )}
-        {data?.note.nextSteps && data?.note.nextSteps.length > 0 && (
-          <NoteNextSteps note={data?.note} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data?.note} />}
       </View>

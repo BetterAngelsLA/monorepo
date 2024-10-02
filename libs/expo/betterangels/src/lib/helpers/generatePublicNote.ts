@@ -2,14 +2,13 @@ import { ServiceEnum, ViewNoteQuery } from '../apollo';
 
 interface IWatchedValue {
   purposes: ViewNoteQuery['note']['purposes'];
-  nextSteps: ViewNoteQuery['note']['nextSteps'];
   moods: ViewNoteQuery['note']['moods'];
   providedServices: ViewNoteQuery['note']['providedServices'];
   requestedServices: ViewNoteQuery['note']['requestedServices'];
 }
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
-  const { purposes, moods, providedServices, nextSteps, requestedServices } =
+  const { purposes, moods, providedServices, requestedServices } =
     watchedValues;
   const changedG = purposes
     .map((purpose) => purpose.title.toLowerCase())
@@ -21,7 +20,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
         ? 'The goal for this session was to'
         : 'The goals for this session were to'
       : '';
-  const changedP = nextSteps
+  const changedP = [{ title: '' }]
     .filter((item) => !!item.title)
     .map((filtered) => `${filtered.title}`);
 

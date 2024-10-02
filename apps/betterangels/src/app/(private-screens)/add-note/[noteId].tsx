@@ -22,7 +22,6 @@ import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
 import Mood from './Mood';
-import NextStep from './NextStep';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
@@ -272,7 +271,6 @@ export default function AddNote() {
           services={data.note.requestedServices}
           {...props}
         />
-        <NextStep nextSteps={data.note.nextSteps} {...props} />
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}
