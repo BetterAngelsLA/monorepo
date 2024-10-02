@@ -21,7 +21,6 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Location from './Location';
-import Mood from './Mood';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
@@ -221,10 +220,12 @@ export default function AddNote() {
     );
   };
 
-  const MoodAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
-    [data]
-  );
+  // TODO: Will be back with moods
+  // const MoodAttachments = useMemo(
+  //   () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
+  //   [data]
+  // );
+
   const RequestedAttachments = useMemo(
     () => filterAttachments(NoteNamespaceEnum.RequestedServices),
     [data]
@@ -256,11 +257,12 @@ export default function AddNote() {
           {...props}
         />
         <Purpose purposes={data.note.purposes} {...props} />
-        <Mood
+        {/* TODO: Will be back later */}
+        {/* <Mood
           attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
-        />
+        /> */}
         <ProvidedServices
           attachments={ProvidedAttachments}
           services={data.note.providedServices}
