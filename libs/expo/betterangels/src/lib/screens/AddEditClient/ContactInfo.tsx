@@ -1,4 +1,5 @@
-import { Regex, Spacings } from '@monorepo/expo/shared/static';
+import { ErrorMessage } from '@hookform/error-message';
+import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   FieldCard,
   Input,
@@ -6,7 +7,7 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { RefObject, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import {
@@ -26,6 +27,7 @@ export default function ContactInfo(props: IContactInfoProps) {
     control,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const email = watch('user.email');
@@ -33,6 +35,12 @@ export default function ContactInfo(props: IContactInfoProps) {
   const address = watch('address');
 
   const isContactInfo = expanded === 'Contact Info';
+
+  useEffect(() => {
+    if (phoneNumber === '') {
+      setValue('phoneNumber', null);
+    }
+  }, [phoneNumber]);
 
   return (
     <FieldCard
@@ -71,6 +79,25 @@ export default function ContactInfo(props: IContactInfoProps) {
           name="phoneNumber"
           control={control}
           keyboardType="phone-pad"
+          maxLength={10}
+          rules={{
+            pattern: {
+              value: Regex.phoneNumber,
+              message:
+                'Enter a 10-digit phone number without space or special characters',
+            },
+          }}
+        />
+        <ErrorMessage
+          errors={errors}
+          name="phoneNumber"
+          render={({ message }: { message: string }) => {
+            return (
+              <TextRegular size="sm" color={Colors.ERROR}>
+                {message}
+              </TextRegular>
+            );
+          }}
         />
         <Input
           placeholder="Enter Email"
