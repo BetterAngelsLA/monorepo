@@ -60,10 +60,9 @@ export default function MailingAddress() {
         },
       });
 
-      setSuggestions(response.data.predictions);
+      return setSuggestions(response.data.predictions);
     } catch (err) {
       console.error('Error fetching place data:', err);
-      return [];
     }
   };
 
