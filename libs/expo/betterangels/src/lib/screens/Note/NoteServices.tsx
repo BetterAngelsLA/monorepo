@@ -54,11 +54,7 @@ const getIcons = (
   }[]
 ) => {
   return array.slice(0, 4).map((icon) => {
-    let iconEnumValue = '';
-
-    if ('service' in icon) {
-      iconEnumValue = icon.service as string;
-    }
+    const iconEnumValue = (icon.service as string) || '';
 
     if (iconEnumValue === 'OTHER') {
       return (
