@@ -183,7 +183,7 @@ type ClientProfileType {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: DjangoImageType
   pronouns: PronounEnum
@@ -233,7 +233,7 @@ input CreateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum
@@ -906,7 +906,7 @@ input UpdateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum

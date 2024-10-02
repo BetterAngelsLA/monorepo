@@ -219,7 +219,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": client_1_phone_numbers,
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
-            "preferredCommunication": PreferredCommunicationEnum.WHATSAPP.name,
+            "preferredCommunication": [PreferredCommunicationEnum.WHATSAPP.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
