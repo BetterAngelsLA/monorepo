@@ -1,5 +1,4 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
@@ -39,15 +38,11 @@ export default function NoteCard(props: INoteCardProps) {
         client={isInteractionsPage ? note.client : note.createdBy}
         isSubmitted={note.isSubmitted}
       />
-      <TextRegular numberOfLines={2} ellipsizeMode="tail" size="sm">
-        {note.publicDetails}
-      </TextRegular>
-      {(note.moods.length > 0 ||
-        note.providedServices.length > 0 ||
+      {(note.providedServices.length > 0 ||
         note.requestedServices.length > 0) && (
         <NoteCardIcons
           icons={[
-            ...note.moods,
+            // ...note.moods, // TODO: will be back soon
             ...note.providedServices,
             ...note.requestedServices,
           ]}
