@@ -30,7 +30,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
-    path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
+    path("graphql", ProtectedGraphQLView.as_view(schema=schema, multipart_uploads_enabled=True)),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
 ]
