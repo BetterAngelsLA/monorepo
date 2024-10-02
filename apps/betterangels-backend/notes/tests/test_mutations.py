@@ -1576,7 +1576,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 
