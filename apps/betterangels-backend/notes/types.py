@@ -196,6 +196,7 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
+    purpose: auto
     title: auto
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
@@ -234,6 +235,7 @@ class NoteType:
 
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
+    purpose: auto
     title: auto
     public_details: auto
     private_details: auto
@@ -243,6 +245,7 @@ class CreateNoteInput:
 @strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: ID
+    purpose: auto
     title: auto
     location: Optional[ID]
     public_details: auto
