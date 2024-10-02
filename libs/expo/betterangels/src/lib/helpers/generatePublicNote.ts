@@ -9,7 +9,7 @@ interface IWatchedValue {
 }
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
-  const { purposes, moods, providedServices, nextSteps, requestedServices } =
+  const { purposes, moods, providedServices, requestedServices } =
     watchedValues;
   const changedG = purposes
     .map((purpose) => purpose.title.toLowerCase())
@@ -21,9 +21,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
         ? 'The goal for this session was to'
         : 'The goals for this session were to'
       : '';
-  const changedP = nextSteps
-    .filter((item) => !!item.title)
-    .map((filtered) => `${filtered.title}`);
 
   const moodIText =
     moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
@@ -71,6 +68,17 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     return item.service;
   });
 
+  const updatedP =
+    requestedServicesArray.length > 0
+      ? 'P - Follow up with client regarding requested ' +
+        requestedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (requestedServicesArray.length > 1 ? ', and ' : '') +
+        requestedServicesArray[
+          requestedServicesArray.length - 1
+        ]?.toLowerCase() +
+        '.'
+      : 'P - Touch base with client for general wellness check.';
+
   const requestedText =
     requestedServicesArray.length > 0
       ? 'Client requested ' +
@@ -99,8 +107,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
           changedG.length > 1 ? ', and ' : ''
         }${changedG[changedG.length - 1]}.`
       : 'G -';
-
-  const updatedP = changedP ? `P - ${changedP.join(', ')}` : 'P -';
 
   const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
 
