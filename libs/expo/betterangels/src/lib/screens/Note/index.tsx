@@ -13,11 +13,9 @@ import NotePurpose from './NotePurpose';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
 
-const hasServicesOrMoods = (note: ViewNoteQuery['note']) => {
+const hasServices = (note: ViewNoteQuery['note']) => {
   return (
-    note?.providedServices?.length > 0 ||
-    note?.moods?.length > 0 ||
-    note?.requestedServices?.length > 0
+    note?.providedServices?.length > 0 || note?.requestedServices?.length > 0
   );
 };
 
@@ -84,7 +82,7 @@ export default function Note({
         {data?.note.purposes && data?.note.purposes.length > 0 && (
           <NotePurpose note={data?.note} />
         )}
-        {data?.note && hasServicesOrMoods(data.note) && (
+        {data?.note && hasServices(data.note) && (
           <NoteServices note={data?.note} />
         )}
         {data?.note.nextSteps && data?.note.nextSteps.length > 0 && (
