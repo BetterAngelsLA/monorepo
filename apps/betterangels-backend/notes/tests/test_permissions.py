@@ -26,7 +26,11 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         note_count = Note.objects.count()
-        variables = {"title": "Test Note", "publicDetails": "This is a test note."}
+        variables = {
+            "purpose": "Test Note",
+            "title": "Test Note",
+            "publicDetails": "This is a test note.",
+        }
         response = self._create_note_fixture(variables)
 
         if should_succeed:
@@ -89,6 +93,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         variables = {
             "id": self.note["id"],
+            "purpose": "Updated Note",
             "title": "Updated Note",
             "publicDetails": "Updated content",
             "isSubmitted": False,
@@ -128,6 +133,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self._handle_user_login("org_2_case_manager_1")
             note_id = self._create_note_fixture(
                 {
+                    "purpose": "New Note",
                     "title": "New Note",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
@@ -193,6 +199,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self._handle_user_login("org_2_case_manager_1")
             note_id = self._create_note_fixture(
                 {
+                    "purpose": "New Note",
                     "title": "New Note",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,

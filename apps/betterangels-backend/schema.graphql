@@ -261,6 +261,7 @@ input CreateNoteAttachmentInput {
 union CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 input CreateNoteInput {
+  purpose: String!
   title: String!
   publicDetails: String
   privateDetails: String
@@ -612,6 +613,7 @@ input NoteOrder {
 
 type NoteType {
   id: ID!
+  purpose: String!
   title: String!
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
@@ -932,6 +934,7 @@ union UpdateCurrentUserPayload = UserType | OperationInfo
 
 input UpdateNoteInput {
   id: ID!
+  purpose: String
   title: String
   location: ID
   publicDetails: String
