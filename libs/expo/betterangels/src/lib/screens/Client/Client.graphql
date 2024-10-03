@@ -18,6 +18,8 @@ query ClientProfile($id: ID!) {
       maritalStatus
       physicalDescription
       genderOther
+      mailingAddress
+      residenceAddress
       race
       age
       hmisProfiles {
