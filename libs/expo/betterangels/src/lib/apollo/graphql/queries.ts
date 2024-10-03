@@ -28,10 +28,6 @@ export const GET_NOTES = gql`
         id
         title
       }
-      nextSteps {
-        id
-        title
-      }
       providedServices {
         id
         service
@@ -102,10 +98,6 @@ export const GET_NOTE = gql`
           email
           username
         }
-      }
-      nextSteps {
-        id
-        title
       }
       providedServices {
         id
