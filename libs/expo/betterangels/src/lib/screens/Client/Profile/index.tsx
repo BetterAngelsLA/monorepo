@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
 import PersonalInfo from './PersonalInfo';
@@ -47,6 +48,7 @@ const Profile = forwardRef<ProfileRef, ProfileProps>(({ client }, ref) => {
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <PersonalInfo {...props} />
       <DemographicInfo {...props} />
+      <ContactInfo {...props} />
       <RelevantContacts ref={viewRef} {...props} />
       <HouseholdMembers {...props} />
     </MainScrollContainer>

@@ -32,6 +32,8 @@ query GetClientProfile($id: ID!) {
       physicalDescription
       displayCaseManager
       maritalStatus
+      mailingAddress
+      residenceAddress
       hmisProfiles {
         agency
         hmisId
