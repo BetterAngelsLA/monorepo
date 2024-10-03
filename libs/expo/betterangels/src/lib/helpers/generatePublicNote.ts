@@ -3,7 +3,6 @@ import { enumDisplayServices } from '../static/enumDisplayMapping';
 
 interface IWatchedValue {
   purposes: ViewNoteQuery['note']['purposes'];
-  nextSteps: ViewNoteQuery['note']['nextSteps'];
   moods: ViewNoteQuery['note']['moods'];
   providedServices: ViewNoteQuery['note']['providedServices'];
   requestedServices: ViewNoteQuery['note']['requestedServices'];
