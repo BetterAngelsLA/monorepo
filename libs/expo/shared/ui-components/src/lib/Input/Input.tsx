@@ -18,6 +18,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import TextRegular from '../TextRegular';
 
 type TRules = Omit<
   RegisterOptions,
@@ -44,6 +45,7 @@ interface IInputProps extends TextInputProps {
   mr?: TSpacing;
   onBlur?: () => void;
   icon?: ReactNode;
+  errorMessage?: string;
 }
 
 export function Input(props: IInputProps) {
@@ -64,6 +66,7 @@ export function Input(props: IInputProps) {
     ml,
     mr,
     icon,
+    errorMessage,
     ...rest
   } = props;
 
@@ -148,6 +151,11 @@ export function Input(props: IInputProps) {
               </Pressable>
             )}
           </View>
+          {errorMessage && (
+            <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
+              {errorMessage}
+            </TextRegular>
+          )}
         </View>
       )}
     />
