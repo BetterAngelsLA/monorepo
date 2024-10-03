@@ -105,12 +105,14 @@ export default function Title(props: IPurposeProps) {
         }}
       >
         <BasicInput
+          placeholder="Enter purpose"
           maxLength={100}
           onDelete={() => {
             setValue('');
             setErrors({ ...errors, purpose: true });
           }}
           error={!!errors.purpose}
+          errorMessage={errors.purpose ? 'Purpose is required' : ''}
           value={value}
           onChangeText={(e) => onChange(e)}
         />

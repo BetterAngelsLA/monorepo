@@ -9,7 +9,9 @@ interface IWatchedValue {
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
   const { purpose, providedServices, requestedServices } = watchedValues;
-  const changedG = purpose ? `G - ${purpose}` : 'G - ';
+  const changedG = purpose
+    ? `G - The goal for this session was to ${purpose}`
+    : 'G - ';
   const changedP = [{ title: '' }]
     .filter((item) => !!item.title)
     .map((filtered) => `${filtered.title}`);
