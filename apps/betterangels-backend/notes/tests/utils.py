@@ -24,6 +24,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note = self._create_note_fixture(
             {
                 "title": f"Session with {self.client_user_1.full_name}",
+                "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
             },
@@ -98,6 +99,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                     ... on NoteType {{
                         id
+                        purpose
                         title
                         location {{
                             id
@@ -173,6 +175,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 revertNote(data: $data) {
                     ... on NoteType {
                         id
+                        purpose
                         title
                         publicDetails
                         location {
