@@ -1,97 +1,102 @@
-import { ViewNoteQuery } from '@monorepo/expo/betterangels';
-import { CircleSolidIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { useMutation } from '@apollo/client';
 import {
+  UPDATE_NOTE,
+  UpdateNoteMutation,
+  UpdateNoteMutationVariables,
+} from '@monorepo/expo/betterangels';
+import {
+  BasicInput,
   FieldCard,
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useEffect, useState } from 'react';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { RefObject, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import PurposeInput from './PurposeInput';
 
 interface IPurposeProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
-  noteId: string | undefined;
-  purposes: ViewNoteQuery['note']['purposes'];
   scrollRef: RefObject<ScrollView>;
+  purpose: string;
+  noteId: string | undefined;
+  errors: {
+    purpose: boolean;
+    location: boolean;
+    date: boolean;
+    time: boolean;
+  };
+  setErrors: (errors: {
+    purpose: boolean;
+    location: boolean;
+    date: boolean;
+    time: boolean;
+  }) => void;
 }
 
-export default function Purpose(props: IPurposeProps) {
+export default function Title(props: IPurposeProps) {
   const {
     expanded,
     setExpanded,
-    noteId,
-    purposes: initialPurposes,
     scrollRef,
+    purpose,
+    noteId,
+    setErrors,
+    errors,
   } = props;
 
-  const [purposes, setPurposes] = useState<
-    | Array<{
-        id: string | undefined;
-        value: string;
-      }>
-    | undefined
-  >(undefined);
+  const [updateNote] = useMutation<
+    UpdateNoteMutation,
+    UpdateNoteMutationVariables
+  >(UPDATE_NOTE);
+
+  const [value, setValue] = useState<string>(purpose);
 
   const isPurpose = expanded === 'Purpose';
-  const isGreaterThanZeroPurpses = purposes && purposes.length > 0;
-  const isLessThanElevenPurpses = purposes && purposes.length < 11;
-  const hasFirstValidPurpose = purposes && purposes[0].value;
-  const lastPurposeHasValue = purposes && purposes[purposes.length - 1].value;
-  const hasAnyValidPurpose =
-    purposes && purposes.some((purpose) => purpose.value);
 
-  const deletePurposesWithoutValue = async () => {
-    const remainingPurposes = purposes?.filter(
-      (purpose, index) => index === 0 || purpose.value
-    );
+  const updateNoteFunction = useRef(
+    debounce(async (value: string) => {
+      if (!noteId || !value) return;
 
-    setPurposes(remainingPurposes);
+      try {
+        await updateNote({
+          variables: {
+            data: {
+              id: noteId,
+              purpose: value,
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }, 500)
+  ).current;
+
+  const onChange = (value: string) => {
+    if (!value) {
+      setErrors({ ...errors, purpose: true });
+    }
+    if (value) {
+      setErrors({ ...errors, purpose: false });
+    }
+    setValue(value);
+    updateNoteFunction(value);
   };
-
-  useEffect(() => {
-    if (!isPurpose) {
-      deletePurposesWithoutValue();
-    }
-  }, [expanded]);
-
-  useEffect(() => {
-    if (initialPurposes.length > 0) {
-      const filteredPurposes = initialPurposes.map((item) => ({
-        id: item.id,
-        value: item.title,
-      }));
-      setPurposes(filteredPurposes);
-    } else {
-      setPurposes([
-        {
-          id: undefined,
-          value: '',
-        },
-      ]);
-    }
-  }, [initialPurposes]);
-
-  if (!purposes) return null;
 
   return (
     <FieldCard
       scrollRef={scrollRef}
       expanded={expanded}
-      setExpanded={() => {
-        setExpanded(isPurpose ? null : 'Purpose');
-      }}
+      required
       mb="xs"
-      actionName={
-        !hasAnyValidPurpose && !isPurpose ? (
-          <TextMedium size="sm">Add Purpose</TextMedium>
-        ) : (
-          ''
-        )
-      }
+      setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       title="Purpose"
+      actionName={
+        !value && !isPurpose ? (
+          <TextMedium size="sm">Add Purpose</TextMedium>
+        ) : null
+      }
     >
       <View
         style={{
@@ -99,56 +104,18 @@ export default function Purpose(props: IPurposeProps) {
           overflow: 'hidden',
         }}
       >
-        {purposes.map((purpose, index) => (
-          <PurposeInput
-            key={index}
-            noteId={noteId}
-            index={index}
-            purpose={purpose}
-            purposes={purposes}
-            setPurposes={setPurposes}
-          />
-        ))}
-        {isGreaterThanZeroPurpses &&
-          isLessThanElevenPurpses &&
-          lastPurposeHasValue && (
-            <TextMedium
-              mt="xs"
-              style={{ textAlign: 'right' }}
-              color={Colors.PRIMARY}
-              onPress={() =>
-                setPurposes([...purposes, { value: '', id: undefined }])
-              }
-              size="sm"
-            >
-              Add another Purpose
-            </TextMedium>
-          )}
-      </View>
-
-      {isGreaterThanZeroPurpses && hasFirstValidPurpose && (
-        <View
-          style={{
-            paddingBottom: !isPurpose ? Spacings.md : 0,
-            height: !isPurpose ? 'auto' : 0,
-            overflow: 'hidden',
+        <BasicInput
+          maxLength={100}
+          onDelete={() => {
+            setValue('');
+            setErrors({ ...errors, purpose: true });
           }}
-        >
-          {purposes.map((purpose, index) => (
-            <View
-              key={index}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: index === 0 ? 0 : Spacings.xs,
-              }}
-            >
-              <CircleSolidIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
-              <TextRegular ml="xs">{purpose.value}</TextRegular>
-            </View>
-          ))}
-        </View>
-      )}
+          error={!!errors.purpose}
+          value={value}
+          onChangeText={(e) => onChange(e)}
+        />
+      </View>
+      {value && !isPurpose && <TextRegular mb="md">{value}</TextRegular>}
     </FieldCard>
   );
 }
