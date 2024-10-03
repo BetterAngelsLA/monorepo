@@ -5,7 +5,6 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import axios from 'axios';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { TouchableOpacity, View } from 'react-native';
@@ -13,9 +12,10 @@ import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
-import { searchPlacesInCalifornia } from '../../../helpers';
-
-const apiUrl = process.env['EXPO_PUBLIC_API_URL'];
+import {
+  searchPlacesInCalifornia,
+  selectAutocompletePlace,
+} from '../../../helpers';
 
 export default function ResidenceAddress() {
   const [suggestions, setSuggestions] = useState<any>([]);
@@ -28,30 +28,6 @@ export default function ResidenceAddress() {
 
   const onReset = () => {
     setValue('residenceAddress', '');
-  };
-
-  const onSuggestionsSelect = async (place: any) => {
-    const placeId = place.place_id;
-    try {
-      const response = await axios.get(
-        `${apiUrl}/proxy/maps/api/place/details/json`,
-        {
-          params: {
-            place_id: placeId,
-            key: process.env['EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY'],
-          },
-        }
-      );
-      const formattedAddress = response.data.result.formatted_address;
-      const cleanedAddress = formattedAddress.substring(
-        0,
-        formattedAddress.lastIndexOf(',')
-      );
-      setValue('residenceAddress', cleanedAddress);
-      setSuggestions([]);
-    } catch (e) {
-      console.log('Error fetching detailed place');
-    }
   };
 
   const debouncedSearch = useCallback(
@@ -99,7 +75,14 @@ export default function ResidenceAddress() {
                 paddingVertical: Spacings.sm,
               }}
               accessibilityRole="button"
-              onPress={() => onSuggestionsSelect(item)}
+              onPress={() =>
+                selectAutocompletePlace(
+                  item,
+                  'residenceAddress',
+                  setValue,
+                  setSuggestions
+                )
+              }
             >
               <TextRegular>{item.description.split(', ')[0]}</TextRegular>
               <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
