@@ -24,6 +24,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         variables: {
           data: {
             title: `Session with ${firstName || 'Client'}`,
+            purpose: `Session with ${firstName || 'Client'}`,
             client: id,
           },
         },

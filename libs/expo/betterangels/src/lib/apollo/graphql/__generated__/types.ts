@@ -287,6 +287,7 @@ export type CreateNoteInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purpose: Scalars['String']['input'];
   title: Scalars['String']['input'];
 };
 
@@ -809,6 +810,7 @@ export type NoteType = {
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
+  purpose: Scalars['String']['output'];
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   title: Scalars['String']['output'];
@@ -1224,6 +1226,7 @@ export type UpdateNoteInput = {
   location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
