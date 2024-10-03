@@ -5,7 +5,6 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import axios from 'axios';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { TouchableOpacity, View } from 'react-native';
@@ -13,8 +12,7 @@ import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
-
-const apiUrl = process.env['EXPO_PUBLIC_API_URL'];
+import { searchPlacesInCalifornia } from '../../../helpers';
 
 export default function MailingAddress() {
   const [suggestions, setSuggestions] = useState<any>([]);
@@ -30,45 +28,17 @@ export default function MailingAddress() {
   };
 
   const onSuggestionsSelect = (place: any) => {
-    setValue('mailingAddress', place.description.split(', ')[0]);
+    const cleanedAddress = place.description.substring(
+      0,
+      place.description.lastIndexOf(',')
+    );
+    setValue('mailingAddress', cleanedAddress);
     setSuggestions([]);
-  };
-
-  const searchPlacesInCalifornia = async (query: string) => {
-    const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
-    if (query.length < 3) {
-      return;
-    }
-
-    // geocode for approx center of LA COUNTY
-    const center = { lat: 34.04499, lng: -118.251601 };
-    const defaultBounds = {
-      north: center.lat + 0.1,
-      south: center.lat - 0.1,
-      east: center.lng + 0.1,
-      west: center.lng - 0.1,
-    };
-
-    try {
-      const response = await axios.get(url, {
-        params: {
-          bounds: defaultBounds,
-          input: query,
-          components: 'country:us',
-          strictBounds: true,
-          withCredentials: true,
-        },
-      });
-
-      return setSuggestions(response.data.predictions);
-    } catch (err) {
-      console.error('Error fetching place data:', err);
-    }
   };
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
-      await searchPlacesInCalifornia(query);
+      await searchPlacesInCalifornia(query, setSuggestions);
     }, 300),
     []
   );
@@ -93,6 +63,7 @@ export default function MailingAddress() {
         value={mailingAddress}
         onChangeText={onChangeText}
         placeholder="Enter mailing address"
+        autoCorrect={false}
       />
       {suggestions.length > 0 && (
         <View
