@@ -66,7 +66,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     if (!data || !('note' in data) || userChange) return;
     const autoNote = generatePublicNote({
       purposes: data.note.purposes,
-      nextSteps: data.note.nextSteps,
       moods: data.note.moods,
       providedServices: data.note.providedServices,
       requestedServices: data.note.requestedServices,
