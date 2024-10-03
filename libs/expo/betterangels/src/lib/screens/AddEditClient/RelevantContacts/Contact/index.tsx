@@ -1,4 +1,3 @@
-import { ErrorMessage } from '@hookform/error-message';
 import {
   Colors,
   Radiuses,
@@ -10,9 +9,7 @@ import {
   Select,
   TextBold,
   TextButton,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import {
@@ -35,19 +32,6 @@ export default function Contact(props: IContactProps) {
     watch,
     formState: { errors },
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
-
-  const contactPhoneNumber = watch(
-    `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`
-  );
-
-  useEffect(() => {
-    if (contactPhoneNumber === '') {
-      setValue(
-        `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
-        null
-      );
-    }
-  }, [contactPhoneNumber, index]);
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
@@ -132,6 +116,18 @@ export default function Contact(props: IContactProps) {
         label="Email"
         keyboardType="email-address"
         name={`contacts[${index}].email`}
+        error={!!errors.contacts?.[index]?.email}
+        errorMessage={
+          (errors.contacts?.[index]?.email?.message as string) || undefined
+        }
+        rules={{
+          validate: (value: string) => {
+            if (value && !Regex.email.test(value)) {
+              return 'Enter a valid email address';
+            }
+            return true;
+          },
+        }}
         control={control}
       />
       <Input
@@ -139,26 +135,21 @@ export default function Contact(props: IContactProps) {
         label="Phone Number"
         keyboardType="phone-pad"
         maxLength={10}
-        name={`contacts[${index}].phoneNumber`}
-        control={control}
+        error={!!errors.contacts?.[index]?.phoneNumber}
+        errorMessage={
+          (errors.contacts?.[index]?.phoneNumber?.message as string) ||
+          undefined
+        }
         rules={{
-          pattern: {
-            value: Regex.phoneNumber,
-            message:
-              'Enter a 10-digit phone number without space or special characters',
+          validate: (value: string) => {
+            if (value && !Regex.phoneNumber.test(value)) {
+              return 'Enter a 10-digit phone number without space or special characters';
+            }
+            return true;
           },
         }}
-      />
-      <ErrorMessage
-        errors={errors}
         name={`contacts[${index}].phoneNumber`}
-        render={({ message }: { message: string }) => {
-          return (
-            <TextRegular size="sm" color={Colors.ERROR}>
-              {message}
-            </TextRegular>
-          );
-        }}
+        control={control}
       />
       <Input
         placeholder="Mailing Address"
