@@ -166,20 +166,21 @@ class Task(BaseModel):
 )
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
-    title = models.CharField(max_length=100)
+    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
     interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
-    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
-    private_details = models.TextField(blank=True)
-    is_submitted = models.BooleanField(default=False)
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    purpose = models.CharField(max_length=100)
+    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
+    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    title = models.CharField(max_length=100)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 

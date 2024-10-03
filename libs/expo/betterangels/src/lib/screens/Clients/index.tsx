@@ -68,6 +68,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         variables: {
           data: {
             title: `Session with ${firstName || 'Client'}`,
+            purpose: `Session with ${firstName || 'Client'}`,
             client: id,
           },
         },
@@ -230,7 +231,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 onPress={() => {
                   if (select === 'true') {
                     createNoteFunction(
-                      clientProfile.id,
+                      clientProfile.user.id,
                       clientProfile.user.firstName
                     );
                   } else {

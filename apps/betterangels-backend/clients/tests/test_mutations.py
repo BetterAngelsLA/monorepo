@@ -316,7 +316,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 8
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
@@ -373,7 +373,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 

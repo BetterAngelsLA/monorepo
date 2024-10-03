@@ -100,6 +100,13 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
+    if (values.contacts && values.contacts?.length > 0) {
+      values.contacts = values.contacts.map((contact) => ({
+        ...contact,
+        phoneNumber: contact.phoneNumber === '' ? null : contact.phoneNumber,
+      }));
+    }
+
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
