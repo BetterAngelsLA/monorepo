@@ -33,7 +33,7 @@ export default function NoteCard(props: INoteCardProps) {
         },
       ]}
     >
-      <NoteCardHeader title={note.title} interactedAt={note.interactedAt} />
+      <NoteCardHeader purpose={note.purpose} interactedAt={note.interactedAt} />
       <NoteCardClient
         client={isInteractionsPage ? note.client : note.createdBy}
         isSubmitted={note.isSubmitted}
