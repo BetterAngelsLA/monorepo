@@ -89,7 +89,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": self.client_profile_1["phoneNumbers"],
             "physicalDescription": "A human",
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
-            "preferredCommunication": PreferredCommunicationEnum.CALL.name,
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "profilePhoto": {"name": self.client_profile_1_photo_name},
             "pronouns": PronounEnum.HE_HIM_HIS.name,
