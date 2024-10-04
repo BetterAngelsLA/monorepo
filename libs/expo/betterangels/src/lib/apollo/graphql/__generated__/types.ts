@@ -193,6 +193,7 @@ export type ClientProfileType = {
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
+  importantNotes?: Maybe<Scalars['String']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
@@ -202,7 +203,7 @@ export type ClientProfileType = {
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
-  preferredCommunication?: Maybe<PreferredCommunicationEnum>;
+  preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: Maybe<LanguageEnum>;
   profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
@@ -252,6 +253,7 @@ export type CreateClientProfileInput = {
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
@@ -260,7 +262,7 @@ export type CreateClientProfileInput = {
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
@@ -1192,6 +1194,7 @@ export type UpdateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
@@ -1200,7 +1203,7 @@ export type UpdateClientProfileInput = {
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
