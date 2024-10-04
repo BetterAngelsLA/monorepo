@@ -9,7 +9,6 @@ import {
   DatePicker,
   FieldCard,
   TextMedium,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { format, setHours, setMinutes } from 'date-fns';
@@ -99,10 +98,10 @@ export default function DateAndTime(props: IDateAndTimeProps) {
         !dateTime.date && !isDateAndTime ? (
           <TextMedium size="sm">Add Date and Time</TextMedium>
         ) : dateTime.date && !isDateAndTime ? (
-          <TextRegular mb="md">
+          <TextMedium size="sm">
             {dateTime.date ? format(dateTime.date, 'MM/dd/yyyy') : ''}{' '}
             {dateTime.time ? format(dateTime.time, 'HH:mm') : ''}
-          </TextRegular>
+          </TextMedium>
         ) : null
       }
     >
