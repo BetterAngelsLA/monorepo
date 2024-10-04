@@ -176,6 +176,7 @@ type ClientProfileType {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String
@@ -226,6 +227,7 @@ input CreateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String
@@ -901,6 +903,7 @@ input UpdateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String

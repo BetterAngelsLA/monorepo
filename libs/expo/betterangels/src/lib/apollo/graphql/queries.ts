@@ -9,7 +9,6 @@ export const GET_NOTES = gql`
     notes(filters: $filters, pagination: $pagination, order: $order) {
       id
       purpose
-      title
       location {
         address {
           id
@@ -24,10 +23,6 @@ export const GET_NOTES = gql`
       moods {
         id
         descriptor
-      }
-      purposes {
-        id
-        title
       }
       providedServices {
         id
@@ -65,7 +60,6 @@ export const GET_NOTE = gql`
     note(pk: $id) {
       id
       purpose
-      title
       location {
         address {
           id
@@ -89,17 +83,6 @@ export const GET_NOTE = gql`
       moods {
         id
         descriptor
-      }
-      purposes {
-        id
-        title
-        status
-        createdAt
-        createdBy {
-          id
-          email
-          username
-        }
       }
       providedServices {
         id

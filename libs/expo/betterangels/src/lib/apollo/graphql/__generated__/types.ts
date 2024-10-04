@@ -193,6 +193,7 @@ export type ClientProfileType = {
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
+  importantNotes?: Maybe<Scalars['String']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
@@ -252,6 +253,7 @@ export type CreateClientProfileInput = {
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
@@ -1192,6 +1194,7 @@ export type UpdateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;

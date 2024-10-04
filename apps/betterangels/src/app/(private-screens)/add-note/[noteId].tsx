@@ -20,13 +20,13 @@ import {
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import DateAndTime from './DateAndTime';
 import Location from './Location';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import SubmittedModal from './SubmittedModal';
-import Title from './Title';
 
 const renderModal = (
   isRevert: string | undefined,
@@ -246,17 +246,14 @@ export default function AddNote() {
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         pt="sm"
       >
-        <Title
-          notePurpose={data.note.purpose}
-          noteDate={data.note.interactedAt}
-          {...props}
-        />
+        <Purpose purpose={data.note.purpose} {...props} />
+        <DateAndTime interactedAt={data.note.interactedAt} {...props} />
         <Location
           address={data.note.location?.address}
           point={data.note.location?.point}
           {...props}
         />
-        <Purpose purposes={data.note.purposes} {...props} />
+
         {/* TODO: Will be back later */}
         {/* <Mood
           attachments={MoodAttachments}
