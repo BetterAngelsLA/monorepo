@@ -11,6 +11,7 @@ from clients.enums import (
     ClientDocumentNamespaceEnum,
     LanguageEnum,
     LivingSituationEnum,
+    PreferredCommunicationEnum,
 )
 from common.graphql.types import (
     AttachmentInterface,
@@ -158,7 +159,7 @@ class ClientProfileBaseType:
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
-    preferred_communication: auto
+    preferred_communication: Optional[List[PreferredCommunicationEnum]]
     preferred_language: auto
     profile_photo: auto
     pronouns: auto
