@@ -7,6 +7,16 @@ import pgtrigger.migrations
 from django.db import migrations, models
 
 
+def copy_custom_service_to_service_other(apps, schema_editor) -> None:
+    ServiceRequest = apps.get_model("notes", "ServiceRequest")
+
+    service_requests = ServiceRequest.objects.all()
+    for service_request in service_requests:
+        if service_request.custom_service:
+            service_request.service_other = service_request.custom_service
+            service_request.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -183,4 +193,5 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
+        migrations.RunPython(copy_custom_service_to_service_other),
     ]
