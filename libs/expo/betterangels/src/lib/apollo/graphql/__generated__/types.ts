@@ -202,7 +202,7 @@ export type ClientProfileType = {
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
-  preferredCommunication?: Maybe<PreferredCommunicationEnum>;
+  preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: Maybe<LanguageEnum>;
   profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
@@ -260,7 +260,7 @@ export type CreateClientProfileInput = {
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
@@ -1200,7 +1200,7 @@ export type UpdateClientProfileInput = {
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;

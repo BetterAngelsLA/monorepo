@@ -195,7 +195,7 @@ class Note(BaseModel):
     _private_details: Optional[str]
 
     def __str__(self) -> str:
-        return self.title
+        return self.purpose
 
     @property
     def label_with_client(self) -> str:
@@ -204,7 +204,7 @@ class Note(BaseModel):
         else:
             client_label = "Client"
 
-        return f"Note {self.id}: {self.title} (with {client_label} {self.interacted_at.date()})"
+        return f"Note {self.id}: {self.purpose} (with {client_label} {self.interacted_at.date()})"
 
     @property
     def label_with_created_by(self) -> str:

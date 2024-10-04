@@ -100,7 +100,7 @@ export default function AddNote() {
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
-    title: false,
+    purpose: false,
     location: false,
     date: false,
     time: false,
@@ -112,7 +112,7 @@ export default function AddNote() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      purpose: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
       headerLeft: () =>
         revertBeforeTimestamp ? (
           <RevertModal
@@ -247,7 +247,7 @@ export default function AddNote() {
         pt="sm"
       >
         <Title
-          noteTitle={data.note.title}
+          notePurpose={data.note.purpose}
           noteDate={data.note.interactedAt}
           {...props}
         />

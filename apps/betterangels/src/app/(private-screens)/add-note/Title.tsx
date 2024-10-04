@@ -19,17 +19,17 @@ import { Pressable, View } from 'react-native';
 interface ITitleProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
-  noteTitle?: string;
+  notePurpose?: string;
   noteId: string | undefined;
   noteDate: Date;
   errors: {
-    title: boolean;
+    purpose: boolean;
     location: boolean;
     date: boolean;
     time: boolean;
   };
   setErrors: (errors: {
-    title: boolean;
+    purpose: boolean;
     location: boolean;
     date: boolean;
     time: boolean;
@@ -37,7 +37,7 @@ interface ITitleProps {
 }
 
 type TNote = {
-  title: string | undefined;
+  purpose: string | undefined;
   date: Date;
   time: Date;
 };
@@ -46,7 +46,7 @@ const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 
 export default function Title(props: ITitleProps) {
   const {
-    noteTitle,
+    notePurpose,
     expanded,
     setExpanded,
     noteId,
@@ -59,7 +59,7 @@ export default function Title(props: ITitleProps) {
     UpdateNoteMutationVariables
   >(UPDATE_NOTE);
   const [note, setNote] = useState<TNote>({
-    title: noteTitle,
+    purpose: notePurpose,
     date: noteDate,
     time: noteDate,
   });
@@ -68,14 +68,14 @@ export default function Title(props: ITitleProps) {
   const isTitle = expanded === 'Title';
 
   const updateNoteFunction = useRef(
-    debounce(async (key: 'time' | 'title' | 'date', value: string | Date) => {
+    debounce(async (key: 'time' | 'purpose' | 'date', value: string | Date) => {
       if (!noteId || !value) return;
       const currentNote = noteRef.current;
       const dateValue = key === 'date' ? value : new Date(currentNote.date);
       const timeValue = key === 'time' ? value : new Date(currentNote.time);
       let updatingField = value;
 
-      const updatingKey = key === 'title' ? 'title' : 'interactedAt';
+      const updatingKey = key === 'purpose' ? 'purpose' : 'interactedAt';
       if (key === 'time' || key === 'date') {
         if (timeValue instanceof Date && dateValue instanceof Date) {
           const hours = timeValue.getHours();
@@ -108,7 +108,7 @@ export default function Title(props: ITitleProps) {
     }, 500)
   ).current;
 
-  const onChange = (key: 'title' | 'date' | 'time', value: string | Date) => {
+  const onChange = (key: 'purpose' | 'date' | 'time', value: string | Date) => {
     if (!value) {
       setErrors({ ...errors, [key]: true });
     }
@@ -134,19 +134,19 @@ export default function Title(props: ITitleProps) {
         <Pressable
           onPress={() => setExpanded('Title')}
           accessibilityRole="button"
-          accessibilityHint="opens title edit"
+          accessibilityHint="opens purpose edit"
           style={{
             flexDirection: 'row',
             alignItems: 'center',
           }}
         >
-          {(errors.title || errors.date || errors.time) && (
+          {(errors.purpose || errors.date || errors.time) && (
             <TextRegular color={Colors.ERROR}>
               These fields are required
             </TextRegular>
           )}
           <TextMedium mr="sm">
-            {note.title} <TextRegular color={Colors.ERROR}>*</TextRegular>
+            {note.purpose} <TextRegular color={Colors.ERROR}>*</TextRegular>
           </TextMedium>
         </Pressable>
         <TextRegular size="xs" mb="md">
@@ -162,12 +162,12 @@ export default function Title(props: ITitleProps) {
       >
         <BasicInput
           onDelete={() => {
-            setNote({ ...note, title: '' });
-            setErrors({ ...errors, title: true });
+            setNote({ ...note, purpose: '' });
+            setErrors({ ...errors, purpose: true });
           }}
-          error={!!errors.title}
-          value={note.title}
-          onChangeText={(e) => onChange('title', e)}
+          error={!!errors.purpose}
+          value={note.purpose}
+          onChangeText={(e) => onChange('purpose', e)}
         />
         <DatePicker
           error={!!errors.date}
