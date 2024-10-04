@@ -1,25 +1,17 @@
 import { ServiceEnum, ViewNoteQuery } from '../apollo';
 
 interface IWatchedValue {
-  purposes: ViewNoteQuery['note']['purposes'];
+  purpose: ViewNoteQuery['note']['purpose'];
   moods: ViewNoteQuery['note']['moods'];
   providedServices: ViewNoteQuery['note']['providedServices'];
   requestedServices: ViewNoteQuery['note']['requestedServices'];
 }
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
-  const { purposes, providedServices, requestedServices } =
-    watchedValues;
-  const changedG = purposes
-    .map((purpose) => purpose.title.toLowerCase())
-    .filter(Boolean);
-
-  const purposeText =
-    changedG.length > 0
-      ? changedG.length === 1
-        ? 'The goal for this session was to'
-        : 'The goals for this session were to'
-      : '';
+  const { purpose, providedServices, requestedServices } = watchedValues;
+  const changedG = purpose
+    ? `G - The goal for this session was to ${purpose}`
+    : 'G - ';
   const changedP = [{ title: '' }]
     .filter((item) => !!item.title)
     .map((filtered) => `${filtered.title}`);
@@ -92,16 +84,9 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
-  const updatedG =
-    changedG.length > 0
-      ? `G - ${purposeText} ${changedG.slice(0, -1).join(', ')}${
-          changedG.length > 1 ? ', and ' : ''
-        }${changedG[changedG.length - 1]}.`
-      : 'G -';
-
   const updatedP = changedP ? `P - ${changedP.join(', ')}` : 'P -';
 
-  const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
+  const newPublicNote = `${changedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
 
   return newPublicNote;
 }
