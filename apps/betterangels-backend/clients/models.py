@@ -95,6 +95,7 @@ class ClientProfile(models.Model):
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
+    important_notes = models.TextField(blank=True, null=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
