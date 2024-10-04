@@ -8,7 +8,6 @@ import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
-import NotePurpose from './NotePurpose';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
 
@@ -78,9 +77,6 @@ export default function Note({
       <View style={styles.container}>
         <NoteTitle note={data?.note} />
         {data?.note.location?.point && <NoteLocation note={data?.note} />}
-        {data?.note.purposes && data?.note.purposes.length > 0 && (
-          <NotePurpose note={data?.note} />
-        )}
         {data?.note && hasServices(data.note) && (
           <NoteServices note={data?.note} />
         )}

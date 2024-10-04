@@ -17,6 +17,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import TextRegular from '../TextRegular';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -26,6 +27,7 @@ interface IBasicInputProps extends TextInputProps {
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
+  errorMessage?: string;
   componentStyle?: StyleProp<ViewStyle>;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -57,6 +59,7 @@ export function BasicInput(props: IBasicInputProps) {
     onDelete,
     autoCorrect = true,
     borderRadius = Radiuses.xs,
+    errorMessage,
     ...rest
   } = props;
 
@@ -126,6 +129,11 @@ export function BasicInput(props: IBasicInputProps) {
           </Pressable>
         )}
       </View>
+      {errorMessage && (
+        <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
+          {errorMessage}
+        </TextRegular>
+      )}
     </View>
   );
 }
