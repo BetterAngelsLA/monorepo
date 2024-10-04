@@ -11,7 +11,7 @@ export default function NoteTitle({
   return (
     <View>
       <TextBold size="lg" mb="xs">
-        {note?.title}
+        {note?.purpose}
       </TextBold>
       <TextRegular size="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
