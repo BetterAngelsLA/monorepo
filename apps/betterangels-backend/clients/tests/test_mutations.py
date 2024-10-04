@@ -79,6 +79,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "importantNotes": "I am an important note",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1234 Mailing Street",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
@@ -210,6 +211,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 71.75,
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
+            "importantNotes": "I am a very important note",
             "householdMembers": household_members,
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
