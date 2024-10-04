@@ -10,6 +10,7 @@ import {
   PronounEnum,
   RaceEnum,
   RelationshipTypeEnum,
+  ServiceEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
 
@@ -157,4 +158,25 @@ export const clientHouseholdMemberEnumDisplay: Partial<{
 }> = {
   ...clientRelationshipEnumDisplay,
   [RelationshipTypeEnum.Pet]: 'Pet',
+};
+
+export const enumDisplayServices: { [key in ServiceEnum]: string } = {
+  [ServiceEnum.Blanket]: 'Blanket',
+  [ServiceEnum.Book]: 'Book',
+  [ServiceEnum.Clothes]: 'Clothes',
+  [ServiceEnum.Dental]: 'Dental',
+  [ServiceEnum.Food]: 'Food',
+  [ServiceEnum.HarmReduction]: 'Harm Reduction',
+  [ServiceEnum.HygieneKit]: 'Hygiene Kit',
+  [ServiceEnum.Medical]: 'Medical',
+  [ServiceEnum.PetCare]: 'Pet Care',
+  [ServiceEnum.PetFood]: 'Pet Food',
+  [ServiceEnum.Shelter]: 'Shelter',
+  [ServiceEnum.Other]: 'Other',
+  [ServiceEnum.Shoes]: 'Shoes',
+  [ServiceEnum.Shower]: 'Shower',
+  [ServiceEnum.Stabilize]: 'Stabilize',
+  [ServiceEnum.Storage]: 'Storage',
+  [ServiceEnum.Transport]: 'Transport',
+  [ServiceEnum.Water]: 'Water',
 };
