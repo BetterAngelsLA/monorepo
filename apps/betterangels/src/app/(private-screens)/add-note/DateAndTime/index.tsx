@@ -44,7 +44,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
   });
 
   const noteRef = useRef(dateTime);
-  const isDateAndTime = expanded === 'Date And Time';
+  const isDateAndTime = expanded === 'Date and Time';
 
   const updateNoteFunction = useRef(
     debounce(async (key: 'time' | 'date', value: string | Date) => {
@@ -92,8 +92,8 @@ export default function DateAndTime(props: IDateAndTimeProps) {
       scrollRef={scrollRef}
       expanded={expanded}
       mb="xs"
-      setExpanded={() => setExpanded(isDateAndTime ? null : 'Date And Time')}
-      title="Date And Time"
+      setExpanded={() => setExpanded(isDateAndTime ? null : 'Date and Time')}
+      title="Date and Time"
       actionName={
         !dateTime.date && !isDateAndTime ? (
           <TextMedium size="sm">Add Date and Time</TextMedium>
