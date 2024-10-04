@@ -152,6 +152,7 @@ class ClientProfileBaseType:
     hair_color: auto
     height_in_inches: auto
     hmis_id: auto
+    important_notes: auto
     living_situation: Optional[LivingSituationEnum]
     marital_status: auto
     mailing_address: auto
