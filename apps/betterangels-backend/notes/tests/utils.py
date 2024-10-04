@@ -126,11 +126,13 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         providedServices {{
                             id
                             service
+                            serviceOther
                             customService
                         }}
                         requestedServices {{
                             id
                             service
+                            serviceOther
                             customService
                         }}
                         publicDetails
@@ -212,6 +214,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         providedServices {
                             id
                             service
+                            serviceOther
                             customService
                             dueBy
                             status
@@ -219,6 +222,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         requestedServices {
                             id
                             service
+                            serviceOther
                             customService
                             dueBy
                             status
@@ -396,6 +400,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ServiceRequestType {
                         id
                         service
+                        serviceOther
                         customService
                         status
                         dueBy
@@ -543,6 +548,7 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                     ... on ServiceRequestType {{
                         id
                         service
+                        serviceOther
                         customService
                         status
                         dueBy

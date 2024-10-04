@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
+    service_other = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",
         on_delete=models.CASCADE,
@@ -59,7 +60,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.custom_service else self.custom_service)
+        return str(self.service if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
