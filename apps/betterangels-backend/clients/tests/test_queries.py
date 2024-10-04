@@ -80,6 +80,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
+            "importantNotes": "I am very important",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
