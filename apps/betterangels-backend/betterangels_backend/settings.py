@@ -123,6 +123,7 @@ INSTALLED_APPS = [
     "pgtrigger",
     "strawberry_django",
     "waffle",
+    "django_filters",
     # Our Apps
     "accounts",
     "clients",
@@ -225,6 +226,13 @@ REST_FRAMEWORK = {
     # We want to use session auth by default for now.
     "TOKEN_CREATOR": None,
     "TOKEN_MODEL": None,
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BAKCENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
 }
 
 STRAWBERRY_DJANGO = {
