@@ -67,7 +67,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       const { data } = await createNote({
         variables: {
           data: {
-            title: `Session with ${firstName || 'Client'}`,
             purpose: `Session with ${firstName || 'Client'}`,
             client: id,
           },
