@@ -112,7 +112,7 @@ export default function AddNote() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      purpose: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
       headerLeft: () =>
         revertBeforeTimestamp ? (
           <RevertModal
