@@ -22,6 +22,7 @@ query ClientProfile($id: ID!) {
       residenceAddress
       race
       age
+      importantNotes
       hmisProfiles {
         agency
         hmisId

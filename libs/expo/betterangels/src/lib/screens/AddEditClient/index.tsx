@@ -32,6 +32,7 @@ import {
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
+import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
@@ -275,6 +276,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         <View style={{ flex: 1 }}>
           <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
             <PersonalInfo {...props} />
+            <ImportantNotes {...props} />
             <DemographicInfo {...props} />
             <ContactInfo {...props} />
             <VeteranStatus {...props} />

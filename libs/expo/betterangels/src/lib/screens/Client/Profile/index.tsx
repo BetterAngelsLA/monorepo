@@ -6,6 +6,7 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
+import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 
@@ -47,6 +48,7 @@ const Profile = forwardRef<ProfileRef, ProfileProps>(({ client }, ref) => {
   return (
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <PersonalInfo {...props} />
+      <ImportantNotes {...props} />
       <DemographicInfo {...props} />
       <ContactInfo {...props} />
       <RelevantContacts ref={viewRef} {...props} />
