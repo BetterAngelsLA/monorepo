@@ -44,6 +44,7 @@ class ServiceRequestType:
     id: ID
     service: auto
     custom_service: auto
+    service_other: auto
     status: auto
     due_by: auto
     completed_on: auto
@@ -57,6 +58,7 @@ class CreateServiceRequestInput:
     service: auto
     status: auto
     custom_service: auto
+    service_other: auto
     client: Optional[ID]
 
 
@@ -64,6 +66,7 @@ class CreateServiceRequestInput:
 class CreateNoteServiceRequestInput:
     service: auto
     custom_service: Optional[str]
+    service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
 
@@ -72,6 +75,7 @@ class CreateNoteServiceRequestInput:
 class UpdateServiceRequestInput:
     id: ID
     custom_service: auto
+    service_other: auto
     status: auto
     due_by: auto
     client: Optional[ID]

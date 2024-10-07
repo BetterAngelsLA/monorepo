@@ -81,11 +81,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     providedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     requestedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     publicDetails
@@ -137,11 +139,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {
                     "id": str(self.provided_services[0].id),
                     "service": ServiceEnum(self.provided_services[0].service).name,
+                    "serviceOther": self.provided_services[0].service_other,
                     "customService": self.provided_services[0].custom_service,
                 },
                 {
                     "id": str(self.provided_services[1].id),
                     "service": ServiceEnum(self.provided_services[1].service).name,
+                    "serviceOther": self.provided_services[1].service_other,
                     "customService": self.provided_services[1].custom_service,
                 },
             ],
@@ -149,11 +153,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {
                     "id": str(self.requested_services[0].id),
                     "service": ServiceEnum(self.requested_services[0].service).name,
+                    "serviceOther": self.requested_services[0].service_other,
                     "customService": self.requested_services[0].custom_service,
                 },
                 {
                     "id": str(self.requested_services[1].id),
                     "service": ServiceEnum(self.requested_services[1].service).name,
+                    "serviceOther": self.requested_services[1].service_other,
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
@@ -199,11 +205,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     providedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     requestedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     publicDetails
@@ -454,6 +462,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                 serviceRequest(pk: $id) {
                     id
                     service
+                    serviceOther
                     customService
                     status
                     dueBy
@@ -478,6 +487,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         expected_service_request = {
             "id": service_request_id,
             "service": self.service_request["service"],
+            "serviceOther": None,
             "customService": None,
             "status": "COMPLETED",
             "dueBy": None,
@@ -495,6 +505,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                 serviceRequests {
                     id
                     service
+                    serviceOther
                     customService
                     status
                     dueBy
