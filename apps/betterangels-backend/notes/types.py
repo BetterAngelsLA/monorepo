@@ -236,7 +236,7 @@ class NoteType:
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     purpose: auto
-    title: auto
+    title: Optional[str]
     public_details: auto
     private_details: auto
     client: Optional[ID]

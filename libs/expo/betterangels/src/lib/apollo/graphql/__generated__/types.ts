@@ -290,7 +290,7 @@ export type CreateNoteInput = {
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose: Scalars['String']['input'];
-  title: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateNoteMoodInput = {
@@ -815,7 +815,7 @@ export type NoteType = {
   purpose: Scalars['String']['output'];
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
-  title: Scalars['String']['output'];
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 
