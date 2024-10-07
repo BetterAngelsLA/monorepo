@@ -282,6 +282,7 @@ union CreateNotePayload = NoteType | OperationInfo
 input CreateNoteServiceRequestInput {
   service: ServiceEnum!
   customService: String
+  serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
 }
@@ -302,6 +303,7 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   customService: String
+  serviceOther: String
   client: ID
 }
 
@@ -793,22 +795,46 @@ type SampleType {
 }
 
 enum ServiceEnum {
+  BICYCLE
+  BIRTH_CERTIFICATE
   BLANKET
   BOOK
+  CALIFORNIA_LIFELINE_PHONE
   CLOTHES
+  CONTACT_DPSS
+  CONTACT_FRIEND
+  DMH_EVALUATION
+  DMV_NO_FEE_ID_FORM
   DENTAL
+  DISCOUNT_SCOOTER_RIDES
+  FAMILY_REUNIFICATION
   FOOD
   HARM_REDUCTION
   HYGIENE_KIT
+  INTERNET_ACCESS
+  LEGAL_COUNSEL
+  MAIL_PICK_UP
   MEDICAL
+  METRO_LIFE_TAP
   PET_CARE
   PET_FOOD
+  PUBLIC_BENEFITS_PROGRAMS
+  RIDE
+  SAFE_PARKING
   SHELTER
   SHOES
   SHOWER
+  SOCIAL_SECURITY_CARD_REPLACEMENT
   STABILIZE
+  STIMULUS_ASSISTANCE
   STORAGE
+  STORAGE_BELONGINGS
+  STORAGE_DOCUMENTS
+  TENT
+  THERAPIST_APPOINTMENT
   TRANSPORT
+  UNEMPLOYMENT_CERTIFICATION
+  VACCINE_PASSPORT
   WATER
   OTHER
 }
@@ -822,6 +848,7 @@ type ServiceRequestType {
   id: ID!
   service: ServiceEnum!
   customService: String
+  serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
@@ -958,6 +985,7 @@ union UpdateNotePayload = NoteType | OperationInfo
 input UpdateServiceRequestInput {
   id: ID!
   customService: String
+  serviceOther: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
   client: ID
