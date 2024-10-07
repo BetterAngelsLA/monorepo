@@ -20,7 +20,7 @@ def copy_custom_service_to_service_other(apps, schema_editor) -> None:
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("notes", "0009_remove_note_note_add_insert_and_more"),
+        ("notes", "0010_alter_note_title_alter_noteevent_title"),
     ]
 
     operations = [
