@@ -4,15 +4,15 @@ from typing import Any, cast
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.forms import AdminUserCreationForm as BaseAdminUserCreationForm
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
-from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.contrib.sites.models import Site
 from organizations.backends import invitation_backend
 
 from .models import User
 
 
-class UserCreationForm(BaseUserCreationForm):
+class UserCreationForm(BaseAdminUserCreationForm):
     class Meta:
         model = User
         fields = ("email", "username")
