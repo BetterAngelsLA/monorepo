@@ -2,7 +2,7 @@ import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
-import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
 import { ViewNoteQuery } from '../../apollo';
 
 export default function NoteLocation({

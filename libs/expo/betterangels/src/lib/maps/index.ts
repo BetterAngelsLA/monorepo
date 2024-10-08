@@ -1,5 +1,15 @@
 import Maps from './map'
 
-export const MapView = Maps.default;
-export const Marker = Maps.Marker;
-export const PROVIDER_GOOGLE = Maps?.PROVIDER_GOOGLE || "google";
+import RNMapView from 'react-native-maps';
+
+type TMapView = RNMapView; // pointing to RN for type as react-native-web-maps MapView breaks typings
+const MapView = Maps.default;
+const Marker = Maps.Marker;
+const PROVIDER_GOOGLE = Maps?.PROVIDER_GOOGLE || 'google';
+
+export {
+    TMapView,
+    MapView,
+    Marker,
+    PROVIDER_GOOGLE,
+}

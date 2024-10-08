@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MapView } from '@monorepo/expo/betterangels';
+import { TMapView } from '@monorepo/expo/betterangels';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
@@ -64,7 +64,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setLocation,
     setError,
   } = props;
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<TMapView>(null);
   const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
