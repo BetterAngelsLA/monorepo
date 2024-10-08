@@ -51,6 +51,7 @@ interface ITextareaProps extends TextInputProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  height?: number | 'auto';
 }
 
 export function Textarea(props: ITextareaProps) {
@@ -69,6 +70,7 @@ export function Textarea(props: ITextareaProps) {
     mx,
     ml,
     mr,
+    height,
     ...rest
   } = props;
 
@@ -117,6 +119,8 @@ export function Textarea(props: ITextareaProps) {
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,
                 minHeight: 40,
+                height,
+                overflow: 'scroll',
                 ...Platform.select({
                   web: {
                     outline: 'none',

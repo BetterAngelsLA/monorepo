@@ -41,6 +41,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             hairColor
             heightInInches
             hmisId
+            importantNotes
             livingSituation
             mailingAddress
             maritalStatus
@@ -220,6 +221,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
+                "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
@@ -229,7 +231,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumbers": self.client_profile_1_phone_numbers,
                 "physicalDescription": "A human",
                 "placeOfBirth": "Los Angeles, CA",
-                "preferredCommunication": PreferredCommunicationEnum.CALL.name,
+                "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
@@ -265,7 +267,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "phoneNumbers": [],
                 "physicalDescription": None,
                 "placeOfBirth": None,
-                "preferredCommunication": None,
+                "preferredCommunication": [],
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,

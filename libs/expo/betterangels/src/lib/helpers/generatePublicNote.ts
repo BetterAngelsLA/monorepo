@@ -1,28 +1,18 @@
 import { ServiceEnum, ViewNoteQuery } from '../apollo';
+import { enumDisplayServices } from '../static/enumDisplayMapping';
 
 interface IWatchedValue {
-  purposes: ViewNoteQuery['note']['purposes'];
+  purpose: ViewNoteQuery['note']['purpose'];
   moods: ViewNoteQuery['note']['moods'];
   providedServices: ViewNoteQuery['note']['providedServices'];
   requestedServices: ViewNoteQuery['note']['requestedServices'];
 }
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
-  const { purposes, providedServices, requestedServices } =
-    watchedValues;
-  const changedG = purposes
-    .map((purpose) => purpose.title.toLowerCase())
-    .filter(Boolean);
-
-  const purposeText =
-    changedG.length > 0
-      ? changedG.length === 1
-        ? 'The goal for this session was to'
-        : 'The goals for this session were to'
-      : '';
-  const changedP = [{ title: '' }]
-    .filter((item) => !!item.title)
-    .map((filtered) => `${filtered.title}`);
+  const { purpose, providedServices, requestedServices } = watchedValues;
+  const changedG = purpose
+    ? `G - The goal for this session was to ${purpose}`
+    : 'G - ';
 
   // const moodIText =
   //   moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
@@ -42,7 +32,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     if (item.service === ServiceEnum.Other) {
       return item.customService;
     }
-    return item.service;
+    return enumDisplayServices[item.service];
   });
 
   const serviceIText =
@@ -67,8 +57,19 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     if (item.service === ServiceEnum.Other) {
       return item.customService;
     }
-    return item.service;
+    return enumDisplayServices[item.service];
   });
+
+  const updatedP =
+    requestedServicesArray.length > 0
+      ? 'P - Follow up with client regarding requested ' +
+        requestedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (requestedServicesArray.length > 1 ? ', and ' : '') +
+        requestedServicesArray[
+          requestedServicesArray.length - 1
+        ]?.toLowerCase() +
+        '.'
+      : 'P - Touch base with client for general wellness check.';
 
   const requestedText =
     requestedServicesArray.length > 0
@@ -92,16 +93,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
-  const updatedG =
-    changedG.length > 0
-      ? `G - ${purposeText} ${changedG.slice(0, -1).join(', ')}${
-          changedG.length > 1 ? ', and ' : ''
-        }${changedG[changedG.length - 1]}.`
-      : 'G -';
-
-  const updatedP = changedP ? `P - ${changedP.join(', ')}` : 'P -';
-
-  const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
+  const newPublicNote = `${changedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
 
   return newPublicNote;
 }

@@ -11,13 +11,13 @@ interface ILocationProps {
   expanded: string | undefined | null;
   errors: {
     location: boolean;
-    title: boolean;
+    purpose: boolean;
     date: boolean;
     time: boolean;
   };
   setErrors: (errors: {
     location: boolean;
-    title: boolean;
+    purpose: boolean;
     date: boolean;
     time: boolean;
   }) => void;
