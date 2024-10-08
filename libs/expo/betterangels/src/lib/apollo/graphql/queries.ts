@@ -27,12 +27,12 @@ export const GET_NOTES = gql`
       providedServices {
         id
         service
-        customService
+        serviceOther
       }
       requestedServices {
         id
         service
-        customService
+        serviceOther
       }
       publicDetails
       isSubmitted
@@ -87,12 +87,12 @@ export const GET_NOTE = gql`
       providedServices {
         id
         service
-        customService
+        serviceOther
       }
       requestedServices {
         id
         service
-        customService
+        serviceOther
       }
       publicDetails
       isSubmitted

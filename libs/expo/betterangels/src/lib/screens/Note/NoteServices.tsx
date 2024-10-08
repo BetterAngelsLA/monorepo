@@ -50,7 +50,7 @@ const getIcons = (
   array: {
     id: string;
     service?: ServiceEnum;
-    customService?: string | null | undefined;
+    serviceOther?: string | null | undefined;
   }[]
 ) => {
   return array.slice(0, 4).map((icon) => {

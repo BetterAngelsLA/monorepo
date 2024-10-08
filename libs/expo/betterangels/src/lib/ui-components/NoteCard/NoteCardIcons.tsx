@@ -104,7 +104,7 @@ export default function NoteCardIcons({
     id: string;
     descriptor?: MoodEnum;
     service?: ServiceEnum;
-    customService?: string | null | undefined;
+    serviceOther?: string | null | undefined;
   }[];
 }) {
   return (
