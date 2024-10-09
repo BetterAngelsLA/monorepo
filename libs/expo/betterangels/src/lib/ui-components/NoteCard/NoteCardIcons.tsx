@@ -1,11 +1,9 @@
 import {
-  ArrowTrendUpIcon,
   BlanketIcon,
   BookOpenIcon,
   BottleWaterIcon,
   BriefcaseMedicalIcon,
   BurgerSodaIcon,
-  CarIcon,
   FaceAngryIcon,
   FaceCalmIcon,
   FaceEyesXmarksIcon,
@@ -30,7 +28,6 @@ import {
   SyringeIcon,
   ToothIcon,
   ToothbrushIcon,
-  WarehouseIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -47,8 +44,6 @@ const ICONS = [
   { Icon: SneakerIcon, title: 'Shoes', enum: ServiceEnum.Shoes },
   { Icon: ShowerIcon, title: 'Shower', enum: ServiceEnum.Shower },
   { Icon: PeopleRoofIcon, title: 'Shelter', enum: ServiceEnum.Shelter },
-  { Icon: WarehouseIcon, title: 'Storage', enum: ServiceEnum.Storage },
-  { Icon: CarIcon, title: 'Transport', enum: ServiceEnum.Transport },
   { Icon: ToothIcon, title: 'Dental', enum: ServiceEnum.Dental },
   { Icon: PawIcon, title: 'Pet Care', enum: ServiceEnum.PetCare },
   { Icon: FaceGrinWinkIcon, title: 'Agreeable', enum: MoodEnum.Agreeable },
@@ -94,7 +89,6 @@ const ICONS = [
     enum: ServiceEnum.HarmReduction,
   },
   { Icon: BriefcaseMedicalIcon, title: 'Medical', enum: ServiceEnum.Medical },
-  { Icon: ArrowTrendUpIcon, title: 'Stabilize', enum: ServiceEnum.Stabilize },
 ];
 
 export default function NoteCardIcons({

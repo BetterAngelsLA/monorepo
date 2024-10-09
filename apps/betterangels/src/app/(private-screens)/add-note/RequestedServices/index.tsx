@@ -121,7 +121,6 @@ const SERVICES = [
     items: [
       { Icon: CarIcon, title: 'Bicycle', enum: ServiceEnum.Bicycle },
       { Icon: PeopleRoofIcon, title: 'Shelter', enum: ServiceEnum.Shelter },
-      { Icon: WarehouseIcon, title: 'Storage', enum: ServiceEnum.Storage },
       {
         Icon: WarehouseIcon,
         title: 'Storage Belongings',
@@ -133,7 +132,6 @@ const SERVICES = [
         enum: ServiceEnum.StorageDocuments,
       },
       { Icon: TentIcon, title: 'Tent', enum: ServiceEnum.Tent },
-      { Icon: CarIcon, title: 'Transport', enum: ServiceEnum.Transport },
       { Icon: CarIcon, title: 'Ride', enum: ServiceEnum.Ride },
       { Icon: CarIcon, title: 'Safe Parking', enum: ServiceEnum.SafeParking },
       {
@@ -232,11 +230,6 @@ const SERVICES = [
         Icon: ArrowTrendUpIcon,
         title: 'Social Security Card Replacement',
         enum: ServiceEnum.SocialSecurityCardReplacement,
-      },
-      {
-        Icon: ArrowTrendUpIcon,
-        title: 'Stabilize',
-        enum: ServiceEnum.Stabilize,
       },
       {
         Icon: ArrowTrendUpIcon,
