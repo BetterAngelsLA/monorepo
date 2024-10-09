@@ -181,7 +181,7 @@ export const enumDisplayServices: { [key in ServiceEnum]: string } = {
   [ServiceEnum.LegalCounsel]: 'Legal Counsel',
   [ServiceEnum.MailPickUp]: 'Mail Pick Up',
   [ServiceEnum.Medical]: 'Medical',
-  [ServiceEnum.MetroLifeTap]: 'Metro Life Tap',
+  [ServiceEnum.MetroLifeTap]: 'Metro LIFE Tap',
   [ServiceEnum.PetCare]: 'Pet Care',
   [ServiceEnum.PetFood]: 'Pet Food',
   [ServiceEnum.PublicBenefitsPrograms]: 'Public Benefits Programs',

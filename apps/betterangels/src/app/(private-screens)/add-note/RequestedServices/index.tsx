@@ -238,7 +238,7 @@ const SERVICES = [
       },
       {
         Icon: ArrowTrendUpIcon,
-        title: 'Unemployment Certification Replacement',
+        title: 'Unemployment Certification',
         enum: ServiceEnum.UnemploymentCertification,
       },
       {
