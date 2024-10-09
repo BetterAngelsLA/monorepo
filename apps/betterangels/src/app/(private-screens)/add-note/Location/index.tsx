@@ -3,7 +3,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
 import LocationMapModal from './LocationMapModal';
 
 interface ILocationProps {
