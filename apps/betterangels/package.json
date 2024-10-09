@@ -77,7 +77,8 @@
     "react-native-keyboard-controller": "*",
     "@react-native-async-storage/async-storage": "*",
     "expo-file-system": "*",
-    "expo-sharing": "*"
+    "expo-sharing": "*",
+    "@teovilla/react-native-web-maps": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
