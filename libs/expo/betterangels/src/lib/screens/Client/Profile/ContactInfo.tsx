@@ -1,3 +1,4 @@
+import { PawIcon } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
   Accordion,
@@ -5,23 +6,36 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { View, ViewStyle } from 'react-native';
+import {
+  enumDisplayPreferredCommunication,
+  enumDisplaySocialMedia,
+} from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
 
 const InfoCol = ({
   label,
   value,
+  row,
 }: {
   label: string;
   value?: string | null;
-}) => (
-  <View>
-    <TextRegular mb="xs" size="sm">
-      {label}
-    </TextRegular>
-    <TextBold size="sm">{value}</TextBold>
-  </View>
-);
+  row?: boolean;
+}) => {
+  const style: ViewStyle = row
+    ? {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }
+    : { gap: Spacings.xs };
+  return (
+    <View style={style}>
+      <TextRegular size="sm">{label}</TextRegular>
+      <TextBold size="sm">{value}</TextBold>
+    </View>
+  );
+};
 
 export default function ContactInfo(props: IProfileSectionProps) {
   const { expanded, setExpanded, client } = props;
@@ -62,6 +76,81 @@ export default function ContactInfo(props: IProfileSectionProps) {
                 .map(({ label, value }) => (
                   <InfoCol key={label} label={label} value={value} />
                 ))}
+              {client?.clientProfile.phoneNumbers &&
+                client?.clientProfile.phoneNumbers.length > 0 && (
+                  <View>
+                    <View
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexDirection: 'row',
+                        marginBottom: Spacings.sm,
+                      }}
+                    >
+                      <TextRegular size="sm">Phone Number(s)</TextRegular>
+                      <TextBold size="sm">Primary</TextBold>
+                    </View>
+                    {client?.clientProfile.phoneNumbers?.map((phoneNumber) => (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                        key={phoneNumber.id}
+                      >
+                        <TextBold size="sm">{phoneNumber.number}</TextBold>
+                        <PawIcon />
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+              <InfoCol
+                row
+                label="Email"
+                value={client?.clientProfile.user.email}
+              />
+              {client?.clientProfile.socialMediaProfiles &&
+                client?.clientProfile.socialMediaProfiles?.length > 0 && (
+                  <View>
+                    <TextRegular size="sm" mb="sm">
+                      Social Medias
+                    </TextRegular>
+                    {client?.clientProfile.socialMediaProfiles?.map(
+                      (profile) => (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                          key={profile.id}
+                        >
+                          <TextRegular size="sm">
+                            {enumDisplaySocialMedia[profile.platform]}
+                          </TextRegular>
+                          <TextBold size="sm">
+                            {profile.platformUserId}
+                          </TextBold>
+                        </View>
+                      )
+                    )}
+                  </View>
+                )}
+              {client?.clientProfile.preferredCommunication &&
+                client?.clientProfile.preferredCommunication.length > 0 && (
+                  <View>
+                    <TextRegular size="sm">Preferred Communication</TextRegular>
+                    <TextBold textAlign="right" size="sm">
+                      {client?.clientProfile.preferredCommunication
+                        ?.map(
+                          (value) => enumDisplayPreferredCommunication[value]
+                        )
+                        .join(', ')}
+                    </TextBold>
+                  </View>
+                )}
             </View>
           </CardWrapper>
         </View>
