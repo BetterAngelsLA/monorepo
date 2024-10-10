@@ -1,11 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
   CardWrapper,
+  Input,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
 import {
   CreateClientProfileInput,
@@ -15,72 +14,34 @@ import {
 import { enumDisplaySocialMedia } from '../../../static/enumDisplayMapping';
 
 export default function SocialMedia() {
-  const { setValue, watch } = useFormContext<
+  const { control } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
-  const [socialMediaValues, setSocialMediaValues] = useState<{
-    [key in SocialMediaEnum]: string;
-  }>({});
 
-  const handleInputChange = (platform: SocialMediaEnum, value: string) => {
-    setSocialMediaValues((prevValues) => ({
-      ...prevValues,
-      [platform]: value,
-    }));
-  };
+  const { fields, replace } = useFieldArray({
+    control,
+    name: 'socialMediaProfiles',
+  });
 
-  const socialMediaProfiles = watch('socialMediaProfiles') || [];
-
-  const socialMediaObject = Object.values(SocialMediaEnum).reduce(
-    (acc, platform) => {
-      const profile = socialMediaProfiles.find(
-        (item) => item.platform === platform
-      );
-      acc[platform] = profile || { platform, platformUserId: '' };
-      return acc;
-    },
-    {} as {
-      [key in SocialMediaEnum]: {
-        platform: SocialMediaEnum;
-        platformUserId: string;
-      };
-    }
-  );
-
-  // Function to handle reset action
   const handleReset = () => {
-    Object.values(SocialMediaEnum).forEach((platform) => {
-      setValue(platform, {
-        platform,
-        platformUserId: '',
-      });
-    });
-    setValue('socialMediaProfiles', []);
+    const resetFields = Object.values(SocialMediaEnum).map((platform) => ({
+      platform,
+      platformUserId: '',
+    }));
+    replace(resetFields);
   };
-
-  useEffect(() => {
-    const initialValues = Object.values(SocialMediaEnum).reduce(
-      (acc, platform) => {
-        const profile = socialMediaProfiles.find(
-          (item) => item.platform === platform
-        );
-        acc[platform] = profile?.platformUserId || '';
-        return acc;
-      },
-      {} as { [key in SocialMediaEnum]: string }
-    );
-    setSocialMediaValues(initialValues);
-  }, [socialMediaProfiles]);
 
   return (
     <CardWrapper title="Social Media">
       <View style={{ gap: Spacings.xs }}>
-        {Object.values(SocialMediaEnum).map((platform) => (
-          <BasicInput
-            key={platform}
-            value={socialMediaObject[platform].platformUserId}
-            label={enumDisplaySocialMedia[platform]}
-            onChangeText={(e) => handleInputChange(platform, e)}
+        {fields.map((field, index) => (
+          <Input
+            key={field.id}
+            label={
+              (field.platform && enumDisplaySocialMedia[field.platform]) || ''
+            }
+            name={`socialMediaProfiles.${index}.platformUserId`}
+            control={control}
           />
         ))}
 
@@ -89,7 +50,7 @@ export default function SocialMedia() {
             mt="sm"
             color={Colors.PRIMARY}
             title="Reset"
-            accessibilityHint="resets SocialMedias"
+            accessibilityHint="Resets social media profiles"
             onPress={handleReset}
           />
         </View>

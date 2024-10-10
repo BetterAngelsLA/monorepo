@@ -19,6 +19,7 @@ import {
 import {
   CreateClientProfileInput,
   Ordering,
+  SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
@@ -36,6 +37,37 @@ import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
+
+const defaultSocialMedias = [
+  {
+    platform: SocialMediaEnum.Facebook,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Instagram,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Linkedin,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Snapchat,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Tiktok,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Twitter,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Whatsapp,
+    platformUserId: '',
+  },
+];
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -108,6 +140,13 @@ export default function AddEditClient({ id }: { id?: string }) {
       }));
     }
 
+    const filteredSocialMediaProfiles =
+      values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
+    values = {
+      ...values,
+      socialMediaProfiles: filteredSocialMediaProfiles,
+    };
+
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
@@ -126,6 +165,7 @@ export default function AddEditClient({ id }: { id?: string }) {
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
+          socialMediaProfiles: filteredSocialMediaProfiles,
           id,
         };
 
@@ -189,8 +229,27 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
 
+    const existingSocialMediaProfiles =
+      data.clientProfile.socialMediaProfiles || [];
+
+    const updatedSocialMediaProfiles = defaultSocialMedias.map(
+      (defaultProfile) => {
+        const existingProfile = existingSocialMediaProfiles.find(
+          (profile) => profile.platform === defaultProfile.platform
+        );
+
+        if (existingProfile) {
+          const { __typename, ...cleanedProfile } = existingProfile;
+          return cleanedProfile;
+        }
+
+        return defaultProfile;
+      }
+    );
+
     const clientInput = {
       ...updatedClientInput,
+      socialMediaProfiles: updatedSocialMediaProfiles,
       user: {
         ...updatedClientInput.user,
       },
