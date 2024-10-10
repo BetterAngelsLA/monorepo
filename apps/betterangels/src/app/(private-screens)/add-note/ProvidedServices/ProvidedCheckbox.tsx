@@ -100,7 +100,7 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
           ...services,
           {
             id,
-            customService: '',
+            serviceOther: '',
             enum: service.enum,
           },
         ];

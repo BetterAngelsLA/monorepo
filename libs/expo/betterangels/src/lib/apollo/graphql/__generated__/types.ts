@@ -306,6 +306,7 @@ export type CreateNoteServiceRequestInput = {
   customService?: InputMaybe<Scalars['String']['input']>;
   noteId: Scalars['ID']['input'];
   service: ServiceEnum;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
@@ -325,6 +326,7 @@ export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
   service: ServiceEnum;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -1076,23 +1078,47 @@ export type SampleType = {
 };
 
 export enum ServiceEnum {
+  Bicycle = 'BICYCLE',
+  BirthCertificate = 'BIRTH_CERTIFICATE',
   Blanket = 'BLANKET',
   Book = 'BOOK',
+  CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
+  ContactDpss = 'CONTACT_DPSS',
+  ContactFriend = 'CONTACT_FRIEND',
   Dental = 'DENTAL',
+  DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
+  DmhEvaluation = 'DMH_EVALUATION',
+  DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
+  FamilyReunification = 'FAMILY_REUNIFICATION',
   Food = 'FOOD',
   HarmReduction = 'HARM_REDUCTION',
   HygieneKit = 'HYGIENE_KIT',
+  InternetAccess = 'INTERNET_ACCESS',
+  LegalCounsel = 'LEGAL_COUNSEL',
+  MailPickUp = 'MAIL_PICK_UP',
   Medical = 'MEDICAL',
+  MetroLifeTap = 'METRO_LIFE_TAP',
   Other = 'OTHER',
   PetCare = 'PET_CARE',
   PetFood = 'PET_FOOD',
+  PublicBenefitsPrograms = 'PUBLIC_BENEFITS_PROGRAMS',
+  Ride = 'RIDE',
+  SafeParking = 'SAFE_PARKING',
   Shelter = 'SHELTER',
   Shoes = 'SHOES',
   Shower = 'SHOWER',
+  SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
   Stabilize = 'STABILIZE',
+  StimulusAssistance = 'STIMULUS_ASSISTANCE',
   Storage = 'STORAGE',
+  StorageBelongings = 'STORAGE_BELONGINGS',
+  StorageDocuments = 'STORAGE_DOCUMENTS',
+  Tent = 'TENT',
+  TherapistAppointment = 'THERAPIST_APPOINTMENT',
   Transport = 'TRANSPORT',
+  UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
+  VaccinePassport = 'VACCINE_PASSPORT',
   Water = 'WATER'
 }
 
@@ -1111,6 +1137,7 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
+  serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -1247,6 +1274,7 @@ export type UpdateServiceRequestInput = {
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['ID']['input'];
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<ServiceRequestStatusEnum>;
 };
 
