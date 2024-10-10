@@ -146,8 +146,6 @@ export default function AddEditClient({ id }: { id?: string }) {
     const filteredPhoneNumbers =
       values.phoneNumbers?.filter((item) => item.number) || [];
 
-    console.log('filtered: ', filteredPhoneNumbers);
-
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
