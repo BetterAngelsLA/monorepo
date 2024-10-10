@@ -2,8 +2,11 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
+import EmailAddress from './EmailAddress';
 import MailingAddress from './MailingAddress';
+import PreferredCommunication from './PreferredCommunication';
 import ResidenceAddress from './ResidenceAddress';
+import SocialMedia from './SocialMedia';
 
 interface IContactInfoProps {
   expanded: undefined | string | null;
@@ -35,6 +38,9 @@ export default function ContactInfo(props: IContactInfoProps) {
         >
           <ResidenceAddress />
           <MailingAddress />
+          <EmailAddress />
+          <SocialMedia />
+          <PreferredCommunication />
         </View>
       )}
     </Accordion>

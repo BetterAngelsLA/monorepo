@@ -35,6 +35,11 @@ query GetClientProfile($id: ID!) {
       mailingAddress
       residenceAddress
       importantNotes
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
+      }
       hmisProfiles {
         agency
         hmisId
