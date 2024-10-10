@@ -294,13 +294,13 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     const newServices:
       | { id: string | undefined; enum: ServiceEnum }[]
       | undefined = [];
-    const newCustomServices:
+    const newServiceOthers:
       | { title: string; id: string | undefined }[]
       | undefined = [];
 
     initialServices.forEach((service) => {
       if (service.service === 'OTHER') {
-        newCustomServices.push({
+        newServiceOthers.push({
           id: service.id,
           title: service.serviceOther || '',
         });
@@ -317,10 +317,10 @@ export default function RequestedServices(props: IRequestedServicesProps) {
     }
 
     if (
-      newCustomServices.length > 0 ||
-      serviceOthers?.length !== newCustomServices.length
+      newServiceOthers.length > 0 ||
+      serviceOthers?.length !== newServiceOthers.length
     ) {
-      setServiceOthers(newCustomServices);
+      setServiceOthers(newServiceOthers);
     }
   }, [initialServices]);
 
