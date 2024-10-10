@@ -4,6 +4,7 @@ import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import EmailAddress from './EmailAddress';
 import MailingAddress from './MailingAddress';
+import PhoneNumbers from './PhoneNumbers';
 import PreferredCommunication from './PreferredCommunication';
 import ResidenceAddress from './ResidenceAddress';
 import SocialMedia from './SocialMedia';
@@ -38,6 +39,7 @@ export default function ContactInfo(props: IContactInfoProps) {
         >
           <ResidenceAddress />
           <MailingAddress />
+          <PhoneNumbers />
           <EmailAddress />
           <SocialMedia />
           <PreferredCommunication />

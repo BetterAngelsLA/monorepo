@@ -142,10 +142,11 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const filteredSocialMediaProfiles =
       values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
-    values = {
-      ...values,
-      socialMediaProfiles: filteredSocialMediaProfiles,
-    };
+
+    const filteredPhoneNumbers =
+      values.phoneNumbers?.filter((item) => item.number) || [];
+
+    console.log('filtered: ', filteredPhoneNumbers);
 
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
@@ -166,6 +167,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         const input = {
           ...(values as UpdateClientProfileInput),
           socialMediaProfiles: filteredSocialMediaProfiles,
+          phoneNumbers: filteredPhoneNumbers,
           id,
         };
 
@@ -247,9 +249,16 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
     );
 
+    const existingPhoneNumbers =
+      data.clientProfile.phoneNumbers &&
+      data.clientProfile.phoneNumbers.length > 0
+        ? data.clientProfile.phoneNumbers.map(({ __typename, ...rest }) => rest)
+        : [{ number: '', isPrimary: false }];
+
     const clientInput = {
       ...updatedClientInput,
       socialMediaProfiles: updatedSocialMediaProfiles,
+      phoneNumbers: existingPhoneNumbers,
       user: {
         ...updatedClientInput.user,
       },
