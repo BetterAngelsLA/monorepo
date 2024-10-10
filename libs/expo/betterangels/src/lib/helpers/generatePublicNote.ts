@@ -30,7 +30,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
 
   const providedServicesArray = providedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
-      return item.customService;
+      return item.serviceOther;
     }
     return enumDisplayServices[item.service];
   });
@@ -55,7 +55,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
 
   const requestedServicesArray = requestedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
-      return item.customService;
+      return item.serviceOther;
     }
     return enumDisplayServices[item.service];
   });

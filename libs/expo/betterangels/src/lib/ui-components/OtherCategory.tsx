@@ -59,7 +59,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           variables: {
             data: {
               service: ServiceEnum.Other,
-              customService: service,
+              serviceOther: service,
               noteId,
               serviceRequestType: serviceType,
             },

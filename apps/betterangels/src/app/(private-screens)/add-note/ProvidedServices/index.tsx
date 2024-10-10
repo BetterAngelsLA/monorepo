@@ -23,6 +23,7 @@ import {
   ShowerIcon,
   SneakerIcon,
   SyringeIcon,
+  TentIcon,
   ToothIcon,
   ToothbrushIcon,
   WarehouseIcon,
@@ -46,25 +47,49 @@ interface IProvidedServicesProps {
   attachments: ViewNoteQuery['note']['attachments'];
 }
 
-const ICONS: { [key: string]: React.ComponentType<IIconProps> } = {
-  FOOD: BurgerSodaIcon,
-  WATER: BottleWaterIcon,
-  BLANKET: BlanketIcon,
-  BOOK: BookOpenIcon,
-  CLOTHES: ShirtIcon,
-  HYGIENE_KIT: ToothbrushIcon,
-  PET_FOOD: PawIcon,
-  SHOES: SneakerIcon,
-  SHOWER: ShowerIcon,
-  SHELTER: PeopleRoofIcon,
-  STORAGE: WarehouseIcon,
-  TRANSPORT: CarIcon,
-  DENTAL: ToothIcon,
-  HARM_REDUCTION: SyringeIcon,
-  MEDICAL: BriefcaseMedicalIcon,
-  PET_CARE: PawIcon,
-  STABILIZE: ArrowTrendUpIcon,
-  Other: PlusIcon,
+const ICONS: { [key in ServiceEnum]: React.ComponentType<IIconProps> } = {
+  [ServiceEnum.Food]: BurgerSodaIcon,
+  [ServiceEnum.Water]: BottleWaterIcon,
+  [ServiceEnum.Blanket]: BlanketIcon,
+  [ServiceEnum.Book]: BookOpenIcon,
+  [ServiceEnum.Clothes]: ShirtIcon,
+  [ServiceEnum.HygieneKit]: ToothbrushIcon,
+  [ServiceEnum.PetFood]: PawIcon,
+  [ServiceEnum.Shoes]: SneakerIcon,
+  [ServiceEnum.Shower]: ShowerIcon,
+  [ServiceEnum.Shelter]: PeopleRoofIcon,
+  [ServiceEnum.Storage]: WarehouseIcon,
+  [ServiceEnum.Transport]: CarIcon,
+  [ServiceEnum.Dental]: ToothIcon,
+  [ServiceEnum.HarmReduction]: SyringeIcon,
+  [ServiceEnum.Medical]: BriefcaseMedicalIcon,
+  [ServiceEnum.PetCare]: PawIcon,
+  [ServiceEnum.Stabilize]: ArrowTrendUpIcon,
+  [ServiceEnum.Bicycle]: CarIcon,
+  [ServiceEnum.BirthCertificate]: ArrowTrendUpIcon,
+  [ServiceEnum.CaliforniaLifelinePhone]: ArrowTrendUpIcon,
+  [ServiceEnum.ContactDpss]: ArrowTrendUpIcon,
+  [ServiceEnum.ContactFriend]: ArrowTrendUpIcon,
+  [ServiceEnum.DiscountScooterRides]: ArrowTrendUpIcon,
+  [ServiceEnum.DmhEvaluation]: ArrowTrendUpIcon,
+  [ServiceEnum.DmvNoFeeIdForm]: ArrowTrendUpIcon,
+  [ServiceEnum.FamilyReunification]: ArrowTrendUpIcon,
+  [ServiceEnum.InternetAccess]: ArrowTrendUpIcon,
+  [ServiceEnum.LegalCounsel]: ArrowTrendUpIcon,
+  [ServiceEnum.MailPickUp]: ArrowTrendUpIcon,
+  [ServiceEnum.MetroLifeTap]: ArrowTrendUpIcon,
+  [ServiceEnum.Other]: PlusIcon,
+  [ServiceEnum.PublicBenefitsPrograms]: ArrowTrendUpIcon,
+  [ServiceEnum.Ride]: CarIcon,
+  [ServiceEnum.SafeParking]: CarIcon,
+  [ServiceEnum.SocialSecurityCardReplacement]: ArrowTrendUpIcon,
+  [ServiceEnum.StimulusAssistance]: ArrowTrendUpIcon,
+  [ServiceEnum.StorageBelongings]: WarehouseIcon,
+  [ServiceEnum.StorageDocuments]: WarehouseIcon,
+  [ServiceEnum.Tent]: TentIcon,
+  [ServiceEnum.TherapistAppointment]: ArrowTrendUpIcon,
+  [ServiceEnum.UnemploymentCertification]: ArrowTrendUpIcon,
+  [ServiceEnum.VaccinePassport]: ArrowTrendUpIcon,
 };
 
 const SERVICES = [
@@ -94,9 +119,26 @@ const SERVICES = [
   {
     title: 'Living Essentials',
     items: [
+      { Icon: CarIcon, title: 'Bicycle', enum: ServiceEnum.Bicycle },
       { Icon: PeopleRoofIcon, title: 'Shelter', enum: ServiceEnum.Shelter },
-      { Icon: WarehouseIcon, title: 'Storage', enum: ServiceEnum.Storage },
-      { Icon: CarIcon, title: 'Transport', enum: ServiceEnum.Transport },
+      {
+        Icon: WarehouseIcon,
+        title: 'Storage Belongings',
+        enum: ServiceEnum.StorageBelongings,
+      },
+      {
+        Icon: WarehouseIcon,
+        title: 'Storage Documents',
+        enum: ServiceEnum.StorageDocuments,
+      },
+      { Icon: TentIcon, title: 'Tent', enum: ServiceEnum.Tent },
+      { Icon: CarIcon, title: 'Ride', enum: ServiceEnum.Ride },
+      { Icon: CarIcon, title: 'Safe Parking', enum: ServiceEnum.SafeParking },
+      {
+        Icon: SyringeIcon,
+        title: 'Therapist Appointment',
+        enum: ServiceEnum.TherapistAppointment,
+      },
     ],
   },
   {
@@ -121,8 +163,88 @@ const SERVICES = [
     items: [
       {
         Icon: ArrowTrendUpIcon,
-        title: 'Stabilize',
-        enum: ServiceEnum.Stabilize,
+        title: 'Birth Certificate',
+        enum: ServiceEnum.BirthCertificate,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'California Lifeline Phone',
+        enum: ServiceEnum.CaliforniaLifelinePhone,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Contact DPSS',
+        enum: ServiceEnum.ContactDpss,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Contact Friend',
+        enum: ServiceEnum.ContactFriend,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Discount Scooter Rides',
+        enum: ServiceEnum.DiscountScooterRides,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'DMH Evaluation',
+        enum: ServiceEnum.DmhEvaluation,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'DMV No Fee Id Form',
+        enum: ServiceEnum.DmvNoFeeIdForm,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Family Reunification',
+        enum: ServiceEnum.FamilyReunification,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Internet Access',
+        enum: ServiceEnum.InternetAccess,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Legal Counsel',
+        enum: ServiceEnum.LegalCounsel,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Mail Pick Up',
+        enum: ServiceEnum.MailPickUp,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Metro Life Tap',
+        enum: ServiceEnum.MetroLifeTap,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Public Benefits Programs',
+        enum: ServiceEnum.PublicBenefitsPrograms,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Social Security Card Replacement',
+        enum: ServiceEnum.SocialSecurityCardReplacement,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Stimulus Assistance',
+        enum: ServiceEnum.StimulusAssistance,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Unemployment Certification',
+        enum: ServiceEnum.UnemploymentCertification,
+      },
+      {
+        Icon: ArrowTrendUpIcon,
+        title: 'Vaccine Passport',
+        enum: ServiceEnum.VaccinePassport,
       },
     ],
   },
@@ -148,7 +270,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     | undefined
   >(undefined);
 
-  const [customServices, setCustomServices] = useState<
+  const [serviceOthers, setServiceOthers] = useState<
     { title: string; id: string | undefined }[] | undefined
   >(undefined);
 
@@ -156,32 +278,32 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
   const isLessThanOneProvidedService =
     services &&
     services.length < 1 &&
-    customServices &&
-    customServices.length < 1;
+    serviceOthers &&
+    serviceOthers.length < 1;
   const isLessThanOneProvidedServiceImages = images && images.length < 1;
   const isGreaterThanZeroProvidedService =
     (services && services.length > 0) ||
-    (customServices && customServices.length > 0);
+    (serviceOthers && serviceOthers.length > 0);
   const isGreaterThanZeroProvidedServiceImages = images && images?.length > 0;
 
   useEffect(() => {
     if (initialServices.length === 0) {
       setServices([]);
-      setCustomServices([]);
+      setServiceOthers([]);
       return;
     }
     const newServices: SetStateAction<
       { id: string | undefined; enum: ServiceEnum }[] | undefined
     > = [];
-    const newCustomServices: SetStateAction<
+    const newServiceOthers: SetStateAction<
       { title: string; id: string | undefined }[] | undefined
     > = [];
 
     initialServices.forEach((service) => {
       if (service.service === 'OTHER') {
-        newCustomServices.push({
+        newServiceOthers.push({
           id: service.id,
-          title: service.customService || '',
+          title: service.serviceOther || '',
         });
       } else {
         newServices.push({
@@ -196,10 +318,10 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     }
 
     if (
-      newCustomServices.length > 0 ||
-      customServices?.length !== newCustomServices.length
+      newServiceOthers.length > 0 ||
+      serviceOthers?.length !== newServiceOthers.length
     ) {
-      setCustomServices(newCustomServices);
+      setServiceOthers(newServiceOthers);
     }
   }, [initialServices]);
 
@@ -215,7 +337,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
     setImages(newImages);
   }, [attachments]);
 
-  if (!services || !customServices || !images) return null;
+  if (!services || !serviceOthers || !images) return null;
 
   return (
     <FieldCard
@@ -248,7 +370,7 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
                 );
               })}
 
-            {customServices && customServices.length > 0 && (
+            {serviceOthers && serviceOthers.length > 0 && (
               <PlusIcon mr="xs" size="md" key="plusIcon" />
             )}
             {isGreaterThanZeroProvidedServiceImages && (
@@ -291,9 +413,9 @@ export default function ProvidedServices(props: IProvidedServicesProps) {
         ))}
         <OtherCategory
           noteId={noteId}
-          setServices={setCustomServices}
+          setServices={setServiceOthers}
           serviceType={ServiceRequestTypeEnum.Provided}
-          services={customServices}
+          services={serviceOthers}
         />
         <Attachments
           noteId={noteId}

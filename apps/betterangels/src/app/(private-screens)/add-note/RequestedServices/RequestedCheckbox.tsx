@@ -99,7 +99,7 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
           ...services,
           {
             id,
-            customService: '',
+            serviceOther: '',
             enum: service.enum,
           },
         ];
