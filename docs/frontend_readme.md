@@ -52,6 +52,7 @@ Run the following on the host machine (not in the container):
    > ```
 
 1. Reload your shell profile or restart your terminal for the changes to take effect
+
    ```bash
    source ~/.zshrc
    ```
@@ -64,10 +65,13 @@ Run the following on the host machine (not in the container):
 
 1. Clone the monorepo
    a. [Setup SSH (optional)](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
-      ```bash
-      git clone git@github.com:BetterAngelsLA/monorepo.git
-      ```
+
+   ```bash
+   git clone git@github.com:BetterAngelsLA/monorepo.git
+   ```
+
    b. Alternatively use https
+
    ```bash
    git clone https://github.com/BetterAngelsLA/monorepo.git
    ```
@@ -85,12 +89,15 @@ Run the following on the host machine (not in the container):
    nvm install node && nvm alias default node
    ```
 
+1. Optional: add a `.env.local` file:
+   - See `.env.local.sample` file for refernce
+
 ### Running the Frontend: Nx Workspace with Expo Application
 
 #### Starting Expo
 
 1. Open a new integrated terminal (local) and run the following to start Expo in your local environment
-   *Note: You should have development builds (linked above) installed on your device*
+   _Note: You should have development builds (linked above) installed on your device_
 
    Start the Outreach app
 
