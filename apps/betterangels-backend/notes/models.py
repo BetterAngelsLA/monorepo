@@ -178,7 +178,7 @@ class Note(BaseModel):
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
-    purpose = models.CharField(max_length=100)
+    purpose = models.CharField(max_length=100, null=True, blank=True)
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     title = models.CharField(max_length=100, blank=True, null=True)
@@ -196,7 +196,10 @@ class Note(BaseModel):
     _private_details: Optional[str]
 
     def __str__(self) -> str:
-        return self.purpose
+        if self.purpose:
+            return self.purpose
+
+        return str(self.id)
 
     @property
     def label_with_client(self) -> str:
