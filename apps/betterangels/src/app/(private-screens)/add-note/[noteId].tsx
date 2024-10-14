@@ -5,6 +5,7 @@ import {
   Ordering,
   useDeleteNoteMutation,
   useRevertNoteMutation,
+  useSnackbar,
   useUpdateNoteMutation,
   useUser,
   useViewNoteQuery,
@@ -75,6 +76,7 @@ export default function AddNote() {
     revertBeforeTimestamp: string;
     arrivedFrom: string;
   }>();
+  const { showSnackbar } = useSnackbar();
 
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
@@ -158,6 +160,11 @@ export default function AddNote() {
       arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to delete interaction.',
+        type: 'error',
+      });
     }
   }
 
@@ -199,9 +206,9 @@ export default function AddNote() {
           },
         },
       });
+
       if (!result.data) {
-        console.error(`Failed to update interaction: ${updateError}`);
-        return;
+        throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
       if (revertBeforeTimestamp) {
@@ -210,6 +217,11 @@ export default function AddNote() {
       setSubmitted(true);
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to update interaction.',
+        type: 'error',
+      });
     }
   }
 
