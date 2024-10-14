@@ -1,6 +1,8 @@
+from typing import Optional
 from unittest.mock import ANY
 
 from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -23,6 +25,10 @@ from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import override_settings
+from model_bakery import baker
+from notes.models import Note
+from pytest import param
+from unittest_parametrize import parametrize
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
@@ -295,7 +301,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 41
+        expected_query_count = 42
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -347,17 +353,27 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    def test_create_client_document(self) -> None:
+    @parametrize(
+        ("create_with_note_id"),
+        [(True,), (False,)],
+    )
+    def test_create_client_document(self, create_with_note_id: bool) -> None:
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
+
+        if create_with_note_id:
+            organization = organization_recipe.make()
+            user = ClientProfile.objects.get(id=self.client_profile_1["id"]).user
+            note = baker.make(Note, organization=organization, client=user)
 
         expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
+                client_profile_id=self.client_profile_1["id"],
+                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content=file_content,
+                file_name=file_name,
+                note_id=str(note.id) if create_with_note_id else None,
             )
 
         client_document_id = response["data"]["createClientDocument"]["id"]
@@ -375,7 +391,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 
