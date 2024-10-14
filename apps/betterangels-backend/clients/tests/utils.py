@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -337,8 +337,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         namespace: str,
         file_content: bytes,
         file_name: str = "test_file.txt",
+        note_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        file = SimpleUploadedFile(name=file_name, content=file_content)
+        file = SimpleUploadedFile(content=file_content, name=file_name)
         response = self.execute_graphql(
             """
             mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
@@ -365,6 +366,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             variables={
                 "clientProfileId": client_profile_id,
                 "namespace": namespace,
+                "noteId": note_id,
             },
             files={"file": file},
         )

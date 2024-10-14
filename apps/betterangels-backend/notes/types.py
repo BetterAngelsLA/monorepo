@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
+from clients.types import ClientDocumentType
+from django.test import Client
 import strawberry
 import strawberry_django
 from accounts.types import UserType
@@ -201,22 +203,23 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
-    purpose: auto
-    team: Optional[SelahTeamEnum]
-    title: auto
-    location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
-    moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
-    provided_services: List[ServiceRequestType]
-    requested_services: List[ServiceRequestType]
-    public_details: auto
-    is_submitted: auto
     client: Optional[UserType]
+    client_documents: List[ClientDocumentType]
     created_at: auto
     created_by: UserType
     interacted_at: auto
+    is_submitted: auto
+    location: Optional[LocationType]
+    moods: List[MoodType]
+    next_steps: List[TaskType]
+    provided_services: List[ServiceRequestType]
+    public_details: auto
+    purpose: auto
+    purposes: List[TaskType]
+    requested_services: List[ServiceRequestType]
+    team: Optional[SelahTeamEnum]
+    title: auto
 
     @strawberry_django.field(
         annotate={
