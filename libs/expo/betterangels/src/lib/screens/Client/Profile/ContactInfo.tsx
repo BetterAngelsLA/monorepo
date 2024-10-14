@@ -76,68 +76,63 @@ export default function ContactInfo(props: IProfileSectionProps) {
                 .map(({ label, value }) => (
                   <InfoCol key={label} label={label} value={value} />
                 ))}
-              {client?.clientProfile.phoneNumbers &&
-                client?.clientProfile.phoneNumbers.length > 0 && (
-                  <View>
+              {!!client?.clientProfile.phoneNumbers?.length && (
+                <View>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexDirection: 'row',
+                      marginBottom: Spacings.sm,
+                    }}
+                  >
+                    <TextRegular size="sm">Phone Number(s)</TextRegular>
+                    <TextBold size="sm">Primary</TextBold>
+                  </View>
+                  {client?.clientProfile.phoneNumbers?.map((phoneNumber) => (
                     <View
                       style={{
+                        flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        flexDirection: 'row',
-                        marginBottom: Spacings.sm,
                       }}
+                      key={phoneNumber.id}
                     >
-                      <TextRegular size="sm">Phone Number(s)</TextRegular>
-                      <TextBold size="sm">Primary</TextBold>
+                      <TextBold size="sm">{phoneNumber.number}</TextBold>
+                      <PawIcon />
                     </View>
-                    {client?.clientProfile.phoneNumbers?.map((phoneNumber) => (
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                        key={phoneNumber.id}
-                      >
-                        <TextBold size="sm">{phoneNumber.number}</TextBold>
-                        <PawIcon />
-                      </View>
-                    ))}
-                  </View>
-                )}
+                  ))}
+                </View>
+              )}
 
               <InfoCol
                 row
                 label="Email"
                 value={client?.clientProfile.user.email}
               />
-              {client?.clientProfile.socialMediaProfiles &&
-                client?.clientProfile.socialMediaProfiles?.length > 0 && (
-                  <View>
-                    <TextRegular size="sm" mb="sm">
-                      Social Medias
-                    </TextRegular>
-                    {client?.clientProfile.socialMediaProfiles?.map(
-                      (profile) => (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                          key={profile.id}
-                        >
-                          <TextRegular size="sm">
-                            {enumDisplaySocialMedia[profile.platform]}
-                          </TextRegular>
-                          <TextBold size="sm">
-                            {profile.platformUserId}
-                          </TextBold>
-                        </View>
-                      )
-                    )}
-                  </View>
-                )}
+              {!!client?.clientProfile.socialMediaProfiles?.length && (
+                <View>
+                  <TextRegular size="sm" mb="sm">
+                    Social Medias
+                  </TextRegular>
+                  {client?.clientProfile.socialMediaProfiles?.map((profile) => (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: Spacings.xs,
+                      }}
+                      key={profile.id}
+                    >
+                      <TextRegular size="sm">
+                        {enumDisplaySocialMedia[profile.platform]}
+                      </TextRegular>
+                      <TextBold size="sm">{profile.platformUserId}</TextBold>
+                    </View>
+                  ))}
+                </View>
+              )}
               {client?.clientProfile.preferredCommunication &&
                 client?.clientProfile.preferredCommunication.length > 0 && (
                   <View>

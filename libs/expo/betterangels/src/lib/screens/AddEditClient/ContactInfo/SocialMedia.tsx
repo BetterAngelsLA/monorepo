@@ -37,6 +37,7 @@ export default function SocialMedia() {
         {fields.map((field, index) => (
           <Input
             key={field.id}
+            placeholder={`Enter ${field.platform} username`}
             label={
               (field.platform && enumDisplaySocialMedia[field.platform]) || ''
             }

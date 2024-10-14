@@ -52,7 +52,7 @@ export default function PreferredCommunicationPicker(
   const Wrapper = ({ children }: { children: ReactNode }) => {
     if (withCard) {
       return (
-        <CardWrapper title={cardTitle ? 'Preferred Communications' : ''}>
+        <CardWrapper title={cardTitle ? 'Preferred Communication' : ''}>
           {children}
         </CardWrapper>
       );
@@ -89,7 +89,7 @@ export default function PreferredCommunicationPicker(
               mt="sm"
               color={Colors.PRIMARY}
               title="Reset"
-              accessibilityHint="resets PreferredCommunications"
+              accessibilityHint="resets Preferred Communication"
               onPress={onReset}
             />
           </View>

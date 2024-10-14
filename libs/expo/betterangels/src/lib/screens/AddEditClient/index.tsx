@@ -247,16 +247,16 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
     );
 
-    const existingPhoneNumbers =
-      data.clientProfile.phoneNumbers &&
-      data.clientProfile.phoneNumbers.length > 0
-        ? data.clientProfile.phoneNumbers.map(({ __typename, ...rest }) => rest)
-        : [{ number: '', isPrimary: false }];
+    const existingPhoneNumbers = data.clientProfile.phoneNumbers?.map(
+      ({ __typename, ...rest }) => rest
+    );
+
+    const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
 
     const clientInput = {
       ...updatedClientInput,
       socialMediaProfiles: updatedSocialMediaProfiles,
-      phoneNumbers: existingPhoneNumbers,
+      phoneNumbers: existingPhoneNumbers || phoneNumberEmpyInput,
       user: {
         ...updatedClientInput.user,
       },

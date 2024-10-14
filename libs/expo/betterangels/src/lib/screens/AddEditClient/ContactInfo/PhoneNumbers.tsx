@@ -25,11 +25,12 @@ export default function PhoneNumbers() {
   });
 
   return (
-    <CardWrapper title="Phone Numbers">
+    <CardWrapper title="Phone Number(s)">
       <View style={{ gap: Spacings.xs }}>
         {fields.map((field, index) => (
           <View key={field.id}>
             <Input
+              placeholder="Enter phone number"
               mb="xs"
               key={field.id}
               name={`phoneNumbers.${index}.number`}
