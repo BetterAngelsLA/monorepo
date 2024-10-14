@@ -196,10 +196,7 @@ class Note(BaseModel):
     _private_details: Optional[str]
 
     def __str__(self) -> str:
-        if self.purpose:
-            return self.purpose
-
-        return str(self.id)
+        return self.purpose or str(self.id)
 
     @property
     def label_with_client(self) -> str:
