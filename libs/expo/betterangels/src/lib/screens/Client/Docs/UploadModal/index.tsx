@@ -244,7 +244,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   align="flex-start"
                   size="full"
                   variant="secondary"
-                  title="Driver's License (front and back)"
+                  title="CA ID or CA Driver's License"
                   accessibilityHint="goes to driver's license upload"
                 />
               </View>
@@ -281,7 +281,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   size="full"
                   variant="secondary"
-                  title="Photo ID"
+                  title="Other Photo ID (e.g., out of state)"
                   accessibilityHint="goes to Photo ID upload"
                 />
               </View>
