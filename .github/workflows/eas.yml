@@ -153,13 +153,15 @@ jobs:
       - name: Set QR Code URLs
         id: set-urls
         run: |
-          # Extract iOS and Android manifestPermalink from the JSON output
-          IOS_MANIFEST_URL=$(echo "${{ steps.continuos_deploy.outputs.update-output }}" | jq -r '.[0].manifestPermalink')
-          ANDROID_MANIFEST_URL=$(echo "${{ steps.continuos_deploy.outputs.update-output }}" | jq -r '.[1].manifestPermalink')
+          # Extract iOS and Android update IDs directly from the JSON output
+          IOS_UPDATE_ID=$(echo "${{ steps.continuos_deploy.outputs.update-output }}" | jq -r '.[0].id')
+          ANDROID_UPDATE_ID=$(echo "${{ steps.continuos_deploy.outputs.update-output }}" | jq -r '.[1].id')
 
-          # Construct the Update and Build QR code URLs
-          IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_MANIFEST_URL##*/}&appScheme=${{ matrix.project }}"
-          ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_MANIFEST_URL##*/}&appScheme=${{ matrix.project }}"
+          # Construct the Update QR code URLs using the update IDs
+          IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=${{ matrix.project }}"
+          ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=${{ matrix.project }}"
+
+          # Construct the Build QR code URLs using iOS and Android build IDs
           IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/${{ matrix.project }}/builds/${{ steps.continuos_deploy.outputs.ios-build-id }}"
           ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/${{ matrix.project }}/builds/${{ steps.continuos_deploy.outputs.android-build-id }}"
 
