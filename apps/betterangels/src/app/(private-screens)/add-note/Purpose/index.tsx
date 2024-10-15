@@ -113,7 +113,8 @@ export default function Title(props: IPurposeProps) {
           }}
           error={!!errors.purpose}
           errorMessage={errors.purpose ? 'Purpose is required' : ''}
-          value={value || 'Session with Client'}
+          // TODO: remove default value after backend cleanup (DEV-804)
+          value={value || 'Session with client'}
           onChangeText={(e) => onChange(e)}
         />
       </View>
