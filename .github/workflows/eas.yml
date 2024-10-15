@@ -182,43 +182,81 @@ jobs:
           echo "iOS Build QR Code URL: ${IOS_BUILD_QR_URL}"
           echo "Android Build QR Code URL: ${ANDROID_BUILD_QR_URL}"
 
-      # - name: Post to Slack
-      #   uses: slackapi/slack-github-action@v1.24.0
-      #   if: github.ref == 'refs/heads/main'
-      #   with:
-      #     payload: |
-      #       {
-      #         "channel": "#your-slack-channel",
-      #         "text": "Here are the latest QR codes for the Expo Development Previews on the main branch:",
-      #         "blocks": [
-      #           {
-      #             "type": "section",
-      #             "text": {
-      #               "type": "mrkdwn",
-      #               "text": "*📱 iOS Preview*"
-      #             }
-      #           },
-      #           {
-      #             "type": "image",
-      #             "image_url": "${{ env.ios_qr_url }}",
-      #             "alt_text": "iOS QR Code"
-      #           },
-      #           {
-      #             "type": "section",
-      #             "text": {
-      #               "type": "mrkdwn",
-      #               "text": "*🤖 Android Preview*"
-      #             }
-      #           },
-      #           {
-      #             "type": "image",
-      #             "image_url": "${{ env.android_qr_url }}",
-      #             "alt_text": "Android QR Code"
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Post to Slack
+        uses: slackapi/slack-github-action@v1.24.0
+        # if: github.ref == 'refs/heads/main'
+        with:
+          payload: |
+            {
+              "channel": "#tech-outreach-main,
+              "text": "New code has landed in main!  Here are the last eas-updates and development builds!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📱 iOS Preview*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Update:*"
+                  }
+                },
+                {
+                  "type": "image",
+                  "image_url": "${{ env.IOS_UPDATE_QR_URL }}",
+                  "alt_text": "iOS Update QR Code"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Build:*"
+                  }
+                },
+                {
+                  "type": "image",
+                  "image_url": "${{ env.IOS_BUILD_QR_URL }}",
+                  "alt_text": "iOS Build QR Code"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🤖 Android Preview*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Update:*"
+                  }
+                },
+                {
+                  "type": "image",
+                  "image_url": "${{ env.ANDROID_UPDATE_QR_URL }}",
+                  "alt_text": "Android Update QR Code"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Build:*"
+                  }
+                },
+                {
+                  "type": "image",
+                  "image_url": "${{ env.ANDROID_BUILD_QR_URL }}",
+                  "alt_text": "Android Build QR Code"
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: 🧼 Cleanup .env file
         if: always()
