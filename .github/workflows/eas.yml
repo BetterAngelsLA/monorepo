@@ -151,7 +151,7 @@ jobs:
           fi
 
       - name: Set QR Code URLs
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         id: set-urls
         run: |
           IOS_QR_URL="https://qr.expo.dev/eas-update?updateId=${{ github.event.workflow_run.outputs.iosUrl }}&appScheme=YOUR_APP_SCHEME"
