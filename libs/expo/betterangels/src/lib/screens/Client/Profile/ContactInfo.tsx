@@ -1,17 +1,37 @@
-import { PawIcon } from '@monorepo/expo/shared/icons';
-import { Spacings } from '@monorepo/expo/shared/static';
+import {
+  ChatBubbleIcon,
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  StarIcon,
+  TiktokIcon,
+  WhatsappIcon,
+} from '@monorepo/expo/shared/icons';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Accordion,
   CardWrapper,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
 import { View, ViewStyle } from 'react-native';
+import { SocialMediaEnum } from '../../../apollo';
 import {
   enumDisplayPreferredCommunication,
   enumDisplaySocialMedia,
 } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
+
+const socialIcons: { [key in SocialMediaEnum]: ReactNode } = {
+  [SocialMediaEnum.Facebook]: <FacebookIcon />,
+  [SocialMediaEnum.Instagram]: <InstagramIcon />,
+  [SocialMediaEnum.Linkedin]: <LinkedinIcon />,
+  [SocialMediaEnum.Snapchat]: <ChatBubbleIcon />,
+  [SocialMediaEnum.Tiktok]: <TiktokIcon />,
+  [SocialMediaEnum.Twitter]: <TiktokIcon />,
+  [SocialMediaEnum.Whatsapp]: <WhatsappIcon />,
+};
 
 const InfoCol = ({
   label,
@@ -99,7 +119,9 @@ export default function ContactInfo(props: IProfileSectionProps) {
                       key={phoneNumber.id}
                     >
                       <TextBold size="sm">{phoneNumber.number}</TextBold>
-                      <PawIcon />
+                      {phoneNumber.isPrimary && (
+                        <StarIcon color={Colors.WARNING} />
+                      )}
                     </View>
                   ))}
                 </View>
@@ -113,21 +135,32 @@ export default function ContactInfo(props: IProfileSectionProps) {
               {!!client?.clientProfile.socialMediaProfiles?.length && (
                 <View>
                   <TextRegular size="sm" mb="sm">
-                    Social Medias
+                    Social Media
                   </TextRegular>
                   {client?.clientProfile.socialMediaProfiles?.map((profile) => (
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
+                        flexWrap: 'wrap',
                         justifyContent: 'space-between',
                         gap: Spacings.xs,
                       }}
                       key={profile.id}
                     >
-                      <TextRegular size="sm">
-                        {enumDisplaySocialMedia[profile.platform]}
-                      </TextRegular>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: Spacings.xs,
+                        }}
+                      >
+                        {socialIcons[profile.platform]}
+
+                        <TextRegular size="sm">
+                          {enumDisplaySocialMedia[profile.platform]}
+                        </TextRegular>
+                      </View>
                       <TextBold size="sm">{profile.platformUserId}</TextBold>
                     </View>
                   ))}

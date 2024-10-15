@@ -251,12 +251,16 @@ export default function AddEditClient({ id }: { id?: string }) {
       ({ __typename, ...rest }) => rest
     );
 
+    console.log(existingPhoneNumbers);
+
     const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
 
     const clientInput = {
       ...updatedClientInput,
       socialMediaProfiles: updatedSocialMediaProfiles,
-      phoneNumbers: existingPhoneNumbers || phoneNumberEmpyInput,
+      phoneNumbers: existingPhoneNumbers?.length
+        ? existingPhoneNumbers
+        : phoneNumberEmpyInput,
       user: {
         ...updatedClientInput.user,
       },

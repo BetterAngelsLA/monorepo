@@ -1,4 +1,12 @@
-import { PawIcon } from '@monorepo/expo/shared/icons';
+import {
+  CallIcon,
+  ChatBubbleIcon,
+  EmailIcon,
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  WhatsappIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   CardWrapper,
@@ -22,25 +30,25 @@ interface IPreferredCommunicationPickerProps {
 
 const icons = {
   [PreferredCommunicationEnum.Call]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <CallIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Email]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <EmailIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Facebook]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <FacebookIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Instagram]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <InstagramIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Linkedin]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <LinkedinIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Text]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <ChatBubbleIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
   [PreferredCommunicationEnum.Whatsapp]: (
-    <PawIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
+    <WhatsappIcon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
   ),
 };
 
