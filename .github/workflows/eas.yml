@@ -159,6 +159,7 @@ jobs:
           echo "ios_qr_url=${IOS_QR_URL}" >> $GITHUB_ENV
           echo "android_qr_url=${ANDROID_QR_URL}" >> $GITHUB_ENV
           echo "${{ steps.continuos_deploy.outputs.ios-build-id }}"
+          echo "${{ steps.continuos_deploy.outputs.update-output }}"
 
       # - name: Post to Slack
       #   uses: slackapi/slack-github-action@v1.24.0
