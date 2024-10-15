@@ -150,6 +150,54 @@ jobs:
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
 
+      - name: Set QR Code URLs
+        if: github.ref == 'refs/heads/main'
+        id: set-urls
+        run: |
+          IOS_QR_URL="https://qr.expo.dev/eas-update?updateId=${{ github.event.workflow_run.outputs.iosUrl }}&appScheme=YOUR_APP_SCHEME"
+          ANDROID_QR_URL="https://qr.expo.dev/eas-update?updateId=${{ github.event.workflow_run.outputs.androidUrl }}&appScheme=YOUR_APP_SCHEME"
+          echo "ios_qr_url=${IOS_QR_URL}" >> $GITHUB_ENV
+          echo "android_qr_url=${ANDROID_QR_URL}" >> $GITHUB_ENV
+          echo "${{ steps.continuos_deploy.outputs.ios-build-id }}"
+
+      # - name: Post to Slack
+      #   uses: slackapi/slack-github-action@v1.24.0
+      #   if: github.ref == 'refs/heads/main'
+      #   with:
+      #     payload: |
+      #       {
+      #         "channel": "#your-slack-channel",
+      #         "text": "Here are the latest QR codes for the Expo Development Previews on the main branch:",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*📱 iOS Preview*"
+      #             }
+      #           },
+      #           {
+      #             "type": "image",
+      #             "image_url": "${{ env.ios_qr_url }}",
+      #             "alt_text": "iOS QR Code"
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*🤖 Android Preview*"
+      #             }
+      #           },
+      #           {
+      #             "type": "image",
+      #             "image_url": "${{ env.android_qr_url }}",
+      #             "alt_text": "Android QR Code"
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
       - name: 🧼 Cleanup .env file
         if: always()
         run: |
