@@ -52,15 +52,7 @@ const defaultSocialMedias = [
     platformUserId: '',
   },
   {
-    platform: SocialMediaEnum.Snapchat,
-    platformUserId: '',
-  },
-  {
     platform: SocialMediaEnum.Tiktok,
-    platformUserId: '',
-  },
-  {
-    platform: SocialMediaEnum.Twitter,
     platformUserId: '',
   },
   {
