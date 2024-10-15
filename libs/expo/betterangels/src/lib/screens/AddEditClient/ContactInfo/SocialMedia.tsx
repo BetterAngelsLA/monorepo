@@ -13,6 +13,14 @@ import {
 } from '../../../apollo';
 import { enumDisplaySocialMedia } from '../../../static/enumDisplayMapping';
 
+const allowedPlatforms = [
+  SocialMediaEnum.Facebook,
+  SocialMediaEnum.Instagram,
+  SocialMediaEnum.Linkedin,
+  SocialMediaEnum.Tiktok,
+  SocialMediaEnum.Whatsapp,
+];
+
 export default function SocialMedia() {
   const { control } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
@@ -24,7 +32,7 @@ export default function SocialMedia() {
   });
 
   const handleReset = () => {
-    const resetFields = Object.values(SocialMediaEnum).map((platform) => ({
+    const resetFields = Object.values(allowedPlatforms).map((platform) => ({
       platform,
       platformUserId: '',
     }));

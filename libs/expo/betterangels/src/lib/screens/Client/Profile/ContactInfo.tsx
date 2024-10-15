@@ -1,5 +1,4 @@
 import {
-  ChatBubbleIcon,
   FacebookIcon,
   InstagramIcon,
   LinkedinIcon,
@@ -23,13 +22,11 @@ import {
 } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
 
-const socialIcons: { [key in SocialMediaEnum]: ReactNode } = {
+const socialIcons: { [key in SocialMediaEnum]?: ReactNode } = {
   [SocialMediaEnum.Facebook]: <FacebookIcon />,
   [SocialMediaEnum.Instagram]: <InstagramIcon />,
   [SocialMediaEnum.Linkedin]: <LinkedinIcon />,
-  [SocialMediaEnum.Snapchat]: <ChatBubbleIcon />,
   [SocialMediaEnum.Tiktok]: <TiktokIcon />,
-  [SocialMediaEnum.Twitter]: <TiktokIcon />,
   [SocialMediaEnum.Whatsapp]: <WhatsappIcon />,
 };
 
