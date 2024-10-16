@@ -193,7 +193,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "test text"
+                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|QR Code>"
                   },
                   "accessory": {
                     "type": "image",
@@ -208,7 +208,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "test text"
+                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|QR Code>"
                   },
                   "accessory": {
                     "type": "image",
@@ -220,6 +220,7 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: 🧼 Cleanup .env file
         if: always()
