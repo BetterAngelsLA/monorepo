@@ -168,13 +168,11 @@ jobs:
           IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.ios-build-id }}"
           ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.android-build-id }}"
 
-          # Output all QR code URLs to the environment
-          {
-            echo "IOS_UPDATE_QR_URL=${IOS_UPDATE_QR_URL}"
-            echo "ANDROID_UPDATE_QR_URL=${ANDROID_UPDATE_QR_URL}"
-            echo "IOS_BUILD_QR_URL=${IOS_BUILD_QR_URL}"
-            echo "ANDROID_BUILD_QR_URL=${ANDROID_BUILD_QR_URL}"
-          } >> $GITHUB_ENV
+          # Set outputs using $GITHUB_OUTPUT
+          echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
+          echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
+          echo "ios_build_qr_url=${IOS_BUILD_QR_URL}" >> $GITHUB_OUTPUT
+          echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}" >> $GITHUB_OUTPUT
 
           # Log URLs for visibility in action logs
           echo "iOS Update QR Code URL: ${IOS_UPDATE_QR_URL}"
@@ -184,7 +182,7 @@ jobs:
 
       - name: Post to Slack
         uses: slackapi/slack-github-action@v1.24.0
-        # if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         with:
           payload: |
             {
@@ -195,11 +193,11 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*\n\n*Update:* [QR Code](${{ env.IOS_UPDATE_QR_URL }})\n*Build:* [QR Code](${{ env.IOS_BUILD_QR_URL }})"
+                    "text": "*📱 iOS Preview*\n\n*Update:* [QR Code](${{ steps.set-urls.outputs.ios_update_qr_url }})\n*Build:* [QR Code](${{ steps.set-urls.outputs.ios_build_qr_url }})"
                   },
                   "accessory": {
                     "type": "image",
-                    "image_url": "${{ env.IOS_UPDATE_QR_URL }}",
+                    "image_url": "${{ steps.set-urls.outputs.ios_update_qr_url }}",
                     "alt_text": "iOS Update QR Code"
                   }
                 },
@@ -210,11 +208,11 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*\n\n*Update:* [QR Code](${{ env.ANDROID_UPDATE_QR_URL }})\n*Build:* [QR Code](${{ env.ANDROID_BUILD_QR_URL }})"
+                    "text": "*🤖 Android Preview*\n\n*Update:* [QR Code](${{ steps.set-urls.outputs.android_update_qr_url }})\n*Build:* [QR Code](${{ steps.set-urls.outputs.android_build_qr_url }})"
                   },
                   "accessory": {
                     "type": "image",
-                    "image_url": "${{ env.ANDROID_UPDATE_QR_URL }}",
+                    "image_url": "${{ steps.set-urls.outputs.android_update_qr_url }}",
                     "alt_text": "Android Update QR Code"
                   }
                 }
