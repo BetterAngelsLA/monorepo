@@ -180,6 +180,7 @@ jobs:
                   "text": {
                     "type": "mrkdwn",
                     "text": "New code has landed in main! Here are the latest EAS updates and development builds for both iOS and Android:"
+                  }
                 },
                 {
                   "type": "section",
