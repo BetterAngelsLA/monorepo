@@ -23,12 +23,6 @@ import {
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
-import {
-  useCreateClientProfileMutation,
-  useDeleteClientProfileMutation,
-  useGetClientProfileQuery,
-  useUpdateClientProfileMutation,
-} from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
@@ -36,6 +30,12 @@ import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
+import {
+  useCreateClientProfileMutation,
+  useDeleteClientProfileMutation,
+  useGetClientProfileQuery,
+  useUpdateClientProfileMutation,
+} from './__generated__/AddEditClient.generated';
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -274,7 +274,11 @@ export default function AddEditClient({ id }: { id?: string }) {
     <FormProvider {...methods}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={{ flex: 1 }}>
-          <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+          <MainScrollContainer
+            ref={scrollRef}
+            bg={Colors.NEUTRAL_EXTRA_LIGHT}
+            keyboardAware={true}
+          >
             <PersonalInfo {...props} />
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />

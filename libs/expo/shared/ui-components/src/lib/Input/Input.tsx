@@ -44,6 +44,7 @@ interface IInputProps extends TextInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
+  onFocus?: () => void;
   icon?: ReactNode;
   errorMessage?: string;
 }
@@ -74,6 +75,12 @@ export function Input(props: IInputProps) {
     onBlur();
     if (props.onBlur) {
       props.onBlur();
+    }
+  };
+
+  const handleFocus = () => {
+    if (props.onFocus) {
+      props.onFocus();
     }
   };
 
@@ -131,6 +138,7 @@ export function Input(props: IInputProps) {
               }}
               value={value}
               onBlur={() => handleBlur(onBlur)}
+              onFocus={() => handleFocus()}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}
