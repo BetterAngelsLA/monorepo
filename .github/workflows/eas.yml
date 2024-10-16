@@ -182,7 +182,7 @@ jobs:
 
       - name: Post to Slack
         uses: slackapi/slack-github-action@v1.24.0
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         with:
           payload: |
             {
