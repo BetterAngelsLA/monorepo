@@ -243,8 +243,6 @@ export default function AddEditClient({ id }: { id?: string }) {
       ({ __typename, ...rest }) => rest
     );
 
-    console.log(existingPhoneNumbers);
-
     const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
 
     const clientInput = {
