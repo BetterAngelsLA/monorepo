@@ -193,7 +193,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|QR Code>"
+                    "text": "test text"
                   },
                   "accessory": {
                     "type": "image",
@@ -208,7 +208,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|QR Code>"
+                    "text": "test text"
                   },
                   "accessory": {
                     "type": "image",
