@@ -17,6 +17,7 @@ export { default as MaritalStatusPicker } from './MaritalStatusPicker';
 export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as OtherCategory } from './OtherCategory';
+export { default as PreferredCommunicationPicker } from './PreferredCommunicationPicker';
 export { default as PronounPicker } from './PronounPicker';
 export { default as RacePicker } from './RacePicker';
 export { AppleSignIn, GoogleSignIn } from './SocialLogin';
