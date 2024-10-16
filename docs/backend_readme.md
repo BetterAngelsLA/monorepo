@@ -243,20 +243,6 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 
 For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
 
-#### `reset_db`
+##### `ynx-reset_db`
 
-Generally it's best to do this when an error occurs where the local database doesn't accurately reflect the new migration(s).
-
-WARNING: This is a destructive action and the local database will be dropped. As a result, the database will reset with the default seed data.
-
-##### Step 1.
-
-```bash
-yarn nx run betterangels-backend:reset_db
-```
-
-##### Step 2.
-
-```bash
-yarn nx run betterangels-backend:migrate
-```
+WARNING: This is a destructive action and the local database will be dropped. Therefore, all data from all tables will be removed but it will allow you to run all migrations again. Use this command on the off chance that your local database doesn't reflect the new migration(s).
