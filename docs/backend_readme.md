@@ -243,7 +243,7 @@ Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("me
 
 For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
 
-#### Reset DB
+#### `reset_db`
 
 Generally it's best to do this when an error occurs where the local database doesn't accurately reflect the new migration(s).
 
