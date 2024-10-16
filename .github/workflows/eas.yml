@@ -188,70 +188,35 @@ jobs:
         with:
           payload: |
             {
-              "channel": "#tech-outreach-main,
-              "text": "New code has landed in main!  Here are the last eas-updates and development builds!",
+              "channel": "#tech-outreach-main",
+              "text": "New code has landed in main! Here are the latest EAS updates and development builds for both iOS and Android:",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*"
+                    "text": "*📱 iOS Preview*\n\n*Update:* [QR Code](${{ env.IOS_UPDATE_QR_URL }})\n*Build:* [QR Code](${{ env.IOS_BUILD_QR_URL }})"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ env.IOS_UPDATE_QR_URL }}",
+                    "alt_text": "iOS Update QR Code"
                   }
+                },
+                {
+                  "type": "divider"
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Update:*"
+                    "text": "*🤖 Android Preview*\n\n*Update:* [QR Code](${{ env.ANDROID_UPDATE_QR_URL }})\n*Build:* [QR Code](${{ env.ANDROID_BUILD_QR_URL }})"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ env.ANDROID_UPDATE_QR_URL }}",
+                    "alt_text": "Android Update QR Code"
                   }
-                },
-                {
-                  "type": "image",
-                  "image_url": "${{ env.IOS_UPDATE_QR_URL }}",
-                  "alt_text": "iOS Update QR Code"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Build:*"
-                  }
-                },
-                {
-                  "type": "image",
-                  "image_url": "${{ env.IOS_BUILD_QR_URL }}",
-                  "alt_text": "iOS Build QR Code"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Update:*"
-                  }
-                },
-                {
-                  "type": "image",
-                  "image_url": "${{ env.ANDROID_UPDATE_QR_URL }}",
-                  "alt_text": "Android Update QR Code"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Build:*"
-                  }
-                },
-                {
-                  "type": "image",
-                  "image_url": "${{ env.ANDROID_BUILD_QR_URL }}",
-                  "alt_text": "Android Build QR Code"
                 }
               ]
             }
