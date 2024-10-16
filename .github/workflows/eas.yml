@@ -153,36 +153,23 @@ jobs:
       - name: Set QR Code URLs
         id: set-urls
         run: |
-          # Assign the JSON output as a raw string
           UPDATE_OUTPUT='${{ steps.continuos_deploy.outputs.update-output }}'
 
-          # Parse the JSON output to extract iOS and Android update IDs
           IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
           ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
 
-          # Construct the Update QR code URLs using the update IDs
           IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
           ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=betterangels"
-
-          # Construct the Build QR code URLs using iOS and Android build IDs
           IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.ios-build-id }}"
           ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.android-build-id }}"
 
-          # Set outputs using $GITHUB_OUTPUT to make them accessible in later steps
           echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
           echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
           echo "ios_build_qr_url=${IOS_BUILD_QR_URL}" >> $GITHUB_OUTPUT
           echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}" >> $GITHUB_OUTPUT
 
-          # Log URLs for visibility in action logs
-          echo "iOS Update QR Code URL: ${IOS_UPDATE_QR_URL}"
-          echo "Android Update QR Code URL: ${ANDROID_UPDATE_QR_URL}"
-          echo "iOS Build QR Code URL: ${IOS_BUILD_QR_URL}"
-          echo "Android Build QR Code URL: ${ANDROID_BUILD_QR_URL}"
-
       - name: Post to Slack
         uses: slackapi/slack-github-action@v1.27.0
-        # if: github.ref == 'refs/heads/main'
         with:
           payload: |
             {
@@ -193,8 +180,8 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}>"
-                  },
+                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|QR Code>"
+                  }
                 },
                 {
                   "type": "divider"
@@ -203,14 +190,13 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}>"
-                  },
+                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|QR Code>"
+                  }
                 }
               ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: 🧼 Cleanup .env file
         if: always()
