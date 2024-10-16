@@ -179,14 +179,14 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "New code has landed in main! Here are the latest EAS updates and development builds for both iOS and Android:"
+                    "text": "*New code has landed in main!* \n*Commit:* `${{ github.event.head_commit.id }}`\n*Message:* ${{ github.event.head_commit.message }}"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|iOS Update>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|iOS Build>"
+                    "text": "*📱 iOS*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|iOS Update QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|iOS Build QR Code>"
                   }
                 },
                 {
@@ -196,7 +196,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|Android Update>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|Android Build>"
+                    "text": "*🤖 Android*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|Android Update QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|Android Build QR Code>"
                   }
                 }
               ]
