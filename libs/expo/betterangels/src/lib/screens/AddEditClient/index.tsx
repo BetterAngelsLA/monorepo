@@ -55,10 +55,6 @@ const defaultSocialMedias = [
     platform: SocialMediaEnum.Tiktok,
     platformUserId: '',
   },
-  {
-    platform: SocialMediaEnum.Whatsapp,
-    platformUserId: '',
-  },
 ];
 
 export default function AddEditClient({ id }: { id?: string }) {

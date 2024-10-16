@@ -18,7 +18,6 @@ const allowedPlatforms = [
   SocialMediaEnum.Instagram,
   SocialMediaEnum.Linkedin,
   SocialMediaEnum.Tiktok,
-  SocialMediaEnum.Whatsapp,
 ];
 
 export default function SocialMedia() {
