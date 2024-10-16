@@ -150,23 +150,30 @@ jobs:
             echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
           fi
 
-      - name: Set QR Code URLs
+      - name: Set QR Code URLs and Commit Info
         id: set-urls
         run: |
-          UPDATE_OUTPUT='${{ steps.continuos_deploy.outputs.update-output }}'
+          UPDATE_OUTPUT='${{ steps.continuous_deploy.outputs.update-output }}'
 
           IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
           ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
 
           IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
           ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=betterangels"
-          IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.ios-build-id }}"
-          ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.android-build-id }}"
+          IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.ios-build-id }}"
+          ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.android-build-id }}"
 
-          echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
-          echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
-          echo "ios_build_qr_url=${IOS_BUILD_QR_URL}" >> $GITHUB_OUTPUT
-          echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}" >> $GITHUB_OUTPUT
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+
+          {
+            echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}"
+            echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}"
+            echo "ios_build_qr_url=${IOS_BUILD_QR_URL}"
+            echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}"
+            echo "commit_id=${COMMIT_ID}"
+            echo "commit_message=${COMMIT_MESSAGE}"
+          } >> $GITHUB_OUTPUT
 
       - name: Post to Slack
         uses: slackapi/slack-github-action@v1.27.0
@@ -179,14 +186,14 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New code has landed in main!* \n*Commit:* `${{ github.event.head_commit.id }}`\n*Message:* ${{ github.event.head_commit.message }}"
+                    "text": "*New code has landed in main!* \n*Commit:* `${{ steps.set-urls.outputs.commit_id }}`\n*Message:* ${{ steps.set-urls.outputs.commit_message }}"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|iOS Update QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|iOS Build QR Code>"
+                    "text": "*📱 iOS*\n\n*Update:* ${{ steps.set-urls.outputs.ios_update_qr_url }}\n*Build:* ${{ steps.set-urls.outputs.ios_build_qr_url }}"
                   }
                 },
                 {
@@ -196,7 +203,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|Android Update QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|Android Build QR Code>"
+                    "text": "*🤖 Android*\n\n*Update:* ${{ steps.set-urls.outputs.android_update_qr_url }}\n*Build:* ${{ steps.set-urls.outputs.android_build_qr_url }}"
                   }
                 }
               ]
