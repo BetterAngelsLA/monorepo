@@ -153,12 +153,12 @@ jobs:
       - name: Set QR Code URLs
         id: set-urls
         run: |
-          # Assume update-output contains the JSON output as a string
+          # Assign the JSON output as a raw string
           UPDATE_OUTPUT='${{ steps.continuos_deploy.outputs.update-output }}'
 
           # Parse the JSON output to extract iOS and Android update IDs
-          IOS_UPDATE_ID=$(echo "$UPDATE_OUTPUT" | jq -r '.[] | select(.platform == "ios") | .id')
-          ANDROID_UPDATE_ID=$(echo "$UPDATE_OUTPUT" | jq -r '.[] | select(.platform == "android") | .id')
+          IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
+          ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
 
           # Construct the Update QR code URLs using the update IDs
           IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
@@ -168,7 +168,7 @@ jobs:
           IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.ios-build-id }}"
           ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuos_deploy.outputs.android-build-id }}"
 
-          # Set outputs using $GITHUB_OUTPUT
+          # Set outputs using $GITHUB_OUTPUT to make them accessible in later steps
           echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
           echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}" >> $GITHUB_OUTPUT
           echo "ios_build_qr_url=${IOS_BUILD_QR_URL}" >> $GITHUB_OUTPUT
