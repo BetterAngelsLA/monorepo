@@ -193,13 +193,8 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|QR Code>"
+                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}>"
                   },
-                  "accessory": {
-                    "type": "image",
-                    "image_url": "${{ steps.set-urls.outputs.ios_update_qr_url }}",
-                    "alt_text": "iOS Update QR Code"
-                  }
                 },
                 {
                   "type": "divider"
@@ -208,13 +203,8 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|QR Code>"
+                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}>"
                   },
-                  "accessory": {
-                    "type": "image",
-                    "image_url": "${{ steps.set-urls.outputs.android_update_qr_url }}",
-                    "alt_text": "Android Update QR Code"
-                  }
                 }
               ]
             }
