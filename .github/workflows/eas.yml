@@ -184,47 +184,40 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         # if: github.ref == 'refs/heads/main'
         with:
-          payload: ${{ toJson({
-            "channel": "#tech-outreach-main",
-            "text": "New code has landed in main! Here are the latest EAS updates and development builds for both iOS and Android:",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*📱 iOS Preview*\n\n*Update:* [QR Code](${{
-                    steps.set-urls.outputs.ios_update_qr_url
-                  }})\n*Build:* [QR Code](${{
-                    steps.set-urls.outputs.ios_build_qr_url
-                  }})"
+          payload: |
+            {
+              "channel": "#tech-outreach-main",
+              "text": "New code has landed in main! Here are the latest EAS updates and development builds for both iOS and Android:",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📱 iOS Preview*\n\n*Update:* <${{ steps.set-urls.outputs.ios_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.ios_build_qr_url }}|QR Code>"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ steps.set-urls.outputs.ios_update_qr_url }}",
+                    "alt_text": "iOS Update QR Code"
+                  }
                 },
-                "accessory": {
-                  "type": "image",
-                  "image_url": "${{ steps.set-urls.outputs.ios_update_qr_url }}",
-                  "alt_text": "iOS Update QR Code"
-                }
-              },
-              {
-                "type": "divider"
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*🤖 Android Preview*\n\n*Update:* [QR Code](${{
-                    steps.set-urls.outputs.android_update_qr_url
-                  }})\n*Build:* [QR Code](${{
-                    steps.set-urls.outputs.android_build_qr_url
-                  }})"
+                {
+                  "type": "divider"
                 },
-                "accessory": {
-                  "type": "image",
-                  "image_url": "${{ steps.set-urls.outputs.android_update_qr_url }}",
-                  "alt_text": "Android Update QR Code"
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🤖 Android Preview*\n\n*Update:* <${{ steps.set-urls.outputs.android_update_qr_url }}|QR Code>\n*Build:* <${{ steps.set-urls.outputs.android_build_qr_url }}|QR Code>"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "${{ steps.set-urls.outputs.android_update_qr_url }}",
+                    "alt_text": "Android Update QR Code"
+                  }
                 }
-              }
-            ]
-          }) }}
+              ]
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
