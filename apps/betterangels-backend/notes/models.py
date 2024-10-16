@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     custom_service = models.CharField(max_length=100, null=True, blank=True)
+    service_other = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",
         on_delete=models.CASCADE,
@@ -59,7 +60,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.custom_service else self.custom_service)
+        return str(self.service if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
@@ -166,20 +167,21 @@ class Task(BaseModel):
 )
 class Note(BaseModel):
     attachments = GenericRelation(Attachment)
-    title = models.CharField(max_length=100)
+    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
     interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
-    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
-    private_details = models.TextField(blank=True)
-    is_submitted = models.BooleanField(default=False)
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    purpose = models.CharField(max_length=100, null=True, blank=True)
+    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
+    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    title = models.CharField(max_length=100, blank=True, null=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
@@ -194,7 +196,7 @@ class Note(BaseModel):
     _private_details: Optional[str]
 
     def __str__(self) -> str:
-        return self.title
+        return self.purpose or str(self.id)
 
     @property
     def label_with_client(self) -> str:
@@ -203,7 +205,7 @@ class Note(BaseModel):
         else:
             client_label = "Client"
 
-        return f"Note {self.id}: {self.title} (with {client_label} {self.interacted_at.date()})"
+        return f"Note {self.id}: {self.purpose} (with {client_label} {self.interacted_at.date()})"
 
     @property
     def label_with_created_by(self) -> str:

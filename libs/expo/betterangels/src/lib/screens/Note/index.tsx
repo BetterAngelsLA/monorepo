@@ -7,17 +7,13 @@ import { useEffect } from 'react';
 import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import NoteLocation from './NoteLocation';
-import NoteNextSteps from './NoteNextSteps';
 import NotePublicNote from './NotePublicNote';
-import NotePurpose from './NotePurpose';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
 
-const hasServicesOrMoods = (note: ViewNoteQuery['note']) => {
+const hasServices = (note: ViewNoteQuery['note']) => {
   return (
-    note?.providedServices?.length > 0 ||
-    note?.moods?.length > 0 ||
-    note?.requestedServices?.length > 0
+    note?.providedServices?.length > 0 || note?.requestedServices?.length > 0
   );
 };
 
@@ -81,14 +77,8 @@ export default function Note({
       <View style={styles.container}>
         <NoteTitle note={data?.note} />
         {data?.note.location?.point && <NoteLocation note={data?.note} />}
-        {data?.note.purposes && data?.note.purposes.length > 0 && (
-          <NotePurpose note={data?.note} />
-        )}
-        {data?.note && hasServicesOrMoods(data.note) && (
+        {data?.note && hasServices(data.note) && (
           <NoteServices note={data?.note} />
-        )}
-        {data?.note.nextSteps && data?.note.nextSteps.length > 0 && (
-          <NoteNextSteps note={data?.note} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data?.note} />}
       </View>

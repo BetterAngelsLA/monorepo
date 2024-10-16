@@ -5,12 +5,12 @@ import { format } from 'date-fns';
 import { View } from 'react-native';
 
 interface INoteCardHeaderProps {
-  title: string;
+  purpose: string;
   interactedAt: string;
 }
 
 export default function NoteCardHeader(props: INoteCardHeaderProps) {
-  const { title, interactedAt } = props;
+  const { purpose, interactedAt } = props;
   return (
     <View
       style={{
@@ -33,7 +33,7 @@ export default function NoteCardHeader(props: INoteCardHeaderProps) {
           size="sm"
           color={Colors.NEUTRAL_DARK}
         >
-          {title}
+          {purpose}
         </TextRegular>
       </View>
       <View style={{ alignItems: 'flex-end', flex: 1 }}>

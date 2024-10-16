@@ -16,11 +16,11 @@ Including another URLconf
 """
 
 from betterangels_backend import settings
-from common.graphql.views import ProtectedGraphQLView
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
+from strawberry.django.views import GraphQLView
 
 from .schema import schema
 
@@ -30,7 +30,14 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
-    path("graphql", ProtectedGraphQLView.as_view(schema=schema)),
+    path(
+        "graphql",
+        GraphQLView.as_view(
+            schema=schema,
+            # https://github.com/strawberry-graphql/strawberry/issues/3655#issuecomment-2386409153
+            multipart_uploads_enabled=True,
+        ),
+    ),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
 ]

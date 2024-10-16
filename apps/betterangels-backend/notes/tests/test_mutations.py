@@ -30,6 +30,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
+                    "purpose": "New note purpose",
                     "title": "New note title",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
@@ -39,6 +40,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         created_note = response["data"]["createNote"]
         expected_note = {
             "id": ANY,
+            "purpose": "New note purpose",
             "title": "New note title",
             "location": None,
             "moods": [],
@@ -59,6 +61,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_mutation(self) -> None:
         variables = {
             "id": self.note["id"],
+            "purpose": "Updated note purpose",
             "title": "Updated note title",
             "location": self.location.pk,
             "publicDetails": "Updated public details",
@@ -74,6 +77,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
+            "purpose": "Updated note purpose",
             "title": "Updated note title",
             "location": {
                 "id": str(self.location.pk),
@@ -115,6 +119,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
+            "purpose": f"Session with {self.client_user_1.full_name}",
             "title": f"Session with {self.client_user_1.full_name}",
             "location": None,
             "moods": [],
@@ -228,6 +233,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "service": "BLANKET",
+            "serviceOther": None,
             "customService": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
@@ -243,6 +249,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "service": "BLANKET",
             "status": expected_status,
+            "serviceOther": None,
             "customService": None,
             "dueBy": None,
             "completedOn": ANY,
@@ -275,6 +282,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "service": "OTHER",
+            "serviceOther": "Other Service",
             "customService": "Other Service",
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
@@ -290,6 +298,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "service": "OTHER",
             "status": expected_status,
+            "serviceOther": "Other Service",
             "customService": "Other Service",
             "dueBy": None,
             "completedOn": ANY,
@@ -321,6 +330,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # First create note service request
         variables = {
             "service": "BLANKET",
+            "serviceOther": None,
             "customService": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
@@ -491,7 +501,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 20
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -533,6 +543,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._update_note_fixture(
             {
                 "id": note_id,
+                "purpose": "Discarded Purpose",
                 "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
                 "location": other_location.pk,
@@ -541,10 +552,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 32
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
+        self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["publicDetails"], "Dale Cooper's public details")
         self.assertIsNone(reverted_note["location"])
@@ -553,10 +565,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 17
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
+        self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["publicDetails"], "Dale Cooper's public details")
         self.assertIsNone(reverted_note["location"])
@@ -580,6 +593,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._update_note_fixture(
             {
                 "id": note_id,
+                "purpose": "Updated purpose",
                 "title": "Updated Title",
                 "publicDetails": "Updated Body",
                 "location": self.location.pk,
@@ -595,6 +609,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._update_note_fixture(
             {
                 "id": note_id,
+                "purpose": "Discarded purpose",
                 "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
                 "location": other_location.pk,
@@ -602,10 +617,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 34
+        expected_query_count = 36
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
+        self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
         self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
@@ -614,10 +630,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 29
+        expected_query_count = 31
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
+        self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
         self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
@@ -674,7 +691,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
-        expected_query_count = 24
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
@@ -907,6 +924,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "BLANKET",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -915,6 +933,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "WATER",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -930,6 +949,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         discarded_requested_service_id = self._create_note_service_request_fixture(
             {
                 "service": "CLOTHES",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -939,6 +959,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         discarded_provided_service_id = self._create_note_service_request_fixture(
             {
                 "service": "FOOD",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -986,6 +1007,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Other Service",
                 "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -994,6 +1016,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Other Service",
                 "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1007,6 +1030,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         discarded_requested_service_id = self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Discarded Other Service",
                 "customService": "Discarded Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1016,6 +1040,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         discarded_provided_service_id = self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Discarded Other Service",
                 "customService": "Discarded Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1210,6 +1235,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "BLANKET",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1218,6 +1244,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "WATER",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1230,6 +1257,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         reverted_requested_service = self._create_note_service_request_fixture(
             {
                 "service": "CLOTHES",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1239,6 +1267,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         reverted_provided_service = self._create_note_service_request_fixture(
             {
                 "service": "FOOD",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1290,6 +1319,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Other Service",
                 "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1298,6 +1328,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Other Service",
                 "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1308,6 +1339,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         reverted_requested_service = self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Retrieved Other Service",
                 "customService": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1317,6 +1349,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         reverted_provided_service = self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Retrieved Other Service",
                 "customService": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1470,6 +1503,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         provided_service = self._create_note_service_request_fixture(
             {
                 "service": "OTHER",
+                "serviceOther": "Other Provided Service",
                 "customService": "Other Provided Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1479,6 +1513,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         requested_service = self._create_note_service_request_fixture(
             {
                 "service": "BLANKET",
+                "serviceOther": None,
                 "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1490,7 +1525,11 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         # Make updates that will be discarded
         self._update_service_request_fixture(
-            {"id": provided_service["id"], "customService": "Discarded Provided Service Title"}
+            {
+                "id": provided_service["id"],
+                "customService": "Discarded Provided Service Title",
+                "serviceOther": "Discarded Provided Service Title",
+            }
         )
         self._update_service_request_fixture(
             {
@@ -1506,6 +1545,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
 
+        self.assertEqual(reverted_note["providedServices"][0]["serviceOther"], "Other Provided Service")
         self.assertEqual(reverted_note["providedServices"][0]["customService"], "Other Provided Service")
         self.assertEqual(reverted_note["requestedServices"][0]["status"], "TO_DO")
         self.assertEqual(reverted_note["requestedServices"][0]["dueBy"], None)
@@ -1576,7 +1616,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 
@@ -1606,6 +1646,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         expected_service_request = {
             "id": ANY,
             "service": "BLANKET",
+            "serviceOther": None,
             "customService": None,
             "dueBy": None,
             "completedOn": None,
@@ -1633,6 +1674,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         expected_service_request = {
             "id": self.service_request["id"],
             "service": "BLANKET",
+            "serviceOther": None,
             "customService": None,
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
@@ -1658,6 +1700,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
         expected_service_request = {
             "id": self.service_request["id"],
             "service": "BLANKET",
+            "serviceOther": None,
             "customService": None,
             "status": "TO_DO",
             "dueBy": None,

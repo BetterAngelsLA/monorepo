@@ -19,6 +19,7 @@ import {
 import {
   CreateClientProfileInput,
   Ordering,
+  SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
@@ -32,9 +33,29 @@ import {
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
+import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
+
+const defaultSocialMedias = [
+  {
+    platform: SocialMediaEnum.Facebook,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Instagram,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Linkedin,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Tiktok,
+    platformUserId: '',
+  },
+];
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -100,6 +121,19 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
+    if (values.contacts && values.contacts?.length > 0) {
+      values.contacts = values.contacts.map((contact) => ({
+        ...contact,
+        phoneNumber: contact.phoneNumber === '' ? null : contact.phoneNumber,
+      }));
+    }
+
+    const filteredSocialMediaProfiles =
+      values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
+
+    const filteredPhoneNumbers =
+      values.phoneNumbers?.filter((item) => item.number) || [];
+
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
@@ -118,6 +152,8 @@ export default function AddEditClient({ id }: { id?: string }) {
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
+          socialMediaProfiles: filteredSocialMediaProfiles,
+          phoneNumbers: filteredPhoneNumbers,
           id,
         };
 
@@ -181,8 +217,36 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
 
+    const existingSocialMediaProfiles =
+      data.clientProfile.socialMediaProfiles || [];
+
+    const updatedSocialMediaProfiles = defaultSocialMedias.map(
+      (defaultProfile) => {
+        const existingProfile = existingSocialMediaProfiles.find(
+          (profile) => profile.platform === defaultProfile.platform
+        );
+
+        if (existingProfile) {
+          const { __typename, ...cleanedProfile } = existingProfile;
+          return cleanedProfile;
+        }
+
+        return defaultProfile;
+      }
+    );
+
+    const existingPhoneNumbers = data.clientProfile.phoneNumbers?.map(
+      ({ __typename, ...rest }) => rest
+    );
+
+    const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
+
     const clientInput = {
       ...updatedClientInput,
+      socialMediaProfiles: updatedSocialMediaProfiles,
+      phoneNumbers: existingPhoneNumbers?.length
+        ? existingPhoneNumbers
+        : phoneNumberEmpyInput,
       user: {
         ...updatedClientInput.user,
       },
@@ -268,6 +332,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         <View style={{ flex: 1 }}>
           <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
             <PersonalInfo {...props} />
+            <ImportantNotes {...props} />
             <DemographicInfo {...props} />
             <ContactInfo {...props} />
             <VeteranStatus {...props} />

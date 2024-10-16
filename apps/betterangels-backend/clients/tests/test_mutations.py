@@ -79,6 +79,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "importantNotes": "I am an important note",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1234 Mailing Street",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
@@ -87,7 +88,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": [phone_number],
             "physicalDescription": "eerily cat-like",
             "placeOfBirth": "Los Angeles",
-            "preferredCommunication": PreferredCommunicationEnum.TEXT.name,
+            "preferredCommunication": [],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "pronounsOther": None,
@@ -210,6 +211,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 71.75,
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
+            "importantNotes": "I am a very important note",
             "householdMembers": household_members,
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
@@ -219,7 +221,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "phoneNumbers": client_1_phone_numbers,
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
-            "preferredCommunication": PreferredCommunicationEnum.WHATSAPP.name,
+            "preferredCommunication": [PreferredCommunicationEnum.WHATSAPP.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
@@ -316,7 +318,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 8
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
@@ -373,7 +375,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 
