@@ -247,7 +247,7 @@ For a list of command aliases, refer to [.bash_aliases](https://github.com/Bette
 
 Generally it's best to do this when an error occurs where the local database doesn't accurately reflect the new migration(s).
 
-WARNING: This is a destructive action. Local database will be dropped and the database will reset with the default seed data.
+WARNING: This is a destructive action and the local database will be dropped. As a result, the database will reset with the default seed data.
 
 ##### Step 1.
 
