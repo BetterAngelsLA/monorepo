@@ -132,7 +132,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
-        id: continuos_deploy
+        id: continuous_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: preview
@@ -143,17 +143,17 @@ jobs:
         if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
         run: |
-          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
           if [ "${build_list_output}" == "[]" ]; then
             eas build --profile development-simulator --platform ios --non-interactive --no-wait
           else
-            echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
+            echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
           fi
 
       - name: Set QR Code URLs and Commit Info
         id: set-urls
         run: |
-          UPDATE_OUTPUT='${{ steps.continuos_deploy.outputs.update-output }}'
+          UPDATE_OUTPUT='${{ steps.continuous_deploy.outputs.update-output }}'
 
           IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
           ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
@@ -193,7 +193,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS*\n\n*Update:* ${{ steps.set-urls.outputs.ios_update_qr_url }}\n*Build:* ${{ steps.set-urls.outputs.ios_build_qr_url }}"
+                    "text": "*📱 iOS*\n\n<${{ steps.set-urls.outputs.ios_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.ios_build_qr_url }}|Build>"
                   }
                 },
                 {
@@ -203,7 +203,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android*\n\n*Update:* ${{ steps.set-urls.outputs.android_update_qr_url }}\n*Build:* ${{ steps.set-urls.outputs.android_build_qr_url }}"
+                    "text": "*🤖 Android*\n\n<${{ steps.set-urls.outputs.android_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.android_build_qr_url }}|Build>"
                   }
                 }
               ]
@@ -288,7 +288,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
-        id: continuos_deploy
+        id: continuous_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: production
