@@ -181,7 +181,7 @@ jobs:
           echo "Android Build QR Code URL: ${ANDROID_BUILD_QR_URL}"
 
       - name: Post to Slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.27.0
         # if: github.ref == 'refs/heads/main'
         with:
           payload: |
