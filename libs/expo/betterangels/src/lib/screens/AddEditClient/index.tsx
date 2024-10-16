@@ -19,6 +19,7 @@ import {
 import {
   CreateClientProfileInput,
   Ordering,
+  SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
@@ -36,6 +37,25 @@ import {
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
+
+const defaultSocialMedias = [
+  {
+    platform: SocialMediaEnum.Facebook,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Instagram,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Linkedin,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Tiktok,
+    platformUserId: '',
+  },
+];
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -108,6 +128,12 @@ export default function AddEditClient({ id }: { id?: string }) {
       }));
     }
 
+    const filteredSocialMediaProfiles =
+      values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
+
+    const filteredPhoneNumbers =
+      values.phoneNumbers?.filter((item) => item.number) || [];
+
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
@@ -126,6 +152,8 @@ export default function AddEditClient({ id }: { id?: string }) {
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
+          socialMediaProfiles: filteredSocialMediaProfiles,
+          phoneNumbers: filteredPhoneNumbers,
           id,
         };
 
@@ -189,8 +217,36 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
 
+    const existingSocialMediaProfiles =
+      data.clientProfile.socialMediaProfiles || [];
+
+    const updatedSocialMediaProfiles = defaultSocialMedias.map(
+      (defaultProfile) => {
+        const existingProfile = existingSocialMediaProfiles.find(
+          (profile) => profile.platform === defaultProfile.platform
+        );
+
+        if (existingProfile) {
+          const { __typename, ...cleanedProfile } = existingProfile;
+          return cleanedProfile;
+        }
+
+        return defaultProfile;
+      }
+    );
+
+    const existingPhoneNumbers = data.clientProfile.phoneNumbers?.map(
+      ({ __typename, ...rest }) => rest
+    );
+
+    const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
+
     const clientInput = {
       ...updatedClientInput,
+      socialMediaProfiles: updatedSocialMediaProfiles,
+      phoneNumbers: existingPhoneNumbers?.length
+        ? existingPhoneNumbers
+        : phoneNumberEmpyInput,
       user: {
         ...updatedClientInput.user,
       },
