@@ -245,4 +245,4 @@ For a list of command aliases, refer to [.bash_aliases](https://github.com/Bette
 
 ##### `ynx-reset_db`
 
-WARNING: This is a destructive action and the local database will be dropped. Therefore, all data from all tables will be removed but it will allow you to run all migrations again. Use this command on the off chance that your local database doesn't reflect the new migration(s).
+_WARNING:_ This is a destructive action and the local database will be dropped. Therefore, all data from all tables will be removed but it will allow you to run all migrations again. Use this command on the off chance that your local database doesn't reflect the new migration(s).
