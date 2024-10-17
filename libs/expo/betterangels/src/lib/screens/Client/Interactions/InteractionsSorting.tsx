@@ -48,10 +48,10 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         },
       });
       if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data?.createNote.id}`);
+        router.navigate(`/add-note/${data.createNote.id}`);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
