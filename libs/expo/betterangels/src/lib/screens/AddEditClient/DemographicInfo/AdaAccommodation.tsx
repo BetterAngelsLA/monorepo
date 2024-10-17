@@ -1,3 +1,4 @@
+import { toggleValueInArray } from '@monorepo/expo/shared/utils';
 import { useFormContext } from 'react-hook-form';
 import {
   CreateClientProfileInput,
@@ -23,18 +24,10 @@ export default function AdaAccommodation() {
       withCard
       cardTitle
       onPress={(value) => {
-        setValue(FORM_KEY, toggleValueInList(watchedValue, value));
+        setValue(FORM_KEY, toggleValueInArray(watchedValue, value));
       }}
       selected={watchedValue}
       onReset={handleReset}
     />
   );
-}
-
-function toggleValueInList<T>(list: T[], value: T): T[] {
-  if (list.includes(value)) {
-    return list.filter((item) => item !== value);
-  }
-
-  return [...list, value];
 }
