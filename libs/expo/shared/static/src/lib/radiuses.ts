@@ -3,7 +3,7 @@ export const Radiuses = {
   xxs: 4,
   xs: 8,
   sm: 16,
-  md: 24,
+  md: 20,
   lg: 32,
   xl: 40,
   xxl: 50,
