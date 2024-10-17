@@ -235,4 +235,14 @@ To track the historical events for a certain model based on their id and timesta
 Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
-</details>
+---
+
+### Troubleshooting
+
+#### Aliases
+
+For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
+
+##### `ynx-reset_db`
+
+_WARNING:_ This is a destructive action and the local database will be dropped. Therefore, all data from all tables will be removed but it will allow you to run all migrations again. Use this command on the off chance that your local database doesn't reflect the new migration(s).
