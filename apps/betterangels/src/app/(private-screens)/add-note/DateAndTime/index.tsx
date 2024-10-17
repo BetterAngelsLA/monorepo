@@ -100,7 +100,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
         ) : dateTime.date && !isDateAndTime ? (
           <TextMedium size="sm">
             {dateTime.date ? format(dateTime.date, 'MM/dd/yyyy') : ''}{' '}
-            {dateTime.time ? format(dateTime.time, 'HH:mm') : ''}
+            {dateTime.time ? format(dateTime.time, 'h:mm a') : ''}
           </TextMedium>
         ) : null
       }
@@ -130,8 +130,8 @@ export default function DateAndTime(props: IDateAndTimeProps) {
           maxDate={endOfDay}
           initialDate={interactedAt}
           mode="time"
-          format="HH:mm"
-          placeholder="HH:MM"
+          format="h:mm a"
+          placeholder="h:mm a"
           mt="xs"
           value={new Date(dateTime.time) || new Date()}
           setValue={(time) => onChange('time', time)}
