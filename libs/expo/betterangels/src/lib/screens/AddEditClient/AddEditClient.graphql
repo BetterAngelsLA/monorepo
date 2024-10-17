@@ -59,6 +59,7 @@ query GetClientProfile($id: ID!) {
       displayPronouns
       veteranStatus
       livingSituation
+      adaAccommodation
       user {
         id
         email

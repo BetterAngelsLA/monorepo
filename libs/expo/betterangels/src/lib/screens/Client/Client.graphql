@@ -45,6 +45,7 @@ query ClientProfile($id: ID!) {
       pronouns
       veteranStatus
       livingSituation
+      adaAccommodation
       profilePhoto {
         height
         name
