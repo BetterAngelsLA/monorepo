@@ -618,6 +618,7 @@ input NoteOrder {
 type NoteType {
   id: ID!
   purpose: String
+  team: SelahTeamEnum
   title: String
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
@@ -794,6 +795,23 @@ type SampleType {
   lastModified: DateTime
 }
 
+enum SelahTeamEnum {
+  BOWTIE_RIVERSIDE_OUTREACH
+  ECHO_PARK_ON_SITE
+  ECHO_PARK_OUTREACH
+  HOLLYWOOD_ON_SITE
+  HOLLYWOOD_OUTREACH
+  LA_RIVER_OUTREACH
+  LOS_FELIZ_OUTREACH
+  NORTHEAST_HOLLYWOOD_OUTREACH
+  SILVER_LAKE_OUTREACH
+  SLCC_ON_SITE
+  SUNDAY_SOCIAL_ATWATER_ON_SITE
+  SUNDAY_SOCIAL_ATWATER_OUTREACH
+  WDI_ON_SITE
+  WDI_OUTREACH
+}
+
 enum ServiceEnum {
   BICYCLE
   BIRTH_CERTIFICATE
@@ -965,6 +983,7 @@ union UpdateCurrentUserPayload = UserType | OperationInfo
 input UpdateNoteInput {
   id: ID!
   purpose: String
+  team: SelahTeamEnum
   title: String
   location: ID
   publicDetails: String
