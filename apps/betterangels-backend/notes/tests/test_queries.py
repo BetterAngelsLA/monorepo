@@ -27,14 +27,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self._update_note_fixture(
             {
                 "id": note_id,
+                "interactedAt": "2024-03-12T11:12:13+00:00",
+                "isSubmitted": False,
+                "location": self.location.pk,
+                "privateDetails": "Updated private details",
+                "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
                 "title": "Updated Note",
-                "location": self.location.pk,
-                "publicDetails": "Updated public details",
-                "privateDetails": "Updated private details",
-                "isSubmitted": False,
-                "interactedAt": "2024-03-12T11:12:13+00:00",
             }
         )
         # Add moods
@@ -55,9 +55,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
+                    interactedAt
+                    isSubmitted
+                    privateDetails
+                    publicDetails
                     purpose
                     team
                     title
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
                     location {
                         id
                         address {
@@ -92,16 +102,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                         serviceOther
                         customService
                     }
-                    publicDetails
-                    privateDetails
-                    isSubmitted
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    interactedAt
                 }
             }
         """
@@ -115,6 +115,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
         expected_note = {
             "id": note_id,
+            "client": {"id": str(self.client_user_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "interactedAt": "2024-03-12T11:12:13+00:00",
+            "isSubmitted": False,
+            "privateDetails": "Updated private details",
+            "publicDetails": "Updated public details",
             "purpose": "Updated Note",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated Note",
@@ -166,12 +172,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
-            "publicDetails": "Updated public details",
-            "privateDetails": "Updated private details",
-            "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "interactedAt": "2024-03-12T11:12:13+00:00",
         }
         note_differences = DeepDiff(expected_note, note, ignore_order=True)
         self.assertFalse(note_differences)
@@ -181,9 +181,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 notes {
                     id
+                    interactedAt
+                    isSubmitted
+                    privateDetails
+                    publicDetails
                     purpose
                     team
                     title
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
                     location {
                         id
                         address {
@@ -218,16 +228,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                         serviceOther
                         customService
                     }
-                    publicDetails
-                    privateDetails
-                    isSubmitted
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    interactedAt
                 }
             }
         """
