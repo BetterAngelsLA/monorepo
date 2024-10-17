@@ -18,7 +18,7 @@ interface IPurposeProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
   scrollRef: RefObject<ScrollView>;
-  purpose: string;
+  purpose: string | null | undefined;
   noteId: string | undefined;
   errors: {
     purpose: boolean;
@@ -50,7 +50,7 @@ export default function Title(props: IPurposeProps) {
     UpdateNoteMutationVariables
   >(UPDATE_NOTE);
 
-  const [value, setValue] = useState<string>(purpose);
+  const [value, setValue] = useState<string | null | undefined>(purpose);
 
   const isPurpose = expanded === 'Purpose';
 
@@ -113,7 +113,8 @@ export default function Title(props: IPurposeProps) {
           }}
           error={!!errors.purpose}
           errorMessage={errors.purpose ? 'Purpose is required' : ''}
-          value={value}
+          // TODO: remove default value after backend cleanup (DEV-804)
+          value={value || 'Session with client'}
           onChangeText={(e) => onChange(e)}
         />
       </View>

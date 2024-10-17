@@ -1,4 +1,7 @@
-import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
+import {
+  TMapView,
+  useUpdateNoteLocationMutation,
+} from '@monorepo/expo/betterangels';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -16,7 +19,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TMapView } from '@monorepo/expo/betterangels';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
