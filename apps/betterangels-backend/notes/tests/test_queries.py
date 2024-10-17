@@ -4,7 +4,7 @@ import time_machine
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum, ServiceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -28,6 +28,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "id": note_id,
                 "purpose": "Updated Note",
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
                 "title": "Updated Note",
                 "location": self.location.pk,
                 "publicDetails": "Updated public details",
@@ -55,6 +56,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 note(pk: $id) {
                     id
                     purpose
+                    team
                     title
                     location {
                         id
@@ -114,6 +116,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "purpose": "Updated Note",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated Note",
             "location": {
                 "id": str(self.location.pk),
@@ -179,6 +182,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 notes {
                     id
                     purpose
+                    team
                     title
                     location {
                         id

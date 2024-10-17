@@ -10,6 +10,7 @@ from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
+    SelahTeamEnum,
     ServiceRequestTypeEnum,
     TaskTypeEnum,
 )
@@ -201,6 +202,7 @@ class NoteFilter:
 class NoteType:
     id: ID
     purpose: auto
+    team: Optional[SelahTeamEnum]
     title: auto
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
@@ -250,6 +252,7 @@ class CreateNoteInput:
 class UpdateNoteInput:
     id: ID
     purpose: auto
+    team: Optional[SelahTeamEnum]
     title: auto
     location: Optional[ID]
     public_details: auto

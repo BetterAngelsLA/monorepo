@@ -101,6 +101,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         purpose
                         title
+                        team
                         location {{
                             id
                             address {{
@@ -179,6 +180,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         purpose
                         title
+                        team
                         publicDetails
                         location {
                             address {
