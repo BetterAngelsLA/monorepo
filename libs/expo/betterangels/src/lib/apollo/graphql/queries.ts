@@ -110,3 +110,36 @@ export const GET_NOTE = gql`
     }
   }
 `;
+
+// Google Maps Queries
+export const SEARCH_PLACES = gql`
+  query SearchPlaces($input: PlaceAutocompleteInput!) {
+    searchPlaces(input: $input)
+      @rest(
+        type: "PlaceAutocompleteResponse"
+        path: "/place/autocomplete/json?input={args.input.input}&components={args.input.components}&language={args.input.language}&location={args.input.location}&locationbias={args.input.locationbias}&locationrestriction={args.input.locationrestriction}&offset={args.input.offset}&origin={args.input.origin}&radius={args.input.radius}&region={args.input.region}&sessiontoken={args.input.sessiontoken}&strictbounds={args.input.strictbounds}&types={args.input.types}"
+      ) {
+      predictions {
+        description
+        placeId
+        matchedSubstrings {
+          length
+          offset
+        }
+        structuredFormatting {
+          mainText
+          secondaryText
+        }
+        terms {
+          offset
+          value
+        }
+        distanceMeters
+        types
+      }
+      status
+      errorMessage
+      infoMessages
+    }
+  }
+`;

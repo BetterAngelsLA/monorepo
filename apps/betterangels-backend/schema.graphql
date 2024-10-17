@@ -701,6 +701,66 @@ type PhoneNumberType {
   isPrimary: Boolean
 }
 
+input PlaceAutocompleteInput {
+  input: String!
+  components: String = null
+  language: String = null
+  location: String = null
+  locationbias: String = null
+  locationrestriction: String = null
+  offset: Int = null
+  origin: String = null
+  radius: Int = null
+  region: String = null
+  sessiontoken: String = null
+  strictbounds: Boolean = true
+  types: String = null
+}
+
+type PlaceAutocompleteMatchedSubstring {
+  length: Int!
+  offset: Int!
+}
+
+type PlaceAutocompletePrediction {
+  description: String!
+  matchedSubstrings: [PlaceAutocompleteMatchedSubstring!]!
+  placeId: String!
+  reference: String
+  structuredFormatting: PlaceAutocompleteStructuredFormat!
+  terms: [PlaceAutocompleteTerm!]!
+  distanceMeters: Int
+  types: [String!]
+}
+
+type PlaceAutocompleteResponse {
+  predictions: [PlaceAutocompletePrediction!]!
+  status: PlacesAutocompleteStatus!
+  errorMessage: String
+  infoMessages: [String!]
+}
+
+type PlaceAutocompleteStructuredFormat {
+  mainText: String!
+  mainTextMatchedSubstrings: [PlaceAutocompleteMatchedSubstring!]!
+  secondaryText: String
+  secondaryTextMatchedSubstrings: [PlaceAutocompleteMatchedSubstring!]
+}
+
+type PlaceAutocompleteTerm {
+  offset: Int!
+  value: String!
+}
+
+enum PlacesAutocompleteStatus {
+  OK
+  ZERO_RESULTS
+  INVALID_REQUEST
+  OVER_QUERY_LIMIT
+  REQUEST_DENIED
+  UNKNOWN_ERROR
+}
+
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
@@ -736,6 +796,7 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  searchPlaces(input: PlaceAutocompleteInput!): PlaceAutocompleteResponse!
 }
 
 enum RaceEnum {
