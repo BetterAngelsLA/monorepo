@@ -1,1 +1,1 @@
-export type { TSnackbar, TSnackbarType } from './Snackbar';
+export type { ISnackbar, TSnackbarType } from './Snackbar';

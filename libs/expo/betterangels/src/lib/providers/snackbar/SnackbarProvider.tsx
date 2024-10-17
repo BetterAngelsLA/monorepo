@@ -1,15 +1,15 @@
 import {
   Snackbar,
-  type TSnackbar,
   type TSnackbarType,
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useState } from 'react';
 import { SnackbarContext } from './SnackbarContext';
 
-export type TShowSnackbar = Pick<
-  TSnackbar,
-  'message' | 'type' | 'showDuration'
->;
+export type TShowSnackbar = {
+  message: string;
+  showDuration?: number;
+  type?: TSnackbarType;
+};
 
 type TSnackbarProvider = {
   children: ReactNode;
@@ -47,10 +47,11 @@ export default function SnackbarProvider(
       <Snackbar
         visible={visible}
         type={snackbarType}
-        message={message}
-        showDuration={duration}
+        duration={duration}
         onDismiss={dismissSnackbar}
-      />
+      >
+        {message}
+      </Snackbar>
     </SnackbarContext.Provider>
   );
 }
