@@ -19,6 +19,13 @@ export type ViewNoteQueryVariables = Types.Exact<{
 
 export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } }>, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
+export type SearchPlacesQueryVariables = Types.Exact<{
+  input: Types.PlaceAutocompleteInput;
+}>;
+
+
+export type SearchPlacesQuery = { __typename?: 'Query', searchPlaces: { __typename?: 'PlaceAutocompleteResponse', status: Types.PlacesAutocompleteStatus, errorMessage?: string | null, infoMessages?: Array<string> | null, predictions: Array<{ __typename?: 'PlaceAutocompletePrediction', description: string, placeId: string, distanceMeters?: number | null, types?: Array<string> | null, matchedSubstrings: Array<{ __typename?: 'PlaceAutocompleteMatchedSubstring', length: number, offset: number }>, structuredFormatting: { __typename?: 'PlaceAutocompleteStructuredFormat', mainText: string, secondaryText?: string | null }, terms: Array<{ __typename?: 'PlaceAutocompleteTerm', offset: number, value: string }> }> } };
+
 
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
@@ -193,3 +200,63 @@ export type ViewNoteQueryHookResult = ReturnType<typeof useViewNoteQuery>;
 export type ViewNoteLazyQueryHookResult = ReturnType<typeof useViewNoteLazyQuery>;
 export type ViewNoteSuspenseQueryHookResult = ReturnType<typeof useViewNoteSuspenseQuery>;
 export type ViewNoteQueryResult = Apollo.QueryResult<ViewNoteQuery, ViewNoteQueryVariables>;
+export const SearchPlacesDocument = gql`
+    query SearchPlaces($input: PlaceAutocompleteInput!) {
+  searchPlaces(input: $input) @rest(type: "PlaceAutocompleteResponse", path: "/place/autocomplete/json?input={args.input.input}&components={args.input.components}&language={args.input.language}&location={args.input.location}&locationbias={args.input.locationbias}&locationrestriction={args.input.locationrestriction}&offset={args.input.offset}&origin={args.input.origin}&radius={args.input.radius}&region={args.input.region}&sessiontoken={args.input.sessiontoken}&strictbounds={args.input.strictbounds}&types={args.input.types}") {
+    predictions {
+      description
+      placeId
+      matchedSubstrings {
+        length
+        offset
+      }
+      structuredFormatting {
+        mainText
+        secondaryText
+      }
+      terms {
+        offset
+        value
+      }
+      distanceMeters
+      types
+    }
+    status
+    errorMessage
+    infoMessages
+  }
+}
+    `;
+
+/**
+ * __useSearchPlacesQuery__
+ *
+ * To run a query within a React component, call `useSearchPlacesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchPlacesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchPlacesQuery({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSearchPlacesQuery(baseOptions: Apollo.QueryHookOptions<SearchPlacesQuery, SearchPlacesQueryVariables> & ({ variables: SearchPlacesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SearchPlacesQuery, SearchPlacesQueryVariables>(SearchPlacesDocument, options);
+      }
+export function useSearchPlacesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SearchPlacesQuery, SearchPlacesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SearchPlacesQuery, SearchPlacesQueryVariables>(SearchPlacesDocument, options);
+        }
+export function useSearchPlacesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<SearchPlacesQuery, SearchPlacesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SearchPlacesQuery, SearchPlacesQueryVariables>(SearchPlacesDocument, options);
+        }
+export type SearchPlacesQueryHookResult = ReturnType<typeof useSearchPlacesQuery>;
+export type SearchPlacesLazyQueryHookResult = ReturnType<typeof useSearchPlacesLazyQuery>;
+export type SearchPlacesSuspenseQueryHookResult = ReturnType<typeof useSearchPlacesSuspenseQuery>;
+export type SearchPlacesQueryResult = Apollo.QueryResult<SearchPlacesQuery, SearchPlacesQueryVariables>;
