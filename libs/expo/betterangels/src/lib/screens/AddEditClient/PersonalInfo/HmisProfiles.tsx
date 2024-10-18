@@ -8,7 +8,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   CreateClientProfileInput,
   HmisAgencyEnum,
@@ -64,7 +64,7 @@ export default function HmisProfiles() {
             )}
           </View>
 
-          <View style={{ flexDirection: 'column', gap: 0 }}>
+          <View style={styles.hmisIdContainer}>
             <TextBold size="sm" mt="md">
               Enter the ID #
             </TextBold>
@@ -104,3 +104,10 @@ export default function HmisProfiles() {
     </CardWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  hmisIdContainer: {
+    flexDirection: 'column',
+    gap: 0,
+  },
+});
