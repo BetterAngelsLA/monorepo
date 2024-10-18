@@ -91,17 +91,16 @@ export default function ClientHeader(props: IClientHeaderProps) {
         <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
         <TextRegular>
           Current Case Manager:{' '}
-          <TextRegular
-            onPress={() => {
-              if (client?.displayCaseManager !== 'Not Assigned') {
-                return onCaseManagerPress();
-              }
-              return null;
-            }}
-            textDecorationLine="underline"
-          >
-            {client?.displayCaseManager}
-          </TextRegular>
+          {client?.displayCaseManager !== 'Not Assigned' ? (
+            <TextRegular
+              onPress={onCaseManagerPress}
+              textDecorationLine="underline"
+            >
+              {client?.displayCaseManager}
+            </TextRegular>
+          ) : (
+            <TextRegular>{client?.displayCaseManager}</TextRegular>
+          )}
         </TextRegular>
       </View>
       {client?.residenceAddress && (
