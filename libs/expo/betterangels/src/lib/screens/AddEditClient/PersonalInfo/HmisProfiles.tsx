@@ -63,7 +63,6 @@ export default function HmisProfiles() {
               )
             )}
           </View>
-
           <View style={styles.hmisIdContainer}>
             <TextBold size="sm" mt="md">
               Enter the ID #
