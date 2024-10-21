@@ -12,7 +12,7 @@ export default function KeyboardToolbarProvider(
 ) {
   const { children } = props;
 
-  const [keyboardArrowsVisible, setKeyboardArrowsVisible] = useState(true);
+  const [keyboardArrowsVisible, setKeyboardArrowsVisible] = useState(false);
 
   const showKeyboardArrows = () => setKeyboardArrowsVisible(true);
   const hideKeyboardArrows = () => setKeyboardArrowsVisible(false);
