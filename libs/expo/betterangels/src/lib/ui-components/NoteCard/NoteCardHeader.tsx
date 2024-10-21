@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { View } from 'react-native';
 
 interface INoteCardHeaderProps {
-  purpose: string;
+  purpose: string | null | undefined;
   interactedAt: string;
 }
 

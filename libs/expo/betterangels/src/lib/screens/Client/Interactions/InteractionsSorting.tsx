@@ -1,13 +1,18 @@
 import {
   ListIcon,
   LocationDotSolidIcon,
+  PlusIcon,
   SortSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextMedium } from '@monorepo/expo/shared/ui-components';
+import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
-
+import {
+  ClientProfileQuery,
+  useCreateNoteMutation,
+} from '../__generated__/Client.generated';
 // TODO: Remove this flag when sorting is implemented
 const displayInteractionsSorting = false;
 
@@ -15,13 +20,39 @@ interface IInteractionsSortingProps {
   notes: NotesQuery['notes'] | undefined;
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
+  client: ClientProfileQuery | undefined;
 }
 
 export default function InteractionsSorting(props: IInteractionsSortingProps) {
-  const { notes, sort, setSort } = props;
-
+  const { notes, sort, setSort, client } = props;
+  const [createNote] = useCreateNoteMutation();
   function onSort(sorting: 'list' | 'location' | 'sort') {
     setSort(sorting);
+  }
+
+  if (!client) {
+    return;
+  }
+
+  async function createNoteFunction(
+    id: string,
+    firstName: string | undefined | null
+  ) {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            purpose: `Session with ${firstName || 'Client'}`,
+            client: id,
+          },
+        },
+      });
+      if (data?.createNote && 'id' in data.createNote) {
+        router.navigate(`/add-note/${data.createNote.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -37,6 +68,20 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         {notes?.length} interaction
         {notes?.length === 1 ? '' : 's'}
       </TextMedium>
+      <IconButton
+        onPress={() =>
+          createNoteFunction(
+            client.clientProfile.user.id,
+            client.clientProfile.user.firstName
+          )
+        }
+        variant="secondary"
+        borderColor={Colors.WHITE}
+        accessibilityLabel={'add interaction'}
+        accessibilityHint={'add a new interaction'}
+      >
+        <PlusIcon />
+      </IconButton>
       {displayInteractionsSorting && (
         <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
           <Pressable
