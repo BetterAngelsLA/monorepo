@@ -5,7 +5,7 @@ const meta: Meta<typeof Pill> = {
   title: 'Pill',
   component: Pill,
   args: {
-    color: 'green',
+    type: 'success',
   },
 };
 
@@ -15,6 +15,6 @@ type PillStory = StoryObj<typeof Pill>;
 
 export const Basic: PillStory = {
   args: {
-    color: 'green',
+    type: 'success',
   },
 };

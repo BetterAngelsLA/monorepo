@@ -3,15 +3,15 @@ import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 interface IPillProps {
-  color?: 'green' | 'blue';
+  type?: 'primary' | 'success';
   label: string;
 }
 
 export function Pill(props: IPillProps) {
-  const { label, color = 'green' } = props;
+  const { label, type = 'success' } = props;
 
   return (
-    <View style={[styles.pill, styles[color]]}>
+    <View style={[styles.pill, styles[type]]}>
       <TextRegular>{label}</TextRegular>
     </View>
   );
@@ -23,12 +23,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  green: {
+  success: {
     backgroundColor: Colors.SUCCESS_EXTRA_LIGHT,
     paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.xxs,
   },
-  blue: {
+  primary: {
     backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
     borderColor: Colors.PRIMARY_DARK,
     borderWidth: 1,
