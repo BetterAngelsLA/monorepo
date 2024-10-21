@@ -95,7 +95,12 @@ export default function Interactions({
         ListHeaderComponent={
           <>
             <InteractionsHeader search={search} setSearch={onChange} />
-            <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
+            <InteractionsSorting
+              sort={sort}
+              setSort={setSort}
+              notes={notes}
+              client={client}
+            />
           </>
         }
         refreshControl={
