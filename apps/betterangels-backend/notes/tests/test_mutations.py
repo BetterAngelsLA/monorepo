@@ -6,7 +6,7 @@ from common.models import Address, Attachment, Location
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -41,6 +41,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": ANY,
             "purpose": "New note purpose",
+            "team": None,
             "title": "New note title",
             "location": None,
             "moods": [],
@@ -62,6 +63,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated note title",
             "location": self.location.pk,
             "publicDetails": "Updated public details",
@@ -78,6 +80,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated note title",
             "location": {
                 "id": str(self.location.pk),
@@ -120,6 +123,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": f"Session with {self.client_user_1.full_name}",
+            "team": None,
             "title": f"Session with {self.client_user_1.full_name}",
             "location": None,
             "moods": [],
