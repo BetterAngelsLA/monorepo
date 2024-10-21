@@ -154,8 +154,7 @@ export function DatePicker(props: IDatePickerProps) {
       {picker && (
         <View style={{ marginTop: Spacings.xs }}>
           <DateTimePicker
-            locale={mode === 'time' ? 'en_GB' : 'en_US'}
-            is24Hour
+            locale={'en_US'}
             onChange={(event, date) => {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
