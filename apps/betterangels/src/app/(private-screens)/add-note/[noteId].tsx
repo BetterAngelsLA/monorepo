@@ -1,6 +1,5 @@
 import {
   MainScrollContainer,
-  NoteNamespaceEnum,
   NotesDocument,
   Ordering,
   useDeleteNoteMutation,
@@ -18,7 +17,7 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import DateAndTime from './DateAndTime';
 import Location from './Location';
@@ -79,7 +78,11 @@ export default function AddNote() {
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
-  const { data, loading: isLoading } = useViewNoteQuery({
+  const {
+    data,
+    loading: isLoading,
+    refetch,
+  } = useViewNoteQuery({
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -184,6 +187,7 @@ export default function AddNote() {
     scrollRef,
     errors,
     setErrors,
+    refetch,
   };
 
   async function submitNote() {
@@ -213,27 +217,11 @@ export default function AddNote() {
     }
   }
 
-  const filterAttachments = (namespace: NoteNamespaceEnum) => {
-    return (
-      data?.note?.attachments?.filter((item) => item.namespace === namespace) ||
-      []
-    );
-  };
-
   // TODO: Will be back with moods
   // const MoodAttachments = useMemo(
   //   () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
   //   [data]
   // );
-
-  const RequestedAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.RequestedServices),
-    [data]
-  );
-  const ProvidedAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.ProvidedServices),
-    [data]
-  );
 
   if (!data || isLoading) {
     return null;
@@ -260,16 +248,8 @@ export default function AddNote() {
           moods={data.note.moods}
           {...props}
         /> */}
-        <ProvidedServices
-          attachments={ProvidedAttachments}
-          services={data.note.providedServices}
-          {...props}
-        />
-        <RequestedServices
-          attachments={RequestedAttachments}
-          services={data.note.requestedServices}
-          {...props}
-        />
+        <ProvidedServices services={data.note.providedServices} {...props} />
+        <RequestedServices services={data.note.requestedServices} {...props} />
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}

@@ -4,8 +4,6 @@ import {
   useCreateNoteServiceRequestMutation,
   useDeleteServiceRequestMutation,
 } from '@monorepo/expo/betterangels';
-import { IIconProps } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRef, useState } from 'react';
@@ -16,7 +14,6 @@ interface IProvidedCheckboxProps {
   service: {
     title: string;
     enum: ServiceEnum;
-    Icon: React.ComponentType<IIconProps>;
   };
   noteId: string | undefined;
   idx: number;
@@ -117,7 +114,6 @@ export default function ProvidedCheckbox(props: IProvidedCheckboxProps) {
       accessibilityHint={service.title}
       label={
         <View style={styles.labelContainer}>
-          <service.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
           <TextRegular ml="xs">{service.title}</TextRegular>
         </View>
       }

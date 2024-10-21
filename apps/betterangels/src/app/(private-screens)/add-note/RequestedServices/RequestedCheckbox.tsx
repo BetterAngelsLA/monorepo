@@ -4,20 +4,18 @@ import {
   useCreateNoteServiceRequestMutation,
   useDeleteServiceRequestMutation,
 } from '@monorepo/expo/betterangels';
-import { IIconProps } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface IRequestedCheckboxProps {
-  id: string | undefined;
   service: {
     title: string;
     enum: ServiceEnum;
-    Icon: React.ComponentType<IIconProps>;
   };
+  id: string | undefined;
+  setChildResetRef: (resetFn: () => void) => void;
   noteId: string | undefined;
   idx: number;
   services: {
@@ -33,9 +31,18 @@ interface IRequestedCheckboxProps {
 }
 
 export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
-  const { service, idx, noteId, services, setServices, id: serviceId } = props;
-  const [isChecked, setIsChecked] = useState(serviceId ? true : false);
-  const [id, setId] = useState<string | undefined>(serviceId);
+  const {
+    service,
+    idx,
+    noteId,
+    services,
+    setServices,
+    setChildResetRef,
+    id: serviceId,
+  } = props;
+
+  const [isChecked, setIsChecked] = useState(false);
+  const [id, setId] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
 
   const [createNoteServiceRequest, { error }] =
@@ -107,6 +114,31 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
     executeMutation(!isChecked, id);
   };
 
+  const onReset = () => {
+    console.log(id, isChecked);
+
+    setId(undefined);
+    setIsChecked(false);
+    // function successfully runs
+  };
+
+  useEffect(() => {
+    setChildResetRef(onReset);
+  }, [id, setChildResetRef]);
+
+  useEffect(() => {
+    if (serviceId) {
+      setIsChecked(true);
+      setId(serviceId);
+    }
+  }, [serviceId]);
+
+  useEffect(() => {
+    if (isChecked || id) {
+      console.log(isChecked, id);
+    }
+  }, [isChecked, id]);
+
   return (
     <Checkbox
       isChecked={isChecked}
@@ -116,7 +148,6 @@ export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
       accessibilityHint={service.title}
       label={
         <View style={styles.labelContainer}>
-          <service.Icon color={Colors.PRIMARY_EXTRA_DARK} size="md" />
           <TextRegular ml="xs">{service.title}</TextRegular>
         </View>
       }

@@ -1,5 +1,4 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   Checkbox,
   Input,
@@ -107,7 +106,6 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           accessibilityHint={service.title}
           label={
             <View style={styles.labelContainer}>
-              <PlusIcon color={Colors.PRIMARY_EXTRA_DARK} size="sm" />
               <TextRegular ml="xs">{service.title}</TextRegular>
             </View>
           }
@@ -116,7 +114,6 @@ export default function OtherCategory(props: IOtherCategoryProps) {
       <Input
         placeholder="Enter other category"
         onSubmitEditing={(e) => handleOtherCategory(e.nativeEvent.text)}
-        icon={<PlusIcon ml="sm" color={Colors.PRIMARY_EXTRA_DARK} size="sm" />}
         mt="xs"
         name="otherCategory"
         height={Spacings.xl}
