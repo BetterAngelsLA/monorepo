@@ -23,6 +23,12 @@ query ClientProfile($id: ID!) {
       race
       age
       importantNotes
+      preferredCommunication
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
+      }
       hmisProfiles {
         agency
         hmisId
@@ -134,6 +140,37 @@ mutation DeleteClientDocument($id: ID!) {
     }
     ... on ClientDocumentType {
       id
+    }
+  }
+}
+
+mutation CreateNote($data: CreateNoteInput!) {
+  createNote(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on NoteType {
+      id
+      title
+      publicDetails
+      client {
+        id
+        username
+        firstName
+        lastName
+        email
+      }
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
     }
   }
 }

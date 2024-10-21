@@ -18,6 +18,7 @@ from strawberry_django.descriptors import model_property
 from .enums import (
     DueByGroupEnum,
     MoodEnum,
+    SelahTeamEnum,
     ServiceEnum,
     ServiceRequestStatusEnum,
     TaskStatusEnum,
@@ -178,9 +179,10 @@ class Note(BaseModel):
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
-    purpose = models.CharField(max_length=100)
+    purpose = models.CharField(max_length=100, null=True, blank=True)
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
+    team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
     title = models.CharField(max_length=100, blank=True, null=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -196,7 +198,7 @@ class Note(BaseModel):
     _private_details: Optional[str]
 
     def __str__(self) -> str:
-        return self.purpose
+        return self.purpose or str(self.id)
 
     @property
     def label_with_client(self) -> str:
