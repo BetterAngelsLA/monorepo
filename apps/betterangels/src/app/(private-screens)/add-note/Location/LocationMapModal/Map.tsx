@@ -57,7 +57,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     const name =
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
-    const apiUrl = getApiUrl();
+    const apiUrl = await getApiUrl();
     const url = isId
       ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
       : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
