@@ -34,6 +34,7 @@ export default function UploadModal(props: IUploadModalProps) {
     ConsentForm: [],
     HmisForm: [],
     IncomeForm: [],
+    OtherForm: [],
   });
 
   const docProps = {
@@ -90,6 +91,13 @@ export default function UploadModal(props: IUploadModalProps) {
         {...docProps}
       />
     ),
+    OtherForm: (
+      <MultipleDocUploads
+        docType="OtherForm"
+        title="Upload Other Forms"
+        {...docProps}
+      />
+    ),
   };
 
   const insets = useSafeAreaInsets();
@@ -137,6 +145,13 @@ export default function UploadModal(props: IUploadModalProps) {
       )
       .map((item) => item.file) as ReactNativeFile[] | undefined;
 
+    const OtherForm = client?.clientProfile.otherDocuments
+      ?.filter(
+        (item) =>
+          item.namespace === ClientDocumentNamespaceEnum.OtherClientDocument
+      )
+      .map((item) => item.file) as ReactNativeFile[] | undefined;
+
     setDocs({
       ...docs,
       DriversLicenseFront,
@@ -147,6 +162,7 @@ export default function UploadModal(props: IUploadModalProps) {
       ConsentForm,
       HmisForm,
       IncomeForm,
+      OtherForm,
     });
   }, [client]);
 
@@ -471,6 +487,47 @@ export default function UploadModal(props: IUploadModalProps) {
                   variant="secondary"
                   title="Income Forms (pay stubs)"
                   accessibilityHint="goes to Income forms upload"
+                />
+              </View>
+            </View>
+
+            <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+              <TextBold>Others</TextBold>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    height: 20,
+                    width: 20,
+                    borderRadius: Radiuses.xxxl,
+                    backgroundColor:
+                      docs.OtherForm && docs.OtherForm.length > 0
+                        ? Colors.SUCCESS
+                        : Colors.NEUTRAL_LIGHT,
+                    marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {!!docs.OtherForm && docs.OtherForm.length > 0 && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
+
+                <Button
+                  containerStyle={{ flex: 1 }}
+                  onPress={() => setTab('OtherForm')}
+                  height="md"
+                  align="flex-start"
+                  size="full"
+                  weight="regular"
+                  variant="secondary"
+                  title="Other"
+                  accessibilityHint="goes to 'Other Forms' upload screen"
                 />
               </View>
             </View>
