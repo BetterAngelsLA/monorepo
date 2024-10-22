@@ -504,7 +504,7 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor: !!docs.OtherClientDocument?.length
+                    backgroundColor: docs.OtherClientDocument?.length
                       ? Colors.SUCCESS
                       : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
