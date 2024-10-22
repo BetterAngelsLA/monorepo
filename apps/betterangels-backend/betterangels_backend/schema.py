@@ -5,14 +5,13 @@ from clients.schema import Query as ClientsQuery
 from common.graphql.schema import Query as CommonQuery
 from notes.schema import Mutation as NotesMutation
 from notes.schema import Query as NotesQuery
-from proxy.schema import Query as ProxyQuery
 from strawberry import Schema
 from strawberry.tools import merge_types
 from strawberry_django.optimizer import DjangoOptimizerExtension
 
 # Schema Stiching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountsQuery, ClientsQuery, CommonQuery, NotesQuery, ProxyQuery)
+queries = (AccountsQuery, ClientsQuery, CommonQuery, NotesQuery)
 Query = merge_types("Query", queries)
 
 mutations = (AccountsMutation, ClientsMutation, NotesMutation)
