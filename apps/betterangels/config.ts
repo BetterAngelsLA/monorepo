@@ -27,7 +27,7 @@ const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
 
 async function getApiUrl() {
   const currentClient = await AsyncStorage.getItem('currentClient')
-  return demoApiUrl ? currentClient == 'demo' : apiUrl
+  return currentClient == 'demo'  ? demoApiUrl : apiUrl
 }
 
 export {

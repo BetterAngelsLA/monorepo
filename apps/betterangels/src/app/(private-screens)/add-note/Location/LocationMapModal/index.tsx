@@ -91,7 +91,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-  const apiUrl = getApiUrl();
 
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
@@ -104,6 +103,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
+    const apiUrl = await getApiUrl();
+    console.log("Searchme")
     const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
@@ -118,6 +119,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
     try {
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      console.log("dev-446")
       const response = await axios.get(url, {
         params: {
           bounds: defaultBounds,
@@ -143,6 +145,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       }
       setLocation(undefined);
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
+      const apiUrl = await getApiUrl();
+      console.log("onsuggest")
       const response = await axios.get(
         `${apiUrl}/proxy/maps/api/place/details/json`,
         {
@@ -254,6 +258,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setUserLocation(userCurrentLocation);
     if (location?.latitude && location?.longitude) return;
 
+    const apiUrl = await getApiUrl();
+    console.log(`geocode ${apiUrl}`)
     const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
