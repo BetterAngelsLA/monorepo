@@ -919,71 +919,6 @@ export type PhoneNumberType = {
   number?: Maybe<Scalars['PhoneNumber']['output']>;
 };
 
-export type PlaceAutocompleteInput = {
-  components?: InputMaybe<Scalars['String']['input']>;
-  input: Scalars['String']['input'];
-  language?: InputMaybe<Scalars['String']['input']>;
-  location?: InputMaybe<Scalars['String']['input']>;
-  locationbias?: InputMaybe<Scalars['String']['input']>;
-  locationrestriction?: InputMaybe<Scalars['String']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  origin?: InputMaybe<Scalars['String']['input']>;
-  radius?: InputMaybe<Scalars['Int']['input']>;
-  region?: InputMaybe<Scalars['String']['input']>;
-  sessiontoken?: InputMaybe<Scalars['String']['input']>;
-  strictbounds?: InputMaybe<Scalars['Boolean']['input']>;
-  types?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type PlaceAutocompleteMatchedSubstring = {
-  __typename?: 'PlaceAutocompleteMatchedSubstring';
-  length: Scalars['Int']['output'];
-  offset: Scalars['Int']['output'];
-};
-
-export type PlaceAutocompletePrediction = {
-  __typename?: 'PlaceAutocompletePrediction';
-  description: Scalars['String']['output'];
-  distanceMeters?: Maybe<Scalars['Int']['output']>;
-  matchedSubstrings: Array<PlaceAutocompleteMatchedSubstring>;
-  placeId: Scalars['String']['output'];
-  reference?: Maybe<Scalars['String']['output']>;
-  structuredFormatting: PlaceAutocompleteStructuredFormat;
-  terms: Array<PlaceAutocompleteTerm>;
-  types?: Maybe<Array<Scalars['String']['output']>>;
-};
-
-export type PlaceAutocompleteResponse = {
-  __typename?: 'PlaceAutocompleteResponse';
-  errorMessage?: Maybe<Scalars['String']['output']>;
-  infoMessages?: Maybe<Array<Scalars['String']['output']>>;
-  predictions: Array<PlaceAutocompletePrediction>;
-  status: PlacesAutocompleteStatus;
-};
-
-export type PlaceAutocompleteStructuredFormat = {
-  __typename?: 'PlaceAutocompleteStructuredFormat';
-  mainText: Scalars['String']['output'];
-  mainTextMatchedSubstrings: Array<PlaceAutocompleteMatchedSubstring>;
-  secondaryText?: Maybe<Scalars['String']['output']>;
-  secondaryTextMatchedSubstrings?: Maybe<Array<PlaceAutocompleteMatchedSubstring>>;
-};
-
-export type PlaceAutocompleteTerm = {
-  __typename?: 'PlaceAutocompleteTerm';
-  offset: Scalars['Int']['output'];
-  value: Scalars['String']['output'];
-};
-
-export enum PlacesAutocompleteStatus {
-  InvalidRequest = 'INVALID_REQUEST',
-  Ok = 'OK',
-  OverQueryLimit = 'OVER_QUERY_LIMIT',
-  RequestDenied = 'REQUEST_DENIED',
-  UnknownError = 'UNKNOWN_ERROR',
-  ZeroResults = 'ZERO_RESULTS'
-}
-
 export enum PreferredCommunicationEnum {
   Call = 'CALL',
   Email = 'EMAIL',
@@ -1013,7 +948,6 @@ export type Query = {
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
-  searchPlaces: PlaceAutocompleteResponse;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
@@ -1063,11 +997,6 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QuerySearchPlacesArgs = {
-  input: PlaceAutocompleteInput;
 };
 
 
