@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const apiUrl = process.env['EXPO_PUBLIC_API_URL'];
-
 export default async function selectAutocompletePlace<T>(
+  apiUrl: string,
   place: any,
   field: keyof T,
   setPlace: (field: keyof T, value: string) => void,
@@ -15,7 +14,6 @@ export default async function selectAutocompletePlace<T>(
       {
         params: {
           place_id: placeId,
-          key: process.env['EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY'],
         },
       }
     );

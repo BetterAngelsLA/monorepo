@@ -20,7 +20,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { apiUrl } from '../../../../../../config';
+import { getApiUrl } from '../../../../../../config';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
@@ -91,6 +91,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+  const apiUrl = getApiUrl();
 
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
@@ -135,7 +136,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       return [];
     }
   };
-
   const onSuggestionsSelect = async (place: any) => {
     try {
       if (chooseDirections) {

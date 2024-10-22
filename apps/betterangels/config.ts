@@ -1,4 +1,5 @@
 // config.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { makeRedirectUri } from 'expo-auth-session';
 import { Platform } from 'react-native';
 
@@ -24,11 +25,18 @@ const { apiUrl, demoApiUrl, googleClientId, redirectUri } = loadConfig();
 const privacyPolicyUrl = `${apiUrl}/legal/privacy-policy`;
 const termsOfServiceUrl = `${apiUrl}/legal/terms-of-service`;
 
+async function getApiUrl() {
+  const currentClient = await AsyncStorage.getItem('currentClient')
+  return demoApiUrl ? currentClient == 'demo' : apiUrl
+}
+
 export {
   apiUrl,
   demoApiUrl,
+  getApiUrl,
   googleClientId,
   privacyPolicyUrl,
   redirectUri,
-  termsOfServiceUrl,
+  termsOfServiceUrl
 };
+

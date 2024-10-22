@@ -1,9 +1,9 @@
+import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '@monorepo/expo/betterangels';
-import { apiUrl } from '../../../../../../config';
+import { getApiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:
@@ -57,6 +57,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     const name =
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
+    const apiUrl = getApiUrl();
     const url = isId
       ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
       : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
