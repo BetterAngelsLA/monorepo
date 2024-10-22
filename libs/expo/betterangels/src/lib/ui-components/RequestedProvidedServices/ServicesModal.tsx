@@ -14,7 +14,7 @@ import {
 } from '../../apollo';
 import { Services } from '../../static';
 import Modal from '../Modal';
-import OtherCategory from '../OtherCategory';
+import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
 interface IServicesModalProps {
@@ -49,7 +49,11 @@ export default function ServicesModal(props: IServicesModalProps) {
   >([]);
 
   const [serviceOthers, setServiceOthers] = useState<
-    { title: string | null; id: string | undefined }[]
+    {
+      title: string | null;
+      id: string | undefined;
+      markedForDeletion?: boolean;
+    }[]
   >([]);
 
   const [deleteService] = useDeleteServiceRequestMutation();
@@ -59,12 +63,11 @@ export default function ServicesModal(props: IServicesModalProps) {
     try {
       const deleteServices = services.map((service) => ({
         ...service,
-        enum: null,
         markedForDeletion: true,
       }));
       const deleteServiceOthers = serviceOthers.map((service) => ({
         ...service,
-        title: null,
+        markedForDeletion: true,
       }));
 
       setServices(deleteServices);
@@ -75,17 +78,30 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   const submitServices = async () => {
+    const toCreateOtherServices = serviceOthers.filter(
+      (service) =>
+        service.title !== null && !service.id && !service.markedForDeletion
+    );
     const toCreateServices = services.filter(
       (service) =>
         service.enum !== null && !service.id && !service.markedForDeletion
+    );
+
+    const toRemoveOtherServices = serviceOthers.filter(
+      (service) => service.markedForDeletion && !!service.id
     );
 
     const toRemoveServices = services.filter(
       (service) => service.markedForDeletion && !!service.id
     );
 
+    const toRemoveServicesWithOther = [
+      ...toRemoveOtherServices,
+      ...toRemoveServices,
+    ];
+
     try {
-      for (const service of toRemoveServices) {
+      for (const service of toRemoveServicesWithOther) {
         if (service.id) {
           try {
             await deleteService({
@@ -119,6 +135,28 @@ export default function ServicesModal(props: IServicesModalProps) {
           } catch (error) {
             console.error(
               `Error creating service with enum ${service.enum}:`,
+              error
+            );
+          }
+        }
+      }
+
+      for (const service of toCreateOtherServices) {
+        if (service.title) {
+          try {
+            await createService({
+              variables: {
+                data: {
+                  service: ServiceEnum.Other,
+                  serviceOther: service.title,
+                  noteId,
+                  serviceRequestType: type,
+                },
+              },
+            });
+          } catch (error) {
+            console.error(
+              `Error creating service with title ${service.title}:`,
               error
             );
           }
@@ -204,7 +242,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           <OtherCategory
             noteId={noteId}
             setServices={setServiceOthers}
-            serviceType={type}
             services={serviceOthers}
           />
         </View>

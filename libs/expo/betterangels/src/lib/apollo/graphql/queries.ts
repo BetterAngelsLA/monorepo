@@ -110,22 +110,3 @@ export const GET_NOTE = gql`
     }
   }
 `;
-
-export const GET_SERVICE_REQUESTS = gql`
-  query ServiceRequests(
-    $filters: NoteFilter
-    $pagination: OffsetPaginationInput
-    $order: NoteOrder
-  ) {
-    serviceRequests(filters: $filters, pagination: $pagination, order: $order) {
-      service
-      serviceOther
-      id
-      dueBy
-      completedOn
-      createdAt
-      customService
-      status
-    }
-  }
-`;

@@ -1,13 +1,10 @@
 import {
-  enumDisplayServices,
-  ServiceEnum,
+  RequestedProvidedServices,
+  ServiceRequestTypeEnum,
   ViewNoteQuery,
 } from '@monorepo/expo/betterangels';
-import { Spacings } from '@monorepo/expo/shared/static';
-import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import RequestedServicesModal from './RequestedServicesModal';
+import { RefObject } from 'react';
+import { ScrollView } from 'react-native';
 
 interface IRequestedServicesProps {
   noteId: string;
@@ -17,50 +14,17 @@ interface IRequestedServicesProps {
 }
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { noteId, services: initialServices, scrollRef, refetch } = props;
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { noteId, services, scrollRef, refetch } = props;
 
-  if (!initialServices) return null;
+  if (!services) return null;
 
   return (
-    <FieldCard
+    <RequestedProvidedServices
+      noteId={noteId}
       scrollRef={scrollRef}
-      actionName={
-        initialServices.length ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: Spacings.xs,
-            }}
-          >
-            {initialServices.map((item, index) => (
-              <Pill
-                type="primary"
-                key={index}
-                label={
-                  item.service !== ServiceEnum.Other
-                    ? enumDisplayServices[item.service]
-                    : item.serviceOther || ''
-                }
-              />
-            ))}
-          </View>
-        ) : (
-          ''
-        )
-      }
-      mb="xs"
-      title="Requested Services"
-      setExpanded={() => setIsModalVisible(true)}
-    >
-      <RequestedServicesModal
-        refetch={refetch}
-        initialServices={initialServices}
-        setIsModalVisible={setIsModalVisible}
-        noteId={noteId}
-        isModalVisible={isModalVisible}
-      />
-    </FieldCard>
+      services={services}
+      refetch={refetch}
+      type={ServiceRequestTypeEnum.Requested}
+    />
   );
 }
