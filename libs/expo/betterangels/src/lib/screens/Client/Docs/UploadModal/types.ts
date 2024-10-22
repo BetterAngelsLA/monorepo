@@ -35,7 +35,7 @@ export interface IMultipleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherForm';
+  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherClientDocument';
 }
 
 export interface ISingleDocUploadsProps {
@@ -62,7 +62,7 @@ export type Docs = {
   ConsentForm: ReactNativeFile[] | undefined;
   HmisForm: ReactNativeFile[] | undefined;
   IncomeForm: ReactNativeFile[] | undefined;
-  OtherForm: ReactNativeFile[] | undefined;
+  OtherClientDocument: ReactNativeFile[] | undefined;
 };
 
 export type ITab =
@@ -73,5 +73,5 @@ export type ITab =
   | 'ConsentForm'
   | 'HmisForm'
   | 'IncomeForm'
-  | 'OtherForm'
+  | 'OtherClientDocument'
   | undefined;
