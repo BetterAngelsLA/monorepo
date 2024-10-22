@@ -1,23 +1,29 @@
-import {
-  enumDisplayServices,
-  ServiceEnum,
-  ViewNoteQuery,
-} from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import RequestedServicesModal from './RequestedServicesModal';
+import {
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+  ViewNoteQuery,
+} from '../../apollo';
+import { enumDisplayServices, enumDisplayServiceType } from '../../static';
+import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
   noteId: string;
   scrollRef: RefObject<ScrollView>;
-  services: ViewNoteQuery['note']['requestedServices'];
+  services:
+    | ViewNoteQuery['note']['requestedServices']
+    | ViewNoteQuery['note']['providedServices'];
   refetch: () => void;
+  type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
-export default function RequestedServices(props: IRequestedServicesProps) {
-  const { noteId, services: initialServices, scrollRef, refetch } = props;
+export default function RequestedProvidedServices(
+  props: IRequestedServicesProps
+) {
+  const { noteId, services: initialServices, scrollRef, refetch, type } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   if (!initialServices) return null;
@@ -36,7 +42,11 @@ export default function RequestedServices(props: IRequestedServicesProps) {
           >
             {initialServices.map((item, index) => (
               <Pill
-                type="primary"
+                type={
+                  type === ServiceRequestTypeEnum.Provided
+                    ? 'success'
+                    : 'primary'
+                }
                 key={index}
                 label={
                   item.service !== ServiceEnum.Other
@@ -51,10 +61,11 @@ export default function RequestedServices(props: IRequestedServicesProps) {
         )
       }
       mb="xs"
-      title="Requested Services"
+      title={`${enumDisplayServiceType[type]} Services`}
       setExpanded={() => setIsModalVisible(true)}
     >
-      <RequestedServicesModal
+      <ServicesModal
+        type={type}
         refetch={refetch}
         initialServices={initialServices}
         setIsModalVisible={setIsModalVisible}

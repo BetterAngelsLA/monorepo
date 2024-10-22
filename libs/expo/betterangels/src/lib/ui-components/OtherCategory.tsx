@@ -17,8 +17,10 @@ import {
 
 interface IOtherCategoryProps {
   noteId: string | undefined;
-  services: { title: string; id: string | undefined }[];
-  setServices: (services: { title: string; id: string | undefined }[]) => void;
+  services: { title: string | null; id: string | undefined }[];
+  setServices: (
+    services: { title: string | null; id: string | undefined }[]
+  ) => void;
   serviceType:
     | ServiceRequestTypeEnum.Provided
     | ServiceRequestTypeEnum.Requested;
@@ -103,7 +105,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           key={service.title}
           hasBorder
           onCheck={() => toggleServices(service.title)}
-          accessibilityHint={service.title}
+          accessibilityHint={service.title || ''}
           label={
             <View style={styles.labelContainer}>
               <TextRegular ml="xs">{service.title}</TextRegular>

@@ -1,13 +1,12 @@
-import { ServiceEnum } from '@monorepo/expo/betterangels';
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
+import { ServiceEnum } from '../../apollo';
 
-interface IRequestedCheckboxProps {
+interface IServiceCheckboxProps {
   service: {
     title: string;
     enum: ServiceEnum;
   };
-  id: string | undefined;
   noteId: string | undefined;
   idx: number;
   services: {
@@ -24,7 +23,7 @@ interface IRequestedCheckboxProps {
   ) => void;
 }
 
-export default function RequestedCheckbox(props: IRequestedCheckboxProps) {
+export default function ServiceCheckbox(props: IServiceCheckboxProps) {
   const { service, idx, services, setServices } = props;
 
   const serviceEntry = services.find((s) => s.enum === service.enum);

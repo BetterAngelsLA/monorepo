@@ -1,12 +1,3 @@
-import {
-  Modal,
-  OtherCategory,
-  ServiceEnum,
-  ServiceRequestTypeEnum,
-  Services,
-  useCreateNoteServiceRequestMutation,
-  useDeleteServiceRequestMutation,
-} from '@monorepo/expo/betterangels';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Button,
@@ -15,9 +6,18 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import RequestedCheckbox from './RequestedCheckbox';
+import {
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
+} from '../../apollo';
+import { Services } from '../../static';
+import Modal from '../Modal';
+import OtherCategory from '../OtherCategory';
+import ServiceCheckbox from './ServiceCheckbox';
 
-interface IRequestedServicesModalProps {
+interface IServicesModalProps {
   setIsModalVisible: (isModalVisible: boolean) => void;
   isModalVisible: boolean;
   noteId: string;
@@ -27,17 +27,17 @@ interface IRequestedServicesModalProps {
     serviceOther?: string | null;
   }[];
   refetch: () => void;
+  type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
-export default function RequestedServicesModal(
-  props: IRequestedServicesModalProps
-) {
+export default function ServicesModal(props: IServicesModalProps) {
   const {
     setIsModalVisible,
     isModalVisible,
     initialServices,
     noteId,
     refetch,
+    type,
   } = props;
 
   const [services, setServices] = useState<
@@ -52,8 +52,8 @@ export default function RequestedServicesModal(
     { title: string | null; id: string | undefined }[]
   >([]);
 
-  const [deleteServiceRequest] = useDeleteServiceRequestMutation();
-  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
+  const [deleteService] = useDeleteServiceRequestMutation();
+  const [createService] = useCreateNoteServiceRequestMutation();
 
   const reset = async () => {
     try {
@@ -88,7 +88,7 @@ export default function RequestedServicesModal(
       for (const service of toRemoveServices) {
         if (service.id) {
           try {
-            await deleteServiceRequest({
+            await deleteService({
               variables: {
                 data: {
                   id: service.id,
@@ -107,12 +107,12 @@ export default function RequestedServicesModal(
       for (const service of toCreateServices) {
         if (service.enum) {
           try {
-            await createServiceRequest({
+            await createService({
               variables: {
                 data: {
                   service: service.enum,
                   noteId,
-                  serviceRequestType: ServiceRequestTypeEnum.Requested,
+                  serviceRequestType: type,
                 },
               },
             });
@@ -178,18 +178,16 @@ export default function RequestedServicesModal(
         }}
         style={{ paddingHorizontal: Spacings.md }}
       >
-        <TextBold>Requested Services</TextBold>
+        <TextBold> Services</TextBold>
         <TextRegular mt="xxs" mb="sm">
-          Select the services Requested to your client in this interaction.
+          Select the services to your client in this interaction.
         </TextRegular>
         {Services.map((service) => (
           <View key={service.title}>
             <TextBold mb="xs">{service.title}</TextBold>
             {service.items.map((item, idx) => {
-              const serviceId = services?.find((s) => s.enum === item.enum)?.id;
               return (
-                <RequestedCheckbox
-                  id={serviceId}
+                <ServiceCheckbox
                   key={item.enum}
                   services={services}
                   setServices={setServices}
@@ -206,7 +204,7 @@ export default function RequestedServicesModal(
           <OtherCategory
             noteId={noteId}
             setServices={setServiceOthers}
-            serviceType={ServiceRequestTypeEnum.Requested}
+            serviceType={type}
             services={serviceOthers}
           />
         </View>
@@ -237,7 +235,7 @@ export default function RequestedServicesModal(
             size="full"
             variant="secondary"
             title="Reset"
-            accessibilityHint="resets all requested checkboxes"
+            accessibilityHint="resets all  checkboxes"
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -246,7 +244,7 @@ export default function RequestedServicesModal(
             size="full"
             variant="primary"
             title="Done"
-            accessibilityHint="closes requested services modal"
+            accessibilityHint="closes  services modal"
           />
         </View>
       </View>
