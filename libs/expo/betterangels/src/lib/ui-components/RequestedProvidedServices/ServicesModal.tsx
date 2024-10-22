@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -208,44 +209,52 @@ export default function ServicesModal(props: IServicesModalProps) {
       closeModal={closeModal}
       isModalVisible={isModalVisible}
     >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          gap: Spacings.sm,
-          paddingBottom: Spacings.md,
+      <KeyboardAwareScrollView
+        style={{
+          flex: 1,
+          backgroundColor: Colors.WHITE,
         }}
-        style={{ paddingHorizontal: Spacings.md }}
+        keyboardShouldPersistTaps="handled"
       >
-        <TextBold> Services</TextBold>
-        <TextRegular mt="xxs" mb="sm">
-          Select the services to your client in this interaction.
-        </TextRegular>
-        {Services.map((service) => (
-          <View key={service.title}>
-            <TextBold mb="xs">{service.title}</TextBold>
-            {service.items.map((item, idx) => {
-              return (
-                <ServiceCheckbox
-                  key={item.enum}
-                  services={services}
-                  setServices={setServices}
-                  noteId={noteId}
-                  service={item}
-                  idx={idx}
-                />
-              );
-            })}
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            gap: Spacings.sm,
+            paddingBottom: Spacings.md,
+          }}
+          style={{ paddingHorizontal: Spacings.md }}
+        >
+          <TextBold> Services</TextBold>
+          <TextRegular mt="xxs" mb="sm">
+            Select the services to your client in this interaction.
+          </TextRegular>
+          {Services.map((service) => (
+            <View key={service.title}>
+              <TextBold mb="xs">{service.title}</TextBold>
+              {service.items.map((item, idx) => {
+                return (
+                  <ServiceCheckbox
+                    key={item.enum}
+                    services={services}
+                    setServices={setServices}
+                    noteId={noteId}
+                    service={item}
+                    idx={idx}
+                  />
+                );
+              })}
+            </View>
+          ))}
+          <View>
+            <TextBold>Other</TextBold>
+            <OtherCategory
+              noteId={noteId}
+              setServices={setServiceOthers}
+              services={serviceOthers}
+            />
           </View>
-        ))}
-        <View>
-          <TextBold>Other</TextBold>
-          <OtherCategory
-            noteId={noteId}
-            setServices={setServiceOthers}
-            services={serviceOthers}
-          />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View
         style={{
