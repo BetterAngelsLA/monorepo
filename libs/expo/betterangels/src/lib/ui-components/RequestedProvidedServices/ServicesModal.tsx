@@ -13,7 +13,8 @@ import {
   useCreateNoteServiceRequestMutation,
   useDeleteServiceRequestMutation,
 } from '../../apollo';
-import { Services } from '../../static';
+import { useSnackbar } from '../../hooks';
+import { ServicesByCategory } from '../../static';
 import Modal from '../Modal';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
@@ -59,6 +60,7 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const [deleteService] = useDeleteServiceRequestMutation();
   const [createService] = useCreateNoteServiceRequestMutation();
+  const { showSnackbar } = useSnackbar();
 
   const reset = async () => {
     try {
@@ -168,6 +170,10 @@ export default function ServicesModal(props: IServicesModalProps) {
       setIsModalVisible(false);
     } catch (e) {
       console.error('Error during service submission:', e);
+      showSnackbar({
+        message: 'Sorry, there was an error updating the services.',
+        type: 'error',
+      });
     }
   };
 
@@ -179,7 +185,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       .filter((item) => item.service === ServiceEnum.Other)
       .map((service) => ({
         id: service.id,
-        title: service.serviceOther || '',
+        title: service.serviceOther || null,
       }));
     setIsModalVisible(false);
     setServiceOthers(initialServiceOthers);
@@ -188,8 +194,11 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   useEffect(() => {
     const newInitialServices = initialServices
-      .filter((item) => item.service !== ServiceEnum.Other)
-      .map((service) => ({ id: service.id, enum: service.service }));
+      .filter((serviceItem) => serviceItem.service !== ServiceEnum.Other)
+      .map((serviceItem) => ({
+        id: serviceItem.id,
+        enum: serviceItem.service,
+      }));
     const initialServiceOthers = initialServices
       .filter((item) => item.service === ServiceEnum.Other)
       .map((service) => ({
@@ -224,17 +233,17 @@ export default function ServicesModal(props: IServicesModalProps) {
           }}
           style={{ paddingHorizontal: Spacings.md }}
         >
-          <TextBold> Services</TextBold>
+          <TextBold>Services</TextBold>
           <TextRegular mt="xxs" mb="sm">
             Select the services to your client in this interaction.
           </TextRegular>
-          {Services.map((service) => (
+          {ServicesByCategory.map((service) => (
             <View key={service.title}>
               <TextBold mb="xs">{service.title}</TextBold>
               {service.items.map((item, idx) => {
                 return (
                   <ServiceCheckbox
-                    key={item.enum}
+                    key={item}
                     services={services}
                     setServices={setServices}
                     noteId={noteId}
@@ -248,7 +257,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           <View>
             <TextBold>Other</TextBold>
             <OtherCategory
-              noteId={noteId}
               setServices={setServiceOthers}
               services={serviceOthers}
             />

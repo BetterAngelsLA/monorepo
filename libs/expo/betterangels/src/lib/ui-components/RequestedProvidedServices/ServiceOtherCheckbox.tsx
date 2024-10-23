@@ -6,7 +6,6 @@ interface IServiceOtherCheckboxProps {
     title: string | null;
     id?: string;
   };
-  noteId: string | undefined;
   idx: number;
   services: {
     id: string | undefined;

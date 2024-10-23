@@ -16,8 +16,6 @@ interface IRequestedServicesProps {
 export default function RequestedServices(props: IRequestedServicesProps) {
   const { noteId, services, scrollRef, refetch } = props;
 
-  if (!services) return null;
-
   return (
     <RequestedProvidedServices
       noteId={noteId}

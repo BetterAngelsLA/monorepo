@@ -9,7 +9,7 @@ import { RefObject } from 'react';
 import { ScrollView } from 'react-native';
 
 interface IProvidedServicesProps {
-  noteId: string | undefined;
+  noteId: string;
   scrollRef: RefObject<ScrollView>;
   services: ViewNoteQuery['note']['providedServices'];
   refetch: (
@@ -19,8 +19,6 @@ interface IProvidedServicesProps {
 
 export default function ProvidedServices(props: IProvidedServicesProps) {
   const { noteId, services, scrollRef, refetch } = props;
-
-  if (!noteId) return null;
 
   return (
     <RequestedProvidedServices
