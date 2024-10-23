@@ -22,6 +22,7 @@ import {
   SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
+import { useSnackbar } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
 import ContactInfo from './ContactInfo';
@@ -59,6 +60,8 @@ const defaultSocialMedias = [
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
+
+  const { showSnackbar } = useSnackbar();
   const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
 
   const methods = useForm<
@@ -115,6 +118,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       router.replace('/clients');
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to delete client.',
+        type: 'error',
+      });
     }
   }
 
@@ -196,7 +204,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           return;
         } else {
           throw new Error(
-            `Failed to update a client profile 3: ${operationResult.messages[0].message}`
+            `Failed to update a client profile: ${operationResult.messages[0].message}`
           );
         }
       }
@@ -208,7 +216,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
     } catch (err) {
       console.log(err);
-      throw new Error(`Failed to update a client profile 2: ${err}`);
+
+      showSnackbar({
+        message: 'Sorry, there was an error updating this profile.',
+        type: 'error',
+      });
     }
   };
 
@@ -310,7 +322,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     scrollRef,
   };
 
-  if (loading)
+  if (loading) {
     return (
       <View
         style={{
@@ -323,8 +335,16 @@ export default function AddEditClient({ id }: { id?: string }) {
         <Loading size="large" />
       </View>
     );
+  }
 
-  if (error) throw new Error('Something went wrong. Please try again.');
+  if (error) {
+    console.error(error);
+
+    showSnackbar({
+      message: 'Something went wrong. Please try again.',
+      type: 'error',
+    });
+  }
 
   return (
     <FormProvider {...methods}>

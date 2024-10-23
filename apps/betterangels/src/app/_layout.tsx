@@ -2,8 +2,10 @@ import 'expo-dev-client';
 
 import {
   KeyboardToolbarProvider,
+  SnackbarProvider,
   UserProvider,
 } from '@monorepo/expo/betterangels';
+
 import { ApolloClientProvider } from '@monorepo/expo/shared/apollo';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
@@ -62,59 +64,64 @@ function RootLayoutNav() {
       <KeyboardProvider>
         <KeyboardToolbarProvider>
           <UserProvider>
-            <StatusBar style="light" />
-            <Stack>
-              <Stack.Screen
-                name="(tabs)"
-                options={{ headerShown: false, gestureEnabled: false }}
-              />
-              <Stack.Screen
-                name="(private-screens)"
-                options={{ headerShown: false, gestureEnabled: false }}
-              />
-              <Stack.Screen
-                name="team"
-                options={{
-                  title: '',
-                  presentation: 'modal',
-                  headerLeft: () => (
-                    <Link href="/teams">
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                        }}
+            <SnackbarProvider>
+              <StatusBar style="light" />
+              <Stack>
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen
+                  name="(private-screens)"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen
+                  name="team"
+                  options={{
+                    title: '',
+                    presentation: 'modal',
+                    headerLeft: () => (
+                      <Link href="/teams">
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                          <TextRegular color={Colors.PRIMARY_LIGHT}>
+                            Teams
+                          </TextRegular>
+                        </View>
+                      </Link>
+                    ),
+                  }}
+                />
+                <Stack.Screen
+                  name="modal"
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="sign-in"
+                  options={{
+                    headerLeft: () => (
+                      <IconButton
+                        onPress={() => router.back()}
+                        variant="transparent"
+                        accessibilityLabel="goes to get started screen"
+                        accessibilityHint="goes to get started screen"
                       >
-                        <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                        <TextRegular color={Colors.PRIMARY_LIGHT}>
-                          Teams
-                        </TextRegular>
-                      </View>
-                    </Link>
-                  ),
-                }}
-              />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-              <Stack.Screen
-                name="sign-in"
-                options={{
-                  headerLeft: () => (
-                    <IconButton
-                      onPress={() => router.back()}
-                      variant="transparent"
-                      accessibilityLabel="goes to get started screen"
-                      accessibilityHint="goes to get started screen"
-                    >
-                      <ArrowLeftIcon />
-                    </IconButton>
-                  ),
-                  headerShadowVisible: false,
-                  title: '',
-                }}
-              />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-            </Stack>
-            {/* </ThemeProvider> */}
+                        <ArrowLeftIcon />
+                      </IconButton>
+                    ),
+                    headerShadowVisible: false,
+                    title: '',
+                  }}
+                />
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
+              </Stack>
+              {/* </ThemeProvider> */}
+            </SnackbarProvider>
           </UserProvider>
         </KeyboardToolbarProvider>
       </KeyboardProvider>
