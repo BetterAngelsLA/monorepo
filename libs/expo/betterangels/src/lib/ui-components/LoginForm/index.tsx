@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
+import { useApiConfig } from '@monorepo/expo/shared/providers';
 import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -32,7 +32,7 @@ export default function LoginForm({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { refetchUser } = useUser();
-  const { switchToProduction, switchToDemo } = useApolloClientContext();
+  const { switchEnvironment } = useApiConfig();
   const [loginForm, { loading, error }] = useLoginFormMutation();
 
   const isValidEmail = (email: string) => {
@@ -51,10 +51,10 @@ export default function LoginForm({
     setUsername(newUsername);
     if (checkIfDemoMode(newUsername)) {
       console.log('Switching to Demo API');
-      switchToDemo();
+      switchEnvironment('demo');
     } else {
       console.log('Switching to Production API');
-      switchToProduction();
+      switchEnvironment('production');
     }
   };
 

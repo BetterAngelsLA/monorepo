@@ -1,5 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
-import { useApolloClientContext } from '@monorepo/expo/shared/apollo';
+import { useApiConfig } from '@monorepo/expo/shared/providers';
 import { useCallback } from 'react';
 import useUser from './useUser';
 
@@ -12,17 +12,17 @@ export const LOGOUT_MUTATION = gql`
 export default function useSignOut() {
   const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
   const { setUser } = useUser();
-  const { switchToProduction } = useApolloClientContext();
+  const { switchEnvironment } = useApiConfig(); // Use the new context
 
   const signOut = useCallback(async () => {
     try {
       await logout();
       setUser(undefined);
-      switchToProduction();
+      switchEnvironment('production');
     } catch (err) {
       console.error(err);
     }
-  }, [logout, setUser, switchToProduction]);
+  }, [logout, setUser, switchEnvironment]);
 
   return { signOut, loading, error };
 }

@@ -7,19 +7,14 @@ import {
   NormalizedCacheObject,
 } from '@apollo/client';
 import { setItem } from '@monorepo/expo/shared/utils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { ReactNode, useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { CSRF_COOKIE_NAME } from './links';
 import { csrfLink } from './links/csrf';
+
+import { useApiConfig } from '@monorepo/expo/shared/providers';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 
 /**
@@ -53,107 +48,44 @@ export const createApolloClient = (
   });
 };
 
-interface ApolloClientContextType {
-  switchToProduction: () => void;
-  switchToDemo: () => void;
-  currentClient: 'production' | 'demo';
-}
-
-const ApolloClientContext = createContext<ApolloClientContextType | undefined>(
-  undefined
-);
-
-interface ApolloClientProviderProps {
-  children: ReactNode;
-  productionClient: ApolloClient<NormalizedCacheObject>;
-  demoClient: ApolloClient<NormalizedCacheObject>;
-}
-
 /**
- * ApolloClientProvider component that manages the active Apollo Client instance
- * and provides functions to switch between production and demo clients.
- * It uses AsyncStorage to persist the current client selection across app reloads.
+ * ApolloClientProvider component that initializes the Apollo Client instance
+ * based on the current base URL from the ApiConfigContext.
+ * It recreates the Apollo Client when the base URL changes.
  *
- * @param props - The props for the component, including children and client instances.
- * @returns A provider component that supplies the Apollo Client context to its children.
+ * @param props - The props for the component, including children.
+ * @returns A provider component that supplies the Apollo Client to its children.
  */
-export const ApolloClientProvider = ({
-  children,
-  productionClient,
-  demoClient,
-}: ApolloClientProviderProps) => {
-  const [currentClient, setCurrentClient] = useState<
-    'production' | 'demo' | null
-  >(null);
+export const ApolloClientProvider = ({ children }: { children: ReactNode }) => {
+  const { baseUrl } = useApiConfig();
 
+  // Clear CSRF cookie when baseUrl changes
   useEffect(() => {
-    /**
-     * Loads the current client from AsyncStorage.
-     * Defaults to 'production' if no valid value is stored.
-     */
-    const loadCurrentClient = async () => {
+    const clearCSRF = async () => {
+      console.log('clearing csrf');
       try {
-        const storedClient = await AsyncStorage.getItem('currentClient');
-        setCurrentClient(storedClient === 'demo' ? 'demo' : 'production');
+        await setItem(CSRF_COOKIE_NAME, '');
       } catch (error) {
-        console.error('Error loading current client from AsyncStorage', error);
-        setCurrentClient('production');
+        console.error('Error clearing CSRF token', error);
       }
     };
 
-    loadCurrentClient();
-  }, []);
+    clearCSRF();
+  }, [baseUrl]);
 
-  /**
-   * Switches the active Apollo Client to the specified client ('production' or 'demo').
-   * Updates the current client in state, persists it to AsyncStorage, and clears the CSRF cookie.
-   *
-   * @param client - The client to switch to ('production' or 'demo').
-   */
-  const switchClient = async (client: 'production' | 'demo') => {
-    if (currentClient !== client) {
-      try {
-        await setItem(CSRF_COOKIE_NAME, '');
-        await AsyncStorage.setItem('currentClient', client);
-        setCurrentClient(client);
-      } catch (error) {
-        console.error('Error switching client', error);
-      }
+  const apolloClient = useMemo(() => {
+    if (!baseUrl) {
+      return new ApolloClient({
+        cache: new InMemoryCache(),
+        link: from([]),
+      });
     }
-  };
+    return createApolloClient(baseUrl);
+  }, [baseUrl]);
 
-  const switchToProduction = () => switchClient('production');
-  const switchToDemo = () => switchClient('demo');
-
-  if (currentClient === null) {
+  if (!apolloClient) {
     return null;
   }
 
-  const activeClient =
-    currentClient === 'production' ? productionClient : demoClient;
-
-  return (
-    <ApolloClientContext.Provider
-      value={{ switchToProduction, switchToDemo, currentClient }}
-    >
-      <ApolloProvider client={activeClient}>{children}</ApolloProvider>
-    </ApolloClientContext.Provider>
-  );
-};
-
-/**
- * Custom hook to access the Apollo Client context.
- * Provides functions to switch clients and the current client information.
- *
- * @returns The Apollo Client context value.
- * @throws An error if used outside of the ApolloClientProvider.
- */
-export const useApolloClientContext = () => {
-  const context = useContext(ApolloClientContext);
-  if (!context) {
-    throw new Error(
-      'useApolloClientContext must be used within an ApolloClientProvider'
-    );
-  }
-  return context;
+  return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
 };

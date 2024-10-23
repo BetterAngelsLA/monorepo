@@ -19,7 +19,6 @@ import {
 
 export default function MailingAddress() {
   const [suggestions, setSuggestions] = useState<any>([]);
-
   const { setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();

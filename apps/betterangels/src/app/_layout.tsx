@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import { SnackbarProvider, UserProvider } from '@monorepo/expo/betterangels';
 import { ApolloClientProvider } from '@monorepo/expo/shared/apollo';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
+import { ApiConfigProvider } from '@monorepo/expo/shared/providers';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';
@@ -12,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { demoClient, productionClient } from '../../apollo';
+import { apiUrl, demoApiUrl } from '../../config';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -52,69 +53,71 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const router = useRouter();
   return (
-    <ApolloClientProvider
-      productionClient={productionClient}
-      demoClient={demoClient}
-    >
-      <KeyboardProvider>
-        <UserProvider>
-          <SnackbarProvider>
-            <StatusBar style="light" />
-            <Stack>
-              <Stack.Screen
-                name="(tabs)"
-                options={{ headerShown: false, gestureEnabled: false }}
-              />
-              <Stack.Screen
-                name="(private-screens)"
-                options={{ headerShown: false, gestureEnabled: false }}
-              />
-              <Stack.Screen
-                name="team"
-                options={{
-                  title: '',
-                  presentation: 'modal',
-                  headerLeft: () => (
-                    <Link href="/teams">
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                        }}
+    <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+      <ApolloClientProvider>
+        <KeyboardProvider>
+          <UserProvider>
+            <SnackbarProvider>
+              <StatusBar style="light" />
+              <Stack>
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen
+                  name="(private-screens)"
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen
+                  name="team"
+                  options={{
+                    title: '',
+                    presentation: 'modal',
+                    headerLeft: () => (
+                      <Link href="/teams">
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                          <TextRegular color={Colors.PRIMARY_LIGHT}>
+                            Teams
+                          </TextRegular>
+                        </View>
+                      </Link>
+                    ),
+                  }}
+                />
+                <Stack.Screen
+                  name="modal"
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="sign-in"
+                  options={{
+                    headerLeft: () => (
+                      <IconButton
+                        onPress={() => router.back()}
+                        variant="transparent"
+                        accessibilityLabel="goes to get started screen"
+                        accessibilityHint="goes to get started screen"
                       >
-                        <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                        <TextRegular color={Colors.PRIMARY_LIGHT}>
-                          Teams
-                        </TextRegular>
-                      </View>
-                    </Link>
-                  ),
-                }}
-              />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-              <Stack.Screen
-                name="sign-in"
-                options={{
-                  headerLeft: () => (
-                    <IconButton
-                      onPress={() => router.back()}
-                      variant="transparent"
-                      accessibilityLabel="goes to get started screen"
-                      accessibilityHint="goes to get started screen"
-                    >
-                      <ArrowLeftIcon />
-                    </IconButton>
-                  ),
-                  headerShadowVisible: false,
-                  title: '',
-                }}
-              />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-            </Stack>
-            {/* </ThemeProvider> */}
-          </SnackbarProvider>
-        </UserProvider>
-      </KeyboardProvider>
-    </ApolloClientProvider>
+                        <ArrowLeftIcon />
+                      </IconButton>
+                    ),
+                    headerShadowVisible: false,
+                    title: '',
+                  }}
+                />
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
+              </Stack>
+              {/* </ThemeProvider> */}
+            </SnackbarProvider>
+          </UserProvider>
+        </KeyboardProvider>
+      </ApolloClientProvider>
+    </ApiConfigProvider>
   );
 }
