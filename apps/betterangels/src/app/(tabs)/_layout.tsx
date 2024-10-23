@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
 
 import {
   ConsentModal,
@@ -24,6 +24,8 @@ import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
+
+const isNative = Platform.OS !== 'web';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -72,7 +74,7 @@ export default function TabLayout() {
           tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
           tabBarStyle: {
             height: 70 + insets.bottom,
-            alignItems: 'center',
+            ...(isNative && {alignItems: 'center'}),
             justifyContent: 'center',
             borderTopWidth: 0,
           },
@@ -180,7 +182,7 @@ export default function TabLayout() {
                 ) : (
                   <UsersLineIcon color={color} />
                 )}
-                <TextRegular color={color} size="xs">
+                <TextRegular color={color} size="xs" style={{whiteSpace: 'nowrap'}}>
                   All Clients
                 </TextRegular>
               </View>
