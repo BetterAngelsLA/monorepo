@@ -52,6 +52,7 @@ interface ITextareaProps extends TextInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   height?: number | 'auto';
+  onFocus?: () => void;
 }
 
 export function Textarea(props: ITextareaProps) {
@@ -71,6 +72,7 @@ export function Textarea(props: ITextareaProps) {
     ml,
     mr,
     height,
+    onFocus,
     ...rest
   } = props;
 
@@ -130,6 +132,7 @@ export function Textarea(props: ITextareaProps) {
               multiline
               value={value}
               onBlur={onBlur}
+              onFocus={onFocus}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}

@@ -99,8 +99,19 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                     ... on NoteType {{
                         id
+                        interactedAt
+                        isSubmitted
+                        privateDetails
+                        publicDetails
                         purpose
+                        team
                         title
+                        client {{
+                            id
+                        }}
+                        createdBy {{
+                            id
+                        }}
                         location {{
                             id
                             address {{
@@ -135,16 +146,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                             serviceOther
                             customService
                         }}
-                        publicDetails
-                        privateDetails
-                        isSubmitted
-                        client {{
-                            id
-                        }}
-                        createdBy {{
-                            id
-                        }}
-                        interactedAt
                     }}
                 }}
             }}
@@ -177,9 +178,13 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 revertNote(data: $data) {
                     ... on NoteType {
                         id
-                        purpose
-                        title
+                        interactedAt
+                        isSubmitted
+                        privateDetails
                         publicDetails
+                        purpose
+                        team
+                        title
                         location {
                             address {
                                 street
