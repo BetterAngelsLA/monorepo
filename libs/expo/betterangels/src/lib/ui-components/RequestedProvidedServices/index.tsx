@@ -26,7 +26,9 @@ export default function RequestedProvidedServices(
   const { noteId, services: initialServices, scrollRef, refetch, type } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  if (!initialServices) return null;
+  if (!initialServices) {
+    return null;
+  }
 
   return (
     <FieldCard
