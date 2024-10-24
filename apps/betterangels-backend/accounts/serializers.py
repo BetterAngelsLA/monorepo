@@ -25,6 +25,8 @@ try:
     from allauth.socialaccount.helpers import complete_social_login
 except ImportError:
     raise ImportError("allauth needs to be added to INSTALLED_APPS.")
+from accounts.models import User
+from clients.models import ClientProfile
 
 
 class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
@@ -145,3 +147,38 @@ class SocialLoginSerializer(DjRestAuthSocialLoginSerializer):
         attrs["user"] = login.account.user
 
         return attrs
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "first_name", "last_name", "username"]
+
+
+class ProfilePhotoSerializer(serializers.Serializer):
+    height = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    path = serializers.CharField(read_only=True)
+    url = serializers.URLField(read_only=True)
+    size = serializers.IntegerField(read_only=True)
+    width = serializers.IntegerField(read_only=True)
+
+    def to_representation(self, instance: Any) -> Dict[str, Any]:
+        if not instance:
+            return {}  # Return an empty dict instead of None
+        return super().to_representation(instance)
+
+
+class ClientProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    profile_photo = ProfilePhotoSerializer(read_only=True)
+    display_case_manager = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClientProfile
+        fields = ["id", "nickname", "user", "profile_photo", "display_case_manager"]
+
+    def get_display_case_manager(self, obj: ClientProfile) -> str:
+        if hasattr(obj, "case_managers") and obj.case_managers.exists():
+            return str(obj.case_managers.last().name)
+        return "Not Assigned"

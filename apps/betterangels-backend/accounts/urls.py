@@ -1,8 +1,12 @@
+from collections import UserList
+
 from accounts.views.auth_views import AppleLogin, AuthRedirectView, GoogleLogin
 from accounts.views.class_views import (
+    ClientProfileList,
     GoogleOauthHomePage,
     SignUpView,
     SupportPage,
+    UserListView,
     delete_account,
 )
 from django.urls import include, path
@@ -24,4 +28,6 @@ urlpatterns = [
     # django-organizations
     path("accounts/", include("organizations.urls")),
     path("invitations/", include(invitation_backend().get_urls())),
+    path("users/", UserListView.as_view(), name="user-list"),
+    path("client-profiles/", ClientProfileList.as_view(), name="client-profile-list"),
 ]
