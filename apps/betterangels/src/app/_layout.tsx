@@ -1,3 +1,5 @@
+import 'expo-dev-client';
+
 import {
   KeyboardToolbarProvider,
   SnackbarProvider,
@@ -10,7 +12,6 @@ import {
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
-import 'expo-dev-client';
 import { useFonts } from 'expo-font';
 import { Link, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
