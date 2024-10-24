@@ -1048,12 +1048,12 @@ type UserType {
   middleName: String
   email: String
   id: ID!
+  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
   username: String!
-  clientProfile: DjangoModelType
 }
 
 enum YesNoPreferNotToSayEnum {

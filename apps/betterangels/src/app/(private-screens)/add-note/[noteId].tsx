@@ -206,18 +206,11 @@ export default function AddNote() {
           },
         },
       });
-
-      if (result.data && result.data.updateNote.__typename === 'NoteType') {
-        const clientProfileId =
-          result.data.updateNote.client?.clientProfile?.pk;
-        if (clientProfileId && revertBeforeTimestamp) {
-          return router.replace(`/client/${clientProfileId}`);
-        }
-      } else {
+      if (!result.data) {
         throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      setSubmitted(true);
+      return router.replace(`/client/${data?.note.client?.clientProfile?.pk}`);
     } catch (err) {
       console.error(err);
 
@@ -320,7 +313,11 @@ export default function AddNote() {
             <TextButton
               mr="sm"
               fontSize="sm"
-              onPress={router.back}
+              onPress={() =>
+                router.navigate(
+                  `/client/${data.note.client?.clientProfile?.pk}`
+                )
+              }
               accessibilityHint="saves the interaction for later"
               title="Save for later"
             />
@@ -333,7 +330,7 @@ export default function AddNote() {
         firstName={data.note.client?.firstName}
         closeModal={() => {
           setSubmitted(false);
-          router.navigate('/');
+          router.navigate(`/client/${data.note.client?.clientProfile?.pk}`);
         }}
         isModalVisible={isSubmitted}
       />

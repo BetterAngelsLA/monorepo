@@ -39,9 +39,6 @@ export const UPDATE_NOTE = gql`
           firstName
           lastName
           email
-          clientProfile {
-            pk
-          }
         }
         createdAt
         createdBy {
@@ -74,9 +71,6 @@ export const REVERT_NOTE = gql`
         isSubmitted
         client {
           id
-          clientProfile {
-            pk
-          }
         }
         createdBy {
           id

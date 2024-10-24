@@ -18,14 +18,14 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title?: string | null, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null, clientProfile?: { __typename?: 'DjangoModelType', pk: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo' } };
+export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, title?: string | null, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo' } };
 
 export type RevertNoteMutationVariables = Types.Exact<{
   data: Types.RevertNoteInput;
 }>;
 
 
-export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, title?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string, clientProfile?: { __typename?: 'DjangoModelType', pk: string } | null } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, title?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
@@ -193,9 +193,6 @@ export const UpdateNoteDocument = gql`
         firstName
         lastName
         email
-        clientProfile {
-          pk
-        }
       }
       createdAt
       createdBy {
@@ -254,9 +251,6 @@ export const RevertNoteDocument = gql`
       isSubmitted
       client {
         id
-        clientProfile {
-          pk
-        }
       }
       createdBy {
         id
