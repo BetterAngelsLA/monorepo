@@ -206,15 +206,17 @@ export default function AddNote() {
           },
         },
       });
-      if (!result.data) {
+
+      if (result.data && result.data.updateNote.__typename === 'NoteType') {
+        const clientProfileId =
+          result.data.updateNote.client?.clientProfile?.pk;
+        if (clientProfileId && revertBeforeTimestamp) {
+          return router.replace(`/client/${clientProfileId}`);
+        }
+      } else {
         throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      if (revertBeforeTimestamp) {
-        return router.replace(
-          `/client/${result.data.updateNote.client.clientProfile.pk}`
-        );
-      }
       setSubmitted(true);
     } catch (err) {
       console.error(err);
