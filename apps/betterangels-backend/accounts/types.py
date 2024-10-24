@@ -51,6 +51,7 @@ class UserType(UserBaseType):
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationType]]
     username: auto
+    client_profile: auto
 
 
 @strawberry_django.input(User, partial=True)

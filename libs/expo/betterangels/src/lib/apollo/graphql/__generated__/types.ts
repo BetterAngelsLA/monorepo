@@ -817,6 +817,7 @@ export type NoteType = {
   purpose?: Maybe<Scalars['String']['output']>;
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
+  team?: Maybe<SelahTeamEnum>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -1077,6 +1078,23 @@ export type SampleType = {
   name: Scalars['String']['output'];
 };
 
+export enum SelahTeamEnum {
+  BowtieRiversideOutreach = 'BOWTIE_RIVERSIDE_OUTREACH',
+  EchoParkOnSite = 'ECHO_PARK_ON_SITE',
+  EchoParkOutreach = 'ECHO_PARK_OUTREACH',
+  HollywoodOnSite = 'HOLLYWOOD_ON_SITE',
+  HollywoodOutreach = 'HOLLYWOOD_OUTREACH',
+  LaRiverOutreach = 'LA_RIVER_OUTREACH',
+  LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
+  NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
+  SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
+  SlccOnSite = 'SLCC_ON_SITE',
+  SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
+  SundaySocialAtwaterOutreach = 'SUNDAY_SOCIAL_ATWATER_OUTREACH',
+  WdiOnSite = 'WDI_ON_SITE',
+  WdiOutreach = 'WDI_OUTREACH'
+}
+
 export enum ServiceEnum {
   Bicycle = 'BICYCLE',
   BirthCertificate = 'BIRTH_CERTIFICATE',
@@ -1257,6 +1275,7 @@ export type UpdateNoteInput = {
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1310,6 +1329,7 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
+  clientProfile?: Maybe<DjangoModelType>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;

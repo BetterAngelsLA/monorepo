@@ -1053,6 +1053,7 @@ type UserType {
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
   username: String!
+  clientProfile: DjangoModelType
 }
 
 enum YesNoPreferNotToSayEnum {

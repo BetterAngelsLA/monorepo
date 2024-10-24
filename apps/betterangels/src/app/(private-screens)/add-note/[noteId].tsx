@@ -211,7 +211,9 @@ export default function AddNote() {
       }
 
       if (revertBeforeTimestamp) {
-        return router.replace('/');
+        return router.replace(
+          `/client/${result.data.updateNote.client.clientProfile.pk}`
+        );
       }
       setSubmitted(true);
     } catch (err) {
