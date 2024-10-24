@@ -59,7 +59,6 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) =>
               complete: observer.complete.bind(observer),
             });
           } catch (err) {
-            console.log(`${apiUrl}`);
             console.error('Error in CSRF Apollo Link:', err);
             observer.error(err);
           }
