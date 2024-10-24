@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const apiUrl = process.env['EXPO_PUBLIC_API_URL'];
-
 export default async function searchPlacesInCalifornia(
+  apiUrl: string,
   query: string,
   setResponse: (e: any) => void
 ) {
