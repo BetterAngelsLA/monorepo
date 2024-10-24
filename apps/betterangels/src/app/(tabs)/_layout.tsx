@@ -1,5 +1,5 @@
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View, Platform } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   ConsentModal,
@@ -74,7 +74,7 @@ export default function TabLayout() {
           tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
           tabBarStyle: {
             height: 70 + insets.bottom,
-            ...(isNative && {alignItems: 'center'}),
+            ...(isNative && { alignItems: 'center' }),
             justifyContent: 'center',
             borderTopWidth: 0,
           },
@@ -182,7 +182,7 @@ export default function TabLayout() {
                 ) : (
                   <UsersLineIcon color={color} />
                 )}
-                <TextRegular color={color} size="xs" style={{whiteSpace: 'nowrap'}}>
+                <TextRegular color={color} size="xs" numberOfLines={1}>
                   All Clients
                 </TextRegular>
               </View>
