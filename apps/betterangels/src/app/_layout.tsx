@@ -1,6 +1,8 @@
-import 'expo-dev-client';
-
-import { SnackbarProvider, UserProvider } from '@monorepo/expo/betterangels';
+import {
+  KeyboardToolbarProvider,
+  SnackbarProvider,
+  UserProvider,
+} from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
   ApolloClientProvider,
@@ -8,6 +10,7 @@ import {
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import 'expo-dev-client';
 import { useFonts } from 'expo-font';
 import { Link, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -58,66 +61,68 @@ function RootLayoutNav() {
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
         <KeyboardProvider>
-          <UserProvider>
-            <SnackbarProvider>
-              <StatusBar style="light" />
-              <Stack>
-                <Stack.Screen
-                  name="(tabs)"
-                  options={{ headerShown: false, gestureEnabled: false }}
-                />
-                <Stack.Screen
-                  name="(private-screens)"
-                  options={{ headerShown: false, gestureEnabled: false }}
-                />
-                <Stack.Screen
-                  name="team"
-                  options={{
-                    title: '',
-                    presentation: 'modal',
-                    headerLeft: () => (
-                      <Link href="/teams">
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                          }}
+          <KeyboardToolbarProvider>
+            <UserProvider>
+              <SnackbarProvider>
+                <StatusBar style="light" />
+                <Stack>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen
+                    name="(private-screens)"
+                    options={{ headerShown: false, gestureEnabled: false }}
+                  />
+                  <Stack.Screen
+                    name="team"
+                    options={{
+                      title: '',
+                      presentation: 'modal',
+                      headerLeft: () => (
+                        <Link href="/teams">
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                            <TextRegular color={Colors.PRIMARY_LIGHT}>
+                              Teams
+                            </TextRegular>
+                          </View>
+                        </Link>
+                      ),
+                    }}
+                  />
+                  <Stack.Screen
+                    name="modal"
+                    options={{ presentation: 'modal' }}
+                  />
+                  <Stack.Screen
+                    name="sign-in"
+                    options={{
+                      headerLeft: () => (
+                        <IconButton
+                          onPress={() => router.back()}
+                          variant="transparent"
+                          accessibilityLabel="goes to get started screen"
+                          accessibilityHint="goes to get started screen"
                         >
-                          <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                          <TextRegular color={Colors.PRIMARY_LIGHT}>
-                            Teams
-                          </TextRegular>
-                        </View>
-                      </Link>
-                    ),
-                  }}
-                />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: 'modal' }}
-                />
-                <Stack.Screen
-                  name="sign-in"
-                  options={{
-                    headerLeft: () => (
-                      <IconButton
-                        onPress={() => router.back()}
-                        variant="transparent"
-                        accessibilityLabel="goes to get started screen"
-                        accessibilityHint="goes to get started screen"
-                      >
-                        <ArrowLeftIcon />
-                      </IconButton>
-                    ),
-                    headerShadowVisible: false,
-                    title: '',
-                  }}
-                />
-                <Stack.Screen name="auth" options={{ headerShown: false }} />
-              </Stack>
-              {/* </ThemeProvider> */}
-            </SnackbarProvider>
-          </UserProvider>
+                          <ArrowLeftIcon />
+                        </IconButton>
+                      ),
+                      headerShadowVisible: false,
+                      title: '',
+                    }}
+                  />
+                  <Stack.Screen name="auth" options={{ headerShown: false }} />
+                </Stack>
+                {/* </ThemeProvider> */}
+              </SnackbarProvider>
+            </UserProvider>
+          </KeyboardToolbarProvider>
         </KeyboardProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>

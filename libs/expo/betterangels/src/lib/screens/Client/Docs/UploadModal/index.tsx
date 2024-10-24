@@ -34,6 +34,7 @@ export default function UploadModal(props: IUploadModalProps) {
     ConsentForm: [],
     HmisForm: [],
     IncomeForm: [],
+    OtherClientDocument: [],
   });
 
   const docProps = {
@@ -90,6 +91,13 @@ export default function UploadModal(props: IUploadModalProps) {
         {...docProps}
       />
     ),
+    OtherClientDocument: (
+      <MultipleDocUploads
+        docType="OtherClientDocument"
+        title="Upload Other Documents"
+        {...docProps}
+      />
+    ),
   };
 
   const insets = useSafeAreaInsets();
@@ -137,6 +145,13 @@ export default function UploadModal(props: IUploadModalProps) {
       )
       .map((item) => item.file) as ReactNativeFile[] | undefined;
 
+    const OtherClientDocument = client?.clientProfile.otherDocuments
+      ?.filter(
+        (item) =>
+          item.namespace === ClientDocumentNamespaceEnum.OtherClientDocument
+      )
+      .map((item) => item.file) as ReactNativeFile[] | undefined;
+
     setDocs({
       ...docs,
       DriversLicenseFront,
@@ -147,6 +162,7 @@ export default function UploadModal(props: IUploadModalProps) {
       ConsentForm,
       HmisForm,
       IncomeForm,
+      OtherClientDocument,
     });
   }, [client]);
 
@@ -471,6 +487,46 @@ export default function UploadModal(props: IUploadModalProps) {
                   variant="secondary"
                   title="Income Forms (pay stubs)"
                   accessibilityHint="goes to Income forms upload"
+                />
+              </View>
+            </View>
+
+            <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+              <TextBold>Others</TextBold>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    height: 20,
+                    width: 20,
+                    borderRadius: Radiuses.xxxl,
+                    backgroundColor: docs.OtherClientDocument?.length
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
+                    marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {!!docs.OtherClientDocument?.length && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
+
+                <Button
+                  containerStyle={{ flex: 1 }}
+                  onPress={() => setTab('OtherClientDocument')}
+                  height="md"
+                  align="flex-start"
+                  size="full"
+                  weight="regular"
+                  variant="secondary"
+                  title="Other"
+                  accessibilityHint="goes to 'Other Documents' upload screen"
                 />
               </View>
             </View>
