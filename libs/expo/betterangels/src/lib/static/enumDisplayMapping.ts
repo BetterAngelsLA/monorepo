@@ -1,4 +1,5 @@
 import {
+  AdaAccommodationEnum,
   ClientDocumentNamespaceEnum,
   EyeColorEnum,
   GenderEnum,
@@ -228,4 +229,13 @@ export const enumDisplayPreferredCommunication: {
   [PreferredCommunicationEnum.Linkedin]: 'Linkedin',
   [PreferredCommunicationEnum.Text]: 'Text',
   [PreferredCommunicationEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayAdaAccommodationEnum: {
+  [key in AdaAccommodationEnum]: string;
+} = {
+  [AdaAccommodationEnum.Hearing]: 'Hearing',
+  [AdaAccommodationEnum.Mobility]: 'Mobility',
+  [AdaAccommodationEnum.Visual]: 'Visual',
+  [AdaAccommodationEnum.Other]: 'Other',
 };
