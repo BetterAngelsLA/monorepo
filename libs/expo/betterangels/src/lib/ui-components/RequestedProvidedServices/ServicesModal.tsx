@@ -246,7 +246,6 @@ export default function ServicesModal(props: IServicesModalProps) {
                     key={item}
                     services={services}
                     setServices={setServices}
-                    noteId={noteId}
                     service={item}
                     idx={idx}
                   />

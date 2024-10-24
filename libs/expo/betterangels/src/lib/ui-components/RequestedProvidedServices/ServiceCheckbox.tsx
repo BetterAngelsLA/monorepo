@@ -5,7 +5,6 @@ import { enumDisplayServices } from '../../static';
 
 interface IServiceCheckboxProps {
   service: ServiceEnum;
-  noteId: string | undefined;
   idx: number;
   services: {
     id: string | undefined;
