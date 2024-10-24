@@ -1,9 +1,4 @@
-import {
-  ApolloClient,
-  ApolloProvider,
-  from,
-  InMemoryCache,
-} from '@apollo/client';
+import { ApolloProvider } from '@apollo/client';
 import { setItem } from '@monorepo/expo/shared/utils';
 import React, { ReactNode, useEffect, useMemo } from 'react';
 import { useApiConfig } from '../http';
@@ -20,7 +15,11 @@ import { CSRF_COOKIE_NAME } from './links/constants';
  */
 export const ApolloClientProvider = ({ children }: { children: ReactNode }) => {
   const { baseUrl } = useApiConfig();
-  // Clear CSRF cookie when baseUrl changes
+
+  const apolloClient = useMemo(() => {
+    return createApolloClient(baseUrl);
+  }, [baseUrl]);
+
   useEffect(() => {
     const clearCSRF = async () => {
       try {
@@ -31,16 +30,6 @@ export const ApolloClientProvider = ({ children }: { children: ReactNode }) => {
     };
 
     clearCSRF();
-  }, [baseUrl]);
-  const apolloClient = useMemo(() => {
-    if (!baseUrl) {
-      return new ApolloClient({
-        cache: new InMemoryCache(),
-        link: from([]),
-      });
-    }
-    console.log(baseUrl);
-    return createApolloClient(baseUrl);
   }, [baseUrl]);
 
   if (!apolloClient) {

@@ -1,9 +1,14 @@
-import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '@monorepo/expo/betterangels';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+  TMapView,
+} from '@monorepo/expo/betterangels';
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
-import { getApiUrl } from '../../../../../../config';
 
 interface IMapProps {
   currentLocation:
@@ -46,7 +51,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     chooseDirections,
     userLocation,
   } = props;
-
+  const { baseUrl } = useApiConfig();
   async function placePin(e: any, isId: boolean) {
     if (chooseDirections) {
       setChooseDirections(false);
@@ -57,10 +62,9 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     const name =
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
-    const apiUrl = await getApiUrl();
     const url = isId
-      ? `${apiUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
-      : `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+      ? `${baseUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
+      : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
