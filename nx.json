@@ -50,11 +50,6 @@
         "{workspaceRoot}/.eslintignore"
       ],
       "cache": true
-    },
-    "@nx/js:tsc": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
     }
   },
   "namedInputs": {
@@ -80,13 +75,5 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": [
-    "@nxlv/python",
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
-    }
-  ]
+  "plugins": ["@nxlv/python"]
 }
