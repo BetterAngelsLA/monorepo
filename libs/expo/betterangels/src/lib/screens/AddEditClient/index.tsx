@@ -350,7 +350,11 @@ export default function AddEditClient({ id }: { id?: string }) {
     <FormProvider {...methods}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={{ flex: 1 }}>
-          <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+          <MainScrollContainer
+            ref={scrollRef}
+            bg={Colors.NEUTRAL_EXTRA_LIGHT}
+            keyboardAware={true}
+          >
             <PersonalInfo {...props} />
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />

@@ -1,3 +1,4 @@
+export { default as AdaAccommodationPicker } from './AdaAccommodationPicker';
 export { default as Attachments } from './Attachments';
 export { default as AuthContainer } from './AuthContainer';
 export { default as ClientCard } from './ClientCard';

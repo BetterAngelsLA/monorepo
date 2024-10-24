@@ -1,4 +1,5 @@
 import {
+  AdaAccommodationEnum,
   ClientDocumentNamespaceEnum,
   EyeColorEnum,
   GenderEnum,
@@ -236,4 +237,13 @@ export const enumDisplayServiceType: {
 } = {
   [ServiceRequestTypeEnum.Provided]: 'Provided',
   [ServiceRequestTypeEnum.Requested]: 'Requested',
+};
+
+export const enumDisplayAdaAccommodationEnum: {
+  [key in AdaAccommodationEnum]: string;
+} = {
+  [AdaAccommodationEnum.Hearing]: 'Hearing',
+  [AdaAccommodationEnum.Mobility]: 'Mobility',
+  [AdaAccommodationEnum.Visual]: 'Visual',
+  [AdaAccommodationEnum.Other]: 'Other',
 };

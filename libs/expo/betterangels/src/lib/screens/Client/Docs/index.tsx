@@ -78,8 +78,7 @@ export default function Docs({
               title="Other"
               {...props}
               data={
-                client?.clientProfile
-                  .consentFormDocuments as ClientDocumentType[]
+                client?.clientProfile.otherDocuments as ClientDocumentType[]
               }
               clientId={client?.clientProfile.id}
             />
