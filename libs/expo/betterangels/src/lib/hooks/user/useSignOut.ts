@@ -12,7 +12,7 @@ export const LOGOUT_MUTATION = gql`
 export default function useSignOut() {
   const [logout, { loading, error }] = useMutation(LOGOUT_MUTATION);
   const { setUser } = useUser();
-  const { switchEnvironment } = useApiConfig(); // Use the new context
+  const { switchEnvironment } = useApiConfig();
 
   const signOut = useCallback(async () => {
     try {
