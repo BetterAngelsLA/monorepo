@@ -24,8 +24,8 @@ export const ApiConfigProvider = ({
   productionUrl,
   demoUrl,
 }: ApiConfigProviderProps) => {
-  const [environment, setEnvironment] = useState<'production' | 'demo' | null>(
-    null
+  const [environment, setEnvironment] = useState<'production' | 'demo'>(
+    'production'
   );
 
   const apiUrls = {
@@ -34,40 +34,33 @@ export const ApiConfigProvider = ({
   };
 
   useEffect(() => {
-    const loadEnvironment = async () => {
+    (async () => {
       try {
         const storedEnv = await AsyncStorage.getItem('currentEnvironment');
-        const env = storedEnv === 'demo' ? 'demo' : 'production';
-        setEnvironment(env);
+        if (storedEnv === 'demo') setEnvironment('demo');
       } catch (error) {
-        console.error('Error loading environment from AsyncStorage', error);
-        setEnvironment('production');
+        console.error('Error loading environment from AsyncStorage:', error);
       }
-    };
-    loadEnvironment();
+    })();
   }, []);
 
-  const baseUrl = environment ? apiUrls[environment] : '';
-
   const switchEnvironment = async (env: 'production' | 'demo') => {
-    if (environment !== env) {
-      try {
-        await AsyncStorage.setItem('currentEnvironment', env);
-        setEnvironment(env);
-        await setItem(CSRF_COOKIE_NAME, '');
-      } catch (error) {
-        console.error('Error switching environment', error);
-      }
+    if (environment === env) return;
+
+    try {
+      await Promise.all([
+        AsyncStorage.setItem('currentEnvironment', env),
+        setItem(CSRF_COOKIE_NAME, ''),
+      ]);
+      setEnvironment(env);
+    } catch (error) {
+      console.error('Error switching environment:', error);
     }
   };
 
-  if (!environment) {
-    return null;
-  }
-
   return (
     <ApiConfigContext.Provider
-      value={{ baseUrl, environment, switchEnvironment }}
+      value={{ baseUrl: apiUrls[environment], environment, switchEnvironment }}
     >
       {children}
     </ApiConfigContext.Provider>

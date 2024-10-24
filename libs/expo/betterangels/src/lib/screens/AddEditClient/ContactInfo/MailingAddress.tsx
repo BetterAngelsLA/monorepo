@@ -1,3 +1,4 @@
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -18,6 +19,7 @@ import {
 } from '../../../helpers';
 
 export default function MailingAddress() {
+  const { baseUrl } = useApiConfig();
   const [suggestions, setSuggestions] = useState<any>([]);
   const { setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
@@ -31,7 +33,7 @@ export default function MailingAddress() {
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
-      await searchPlacesInCalifornia(query, setSuggestions);
+      await searchPlacesInCalifornia(baseUrl, query, setSuggestions);
     }, 300),
     []
   );
@@ -76,6 +78,7 @@ export default function MailingAddress() {
               accessibilityRole="button"
               onPress={() =>
                 selectAutocompletePlace(
+                  baseUrl,
                   item,
                   'mailingAddress',
                   setValue,
