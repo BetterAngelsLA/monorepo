@@ -59,6 +59,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       markedForDeletion?: boolean;
     }[]
   >([]);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
 
   const [searchText, setSearchText] = useState('');
 
@@ -96,6 +97,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   const submitServices = async () => {
+    setIsSubmitLoading(true);
     const toCreateOtherServices = serviceOthers.filter(
       (service) =>
         service.title !== null && !service.id && !service.markedForDeletion
@@ -189,6 +191,8 @@ export default function ServicesModal(props: IServicesModalProps) {
         message: 'Sorry, there was an error updating the services.',
         type: 'error',
       });
+    } finally {
+      setIsSubmitLoading(false);
     }
   };
 
@@ -257,6 +261,8 @@ export default function ServicesModal(props: IServicesModalProps) {
             </TextRegular>
           </View>
           <BasicInput
+            value={searchText}
+            onDelete={() => setSearchText('')}
             onChangeText={handleFilter}
             placeholder="Search a service"
             icon={<SearchIcon color={Colors.NEUTRAL} />}
@@ -319,6 +325,8 @@ export default function ServicesModal(props: IServicesModalProps) {
         </View>
         <View style={{ flex: 1 }}>
           <Button
+            disabled={isSubmitLoading}
+            loading={isSubmitLoading}
             onPress={submitServices}
             size="full"
             variant="primary"
