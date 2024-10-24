@@ -15,7 +15,6 @@ const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
       await setItem(CSRF_COOKIE_NAME, csrfToken);
     }
   }
-  console.log(`CSRF token: ${csrfToken}`);
   return csrfToken;
 };
 

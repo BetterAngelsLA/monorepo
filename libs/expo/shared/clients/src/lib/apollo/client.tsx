@@ -5,13 +5,12 @@ import {
   InMemoryCache,
   NormalizedCacheObject,
 } from '@apollo/client';
-import {
-  csrfLink,
-  isReactNativeFileInstance,
-} from '@monorepo/expo/shared/clients';
+
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
+import { isReactNativeFileInstance } from './ReactNativeFile';
+import { csrfLink } from './links';
 
 /**
  * Creates an Apollo Client instance configured with the provided API URL.
