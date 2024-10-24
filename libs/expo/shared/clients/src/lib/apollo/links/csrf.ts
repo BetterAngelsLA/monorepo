@@ -15,6 +15,7 @@ const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
       await setItem(CSRF_COOKIE_NAME, csrfToken);
     }
   }
+  console.log(`CSRF token: ${csrfToken}`);
   return csrfToken;
 };
 
@@ -59,6 +60,7 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) =>
               complete: observer.complete.bind(observer),
             });
           } catch (err) {
+            console.log(err);
             console.error('Error in CSRF Apollo Link:', err);
             observer.error(err);
           }

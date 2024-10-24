@@ -1,6 +1,7 @@
+import { setItem } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-
+import { CSRF_COOKIE_NAME } from '../apollo';
 interface ApiConfigContextType {
   baseUrl: string;
   environment: 'production' | 'demo';
@@ -34,6 +35,7 @@ export const ApiConfigProvider = ({
   useEffect(() => {
     const loadEnvironment = async () => {
       try {
+        await setItem(CSRF_COOKIE_NAME, '');
         const storedEnv = await AsyncStorage.getItem('currentEnvironment');
         const env = storedEnv === 'demo' ? 'demo' : 'production';
         setEnvironment(env);
@@ -50,6 +52,7 @@ export const ApiConfigProvider = ({
   const switchEnvironment = async (env: 'production' | 'demo') => {
     if (environment !== env) {
       try {
+        await AsyncStorage.setItem(CSRF_COOKIE_NAME, '');
         await AsyncStorage.setItem('currentEnvironment', env);
         setEnvironment(env);
       } catch (error) {

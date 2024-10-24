@@ -1,9 +1,11 @@
 import 'expo-dev-client';
 
 import { SnackbarProvider, UserProvider } from '@monorepo/expo/betterangels';
-import { ApolloClientProvider } from '@monorepo/expo/shared/apollo';
+import {
+  ApiConfigProvider,
+  ApolloClientProvider,
+} from '@monorepo/expo/shared/apollo';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { ApiConfigProvider } from '@monorepo/expo/shared/providers';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useFonts } from 'expo-font';

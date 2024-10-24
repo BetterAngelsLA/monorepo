@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { useApiConfig } from '@monorepo/expo/shared/providers';
+import { useApiConfig } from '@monorepo/expo/shared/apollo';
 import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
