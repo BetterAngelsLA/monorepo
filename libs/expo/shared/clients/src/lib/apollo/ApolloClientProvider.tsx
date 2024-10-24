@@ -1,9 +1,7 @@
 import { ApolloProvider } from '@apollo/client';
-import { setItem } from '@monorepo/expo/shared/utils';
-import React, { ReactNode, useEffect, useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
 import { createApolloClient } from './client';
-import { CSRF_COOKIE_NAME } from './links/constants';
 
 /**
  * ApolloClientProvider component that initializes the Apollo Client instance
@@ -18,18 +16,6 @@ export const ApolloClientProvider = ({ children }: { children: ReactNode }) => {
 
   const apolloClient = useMemo(() => {
     return createApolloClient(baseUrl);
-  }, [baseUrl]);
-
-  useEffect(() => {
-    const clearCSRF = async () => {
-      try {
-        await setItem(CSRF_COOKIE_NAME, '');
-      } catch (error) {
-        console.error('Error clearing CSRF token', error);
-      }
-    };
-
-    clearCSRF();
   }, [baseUrl]);
 
   if (!apolloClient) {
