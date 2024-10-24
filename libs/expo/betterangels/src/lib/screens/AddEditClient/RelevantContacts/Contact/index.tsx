@@ -18,6 +18,9 @@ import {
   UpdateClientProfileInput,
 } from '../../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
+import AddressAutocomplete from '../../../../ui-components/AddressField';
+
+type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
 interface IContactProps {
   index: number;
@@ -31,7 +34,7 @@ export default function Contact(props: IContactProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  } = useFormContext<TForm>();
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
@@ -151,12 +154,16 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].phoneNumber`}
         control={control}
       />
-      <Input
-        placeholder="Mailing Address"
-        label="Mailing Address"
-        name={`contacts[${index}].mailingAddress`}
+
+      <AddressAutocomplete<TForm>
+        name={
+          `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`
+        }
         control={control}
+        label="Mailing Address"
+        placeholder="Mailing Address"
       />
+
       {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
         <Input
           placeholder="Relationship to Client Other"
