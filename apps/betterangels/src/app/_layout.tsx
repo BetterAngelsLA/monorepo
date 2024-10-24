@@ -4,7 +4,7 @@ import { SnackbarProvider, UserProvider } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
   ApolloClientProvider,
-} from '@monorepo/expo/shared/apollo';
+} from '@monorepo/expo/shared/clients';
 import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';

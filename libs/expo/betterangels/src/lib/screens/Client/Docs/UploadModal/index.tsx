@@ -1,4 +1,4 @@
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,

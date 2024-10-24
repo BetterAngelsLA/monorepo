@@ -1,4 +1,4 @@
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 

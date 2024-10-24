@@ -1,5 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
-import { useApiConfig } from '@monorepo/expo/shared/apollo';
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { useCallback } from 'react';
 import useUser from './useUser';
 

@@ -8,7 +8,7 @@ import {
 import {
   csrfLink,
   isReactNativeFileInstance,
-} from '@monorepo/expo/shared/apollo';
+} from '@monorepo/expo/shared/clients';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
