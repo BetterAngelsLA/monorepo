@@ -88,12 +88,13 @@ export function BasicInput(props: IBasicInputProps) {
         style={[
           styles.inputBasic,
           {
+            paddingLeft: icon ? Spacings.sm : 0,
             borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
             borderRadius,
           },
         ]}
       >
-        {icon && icon}
+        {icon}
         <TextInput
           style={{
             color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,

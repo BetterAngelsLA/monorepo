@@ -83,6 +83,7 @@ export function Checkbox(props: ICheckboxProps) {
           marginRight: mr && Spacings[mr],
           marginHorizontal: mx && Spacings[mx],
           marginVertical: my && Spacings[my],
+          gap: Spacings.sm,
         },
       ]}
       onPress={onCheck}
