@@ -28,8 +28,8 @@ def create_test_client(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="client").exists():
         User.objects.create_user(
             username="client",
-            email="client@ba.la",
-            password="client",
+            email="client@example.com",
+            password="password",
             first_name="Jose",
         )
 
@@ -39,8 +39,8 @@ def create_test_agent(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="agent").exists():
         User.objects.create_user(
             username="agent",
-            email="agent@ba.la",
-            password="agent",
+            email="agent@example.com",
+            password="password",
             first_name="Carolyn",
         )
 
