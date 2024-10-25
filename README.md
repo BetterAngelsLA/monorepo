@@ -30,9 +30,10 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 1. [Project Overview](#project-overview)
 2. [Frontend Development](#frontend-development)
 3. [Backend Development](#backend-development)
-4. [Development Workflow](#development-workflow)
-5. [Licensing Details](#licensing-details)
-6. [Contributing](#contributing)
+4. [Seed Data](#seed-data)
+5. [Development Workflow](#development-workflow)
+6. [Licensing Details](#licensing-details)
+7. [Contributing](#contributing)
 
 ## Project Overview
 
@@ -49,6 +50,25 @@ The frontend is built with [React Native](https://reactnative.dev/) and uses [Ex
 The backend is built with [Django](https://www.djangoproject.com/), a high-level Python web framework, and uses [Celery](https://docs.celeryproject.org/en/stable/) for distributed task processing.
 
 - **[Backend Development Guide](docs/backend_readme.md)**: This guide covers setting up the development environment, running the backend server, and integrating Celery for task processing.
+
+## Seed Data
+
+### Users
+
+The following users should exist as part of seed data:
+
+- Agent - can access front-end account as an agent
+  - username: agent
+  - email: `agent@example.com`
+  - password: password
+- Client - can access front-end account as a client
+  - username: client
+  - email: `client@example.com`
+  - password: password
+- Django Admin - can access backend admin panel
+  - username: admin
+  - email: `admin@example.com`
+  - password: password
 
 ## Development Workflow
 
