@@ -17,7 +17,7 @@ export default function NoteTitle({
       <TextRegular size="sm" mb="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
       </TextRegular>
-      {note?.team && (
+      {!!note?.team && (
         <>
           <TextBold size="sm">Team</TextBold>
           <TextRegular size="sm">{enumDisplaySelahTeam[note.team]}</TextRegular>
