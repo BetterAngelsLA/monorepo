@@ -25,7 +25,7 @@ export default function AdaAccommodationPicker(props: IAdaAccommodationPicker) {
   const Wrapper = ({ children }: { children: ReactNode }) => {
     if (withCard) {
       return (
-        <CardWrapper title={cardTitle ? 'ADA Accomodation' : ''}>
+        <CardWrapper title={cardTitle ? 'ADA Accommodation' : ''}>
           {children}
         </CardWrapper>
       );
@@ -59,7 +59,7 @@ export default function AdaAccommodationPicker(props: IAdaAccommodationPicker) {
               mt="sm"
               color={Colors.PRIMARY}
               title="Reset"
-              accessibilityHint="resets ADA Accomodation"
+              accessibilityHint="resets ADA Accommodation"
               onPress={onReset}
             />
           </View>
