@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_migrate)
 def create_superuser(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser(username="admin", email="admin@ba.la", password="admin")
+        User.objects.create_superuser(username="admin", email="admin@example.com", password="password")
 
 
 @receiver(post_migrate)
