@@ -7,19 +7,35 @@ import { View } from 'react-native';
 import { getPlaceDetailsById, searchPlacesLA } from '../../services';
 import { AddressOption } from './AddressOption';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 type TAutocompletePrediction = google.maps.places.AutocompletePrediction;
 
 type TAddressField = {
-  placeholder?: string;
+  value: string;
+  placeholder: string;
+  onChange: (address: string) => void;
+  onReset?: () => void;
 };
 
 export function AddressField(props: TAddressField) {
-  const { placeholder } = props;
+  const { value, onChange, onReset, placeholder } = props;
 
   const { baseUrl } = useApiConfig();
-
-  const [address, setAddress] = useState('');
   const [predictions, setPredictions] = useState<TAutocompletePrediction[]>([]);
+
+  const onChangeText = async (input: string) => {
+    onChange(input);
+
+    if (!input.trim() || input.length < 3) {
+      setPredictions([]);
+      debouncedSearch.cancel();
+
+      return;
+    }
+
+    debouncedSearch(input);
+  };
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -32,24 +48,11 @@ export function AddressField(props: TAddressField) {
 
         setPredictions([]);
       }
-    }, 30),
+    }, SEARCH_DEBOUNCE_MS),
     []
   );
 
-  const onChangeText = async (input: string) => {
-    setAddress(input);
-
-    if (!input.trim() || input.length < 3) {
-      setPredictions([]);
-      debouncedSearch.cancel();
-
-      return;
-    }
-
-    debouncedSearch(input);
-  };
-
-  const onAddressSelect = async (prediction: TAutocompletePrediction) => {
+  const onPredictionSelect = async (prediction: TAutocompletePrediction) => {
     const placeId = prediction.place_id;
 
     if (!placeId) {
@@ -58,25 +61,30 @@ export function AddressField(props: TAddressField) {
 
     setPredictions([]);
 
-    const placeDetails = await getPlaceDetailsById({
+    const deatailAddress = await getPlaceDetailsById({
       baseUrl,
       placeId,
     });
 
-    setAddress(placeDetails);
+    onChange(deatailAddress);
   };
+
+  function onInputReset(): void {
+    setPredictions([]);
+
+    if (onReset) {
+      onReset();
+    }
+  }
 
   return (
     <>
       <BasicInput
-        onDelete={() => {
-          setAddress('');
-          setPredictions([]);
-        }}
-        value={address}
-        autoCorrect={false}
+        value={value}
         onChangeText={onChangeText}
+        onDelete={onInputReset}
         placeholder={placeholder}
+        autoCorrect={false}
       />
 
       {!!predictions.length && (
@@ -90,7 +98,7 @@ export function AddressField(props: TAddressField) {
             <AddressOption
               key={prediction.place_id}
               item={prediction}
-              onPress={() => onAddressSelect(prediction)}
+              onPress={() => onPredictionSelect(prediction)}
             />
           ))}
         </View>
