@@ -4448,6 +4448,7 @@ __metadata:
     "@testing-library/jest-native": "npm:5.4.3"
     "@testing-library/react-native": "npm:12.5.1"
     "@types/apollo-upload-client": "npm:^18.0.0"
+    "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:^29.4.0"
     "@types/node": "npm:18.19.14"
     "@types/react": "npm:18.2.79"
@@ -8580,6 +8581,13 @@ __metadata:
   version: 3.55.2
   resolution: "@types/google.maps@npm:3.55.2"
   checksum: 10/339ce458e8422c30b4b00b633a72e921cd56f5ea1f3b41e79fb1dff88547808c61a308370bc4baf4e31b0db2cde343d722efb078b0c5e9505847af7efe5623d8
+  languageName: node
+  linkType: hard
+
+"@types/google.maps@npm:^3.58.1":
+  version: 3.58.1
+  resolution: "@types/google.maps@npm:3.58.1"
+  checksum: 10/3d5aaa901c0b5dcce45dc9f667912c04b99be0b4a8b541b5120b677697d17116684fddb457bea4955142755c9089993ea4b48b30705283c16935473b1818ecd1
   languageName: node
   linkType: hard
 

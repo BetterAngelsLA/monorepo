@@ -79,7 +79,8 @@
     "expo-file-system": "*",
     "expo-sharing": "*",
     "@teovilla/react-native-web-maps": "*",
-    "react-native-paper": "*"
+    "react-native-paper": "*",
+    "@types/google.maps": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
