@@ -8,10 +8,10 @@ import { AddressField } from '../../../ui-components';
 
 const FIELD_KEY = 'residenceAddress';
 
-type TForm = UpdateClientProfileInput | CreateClientProfileInput;
-
 export default function ResidenceAddress() {
-  const { setValue } = useFormContext<TForm>();
+  const { setValue } = useFormContext<
+    UpdateClientProfileInput | CreateClientProfileInput
+  >();
 
   const value = useWatch({ name: FIELD_KEY }) || '';
 
