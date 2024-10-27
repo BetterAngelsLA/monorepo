@@ -18,6 +18,7 @@ import {
   UpdateClientProfileInput,
 } from '../../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
+import ContactAddress from './ContactAddress';
 
 interface IContactProps {
   index: number;
@@ -151,12 +152,12 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].phoneNumber`}
         control={control}
       />
-      <Input
-        placeholder="Mailing Address"
-        label="Mailing Address"
+
+      <ContactAddress
         name={`contacts[${index}].mailingAddress`}
         control={control}
       />
+
       {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
         <Input
           placeholder="Relationship to Client Other"

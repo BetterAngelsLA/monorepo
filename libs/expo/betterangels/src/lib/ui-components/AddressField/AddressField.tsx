@@ -14,12 +14,16 @@ type TAutocompletePrediction = google.maps.places.AutocompletePrediction;
 type TAddressField = {
   value: string;
   placeholder: string;
+  label?: string;
+  errorMessage?: string;
   onChange: (address: string) => void;
+  onBlur?: () => void;
   onReset?: () => void;
 };
 
 export function AddressField(props: TAddressField) {
-  const { value, onChange, onReset, placeholder } = props;
+  const { errorMessage, label, value, onChange, onBlur, onReset, placeholder } =
+    props;
 
   const { baseUrl } = useApiConfig();
   const [predictions, setPredictions] = useState<TAutocompletePrediction[]>([]);
@@ -80,11 +84,15 @@ export function AddressField(props: TAddressField) {
   return (
     <>
       <BasicInput
+        label={label}
         value={value}
         onChangeText={onChangeText}
         onDelete={onInputReset}
         placeholder={placeholder}
+        onBlur={onBlur}
         autoCorrect={false}
+        errorMessage={errorMessage}
+        error={!!errorMessage && !!String(errorMessage?.trim())}
       />
 
       {!!predictions.length && (
