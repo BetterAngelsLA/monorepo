@@ -1,17 +1,23 @@
 import axios from 'axios';
 
-type TPlaceResult = google.maps.places.PlaceResult;
-
 type TGetPlaceDetails = {
   baseUrl: string;
   placeId: string;
+  fields?: string[];
+  withCredentials?: boolean;
 };
 
 export async function getPlaceDetailsById(props: TGetPlaceDetails) {
-  const { baseUrl, placeId } = props;
+  const { baseUrl, fields = [], placeId, withCredentials } = props;
 
   if (!placeId) {
     throw new Error('getPlaceDetailsById: missing placeId');
+  }
+
+  let fieldsParam: string | undefined;
+
+  if (fields.length) {
+    fieldsParam = fields.join(',');
   }
 
   const response = await axios.get(
@@ -19,13 +25,11 @@ export async function getPlaceDetailsById(props: TGetPlaceDetails) {
     {
       params: {
         place_id: placeId,
+        fields: fieldsParam,
+        withCredentials,
       },
     }
   );
 
-  const result: TPlaceResult = response.data.result;
-
-  const formattedAddress = result.formatted_address || '';
-
-  return formattedAddress.substring(0, formattedAddress.lastIndexOf(','));
+  return response.data.result as google.maps.places.PlaceResult;
 }

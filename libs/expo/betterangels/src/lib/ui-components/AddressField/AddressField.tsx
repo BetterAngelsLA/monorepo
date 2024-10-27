@@ -70,7 +70,9 @@ export function AddressField(props: TAddressField) {
       placeId,
     });
 
-    onChange(deatailAddress);
+    const presentedAddress = getPresentedAddress(deatailAddress);
+
+    onChange(presentedAddress);
   };
 
   function onInputReset(): void {
@@ -113,4 +115,18 @@ export function AddressField(props: TAddressField) {
       )}
     </>
   );
+}
+
+function getPresentedAddress(
+  deatailAddress: google.maps.places.PlaceResult
+): string {
+  try {
+    const formattedAddress = deatailAddress.formatted_address || '';
+
+    return formattedAddress.substring(0, formattedAddress.lastIndexOf(','));
+  } catch (e) {
+    console.error(e);
+
+    return '';
+  }
 }
