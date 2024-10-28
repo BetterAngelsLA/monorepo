@@ -34,7 +34,7 @@ interface IPurposeProps {
   }) => void;
 }
 
-export default function Title(props: IPurposeProps) {
+export default function Purpose(props: IPurposeProps) {
   const {
     expanded,
     setExpanded,
