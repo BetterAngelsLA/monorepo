@@ -109,7 +109,7 @@ Run the following on the host machine—**not in the container**:
    Start the Outreach app
 
    ```bash
-   yarn nx start betterangels
+   yarn nx run betterangels:start
    ```
 
    Start the Shelter app
