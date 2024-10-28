@@ -1,13 +1,12 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicRadio,
-  FieldCard,
-  TextMedium,
-  TextRegular,
+  CardWrapper,
+  Radio,
+  TextBold,
 } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { StyleSheet, View } from 'react-native';
+
 import { useFormContext } from 'react-hook-form';
-import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
@@ -15,77 +14,38 @@ import {
 } from '../../apollo';
 import { enumDisplayVeteran } from '../../static/enumDisplayMapping';
 
-interface IVeteranStatusProps {
-  expanded: undefined | string | null;
-  setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
-}
-
-export default function VeteranStatus(props: IVeteranStatusProps) {
-  const { expanded, setExpanded, scrollRef } = props;
+export default function VeteranStatus() {
   const { setValue, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
   const veteranStatus = watch('veteranStatus');
 
-  const isVeteranStatus = expanded === 'Veteran Status';
+  const onReset = () => {
+    setValue('veteranStatus', null);
+  };
   return (
-    <FieldCard
-      scrollRef={scrollRef}
-      expanded={expanded}
-      setExpanded={() => {
-        setExpanded(isVeteranStatus ? null : 'Veteran Status');
-      }}
-      mb="xs"
-      actionName={
-        !veteranStatus && !isVeteranStatus ? (
-          <TextMedium size="sm">Add Veteran Status</TextMedium>
-        ) : (
-          <TextMedium size="sm">
-            {veteranStatus && enumDisplayVeteran[veteranStatus]}
-          </TextMedium>
-        )
-      }
-      title="Veteran Status"
-    >
-      <View
-        style={{
-          gap: Spacings.sm,
-          height: isVeteranStatus ? 'auto' : 0,
-          overflow: 'hidden',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <TextRegular>Are you a veteran?</TextRegular>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: Spacings.sm,
-            flex: 1,
-          }}
-        >
-          {Object.entries(enumDisplayVeteran).map(
-            ([enumValue, displayValue]) => (
-              <BasicRadio
-                label={displayValue}
-                accessibilityHint={`Select ${displayValue}`}
-                key={enumValue}
-                value={veteranStatus && enumDisplayVeteran[veteranStatus]}
-                onPress={() =>
-                  setValue(
-                    'veteranStatus',
-                    enumValue as YesNoPreferNotToSayEnum
-                  )
-                }
-              />
-            )
-          )}
-        </View>
+    <CardWrapper onReset={onReset} title="Veteran Status">
+      <View style={styles.container}>
+        <TextBold size="sm">Are you a veteran?</TextBold>
+        {Object.entries(enumDisplayVeteran).map(([enumValue, displayValue]) => (
+          <Radio
+            key={enumValue}
+            value={enumDisplayVeteran[veteranStatus as YesNoPreferNotToSayEnum]}
+            label={displayValue}
+            onPress={() =>
+              setValue('veteranStatus', enumValue as YesNoPreferNotToSayEnum)
+            }
+            accessibilityHint="selects living situation"
+          />
+        ))}
       </View>
-    </FieldCard>
+    </CardWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: Spacings.xs,
+  },
+});

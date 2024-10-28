@@ -10,6 +10,7 @@ import {
   enumDisplayHmisAgency,
   enumDisplayLanguage,
   enumDisplayLivingSituation,
+  enumDisplayYesNoPreferNot,
 } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
 
@@ -47,6 +48,12 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     {
       label: 'DoB',
       value: client?.clientProfile.dateOfBirth,
+    },
+    {
+      label: 'Veteran Status',
+      value:
+        client?.clientProfile.veteranStatus &&
+        enumDisplayYesNoPreferNot[client.clientProfile.veteranStatus],
     },
     {
       label: 'Preferred Language',
