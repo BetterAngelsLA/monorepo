@@ -36,7 +36,7 @@ export default function VeteranStatus() {
             onPress={() =>
               setValue('veteranStatus', enumValue as YesNoPreferNotToSayEnum)
             }
-            accessibilityHint="selects living situation"
+            accessibilityHint="selects veteran status"
           />
         ))}
       </View>
