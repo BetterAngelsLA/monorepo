@@ -27,6 +27,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
   const {
     name,
     control,
+    label,
     placeholder,
     debounceMs = DEFAULT_DEBOUNCE_MS,
   } = props;
@@ -78,6 +79,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
           <AutocompleteInput<TPlacesPrediction>
             value={value || ''}
             placeholder={placeholder}
+            label={label}
             predictions={predictions}
             onChangeText={handleChange}
             onBlur={onBlur}
