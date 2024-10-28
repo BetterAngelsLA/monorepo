@@ -16,6 +16,7 @@ export default function NoteServices({
         {type === 'providedServices' ? 'Provided' : 'Requested'} Services
       </TextBold>
       <PillContainer
+        maxVisible={5}
         type={type === 'providedServices' ? 'success' : 'primary'}
         data={data?.note[type].map((item) =>
           item.service === ServiceEnum.Other

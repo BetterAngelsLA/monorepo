@@ -8,12 +8,14 @@ import TextBold from '../TextBold';
 export function PillContainer({
   data,
   type,
+  maxVisible,
 }: {
   data: string[];
   type?: 'primary' | 'success';
+  maxVisible: number;
 }) {
   const [showAll, setShowAll] = useState(false);
-  const servicesToDisplay = showAll ? data : data.slice(0, 5);
+  const servicesToDisplay = showAll ? data : data.slice(0, maxVisible);
 
   return (
     <View>
@@ -23,7 +25,7 @@ export function PillContainer({
         ))}
       </View>
 
-      {data.length > 5 && (
+      {data.length > maxVisible && (
         <Pressable
           accessibilityRole="button"
           style={styles.button}
@@ -31,7 +33,7 @@ export function PillContainer({
           onPress={() => setShowAll(!showAll)}
         >
           <TextBold mr="xs" size="xs">
-            {showAll ? `Show Less` : `View All (+${data.length - 5})`}
+            {showAll ? `Show Less` : `View All (+${data.length - maxVisible})`}
           </TextBold>
           <ChevronLeftIcon rotate={showAll ? '90deg' : '-90deg'} />
         </Pressable>
