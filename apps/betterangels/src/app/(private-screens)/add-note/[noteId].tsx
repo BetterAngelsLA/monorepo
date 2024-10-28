@@ -196,6 +196,8 @@ export default function AddNote() {
     setErrors,
     refetch,
   };
+  const getClientProfileUrl = (clientProfileId: string | undefined) =>
+    `/client/${clientProfileId}`;
 
   async function submitNote() {
     if (Object.values(errors).some((error) => error)) {
@@ -214,7 +216,9 @@ export default function AddNote() {
         throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      return router.replace(`/client/${data?.note.client?.clientProfile?.id}`);
+      return router.replace(
+        getClientProfileUrl(data?.note.client?.clientProfile?.id)
+      );
     } catch (err) {
       console.error(err);
 
@@ -295,7 +299,7 @@ export default function AddNote() {
               fontSize="sm"
               onPress={() =>
                 router.navigate(
-                  `/client/${data.note.client?.clientProfile?.id}`
+                  getClientProfileUrl(data?.note.client?.clientProfile?.id)
                 )
               }
               accessibilityHint="saves the interaction for later"
@@ -310,7 +314,9 @@ export default function AddNote() {
         firstName={data.note.client?.firstName}
         closeModal={() => {
           setSubmitted(false);
-          router.navigate(`/client/${data.note.client?.clientProfile?.id}`);
+          router.navigate(
+            getClientProfileUrl(data?.note.client?.clientProfile?.id)
+          );
         }}
         isModalVisible={isSubmitted}
       />
