@@ -120,7 +120,7 @@ export default function DemographicInfo(props: IProfileSectionProps) {
               {!!client?.clientProfile.adaAccommodation?.length && (
                 <View>
                   <TextRegular mb="xs" size="sm">
-                    ADA Accomodations(s)
+                    ADA Accommodation(s)
                   </TextRegular>
                   <TextBold size="sm">
                     {client.clientProfile.adaAccommodation
