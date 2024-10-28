@@ -13,6 +13,7 @@ import {
   RaceEnum,
   RelationshipTypeEnum,
   ServiceEnum,
+  ServiceRequestTypeEnum,
   SocialMediaEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
@@ -229,6 +230,13 @@ export const enumDisplayPreferredCommunication: {
   [PreferredCommunicationEnum.Linkedin]: 'Linkedin',
   [PreferredCommunicationEnum.Text]: 'Text',
   [PreferredCommunicationEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayServiceType: {
+  [key in ServiceRequestTypeEnum]: string;
+} = {
+  [ServiceRequestTypeEnum.Provided]: 'Provided',
+  [ServiceRequestTypeEnum.Requested]: 'Requested',
 };
 
 export const enumDisplayAdaAccommodationEnum: {
