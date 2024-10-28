@@ -55,7 +55,7 @@ export default function DemographicInfo(props: IProfileSectionProps) {
         enumDisplayRace[client?.clientProfile.race],
     },
     {
-      label: 'City of Birth',
+      label: 'Place of Birth',
       value: client?.clientProfile.placeOfBirth,
     },
     {
