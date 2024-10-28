@@ -1,35 +1,28 @@
 import { CardWrapper } from '@monorepo/expo/shared/ui-components';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
-import { AddressField } from '../../../ui-components';
+import AddressAutocomplete from '../../../ui-components/AddressField';
 
-const FIELD_KEY = 'mailingAddress';
+const FIELD_NAME = 'mailingAddress';
+
+type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
 export default function MailingAddress() {
-  const { setValue } = useFormContext<
-    UpdateClientProfileInput | CreateClientProfileInput
-  >();
-
-  const value = useWatch({ name: FIELD_KEY }) || '';
+  const { control, setValue } = useFormContext<TForm>();
 
   const onReset = () => {
-    setValue(FIELD_KEY, '');
-  };
-
-  const onChangeText = (input: string) => {
-    setValue(FIELD_KEY, input);
+    setValue(FIELD_NAME, '');
   };
 
   return (
     <CardWrapper onReset={onReset} title="Personal Mailing Address">
-      <AddressField
-        value={value}
-        placeholder="Enter residence address"
-        onChange={onChangeText}
-        onReset={onReset}
+      <AddressAutocomplete<TForm>
+        name={FIELD_NAME}
+        control={control}
+        placeholder="Enter mailing address"
       />
     </CardWrapper>
   );

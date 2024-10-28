@@ -1,1 +1,1 @@
-export { AddressField as default } from './AddressField';
+export { AddressAutocomplete as default } from './AddressAutocomplete';

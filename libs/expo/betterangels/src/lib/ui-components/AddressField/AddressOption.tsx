@@ -1,11 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { TouchableOpacity } from 'react-native';
-
-type TAutocompletePrediction = google.maps.places.AutocompletePrediction;
+import { TPlacesPrediction } from '../../services';
 
 type TAddressOption = {
-  item: TAutocompletePrediction;
+  item: TPlacesPrediction;
   onPress: () => void;
 };
 

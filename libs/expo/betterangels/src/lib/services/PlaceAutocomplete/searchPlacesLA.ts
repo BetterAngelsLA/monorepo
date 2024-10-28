@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-type TAutocompletePrediction = google.maps.places.AutocompletePrediction;
+import { TPlacesPrediction } from './types';
 
 // geocode for approx center of LA COUNTY
 const LA_COUNTY_LAT = 34.04499;
@@ -43,5 +43,5 @@ export async function searchPlacesLA(props: TSearchPlacesLA) {
     },
   });
 
-  return response.data.predictions as TAutocompletePrediction[];
+  return response.data.predictions as TPlacesPrediction[];
 }

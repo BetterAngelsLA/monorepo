@@ -3,21 +3,15 @@ import axios from 'axios';
 type TGetPlaceDetails = {
   baseUrl: string;
   placeId: string;
-  fields?: string[];
+  fields?: string;
   withCredentials?: boolean;
 };
 
 export async function getPlaceDetailsById(props: TGetPlaceDetails) {
-  const { baseUrl, fields = [], placeId, withCredentials } = props;
+  const { baseUrl, fields, placeId, withCredentials } = props;
 
   if (!placeId) {
     throw new Error('getPlaceDetailsById: missing placeId');
-  }
-
-  let fieldsParam: string | undefined;
-
-  if (fields.length) {
-    fieldsParam = fields.join(',');
   }
 
   const response = await axios.get(
@@ -25,7 +19,7 @@ export async function getPlaceDetailsById(props: TGetPlaceDetails) {
     {
       params: {
         place_id: placeId,
-        fields: fieldsParam,
+        fields,
         withCredentials,
       },
     }
