@@ -34,7 +34,7 @@ interface IPurposeProps {
   }) => void;
 }
 
-export default function Title(props: IPurposeProps) {
+export default function Purpose(props: IPurposeProps) {
   const {
     expanded,
     setExpanded,
@@ -114,7 +114,7 @@ export default function Title(props: IPurposeProps) {
           error={!!errors.purpose}
           errorMessage={errors.purpose ? 'Purpose is required' : ''}
           // TODO: remove default value after backend cleanup (DEV-804)
-          value={value || undefined}
+          value={value || 'Session with client'}
           onChangeText={(e) => onChange(e)}
         />
       </View>
