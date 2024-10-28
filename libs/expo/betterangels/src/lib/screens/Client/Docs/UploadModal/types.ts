@@ -1,4 +1,4 @@
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
@@ -35,7 +35,7 @@ export interface IMultipleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm';
+  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherClientDocument';
 }
 
 export interface ISingleDocUploadsProps {
@@ -62,6 +62,7 @@ export type Docs = {
   ConsentForm: ReactNativeFile[] | undefined;
   HmisForm: ReactNativeFile[] | undefined;
   IncomeForm: ReactNativeFile[] | undefined;
+  OtherClientDocument: ReactNativeFile[] | undefined;
 };
 
 export type ITab =
@@ -72,4 +73,5 @@ export type ITab =
   | 'ConsentForm'
   | 'HmisForm'
   | 'IncomeForm'
+  | 'OtherClientDocument'
   | undefined;

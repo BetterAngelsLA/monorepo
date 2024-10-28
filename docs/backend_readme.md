@@ -32,6 +32,8 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
    poetry install
    ```
 
+1. Add/Update `.env.local` file in the `apps/betterangels-backend` project to manage `local-only` environment variables.
+
 ### Running the Backend
 
 #### Starting Django
@@ -42,8 +44,13 @@ To start the Django backend server:
 yarn nx start betterangels-backend
 ```
 
-Once started, you can access the Django development server at the default address: [http://localhost:8000/admin/](http://localhost:8000/admin/) or the port you've configured.
-Login using creds: `admin@ba.la`/`admin`
+Once started, you can access the Django development server at
+
+- default address: [http://localhost:8000/admin/](http://localhost:8000/admin/)
+  - or the port you've configured.
+- Login using creds
+  - email: `admin@example.com`
+  - psw: `password`
 
 #### Starting a Django Shell
 
@@ -235,4 +242,14 @@ To track the historical events for a certain model based on their id and timesta
 Context.objects.filter(metadata__tracked_model_id=tracked_model_id).order_by("metadata__timestamp")
 ```
 
-</details>
+---
+
+### Troubleshooting
+
+#### Aliases
+
+For a list of command aliases, refer to [.bash_aliases](https://github.com/BetterAngelsLA/monorepo/blob/main/.bash_aliases)
+
+##### `ynx-reset_db`
+
+_WARNING:_ This is a destructive action and the local database will be dropped. Therefore, all data from all tables will be removed but it will allow you to run all migrations again. Use this command on the off chance that your local database doesn't reflect the new migration(s).

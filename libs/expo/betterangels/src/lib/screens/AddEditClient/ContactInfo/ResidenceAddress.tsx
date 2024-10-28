@@ -1,3 +1,4 @@
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -18,6 +19,7 @@ import {
 } from '../../../helpers';
 
 export default function ResidenceAddress() {
+  const { baseUrl } = useApiConfig();
   const [suggestions, setSuggestions] = useState<any>([]);
 
   const { setValue, watch } = useFormContext<
@@ -32,7 +34,7 @@ export default function ResidenceAddress() {
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
-      await searchPlacesInCalifornia(query, setSuggestions);
+      await searchPlacesInCalifornia(baseUrl, query, setSuggestions);
     }, 300),
     []
   );
@@ -77,6 +79,7 @@ export default function ResidenceAddress() {
               accessibilityRole="button"
               onPress={() =>
                 selectAutocompletePlace(
+                  baseUrl,
                   item,
                   'residenceAddress',
                   setValue,

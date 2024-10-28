@@ -19,16 +19,12 @@ import {
 import {
   CreateClientProfileInput,
   Ordering,
+  SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
+import { useSnackbar } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
-import {
-  useCreateClientProfileMutation,
-  useDeleteClientProfileMutation,
-  useGetClientProfileQuery,
-  useUpdateClientProfileMutation,
-} from './__generated__/AddEditClient.generated';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import HouseholdMembers from './HouseholdMembers';
@@ -36,9 +32,36 @@ import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
 import VeteranStatus from './VeteranStatus';
+import {
+  useCreateClientProfileMutation,
+  useDeleteClientProfileMutation,
+  useGetClientProfileQuery,
+  useUpdateClientProfileMutation,
+} from './__generated__/AddEditClient.generated';
+
+const defaultSocialMedias = [
+  {
+    platform: SocialMediaEnum.Facebook,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Instagram,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Linkedin,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Tiktok,
+    platformUserId: '',
+  },
+];
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
+
+  const { showSnackbar } = useSnackbar();
   const { data, loading, error, refetch } = useGetClientProfileQuery(checkId);
 
   const methods = useForm<
@@ -95,6 +118,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       router.replace('/clients');
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to delete client.',
+        type: 'error',
+      });
     }
   }
 
@@ -107,6 +135,12 @@ export default function AddEditClient({ id }: { id?: string }) {
         phoneNumber: contact.phoneNumber === '' ? null : contact.phoneNumber,
       }));
     }
+
+    const filteredSocialMediaProfiles =
+      values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
+
+    const filteredPhoneNumbers =
+      values.phoneNumbers?.filter((item) => item.number) || [];
 
     if (values.dateOfBirth) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
@@ -126,6 +160,8 @@ export default function AddEditClient({ id }: { id?: string }) {
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
+          socialMediaProfiles: filteredSocialMediaProfiles,
+          phoneNumbers: filteredPhoneNumbers,
           id,
         };
 
@@ -168,7 +204,7 @@ export default function AddEditClient({ id }: { id?: string }) {
           return;
         } else {
           throw new Error(
-            `Failed to update a client profile 3: ${operationResult.messages[0].message}`
+            `Failed to update a client profile: ${operationResult.messages[0].message}`
           );
         }
       }
@@ -180,7 +216,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
     } catch (err) {
       console.log(err);
-      throw new Error(`Failed to update a client profile 2: ${err}`);
+
+      showSnackbar({
+        message: 'Sorry, there was an error updating this profile.',
+        type: 'error',
+      });
     }
   };
 
@@ -189,8 +229,36 @@ export default function AddEditClient({ id }: { id?: string }) {
 
     const { displayCaseManager, ...updatedClientInput } = data.clientProfile;
 
+    const existingSocialMediaProfiles =
+      data.clientProfile.socialMediaProfiles || [];
+
+    const updatedSocialMediaProfiles = defaultSocialMedias.map(
+      (defaultProfile) => {
+        const existingProfile = existingSocialMediaProfiles.find(
+          (profile) => profile.platform === defaultProfile.platform
+        );
+
+        if (existingProfile) {
+          const { __typename, ...cleanedProfile } = existingProfile;
+          return cleanedProfile;
+        }
+
+        return defaultProfile;
+      }
+    );
+
+    const existingPhoneNumbers = data.clientProfile.phoneNumbers?.map(
+      ({ __typename, ...rest }) => rest
+    );
+
+    const phoneNumberEmpyInput = [{ number: '', isPrimary: false }];
+
     const clientInput = {
       ...updatedClientInput,
+      socialMediaProfiles: updatedSocialMediaProfiles,
+      phoneNumbers: existingPhoneNumbers?.length
+        ? existingPhoneNumbers
+        : phoneNumberEmpyInput,
       user: {
         ...updatedClientInput.user,
       },
@@ -254,7 +322,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     scrollRef,
   };
 
-  if (loading)
+  if (loading) {
     return (
       <View
         style={{
@@ -267,14 +335,26 @@ export default function AddEditClient({ id }: { id?: string }) {
         <Loading size="large" />
       </View>
     );
+  }
 
-  if (error) throw new Error('Something went wrong. Please try again.');
+  if (error) {
+    console.error(error);
+
+    showSnackbar({
+      message: 'Something went wrong. Please try again.',
+      type: 'error',
+    });
+  }
 
   return (
     <FormProvider {...methods}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={{ flex: 1 }}>
-          <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+          <MainScrollContainer
+            ref={scrollRef}
+            bg={Colors.NEUTRAL_EXTRA_LIGHT}
+            keyboardAware={true}
+          >
             <PersonalInfo {...props} />
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />

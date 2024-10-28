@@ -2,13 +2,14 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import CityOfBirth from './CityOfBirth';
+import AdaAccommodation from './AdaAccommodation';
 import EyeColor from './EyeColor';
 import Gender from './Gender';
 import HairColor from './HairColor';
 import Height from './Height';
 import MaritalStatus from './MaritalStatus';
 import PhysicalDescription from './PhysicalDescription';
+import PlaceOfBirth from './PlaceOfBirth';
 import Pronoun from './Pronoun';
 import Race from './Race';
 
@@ -43,12 +44,13 @@ export default function DemographicInfo(props: IDemographicInfoProps) {
           <Gender />
           <Pronoun />
           <Race />
-          <CityOfBirth />
+          <PlaceOfBirth />
           <Height />
           <EyeColor />
           <HairColor />
           <MaritalStatus />
           <PhysicalDescription />
+          <AdaAccommodation />
         </View>
       )}
     </Accordion>

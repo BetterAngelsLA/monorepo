@@ -1,4 +1,5 @@
 import {
+  AdaAccommodationEnum,
   ClientDocumentNamespaceEnum,
   EyeColorEnum,
   GenderEnum,
@@ -7,10 +8,13 @@ import {
   LanguageEnum,
   LivingSituationEnum,
   MaritalStatusEnum,
+  PreferredCommunicationEnum,
   PronounEnum,
   RaceEnum,
   RelationshipTypeEnum,
   ServiceEnum,
+  ServiceRequestTypeEnum,
+  SocialMediaEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
 
@@ -204,4 +208,42 @@ export const enumDisplayServices: { [key in ServiceEnum]: string } = {
   [ServiceEnum.VaccinePassport]: 'Vaccine Passport',
   [ServiceEnum.Water]: 'Water',
   [ServiceEnum.Other]: 'Other',
+};
+
+export const enumDisplaySocialMedia: { [key in SocialMediaEnum]: string } = {
+  [SocialMediaEnum.Facebook]: 'Facebook',
+  [SocialMediaEnum.Instagram]: 'Instagram',
+  [SocialMediaEnum.Linkedin]: 'Linkedin',
+  [SocialMediaEnum.Snapchat]: 'Snapchat',
+  [SocialMediaEnum.Tiktok]: 'Tiktok',
+  [SocialMediaEnum.Twitter]: 'Twitter',
+  [SocialMediaEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayPreferredCommunication: {
+  [key in PreferredCommunicationEnum]: string;
+} = {
+  [PreferredCommunicationEnum.Call]: 'Call',
+  [PreferredCommunicationEnum.Email]: 'Email',
+  [PreferredCommunicationEnum.Facebook]: 'Facebook',
+  [PreferredCommunicationEnum.Instagram]: 'Instagram',
+  [PreferredCommunicationEnum.Linkedin]: 'Linkedin',
+  [PreferredCommunicationEnum.Text]: 'Text',
+  [PreferredCommunicationEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayServiceType: {
+  [key in ServiceRequestTypeEnum]: string;
+} = {
+  [ServiceRequestTypeEnum.Provided]: 'Provided',
+  [ServiceRequestTypeEnum.Requested]: 'Requested',
+};
+
+export const enumDisplayAdaAccommodationEnum: {
+  [key in AdaAccommodationEnum]: string;
+} = {
+  [AdaAccommodationEnum.Hearing]: 'Hearing',
+  [AdaAccommodationEnum.Mobility]: 'Mobility',
+  [AdaAccommodationEnum.Visual]: 'Visual',
+  [AdaAccommodationEnum.Other]: 'Other',
 };

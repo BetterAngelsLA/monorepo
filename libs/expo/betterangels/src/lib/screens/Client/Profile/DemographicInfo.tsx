@@ -7,6 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import {
+  enumDisplayAdaAccommodationEnum,
   enumDisplayEyeColor,
   enumDisplayHairColor,
   enumDisplayMaritalStatus,
@@ -54,7 +55,7 @@ export default function DemographicInfo(props: IProfileSectionProps) {
         enumDisplayRace[client?.clientProfile.race],
     },
     {
-      label: 'City of Birth',
+      label: 'Place of Birth',
       value: client?.clientProfile.placeOfBirth,
     },
     {
@@ -75,7 +76,6 @@ export default function DemographicInfo(props: IProfileSectionProps) {
         client?.clientProfile.hairColor &&
         enumDisplayHairColor[client?.clientProfile.hairColor],
     },
-
     {
       label: 'Marital Status',
       value:
@@ -116,6 +116,19 @@ export default function DemographicInfo(props: IProfileSectionProps) {
                   {client?.clientProfile.physicalDescription || ''}
                 </TextBold>
               </View>
+
+              {!!client?.clientProfile.adaAccommodation?.length && (
+                <View>
+                  <TextRegular mb="xs" size="sm">
+                    ADA Accommodation(s)
+                  </TextRegular>
+                  <TextBold size="sm">
+                    {client.clientProfile.adaAccommodation
+                      .map((key) => enumDisplayAdaAccommodationEnum[key])
+                      .join(', ')}
+                  </TextBold>
+                </View>
+              )}
             </View>
           </CardWrapper>
         </View>
