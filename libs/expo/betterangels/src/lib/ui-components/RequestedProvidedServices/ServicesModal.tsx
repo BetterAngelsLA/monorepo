@@ -60,7 +60,6 @@ export default function ServicesModal(props: IServicesModalProps) {
     }[]
   >([]);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-
   const [searchText, setSearchText] = useState('');
 
   const [deleteService] = useDeleteServiceRequestMutation();
