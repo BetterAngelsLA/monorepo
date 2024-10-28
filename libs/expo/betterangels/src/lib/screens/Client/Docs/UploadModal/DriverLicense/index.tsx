@@ -30,7 +30,6 @@ export default function DriverLicense({
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
 }) {
-  const [isCaLicense, setIsCaLicense] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [uploadingType, setUploadingType] = useState<'front' | 'back'>('front');
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
