@@ -1,4 +1,4 @@
-import { Control, RegisterOptions } from 'react-hook-form';
+import { Control } from 'react-hook-form';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
@@ -10,11 +10,10 @@ type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 type TContactAddress = {
   name: `contacts[${number}].mailingAddress`;
   control: Control<TForm, any>;
-  rules?: Pick<RegisterOptions, 'minLength'>;
 };
 
 export default function ContactAddress(props: TContactAddress) {
-  const { control, name, rules } = props;
+  const { control, name } = props;
 
   return (
     <AddressAutocomplete<TForm>

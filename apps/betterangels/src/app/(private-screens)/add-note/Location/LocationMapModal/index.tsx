@@ -131,8 +131,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       }
       setLocation(undefined);
 
-      let hello: google.maps.places.AutocompletePrediction | undefined;
-
       const placeResult = await getPlaceDetailsById({
         baseUrl,
         placeId: place.place_id,
