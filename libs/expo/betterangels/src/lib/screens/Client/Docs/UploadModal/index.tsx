@@ -210,7 +210,7 @@ export default function UploadModal(props: IUploadModalProps) {
               <TextBold size="lg">Upload Files</TextBold>
               <Pressable
                 accessible
-                accessibilityHint="closes the modal"
+                accessibilityHint="closes the Upload modal"
                 accessibilityRole="button"
                 accessibilityLabel="close"
                 onPress={closeModal}
@@ -261,7 +261,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="CA ID or CA Driver's License"
-                  accessibilityHint="goes to CA ID upload"
+                  accessibilityHint="opens CA Photo ID upload screen"
                 />
               </View>
               <View
@@ -298,7 +298,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="Other Photo ID (e.g., out of state)"
-                  accessibilityHint="goes to other photo ID upload"
+                  accessibilityHint="opens non-CA Photo ID upload screen"
                 />
               </View>
               <View
@@ -335,7 +335,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="Birth Certificate"
-                  accessibilityHint="goes to Birth Certificate upload"
+                  accessibilityHint="opens Birth Certificate upload screen"
                 />
               </View>
               <View
@@ -372,7 +372,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="SSN"
-                  accessibilityHint="goes to SSN upload"
+                  accessibilityHint="opens Social Security Card upload screen"
                 />
               </View>
             </View>
@@ -412,7 +412,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   variant="secondary"
                   title="Consent Forms"
-                  accessibilityHint="goes to consent forms upload"
+                  accessibilityHint="opens Consent Form upload screen"
                 />
               </View>
               <View
@@ -449,7 +449,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="HMIS Form"
-                  accessibilityHint="goes to hmis form upload"
+                  accessibilityHint="opens HMIS Form upload screen"
                 />
               </View>
               <View
@@ -486,7 +486,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="Income Forms (pay stubs)"
-                  accessibilityHint="goes to Income forms upload"
+                  accessibilityHint="opens Income Form upload screen"
                 />
               </View>
             </View>
