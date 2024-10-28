@@ -1,4 +1,6 @@
 import { CardWrapper } from '@monorepo/expo/shared/ui-components';
+import { Picker } from '@react-native-picker/picker';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   CreateClientProfileInput,
@@ -17,6 +19,8 @@ export default function ResidenceAddress() {
     setValue(FIELD_NAME, '');
   };
 
+  const [selectedLanguage, setSelectedLanguage] = useState('java');
+
   return (
     <CardWrapper onReset={onReset} title="Residence Address">
       <AddressAutocomplete<TForm>
@@ -24,6 +28,16 @@ export default function ResidenceAddress() {
         control={control}
         placeholder="Enter residence address"
       />
+
+      <Picker
+        selectedValue={selectedLanguage}
+        onValueChange={(itemValue: string, itemIndex: number) =>
+          setSelectedLanguage(itemValue)
+        }
+      >
+        <Picker.Item label="Java" value="java" />
+        <Picker.Item label="JavaScript" value="js" />
+      </Picker>
     </CardWrapper>
   );
 }
