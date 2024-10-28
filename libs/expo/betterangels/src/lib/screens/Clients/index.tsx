@@ -187,7 +187,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setClients({});
           }}
         />
-        {search && !loading && sections.length < 1 && (
+        {search && !loading && sections.length < 1 ? (
           <View
             style={{
               flexGrow: 1,
@@ -215,43 +215,44 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               Try searching for something else.
             </TextRegular>
           </View>
+        ) : (
+          <SectionList
+            style={{
+              flex: 1,
+            }}
+            sections={sections}
+            renderItem={({ item: clientProfile }) =>
+              clients ? (
+                <ClientCard
+                  client={clientProfile}
+                  arrivedFrom="/clients"
+                  select={select as string}
+                  onPress={() => {
+                    if (select === 'true') {
+                      createNoteFunction(
+                        clientProfile.user.id,
+                        clientProfile.user.firstName
+                      );
+                    } else {
+                      setCurrentClient(clientProfile);
+                      setModalIsOpen(true);
+                    }
+                  }}
+                  mb="sm"
+                />
+              ) : null
+            }
+            renderSectionHeader={({ section: { title } }) => (
+              <TextBold mb="xs" size="sm">
+                {title}
+              </TextBold>
+            )}
+            keyExtractor={(clientProfile) => clientProfile.id}
+            onEndReached={loadMoreClients}
+            onEndReachedThreshold={0.05}
+            ListFooterComponent={renderFooter}
+          />
         )}
-        <SectionList
-          style={{
-            flex: 1,
-          }}
-          sections={sections}
-          renderItem={({ item: clientProfile }) =>
-            clients ? (
-              <ClientCard
-                client={clientProfile}
-                arrivedFrom="/clients"
-                select={select as string}
-                onPress={() => {
-                  if (select === 'true') {
-                    createNoteFunction(
-                      clientProfile.user.id,
-                      clientProfile.user.firstName
-                    );
-                  } else {
-                    setCurrentClient(clientProfile);
-                    setModalIsOpen(true);
-                  }
-                }}
-                mb="sm"
-              />
-            ) : null
-          }
-          renderSectionHeader={({ section: { title } }) => (
-            <TextBold mb="xs" size="sm">
-              {title}
-            </TextBold>
-          )}
-          keyExtractor={(clientProfile) => clientProfile.id}
-          onEndReached={loadMoreClients}
-          onEndReachedThreshold={0.05}
-          ListFooterComponent={renderFooter}
-        />
       </View>
       <ClientCardModal
         isModalVisible={modalIsOpen}
