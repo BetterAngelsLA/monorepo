@@ -1,5 +1,3 @@
-from collections import UserList
-
 from accounts.views.auth_views import AppleLogin, AuthRedirectView, GoogleLogin
 from accounts.views.class_views import (
     ClientProfileList,
@@ -12,6 +10,7 @@ from accounts.views.class_views import (
 from django.urls import include, path
 from organizations.backends import invitation_backend
 from sesame.views import LoginView
+from waffle.decorators import waffle_flag
 
 urlpatterns = [
     path("google-oauth-homepage/", GoogleOauthHomePage.as_view()),
@@ -28,6 +27,14 @@ urlpatterns = [
     # django-organizations
     path("accounts/", include("organizations.urls")),
     path("invitations/", include(invitation_backend().get_urls())),
-    path("users/", UserListView.as_view(), name="user-list"),
-    path("client-profiles/", ClientProfileList.as_view(), name="client-profile-list"),
+    path(
+        "users/",
+        waffle_flag("fetching_active_clients_flag")(UserListView.as_view()),
+        name="user-list",
+    ),
+    path(
+        "client-profiles/",
+        waffle_flag("fetching_active_clients_flag")(ClientProfileList.as_view()),
+        name="client-profile-list",
+    ),
 ]
