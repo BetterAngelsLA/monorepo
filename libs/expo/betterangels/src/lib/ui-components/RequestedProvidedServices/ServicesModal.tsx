@@ -60,7 +60,6 @@ export default function ServicesModal(props: IServicesModalProps) {
     }[]
   >([]);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-
   const [searchText, setSearchText] = useState('');
 
   const [deleteService] = useDeleteServiceRequestMutation();
@@ -232,7 +231,6 @@ export default function ServicesModal(props: IServicesModalProps) {
   const hasResults = filteredServices.some(
     (category) => category.items.length > 0
   );
-
   return (
     <Modal
       mt={Spacings.sm}
