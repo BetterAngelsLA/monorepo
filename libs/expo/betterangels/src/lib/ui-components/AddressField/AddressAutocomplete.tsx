@@ -6,8 +6,8 @@ import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import {
   TPlaceResult,
   TPlacesPrediction,
+  getPlaceAutocomplete,
   getPlaceDetailsById,
-  searchPlacesLA,
 } from '../../services';
 import { AddressOption } from './AddressOption';
 
@@ -50,7 +50,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
       try {
-        const result = await searchPlacesLA({ baseUrl, query });
+        const result = await getPlaceAutocomplete({ baseUrl, query });
 
         setPredictions(result);
       } catch (e) {

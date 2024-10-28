@@ -2,8 +2,8 @@ import {
   TMapView,
   TPlaceLatLng,
   TPlacesPrediction,
+  getPlaceAutocomplete,
   getPlaceDetailsById,
-  searchPlacesLA,
   useUpdateNoteLocationMutation,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
@@ -111,7 +111,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (query.length < 3) return;
 
     try {
-      const predictions = await searchPlacesLA({
+      const predictions = await getPlaceAutocomplete({
         baseUrl,
         query,
       });
