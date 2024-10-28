@@ -102,7 +102,7 @@ export const GET_NOTE = gql`
         firstName
         lastName
         clientProfile {
-          pk
+          id: pk
         }
       }
       createdBy {
