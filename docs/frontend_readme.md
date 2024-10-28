@@ -19,7 +19,11 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Setup:**
 
-Run the following on the host machine (not in the container):
+Run the following on the host machine—**not in the container**:
+
+> [!WARNING]
+> If you run the following commands inside the Docker container, they will not function  
+> correctly. Use your **System Terminal** instead.
 
 1. Install [NVM](https://github.com/nvm-sh/nvm)
 
@@ -105,7 +109,7 @@ Run the following on the host machine (not in the container):
    Start the Outreach app
 
    ```bash
-   yarn nx start betterangels
+   yarn nx run betterangels:start
    ```
 
    Start the Shelter app
