@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { LA_CENTER_LAT_LNG } from './constants.google.maps';
+import { LA_COUNTY_CENTER } from './constants.google.maps';
 import { TPlaceLatLng, TPlacesPrediction } from './types';
 
 type TgetPlaceAutocomplete = {
@@ -14,7 +14,7 @@ export async function getPlaceAutocomplete(props: TgetPlaceAutocomplete) {
   const {
     baseUrl,
     query,
-    boundsCenter = LA_CENTER_LAT_LNG,
+    boundsCenter = LA_COUNTY_CENTER,
     boundsRadiusMiles = 10,
   } = props;
 
