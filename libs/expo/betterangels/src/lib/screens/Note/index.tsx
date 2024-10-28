@@ -4,18 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ViewNoteQuery, useViewNoteQuery } from '../../apollo';
+import { useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
-
-const hasServices = (note: ViewNoteQuery['note']) => {
-  return (
-    note?.providedServices?.length > 0 || note?.requestedServices?.length > 0
-  );
-};
 
 export default function Note({
   id,
@@ -77,8 +71,11 @@ export default function Note({
       <View style={styles.container}>
         <NoteTitle note={data?.note} />
         {data?.note.location?.point && <NoteLocation note={data?.note} />}
-        {data?.note && hasServices(data.note) && (
-          <NoteServices note={data?.note} />
+        {!!data?.note.providedServices.length && (
+          <NoteServices type="providedServices" data={data} />
+        )}
+        {!!data?.note.requestedServices.length && (
+          <NoteServices type="requestedServices" data={data} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data?.note} />}
       </View>
