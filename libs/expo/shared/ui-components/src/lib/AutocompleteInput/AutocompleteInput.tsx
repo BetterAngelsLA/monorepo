@@ -2,7 +2,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 import BasicInput from '../BasicInput';
 
-const DEFAULT_VISIBLE_RESULTS = 5;
+const DEFAULT_MAX_RESULTS = 10;
 
 type TAutocompleteInput<T> = {
   value?: string;
@@ -28,7 +28,7 @@ export function AutocompleteInput<T>(props: TAutocompleteInput<T>) {
     placeholder,
     label,
     renderItem,
-    maxResults = DEFAULT_VISIBLE_RESULTS,
+    maxResults = DEFAULT_MAX_RESULTS,
   } = props;
 
   const visiblePredictions = (predictions || []).slice(0, maxResults);

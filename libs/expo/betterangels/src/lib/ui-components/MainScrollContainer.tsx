@@ -3,15 +3,6 @@ import { ReactNode, forwardRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
-const bottomActionsHeight = 89;
-const iOSKeyboardToolbarHeight = 44;
-const androidKeyboardToolbarHeight = 48;
-
-const keyboardToolbarHeight =
-  Platform.OS === 'ios'
-    ? iOSKeyboardToolbarHeight
-    : androidKeyboardToolbarHeight;
-
 interface IMainScrollContainerProps {
   children: ReactNode;
   bg?: string;
@@ -32,15 +23,12 @@ const MainScrollContainer = forwardRef<ScrollView, IMainScrollContainerProps>(
       children,
     } = props;
 
-    const toolbarHeight = bottomActionsHeight + keyboardToolbarHeight;
-
     const ViewContainer = keyboardAware ? KeyboardAwareScrollView : ScrollView;
 
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={toolbarHeight}
       >
         <ViewContainer
           ref={ref}
