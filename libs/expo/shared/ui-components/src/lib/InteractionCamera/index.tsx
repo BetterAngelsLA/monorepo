@@ -1,5 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { CameraIcon } from '@monorepo/expo/shared/icons';
 import { useCameraPermissions } from 'expo-camera';
 import { Dispatch, SetStateAction, useState } from 'react';
