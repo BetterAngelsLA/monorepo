@@ -1,4 +1,4 @@
-import { SearchIcon } from '@monorepo/expo/shared/icons';
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -228,6 +228,9 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServices(newInitialServices);
   }, [initialServices]);
 
+  const hasResults = filteredServices.some(
+    (category) => category.items.length > 0
+  );
   return (
     <Modal
       mt={Spacings.sm}
@@ -266,24 +269,49 @@ export default function ServicesModal(props: IServicesModalProps) {
             placeholder="Search a service"
             icon={<SearchIcon color={Colors.NEUTRAL} />}
           />
-          {filteredServices.map((service) =>
-            service.items.length > 0 ? (
-              <View key={service.title}>
-                <TextBold mb="xs">{service.title}</TextBold>
-                {service.items.map((item, idx) => {
-                  return (
-                    <ServiceCheckbox
-                      key={item}
-                      services={services}
-                      setServices={setServices}
-                      service={item}
-                      idx={idx}
-                    />
-                  );
-                })}
+          {hasResults ? (
+            filteredServices.map((service) =>
+              service.items.length > 0 ? (
+                <View key={service.title}>
+                  <TextBold mb="xs">{service.title}</TextBold>
+                  {service.items.map((item, idx) => {
+                    return (
+                      <ServiceCheckbox
+                        key={item}
+                        services={services}
+                        setServices={setServices}
+                        service={item}
+                        idx={idx}
+                      />
+                    );
+                  })}
+                </View>
+              ) : null
+            )
+          ) : (
+            <View style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  height: 90,
+                  width: 90,
+                  backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                  borderRadius: 100,
+                  marginBottom: Spacings.md,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileSearchIcon size="2xl" />
               </View>
-            ) : null
+              <TextBold mb="xs" size="sm">
+                No Results
+              </TextBold>
+              <TextRegular size="sm">
+                Try searching for something else.
+              </TextRegular>
+            </View>
           )}
+
           <View>
             <TextBold>Other</TextBold>
             <OtherCategory
