@@ -1,5 +1,7 @@
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BasicInput,
   Button,
   TextBold,
   TextRegular,
@@ -57,10 +59,23 @@ export default function ServicesModal(props: IServicesModalProps) {
       markedForDeletion?: boolean;
     }[]
   >([]);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const [deleteService] = useDeleteServiceRequestMutation();
   const [createService] = useCreateNoteServiceRequestMutation();
   const { showSnackbar } = useSnackbar();
+
+  const handleFilter = (text: string) => {
+    setSearchText(text);
+  };
+
+  const filteredServices = ServicesByCategory.map((category) => ({
+    ...category,
+    items: category.items.filter((item) =>
+      item.toLowerCase().includes(searchText.toLowerCase())
+    ),
+  }));
 
   const reset = async () => {
     try {
@@ -81,6 +96,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   const submitServices = async () => {
+    setIsSubmitLoading(true);
     const toCreateOtherServices = serviceOthers.filter(
       (service) =>
         service.title !== null && !service.id && !service.markedForDeletion
@@ -174,6 +190,8 @@ export default function ServicesModal(props: IServicesModalProps) {
         message: 'Sorry, there was an error updating the services.',
         type: 'error',
       });
+    } finally {
+      setIsSubmitLoading(false);
     }
   };
 
@@ -210,6 +228,9 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServices(newInitialServices);
   }, [initialServices]);
 
+  const hasResults = filteredServices.some(
+    (category) => category.items.length > 0
+  );
   return (
     <Modal
       mt={Spacings.sm}
@@ -233,26 +254,64 @@ export default function ServicesModal(props: IServicesModalProps) {
           }}
           style={{ paddingHorizontal: Spacings.md }}
         >
-          <TextBold>Services</TextBold>
-          <TextRegular mt="xxs" mb="sm">
-            Select the services to your client in this interaction.
-          </TextRegular>
-          {ServicesByCategory.map((service) => (
-            <View key={service.title}>
-              <TextBold mb="xs">{service.title}</TextBold>
-              {service.items.map((item, idx) => {
-                return (
-                  <ServiceCheckbox
-                    key={item}
-                    services={services}
-                    setServices={setServices}
-                    service={item}
-                    idx={idx}
-                  />
-                );
-              })}
+          <View>
+            <TextBold size="lg">
+              {type === 'PROVIDED' ? 'Provided Services' : 'Requested Services'}
+            </TextBold>
+            <TextRegular mt="xxs" mb="sm">
+              Select the services to your client in this interaction.
+            </TextRegular>
+          </View>
+          <BasicInput
+            value={searchText}
+            onDelete={() => setSearchText('')}
+            onChangeText={handleFilter}
+            placeholder="Search a service"
+            icon={<SearchIcon color={Colors.NEUTRAL} />}
+          />
+          {hasResults ? (
+            filteredServices.map((service) =>
+              service.items.length > 0 ? (
+                <View key={service.title}>
+                  <TextBold mb="xs">{service.title}</TextBold>
+                  {service.items.map((item, idx) => {
+                    return (
+                      <ServiceCheckbox
+                        key={item}
+                        services={services}
+                        setServices={setServices}
+                        service={item}
+                        idx={idx}
+                      />
+                    );
+                  })}
+                </View>
+              ) : null
+            )
+          ) : (
+            <View style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  height: 90,
+                  width: 90,
+                  backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                  borderRadius: 100,
+                  marginBottom: Spacings.md,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileSearchIcon size="2xl" />
+              </View>
+              <TextBold mb="xs" size="sm">
+                No Results
+              </TextBold>
+              <TextRegular size="sm">
+                Try searching for something else.
+              </TextRegular>
             </View>
-          ))}
+          )}
+
           <View>
             <TextBold>Other</TextBold>
             <OtherCategory
@@ -293,6 +352,8 @@ export default function ServicesModal(props: IServicesModalProps) {
         </View>
         <View style={{ flex: 1 }}>
           <Button
+            disabled={isSubmitLoading}
+            loading={isSubmitLoading}
             onPress={submitServices}
             size="full"
             variant="primary"
