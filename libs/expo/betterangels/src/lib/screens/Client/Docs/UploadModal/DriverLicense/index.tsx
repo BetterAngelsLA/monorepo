@@ -9,7 +9,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { Image, Pressable, Switch, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
 import {
   ClientProfileDocument,
@@ -45,7 +45,7 @@ export default function DriverLicense({
   });
 
   const uploadDocument = async () => {
-    if (!docs?.DriversLicenseFront || !docs.DriversLicenseBack || !client) {
+    if (!docs?.DriversLicenseFront || !client) {
       return;
     }
     const fileToUploadFront = new ReactNativeFile({
@@ -54,23 +54,26 @@ export default function DriverLicense({
       name: docs.DriversLicenseFront.name,
     });
 
-    const fileToUploadBack = new ReactNativeFile({
-      uri: docs.DriversLicenseBack.uri,
-      type: docs.DriversLicenseBack.type,
-      name: docs.DriversLicenseBack.name,
-    });
-
-    try {
-      await Promise.all([
-        createDocument({
-          variables: {
-            data: {
-              file: fileToUploadFront,
-              clientProfile: client.clientProfile.id,
-              namespace: ClientDocumentNamespaceEnum.DriversLicenseFront,
-            },
+    const filesToUpload = [
+      createDocument({
+        variables: {
+          data: {
+            file: fileToUploadFront,
+            clientProfile: client.clientProfile.id,
+            namespace: ClientDocumentNamespaceEnum.DriversLicenseFront,
           },
-        }),
+        },
+      }),
+    ];
+
+    if (docs.DriversLicenseBack) {
+      const fileToUploadBack = new ReactNativeFile({
+        uri: docs.DriversLicenseBack.uri,
+        type: docs.DriversLicenseBack.type,
+        name: docs.DriversLicenseBack.name,
+      });
+
+      filesToUpload.push(
         createDocument({
           variables: {
             data: {
@@ -79,9 +82,12 @@ export default function DriverLicense({
               namespace: ClientDocumentNamespaceEnum.DriversLicenseBack,
             },
           },
-        }),
-      ]);
+        })
+      );
+    }
 
+    try {
+      await Promise.all(filesToUpload);
       setTab(undefined);
     } catch (err) {
       console.error('error uploading driver license', err);
@@ -106,8 +112,7 @@ export default function DriverLicense({
     <>
       <Section
         loading={loading}
-        title="Upload Driver's License"
-        subtitle="You need to upload front and back of the license."
+        title="Upload CA ID or CA Driver’s License"
         onSubmit={uploadDocument}
         onCancel={() => {
           setDocs({
@@ -118,23 +123,6 @@ export default function DriverLicense({
           setTab(undefined);
         }}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: Spacings.md,
-            paddingBottom: Spacings.sm,
-            marginBottom: Spacings.sm,
-          }}
-        >
-          <TextRegular>Is this a CA Driver's License?</TextRegular>
-
-          <Switch
-            value={isCaLicense}
-            onChange={() => setIsCaLicense(!isCaLicense)}
-          />
-        </View>
         <View
           style={{
             padding: Spacings.sm,
