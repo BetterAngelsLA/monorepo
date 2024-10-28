@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.PRIMARY_EXTRA_DARK,
     height: Spacings.sm,
     width: Spacings.sm,
+    backgroundColor: Colors.WHITE,
   },
   radioLabel: {
     color: Colors.WHITE,
