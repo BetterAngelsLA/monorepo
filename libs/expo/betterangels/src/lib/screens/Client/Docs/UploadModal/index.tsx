@@ -49,7 +49,7 @@ export default function UploadModal(props: IUploadModalProps) {
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.PhotoId}
         docType="DriversLicenseFront"
-        title="Upload CA ID or CA Driver’s License (front)"
+        title="Upload CA ID or CA Driver’s License - Front"
         {...docProps}
       />
     ),
@@ -57,7 +57,7 @@ export default function UploadModal(props: IUploadModalProps) {
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.PhotoId}
         docType="DriversLicenseBack"
-        title="Upload CA ID or CA Driver’s License (back)"
+        title="Upload CA ID or CA Driver’s License - Back"
         {...docProps}
       />
     ),
@@ -272,8 +272,8 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   size="full"
                   variant="secondary"
-                  title="CA ID or CA Driver's License (front)"
-                  accessibilityHint="opens CA Photo ID (front) upload screen"
+                  title="CA ID or CA Driver's License - Front"
+                  accessibilityHint="opens CA Photo ID front upload screen"
                 />
               </View>
               <View
@@ -309,8 +309,8 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   size="full"
                   variant="secondary"
-                  title="CA ID or CA Driver's License (back)"
-                  accessibilityHint="opens CA Photo ID (back) upload screen"
+                  title="CA ID or CA Driver's License - Back"
+                  accessibilityHint="opens CA Photo ID back upload screen"
                 />
               </View>
               <View
