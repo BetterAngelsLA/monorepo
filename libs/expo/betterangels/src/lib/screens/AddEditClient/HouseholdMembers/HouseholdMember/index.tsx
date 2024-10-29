@@ -73,7 +73,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
             value: enumValue,
           })
         )}
-        setSelecetValue={(e) =>
+        setSelectedValueValue={(e) =>
           setValue(
             `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
             e as RelationshipTypeEnum
