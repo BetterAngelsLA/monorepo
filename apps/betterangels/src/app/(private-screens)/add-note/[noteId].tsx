@@ -197,7 +197,7 @@ export default function AddNote() {
     refetch,
   };
   const getClientProfileUrl = (clientProfileId: string | undefined) =>
-    `/client/${clientProfileId}`;
+    clientProfileId ? `/client/${clientProfileId}` : '/';
 
   async function submitNote() {
     if (Object.values(errors).some((error) => error)) {
