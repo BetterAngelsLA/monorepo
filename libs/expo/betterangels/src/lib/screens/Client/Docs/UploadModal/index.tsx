@@ -17,7 +17,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import DriversLicense from './DriverLicense';
+// import DriversLicense from './DriverLicense';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
@@ -45,7 +45,22 @@ export default function UploadModal(props: IUploadModalProps) {
   };
 
   const TABS = {
-    DriversLicense: <DriversLicense {...docProps} />,
+    DriversLicenseFront: (
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.PhotoId}
+        docType="DriversLicenseFront"
+        title="Upload CA ID or CA Driver’s License (front)"
+        {...docProps}
+      />
+    ),
+    DriversLicenseBack: (
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.PhotoId}
+        docType="DriversLicenseBack"
+        title="Upload CA ID or CA Driver’s License (back)"
+        {...docProps}
+      />
+    ),
     BirthCertificate: (
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.BirthCertificate}
@@ -224,7 +239,7 @@ export default function UploadModal(props: IUploadModalProps) {
             </TextRegular>
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
               <TextBold>Doc-Ready</TextBold>
-              <View
+              {/* <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -262,6 +277,43 @@ export default function UploadModal(props: IUploadModalProps) {
                   variant="secondary"
                   title="CA ID or CA Driver's License"
                   accessibilityHint="opens CA Photo ID upload screen"
+                />
+              </View> */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    height: 20,
+                    width: 20,
+                    borderRadius: Radiuses.xxxl,
+                    backgroundColor: docs.DriversLicenseFront
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
+                    marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {!!docs.DriversLicenseFront && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
+
+                <Button
+                  disabled={!!docs.DriversLicenseFront}
+                  containerStyle={{ flex: 1 }}
+                  onPress={() => setTab('DriversLicenseFront')}
+                  height="md"
+                  align="flex-start"
+                  weight="regular"
+                  size="full"
+                  variant="secondary"
+                  title="CA ID or CA Driver's License (front)"
+                  accessibilityHint="opens CA Photo ID (front) upload screen"
                 />
               </View>
               <View
