@@ -101,6 +101,9 @@ export const GET_NOTE = gql`
         email
         firstName
         lastName
+        clientProfile {
+          id: pk
+        }
       }
       createdBy {
         id
