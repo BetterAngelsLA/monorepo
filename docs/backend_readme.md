@@ -32,6 +32,8 @@ The betterangels_backend is built on Django, a Python web framework. It also uti
    poetry install
    ```
 
+1. Add/Update `.env.local` file in the `apps/betterangels-backend` project to manage `local-only` environment variables.
+
 ### Running the Backend
 
 #### Starting Django
