@@ -155,6 +155,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   }, [data, offset]);
 
   const sections = useMemo(() => Object.values(clients || {}), [clients]);
+  const hasClients = !loading && !!sections.length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -187,7 +188,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setClients({});
           }}
         />
-        {search && !loading && sections.length < 1 ? (
+        {search && !hasClients && (
           <View
             style={{
               flexGrow: 1,
@@ -215,7 +216,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               Try searching for something else.
             </TextRegular>
           </View>
-        ) : (
+        )}
+        {hasClients && (
           <SectionList
             style={{
               flex: 1,
