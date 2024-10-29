@@ -1,7 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Input,
-  Select,
+  Picker,
   TextBold,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
@@ -66,25 +66,41 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
 
   if (!relationship) {
     return (
-      <Select
-        boldLabel
-        labelMarginLeft="xs"
-        label="Type of Relationship"
-        placeholder="Select Relationship"
-        defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
-        onValueChange={(enumValue) =>
-          setValue(
-            `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-            enumValue as RelationshipTypeEnum
-          )
-        }
+      <Picker
         items={Object.entries(clientHouseholdMemberEnumDisplay).map(
           ([enumValue, displayValue]) => ({
-            displayValue: displayValue,
+            label: displayValue,
             value: enumValue,
           })
         )}
+        setSelecetValue={(e) =>
+          setValue(
+            `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
+            e as RelationshipTypeEnum
+          )
+        }
+        placeholder="Select Relationship"
+        value={relationship}
       />
+      // <Select
+      //   boldLabel
+      //   labelMarginLeft="xs"
+      //   label="Type of Relationship"
+      //   placeholder="Select Relationship"
+      //   defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
+      //   onValueChange={(enumValue) =>
+      //     setValue(
+      //       `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
+      //       enumValue as RelationshipTypeEnum
+      //     )
+      //   }
+      //   items={Object.entries(clientHouseholdMemberEnumDisplay).map(
+      //     ([enumValue, displayValue]) => ({
+      //       displayValue: displayValue,
+      //       value: enumValue,
+      //     })
+      //   )}
+      // />
     );
   }
 
