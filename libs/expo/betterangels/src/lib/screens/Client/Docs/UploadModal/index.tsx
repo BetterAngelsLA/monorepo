@@ -239,46 +239,6 @@ export default function UploadModal(props: IUploadModalProps) {
             </TextRegular>
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
               <TextBold>Doc-Ready</TextBold>
-              {/* <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor:
-                      !!docs.DriversLicenseFront && !!docs.DriversLicenseBack
-                        ? Colors.SUCCESS
-                        : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.DriversLicenseFront && !!docs.DriversLicenseBack && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={
-                    !!docs.DriversLicenseFront && !!docs.DriversLicenseBack
-                  }
-                  containerStyle={{ flex: 1 }}
-                  weight="regular"
-                  onPress={() => setTab('DriversLicense')}
-                  height="md"
-                  align="flex-start"
-                  size="full"
-                  variant="secondary"
-                  title="CA ID or CA Driver's License"
-                  accessibilityHint="opens CA Photo ID upload screen"
-                />
-              </View> */}
               <View
                 style={{
                   flexDirection: 'row',
