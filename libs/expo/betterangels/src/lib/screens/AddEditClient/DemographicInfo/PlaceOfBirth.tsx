@@ -5,16 +5,16 @@ import {
   UpdateClientProfileInput,
 } from '../../../apollo';
 
-export default function CityOfBirth() {
+export default function PlaceOfBirth() {
   const { control } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
   return (
-    <CardWrapper title="City of Birth">
+    <CardWrapper title="Place of Birth">
       <Input
         name="placeOfBirth"
-        placeholder="Enter City of Birth"
+        placeholder="Enter Place of Birth"
         control={control}
       />
     </CardWrapper>
