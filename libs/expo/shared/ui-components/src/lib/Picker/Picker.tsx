@@ -10,6 +10,7 @@ interface IPickerProps {
 
 export default function Picker(props: IPickerProps) {
   const { setSelectedValueValue, error, value, placeholder, items } = props;
+  console.log(error);
 
   return (
     <RNPicker
