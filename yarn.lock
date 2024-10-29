@@ -2471,9 +2471,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/fingerprint@npm:^0.10.2":
-  version: 0.10.2
-  resolution: "@expo/fingerprint@npm:0.10.2"
+"@expo/fingerprint@npm:>=0.11.1":
+  version: 0.11.1
+  resolution: "@expo/fingerprint@npm:0.11.1"
   dependencies:
     "@expo/spawn-async": "npm:^1.7.2"
     chalk: "npm:^4.1.2"
@@ -2485,7 +2485,7 @@ __metadata:
     semver: "npm:^7.6.0"
   bin:
     fingerprint: bin/cli.js
-  checksum: 10/639f95e02814f76009399421d182097646296a9dbefeec6f3c14f52d55da4153655ed89d1176aea93b690a73c913138e12327bd3bf393ca71fdb144815590522
+  checksum: 10/94d30b1a12f23787b3102223de21b67cd2bfa127f7754661210bcb9e913eef68680ab8caf7a1f68e8774afd58db3d21c6217a9f8999c919795cf2cdf8901c443
   languageName: node
   linkType: hard
 
