@@ -50,16 +50,16 @@ export default function PersonalInfo(props: IProfileSectionProps) {
       value: client?.clientProfile.dateOfBirth,
     },
     {
-      label: 'Veteran Status',
-      value:
-        client?.clientProfile.veteranStatus &&
-        enumDisplayYesNoPreferNot[client.clientProfile.veteranStatus],
-    },
-    {
       label: 'Preferred Language',
       value:
         client?.clientProfile.preferredLanguage &&
         enumDisplayLanguage[client.clientProfile.preferredLanguage],
+    },
+    {
+      label: 'Veteran Status',
+      value:
+        client?.clientProfile.veteranStatus &&
+        enumDisplayYesNoPreferNot[client.clientProfile.veteranStatus],
     },
   ];
 
