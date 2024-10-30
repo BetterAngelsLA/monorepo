@@ -131,6 +131,22 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
 
+      - name: 🔧 Combine Android and iOS Fingerprints and Set EXPO_PUBLIC_RUNTIME_VERSION
+        run: |
+          # Combine the Android and iOS fingerprints
+          combined_fingerprints="${{ steps.continuous_deploy.outputs.android-fingerprint }}${{ steps.continuous_deploy.outputs.ios-fingerprint }}"
+
+          # Take a hash of the combined fingerprints
+          EXPO_PUBLIC_RUNTIME_VERSION=$(echo -n "$combined_fingerprints" | sha256sum | awk '{print $1}')
+
+          # Set the RUNTIME_VERSION environment variable
+          echo "EXPO_PUBLIC_RUNTIME_VERSION=$EXPO_PUBLIC_RUNTIME_VERSION" >> $GITHUB_ENV
+
+          # Write the RUNTIME_VERSION to the .env file
+          echo "EXPO_PUBLIC_RUNTIME_VERSION=$EXPO_PUBLIC_RUNTIME_VERSION" >> .env
+
+        working-directory: apps/${{ matrix.project }}
+
       - name: 🚀 Continuously Deploy
         id: continuous_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
@@ -286,6 +302,22 @@ jobs:
           done <<< "$secrets"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        working-directory: apps/${{ matrix.project }}
+
+      - name: 🔧 Combine Android and iOS Fingerprints and Set EXPO_PUBLIC_RUNTIME_VERSION
+        run: |
+          # Combine the Android and iOS fingerprints
+          combined_fingerprints="${{ steps.continuous_deploy.outputs.android-fingerprint }}${{ steps.continuous_deploy.outputs.ios-fingerprint }}"
+
+          # Take a hash of the combined fingerprints
+          EXPO_PUBLIC_RUNTIME_VERSION=$(echo -n "$combined_fingerprints" | sha256sum | awk '{print $1}')
+
+          # Set the RUNTIME_VERSION environment variable
+          echo "EXPO_PUBLIC_RUNTIME_VERSION=$EXPO_PUBLIC_RUNTIME_VERSION" >> $GITHUB_ENV
+
+          # Write the RUNTIME_VERSION to the .env file
+          echo "EXPO_PUBLIC_RUNTIME_VERSION=$EXPO_PUBLIC_RUNTIME_VERSION" >> .env
+
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy

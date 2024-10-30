@@ -127,8 +127,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: {
-      policy: 'fingerprint',
-    },
+    runtimeVersion: process.env.EXPO_PUBLIC_RUNTIME_VERSION || 'local',
   },
 };
