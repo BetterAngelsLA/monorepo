@@ -117,6 +117,7 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      'expo-secure-store',
     ],
     extra: {
       router: {
