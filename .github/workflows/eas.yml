@@ -8,72 +8,70 @@ on:
       - main
 
 jobs:
-  # prepare:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     actions: read # Required to find the last successful workflow run
-  #     contents: read # Required for actions/checkout
-  #   steps:
-  #     - name: 🏗 Check out repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-  #     # This line is needed for nx affected to work when CI is running on a PR
-  #     - name: 🔀 Track main if PR
-  #       if: github.ref != 'refs/heads/main'
-  #       run: git branch --track main origin/main
+      # This line is needed for nx affected to work when CI is running on a PR
+      - name: 🔀 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
 
-  #     - name: 🔧 Configure NX SHAs
-  #       uses: nrwl/nx-set-shas@v4
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
 
-  #     - name: 🔧 Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20.12.2
-  #     - run: |
-  #         corepack enable
-  #     - name: Setup Yarn in Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         cache: 'yarn'
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+      - run: |
+          corepack enable
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
-  #     - name: 📦 Install dependencies
-  #       run: yarn install
+      - name: 📦 Install dependencies
+        run: yarn install
 
-  #     - name: 🧩 Determine Affected Projects for eas-update
-  #       id: set-matrix
-  #       run: |
-  #         # Get the list of affected projects with eas-update target
-  #         affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
-  #         # Convert the list to a JSON matrix
-  #         MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
-  #           split("\n") |
-  #           map(select(. != "")) |
-  #           if length == 0 then
-  #               {}
-  #           else
-  #               {include: map({project: .})}
-  #           end'
-  #         )
-  #         IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
-  #         echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
-  #         echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+      - name: 🧩 Determine Affected Projects for eas-update
+        id: set-matrix
+        run: |
+          # Get the list of affected projects with eas-update target
+          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
+          # Convert the list to a JSON matrix
+          MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
+            split("\n") |
+            map(select(. != "")) |
+            if length == 0 then
+                {}
+            else
+                {include: map({project: .})}
+            end'
+          )
+          IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
+          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-  #   outputs:
-  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
-  #     is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   preview:
-    # needs: prepare
+    needs: prepare
     environment: preview
     runs-on: ubuntu-latest
-    # if: needs.prepare.outputs.is_matrix_empty == 'false'
+    if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
-      # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-      matrix:
-        project: ['betterangels']
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
       # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
@@ -138,20 +136,19 @@ jobs:
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: preview
-          platform: android
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
-      # - name: 🍏 Apple Simulator Build
-      #   if: github.ref != 'refs/heads/main'
-      #   working-directory: apps/${{ matrix.project }}
-      #   run: |
-      #     build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
-      #     if [ "${build_list_output}" == "[]" ]; then
-      #       eas build --profile development-simulator --platform ios --non-interactive --no-wait
-      #     else
-      #       echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
-      #     fi
+      - name: 🍏 Apple Simulator Build
+        if: github.ref != 'refs/heads/main'
+        working-directory: apps/${{ matrix.project }}
+        run: |
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          if [ "${build_list_output}" == "[]" ]; then
+            eas build --profile development-simulator --platform ios --non-interactive --no-wait
+          else
+            echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
+          fi
 
       - name: Set QR Code URLs and Commit Info
         id: set-urls
@@ -222,85 +219,85 @@ jobs:
           rm -f .env
         working-directory: apps/${{ matrix.project }}
 
-  # deploy:
-  #   needs: prepare
-  #   environment: production
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
-  #   concurrency: continuous-deploy-fingerprint-main
-  #   env:
-  #     APP_VARIANT: production
-  #   strategy:
-  #     matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-  #   permissions:
-  #     # REQUIRED: Allow comments on PRs
-  #     pull-requests: write # Allow comments on PRs
-  #     # REQUIRED: Allow updating fingerprint in action caches
-  #     actions: write
-  #     # Following permissions are required for private repos
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - name: 🏗 Check out repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         # https://github.com/expo/expo-github-action/issues/229
-  #         ref: ${{ github.event.pull_request.head.ref }}
+  deploy:
+    needs: prepare
+    environment: production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+    concurrency: continuous-deploy-fingerprint-main
+    env:
+      APP_VARIANT: production
+    strategy:
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+    permissions:
+      # REQUIRED: Allow comments on PRs
+      pull-requests: write # Allow comments on PRs
+      # REQUIRED: Allow updating fingerprint in action caches
+      actions: write
+      # Following permissions are required for private repos
+      contents: read
+      packages: write
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/expo/expo-github-action/issues/229
+          ref: ${{ github.event.pull_request.head.ref }}
 
-  #     - name: 🔧 Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20.12.2
-  #     - run: |
-  #         corepack enable
-  #     - name: Setup Yarn in Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         cache: 'yarn'
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+      - run: |
+          corepack enable
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
-  #     - name: 🔧 Setup EAS
-  #       uses: expo/expo-github-action@v8
-  #       with:
-  #         eas-version: latest
-  #         token: ${{ secrets.EXPO_TOKEN }}
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-  #     - name: 📦 Install dependencies
-  #       run: yarn install
+      - name: 📦 Install dependencies
+        run: yarn install
 
-  #     - name: 🧹 Clear All .env files and load eas.json
-  #       run: |
-  #         find . -name '*.env*' -delete
-  #         cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
-  #       working-directory: apps/${{ matrix.project }}
+      - name: 🧹 Clear All .env files and load eas.json
+        run: |
+          find . -name '*.env*' -delete
+          cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+        working-directory: apps/${{ matrix.project }}
 
-  #     - name: Load Application Secrets
-  #       id: filter-secrets
-  #       shell: bash
-  #       run: |
-  #         echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
-  #         # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
-  #         # but include items such as API keys and configurations (e.g., Google API keys)
-  #         # that we prefer not to commit directly into our GitHub repository.
-  #         secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+      - name: Load Application Secrets
+        id: filter-secrets
+        shell: bash
+        run: |
+          echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+          # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+          # but include items such as API keys and configurations (e.g., Google API keys)
+          # that we prefer not to commit directly into our GitHub repository.
+          secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
 
-  #         # Write the filtered secrets to the .env file
-  #         while IFS= read -r line; do
-  #           echo "$line" >> .env
-  #         done <<< "$secrets"
-  #       env:
-  #         SECRETS_CONTEXT: ${{ toJson(secrets) }}
-  #       working-directory: apps/${{ matrix.project }}
+          # Write the filtered secrets to the .env file
+          while IFS= read -r line; do
+            echo "$line" >> .env
+          done <<< "$secrets"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        working-directory: apps/${{ matrix.project }}
 
-  #     - name: 🚀 Continuously Deploy
-  #       id: continuous_deploy
-  #       uses: expo/expo-github-action/continuous-deploy-fingerprint@main
-  #       with:
-  #         profile: production
-  #         branch: main
-  #         working-directory: apps/${{ matrix.project }}
+      - name: 🚀 Continuously Deploy
+        id: continuous_deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+        with:
+          profile: production
+          branch: main
+          working-directory: apps/${{ matrix.project }}
 
-  #     - name: 🧼 Cleanup .env file
-  #       if: always()
-  #       run: |
-  #         rm -f .env
-  #       working-directory: apps/${{ matrix.project }}
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
