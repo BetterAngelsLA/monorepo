@@ -134,6 +134,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: Check fingerprint
+        id: fingerprint
         uses: expo/expo-github-action/fingerprint@main
         with:
           working-directory: apps/${{ matrix.project }}
@@ -144,10 +145,10 @@ jobs:
         id: check_builds
         run: |
           # Check for iOS build
-          ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.fingerprint.outputs.current-fingerprint }} --limit 1 --json --non-interactive)
 
           # Check for Android build
-          android_build_output=$(eas build:list --platform android --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.continuous_deploy.outputs.android-fingerprint }} --limit 1 --json --non-interactive)
+          android_build_output=$(eas build:list --platform android --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.fingerprint.outputs.current-fingerprint }} --limit 1 --json --non-interactive)
 
           # Save results as GitHub outputs
           if [ "${ios_build_output}" == "[]" ]; then
