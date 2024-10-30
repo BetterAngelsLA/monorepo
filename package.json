@@ -129,19 +129,6 @@
     "ts-node": "10.9.1",
     "typescript": "~5.3.3"
   },
-  "resolutions": {
-    "axios": ">=1.7.4",
-    "body-parser": ">=1.20.3",
-    "dset": ">=3.1.4",
-    "express": ">=4.20.0",
-    "fast-xml-parser": ">=4.4.1",
-    "micromatch": ">=4.0.8",
-    "path-to-regexp": ">=0.1.10",
-    "send": ">=0.19.0",
-    "serve-static": "1.16.0",
-    "webpack": ">=5.94.0",
-    "ws": ">=8.17.1"
-  },
   "engines": {
     "node": "20.12.2"
   }
