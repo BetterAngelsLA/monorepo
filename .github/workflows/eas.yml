@@ -144,34 +144,35 @@ jobs:
         working-directory: apps/${{ matrix.project }}
         id: check_builds
         run: |
-          # Check for iOS build
-          ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.fingerprint.outputs.current-fingerprint }} --limit 1 --json --non-interactive)
+          # Define the runtime version using the fingerprint output
+          runtime_version="${{ steps.fingerprint.outputs.current-fingerprint }}"
 
-          # Check for Android build
-          android_build_output=$(eas build:list --platform android --status in-progress --status finished --buildProfile preview --runtimeVersion ${{ steps.fingerprint.outputs.current-fingerprint }} --limit 1 --json --non-interactive)
+          # Check for iOS build with specified runtime version
+          ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
 
-          # Save results as GitHub outputs
-          if [ "${ios_build_output}" == "[]" ]; then
-            echo "No existing iOS build found, starting a new build."
-            ios_build_status="not_found"
-            ios_build_id=""
+          # Check for Android build with specified runtime version
+          android_build_output=$(eas build:list --platform android --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
+
+          # Parse and check build outputs for existing builds
+          if [[ "$ios_build_output" == "[]" ]]; then
+            echo "No existing iOS build found for runtime version $runtime_version. Starting a new build."
+            echo "ios_build_status=not_found" >> $GITHUB_OUTPUT
+            echo "ios_build_id=" >> $GITHUB_OUTPUT
           else
-            ios_build_status="found"
-            ios_build_id=$(echo "${ios_build_output}" | jq -r '.[0].id')
-          fi
-          if [ "${android_build_output}" == "[]" ]; then
-            echo "No existing Android build found, starting a new build."
-            android_build_status="not_found"
-            android_build_id=""
-          else
-            android_build_status="found"
-            android_build_id=$(echo "${android_build_output}" | jq -r '.[0].id')
+            echo "iOS build found for runtime version $runtime_version."
+            echo "ios_build_status=found" >> $GITHUB_OUTPUT
+            echo "ios_build_id=$(echo "$ios_build_output" | jq -r '.[0].id')" >> $GITHUB_OUTPUT
           fi
 
-          echo "ios_build_status=${ios_build_status}" >> $GITHUB_OUTPUT
-          echo "ios_build_id=${ios_build_id}" >> $GITHUB_OUTPUT
-          echo "android_build_status=${android_build_status}" >> $GITHUB_OUTPUT
-          echo "android_build_id=${android_build_id}" >> $GITHUB_OUTPUT
+          if [[ "$android_build_output" == "[]" ]]; then
+            echo "No existing Android build found for runtime version $runtime_version. Starting a new build."
+            echo "android_build_status=not_found" >> $GITHUB_OUTPUT
+            echo "android_build_id=" >> $GITHUB_OUTPUT
+          else
+            echo "Android build found for runtime version $runtime_version."
+            echo "android_build_status=found" >> $GITHUB_OUTPUT
+            echo "android_build_id=$(echo "$android_build_output" | jq -r '.[0].id')" >> $GITHUB_OUTPUT
+          fi
 
       - name: 🚀 Start New Builds if Needed
         if: needs.check_builds.outputs.ios_build_status == 'not_found' || needs.check_builds.outputs.android_build_status == 'not_found'
