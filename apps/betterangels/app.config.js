@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config(); // This will load the environment variables from .env file
+
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 const HOSTNAME = IS_PRODUCTION
@@ -127,6 +130,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION || 'local',
+    runtimeVersion: process.env.RUNTIME_VERSION,
   },
 };
