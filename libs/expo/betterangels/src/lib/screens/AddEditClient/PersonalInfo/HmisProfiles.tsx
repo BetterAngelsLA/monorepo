@@ -39,6 +39,9 @@ export default function HmisProfiles() {
     <CardWrapper
       {...(hmisProfiles.length !== 0 && { onReset })}
       title="HMIS IDs"
+      subtitle={
+        hmisProfiles.length !== 0 ? 'Fill in both HMIS ID Type and ID #' : ''
+      }
     >
       {fields.map((_, index) => (
         <View style={{ gap: Spacings.sm }} key={index}>
