@@ -146,7 +146,7 @@ jobs:
         run: |
           # Define the runtime version using the fingerprint output
           runtime_version="${{ steps.fingerprint.outputs.current-fingerprint }}"
-
+          echo $runtime_version
           # Check for iOS build with specified runtime version
           ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
 
