@@ -136,19 +136,20 @@ jobs:
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: preview
+          platform: android
           branch: ${{ github.event.pull_request.head.ref }}
           working-directory: apps/${{ matrix.project }}
 
-      - name: 🍏 Apple Simulator Build
-        if: github.ref != 'refs/heads/main'
-        working-directory: apps/${{ matrix.project }}
-        run: |
-          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
-          if [ "${build_list_output}" == "[]" ]; then
-            eas build --profile development-simulator --platform ios --non-interactive --no-wait
-          else
-            echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
-          fi
+      # - name: 🍏 Apple Simulator Build
+      #   if: github.ref != 'refs/heads/main'
+      #   working-directory: apps/${{ matrix.project }}
+      #   run: |
+      #     build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+      #     if [ "${build_list_output}" == "[]" ]; then
+      #       eas build --profile development-simulator --platform ios --non-interactive --no-wait
+      #     else
+      #       echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
+      #     fi
 
       - name: Set QR Code URLs and Commit Info
         id: set-urls
