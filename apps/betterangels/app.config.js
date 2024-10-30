@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
+const IS_IOS = process.env.EXPO_TARGET === 'ios';
 
 const HOSTNAME = IS_PRODUCTION
   ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
@@ -135,6 +136,8 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION,
+    runtimeVersion: IS_IOS
+      ? process.env.IOS_RUNTIME_VERSION
+      : process.env.ANDROID_RUNTIME_VERSION,
   },
 };
