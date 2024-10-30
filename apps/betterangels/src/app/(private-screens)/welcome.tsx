@@ -25,7 +25,7 @@ export default function Welcome() {
             Your account has not been authorized.
           </TextMedium>
           <TextRegular textAlign="center" size="sm" mb="xl">
-            Please contact your organization's administrator to authorize your
+            Please contacts your organization's administrator to authorize your
             account.
           </TextRegular>
         </View>
