@@ -62,7 +62,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
+    "@babel/core": "^7.25.2",
     "@chromatic-com/storybook": "^1",
     "@config-plugins/detox": "8.0.0",
     "@expo/metro-runtime": "~4.0.0-preview.0",
