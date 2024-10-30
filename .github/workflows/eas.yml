@@ -73,7 +73,7 @@ jobs:
     strategy:
       # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
       matrix:
-        - betterangels
+        project: ['betterangels']
     permissions:
       # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
