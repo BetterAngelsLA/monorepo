@@ -132,6 +132,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🔧 Combine Android and iOS Fingerprints and Set RUNTIME_VERSION
+        id: set-runtime-version
         run: |
           # Combine the Android and iOS fingerprints
           combined_fingerprints="${{ steps.continuous_deploy.outputs.android-fingerprint }}${{ steps.continuous_deploy.outputs.ios-fingerprint }}"
