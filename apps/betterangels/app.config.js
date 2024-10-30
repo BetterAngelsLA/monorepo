@@ -127,6 +127,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: '1.1.0',
+    runtimeVersion: process.env.RUNTIME_VERSION || 'local',
   },
 };
