@@ -1,23 +1,19 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { CheckIcon, PlusIcon } from '@monorepo/expo/shared/icons';
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   Radiuses,
   Spacings,
   thumbnailSizes,
 } from '@monorepo/expo/shared/static';
-import {
-  Button,
-  TextBold,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-// import DriversLicense from './DriverLicense';
+import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
@@ -239,345 +235,68 @@ export default function UploadModal(props: IUploadModalProps) {
             </TextRegular>
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
               <TextBold>Doc-Ready</TextBold>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.DriversLicenseFront
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.DriversLicenseFront && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={!!docs.DriversLicenseFront}
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('DriversLicenseFront')}
-                  height="md"
-                  align="flex-start"
-                  weight="regular"
-                  size="full"
-                  variant="secondary"
-                  title="CA ID or CA Driver's License - Front"
-                  accessibilityHint="opens CA Photo ID front upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.DriversLicenseBack
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.DriversLicenseBack && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={!!docs.DriversLicenseBack}
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('DriversLicenseBack')}
-                  height="md"
-                  align="flex-start"
-                  weight="regular"
-                  size="full"
-                  variant="secondary"
-                  title="CA ID or CA Driver's License - Back"
-                  accessibilityHint="opens CA Photo ID back upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.PhotoId
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.PhotoId && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={!!docs.PhotoId}
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('PhotoId')}
-                  height="md"
-                  align="flex-start"
-                  weight="regular"
-                  size="full"
-                  variant="secondary"
-                  title="Other Photo ID (e.g., out of state)"
-                  accessibilityHint="opens non-CA Photo ID upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.BirthCertificate
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.BirthCertificate && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={!!docs.BirthCertificate}
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('BirthCertificate')}
-                  height="md"
-                  align="flex-start"
-                  weight="regular"
-                  size="full"
-                  variant="secondary"
-                  title="Birth Certificate"
-                  accessibilityHint="opens Birth Certificate upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.SocialSecurityCard
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.SocialSecurityCard && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  disabled={!!docs.SocialSecurityCard}
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('SocialSecurityCard')}
-                  height="md"
-                  weight="regular"
-                  align="flex-start"
-                  size="full"
-                  variant="secondary"
-                  title="SSN"
-                  accessibilityHint="opens Social Security Card upload screen"
-                />
-              </View>
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="DriversLicenseFront"
+                title="CA ID or CA Driver’s License - Front"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="DriversLicenseBack"
+                title="CA ID or CA Driver’s License - Back"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="PhotoId"
+                title="Other Photo ID (e.g., out of state)"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="BirthCertificate"
+                title="Birth Certificate"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="SocialSecurityCard"
+                title="Social Security Card"
+              />
             </View>
+
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
               <TextBold>Forms</TextBold>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor:
-                      docs.ConsentForm && docs.ConsentForm.length > 0
-                        ? Colors.SUCCESS
-                        : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.ConsentForm && docs.ConsentForm.length > 0 && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('ConsentForm')}
-                  height="md"
-                  align="flex-start"
-                  size="full"
-                  weight="regular"
-                  variant="secondary"
-                  title="Consent Forms"
-                  accessibilityHint="opens Consent Form upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor:
-                      docs.HmisForm && docs.HmisForm.length > 0
-                        ? Colors.SUCCESS
-                        : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.HmisForm && docs.HmisForm.length > 0 && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('HmisForm')}
-                  height="md"
-                  align="flex-start"
-                  weight="regular"
-                  size="full"
-                  variant="secondary"
-                  title="HMIS Form"
-                  accessibilityHint="opens HMIS Form upload screen"
-                />
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor:
-                      docs.IncomeForm && docs.IncomeForm.length > 0
-                        ? Colors.SUCCESS
-                        : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.IncomeForm && docs.IncomeForm.length > 0 && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('IncomeForm')}
-                  height="md"
-                  weight="regular"
-                  align="flex-start"
-                  size="full"
-                  variant="secondary"
-                  title="Income Forms (pay stubs)"
-                  accessibilityHint="opens Income Form upload screen"
-                />
-              </View>
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="ConsentForm"
+                title="Consent Forms"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="HmisForm"
+                title="HMIS Forms"
+              />
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="IncomeForm"
+                title="Income Forms (pay stubs)"
+              />
             </View>
 
             <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-              <TextBold>Others</TextBold>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    height: 20,
-                    width: 20,
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: docs.OtherClientDocument?.length
-                      ? Colors.SUCCESS
-                      : Colors.NEUTRAL_LIGHT,
-                    marginRight: Spacings.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {!!docs.OtherClientDocument?.length && (
-                    <CheckIcon size="sm" color={Colors.WHITE} />
-                  )}
-                </View>
-
-                <Button
-                  containerStyle={{ flex: 1 }}
-                  onPress={() => setTab('OtherClientDocument')}
-                  height="md"
-                  align="flex-start"
-                  size="full"
-                  weight="regular"
-                  variant="secondary"
-                  title="Other"
-                  accessibilityHint="goes to 'Other Documents' upload screen"
-                />
-              </View>
+              <TextBold>Other</TextBold>
+              <FileUploadTab
+                docs={docs}
+                setTab={setTab}
+                tabKey="OtherClientDocument"
+                title="Other Documents"
+              />
             </View>
           </ScrollView>
         )}
