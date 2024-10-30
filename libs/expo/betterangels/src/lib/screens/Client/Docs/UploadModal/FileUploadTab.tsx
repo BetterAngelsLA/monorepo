@@ -6,15 +6,15 @@ import { Docs, ITab } from './types';
 
 export interface IFileUploadTabProps {
   docs: Docs;
-  isSingleUpload: boolean;
   setTab: (tabKey: ITab) => void;
   tabKey: keyof Docs;
   title: string;
 }
 
 const FileUploadTab = (props: IFileUploadTabProps) => {
-  const { docs, isSingleUpload, setTab, tabKey, title } = props;
-  const disabled = isSingleUpload && !!docs[tabKey as keyof Docs];
+  const { docs, setTab, tabKey, title } = props;
+  const isMultiUpload = Array.isArray(docs[tabKey as keyof Docs]);
+  const disabled = !isMultiUpload && !!docs[tabKey as keyof Docs];
 
   return (
     <View

@@ -13,7 +13,6 @@ import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-// import DriversLicense from './DriverLicense';
 import FileUploadTab from './FileUploadTab';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
@@ -238,35 +237,30 @@ export default function UploadModal(props: IUploadModalProps) {
               <TextBold>Doc-Ready</TextBold>
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={true}
                 setTab={setTab}
                 tabKey="DriversLicenseFront"
                 title="CA ID or CA Driver’s License - Front"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={true}
                 setTab={setTab}
                 tabKey="DriversLicenseBack"
                 title="CA ID or CA Driver’s License - Back"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={true}
                 setTab={setTab}
                 tabKey="PhotoId"
                 title="Other Photo ID (e.g., out of state)"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={true}
                 setTab={setTab}
                 tabKey="BirthCertificate"
                 title="Birth Certificate"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={true}
                 setTab={setTab}
                 tabKey="SocialSecurityCard"
                 title="Social Security Card"
@@ -277,21 +271,18 @@ export default function UploadModal(props: IUploadModalProps) {
               <TextBold>Forms</TextBold>
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={false}
                 setTab={setTab}
                 tabKey="ConsentForm"
                 title="Consent Forms"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={false}
                 setTab={setTab}
                 tabKey="HmisForm"
                 title="HMIS Forms"
               />
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={false}
                 setTab={setTab}
                 tabKey="IncomeForm"
                 title="Income Forms (pay stubs)"
@@ -302,7 +293,6 @@ export default function UploadModal(props: IUploadModalProps) {
               <TextBold>Other</TextBold>
               <FileUploadTab
                 docs={docs}
-                isSingleUpload={false}
                 setTab={setTab}
                 tabKey="OtherClientDocument"
                 title="Other Documents"
