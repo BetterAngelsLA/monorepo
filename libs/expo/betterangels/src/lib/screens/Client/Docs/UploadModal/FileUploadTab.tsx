@@ -26,10 +26,9 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
       <View
         style={[
           styles.tabIcon,
-          {
-            backgroundColor: disabled ? Colors.SUCCESS : Colors.WHITE,
-            borderColor: Colors.NEUTRAL_LIGHT,
-            borderWidth: disabled ? 0 : 1,
+          disabled && {
+            backgroundColor: Colors.SUCCESS,
+            borderWidth: 0,
           },
         ]}
       >
@@ -59,7 +58,10 @@ export default FileUploadTab;
 const styles = StyleSheet.create({
   tabIcon: {
     alignItems: 'center',
+    backgroundColor: Colors.WHITE,
     borderRadius: Radiuses.xxxl,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    borderWidth: 1,
     height: 20,
     justifyContent: 'center',
     marginRight: Spacings.xs,
