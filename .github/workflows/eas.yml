@@ -135,6 +135,7 @@ jobs:
         uses: expo/expo-github-action/preview-build@main
         with:
           command: eas build --profile preview --platform all
+        working-directory: apps/${{ matrix.project }}
 
       - name: Set QR Code URLs and Commit Info
         id: set-urls
