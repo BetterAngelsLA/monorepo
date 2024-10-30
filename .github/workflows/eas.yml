@@ -113,7 +113,7 @@ jobs:
           cat eas.json | jq -r '.build.preview.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
         working-directory: apps/${{ matrix.project }}
 
-      - name: Load Application Secrets & Runtime Version
+      - name: Load Application Secrets
         id: filter-secrets
         shell: bash
         run: |
@@ -127,12 +127,6 @@ jobs:
           while IFS= read -r line; do
             echo "$line" >> .env
           done <<< "$secrets"
-
-          # Set the RUNTIME_VERSION as an output
-          {
-          echo "ANDROID_RUNTIME_VERSION=${{ steps.continuous_deploy.outputs.android-fingerprint }}"
-          echo "IOS_RUNTIME_VERSION=${{ steps.continuous_deploy.outputs.ios-fingerprint }}"
-          } >> .env
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
@@ -276,7 +270,7 @@ jobs:
           cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
         working-directory: apps/${{ matrix.project }}
 
-      - name: Load Application Secrets & Runtime Version
+      - name: Load Application Secrets
         id: filter-secrets
         shell: bash
         run: |
@@ -290,12 +284,6 @@ jobs:
           while IFS= read -r line; do
             echo "$line" >> .env
           done <<< "$secrets"
-
-          # Set the RUNTIME_VERSION as an output
-          {
-          echo "ANDROID_RUNTIME_VERSION=${{ steps.continuous_deploy.outputs.android-fingerprint }}"
-          echo "IOS_RUNTIME_VERSION=${{ steps.continuous_deploy.outputs.ios-fingerprint }}"
-          } >> .env
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
