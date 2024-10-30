@@ -68,7 +68,7 @@ jobs:
     # needs: prepare
     environment: preview
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.is_matrix_empty == 'false'
+    # if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
       # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
