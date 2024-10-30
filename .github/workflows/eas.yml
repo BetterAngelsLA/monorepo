@@ -139,12 +139,9 @@ jobs:
           # Take a hash of the combined fingerprints
           RUNTIME_VERSION=$(echo -n "$combined_fingerprints" | sha256sum | awk '{print $1}')
 
-          # Set the RUNTIME_VERSION environment variable
-          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $GITHUB_ENV
-
-          # Write the RUNTIME_VERSION to the .env file
+          # Set the RUNTIME_VERSION as an output
           echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> .env
-
+          echo "runtime_version=$RUNTIME_VERSION" >> $GITHUB_OUTPUT
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
@@ -159,11 +156,11 @@ jobs:
         if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
         run: |
-          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.set-runtime-version.outputs.runtime_version }} --limit 1 --json --non-interactive)
           if [ "${build_list_output}" == "[]" ]; then
             eas build --profile development-simulator --platform ios --non-interactive --no-wait
           else
-            echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
+            echo "A simulator was already found for ${{ steps.set-runtime-version.outputs.runtime_version }}."
           fi
 
       - name: Set QR Code URLs and Commit Info
@@ -311,11 +308,6 @@ jobs:
 
           # Take a hash of the combined fingerprints
           RUNTIME_VERSION=$(echo -n "$combined_fingerprints" | sha256sum | awk '{print $1}')
-
-          # Set the RUNTIME_VERSION environment variable
-          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $GITHUB_ENV
-
-          # Write the RUNTIME_VERSION to the .env file
           echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> .env
 
         working-directory: apps/${{ matrix.project }}
