@@ -8,7 +8,7 @@ export interface IFileUploadTabProps {
   docs: Docs;
   isSingleUpload: boolean;
   setTab: (tabKey: ITab) => void;
-  tabKey: string;
+  tabKey: keyof Docs;
   title: string;
 }
 
