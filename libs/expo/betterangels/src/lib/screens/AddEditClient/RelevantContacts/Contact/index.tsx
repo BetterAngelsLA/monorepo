@@ -59,7 +59,7 @@ export default function Contact(props: IContactProps) {
       null
     );
     setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      `contacts[${index}].relationshipToClientOther` as `contacts.${number}.relationshipToClientOther`,
       null
     );
   };
@@ -178,7 +178,7 @@ export default function Contact(props: IContactProps) {
         <TextButton
           color={Colors.PRIMARY}
           title="Remove"
-          onPress={() => handleRemove()}
+          onPress={handleRemove}
           accessibilityHint="Removes Relevant contact"
         />
 

@@ -26,6 +26,7 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'contacts',
+    keyName: 'fieldId',
   });
 
   const isRelevantContacts = expanded === 'Relevant Contacts';
@@ -70,8 +71,8 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
             gap: Spacings.xs,
           }}
         >
-          {sortedContacts.map((_, index) => (
-            <Contact remove={remove} key={index} index={index} />
+          {sortedContacts.map((contact, index) => (
+            <Contact remove={remove} key={contact.fieldId} index={index} />
           ))}
           <View style={{ alignItems: 'flex-start' }}>
             <TextButton
