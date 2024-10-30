@@ -8,70 +8,72 @@ on:
       - main
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read # Required to find the last successful workflow run
-      contents: read # Required for actions/checkout
-    steps:
-      - name: 🏗 Check out repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+  # prepare:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     actions: read # Required to find the last successful workflow run
+  #     contents: read # Required for actions/checkout
+  #   steps:
+  #     - name: 🏗 Check out repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-      # This line is needed for nx affected to work when CI is running on a PR
-      - name: 🔀 Track main if PR
-        if: github.ref != 'refs/heads/main'
-        run: git branch --track main origin/main
+  #     # This line is needed for nx affected to work when CI is running on a PR
+  #     - name: 🔀 Track main if PR
+  #       if: github.ref != 'refs/heads/main'
+  #       run: git branch --track main origin/main
 
-      - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+  #     - name: 🔧 Configure NX SHAs
+  #       uses: nrwl/nx-set-shas@v4
 
-      - name: 🔧 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.12.2
-      - run: |
-          corepack enable
-      - name: Setup Yarn in Node
-        uses: actions/setup-node@v4
-        with:
-          cache: 'yarn'
+  #     - name: 🔧 Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20.12.2
+  #     - run: |
+  #         corepack enable
+  #     - name: Setup Yarn in Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         cache: 'yarn'
 
-      - name: 📦 Install dependencies
-        run: yarn install
+  #     - name: 📦 Install dependencies
+  #       run: yarn install
 
-      - name: 🧩 Determine Affected Projects for eas-update
-        id: set-matrix
-        run: |
-          # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
-          # Convert the list to a JSON matrix
-          MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
-            split("\n") |
-            map(select(. != "")) |
-            if length == 0 then
-                {}
-            else
-                {include: map({project: .})}
-            end'
-          )
-          IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
-          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
-          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+  #     - name: 🧩 Determine Affected Projects for eas-update
+  #       id: set-matrix
+  #       run: |
+  #         # Get the list of affected projects with eas-update target
+  #         affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
+  #         # Convert the list to a JSON matrix
+  #         MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
+  #           split("\n") |
+  #           map(select(. != "")) |
+  #           if length == 0 then
+  #               {}
+  #           else
+  #               {include: map({project: .})}
+  #           end'
+  #         )
+  #         IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
+  #         echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+  #         echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #     is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   preview:
-    needs: prepare
+    # needs: prepare
     environment: preview
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
-      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+      # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+      matrix:
+        - betterangels
     permissions:
       # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
