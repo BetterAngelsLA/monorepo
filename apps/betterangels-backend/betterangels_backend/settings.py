@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "pgtrigger",
     "strawberry_django",
     "waffle",
+    "import_export",
     # Our Apps
     "accounts",
     "clients",
