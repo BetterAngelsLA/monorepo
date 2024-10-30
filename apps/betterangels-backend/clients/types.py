@@ -90,6 +90,7 @@ class ClientProfileFilter:
         q_objects = []
         combined_q_search = []
         searchable_fields = [
+            "california_id",
             "hmis_id",
             "nickname",
             "user__first_name",
