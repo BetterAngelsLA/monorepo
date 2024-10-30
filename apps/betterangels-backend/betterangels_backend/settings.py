@@ -77,6 +77,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

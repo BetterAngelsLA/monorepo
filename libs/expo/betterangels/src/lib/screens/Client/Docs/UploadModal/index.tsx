@@ -17,7 +17,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import DriversLicense from './DriverLicense';
+// import DriversLicense from './DriverLicense';
 import MultipleDocUploads from './MultipleDocUploads';
 import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
@@ -45,7 +45,22 @@ export default function UploadModal(props: IUploadModalProps) {
   };
 
   const TABS = {
-    DriversLicense: <DriversLicense {...docProps} />,
+    DriversLicenseFront: (
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.PhotoId}
+        docType="DriversLicenseFront"
+        title="Upload CA ID or CA Driver’s License - Front"
+        {...docProps}
+      />
+    ),
+    DriversLicenseBack: (
+      <SingleDocUploads
+        thumbnailSize={thumbnailSizes.PhotoId}
+        docType="DriversLicenseBack"
+        title="Upload CA ID or CA Driver’s License - Back"
+        {...docProps}
+      />
+    ),
     BirthCertificate: (
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.BirthCertificate}
@@ -210,7 +225,7 @@ export default function UploadModal(props: IUploadModalProps) {
               <TextBold size="lg">Upload Files</TextBold>
               <Pressable
                 accessible
-                accessibilityHint="closes the modal"
+                accessibilityHint="closes the Upload modal"
                 accessibilityRole="button"
                 accessibilityLabel="close"
                 onPress={closeModal}
@@ -235,33 +250,67 @@ export default function UploadModal(props: IUploadModalProps) {
                     height: 20,
                     width: 20,
                     borderRadius: Radiuses.xxxl,
-                    backgroundColor:
-                      !!docs.DriversLicenseFront && !!docs.DriversLicenseBack
-                        ? Colors.SUCCESS
-                        : Colors.NEUTRAL_LIGHT,
+                    backgroundColor: docs.DriversLicenseFront
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
                     marginRight: Spacings.xs,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  {!!docs.DriversLicenseFront && !!docs.DriversLicenseBack && (
+                  {!!docs.DriversLicenseFront && (
                     <CheckIcon size="sm" color={Colors.WHITE} />
                   )}
                 </View>
 
                 <Button
-                  disabled={
-                    !!docs.DriversLicenseFront && !!docs.DriversLicenseBack
-                  }
+                  disabled={!!docs.DriversLicenseFront}
                   containerStyle={{ flex: 1 }}
-                  weight="regular"
-                  onPress={() => setTab('DriversLicense')}
+                  onPress={() => setTab('DriversLicenseFront')}
                   height="md"
                   align="flex-start"
+                  weight="regular"
                   size="full"
                   variant="secondary"
-                  title="Driver's License (front and back)"
-                  accessibilityHint="goes to driver's license upload"
+                  title="CA ID or CA Driver's License - Front"
+                  accessibilityHint="opens CA Photo ID front upload screen"
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    height: 20,
+                    width: 20,
+                    borderRadius: Radiuses.xxxl,
+                    backgroundColor: docs.DriversLicenseBack
+                      ? Colors.SUCCESS
+                      : Colors.NEUTRAL_LIGHT,
+                    marginRight: Spacings.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {!!docs.DriversLicenseBack && (
+                    <CheckIcon size="sm" color={Colors.WHITE} />
+                  )}
+                </View>
+
+                <Button
+                  disabled={!!docs.DriversLicenseBack}
+                  containerStyle={{ flex: 1 }}
+                  onPress={() => setTab('DriversLicenseBack')}
+                  height="md"
+                  align="flex-start"
+                  weight="regular"
+                  size="full"
+                  variant="secondary"
+                  title="CA ID or CA Driver's License - Back"
+                  accessibilityHint="opens CA Photo ID back upload screen"
                 />
               </View>
               <View
@@ -297,8 +346,8 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   size="full"
                   variant="secondary"
-                  title="Photo ID"
-                  accessibilityHint="goes to Photo ID upload"
+                  title="Other Photo ID (e.g., out of state)"
+                  accessibilityHint="opens non-CA Photo ID upload screen"
                 />
               </View>
               <View
@@ -335,7 +384,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="Birth Certificate"
-                  accessibilityHint="goes to Birth Certificate upload"
+                  accessibilityHint="opens Birth Certificate upload screen"
                 />
               </View>
               <View
@@ -372,7 +421,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="SSN"
-                  accessibilityHint="goes to SSN upload"
+                  accessibilityHint="opens Social Security Card upload screen"
                 />
               </View>
             </View>
@@ -412,7 +461,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   weight="regular"
                   variant="secondary"
                   title="Consent Forms"
-                  accessibilityHint="goes to consent forms upload"
+                  accessibilityHint="opens Consent Form upload screen"
                 />
               </View>
               <View
@@ -449,7 +498,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="HMIS Form"
-                  accessibilityHint="goes to hmis form upload"
+                  accessibilityHint="opens HMIS Form upload screen"
                 />
               </View>
               <View
@@ -486,7 +535,7 @@ export default function UploadModal(props: IUploadModalProps) {
                   size="full"
                   variant="secondary"
                   title="Income Forms (pay stubs)"
-                  accessibilityHint="goes to Income forms upload"
+                  accessibilityHint="opens Income Form upload screen"
                 />
               </View>
             </View>
