@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // ⚠️ WARNING: DIRTY HACK IN PLACE ⚠️
 // This hack circumvents the CI breaking change where runtime versions don't match.
 // We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
@@ -7,7 +9,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
-const IS_IOS = process.env.EXPO_TARGET === 'ios';
+const IS_IOS = Platform.OS === 'ios';
+const IS_ANDROID = Platform.OS === 'android';
 
 const HOSTNAME = IS_PRODUCTION
   ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
@@ -16,6 +19,12 @@ const HOSTNAME = IS_PRODUCTION
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
   : 'la.betterangels.dev.app';
+
+const RUNTIME_VERSION = IS_IOS
+  ? process.env.IOS_RUNTIME_VERSION || 'unknown'
+  : IS_ANDROID
+    ? process.env.ANDROID_RUNTIME_VERSION || 'unknown'
+    : 'unknown';
 
 export default {
   expo: {
@@ -136,8 +145,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: IS_IOS
-      ? process.env.IOS_RUNTIME_VERSION
-      : process.env.ANDROID_RUNTIME_VERSION,
+    runtimeVersion: RUNTIME_VERSION,
   },
 };
