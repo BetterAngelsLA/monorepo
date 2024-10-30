@@ -8,70 +8,72 @@ on:
       - main
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read # Required to find the last successful workflow run
-      contents: read # Required for actions/checkout
-    steps:
-      - name: 🏗 Check out repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
+  # prepare:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     actions: read # Required to find the last successful workflow run
+  #     contents: read # Required for actions/checkout
+  #   steps:
+  #     - name: 🏗 Check out repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
-      # This line is needed for nx affected to work when CI is running on a PR
-      - name: 🔀 Track main if PR
-        if: github.ref != 'refs/heads/main'
-        run: git branch --track main origin/main
+  #     # This line is needed for nx affected to work when CI is running on a PR
+  #     - name: 🔀 Track main if PR
+  #       if: github.ref != 'refs/heads/main'
+  #       run: git branch --track main origin/main
 
-      - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+  #     - name: 🔧 Configure NX SHAs
+  #       uses: nrwl/nx-set-shas@v4
 
-      - name: 🔧 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.12.2
-      - run: |
-          corepack enable
-      - name: Setup Yarn in Node
-        uses: actions/setup-node@v4
-        with:
-          cache: 'yarn'
+  #     - name: 🔧 Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20.12.2
+  #     - run: |
+  #         corepack enable
+  #     - name: Setup Yarn in Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         cache: 'yarn'
 
-      - name: 📦 Install dependencies
-        run: yarn install
+  #     - name: 📦 Install dependencies
+  #       run: yarn install
 
-      - name: 🧩 Determine Affected Projects for eas-update
-        id: set-matrix
-        run: |
-          # Get the list of affected projects with eas-update target
-          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
-          # Convert the list to a JSON matrix
-          MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
-            split("\n") |
-            map(select(. != "")) |
-            if length == 0 then
-                {}
-            else
-                {include: map({project: .})}
-            end'
-          )
-          IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
-          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
-          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+  #     - name: 🧩 Determine Affected Projects for eas-update
+  #       id: set-matrix
+  #       run: |
+  #         # Get the list of affected projects with eas-update target
+  #         affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
+  #         # Convert the list to a JSON matrix
+  #         MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
+  #           split("\n") |
+  #           map(select(. != "")) |
+  #           if length == 0 then
+  #               {}
+  #           else
+  #               {include: map({project: .})}
+  #           end'
+  #         )
+  #         IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
+  #         echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+  #         echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+  #   outputs:
+  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
+  #     is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   preview:
-    needs: prepare
+    # needs: prepare
     environment: preview
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.is_matrix_empty == 'false'
+    # if: needs.prepare.outputs.is_matrix_empty == 'false'
     concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
-      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+      # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+      matrix:
+        project: [betterangels]
     permissions:
       # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
@@ -131,160 +133,206 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
         working-directory: apps/${{ matrix.project }}
 
-      - name: Create preview builds if fingerprint changed
-        uses: expo/expo-github-action/preview-build@main
+      - name: Check fingerprint
+        uses: expo/expo-github-action/fingerprint@main
         with:
-          command: eas build --profile preview --platform android --non-interactive
           working-directory: apps/${{ matrix.project }}
 
-      - name: Set QR Code URLs and Commit Info
-        id: set-urls
-        run: |
-          UPDATE_OUTPUT='${{ steps.continuous_deploy.outputs.update-output }}'
-
-          IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
-          ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
-
-          IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
-          ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=betterangels"
-          IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.ios-build-id }}"
-          ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.android-build-id }}"
-
-          COMMIT_ID=$(git rev-parse HEAD)
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
-
-          {
-            echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}"
-            echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}"
-            echo "ios_build_qr_url=${IOS_BUILD_QR_URL}"
-            echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}"
-            echo "commit_id=${COMMIT_ID}"
-            echo "commit_message=${COMMIT_MESSAGE}"
-          } >> $GITHUB_OUTPUT
-
-      - name: Post to Slack
-        uses: slackapi/slack-github-action@v1.27.0
-        if: github.ref == 'refs/heads/main'
-        with:
-          payload: |
-            {
-              "channel": "#tech-outreach-main",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*New code has landed in main!* \n*Commit:* `${{ steps.set-urls.outputs.commit_id }}`\n*Message:* ${{ steps.set-urls.outputs.commit_message }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*📱 iOS*\n\n<${{ steps.set-urls.outputs.ios_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.ios_build_qr_url }}|Build>"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🤖 Android*\n\n<${{ steps.set-urls.outputs.android_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.android_build_qr_url }}|Build>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
-      - name: 🧼 Cleanup .env file
-        if: always()
-        run: |
-          rm -f .env
+      - name: 🍏 Check for Existing iOS and Android Builds
+        if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
-
-  deploy:
-    needs: prepare
-    environment: production
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
-    concurrency: continuous-deploy-fingerprint-main
-    env:
-      APP_VARIANT: production
-    strategy:
-      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-    permissions:
-      # REQUIRED: Allow comments on PRs
-      pull-requests: write # Allow comments on PRs
-      # REQUIRED: Allow updating fingerprint in action caches
-      actions: write
-      # Following permissions are required for private repos
-      contents: read
-      packages: write
-    steps:
-      - name: 🏗 Check out repo
-        uses: actions/checkout@v4
-        with:
-          # https://github.com/expo/expo-github-action/issues/229
-          ref: ${{ github.event.pull_request.head.ref }}
-
-      - name: 🔧 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.12.2
-      - run: |
-          corepack enable
-      - name: Setup Yarn in Node
-        uses: actions/setup-node@v4
-        with:
-          cache: 'yarn'
-
-      - name: 🔧 Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: 📦 Install dependencies
-        run: yarn install
-
-      - name: 🧹 Clear All .env files and load eas.json
+        id: check_builds
         run: |
-          find . -name '*.env*' -delete
-          cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
-        working-directory: apps/${{ matrix.project }}
+          # Check for iOS build
+          ios_build_output=$(eas build:list --platform ios --status in-progress,finished --buildProfile preview --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
 
-      - name: Load Application Secrets
-        id: filter-secrets
-        shell: bash
+          # Check for Android build
+          android_build_output=$(eas build:list --platform android --status in-progress,finished --buildProfile preview --runtimeVersion ${{ steps.continuous_deploy.outputs.android-fingerprint }} --limit 1 --json --non-interactive)
+
+          # Save results as GitHub outputs
+          if [ "${ios_build_output}" == "[]" ]; then
+            echo "No existing iOS build found, starting a new build."
+            ios_build_status="not_found"
+            ios_build_id=""
+          else
+            ios_build_status="found"
+            ios_build_id=$(echo "${ios_build_output}" | jq -r '.[0].id')
+          fi
+          if [ "${android_build_output}" == "[]" ]; then
+            echo "No existing Android build found, starting a new build."
+            android_build_status="not_found"
+            android_build_id=""
+          else
+            android_build_status="found"
+            android_build_id=$(echo "${android_build_output}" | jq -r '.[0].id')
+          fi
+
+          echo "ios_build_status=${ios_build_status}" >> $GITHUB_OUTPUT
+          echo "ios_build_id=${ios_build_id}" >> $GITHUB_OUTPUT
+          echo "android_build_status=${android_build_status}" >> $GITHUB_OUTPUT
+          echo "android_build_id=${android_build_id}" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Start New Builds if Needed
+        if: needs.check_builds.outputs.ios_build_status == 'not_found' || needs.check_builds.outputs.android_build_status == 'not_found'
+        working-directory: apps/${{ matrix.project }}
         run: |
-          echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
-          # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
-          # but include items such as API keys and configurations (e.g., Google API keys)
-          # that we prefer not to commit directly into our GitHub repository.
-          secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+          if [ "${{ needs.check_builds.outputs.ios_build_status }}" == "not_found" ]; then
+            echo "Starting new iOS simulator build..."
+            # eas build --profile preview --platform ios --non-interactive --no-wait
+          fi
+          if [ "${{ needs.check_builds.outputs.android_build_status }}" == "not_found" ]; then
+            echo "Starting new Android simulator build..."
+            # eas build --profile preview --platform android --non-interactive --no-wait
+          fi
 
-          # Write the filtered secrets to the .env file
-          while IFS= read -r line; do
-            echo "$line" >> .env
-          done <<< "$secrets"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-        working-directory: apps/${{ matrix.project }}
+  #     - name: Set QR Code URLs and Commit Info
+  #       id: set-urls
+  #       run: |
+  #         UPDATE_OUTPUT='${{ steps.continuous_deploy.outputs.update-output }}'
 
-      - name: 🚀 Continuously Deploy
-        id: continuous_deploy
-        uses: expo/expo-github-action/continuous-deploy-fingerprint@main
-        with:
-          profile: production
-          branch: main
-          working-directory: apps/${{ matrix.project }}
+  #         IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
+  #         ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
 
-      - name: 🧼 Cleanup .env file
-        if: always()
-        run: |
-          rm -f .env
-        working-directory: apps/${{ matrix.project }}
+  #         IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
+  #         ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=betterangels"
+  #         IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.ios-build-id }}"
+  #         ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.android-build-id }}"
+
+  #         COMMIT_ID=$(git rev-parse HEAD)
+  #         COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+
+  #         {
+  #           echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}"
+  #           echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}"
+  #           echo "ios_build_qr_url=${IOS_BUILD_QR_URL}"
+  #           echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}"
+  #           echo "commit_id=${COMMIT_ID}"
+  #           echo "commit_message=${COMMIT_MESSAGE}"
+  #         } >> $GITHUB_OUTPUT
+
+  #     - name: Post to Slack
+  #       uses: slackapi/slack-github-action@v1.27.0
+  #       if: github.ref == 'refs/heads/main'
+  #       with:
+  #         payload: |
+  #           {
+  #             "channel": "#tech-outreach-main",
+  #             "blocks": [
+  #               {
+  #                 "type": "section",
+  #                 "text": {
+  #                   "type": "mrkdwn",
+  #                   "text": "*New code has landed in main!* \n*Commit:* `${{ steps.set-urls.outputs.commit_id }}`\n*Message:* ${{ steps.set-urls.outputs.commit_message }}"
+  #                 }
+  #               },
+  #               {
+  #                 "type": "section",
+  #                 "text": {
+  #                   "type": "mrkdwn",
+  #                   "text": "*📱 iOS*\n\n<${{ steps.set-urls.outputs.ios_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.ios_build_qr_url }}|Build>"
+  #                 }
+  #               },
+  #               {
+  #                 "type": "divider"
+  #               },
+  #               {
+  #                 "type": "section",
+  #                 "text": {
+  #                   "type": "mrkdwn",
+  #                   "text": "*🤖 Android*\n\n<${{ steps.set-urls.outputs.android_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.android_build_qr_url }}|Build>"
+  #                 }
+  #               }
+  #             ]
+  #           }
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  #     - name: 🧼 Cleanup .env file
+  #       if: always()
+  #       run: |
+  #         rm -f .env
+  #       working-directory: apps/${{ matrix.project }}
+
+  # deploy:
+  #   needs: prepare
+  #   environment: production
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+  #   concurrency: continuous-deploy-fingerprint-main
+  #   env:
+  #     APP_VARIANT: production
+  #   strategy:
+  #     matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
+  #   permissions:
+  #     # REQUIRED: Allow comments on PRs
+  #     pull-requests: write # Allow comments on PRs
+  #     # REQUIRED: Allow updating fingerprint in action caches
+  #     actions: write
+  #     # Following permissions are required for private repos
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - name: 🏗 Check out repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         # https://github.com/expo/expo-github-action/issues/229
+  #         ref: ${{ github.event.pull_request.head.ref }}
+
+  #     - name: 🔧 Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20.12.2
+  #     - run: |
+  #         corepack enable
+  #     - name: Setup Yarn in Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         cache: 'yarn'
+
+  #     - name: 🔧 Setup EAS
+  #       uses: expo/expo-github-action@v8
+  #       with:
+  #         eas-version: latest
+  #         token: ${{ secrets.EXPO_TOKEN }}
+
+  #     - name: 📦 Install dependencies
+  #       run: yarn install
+
+  #     - name: 🧹 Clear All .env files and load eas.json
+  #       run: |
+  #         find . -name '*.env*' -delete
+  #         cat eas.json | jq -r '.build.production.env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+  #       working-directory: apps/${{ matrix.project }}
+
+  #     - name: Load Application Secrets
+  #       id: filter-secrets
+  #       shell: bash
+  #       run: |
+  #         echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+  #         # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+  #         # but include items such as API keys and configurations (e.g., Google API keys)
+  #         # that we prefer not to commit directly into our GitHub repository.
+  #         secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+
+  #         # Write the filtered secrets to the .env file
+  #         while IFS= read -r line; do
+  #           echo "$line" >> .env
+  #         done <<< "$secrets"
+  #       env:
+  #         SECRETS_CONTEXT: ${{ toJson(secrets) }}
+  #       working-directory: apps/${{ matrix.project }}
+
+  #     - name: 🚀 Continuously Deploy
+  #       id: continuous_deploy
+  #       uses: expo/expo-github-action/continuous-deploy-fingerprint@main
+  #       with:
+  #         profile: production
+  #         branch: main
+  #         working-directory: apps/${{ matrix.project }}
+
+  #     - name: 🧼 Cleanup .env file
+  #       if: always()
+  #       run: |
+  #         rm -f .env
+  #       working-directory: apps/${{ matrix.project }}
