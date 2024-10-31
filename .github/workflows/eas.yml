@@ -144,20 +144,24 @@ jobs:
         working-directory: apps/${{ matrix.project }}
         id: check_and_start_builds
         run: |
-          # Extract the runtime version from the fingerprint output
-          runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+          # Extract the runtime version from the fingerprint output and write it to .env
+          echo "RUNTIME_VERSION=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')" >> .env
 
-          # Write runtime version to .env
-          echo "RUNTIME_VERSION=$runtime_version" >> .env
+          # Define the platforms to check
+          platforms=("android" "ios")
 
-          # Helper function to check build status and start a new build if needed
-          check_and_start_build() {
-            platform=$1
-            build_output=$(eas build:list --platform "$platform" --status new --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
+          for platform in "${platforms[@]}"; do
+            # Get existing builds for the platform
+            build_output=$(eas build:list --platform "$platform" \
+              --status new --status in-progress --status finished \
+              --buildProfile preview --runtimeVersion "$runtime_version" \
+              --limit 1 --json --non-interactive 2>&1)
 
-            if [[ "$build_output" == "[]" ]]; then
+            # Check if any builds exist
+            if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
               echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
-              new_build_output=$(eas build --profile preview --platform "$platform" --freeze-credentials --non-interactive --no-wait --json)
+              new_build_output=$(eas build --profile preview --platform "$platform" \
+                --freeze-credentials --non-interactive --no-wait --json)
               build_id=$(echo "$new_build_output" | jq -r '.[0].id')
               echo "New $platform build started with ID: $build_id"
               echo "${platform}_build_status=not_found" >> $GITHUB_OUTPUT
@@ -168,24 +172,18 @@ jobs:
               echo "${platform}_build_status=found" >> $GITHUB_OUTPUT
               echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
             fi
-          }
-
-          # Check and start builds for iOS and Android
-          check_and_start_build android
-          # check_and_start_build ios
-
+          done
 
           # Build EAS Updates
           eas_update_output=$(eas update --non-interactive --auto --json)
-          ios_update_id=$(echo "$eas_update_output" | jq -r '.[] | select(.platform == "ios") | .id')
-          android_update_id=$(echo "$eas_update_output" | jq -r '.[] | select(.platform == "android") | .id')
 
-          echo "iOS update ID: $ios_update_id"
-          echo "Android update ID: $android_update_id"
+          # Extract update IDs and export them
+          for platform in "${platforms[@]}"; do
+            update_id=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\") | .id")
+            echo "$platform update ID: $update_id"
+            echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+          done
 
-          # Export the update IDs to GitHub output for further steps
-          echo "ios_update_id=$ios_update_id" >> $GITHUB_OUTPUT
-          echo "android_update_id=$android_update_id" >> $GITHUB_OUTPUT
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
   #       run: |
