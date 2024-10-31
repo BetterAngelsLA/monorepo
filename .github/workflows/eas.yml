@@ -207,6 +207,28 @@ jobs:
             echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
             echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
           done
+      - name: 📝 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.fingerprint.outputs.project_id }} -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- continuous-deploy-fingerprint-projectId:${{ steps.fingerprint.outputs.project_id }} -->
+            🚀 Expo continuous deployment is ready!
+
+            - Project → **${{ matrix.project }}**
+            - Platforms → **android**, **ios**
+            - Scheme → **${{ steps.check_and_start_builds.outputs.slug }}**
+
+            &nbsp; | 🤖 Android | 🍎 iOS
+            --- | --- | ---
+            Fingerprint | ${{ steps.fingerprint.outputs.current-fingerprint }} | ${{ steps.fingerprint.outputs.current-fingerprint }}
+            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
+            Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
+          edit-mode: replace
 
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
