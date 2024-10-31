@@ -6,6 +6,8 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
+
+import { format } from 'date-fns';
 import {
   enumDisplayHmisAgency,
   enumDisplayLanguage,
@@ -36,6 +38,8 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
+  const hasDob = !!client?.clientProfile.dateOfBirth;
+
   const personalData = [
     {
       label: 'Full Name',
@@ -47,7 +51,11 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     },
     {
       label: 'DoB',
-      value: client?.clientProfile.dateOfBirth,
+      value:
+        hasDob &&
+        `${
+          hasDob && format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')
+        } (${client?.clientProfile.age})`,
     },
     {
       label: 'Preferred Language',
