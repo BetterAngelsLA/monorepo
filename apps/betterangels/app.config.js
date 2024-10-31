@@ -8,6 +8,10 @@ dotenv.config();
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
+const HOSTNAME = IS_PRODUCTION
+  ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
+  : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
+
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
   : 'la.betterangels.dev.app';
@@ -131,6 +135,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: 'default',
+    runtimeVersion: process.env.RUNTIME_VERSION,
   },
 };
