@@ -15,7 +15,6 @@ export default function Picker(props: IPickerProps) {
   return (
     <RNPicker
       placeholder={placeholder}
-      style={{ backgroundColor: '#d1d3da' }}
       selectedValue={value}
       onValueChange={(itemValue) => setSelectedValueValue(itemValue)}
     >
