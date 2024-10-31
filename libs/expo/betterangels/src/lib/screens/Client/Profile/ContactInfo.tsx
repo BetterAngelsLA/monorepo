@@ -70,6 +70,12 @@ export default function ContactInfo(props: IProfileSectionProps) {
     },
   ];
 
+  const hasContactInfo =
+    client?.clientProfile.phoneNumbers?.length ||
+    client?.clientProfile.user.email ||
+    client?.clientProfile.socialMediaProfiles?.length ||
+    client?.clientProfile.preferredCommunication?.length;
+
   return (
     <Accordion
       expanded={expanded}
@@ -79,7 +85,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
       mb="xs"
       title="Contact Info"
     >
-      {isContactInfo && (
+      {isContactInfo && hasContactInfo && (
         <View
           style={{
             height: isContactInfo ? 'auto' : 0,
@@ -123,12 +129,13 @@ export default function ContactInfo(props: IProfileSectionProps) {
                   ))}
                 </View>
               )}
-
-              <InfoCol
-                row
-                label="Email"
-                value={client?.clientProfile.user.email}
-              />
+              {!!client?.clientProfile.user.email && (
+                <InfoCol
+                  row
+                  label="Email"
+                  value={client?.clientProfile.user.email}
+                />
+              )}
               {!!client?.clientProfile.socialMediaProfiles?.length && (
                 <View>
                   <TextRegular size="sm" mb="sm">
