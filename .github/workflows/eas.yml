@@ -168,6 +168,9 @@ jobs:
             fi
           }
 
+          # Write runtime version to .env
+          echo "RUNTIME_VERSION=$runtime_version" >> .env
+
           # Check and start builds for iOS and Android
           check_and_start_build ios
           check_and_start_build android
