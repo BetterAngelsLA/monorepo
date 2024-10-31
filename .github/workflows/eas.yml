@@ -174,7 +174,7 @@ jobs:
           check_and_start_build android
           # check_and_start_build ios
 
-          eas update --runtime-version "$runtime_version" --non-interactive --auto --json
+          eas_update_output=$(eas update --non-interactive --auto --json)
           echo $eas_update_output
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
