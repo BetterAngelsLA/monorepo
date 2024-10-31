@@ -96,7 +96,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                   value={hmisProfile.hmisId}
                 />
               ))}
-              {client?.clientProfile.livingSituation && (
+              {!!client?.clientProfile.livingSituation && (
                 <InfoRow
                   label="Living Situation"
                   value={
