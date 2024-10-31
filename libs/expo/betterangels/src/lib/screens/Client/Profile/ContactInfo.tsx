@@ -70,11 +70,11 @@ export default function ContactInfo(props: IProfileSectionProps) {
     },
   ];
 
-  const hasContactInfo =
-    client?.clientProfile.phoneNumbers?.length ||
-    client?.clientProfile.user.email ||
-    client?.clientProfile.socialMediaProfiles?.length ||
-    client?.clientProfile.preferredCommunication?.length;
+  const hasContent =
+    addresses.some(({ value }) => value) ||
+    !!client?.clientProfile.socialMediaProfiles?.length ||
+    !!client?.clientProfile.phoneNumbers?.length ||
+    !!client?.clientProfile.preferredCommunication?.length;
 
   return (
     <Accordion
@@ -85,7 +85,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
       mb="xs"
       title="Contact Info"
     >
-      {isContactInfo && hasContactInfo && (
+      {isContactInfo && hasContent && (
         <View
           style={{
             height: isContactInfo ? 'auto' : 0,

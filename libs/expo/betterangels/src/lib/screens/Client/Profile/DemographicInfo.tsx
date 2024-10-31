@@ -84,15 +84,10 @@ export default function DemographicInfo(props: IProfileSectionProps) {
     },
   ];
 
-  const hasDemographicInfo =
-    client?.clientProfile.displayGender ||
-    client?.clientProfile.displayPronouns ||
-    client?.clientProfile.race ||
-    client?.clientProfile.placeOfBirth ||
-    client?.clientProfile.heightInInches ||
-    client?.clientProfile.eyeColor ||
-    client?.clientProfile.hairColor ||
-    client?.clientProfile.maritalStatus;
+  const hasContent =
+    demographicData.some(({ value }) => value) ||
+    !!client?.clientProfile.physicalDescription ||
+    !!client?.clientProfile.adaAccommodation?.length;
 
   return (
     <Accordion
@@ -103,7 +98,7 @@ export default function DemographicInfo(props: IProfileSectionProps) {
       mb="xs"
       title="Demographic Info"
     >
-      {isDemographicInfo && hasDemographicInfo && (
+      {isDemographicInfo && hasContent && (
         <View
           style={{
             height: isDemographicInfo ? 'auto' : 0,
