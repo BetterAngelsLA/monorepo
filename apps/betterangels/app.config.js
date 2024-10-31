@@ -131,6 +131,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: process.env.RUNTIME_VERSION,
+    runtimeVersion: process.env.RUNTIME_VERSION || 'default',
   },
 };

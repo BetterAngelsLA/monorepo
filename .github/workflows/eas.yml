@@ -148,6 +148,9 @@ jobs:
           runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
           echo "Extracted runtime version: $runtime_version"
 
+          # Write runtime version to .env
+          echo "RUNTIME_VERSION=$runtime_version" >> .env
+
           # Helper function to check build status and start a new build if needed
           check_and_start_build() {
             platform=$1
@@ -167,9 +170,6 @@ jobs:
               echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
             fi
           }
-
-          # Write runtime version to .env
-          echo "RUNTIME_VERSION=$runtime_version" >> .env
 
           # Check and start builds for iOS and Android
           check_and_start_build ios
