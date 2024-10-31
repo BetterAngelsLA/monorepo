@@ -22,6 +22,13 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+enum AdaAccommodationEnum {
+  HEARING
+  MOBILITY
+  VISUAL
+  OTHER
+}
+
 input AddNoteTaskInput {
   taskId: ID!
   noteId: ID!
@@ -48,6 +55,8 @@ interface AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum AttachmentType {
@@ -109,6 +118,8 @@ type ClientDocumentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   namespace: ClientDocumentNamespaceEnum!
 }
 
@@ -155,6 +166,7 @@ input ClientProfilePhotoInput {
 }
 
 type ClientProfileType {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
@@ -164,6 +176,7 @@ type ClientProfileType {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String
@@ -171,7 +184,7 @@ type ClientProfileType {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: DjangoImageType
   pronouns: PronounEnum
@@ -184,6 +197,7 @@ type ClientProfileType {
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
+  phoneNumbers: [PhoneNumberType!]
   socialMediaProfiles: [SocialMediaProfileType!]
   displayGender: String
   displayPronouns: String
@@ -203,6 +217,7 @@ input CreateClientDocumentInput {
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input CreateClientProfileInput {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
@@ -212,6 +227,7 @@ input CreateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String
@@ -219,7 +235,7 @@ input CreateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum
@@ -231,6 +247,7 @@ input CreateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
 }
@@ -246,7 +263,8 @@ input CreateNoteAttachmentInput {
 union CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
 input CreateNoteInput {
-  title: String!
+  purpose: String
+  title: String
   publicDetails: String
   privateDetails: String
   client: ID
@@ -264,6 +282,7 @@ union CreateNotePayload = NoteType | OperationInfo
 input CreateNoteServiceRequestInput {
   service: ServiceEnum!
   customService: String
+  serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
 }
@@ -284,6 +303,7 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   customService: String
+  serviceOther: String
   client: ID
 }
 
@@ -568,6 +588,8 @@ type NoteAttachmentType implements AttachmentInterface {
   file: DjangoFileType!
   attachmentType: AttachmentType!
   originalFilename: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   namespace: NoteNamespaceEnum!
 }
 
@@ -595,7 +617,9 @@ input NoteOrder {
 
 type NoteType {
   id: ID!
-  title: String!
+  purpose: String
+  team: SelahTeamEnum
+  title: String
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
@@ -665,6 +689,18 @@ type OrganizationType {
 }
 
 scalar PhoneNumber
+
+input PhoneNumberInput {
+  id: ID
+  number: PhoneNumber
+  isPrimary: Boolean = false
+}
+
+type PhoneNumberType {
+  id: ID!
+  number: PhoneNumber
+  isPrimary: Boolean
+}
 
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
@@ -759,23 +795,64 @@ type SampleType {
   lastModified: DateTime
 }
 
+enum SelahTeamEnum {
+  BOWTIE_RIVERSIDE_OUTREACH
+  ECHO_PARK_ON_SITE
+  ECHO_PARK_OUTREACH
+  HOLLYWOOD_ON_SITE
+  HOLLYWOOD_OUTREACH
+  LA_RIVER_OUTREACH
+  LOS_FELIZ_OUTREACH
+  NORTHEAST_HOLLYWOOD_OUTREACH
+  SILVER_LAKE_OUTREACH
+  SLCC_ON_SITE
+  SUNDAY_SOCIAL_ATWATER_ON_SITE
+  SUNDAY_SOCIAL_ATWATER_OUTREACH
+  WDI_ON_SITE
+  WDI_OUTREACH
+}
+
 enum ServiceEnum {
+  BICYCLE
+  BIRTH_CERTIFICATE
   BLANKET
   BOOK
+  CALIFORNIA_LIFELINE_PHONE
   CLOTHES
+  CONTACT_DPSS
+  CONTACT_FRIEND
+  DMH_EVALUATION
+  DMV_NO_FEE_ID_FORM
   DENTAL
+  DISCOUNT_SCOOTER_RIDES
+  FAMILY_REUNIFICATION
   FOOD
   HARM_REDUCTION
   HYGIENE_KIT
+  INTERNET_ACCESS
+  LEGAL_COUNSEL
+  MAIL_PICK_UP
   MEDICAL
+  METRO_LIFE_TAP
   PET_CARE
   PET_FOOD
+  PUBLIC_BENEFITS_PROGRAMS
+  RIDE
+  SAFE_PARKING
   SHELTER
   SHOES
   SHOWER
+  SOCIAL_SECURITY_CARD_REPLACEMENT
   STABILIZE
+  STIMULUS_ASSISTANCE
   STORAGE
+  STORAGE_BELONGINGS
+  STORAGE_DOCUMENTS
+  TENT
+  THERAPIST_APPOINTMENT
   TRANSPORT
+  UNEMPLOYMENT_CERTIFICATION
+  VACCINE_PASSPORT
   WATER
   OTHER
 }
@@ -789,6 +866,7 @@ type ServiceRequestType {
   id: ID!
   service: ServiceEnum!
   customService: String
+  serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
@@ -860,6 +938,7 @@ enum TaskTypeEnum {
 }
 
 input UpdateClientProfileInput {
+  adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
   dateOfBirth: Date
@@ -869,6 +948,7 @@ input UpdateClientProfileInput {
   hairColor: HairColorEnum
   heightInInches: Float
   hmisId: String
+  importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
   mailingAddress: String
@@ -876,7 +956,7 @@ input UpdateClientProfileInput {
   phoneNumber: PhoneNumber
   physicalDescription: String
   placeOfBirth: String
-  preferredCommunication: PreferredCommunicationEnum
+  preferredCommunication: [PreferredCommunicationEnum!]
   preferredLanguage: LanguageEnum
   profilePhoto: Upload
   pronouns: PronounEnum
@@ -889,6 +969,7 @@ input UpdateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
 }
@@ -901,6 +982,8 @@ union UpdateCurrentUserPayload = UserType | OperationInfo
 
 input UpdateNoteInput {
   id: ID!
+  purpose: String
+  team: SelahTeamEnum
   title: String
   location: ID
   publicDetails: String
@@ -921,6 +1004,7 @@ union UpdateNotePayload = NoteType | OperationInfo
 input UpdateServiceRequestInput {
   id: ID!
   customService: String
+  serviceOther: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
   client: ID
@@ -964,6 +1048,7 @@ type UserType {
   middleName: String
   email: String
   id: ID!
+  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean

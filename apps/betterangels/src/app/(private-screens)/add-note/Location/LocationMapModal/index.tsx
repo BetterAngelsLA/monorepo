@@ -1,4 +1,8 @@
-import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
+import {
+  TMapView,
+  useUpdateNoteLocationMutation,
+} from '@monorepo/expo/betterangels';
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -16,9 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { apiUrl } from '../../../../../../config';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
@@ -64,7 +66,8 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setLocation,
     setError,
   } = props;
-  const mapRef = useRef<MapView>(null);
+  const { baseUrl } = useApiConfig();
+  const mapRef = useRef<TMapView>(null);
   const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
@@ -101,7 +104,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
-    const url = `${apiUrl}/proxy/maps/api/place/autocomplete/json`;
+    const url = `${baseUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
     // geocode for approx center of LA COUNTY
@@ -133,7 +136,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       return [];
     }
   };
-
   const onSuggestionsSelect = async (place: any) => {
     try {
       if (chooseDirections) {
@@ -142,7 +144,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setLocation(undefined);
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const response = await axios.get(
-        `${apiUrl}/proxy/maps/api/place/details/json`,
+        `${baseUrl}/proxy/maps/api/place/details/json`,
         {
           params: {
             place_id: place.place_id,
@@ -252,7 +254,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setUserLocation(userCurrentLocation);
     if (location?.latitude && location?.longitude) return;
 
-    const url = `${apiUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
+    const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
 
     try {
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete

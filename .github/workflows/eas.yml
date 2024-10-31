@@ -101,7 +101,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: 9.2.0
+          eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
@@ -132,7 +132,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
-        id: continuos_deploy
+        id: continuous_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: preview
@@ -143,12 +143,75 @@ jobs:
         if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
         run: |
-          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuos_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
+          build_list_output=$(eas build:list --platform ios --status finished --buildProfile development-simulator --runtimeVersion ${{ steps.continuous_deploy.outputs.ios-fingerprint }} --limit 1 --json --non-interactive)
           if [ "${build_list_output}" == "[]" ]; then
             eas build --profile development-simulator --platform ios --non-interactive --no-wait
           else
-            echo "A simulator was already found for ${{ steps.continuos_deploy.outputs.ios-fingerprint }}."
+            echo "A simulator was already found for ${{ steps.continuous_deploy.outputs.ios-fingerprint }}."
           fi
+
+      - name: Set QR Code URLs and Commit Info
+        id: set-urls
+        run: |
+          UPDATE_OUTPUT='${{ steps.continuous_deploy.outputs.update-output }}'
+
+          IOS_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "ios") | .id')
+          ANDROID_UPDATE_ID=$(echo "${UPDATE_OUTPUT}" | jq -r '.[] | select(.platform == "android") | .id')
+
+          IOS_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${IOS_UPDATE_ID}&appScheme=betterangels"
+          ANDROID_UPDATE_QR_URL="https://qr.expo.dev/eas-update?updateId=${ANDROID_UPDATE_ID}&appScheme=betterangels"
+          IOS_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.ios-build-id }}"
+          ANDROID_BUILD_QR_URL="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.continuous_deploy.outputs.android-build-id }}"
+
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+
+          {
+            echo "ios_update_qr_url=${IOS_UPDATE_QR_URL}"
+            echo "android_update_qr_url=${ANDROID_UPDATE_QR_URL}"
+            echo "ios_build_qr_url=${IOS_BUILD_QR_URL}"
+            echo "android_build_qr_url=${ANDROID_BUILD_QR_URL}"
+            echo "commit_id=${COMMIT_ID}"
+            echo "commit_message=${COMMIT_MESSAGE}"
+          } >> $GITHUB_OUTPUT
+
+      - name: Post to Slack
+        uses: slackapi/slack-github-action@v1.27.0
+        if: github.ref == 'refs/heads/main'
+        with:
+          payload: |
+            {
+              "channel": "#tech-outreach-main",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*New code has landed in main!* \n*Commit:* `${{ steps.set-urls.outputs.commit_id }}`\n*Message:* ${{ steps.set-urls.outputs.commit_message }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📱 iOS*\n\n<${{ steps.set-urls.outputs.ios_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.ios_build_qr_url }}|Build>"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🤖 Android*\n\n<${{ steps.set-urls.outputs.android_update_qr_url }}|Update>\n<${{ steps.set-urls.outputs.android_build_qr_url }}|Build>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: 🧼 Cleanup .env file
         if: always()
@@ -195,7 +258,7 @@ jobs:
       - name: 🔧 Setup EAS
         uses: expo/expo-github-action@v8
         with:
-          eas-version: 9.2.0
+          eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
@@ -226,7 +289,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
       - name: 🚀 Continuously Deploy
-        id: continuos_deploy
+        id: continuous_deploy
         uses: expo/expo-github-action/continuous-deploy-fingerprint@main
         with:
           profile: production

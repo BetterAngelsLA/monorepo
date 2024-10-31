@@ -4,7 +4,7 @@ import time_machine
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum, ServiceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum, ServiceEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -27,12 +27,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self._update_note_fixture(
             {
                 "id": note_id,
-                "title": "Updated Note",
-                "location": self.location.pk,
-                "publicDetails": "Updated public details",
-                "privateDetails": "Updated private details",
-                "isSubmitted": False,
                 "interactedAt": "2024-03-12T11:12:13+00:00",
+                "isSubmitted": False,
+                "location": self.location.pk,
+                "privateDetails": "Updated private details",
+                "publicDetails": "Updated public details",
+                "purpose": "Updated Note",
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "title": "Updated Note",
             }
         )
         # Add moods
@@ -53,7 +55,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             query ViewNote($id: ID!) {
                 note(pk: $id) {
                     id
+                    interactedAt
+                    isSubmitted
+                    privateDetails
+                    publicDetails
+                    purpose
+                    team
                     title
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
                     location {
                         id
                         address {
@@ -79,23 +93,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     providedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     requestedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
-                    publicDetails
-                    privateDetails
-                    isSubmitted
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    interactedAt
                 }
             }
         """
@@ -109,6 +115,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
         expected_note = {
             "id": note_id,
+            "client": {"id": str(self.client_user_1.pk)},
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "interactedAt": "2024-03-12T11:12:13+00:00",
+            "isSubmitted": False,
+            "privateDetails": "Updated private details",
+            "publicDetails": "Updated public details",
+            "purpose": "Updated Note",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated Note",
             "location": {
                 "id": str(self.location.pk),
@@ -134,11 +148,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {
                     "id": str(self.provided_services[0].id),
                     "service": ServiceEnum(self.provided_services[0].service).name,
+                    "serviceOther": self.provided_services[0].service_other,
                     "customService": self.provided_services[0].custom_service,
                 },
                 {
                     "id": str(self.provided_services[1].id),
                     "service": ServiceEnum(self.provided_services[1].service).name,
+                    "serviceOther": self.provided_services[1].service_other,
                     "customService": self.provided_services[1].custom_service,
                 },
             ],
@@ -146,20 +162,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {
                     "id": str(self.requested_services[0].id),
                     "service": ServiceEnum(self.requested_services[0].service).name,
+                    "serviceOther": self.requested_services[0].service_other,
                     "customService": self.requested_services[0].custom_service,
                 },
                 {
                     "id": str(self.requested_services[1].id),
                     "service": ServiceEnum(self.requested_services[1].service).name,
+                    "serviceOther": self.requested_services[1].service_other,
                     "customService": self.requested_services[1].custom_service,
                 },
             ],
-            "publicDetails": "Updated public details",
-            "privateDetails": "Updated private details",
-            "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "interactedAt": "2024-03-12T11:12:13+00:00",
         }
         note_differences = DeepDiff(expected_note, note, ignore_order=True)
         self.assertFalse(note_differences)
@@ -169,7 +181,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 notes {
                     id
+                    interactedAt
+                    isSubmitted
+                    privateDetails
+                    publicDetails
+                    purpose
+                    team
                     title
+                    client {
+                        id
+                    }
+                    createdBy {
+                        id
+                    }
                     location {
                         id
                         address {
@@ -195,23 +219,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     providedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
                     requestedServices {
                         id
                         service
+                        serviceOther
                         customService
                     }
-                    publicDetails
-                    privateDetails
-                    isSubmitted
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    interactedAt
                 }
             }
         """
@@ -262,6 +278,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
         self.note_2 = self._create_note_fixture(
             {
+                "purpose": "Client 1's Note",
                 "title": "Client 1's Note",
                 "publicDetails": "deets",
                 "client": self.client_user_1.pk,
@@ -270,6 +287,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         self.note_3 = self._create_note_fixture(
             {
+                "purpose": "Client 2's Note",
                 "title": "Client 2's Note",
                 "publicDetails": "more deets",
                 "client": self.client_user_2.pk,
@@ -317,14 +335,22 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        older_note = self._create_note_fixture({"title": "Client 1's Note", "client": self.client_user_1.pk})["data"][
-            "createNote"
-        ]
+        older_note = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
+                "title": "Client 1's Note",
+                "client": self.client_user_1.pk,
+            }
+        )["data"]["createNote"]
         self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
 
-        oldest_note = self._create_note_fixture({"title": "Client 2's Note", "client": self.client_user_2.pk})["data"][
-            "createNote"
-        ]
+        oldest_note = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "title": "Client 2's Note",
+                "client": self.client_user_2.pk,
+            }
+        )["data"]["createNote"]
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
@@ -440,6 +466,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                 serviceRequest(pk: $id) {
                     id
                     service
+                    serviceOther
                     customService
                     status
                     dueBy
@@ -464,6 +491,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         expected_service_request = {
             "id": service_request_id,
             "service": self.service_request["service"],
+            "serviceOther": None,
             "customService": None,
             "status": "COMPLETED",
             "dueBy": None,
@@ -481,6 +509,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                 serviceRequests {
                     id
                     service
+                    serviceOther
                     customService
                     status
                     dueBy

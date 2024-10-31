@@ -2,6 +2,7 @@ from unittest.mock import ANY
 
 from accounts.models import User
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -56,12 +57,17 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.OTHER.name,
             "relationshipToClientOther": "cartoon friend",
         }
+        phone_number = {
+            "number": "2125551212",
+            "isPrimary": True,
+        }
         social_media_profile = {
             "platform": SocialMediaEnum.FACEBOOK.name,
             "platformUserId": "firsty_lasty",
         }
 
         variables = {
+            "adaAccommodation": [AdaAccommodationEnum.VISUAL.name],
             "address": "1234 Main St",
             "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
@@ -73,14 +79,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
+            "importantNotes": "I am an important note",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1234 Mailing Street",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "phoneNumbers": [phone_number],
             "physicalDescription": "eerily cat-like",
             "placeOfBirth": "Los Angeles",
-            "preferredCommunication": PreferredCommunicationEnum.TEXT.name,
+            "preferredCommunication": [],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.SHE_HER_HERS.name,
             "pronounsOther": None,
@@ -97,6 +105,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_contacts = [{"id": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
         expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
+        expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_user = {"id": ANY, **user}
         expected_client_profile = {
@@ -110,6 +119,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayPronouns": "She/Her/Hers",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
+            "phoneNumbers": expected_phone_numbers,
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
@@ -172,6 +182,16 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         }
         household_members = [household_member_1, household_member_new]
 
+        client_1_phone_number_1 = {
+            "id": self.client_profile_1["phoneNumbers"][0]["id"],
+            "number": "2125551212",
+            "isPrimary": False,
+        }
+        client_1_phone_number_new = {
+            "number": "6465551212",
+            "isPrimary": True,
+        }
+        client_1_phone_numbers = [client_1_phone_number_1, client_1_phone_number_new]
         client_1_social_media_profile_2 = {
             "platform": SocialMediaEnum.TWITTER.name,
             "platformUserId": "bortman",
@@ -180,6 +200,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "id": self.client_profile_1["id"],
+            "adaAccommodation": [AdaAccommodationEnum.VISUAL.name, AdaAccommodationEnum.HEARING.name],
             "address": "1234 Main St",
             "contacts": contacts,
             "dateOfBirth": self.date_of_birth,
@@ -190,15 +211,17 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "heightInInches": 71.75,
             "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
+            "importantNotes": "I am a very important note",
             "householdMembers": household_members,
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "maritalStatus": MaritalStatusEnum.SEPARATED.name,
             "mailingAddress": "1234 Mailing St",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
+            "phoneNumbers": client_1_phone_numbers,
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
-            "preferredCommunication": PreferredCommunicationEnum.WHATSAPP.name,
+            "preferredCommunication": [PreferredCommunicationEnum.WHATSAPP.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "pronouns": PronounEnum.OTHER.name,
             "pronounsOther": "she/her/theirs",
@@ -233,6 +256,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
+
         self.assertFalse(client_differences)
 
     def test_partial_update_client_profile_mutation(self) -> None:
@@ -271,7 +295,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 40
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -294,7 +318,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 8
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
@@ -351,7 +375,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 14
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 

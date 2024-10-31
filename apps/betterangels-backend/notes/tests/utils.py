@@ -24,6 +24,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note = self._create_note_fixture(
             {
                 "title": f"Session with {self.client_user_1.full_name}",
+                "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
             },
@@ -98,7 +99,19 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }}
                     ... on NoteType {{
                         id
+                        interactedAt
+                        isSubmitted
+                        privateDetails
+                        publicDetails
+                        purpose
+                        team
                         title
+                        client {{
+                            id
+                        }}
+                        createdBy {{
+                            id
+                        }}
                         location {{
                             id
                             address {{
@@ -124,23 +137,15 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         providedServices {{
                             id
                             service
+                            serviceOther
                             customService
                         }}
                         requestedServices {{
                             id
                             service
+                            serviceOther
                             customService
                         }}
-                        publicDetails
-                        privateDetails
-                        isSubmitted
-                        client {{
-                            id
-                        }}
-                        createdBy {{
-                            id
-                        }}
-                        interactedAt
                     }}
                 }}
             }}
@@ -173,8 +178,13 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 revertNote(data: $data) {
                     ... on NoteType {
                         id
-                        title
+                        interactedAt
+                        isSubmitted
+                        privateDetails
                         publicDetails
+                        purpose
+                        team
+                        title
                         location {
                             address {
                                 street
@@ -209,6 +219,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         providedServices {
                             id
                             service
+                            serviceOther
                             customService
                             dueBy
                             status
@@ -216,6 +227,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         requestedServices {
                             id
                             service
+                            serviceOther
                             customService
                             dueBy
                             status
@@ -393,6 +405,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ServiceRequestType {
                         id
                         service
+                        serviceOther
                         customService
                         status
                         dueBy
@@ -540,6 +553,7 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                     ... on ServiceRequestType {{
                         id
                         service
+                        serviceOther
                         customService
                         status
                         dueBy

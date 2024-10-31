@@ -18,6 +18,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import TextRegular from '../TextRegular';
 
 type TRules = Omit<
   RegisterOptions,
@@ -43,7 +44,9 @@ interface IInputProps extends TextInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onBlur?: () => void;
+  onFocus?: () => void;
   icon?: ReactNode;
+  errorMessage?: string;
 }
 
 export function Input(props: IInputProps) {
@@ -64,6 +67,7 @@ export function Input(props: IInputProps) {
     ml,
     mr,
     icon,
+    errorMessage,
     ...rest
   } = props;
 
@@ -71,6 +75,12 @@ export function Input(props: IInputProps) {
     onBlur();
     if (props.onBlur) {
       props.onBlur();
+    }
+  };
+
+  const handleFocus = () => {
+    if (props.onFocus) {
+      props.onFocus();
     }
   };
 
@@ -128,6 +138,7 @@ export function Input(props: IInputProps) {
               }}
               value={value}
               onBlur={() => handleBlur(onBlur)}
+              onFocus={() => handleFocus()}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}
@@ -147,6 +158,11 @@ export function Input(props: IInputProps) {
               </Pressable>
             )}
           </View>
+          {errorMessage && (
+            <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
+              {errorMessage}
+            </TextRegular>
+          )}
         </View>
       )}
     />

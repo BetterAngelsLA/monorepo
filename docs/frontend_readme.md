@@ -19,7 +19,11 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Setup:**
 
-Run the following on the host machine (not in the container):
+Run the following on the host machine—**not in the container**:
+
+> [!WARNING]
+> If you run the following commands inside the Docker container, they will not function  
+> correctly. Use your **System Terminal** instead.
 
 1. Install [NVM](https://github.com/nvm-sh/nvm)
 
@@ -52,6 +56,7 @@ Run the following on the host machine (not in the container):
    > ```
 
 1. Reload your shell profile or restart your terminal for the changes to take effect
+
    ```bash
    source ~/.zshrc
    ```
@@ -64,10 +69,13 @@ Run the following on the host machine (not in the container):
 
 1. Clone the monorepo
    a. [Setup SSH (optional)](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
-      ```bash
-      git clone git@github.com:BetterAngelsLA/monorepo.git
-      ```
+
+   ```bash
+   git clone git@github.com:BetterAngelsLA/monorepo.git
+   ```
+
    b. Alternatively use https
+
    ```bash
    git clone https://github.com/BetterAngelsLA/monorepo.git
    ```
@@ -85,17 +93,23 @@ Run the following on the host machine (not in the container):
    nvm install node && nvm alias default node
    ```
 
+1. Optional: add a `.env.local` file:
+   - See `.env.local.sample` file for refernce
+   - .env.local file should override the .env values on your local machine
+     - usage example: seting ` EXPO_PUBLIC_API_URL`` and  `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
+   - NX docs on [Environment Variables](https://nx.dev/recipes/tips-n-tricks/define-environment-variables)
+
 ### Running the Frontend: Nx Workspace with Expo Application
 
 #### Starting Expo
 
 1. Open a new integrated terminal (local) and run the following to start Expo in your local environment
-   *Note: You should have development builds (linked above) installed on your device*
+   _Note: You should have development builds (linked above) installed on your device_
 
    Start the Outreach app
 
    ```bash
-   yarn nx start betterangels
+   yarn nx run betterangels:start
    ```
 
    Start the Shelter app

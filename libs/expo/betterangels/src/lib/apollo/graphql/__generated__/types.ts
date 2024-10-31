@@ -24,6 +24,13 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
+export enum AdaAccommodationEnum {
+  Hearing = 'HEARING',
+  Mobility = 'MOBILITY',
+  Other = 'OTHER',
+  Visual = 'VISUAL'
+}
+
 export type AddNoteTaskInput = {
   noteId: Scalars['ID']['input'];
   taskId: Scalars['ID']['input'];
@@ -48,9 +55,11 @@ export type AddressType = {
 
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export enum AttachmentType {
@@ -112,15 +121,18 @@ export enum ClientDocumentNamespaceEnum {
 export type ClientDocumentType = AttachmentInterface & {
   __typename?: 'ClientDocumentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientHouseholdMemberInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
@@ -131,7 +143,9 @@ export type ClientHouseholdMemberType = {
   __typename?: 'ClientHouseholdMemberType';
   clientProfile: DjangoModelType;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
+  displayGender?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
@@ -160,31 +174,36 @@ export type ClientProfilePhotoInput = {
 
 export type ClientProfileType = {
   __typename?: 'ClientProfileType';
+  adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
   displayCaseManager: Scalars['String']['output'];
+  displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
   docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
   eyeColor?: Maybe<EyeColorEnum>;
   gender?: Maybe<GenderEnum>;
+  genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisId?: Maybe<Scalars['String']['output']>;
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
+  importantNotes?: Maybe<Scalars['String']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
+  phoneNumbers?: Maybe<Array<PhoneNumberType>>;
   physicalDescription?: Maybe<Scalars['String']['output']>;
   placeOfBirth?: Maybe<Scalars['String']['output']>;
-  preferredCommunication?: Maybe<PreferredCommunicationEnum>;
+  preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: Maybe<LanguageEnum>;
   profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
@@ -221,25 +240,29 @@ export type CreateClientDocumentInput = {
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type CreateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
@@ -266,7 +289,8 @@ export type CreateNoteInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  title: Scalars['String']['input'];
+  purpose?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateNoteMoodInput = {
@@ -282,6 +306,7 @@ export type CreateNoteServiceRequestInput = {
   customService?: InputMaybe<Scalars['String']['input']>;
   noteId: Scalars['ID']['input'];
   service: ServiceEnum;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
@@ -301,6 +326,7 @@ export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
   service: ServiceEnum;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -743,10 +769,12 @@ export type NoteAttachmentFilter = {
 export type NoteAttachmentType = AttachmentInterface & {
   __typename?: 'NoteAttachmentType';
   attachmentType: AttachmentType;
+  createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type NoteFilter = {
@@ -786,9 +814,11 @@ export type NoteType = {
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
+  purpose?: Maybe<Scalars['String']['output']>;
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
-  title: Scalars['String']['output'];
+  team?: Maybe<SelahTeamEnum>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -875,6 +905,19 @@ export type PermDefinition = {
   app?: InputMaybe<Scalars['String']['input']>;
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PhoneNumberInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isPrimary?: InputMaybe<Scalars['Boolean']['input']>;
+  number?: InputMaybe<Scalars['PhoneNumber']['input']>;
+};
+
+export type PhoneNumberType = {
+  __typename?: 'PhoneNumberType';
+  id: Scalars['ID']['output'];
+  isPrimary?: Maybe<Scalars['Boolean']['output']>;
+  number?: Maybe<Scalars['PhoneNumber']['output']>;
 };
 
 export enum PreferredCommunicationEnum {
@@ -1035,24 +1078,65 @@ export type SampleType = {
   name: Scalars['String']['output'];
 };
 
+export enum SelahTeamEnum {
+  BowtieRiversideOutreach = 'BOWTIE_RIVERSIDE_OUTREACH',
+  EchoParkOnSite = 'ECHO_PARK_ON_SITE',
+  EchoParkOutreach = 'ECHO_PARK_OUTREACH',
+  HollywoodOnSite = 'HOLLYWOOD_ON_SITE',
+  HollywoodOutreach = 'HOLLYWOOD_OUTREACH',
+  LaRiverOutreach = 'LA_RIVER_OUTREACH',
+  LosFelizOutreach = 'LOS_FELIZ_OUTREACH',
+  NortheastHollywoodOutreach = 'NORTHEAST_HOLLYWOOD_OUTREACH',
+  SilverLakeOutreach = 'SILVER_LAKE_OUTREACH',
+  SlccOnSite = 'SLCC_ON_SITE',
+  SundaySocialAtwaterOnSite = 'SUNDAY_SOCIAL_ATWATER_ON_SITE',
+  SundaySocialAtwaterOutreach = 'SUNDAY_SOCIAL_ATWATER_OUTREACH',
+  WdiOnSite = 'WDI_ON_SITE',
+  WdiOutreach = 'WDI_OUTREACH'
+}
+
 export enum ServiceEnum {
+  Bicycle = 'BICYCLE',
+  BirthCertificate = 'BIRTH_CERTIFICATE',
   Blanket = 'BLANKET',
   Book = 'BOOK',
+  CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
+  ContactDpss = 'CONTACT_DPSS',
+  ContactFriend = 'CONTACT_FRIEND',
   Dental = 'DENTAL',
+  DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
+  DmhEvaluation = 'DMH_EVALUATION',
+  DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
+  FamilyReunification = 'FAMILY_REUNIFICATION',
   Food = 'FOOD',
   HarmReduction = 'HARM_REDUCTION',
   HygieneKit = 'HYGIENE_KIT',
+  InternetAccess = 'INTERNET_ACCESS',
+  LegalCounsel = 'LEGAL_COUNSEL',
+  MailPickUp = 'MAIL_PICK_UP',
   Medical = 'MEDICAL',
+  MetroLifeTap = 'METRO_LIFE_TAP',
   Other = 'OTHER',
   PetCare = 'PET_CARE',
   PetFood = 'PET_FOOD',
+  PublicBenefitsPrograms = 'PUBLIC_BENEFITS_PROGRAMS',
+  Ride = 'RIDE',
+  SafeParking = 'SAFE_PARKING',
   Shelter = 'SHELTER',
   Shoes = 'SHOES',
   Shower = 'SHOWER',
+  SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
   Stabilize = 'STABILIZE',
+  StimulusAssistance = 'STIMULUS_ASSISTANCE',
   Storage = 'STORAGE',
+  StorageBelongings = 'STORAGE_BELONGINGS',
+  StorageDocuments = 'STORAGE_DOCUMENTS',
+  Tent = 'TENT',
+  TherapistAppointment = 'THERAPIST_APPOINTMENT',
   Transport = 'TRANSPORT',
+  UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
+  VaccinePassport = 'VACCINE_PASSPORT',
   Water = 'WATER'
 }
 
@@ -1071,6 +1155,7 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
+  serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
 
@@ -1140,26 +1225,30 @@ export enum TaskTypeEnum {
 }
 
 export type UpdateClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   gender?: InputMaybe<GenderEnum>;
+  genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
   hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
   placeOfBirth?: InputMaybe<Scalars['String']['input']>;
-  preferredCommunication?: InputMaybe<PreferredCommunicationEnum>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
   preferredLanguage?: InputMaybe<LanguageEnum>;
   profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
   pronouns?: InputMaybe<PronounEnum>;
@@ -1185,6 +1274,8 @@ export type UpdateNoteInput = {
   location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1202,6 +1293,7 @@ export type UpdateServiceRequestInput = {
   customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['ID']['input'];
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<ServiceRequestStatusEnum>;
 };
 
@@ -1237,6 +1329,7 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
+  clientProfile?: Maybe<DjangoModelType>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;

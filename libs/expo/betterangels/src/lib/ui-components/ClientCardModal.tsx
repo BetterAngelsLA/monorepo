@@ -23,7 +23,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
       const { data } = await createNote({
         variables: {
           data: {
-            title: `Session with ${firstName || 'Client'}`,
+            purpose: `Session with ${firstName || 'Client'}`,
             client: id,
           },
         },

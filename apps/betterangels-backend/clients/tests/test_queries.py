@@ -4,6 +4,7 @@ from typing import Optional
 import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
+    AdaAccommodationEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -53,7 +54,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 11
+        expected_query_count = 12
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -61,6 +62,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile = response["data"]["clientProfile"]
         expected_client_profile = {
             "id": str(client_profile_id),
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
             "consentFormDocuments": [self.client_profile_1_document_3],
@@ -78,15 +80,17 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
+            "importantNotes": "I am very important",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
+            "phoneNumbers": self.client_profile_1["phoneNumbers"],
             "physicalDescription": "A human",
             "placeOfBirth": self.client_profile_1["placeOfBirth"],
-            "preferredCommunication": PreferredCommunicationEnum.CALL.name,
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
             "preferredLanguage": LanguageEnum.ENGLISH.name,
             "profilePhoto": {"name": self.client_profile_1_photo_name},
             "pronouns": PronounEnum.HE_HIM_HIS.name,
@@ -109,7 +113,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 7
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

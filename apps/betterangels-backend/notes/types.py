@@ -10,6 +10,7 @@ from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
+    SelahTeamEnum,
     ServiceRequestTypeEnum,
     TaskTypeEnum,
 )
@@ -44,6 +45,7 @@ class ServiceRequestType:
     id: ID
     service: auto
     custom_service: auto
+    service_other: auto
     status: auto
     due_by: auto
     completed_on: auto
@@ -57,6 +59,7 @@ class CreateServiceRequestInput:
     service: auto
     status: auto
     custom_service: auto
+    service_other: auto
     client: Optional[ID]
 
 
@@ -64,6 +67,7 @@ class CreateServiceRequestInput:
 class CreateNoteServiceRequestInput:
     service: auto
     custom_service: Optional[str]
+    service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
 
@@ -72,6 +76,7 @@ class CreateNoteServiceRequestInput:
 class UpdateServiceRequestInput:
     id: ID
     custom_service: auto
+    service_other: auto
     status: auto
     due_by: auto
     client: Optional[ID]
@@ -196,6 +201,8 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
+    purpose: auto
+    team: Optional[SelahTeamEnum]
     title: auto
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
@@ -234,7 +241,8 @@ class NoteType:
 
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
-    title: auto
+    purpose: auto
+    title: Optional[str]
     public_details: auto
     private_details: auto
     client: Optional[ID]
@@ -243,6 +251,8 @@ class CreateNoteInput:
 @strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: ID
+    purpose: auto
+    team: Optional[SelahTeamEnum]
     title: auto
     location: Optional[ID]
     public_details: auto

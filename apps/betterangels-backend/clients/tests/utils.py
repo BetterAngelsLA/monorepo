@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from clients.enums import (
+    AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
@@ -27,20 +28,20 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        # Order of fields: id -> direct fields and model properties -> display fields -> related fields
         self.client_profile_fields = """
             id
+            adaAccommodation
             address
             age
             dateOfBirth
-            displayCaseManager
-            displayGender
-            displayPronouns
             eyeColor
             gender
             genderOther
             hairColor
             heightInInches
             hmisId
+            importantNotes
             livingSituation
             mailingAddress
             maritalStatus
@@ -56,6 +57,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             spokenLanguages
             veteranStatus
+            displayCaseManager
+            displayGender
+            displayPronouns
             contacts {
                 id
                 name
@@ -79,6 +83,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 genderOther
                 relationshipToClient
                 relationshipToClientOther
+            }
+            phoneNumbers {
+                id
+                number
+                isPrimary
             }
             profilePhoto {
                 name
@@ -177,6 +186,15 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_household_member_1,
             self.client_profile_1_household_member_2,
         ]
+        self.client_1_phone_number_1 = {
+            "number": "2125551212",
+            "isPrimary": True,
+        }
+        self.client_1_phone_number_2 = {
+            "number": "7185551212",
+        }
+        self.client_profile_1_phone_numbers = [self.client_1_phone_number_1, self.client_1_phone_number_2]
+
         self.client_1_social_media_profile_1 = {
             "platform": SocialMediaEnum.INSTAGRAM.name,
             "platformUserId": "toadman",
@@ -189,8 +207,10 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_1_social_media_profile_1,
             self.client_1_social_media_profile_2,
         ]
+
         self.client_profile_1 = self._create_client_profile_fixture(
             {
+                "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
@@ -201,15 +221,17 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "heightInInches": 71.75,
                 "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
+                "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
+                "phoneNumbers": self.client_profile_1_phone_numbers,
                 "physicalDescription": "A human",
                 "placeOfBirth": "Los Angeles, CA",
-                "preferredCommunication": PreferredCommunicationEnum.CALL.name,
+                "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
                 "preferredLanguage": LanguageEnum.ENGLISH.name,
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
@@ -225,6 +247,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         self.client_profile_2 = self._create_client_profile_fixture(
             {
+                "adaAccommodation": [],
                 "address": None,
                 "contacts": [],
                 "dateOfBirth": None,
@@ -241,9 +264,10 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
+                "phoneNumbers": [],
                 "physicalDescription": None,
                 "placeOfBirth": None,
-                "preferredCommunication": None,
+                "preferredCommunication": [],
                 "preferredLanguage": None,
                 "pronouns": None,
                 "race": None,

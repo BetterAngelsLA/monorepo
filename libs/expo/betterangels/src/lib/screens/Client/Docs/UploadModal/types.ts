@@ -1,4 +1,4 @@
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
@@ -26,7 +26,11 @@ export interface IIdDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'SocialSecurityCard' | 'PhotoId';
+  docType:
+    | 'DriversLicenseFront'
+    | 'DriversLicenseBack'
+    | 'SocialSecurityCard'
+    | 'PhotoId';
 }
 
 export interface IMultipleDocUploadsProps {
@@ -35,7 +39,7 @@ export interface IMultipleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm';
+  docType: 'ConsentForm' | 'HmisForm' | 'IncomeForm' | 'OtherClientDocument';
 }
 
 export interface ISingleDocUploadsProps {
@@ -44,7 +48,12 @@ export interface ISingleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'BirthCertificate' | 'SocialSecurityCard' | 'PhotoId';
+  docType:
+    | 'DriversLicenseFront'
+    | 'DriversLicenseBack'
+    | 'BirthCertificate'
+    | 'SocialSecurityCard'
+    | 'PhotoId';
   thumbnailSize: TThumbnailSize;
 }
 
@@ -62,14 +71,17 @@ export type Docs = {
   ConsentForm: ReactNativeFile[] | undefined;
   HmisForm: ReactNativeFile[] | undefined;
   IncomeForm: ReactNativeFile[] | undefined;
+  OtherClientDocument: ReactNativeFile[] | undefined;
 };
 
 export type ITab =
-  | 'DriversLicense'
+  | 'DriversLicenseFront'
+  | 'DriversLicenseBack'
   | 'BirthCertificate'
   | 'PhotoId'
   | 'SocialSecurityCard'
   | 'ConsentForm'
   | 'HmisForm'
   | 'IncomeForm'
+  | 'OtherClientDocument'
   | undefined;

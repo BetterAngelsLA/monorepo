@@ -4,6 +4,14 @@ from django.utils.translation import gettext_lazy as _
 
 
 @strawberry.enum
+class AdaAccommodationEnum(models.TextChoices):
+    HEARING = "hearing", _("Hearing")
+    MOBILITY = "mobility", _("Mobility")
+    VISUAL = "visual", _("Visual")
+    OTHER = "other", _("Other")
+
+
+@strawberry.enum
 class ClientDocumentNamespaceEnum(models.TextChoices):
     DRIVERS_LICENSE_FRONT = "drivers_license_front", "Driver's License Front"
     DRIVERS_LICENSE_BACK = "drivers_license_back", "Driver's License Back"

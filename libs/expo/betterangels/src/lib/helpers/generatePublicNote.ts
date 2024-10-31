@@ -1,49 +1,38 @@
 import { ServiceEnum, ViewNoteQuery } from '../apollo';
+import { enumDisplayServices } from '../static/enumDisplayMapping';
 
 interface IWatchedValue {
-  purposes: ViewNoteQuery['note']['purposes'];
-  nextSteps: ViewNoteQuery['note']['nextSteps'];
+  purpose: ViewNoteQuery['note']['purpose'];
   moods: ViewNoteQuery['note']['moods'];
   providedServices: ViewNoteQuery['note']['providedServices'];
   requestedServices: ViewNoteQuery['note']['requestedServices'];
 }
 
 export default function generatePublicNote(watchedValues: IWatchedValue) {
-  const { purposes, moods, providedServices, nextSteps, requestedServices } =
-    watchedValues;
-  const changedG = purposes
-    .map((purpose) => purpose.title.toLowerCase())
-    .filter(Boolean);
+  const { purpose, providedServices, requestedServices } = watchedValues;
+  const changedG = purpose
+    ? `G - The goal for this session was to ${purpose}`
+    : 'G - ';
 
-  const purposeText =
-    changedG.length > 0
-      ? changedG.length === 1
-        ? 'The goal for this session was to'
-        : 'The goals for this session were to'
-      : '';
-  const changedP = nextSteps
-    .filter((item) => !!item.title)
-    .map((filtered) => `${filtered.title}`);
+  // const moodIText =
+  //   moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
 
-  const moodIText =
-    moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
+  // const moodsArray = moods.map((item) => item.descriptor);
 
-  const moodsArray = moods.map((item) => item.descriptor);
-
-  const moodRText =
-    moodsArray.length > 0
-      ? 'Client responded that he was ' +
-        moodsArray.slice(0, -1).join(', ').toLowerCase() +
-        (moodsArray.length > 1 ? ', and ' : '') +
-        moodsArray[moodsArray.length - 1].toLowerCase() +
-        '.'
-      : '';
+  // const moodRText =
+  //   moodsArray.length > 0
+  //     ? 'Client responded that he was ' +
+  //       moodsArray.slice(0, -1).join(', ').toLowerCase() +
+  //       (moodsArray.length > 1 ? ', and ' : '') +
+  //       moodsArray[moodsArray.length - 1].toLowerCase() +
+  //       '.'
+  //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
-      return item.customService;
+      return item.serviceOther;
     }
-    return item.service;
+    return enumDisplayServices[item.service];
   });
 
   const serviceIText =
@@ -66,10 +55,21 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
 
   const requestedServicesArray = requestedServices.map((item) => {
     if (item.service === ServiceEnum.Other) {
-      return item.customService;
+      return item.serviceOther;
     }
-    return item.service;
+    return enumDisplayServices[item.service];
   });
+
+  const updatedP =
+    requestedServicesArray.length > 0
+      ? 'P - Follow up with client regarding requested ' +
+        requestedServicesArray.slice(0, -1).join(', ').toLowerCase() +
+        (requestedServicesArray.length > 1 ? ', and ' : '') +
+        requestedServicesArray[
+          requestedServicesArray.length - 1
+        ]?.toLowerCase() +
+        '.'
+      : 'P - Touch base with client for general wellness check.';
 
   const requestedText =
     requestedServicesArray.length > 0
@@ -84,25 +84,16 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
 
   const updatedI =
     'I -' +
-    (moodIText ? ' ' + moodIText : '') +
+    // (moodIText ? ' ' + moodIText : '') +
     (serviceIText ? ' ' + serviceIText : '');
 
   const updatedR =
     'R -' +
-    (moodRText ? ' ' + moodRText : '') +
+    // (moodRText ? ' ' + moodRText : '') +
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
-  const updatedG =
-    changedG.length > 0
-      ? `G - ${purposeText} ${changedG.slice(0, -1).join(', ')}${
-          changedG.length > 1 ? ', and ' : ''
-        }${changedG[changedG.length - 1]}.`
-      : 'G -';
-
-  const updatedP = changedP ? `P - ${changedP.join(', ')}` : 'P -';
-
-  const newPublicNote = `${updatedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
+  const newPublicNote = `${changedG}\n${updatedI}\n${updatedR}\n${updatedP}`;
 
   return newPublicNote;
 }

@@ -1,4 +1,9 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Regex,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   Input,
   Select,
@@ -12,7 +17,7 @@ import {
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
-import { enumDisplayRelevant } from '../../../../static/enumDisplayMapping';
+import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
 
 interface IContactProps {
   index: number;
@@ -21,9 +26,12 @@ interface IContactProps {
 
 export default function Contact(props: IContactProps) {
   const { index, remove } = props;
-  const { control, setValue, watch } = useFormContext<
-    UpdateClientProfileInput | CreateClientProfileInput
-  >();
+  const {
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
@@ -70,7 +78,7 @@ export default function Contact(props: IContactProps) {
             enumValue as RelationshipTypeEnum
           )
         }
-        items={Object.entries(enumDisplayRelevant).map(
+        items={Object.entries(clientRelevantContactEnumDisplay).map(
           ([enumValue, displayValue]) => ({
             displayValue: displayValue,
             value: enumValue,
@@ -93,7 +101,9 @@ export default function Contact(props: IContactProps) {
         paddingHorizontal: Spacings.sm,
       }}
     >
-      <TextBold size="lg">{enumDisplayRelevant[relationship]}</TextBold>
+      <TextBold size="lg">
+        {clientRelevantContactEnumDisplay[relationship]}
+      </TextBold>
       <Input
         placeholder="Name"
         autoCorrect={false}
@@ -106,13 +116,38 @@ export default function Contact(props: IContactProps) {
         label="Email"
         keyboardType="email-address"
         name={`contacts[${index}].email`}
+        error={!!errors.contacts?.[index]?.email}
+        errorMessage={
+          (errors.contacts?.[index]?.email?.message as string) || undefined
+        }
+        rules={{
+          validate: (value: string) => {
+            if (value && !Regex.email.test(value)) {
+              return 'Enter a valid email address';
+            }
+            return true;
+          },
+        }}
         control={control}
       />
       <Input
         placeholder="Phone Number"
         label="Phone Number"
         keyboardType="phone-pad"
-        maxLength={12}
+        maxLength={10}
+        error={!!errors.contacts?.[index]?.phoneNumber}
+        errorMessage={
+          (errors.contacts?.[index]?.phoneNumber?.message as string) ||
+          undefined
+        }
+        rules={{
+          validate: (value: string) => {
+            if (value && !Regex.phoneNumber.test(value)) {
+              return 'Enter a 10-digit phone number without space or special characters';
+            }
+            return true;
+          },
+        }}
         name={`contacts[${index}].phoneNumber`}
         control={control}
       />
