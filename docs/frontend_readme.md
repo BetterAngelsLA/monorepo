@@ -6,7 +6,7 @@
 
 The betterangels_frontend is built in [React Native](https://reactnative.dev/). It uses [Expo](https://docs.expo.dev/) to build and run the application across devices.
 
-If you are a volunteer be sure to also read the [Volunteer Contributors](#volunteer-contributors)
+If you are a volunteer be sure to also read the [Volunteer Contributors](#volunteer-contributors) section
 
 
 
@@ -259,7 +259,7 @@ This step allows you to pull updates from the original repository and stay in sy
 git remote add upstream https://github.com/BetterAngelsLA/monorepo.git
 ```
 
-### Creating a feature branch and Pull requests
+### Creating a feature branch and pull requests
 
 #### 1. Keeping Your Fork Updated
 
@@ -299,11 +299,11 @@ git push origin feature-branch-name
 ```
 #### 4. Creating a Pull Request
 
-1. Go to your fork on GitHub.
+1. Go to your forked repo on GitHub.
 2. You should see an option to **Compare & pull request**. Click it to open a pull request from your branch to the `main` branch of the original repository.
 3. Add a description of your changes, why they're necessary, and any context for reviewers.
 4. On the Jira board move your ticket from **In Progress** to **Review**
-5. In slack let one of the staff engineers know you have made a pull request with a link and @ them on the #tech-volunteers-engineering channel.
+5. In Betterangels' Slack let one of the staff engineers know you have made a pull request with a link and @ them on the #tech-volunteers-engineering channel.
 
 #### 5. After the Pull Request is Merged
 
