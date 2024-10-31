@@ -31,7 +31,6 @@ import HouseholdMembers from './HouseholdMembers';
 import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContacts from './RelevantContacts';
-import VeteranStatus from './VeteranStatus';
 import {
   useCreateClientProfileMutation,
   useDeleteClientProfileMutation,
@@ -359,7 +358,6 @@ export default function AddEditClient({ id }: { id?: string }) {
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />
             <ContactInfo {...props} />
-            <VeteranStatus {...props} />
             <RelevantContacts {...props} />
             <HouseholdMembers {...props} />
             {id && (

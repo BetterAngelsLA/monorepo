@@ -26,7 +26,11 @@ export interface IIdDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'SocialSecurityCard' | 'PhotoId';
+  docType:
+    | 'DriversLicenseFront'
+    | 'DriversLicenseBack'
+    | 'SocialSecurityCard'
+    | 'PhotoId';
 }
 
 export interface IMultipleDocUploadsProps {
@@ -44,7 +48,12 @@ export interface ISingleDocUploadsProps {
   docs: Docs;
   setDocs: Dispatch<SetStateAction<Docs>>;
   title: string;
-  docType: 'BirthCertificate' | 'SocialSecurityCard' | 'PhotoId';
+  docType:
+    | 'DriversLicenseFront'
+    | 'DriversLicenseBack'
+    | 'BirthCertificate'
+    | 'SocialSecurityCard'
+    | 'PhotoId';
   thumbnailSize: TThumbnailSize;
 }
 
@@ -66,7 +75,8 @@ export type Docs = {
 };
 
 export type ITab =
-  | 'DriversLicense'
+  | 'DriversLicenseFront'
+  | 'DriversLicenseBack'
   | 'BirthCertificate'
   | 'PhotoId'
   | 'SocialSecurityCard'

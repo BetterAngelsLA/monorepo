@@ -7,6 +7,7 @@ import FullName from './FullName';
 import HmisProfiles from './HmisProfiles';
 import LivingSituation from './LivingSituation';
 import PreferredLanguage from './PreferredLanguage';
+import VeteranStatus from '../VeteranStatus';
 
 interface IPersonalInfoProps {
   expanded: undefined | string | null;
@@ -40,6 +41,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
           <Dob />
           <HmisProfiles />
           <PreferredLanguage />
+          <VeteranStatus />
           <LivingSituation />
         </View>
       )}

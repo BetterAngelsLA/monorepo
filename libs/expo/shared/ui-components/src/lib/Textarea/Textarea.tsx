@@ -115,6 +115,7 @@ export function Textarea(props: ITextareaProps) {
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
 
+                paddingVertical: Spacings.sm,
                 paddingLeft: Spacings.sm,
                 paddingRight: Spacings.lg,
                 fontFamily: 'Poppins-Regular',
