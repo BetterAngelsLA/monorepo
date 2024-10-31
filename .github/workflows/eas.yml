@@ -223,12 +223,14 @@ jobs:
             branch=$(echo "$update_info" | jq -r '.branch')
             group_id=$(echo "$update_info" | jq -r '.group')
             update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+            update_permalink="https://expo.dev/projects/${unique_project_ids[0]}/updates/${update_id}"
             update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${unique_project_ids[0]}&groupId=${group_id}"
 
             # Save each platform's update info to output
             echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
             echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
             echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
+            echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
             echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
             echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
           done
@@ -252,7 +254,7 @@ jobs:
             --- | --- | ---
             Runtime Version | `${{ steps.check_and_start_builds.outputs.android_runtime_version }}` | `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`
             Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.check_and_start_builds.outputs.android_distribution }}`<br />Build profile: `${{ steps.check_and_start_builds.outputs.android_build_profile }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.android_runtime_version }}`<br />App version: `${{ steps.check_and_start_builds.outputs.android_app_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_git_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.check_and_start_builds.outputs.ios_distribution }}`<br />Build profile: `${{ steps.check_and_start_builds.outputs.ios_build_profile }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`<br />App version: `${{ steps.check_and_start_builds.outputs.ios_app_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_git_commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.android_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_update_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_update_commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.android_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_update_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_update_commit }}`</details>
             Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
           edit-mode: replace
 
