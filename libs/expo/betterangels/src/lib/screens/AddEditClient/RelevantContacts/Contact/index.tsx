@@ -31,6 +31,7 @@ export default function Contact(props: IContactProps) {
     setValue,
     watch,
     formState: { errors },
+    getValues,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const relationship = watch(
@@ -41,25 +42,27 @@ export default function Contact(props: IContactProps) {
 
   const handleRemove = () => {
     remove(index);
+
+    setValue('contacts', getValues('contacts'));
   };
 
   const handleReset = () => {
     setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+      `contacts.${index}.relationshipToClient` as `contacts.${number}.relationshipToClient`,
       null
     );
-    setValue(`contacts[${index}].name` as `contacts.${number}.name`, null);
-    setValue(`contacts[${index}].email` as `contacts.${number}.email`, null);
+    setValue(`contacts.${index}.name` as `contacts.${number}.name`, null);
+    setValue(`contacts.${index}.email` as `contacts.${number}.email`, null);
     setValue(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
-      null
-    );
-    setValue(
-      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
+      `contacts.${index}.phoneNumber` as `contacts.${number}.phoneNumber`,
       null
     );
     setValue(
-      `contacts[${index}].relationshipToClientOther` as `contacts.${number}.relationshipToClientOther`,
+      `contacts.${index}.mailingAddress` as `contacts.${number}.mailingAddress`,
+      null
+    );
+    setValue(
+      `contacts.${index}.relationshipToClientOther` as `contacts.${number}.relationshipToClientOther`,
       null
     );
   };
