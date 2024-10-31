@@ -154,13 +154,13 @@ jobs:
           # Helper function to check build status and start a new build if needed
           check_and_start_build() {
             platform=$1
-            build_output=$(eas build:list --platform "$platform" --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
+            build_output=$(eas build:list --platform "$platform" --status new --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
 
             if [[ "$build_output" == "[]" ]]; then
               echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
               new_build_output=$(eas build --profile preview --platform "$platform" --freeze-credentials --non-interactive --no-wait --json)
               echo $new_build_output
-              build_id=$(echo "$new_build_output" | jq -r '.id')
+              build_id=$(echo "$new_build_output" | jq -r '.[0].id')
               echo "New $platform build started with ID: $build_id"
               echo "${platform}_build_status=not_found" >> $GITHUB_OUTPUT
               echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
