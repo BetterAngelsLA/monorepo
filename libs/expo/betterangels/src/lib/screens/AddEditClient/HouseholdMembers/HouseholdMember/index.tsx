@@ -43,7 +43,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
     setValue(`householdMembers.${index}.gender`, null);
     setValue(`householdMembers.${index}.genderOther`, null);
     setValue(`householdMembers.${index}.dateOfBirth`, null);
-    setValue(`householdMembers.${index}.relationshipToClient`, null);
+    setValue(`householdMembers.${index}.relationshipToClientOther`, null);
   };
 
   if (!relationship) {
@@ -55,7 +55,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
             value: enumValue,
           })
         )}
-        setSelectedValueValue={(e) =>
+        setSelectedValue={(e) =>
           setValue(
             `householdMembers.${index}.relationshipToClient`,
             e as RelationshipTypeEnum
