@@ -207,6 +207,7 @@ jobs:
             echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
             echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
           done
+
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'
         uses: edumserrano/find-create-or-update-comment@v1
@@ -224,9 +225,9 @@ jobs:
 
             &nbsp; | 🤖 Android | 🍎 iOS
             --- | --- | ---
-            Fingerprint | ${{ steps.fingerprint.outputs.current-fingerprint }} | ${{ steps.fingerprint.outputs.current-fingerprint }}
-            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.fingerprint.outputs.current-fingerprint }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
+            Runtime Version | `${{ steps.check_and_start_builds.outputs.runtime_version }}` | `${{ steps.check_and_start_builds.outputs.runtime_version }}`
+            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
             Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
           edit-mode: replace
 
