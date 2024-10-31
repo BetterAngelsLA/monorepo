@@ -127,8 +127,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: {
-      policy: 'fingerprint',
-    },
+    runtimeVersion: '2024.10.30.21.52.37',
   },
 };
