@@ -9,7 +9,7 @@ import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
 interface IPickerProps {
-  setSelectedValueValue: (value: string | null) => void;
+  setSelectedValue: (value: string | null) => void;
   error?: boolean;
   value?: string | null;
   placeholder: string;
@@ -17,7 +17,7 @@ interface IPickerProps {
 }
 
 export default function Picker(props: IPickerProps) {
-  const { setSelectedValueValue, error, value, placeholder, items } = props;
+  const { setSelectedValue, error, value, placeholder, items } = props;
   const [localValue, setLocalValue] = useState<string | null>(value || null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
@@ -38,7 +38,7 @@ export default function Picker(props: IPickerProps) {
         ]}
         accessibilityRole="button"
       >
-        <TextRegular color={value ? Colors.PRIMARY : Colors.NEUTRAL}>
+        <TextRegular color={value ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}>
           {value || placeholder}
         </TextRegular>
         <ChevronLeftIcon size="sm" rotate={'-90deg'} />
@@ -63,7 +63,7 @@ export default function Picker(props: IPickerProps) {
               accessibilityHint={`selects ${localValue}`}
               accessibilityRole="button"
               onPress={() => {
-                setSelectedValueValue(localValue);
+                setSelectedValue(localValue);
                 setIsModalVisible(false);
               }}
             >
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
     height: 56,
     paddingHorizontal: Spacings.sm,
-
     borderWidth: 1,
     borderRadius: Radiuses.xs,
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import { Picker as RNPicker } from '@react-native-picker/picker';
 
 interface IPickerProps {
-  setSelectedValueValue: (value: string | null) => void;
+  setSelectedValue: (value: string | null) => void;
   error?: boolean;
   value?: string | null;
   placeholder: string;
@@ -9,14 +9,14 @@ interface IPickerProps {
 }
 
 export default function Picker(props: IPickerProps) {
-  const { setSelectedValueValue, error, value, placeholder, items } = props;
-  console.log(error);
+  const { setSelectedValue, error, value, placeholder, items } = props;
 
   return (
     <RNPicker
+      style={{ color: error ? 'red' : 'black' }}
       placeholder={placeholder}
       selectedValue={value}
-      onValueChange={(itemValue) => setSelectedValueValue(itemValue)}
+      onValueChange={(itemValue) => setSelectedValue(itemValue)}
     >
       {items.map((item) => (
         <RNPicker.Item key={item.value} label={item.label} value={item.value} />
