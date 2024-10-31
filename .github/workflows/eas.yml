@@ -158,7 +158,7 @@ jobs:
 
             if [[ "$build_output" == "[]" ]]; then
               echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
-              new_build_output=$(eas build --profile preview --platform "$platform" --non-interactive --no-wait --json)
+              new_build_output=$(eas build --profile preview --platform "$platform" --freeze-credentials --non-interactive --no-wait --json)
               build_id=$(echo "$new_build_output" | jq -r '.id')
               echo "New $platform build started with ID: $build_id"
               echo "${platform}_build_status=not_found" >> $GITHUB_OUTPUT
