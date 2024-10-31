@@ -169,15 +169,23 @@ jobs:
               echo "$platform build found for runtime version $runtime_version."
             fi
 
-            # Extract slug and build ID from the build output JSON
+            # Extract required fields from the build output JSON
             slug=$(echo "$build_output" | jq -r '.[0].project.slug')
             build_id=$(echo "$build_output" | jq -r '.[0].id')
+            distribution=$(echo "$build_output" | jq -r '.[0].distribution')
+            build_profile=$(echo "$build_output" | jq -r '.[0].buildProfile')
+            runtime_version_from_build=$(echo "$build_output" | jq -r '.[0].runtimeVersion')
+            app_version=$(echo "$build_output" | jq -r '.[0].appVersion')
+            git_commit=$(echo "$build_output" | jq -r '.[0].gitCommitHash')
             build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
-            update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${{ steps.fingerprint.outputs.project_id }}&groupId=${build_id}"
 
             echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
             echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
-            echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+            echo "${platform}_distribution=$distribution" >> $GITHUB_OUTPUT
+            echo "${platform}_build_profile=$build_profile" >> $GITHUB_OUTPUT
+            echo "${platform}_runtime_version=$runtime_version_from_build" >> $GITHUB_OUTPUT
+            echo "${platform}_app_version=$app_version" >> $GITHUB_OUTPUT
+            echo "${platform}_git_commit=$git_commit" >> $GITHUB_OUTPUT
 
             slugs+=("$slug")
           done
@@ -200,12 +208,15 @@ jobs:
             update_id=$(echo "$update_info" | jq -r '.id')
             branch=$(echo "$update_info" | jq -r '.branch')
             group_id=$(echo "$update_info" | jq -r '.group')
-            commit_hash=$(echo "$update_info" | jq -r '.gitCommitHash')
+            update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+            update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${{ steps.fingerprint.outputs.project_id }}&groupId=${group_id}"
 
             # Save each platform's update info to output
             echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
             echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
             echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
+            echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+            echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
           done
 
       - name: 📝 Comment on PR
@@ -225,9 +236,9 @@ jobs:
 
             &nbsp; | 🤖 Android | 🍎 iOS
             --- | --- | ---
-            Runtime Version | `${{ steps.check_and_start_builds.outputs.runtime_version }}` | `${{ steps.check_and_start_builds.outputs.runtime_version }}`
-            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_commit }}`</details>
+            Runtime Version | `${{ steps.check_and_start_builds.outputs.android_runtime_version }}` | `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`
+            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.check_and_start_builds.outputs.android_distribution }}`<br />Build profile: `${{ steps.check_and_start_builds.outputs.android_build_profile }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.android_runtime_version }}`<br />App version: `${{ steps.check_and_start_builds.outputs.android_app_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_git_commit }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.check_and_start_builds.outputs.ios_distribution }}`<br />Build profile: `${{ steps.check_and_start_builds.outputs.ios_build_profile }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`<br />App version: `${{ steps.check_and_start_builds.outputs.ios_app_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_git_commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.android_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.android_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.android_update_commit }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})<br /><details><summary>Details</summary>Branch: `${{ steps.check_and_start_builds.outputs.ios_branch }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.ios_runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.ios_update_commit }}`</details>
             Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
           edit-mode: replace
 
