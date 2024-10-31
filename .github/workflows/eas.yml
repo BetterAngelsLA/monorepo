@@ -139,62 +139,38 @@ jobs:
         with:
           working-directory: apps/${{ matrix.project }}
 
-      - name: 🍏 Check for Existing iOS and Android Builds
+      - name: 🍏 Check for Existing Builds and Start New Ones if Needed
         if: github.ref != 'refs/heads/main'
         working-directory: apps/${{ matrix.project }}
-        id: check_builds
+        id: check_and_start_builds
         run: |
-          # Extract the runtime_version from the fingerprint output
+          # Extract the runtime version from the fingerprint output
           runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
           echo "Extracted runtime version: $runtime_version"
 
-          # Check for iOS build with specified runtime version
-          ios_build_output=$(eas build:list --platform ios --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
+          # Helper function to check build status and start a new build if needed
+          check_and_start_build() {
+            platform=$1
+            build_output=$(eas build:list --platform "$platform" --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
 
-          # Check for Android build with specified runtime version
-          android_build_output=$(eas build:list --platform android --status in-progress --status finished --buildProfile preview --runtimeVersion "$runtime_version" --limit 1 --json --non-interactive 2>&1)
+            if [[ "$build_output" == "[]" ]]; then
+              echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
+              new_build_output=$(eas build --profile preview --platform "$platform" --non-interactive --json)
+              build_id=$(echo "$new_build_output" | jq -r '.id')
+              echo "New $platform build started with ID: $build_id"
+              echo "${platform}_build_status=not_found" >> $GITHUB_OUTPUT
+              echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+            else
+              echo "$platform build found for runtime version $runtime_version."
+              build_id=$(echo "$build_output" | jq -r '.[0].id')
+              echo "${platform}_build_status=found" >> $GITHUB_OUTPUT
+              echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+            fi
+          }
 
-          # Parse and check build outputs for existing builds
-          if [[ "$ios_build_output" == "[]" ]]; then
-            echo "No existing iOS build found for runtime version $runtime_version. Starting a new build."
-            echo "ios_build_status=not_found" >> $GITHUB_OUTPUT
-            echo "ios_build_id=" >> $GITHUB_OUTPUT
-          else
-            echo "iOS build found for runtime version $runtime_version."
-            echo "ios_build_status=found" >> $GITHUB_OUTPUT
-            echo "ios_build_id=$(echo "$ios_build_output" | jq -r '.[0].id')" >> $GITHUB_OUTPUT
-          fi
-
-          if [[ "$android_build_output" == "[]" ]]; then
-            echo "No existing Android build found for runtime version $runtime_version. Starting a new build."
-            echo "android_build_status=not_found" >> $GITHUB_OUTPUT
-            echo "android_build_id=" >> $GITHUB_OUTPUT
-          else
-            echo "Android build found for runtime version $runtime_version."
-            echo "android_build_status=found" >> $GITHUB_OUTPUT
-            echo "android_build_id=$(echo "$android_build_output" | jq -r '.[0].id')" >> $GITHUB_OUTPUT
-          fi
-
-      # - name: 🚀 Start New Builds if Needed
-      #   if: needs.check_builds.outputs.ios_build_status == 'not_found' || needs.check_builds.outputs.android_build_status == 'not_found'
-      #   working-directory: apps/${{ matrix.project }}
-      #   id: start_builds
-      #   run: |
-      #     if [ "${{ needs.check_builds.outputs.ios_build_status }}" == "not_found" ]; then
-      #       echo "Starting new iOS simulator build..."
-      #       ios_build_output=$(eas build --profile preview --platform ios --non-interactive --json)
-      #       ios_build_id=$(echo "$ios_build_output" | jq -r '.id')
-      #       echo "New iOS build started with ID: $ios_build_id"
-      #       echo "ios_build_id=$ios_build_id" >> $GITHUB_OUTPUT
-      #     fi
-
-      #     if [ "${{ needs.check_builds.outputs.android_build_status }}" == "not_found" ]; then
-      #       echo "Starting new Android simulator build..."
-      #       android_build_output=$(eas build --profile preview --platform android --non-interactive --json)
-      #       android_build_id=$(echo "$android_build_output" | jq -r '.id')
-      #       echo "New Android build started with ID: $android_build_id"
-      #       echo "android_build_id=$android_build_id" >> $GITHUB_OUTPUT
-      #     fi
+          # Check and start builds for iOS and Android
+          check_and_start_build ios
+          check_and_start_build android
 
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
