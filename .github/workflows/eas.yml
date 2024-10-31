@@ -203,45 +203,25 @@ jobs:
         uses: edumserrano/find-create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '<!-- expo-qr-code -->'
+          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.check_and_start_builds.outputs.project_id }} -->'
           comment-author: 'github-actions[bot]'
           body: |
-            <!-- expo-qr-code -->
+            <!-- continuous-deploy-fingerprint-projectId:${{ steps.check_and_start_builds.outputs.project_id }} -->
+            🚀 Expo continuous deployment is ready!
 
-            ### New code has landed in ${{ github.head_ref }}
+            - Project → **${{ steps.check_and_start_builds.outputs.slug }}**
+            - Platforms → **android**, **ios**
+            - Scheme → **${{ steps.check_and_start_builds.outputs.slug }}**
 
-            **Commit:** `${{ steps.check_and_start_builds.outputs.commit_id }}`
-            **Message:** ${{ steps.check_and_start_builds.outputs.commit_message }}
-            **App Scheme (Slug):** `${{ steps.check_and_start_builds.outputs.slug }}`
-            **Runtime Version:** `${{ steps.check_and_start_builds.outputs.runtime_version }}`
+            &nbsp; | 🤖 Android | 🍎 iOS
+            --- | --- | ---
+            Fingerprint | `${{ steps.check_and_start_builds.outputs.runtime_version }}` | `${{ steps.check_and_start_builds.outputs.runtime_version }}`
+            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details>
+            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_link }})<br /><details><summary>Details</summary>Branch: `${{ github.head_ref }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_link }})<br /><details><summary>Details</summary>Branch: `${{ github.head_ref }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details>
+            Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
 
-            -----
+        edit-mode: replace
 
-            **📱 iOS**
-
-            **Update QR Code:**
-            ![iOS Update QR Code](${{ steps.check_and_start_builds.outputs.ios_update_qr_url }})
-
-            **Build QR Code:**
-            ![iOS Build QR Code](${{ steps.check_and_start_builds.outputs.ios_build_qr_url }})
-
-            **Build Link:** [View Build](${{ steps.check_and_start_builds.outputs.ios_build_link }})
-            **Build ID:** `${{ steps.check_and_start_builds.outputs.ios_build_id }}`
-
-            -----
-
-            **🤖 Android**
-
-            **Update QR Code:**
-            ![Android Update QR Code](${{ steps.check_and_start_builds.outputs.android_update_qr_url }})
-
-            **Build QR Code:**
-            ![Android Build QR Code](${{ steps.check_and_start_builds.outputs.android_build_qr_url }})
-
-            **Build Link:** [View Build](${{ steps.check_and_start_builds.outputs.android_build_link }})
-            **Build ID:** `${{ steps.check_and_start_builds.outputs.android_build_id }}`
-
-          edit-mode: replace
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
   #       run: |
