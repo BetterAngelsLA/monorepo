@@ -65,6 +65,13 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Other]: 'Other',
 };
 
+export const enumDisplayYesNoPreferNot: {
+  [key in YesNoPreferNotToSayEnum]: string;
+} = {
+  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+  [YesNoPreferNotToSayEnum.No]: 'No',
+  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+};
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
   [PronounEnum.SheHerHers]: 'She/Her/Hers',

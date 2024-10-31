@@ -13,7 +13,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.23',
+    version: '1.0.24',
     orientation: 'portrait',
     icon: './src/app/assets/images/icon.png',
     splash: {
@@ -29,7 +29,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.22', // Does this number reset when you bump the version number?
+      buildNumber: '1.0.23', // Does this number reset when you bump the version number?
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -66,7 +66,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 22, // Does this number reset when you bump the version number?
+      versionCode: 23, // Does this number reset when you bump the version number?
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -127,8 +127,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: {
-      policy: 'fingerprint',
-    },
+    runtimeVersion: '2024.10.30.21.52.37',
   },
 };
