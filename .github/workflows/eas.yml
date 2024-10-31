@@ -151,7 +151,6 @@ jobs:
           # Define the platforms to check
           platforms=("android" "ios")
           slugs=()
-          update_details=()
 
           for platform in "${platforms[@]}"; do
             # Check for existing builds for the platform
@@ -160,6 +159,7 @@ jobs:
               --buildProfile preview --runtimeVersion "$runtime_version" \
               --limit 1 --json --non-interactive 2>&1)
 
+            echo $build_output
             # If no existing build, start a new build
             if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
               echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
@@ -192,15 +192,15 @@ jobs:
 
           # Perform EAS Update
           eas_update_output=$(eas update --non-interactive --auto --json)
+          echo $eas_update_output
 
-          # Extract update details and append to the update_details array
+          # Extract update details
           for platform in "${platforms[@]}"; do
             update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
             update_id=$(echo "$update_info" | jq -r '.id')
             branch=$(echo "$update_info" | jq -r '.branch')
             group_id=$(echo "$update_info" | jq -r '.group')
             commit_hash=$(echo "$update_info" | jq -r '.gitCommitHash')
-            update_details+=("${platform}: { updateId: $update_id, branch: $branch, groupId: $group_id, commit: $commit_hash }")
 
             # Save each platform's update info to output
             echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
