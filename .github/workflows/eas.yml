@@ -139,19 +139,19 @@ jobs:
         with:
           working-directory: apps/${{ matrix.project }}
 
-      - name: Check fingerprint and Manage Builds
+      - name: 🍏 Check for Existing Builds, Start New Builds if Needed, and Perform EAS Update
         if: github.ref != 'refs/heads/main'
-        id: check_and_start_builds
         working-directory: apps/${{ matrix.project }}
+        id: check_and_start_builds
         run: |
-          # Extract the runtime version from the fingerprint output
+          # Extract the runtime version from the fingerprint output and write it to .env
           runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
           echo "RUNTIME_VERSION=$runtime_version" >> .env
 
-          # Define the platforms to check and initialize variables
+          # Define the platforms to check
           platforms=("android" "ios")
           slugs=()
-          declare -A qr_urls build_links build_ids update_ids
+          update_details=()
 
           for platform in "${platforms[@]}"; do
             # Check for existing builds for the platform
@@ -162,64 +162,51 @@ jobs:
 
             # If no existing build, start a new build
             if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
-              echo "No existing $platform build found. Starting a new build."
+              echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
               build_output=$(eas build --profile preview --platform "$platform" \
                 --freeze-credentials --non-interactive --no-wait --json)
             else
               echo "$platform build found for runtime version $runtime_version."
             fi
 
-            # Extract slug, build ID, and create links and QR codes
+            # Extract slug and build ID from the build output JSON
             slug=$(echo "$build_output" | jq -r '.[0].project.slug')
             build_id=$(echo "$build_output" | jq -r '.[0].id')
-            slugs+=("$slug")
-            build_ids["$platform"]=$build_id
+            build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+            update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${{ steps.fingerprint.outputs.project_id }}&groupId=${build_id}"
 
-            # Generate QR URLs and build links
-            qr_urls["${platform}_update"]="https://qr.expo.dev/eas-update?updateId=${build_id}&appScheme=$slug"
-            qr_urls["${platform}_build"]="https://qr.expo.dev/builds/${build_id}"
-            build_links["$platform"]="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${build_id}"
+            echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+            echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+            echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+
+            slugs+=("$slug")
           done
 
-          # Ensure all slugs are the same
+          # Check if all slugs are the same
           unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
           if [ ${#unique_slugs[@]} -ne 1 ]; then
-            echo "Error: Different slugs found: ${slugs[*]}"
+            echo "Error: Different slugs found for platforms: ${slugs[*]}"
             exit 1
           fi
           echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
-          echo "runtime_version=$runtime_version" >> $GITHUB_OUTPUT
 
-          # Set output values for QR URLs and Build Links
+          # Perform EAS Update
+          eas_update_output=$(eas update --non-interactive --auto --json)
+
+          # Extract update details and append to the update_details array
           for platform in "${platforms[@]}"; do
-            echo "${platform}_update_qr_url=${qr_urls["${platform}_update"]}" >> $GITHUB_OUTPUT
-            echo "${platform}_build_qr_url=${qr_urls["${platform}_build"]}" >> $GITHUB_OUTPUT
-            echo "${platform}_build_link=${build_links["$platform"]}" >> $GITHUB_OUTPUT
-            echo "${platform}_build_id=${build_ids["$platform"]}" >> $GITHUB_OUTPUT
+            update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+            update_id=$(echo "$update_info" | jq -r '.id')
+            branch=$(echo "$update_info" | jq -r '.branch')
+            group_id=$(echo "$update_info" | jq -r '.group')
+            commit_hash=$(echo "$update_info" | jq -r '.gitCommitHash')
+            update_details+=("${platform}: { updateId: $update_id, branch: $branch, groupId: $group_id, commit: $commit_hash }")
+
+            # Save each platform's update info to output
+            echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+            echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
+            echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
           done
-
-      - name: 📝 Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: edumserrano/find-create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.check_and_start_builds.outputs.project_id }} -->'
-          comment-author: 'github-actions[bot]'
-          body: |
-            <!-- continuous-deploy-fingerprint-projectId:${{ steps.check_and_start_builds.outputs.project_id }} -->
-            🚀 Expo continuous deployment is ready!
-
-            - Project → **${{ steps.check_and_start_builds.outputs.slug }}**
-            - Platforms → **android**, **ios**
-            - Scheme → **${{ steps.check_and_start_builds.outputs.slug }}**
-
-            &nbsp; | 🤖 Android | 🍎 iOS
-            --- | --- | ---
-            Fingerprint | `${{ steps.check_and_start_builds.outputs.runtime_version }}` | `${{ steps.check_and_start_builds.outputs.runtime_version }}`
-            Build Details | [Build Permalink](${{ steps.check_and_start_builds.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details> | [Build Permalink](${{ steps.check_and_start_builds.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `INTERNAL`<br />Build profile: `preview`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />App version: `1.0.24`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details>
-            Update Details | [Update Permalink](${{ steps.check_and_start_builds.outputs.android_update_link }})<br /><details><summary>Details</summary>Branch: `${{ github.head_ref }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details> | [Update Permalink](${{ steps.check_and_start_builds.outputs.ios_update_link }})<br /><details><summary>Details</summary>Branch: `${{ github.head_ref }}`<br />Runtime version: `${{ steps.check_and_start_builds.outputs.runtime_version }}`<br />Git commit: `${{ steps.check_and_start_builds.outputs.commit_id }}`</details>
-            Update QR   | <a href="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}"><img src="${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
-          edit-mode: replace
 
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
