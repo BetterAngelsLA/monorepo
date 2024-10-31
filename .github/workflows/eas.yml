@@ -145,7 +145,8 @@ jobs:
         id: check_and_start_builds
         run: |
           # Extract the runtime version from the fingerprint output and write it to .env
-          echo "RUNTIME_VERSION=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')" >> .env
+          runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+          echo "RUNTIME_VERSION=$runtime_version" >> .env
 
           # Define the platforms to check
           platforms=("android" "ios")
@@ -177,12 +178,54 @@ jobs:
           # Build EAS Updates
           eas_update_output=$(eas update --non-interactive --auto --json)
 
-          # Extract update IDs and export them
+          # Extract update IDs, group IDs, and project ID, and export them
           for platform in "${platforms[@]}"; do
-            update_id=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\") | .id")
+            update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+            update_id=$(echo "$update_info" | jq -r '.id')
+            group_id=$(echo "$update_info" | jq -r '.group')
             echo "$platform update ID: $update_id"
             echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+            echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
           done
+
+          project_id=$(echo "$eas_update_output" | jq -r '.[0].projectId')
+          echo "project_id=$project_id" >> $GITHUB_OUTPUT
+
+      - name: 📝 Publish EAS QR Codes
+        if: github.event_name == 'pull_request'
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- expo-qr-code -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- expo-qr-code -->
+
+            ### BetterAngels App Preview
+
+            **Project:** betterangels
+
+            <table>
+            <tr>
+              <th>Platform</th>
+              <th>Build Link</th>
+              <th>Update QR Code</th>
+              <th>Update Link</th>
+            </tr>
+            <tr>
+              <td>iOS</td>
+              <td><a href="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.check_and_start_builds.outputs.ios_build_id }}">View Build</a></td>
+              <td><img src="https://qr.expo.dev/eas-update/?projectId=${{ steps.check_and_start_builds.outputs.project_id }}&groupId=${{ steps.check_and_start_builds.outputs.ios_group_id }}" height="200px" width="200px" /></td>
+              <td><a href="exp://u.expo.dev/${{ steps.check_and_start_builds.outputs.project_id }}/group/${{ steps.check_and_start_builds.outputs.ios_group_id }}">Open Link</a></td>
+            </tr>
+            <tr>
+              <td>Android</td>
+              <td><a href="https://expo.dev/accounts/better-angels/projects/betterangels/builds/${{ steps.check_and_start_builds.outputs.android_build_id }}">View Build</a></td>
+              <td><img src="https://qr.expo.dev/eas-update/?projectId=${{ steps.check_and_start_builds.outputs.project_id }}&groupId=${{ steps.check_and_start_builds.outputs.android_group_id }}" height="200px" width="200px" /></td>
+              <td><a href="exp://u.expo.dev/${{ steps.check_and_start_builds.outputs.project_id }}/group/${{ steps.check_and_start_builds.outputs.android_group_id }}">Open Link</a></td>
+            </tr>
+            </table>
+          edit-mode: replace
 
   #     - name: Set QR Code URLs and Commit Info
   #       id: set-urls
