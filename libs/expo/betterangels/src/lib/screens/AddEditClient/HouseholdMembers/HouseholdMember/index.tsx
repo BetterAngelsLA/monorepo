@@ -28,7 +28,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
   >();
 
   const relationship = watch(
-    `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`
+    `householdMembers${index}.relationshipToClient` as `householdMembers.${number}.relationshipToClient`
   );
 
   const householdMembers = watch('householdMembers') || [];
@@ -38,30 +38,12 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
   };
 
   const handleReset = () => {
-    setValue(
-      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].name` as `householdMembers.${number}.name`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].gender` as `householdMembers.${number}.gender`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].genderOther` as `householdMembers.${number}.genderOther`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].dateOfBirth` as `householdMembers.${number}.dateOfBirth`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-      null
-    );
+    setValue(`householdMembers.${index}.relationshipToClient`, null);
+    setValue(`householdMembers.${index}.name`, null);
+    setValue(`householdMembers.${index}.gender`, null);
+    setValue(`householdMembers.${index}.genderOther`, null);
+    setValue(`householdMembers.${index}.dateOfBirth`, null);
+    setValue(`householdMembers.${index}.relationshipToClient`, null);
   };
 
   if (!relationship) {
@@ -75,7 +57,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
         )}
         setSelectedValueValue={(e) =>
           setValue(
-            `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
+            `householdMembers.${index}.relationshipToClient`,
             e as RelationshipTypeEnum
           )
         }
