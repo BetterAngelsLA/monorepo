@@ -22,7 +22,7 @@ export default function Welcome() {
         <View style={{ alignItems: 'center' }}>
           <WarningIcon size={100} color={Colors.PRIMARY} />
           <TextMedium mt="lg" textAlign="center" size="lg" mb="sm">
-            Your account has not been authorized.
+            Your account has not been authorized.r
           </TextMedium>
           <TextRegular textAlign="center" size="sm" mb="xl">
             Please contacts your organization's administrator to authorize your
