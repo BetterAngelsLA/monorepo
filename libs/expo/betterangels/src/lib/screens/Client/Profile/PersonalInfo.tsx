@@ -23,7 +23,7 @@ const InfoRow = ({
 }) => (
   <View style={styles.flexRow}>
     <TextRegular size="sm">{label}</TextRegular>
-    <TextBold size="sm">{value || 'N/A'}</TextBold>
+    <TextBold size="sm">{value}</TextBold>
   </View>
 );
 
@@ -96,16 +96,17 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                   value={hmisProfile.hmisId}
                 />
               ))}
-
-              <InfoRow
-                label="Living Situation"
-                value={
-                  client?.clientProfile.livingSituation &&
-                  enumDisplayLivingSituation[
-                    client.clientProfile.livingSituation
-                  ]
-                }
-              />
+              {client?.clientProfile.livingSituation && (
+                <InfoRow
+                  label="Living Situation"
+                  value={
+                    client?.clientProfile.livingSituation &&
+                    enumDisplayLivingSituation[
+                      client.clientProfile.livingSituation
+                    ]
+                  }
+                />
+              )}
             </View>
           </CardWrapper>
         </View>
