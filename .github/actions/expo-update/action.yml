@@ -25,6 +25,12 @@ outputs:
   android-update-qr-url:
     description: 'QR URL for Android update.'
     value: ${{ steps.perform-eas-update.outputs.android-update-qr-url }}
+  android-branch:
+    description: 'Branch for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-branch }}
+  android-update-commit:
+    description: 'Commit hash for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-update-commit }}
   ios-update-id:
     description: 'iOS update ID.'
     value: ${{ steps.perform-eas-update.outputs.ios-update-id }}
@@ -34,6 +40,12 @@ outputs:
   ios-update-qr-url:
     description: 'QR URL for iOS update.'
     value: ${{ steps.perform-eas-update.outputs.ios-update-qr-url }}
+  ios-branch:
+    description: 'Branch for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-branch }}
+  ios-update-commit:
+    description: 'Commit hash for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-update-commit }}
 
 runs:
   using: 'composite'
@@ -44,17 +56,23 @@ runs:
         platforms=("android" "ios")
         eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
 
+        echo $eas_update_output
+
         for platform in "${platforms[@]}"; do
+          branch=$(echo "$update_info" | jq -r '.branch')
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
           update_id=$(echo "$update_info" | jq -r '.id')
           group_id=$(echo "$update_info" | jq -r '.group')
+          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
           update_permalink="https://expo.dev/projects/${{ inputs.project-id }}/updates/${update_id}"
           update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project-id }}&groupId=${group_id}"
 
           # Set platform-specific outputs
+          echo "${platform}-branch=$branch" >> $GITHUB_OUTPUT
           echo "${platform}-update-id=$update_id" >> $GITHUB_OUTPUT
           echo "${platform}-update-permalink=$update_permalink" >> $GITHUB_OUTPUT
           echo "${platform}-update-qr-url=$update_qr_url" >> $GITHUB_OUTPUT
+          echo "${platform}-update-commit=$update_commit" >> $GITHUB_OUTPUT
         done
       working-directory: apps/${{ inputs.project }}
       shell: bash

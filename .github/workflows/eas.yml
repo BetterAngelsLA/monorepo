@@ -64,6 +64,8 @@ jobs:
   preview-build:
     # needs: prepare
     environment: preview
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
     # if: needs.prepare.outputs.is_matrix_empty == 'false'
     strategy:
@@ -129,7 +131,7 @@ jobs:
         uses: ./.github/actions/expo-update
         with:
           project: ${{ matrix.project }}
-          branch: ${{ inputs.branch }}
+          branch: ${{ github.head_ref || github.ref_name }}
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
@@ -142,7 +144,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body: |
             <!-- continuous-deploy-fingerprint-projectId:${{ steps.preview-build.outputs.project-id }} -->
-            🚀 Expo continuous deployment (Preview) is ready for **${{ matrix.project }}**!
+            🚀 Expo continuous deployment is ready for **${{ matrix.project }}**!
 
             - Project → **${{ matrix.project }}**
             - Environment → **Preview**
@@ -153,23 +155,34 @@ jobs:
             --- | --- | ---
             Runtime Version | `${{ steps.preview-build.outputs.android-runtime-version }}` | `${{ steps.preview-build.outputs.ios-runtime-version }}`
             Build Details | [Build Permalink](${{ steps.preview-build.outputs.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.android-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.android-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.android-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.android-git-commit }}`</details> | [Build Permalink](${{ steps.preview-build.outputs.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.ios-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.ios-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.ios-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.ios-git-commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.expo-update.outputs.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.android-update-commit }}`</details> | [Update Permalink](${{ steps.expo-update.outputs.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.ios-update-commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.expo-update.outputs.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.android-branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.android-update-commit }}`</details> | [Update Permalink](${{ steps.expo-update.outputs.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.ios-branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.ios-update-commit }}`</details>
             Update QR   | <a href="${{ steps.expo-update.outputs.android-update-qr-url }}"><img src="${{ steps.expo-update.outputs.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ steps.expo-update.outputs.ios-update-qr-url }}"><img src="${{ steps.expo-update.outputs.ios-update-qr-url }}" width="250px" height="250px" /></a>
           edit-mode: replace
 
+      - name: Set Git Variables
+        id: set-git-vars
+        run: |
+          COMMIT_ID=$(git rev-parse HEAD)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+
+          {
+            echo "commit-id=${COMMIT_ID}"
+            echo "commit-message=${COMMIT_MESSAGE}"
+          } >> $GITHUB_OUTPUT
+
       - name: Post to Slack
-        if: github.ref == 'refs/heads/main'
+        if: ${{ env.BRANCH_NAME == 'main' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
             {
-              "channel": "#tech-outreach-main",
+              "channel": "#tech-outreach-main-test",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New preview code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.preview-build.outputs.commit-id }}`\n*Message:* ${{ steps.preview-build.outputs.commit-message }}"
+                    "text": "*New preview code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
                   }
                 },
                 {

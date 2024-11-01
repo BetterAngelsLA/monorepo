@@ -129,6 +129,8 @@ runs:
         fi
 
         # Set common outputs
+        commit_message=$(git log -1 --pretty=format:"%s" HEAD)
+        echo "commit-message=${commit_message}" >> $GITHUB_OUTPUT
         echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
         echo "project-id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
       working-directory: apps/${{ inputs.project }}
