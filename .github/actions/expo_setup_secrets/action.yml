@@ -9,10 +9,6 @@ inputs:
     required: true
     type: string
 
-defaults:
-  run:
-    working-directory: apps/${{ inputs.project }}
-
 runs:
   using: 'composite'
   steps:
@@ -21,6 +17,7 @@ runs:
         find . -name '*.env*' -delete
         cat eas.json | jq -r '.build["'"${{ inputs.profile }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
       shell: bash
+      working-directory: apps/${{ inputs.project }}
 
     - name: Load Application Secrets
       run: |
@@ -30,9 +27,11 @@ runs:
           echo "$var" >> .env
         done
       shell: bash
+      working-directory: apps/${{ inputs.project }}
 
     - name: Delete .env file at end of job
       if: always()
       run: |
         rm -f .env
       shell: bash
+      working-directory: apps/${{ inputs.project }}
