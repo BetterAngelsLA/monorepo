@@ -138,7 +138,6 @@ runs:
     - name: 🍏 Check for Existing Builds, Start New Builds if Needed, and Perform EAS Update
       id: check_and_start_builds
       run: |
-        set -x
         if [ "${{ inputs.environment }}" == "preview" ]; then
           PROFILE="preview"
         else
