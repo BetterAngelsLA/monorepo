@@ -46,6 +46,7 @@ class UserType(UserBaseType):
     # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
     # Temporary fix while we figure out type generation
     id: ID
+    client_profile: auto
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]

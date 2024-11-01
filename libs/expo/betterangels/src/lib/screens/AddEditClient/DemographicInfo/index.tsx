@@ -3,13 +3,13 @@ import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import AdaAccommodation from './AdaAccommodation';
-import PlaceOfBirth from './PlaceOfBirth';
 import EyeColor from './EyeColor';
 import Gender from './Gender';
 import HairColor from './HairColor';
 import Height from './Height';
 import MaritalStatus from './MaritalStatus';
 import PhysicalDescription from './PhysicalDescription';
+import PlaceOfBirth from './PlaceOfBirth';
 import Pronoun from './Pronoun';
 import Race from './Race';
 

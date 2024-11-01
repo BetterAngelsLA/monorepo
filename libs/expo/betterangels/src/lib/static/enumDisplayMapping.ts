@@ -12,6 +12,7 @@ import {
   PronounEnum,
   RaceEnum,
   RelationshipTypeEnum,
+  SelahTeamEnum,
   ServiceEnum,
   ServiceRequestTypeEnum,
   SocialMediaEnum,
@@ -64,6 +65,13 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Other]: 'Other',
 };
 
+export const enumDisplayYesNoPreferNot: {
+  [key in YesNoPreferNotToSayEnum]: string;
+} = {
+  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+  [YesNoPreferNotToSayEnum.No]: 'No',
+  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+};
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
   [PronounEnum.SheHerHers]: 'She/Her/Hers',
@@ -246,4 +254,24 @@ export const enumDisplayAdaAccommodationEnum: {
   [AdaAccommodationEnum.Mobility]: 'Mobility',
   [AdaAccommodationEnum.Visual]: 'Visual',
   [AdaAccommodationEnum.Other]: 'Other',
+};
+
+export const enumDisplaySelahTeam: {
+  [key in SelahTeamEnum]: string;
+} = {
+  [SelahTeamEnum.BowtieRiversideOutreach]: 'Bowtie & Riverside Outreach',
+  [SelahTeamEnum.EchoParkOnSite]: 'Echo Park On-site',
+  [SelahTeamEnum.EchoParkOutreach]: 'Echo Park Outreach',
+  [SelahTeamEnum.HollywoodOnSite]: 'Hollywood On-site',
+  [SelahTeamEnum.HollywoodOutreach]: 'Hollywood Outreach',
+  [SelahTeamEnum.LaRiverOutreach]: 'LA River Outreach',
+  [SelahTeamEnum.LosFelizOutreach]: 'Los Feliz Outreach',
+  [SelahTeamEnum.NortheastHollywoodOutreach]: 'Northeast Hollywood Outreach',
+  [SelahTeamEnum.SilverLakeOutreach]: 'Silver Lake Outreach',
+  [SelahTeamEnum.SlccOnSite]: 'SLCC On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOnSite]: 'Sunday Social / Atwater On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOutreach]:
+    'Sunday Social / Atwater Outreach',
+  [SelahTeamEnum.WdiOnSite]: 'WDI On-site',
+  [SelahTeamEnum.WdiOutreach]: 'WDI Outreach',
 };
