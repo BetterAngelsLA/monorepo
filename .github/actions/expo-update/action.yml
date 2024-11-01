@@ -1,0 +1,54 @@
+name: 'EAS Update'
+description: 'Perform EAS Update for the project'
+
+inputs:
+  project:
+    required: true
+    type: string
+  branch:
+    required: true
+    type: string
+  slug:
+    required: true
+    type: string
+  project_id:
+    required: true
+    type: string
+
+outputs:
+  android_update_id:
+    description: 'Android update ID.'
+  android_update_permalink:
+    description: 'Permalink for Android update.'
+  android_update_qr_url:
+    description: 'QR URL for Android update.'
+  ios_update_id:
+    description: 'iOS update ID.'
+  ios_update_permalink:
+    description: 'Permalink for iOS update.'
+  ios_update_qr_url:
+    description: 'QR URL for iOS update.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Perform EAS Update
+      run: |
+        platforms=("android" "ios")
+
+        eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
+        echo $eas_update_output
+
+        for platform in "${platforms[@]}"; do
+          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+          update_id=$(echo "$update_info" | jq -r '.id')
+          group_id=$(echo "$update_info" | jq -r '.group')
+          update_permalink="https://expo.dev/projects/${{ inputs.project_id }}/updates/${update_id}"
+          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project_id }}&groupId=${group_id}"
+
+          echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+          echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
+          echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+        done
+      working-directory: apps/${{ inputs.project }}
+      shell: bash

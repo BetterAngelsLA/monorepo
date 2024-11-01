@@ -32,7 +32,6 @@ runs:
   steps:
     - name: Check for Existing Builds or Start New Build
       run: |
-        set -x
         platforms=(${{ inputs.platforms }})
         slugs=()
         project_ids=()
@@ -42,8 +41,6 @@ runs:
             --status new --status in-progress --status finished \
             --buildProfile "${{ inputs.profile }}" \
             --limit 1 --json --non-interactive 2>&1)
-
-          echo $build_output
 
           if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
             echo "No existing $platform build found. Starting a new build."

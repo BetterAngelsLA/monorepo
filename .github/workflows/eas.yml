@@ -104,6 +104,7 @@ jobs:
 
       - name: Preview Build
         uses: ./.github/actions/expo-build
+        id: preview_build
         with:
           profile: preview
           project: ${{ matrix.project }}
@@ -115,13 +116,13 @@ jobs:
           project: ${{ matrix.project }}
           platforms: ios
 
-      # - name: Perform EAS Update
-      #   uses: ./.github/actions/eas_update
-      #   with:
-      #     project: ${{ matrix.project }}
-      #     branch: ${{ inputs.branch }}
-      #     slug: ${{ steps.check_and_start_build.outputs.slug }}
-      #     project_id: ${{ steps.check_and_start_build.outputs.project_id }}
+      - name: Perform EAS Update
+        uses: ./.github/actions/expo-update
+        with:
+          project: ${{ matrix.project }}
+          branch: ${{ inputs.branch }}
+          slug: ${{ steps.check_and_start_build.outputs.slug }}
+          project_id: ${{ steps.preview_build.outputs.project_id }}
 
       # - name: 📝 Comment on PR
       #   if: github.event_name == 'pull_request'
