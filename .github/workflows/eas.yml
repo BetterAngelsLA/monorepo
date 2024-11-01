@@ -131,7 +131,6 @@ jobs:
         if: always()
         run: |
           rm -f .env
-        post: true
         shell: bash
         working-directory: apps/${{ inputs.project }}
 
