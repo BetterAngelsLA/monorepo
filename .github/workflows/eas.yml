@@ -70,6 +70,11 @@ jobs:
       # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
       matrix:
         project: [betterangels]
+    permissions:
+      # REQUIRED: Allow comments on PRs
+      pull-requests: write # Allow comments on PRs
+      # REQUIRED: Allow updating fingerprint in action caches
+      actions: write
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
