@@ -130,8 +130,8 @@ jobs:
         with:
           project: ${{ matrix.project }}
           branch: ${{ inputs.branch }}
-          slug: ${{ steps.check_and_start_build.outputs.slug }}
-          project_id: ${{ steps.preview-build.outputs.project_id }}
+          slug: ${{ steps.preview-build.outputs.slug }}
+          project-id: ${{ steps.preview-build.outputs.project-id }}
 
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'

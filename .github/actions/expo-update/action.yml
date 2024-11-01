@@ -11,7 +11,7 @@ inputs:
   slug:
     required: true
     type: string
-  project_id:
+  project-id:
     required: true
     type: string
 
@@ -42,16 +42,14 @@ runs:
       id: perform-eas-update
       run: |
         platforms=("android" "ios")
-
         eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
-        echo $eas_update_output
 
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
           update_id=$(echo "$update_info" | jq -r '.id')
           group_id=$(echo "$update_info" | jq -r '.group')
-          update_permalink="https://expo.dev/projects/${{ inputs.project_id }}/updates/${update_id}"
-          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project_id }}&groupId=${group_id}"
+          update_permalink="https://expo.dev/projects/${{ inputs.project-id }}/updates/${update_id}"
+          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project-id }}&groupId=${group_id}"
 
           # Set platform-specific outputs
           echo "${platform}-update-id=$update_id" >> $GITHUB_OUTPUT
