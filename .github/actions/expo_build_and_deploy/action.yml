@@ -86,6 +86,7 @@ runs:
         node-version: 20.12.2
 
     - run: corepack enable
+      shell: bash
 
     - name: Setup Yarn in Node
       uses: actions/setup-node@v4
@@ -100,12 +101,14 @@ runs:
 
     - name: 📦 Install dependencies
       run: yarn install
+      shell: bash
 
     - name: 🧹 Clear All .env files and load eas.json
       run: |
         find . -name '*.env*' -delete
         cat eas.json | jq -r '.build["'"${{ inputs.environment }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
       working-directory: apps/${{ inputs.project }}
+      shell: bash
 
     - name: Load Application Secrets
       id: filter-secrets
@@ -134,6 +137,7 @@ runs:
         COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
         echo "commit_id=$COMMIT_ID" >> $GITHUB_OUTPUT
         echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: 🍏 Check for Existing Builds, Start New Builds if Needed, and Perform EAS Update
       id: check_and_start_builds
@@ -233,3 +237,4 @@ runs:
           echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
           echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
         done
+      shell: bash
