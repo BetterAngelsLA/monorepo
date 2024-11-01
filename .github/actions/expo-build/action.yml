@@ -28,6 +28,7 @@ runs:
   steps:
     - name: Check for Existing Builds or Start New Build
       run: |
+        set -x
         platforms=("android" "ios")
         slugs=()
         project_ids=()
