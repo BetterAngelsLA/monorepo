@@ -50,7 +50,6 @@ runs:
     - name: Check for Existing Builds or Start New Build
       run: |
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
-        echo "current runtime version $runtime_version"
         echo "RUNTIME_VERSION=$runtime_version" >> .env
         echo "runtime_version=$runtime_version" >> $GITHUB_OUTPUT
       shell: bash
@@ -60,5 +59,6 @@ runs:
       if: always()
       run: |
         rm -f .env
+      post: true
       shell: bash
       working-directory: apps/${{ inputs.project }}
