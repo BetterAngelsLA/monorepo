@@ -235,3 +235,4 @@ runs:
           echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
         done
       shell: bash
+      working-directory: apps/${{ inputs.project }}
