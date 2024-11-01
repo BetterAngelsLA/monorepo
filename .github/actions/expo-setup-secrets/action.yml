@@ -12,10 +12,9 @@ inputs:
     required: true
     type: string
 
-output:
+outputs:
   runtime-version:
     description: 'Runtime version for build.'
-    value: ${{ steps.set-runtime-version.outputs.runtime-version }}
 
 runs:
   using: 'composite'
