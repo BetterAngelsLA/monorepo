@@ -8,70 +8,68 @@ on:
       - main
 
 jobs:
-  # prepare:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 🏗 Check out repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: 🔀 Track main if PR
-  #       if: github.ref != 'refs/heads/main'
-  #       run: git branch --track main origin/main
+      - name: 🔀 Track main if PR
+        if: github.ref != 'refs/heads/main'
+        run: git branch --track main origin/main
 
-  #     - name: 🔧 Configure NX SHAs
-  #       uses: nrwl/nx-set-shas@v4
+      - name: 🔧 Configure NX SHAs
+        uses: nrwl/nx-set-shas@v4
 
-  #     - name: 🔧 Setup Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20.12.2
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
 
-  #     - run: corepack enable
+      - run: corepack enable
 
-  #     - name: Setup Yarn in Node
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         cache: 'yarn'
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
-  #     - name: 📦 Install dependencies
-  #       run: yarn install
+      - name: 📦 Install dependencies
+        run: yarn install
 
-  #     - name: 🧩 Determine Affected Projects for eas-update
-  #       id: set-matrix
-  #       run: |
-  #         # Get the list of affected projects with eas-update target
-  #         affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
-  #         # Convert the list to a JSON matrix
-  #         MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
-  #           split("\n") |
-  #           map(select(. != "")) |
-  #           if length == 0 then
-  #               {}
-  #           else
-  #               {include: map({project: .})}
-  #           end'
-  #         )
-  #         IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
-  #         echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
-  #         echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+      - name: 🧩 Determine Affected Projects for eas-update
+        id: set-matrix
+        run: |
+          # Get the list of affected projects with eas-update target
+          affected_projects=$(yarn nx show projects --affected --exclude=shelter --withTarget eas-update)
+          # Convert the list to a JSON matrix
+          MATRIX_JSON=$(echo "$affected_projects" | jq -Rcs '
+            split("\n") |
+            map(select(. != "")) |
+            if length == 0 then
+                {}
+            else
+                {include: map({project: .})}
+            end'
+          )
+          IS_MATRIX_EMPTY=$(echo "$MATRIX_JSON" | jq 'if .include | length == 0 then true else false end')
+          echo "is_matrix_empty=$IS_MATRIX_EMPTY" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
-  #   outputs:
-  #     matrix: ${{ steps.set-matrix.outputs.matrix }}
-  #     is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
   preview-build:
-    # needs: prepare
+    needs: prepare
     environment: preview
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
-    # if: needs.prepare.outputs.is_matrix_empty == 'false'
+    if: needs.prepare.outputs.is_matrix_empty == 'false'
     strategy:
-      # matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-      matrix:
-        project: [betterangels]
+      matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
       # REQUIRED: Allow comments on PRs
       pull-requests: write # Allow comments on PRs
@@ -178,7 +176,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Post to Slack
-        # if: ${{ env.BRANCH_NAME == 'main' }}
+        if: ${{ env.BRANCH_NAME == 'main' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -215,24 +213,54 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-  # production_build:
-  #   needs: prepare
-  #   runs-on: ubuntu-latest
-  #   if: needs.prepare.outputs.is_matrix_empty == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   strategy:
-  #     matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
-  #   steps:
-  #     - name: 🏗 Check out repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+production_build:
+  if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+  needs: prepare
+  environment: production
+  runs-on: ubuntu-latest
+  strategy:
+    matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+  permissions:
+    pull-requests: write # Allow comments on PRs
+    actions: write # Allow updating fingerprint in action caches
+  steps:
+    - name: 🏗 Check out repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
 
-  #     - name: Build and Deploy (Production)
-  #       uses: ./.github/actions/build_and_deploy
-  #       with:
-  #         environment: 'production'
-  #         project: ${{ matrix.project }}
-  #         branch: 'main'
-  #         expo-token: ${{ secrets.EXPO_TOKEN }}
-  #         expo-apple-app-specific-password: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-  #       id: build_and_deploy
+    - name: 🔧 Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.12.2
+    - run: |
+        corepack enable
+
+    - name: Setup Yarn in Node
+      uses: actions/setup-node@v4
+      with:
+        cache: 'yarn'
+
+    - name: 🔧 Setup EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+
+    - name: 📦 Install dependencies
+      run: yarn install
+
+    - name: Set up Secrets
+      id: setup-secrets
+      uses: ./.github/actions/expo-setup-secrets
+      with:
+        profile: production
+        project: ${{ matrix.project }}
+        secrets: ${{ toJson(secrets) }}
+
+    - name: Production Build
+      uses: ./.github/actions/expo-build
+      with:
+        profile: production
+        project: ${{ matrix.project }}
+        runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
