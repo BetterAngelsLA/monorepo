@@ -40,6 +40,7 @@ export default function ImportantNotes(props: IImportantNotesProps) {
           }}
         >
           <Textarea
+            textAlignVertical='top'
             placeholder="Enter important notes"
             name="importantNotes"
             control={control}
