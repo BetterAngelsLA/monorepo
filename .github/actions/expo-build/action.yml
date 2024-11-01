@@ -23,12 +23,18 @@ outputs:
   android-build-link:
     description: 'Link to the Android build.'
     value: ${{ steps.check-builds.outputs.android-build-link }}
+  android-runtime-version:
+    description: 'Runtime version for Android build.'
+    value: ${{ steps.check-builds.outputs.android-runtime-version }}
   ios-build-id:
     description: 'iOS build ID for tracking the build.'
     value: ${{ steps.check-builds.outputs.ios-build-id }}
   ios-build-link:
     description: 'Link to the iOS build.'
     value: ${{ steps.check-builds.outputs.ios-build-link }}
+  ios-runtime-version:
+    description: 'Runtime version for iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-runtime-version }}
   slug:
     description: 'Project slug for Expo tracking.'
     value: ${{ steps.check-builds.outputs.slug }}
@@ -64,11 +70,13 @@ runs:
           slug=$(echo "$build_output" | jq -r '.[0].project.slug')
           project_id=$(echo "$build_output" | jq -r '.[0].project.id')
           build_id=$(echo "$build_output" | jq -r '.[0].id')
+          runtime_version_from_build=$(echo "$build_output" | jq -r '.[0].runtimeVersion')
           build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
 
           # Assign outputs for each platform
           echo "${platform}-build-id=$build_id" >> $GITHUB_OUTPUT
           echo "${platform}-build-link=$build_link" >> $GITHUB_OUTPUT
+          echo "${platform}-runtime-version=$runtime_version_from_build" >> $GITHUB_OUTPUT
 
           slugs+=("$slug")
           project_ids+=("$project_id")
