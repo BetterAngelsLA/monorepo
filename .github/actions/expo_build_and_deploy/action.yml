@@ -149,88 +149,88 @@ runs:
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
 
-        platforms=("android" "ios")
-        slugs=()
-        project_ids=()
+        # platforms=("android" "ios")
+        # slugs=()
+        # project_ids=()
 
-        for platform in "${platforms[@]}"; do
-          build_output=$(eas build:list --platform "$platform" \
-            --status new --status in-progress --status finished \
-            --buildProfile "$PROFILE" --runtimeVersion "$runtime_version" \
-            --limit 1 --json --non-interactive 2>&1)
+        # for platform in "${platforms[@]}"; do
+        #   build_output=$(eas build:list --platform "$platform" \
+        #     --status new --status in-progress --status finished \
+        #     --buildProfile "$PROFILE" --runtimeVersion "$runtime_version" \
+        #     --limit 1 --json --non-interactive 2>&1)
 
-          echo $build_output
+        #   echo $build_output
 
-          if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
-            echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
-            build_output=$(eas build --profile "$PROFILE" --platform "$platform" \
-              --freeze-credentials --non-interactive --no-wait --json)
-          else
-            echo "$platform build found for runtime version $runtime_version."
-          fi
+        #   if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
+        #     echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
+        #     build_output=$(eas build --profile "$PROFILE" --platform "$platform" \
+        #       --freeze-credentials --non-interactive --no-wait --json)
+        #   else
+        #     echo "$platform build found for runtime version $runtime_version."
+        #   fi
 
-          # Handle both array and single object response
-          if [[ "$(echo "$build_output" | jq 'type')" == "array" ]]; then
-            build_info=$(echo "$build_output" | jq '.[0]')
-          else
-            build_info="$build_output"
-          fi
+        #   # Handle both array and single object response
+        #   if [[ "$(echo "$build_output" | jq 'type')" == "array" ]]; then
+        #     build_info=$(echo "$build_output" | jq '.[0]')
+        #   else
+        #     build_info="$build_output"
+        #   fi
 
-          slug=$(echo "$build_info" | jq -r '.project.slug')
-          project_id=$(echo "$build_info" | jq -r '.project.id')
-          build_id=$(echo "$build_info" | jq -r '.id')
-          distribution=$(echo "$build_info" | jq -r '.distribution')
-          build_profile=$(echo "$build_info" | jq -r '.buildProfile')
-          runtime_version_from_build=$(echo "$build_info" | jq -r '.runtimeVersion')
-          app_version=$(echo "$build_info" | jq -r '.appVersion')
-          git_commit=$(echo "$build_info" | jq -r '.gitCommitHash')
-          build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+        #   slug=$(echo "$build_info" | jq -r '.project.slug')
+        #   project_id=$(echo "$build_info" | jq -r '.project.id')
+        #   build_id=$(echo "$build_info" | jq -r '.id')
+        #   distribution=$(echo "$build_info" | jq -r '.distribution')
+        #   build_profile=$(echo "$build_info" | jq -r '.buildProfile')
+        #   runtime_version_from_build=$(echo "$build_info" | jq -r '.runtimeVersion')
+        #   app_version=$(echo "$build_info" | jq -r '.appVersion')
+        #   git_commit=$(echo "$build_info" | jq -r '.gitCommitHash')
+        #   build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
 
-          echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
-          echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
-          echo "${platform}_distribution=$distribution" >> $GITHUB_OUTPUT
-          echo "${platform}_build_profile=$build_profile" >> $GITHUB_OUTPUT
-          echo "${platform}_runtime_version=$runtime_version_from_build" >> $GITHUB_OUTPUT
-          echo "${platform}_app_version=$app_version" >> $GITHUB_OUTPUT
-          echo "${platform}_git_commit=$git_commit" >> $GITHUB_OUTPUT
+        #   echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+        #   echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+        #   echo "${platform}_distribution=$distribution" >> $GITHUB_OUTPUT
+        #   echo "${platform}_build_profile=$build_profile" >> $GITHUB_OUTPUT
+        #   echo "${platform}_runtime_version=$runtime_version_from_build" >> $GITHUB_OUTPUT
+        #   echo "${platform}_app_version=$app_version" >> $GITHUB_OUTPUT
+        #   echo "${platform}_git_commit=$git_commit" >> $GITHUB_OUTPUT
 
-          slugs+=("$slug")
-          project_ids+=("$project_id")
-        done
+        #   slugs+=("$slug")
+        #   project_ids+=("$project_id")
+        # done
 
-        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        # unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        # unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
 
-        if [ ${#unique_slugs[@]} -ne 1 ]; then
-          echo "Error: Different slugs found for platforms: ${slugs[*]}"
-          exit 1
-        fi
+        # if [ ${#unique_slugs[@]} -ne 1 ]; then
+        #   echo "Error: Different slugs found for platforms: ${slugs[*]}"
+        #   exit 1
+        # fi
 
-        if [ ${#unique_project_ids[@]} -ne 1 ]; then
-          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
-          exit 1
-        fi
+        # if [ ${#unique_project_ids[@]} -ne 1 ]; then
+        #   echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
+        #   exit 1
+        # fi
 
-        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
-        echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+        # echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
+        # echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
 
-        eas_update_output=$(eas update --branch $BRANCH --non-interactive --auto --json)
-        echo $eas_update_output
+        # eas_update_output=$(eas update --branch $BRANCH --non-interactive --auto --json)
+        # echo $eas_update_output
 
-        for platform in "${platforms[@]}"; do
-          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
-          update_id=$(echo "$update_info" | jq -r '.id')
-          branch=$(echo "$update_info" | jq -r '.branch')
-          group_id=$(echo "$update_info" | jq -r '.group')
-          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
-          update_permalink="https://expo.dev/projects/${unique_project_ids[0]}/updates/${update_id}"
-          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${unique_project_ids[0]}&groupId=${group_id}"
+        # for platform in "${platforms[@]}"; do
+        #   update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+        #   update_id=$(echo "$update_info" | jq -r '.id')
+        #   branch=$(echo "$update_info" | jq -r '.branch')
+        #   group_id=$(echo "$update_info" | jq -r '.group')
+        #   update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+        #   update_permalink="https://expo.dev/projects/${unique_project_ids[0]}/updates/${update_id}"
+        #   update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${unique_project_ids[0]}&groupId=${group_id}"
 
-          echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
-          echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
-          echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
-          echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
-          echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
-          echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
-        done
+        #   echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+        #   echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
+        #   echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
+        #   echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
+        #   echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+        #   echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
+        # done
       shell: bash
