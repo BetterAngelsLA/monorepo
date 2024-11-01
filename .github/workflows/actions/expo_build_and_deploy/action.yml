@@ -1,0 +1,211 @@
+name: 'Build and Deploy'
+description: 'Build and deploy the project'
+
+inputs:
+  environment:
+    required: true
+    type: string
+  project:
+    required: true
+    type: string
+  expo-token:
+    required: true
+    type: string
+  expo-apple-app-specific-password:
+    required: false
+    type: string
+
+outputs:
+  android_build_id: ${{ steps.check_and_start_builds.outputs.android_build_id }}
+  android_build_link: ${{ steps.check_and_start_builds.outputs.android_build_link }}
+  android_distribution: ${{ steps.check_and_start_builds.outputs.android_distribution }}
+  android_build_profile: ${{ steps.check_and_start_builds.outputs.android_build_profile }}
+  android_runtime_version: ${{ steps.check_and_start_builds.outputs.android_runtime_version }}
+  android_app_version: ${{ steps.check_and_start_builds.outputs.android_app_version }}
+  android_git_commit: ${{ steps.check_and_start_builds.outputs.android_git_commit }}
+  android_branch: ${{ steps.check_and_start_builds.outputs.android_branch }}
+  android_update_id: ${{ steps.check_and_start_builds.outputs.android_update_id }}
+  android_group_id: ${{ steps.check_and_start_builds.outputs.android_group_id }}
+  android_update_permalink: ${{ steps.check_and_start_builds.outputs.android_update_permalink }}
+  android_update_qr_url: ${{ steps.check_and_start_builds.outputs.android_update_qr_url }}
+  android_update_commit: ${{ steps.check_and_start_builds.outputs.android_update_commit }}
+  ios_build_id: ${{ steps.check_and_start_builds.outputs.ios_build_id }}
+  ios_build_link: ${{ steps.check_and_start_builds.outputs.ios_build_link }}
+  ios_distribution: ${{ steps.check_and_start_builds.outputs.ios_distribution }}
+  ios_build_profile: ${{ steps.check_and_start_builds.outputs.ios_build_profile }}
+  ios_runtime_version: ${{ steps.check_and_start_builds.outputs.ios_runtime_version }}
+  ios_app_version: ${{ steps.check_and_start_builds.outputs.ios_app_version }}
+  ios_git_commit: ${{ steps.check_and_start_builds.outputs.ios_git_commit }}
+  ios_branch: ${{ steps.check_and_start_builds.outputs.ios_branch }}
+  ios_update_id: ${{ steps.check_and_start_builds.outputs.ios_update_id }}
+  ios_group_id: ${{ steps.check_and_start_builds.outputs.ios_group_id }}
+  ios_update_permalink: ${{ steps.check_and_start_builds.outputs.ios_update_permalink }}
+  ios_update_qr_url: ${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}
+  ios_update_commit: ${{ steps.check_and_start_builds.outputs.ios_update_commit }}
+  slug: ${{ steps.check_and_start_builds.outputs.slug }}
+  project_id: ${{ steps.check_and_start_builds.outputs.project_id }}
+  commit_id: ${{ steps.set_commit_info.outputs.commit_id }}
+  commit_message: ${{ steps.set_commit_info.outputs.commit_message }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔧 Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.12.2
+
+    - run: corepack enable
+
+    - name: Setup Yarn in Node
+      uses: actions/setup-node@v4
+      with:
+        cache: 'yarn'
+
+    - name: 🔧 Setup EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ inputs.expo-token }}
+
+    - name: 📦 Install dependencies
+      run: yarn install
+
+    - name: 🧹 Clear All .env files and load eas.json
+      run: |
+        find . -name '*.env*' -delete
+        cat eas.json | jq -r '.build["'"${{ inputs.environment }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+      working-directory: apps/${{ inputs.project }}
+
+    - name: Load Application Secrets
+      id: filter-secrets
+      shell: bash
+      run: |
+        echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+        secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+
+        while IFS= read -r line; do
+          echo "$line" >> .env
+        done <<< "$secrets"
+      env:
+        SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      working-directory: apps/${{ inputs.project }}
+
+    - name: Check fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/fingerprint@main
+      with:
+        working-directory: apps/${{ inputs.project }}
+
+    - name: Set Commit Info
+      id: set_commit_info
+      run: |
+        COMMIT_ID=$(git rev-parse HEAD)
+        COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+        echo "commit_id=$COMMIT_ID" >> $GITHUB_OUTPUT
+        echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+
+    - name: 🍏 Check for Existing Builds, Start New Builds if Needed, and Perform EAS Update
+      working-directory: apps/${{ inputs.project }}
+      id: check_and_start_builds
+      run: |
+        if [ "${{ inputs.environment }}" == "preview" ]; then
+          PROFILE="preview"
+          BRANCH="pr-${{ github.event.pull_request.number || github.run_id }}"
+        else
+          PROFILE="production"
+          BRANCH="main"
+        fi
+
+        runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+        echo "RUNTIME_VERSION=$runtime_version" >> .env
+
+        platforms=("android" "ios")
+        slugs=()
+        project_ids=()
+
+        for platform in "${platforms[@]}"; do
+          build_output=$(eas build:list --platform "$platform" \
+            --status new --status in-progress --status finished \
+            --buildProfile "$PROFILE" --runtimeVersion "$runtime_version" \
+            --limit 1 --json --non-interactive 2>&1)
+
+          echo $build_output
+
+          if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
+            echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
+            build_output=$(eas build --profile "$PROFILE" --platform "$platform" \
+              --freeze-credentials --non-interactive --no-wait --json)
+          else
+            echo "$platform build found for runtime version $runtime_version."
+          fi
+
+          # Handle both array and single object response
+          if [[ "$(echo "$build_output" | jq 'type')" == "array" ]]; then
+            build_info=$(echo "$build_output" | jq '.[0]')
+          else
+            build_info="$build_output"
+          fi
+
+          slug=$(echo "$build_info" | jq -r '.project.slug')
+          project_id=$(echo "$build_info" | jq -r '.project.id')
+          build_id=$(echo "$build_info" | jq -r '.id')
+          distribution=$(echo "$build_info" | jq -r '.distribution')
+          build_profile=$(echo "$build_info" | jq -r '.buildProfile')
+          runtime_version_from_build=$(echo "$build_info" | jq -r '.runtimeVersion')
+          app_version=$(echo "$build_info" | jq -r '.appVersion')
+          git_commit=$(echo "$build_info" | jq -r '.gitCommitHash')
+          build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+
+          echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+          echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+          echo "${platform}_distribution=$distribution" >> $GITHUB_OUTPUT
+          echo "${platform}_build_profile=$build_profile" >> $GITHUB_OUTPUT
+          echo "${platform}_runtime_version=$runtime_version_from_build" >> $GITHUB_OUTPUT
+          echo "${platform}_app_version=$app_version" >> $GITHUB_OUTPUT
+          echo "${platform}_git_commit=$git_commit" >> $GITHUB_OUTPUT
+
+          slugs+=("$slug")
+          project_ids+=("$project_id")
+        done
+
+        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+        if [ ${#unique_slugs[@]} -ne 1 ]; then
+          echo "Error: Different slugs found for platforms: ${slugs[*]}"
+          exit 1
+        fi
+
+        if [ ${#unique_project_ids[@]} -ne 1 ]; then
+          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
+          exit 1
+        fi
+
+        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
+        echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+
+        eas_update_output=$(eas update --branch $BRANCH --non-interactive --auto --json)
+        echo $eas_update_output
+
+        for platform in "${platforms[@]}"; do
+          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+          update_id=$(echo "$update_info" | jq -r '.id')
+          branch=$(echo "$update_info" | jq -r '.branch')
+          group_id=$(echo "$update_info" | jq -r '.group')
+          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+          update_permalink="https://expo.dev/projects/${unique_project_ids[0]}/updates/${update_id}"
+          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${unique_project_ids[0]}&groupId=${group_id}"
+
+          echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+          echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
+          echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
+          echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
+          echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+          echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
+        done
+
+    - name: 🧼 Cleanup .env file
+      if: always()
+      run: rm -f .env
+      working-directory: apps/${{ inputs.project }}
