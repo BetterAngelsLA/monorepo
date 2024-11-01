@@ -451,8 +451,8 @@ export enum HmisAgencyEnum {
   Champ = 'CHAMP',
   Lahsa = 'LAHSA',
   Pasadena = 'PASADENA',
-  SantaMonica = 'SANTA_MONICA',
-  Vash = 'VASH'
+  Vash = 'VASH',
+  LongBeach = 'LONG_BEACH'
 }
 
 export type HmisProfileInput = {

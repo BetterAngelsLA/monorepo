@@ -426,10 +426,10 @@ enum HairColorEnum {
 
 enum HmisAgencyEnum {
   LAHSA
-  SANTA_MONICA
   PASADENA
   CHAMP
   VASH
+  LONG_BEACH
 }
 
 input HmisProfileInput {
