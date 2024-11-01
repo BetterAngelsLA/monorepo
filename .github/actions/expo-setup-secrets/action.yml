@@ -52,6 +52,7 @@ runs:
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
         echo "$runtime_version=$runtime_version" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Delete .env file at end of job
       if: always()
