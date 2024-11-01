@@ -11,30 +11,36 @@ inputs:
   runtime-version:
     required: true
     type: string
-    default: 'Build runtime version'
   platforms:
     required: false
     type: string
     default: 'android ios'
 
 outputs:
-  android_build_id:
+  android-build-id:
     description: 'Android build ID for tracking the build.'
-  android_build_link:
+    value: ${{ steps.check-builds.outputs.android-build-id }}
+  android-build-link:
     description: 'Link to the Android build.'
-  ios_build_id:
+    value: ${{ steps.check-builds.outputs.android-build-link }}
+  ios-build-id:
     description: 'iOS build ID for tracking the build.'
-  ios_build_link:
+    value: ${{ steps.check-builds.outputs.ios-build-id }}
+  ios-build-link:
     description: 'Link to the iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-build-link }}
   slug:
     description: 'Project slug for Expo tracking.'
-  project_id:
+    value: ${{ steps.check-builds.outputs.slug }}
+  project-id:
     description: 'Project ID for tracking purposes.'
+    value: ${{ steps.check-builds.outputs.project-id }}
 
 runs:
   using: 'composite'
   steps:
     - name: Check for Existing Builds or Start New Build
+      id: check-builds
       run: |
         platforms=(${{ inputs.platforms }})
         slugs=()
@@ -44,7 +50,7 @@ runs:
           # Check for existing builds for the platform
           build_output=$(eas build:list --platform "$platform" \
             --status new --status in-progress --status finished \
-            --buildProfile preview --runtimeVersion "${{ inputs.runtime-version }}" \
+            --buildProfile "${{ inputs.profile }}" --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --non-interactive 2>&1)
 
           if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
@@ -60,14 +66,15 @@ runs:
           build_id=$(echo "$build_output" | jq -r '.[0].id')
           build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
 
-          echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
-          echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+          # Assign outputs for each platform
+          echo "${platform}-build-id=$build_id" >> $GITHUB_OUTPUT
+          echo "${platform}-build-link=$build_link" >> $GITHUB_OUTPUT
 
           slugs+=("$slug")
           project_ids+=("$project_id")
         done
 
-        # Check for consistent slugs and project IDs
+        # Ensure slugs and project IDs are consistent
         unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
         unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
 
@@ -81,7 +88,8 @@ runs:
           exit 1
         fi
 
+        # Set common outputs
         echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
-        echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+        echo "project-id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
       working-directory: apps/${{ inputs.project }}
       shell: bash
