@@ -38,7 +38,11 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
-  const hasDob = !!client?.clientProfile.dateOfBirth;
+  const displayDob = client?.clientProfile.dateOfBirth
+    ? `${format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')} (${
+        client?.clientProfile.age
+      })`
+    : null;
 
   const personalData = [
     {
@@ -51,11 +55,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     },
     {
       label: 'DoB',
-      value:
-        hasDob &&
-        `${
-          hasDob && format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')
-        } (${client?.clientProfile.age})`,
+      value: displayDob,
     },
     {
       label: 'Preferred Language',
