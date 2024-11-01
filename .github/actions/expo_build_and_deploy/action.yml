@@ -146,8 +146,8 @@ runs:
 
         BRANCH="${{ inputs.branch }}"
 
-        runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
-        echo "RUNTIME_VERSION=$runtime_version" >> .env
+        runtime_version="${{ steps.fingerprint.outputs.current-fingerprint }}"
+        echo "RUNTIME_VERSION=$(echo "$runtime_version" | jq -r '.hash')" >> .env
 
         # platforms=("android" "ios")
         # slugs=()
