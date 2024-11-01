@@ -63,6 +63,7 @@ jobs:
 
   preview_build:
     # needs: prepare
+    environment: preview
     runs-on: ubuntu-latest
     # if: needs.prepare.outputs.is_matrix_empty == 'false'
     strategy:
