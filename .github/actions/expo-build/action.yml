@@ -8,6 +8,10 @@ inputs:
   profile:
     required: true
     type: string
+  platforms:
+    required: false
+    type: string
+    default: 'android ios'
 
 outputs:
   android_build_id:
@@ -29,7 +33,7 @@ runs:
     - name: Check for Existing Builds or Start New Build
       run: |
         set -x
-        platforms=("android" "ios")
+        platforms=(${{ inputs.platforms }})
         slugs=()
         project_ids=()
 

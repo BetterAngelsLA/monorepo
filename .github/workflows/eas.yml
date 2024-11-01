@@ -113,6 +113,7 @@ jobs:
         with:
           profile: development-simulator
           project: ${{ matrix.project }}
+          platform: ios
 
       # - name: Perform EAS Update
       #   uses: ./.github/actions/eas_update
