@@ -75,76 +75,87 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build and Deploy (Preview)
-        uses: ./.github/actions/expo_build_and_deploy
+      - name: Set up Secrets
+        uses: ./.github/actions/expo_setup_secrets
         with:
-          environment: 'preview'
-          project: ${{ matrix.project }}
-          branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }}
-          expo-token: ${{ secrets.EXPO_TOKEN }}
-        id: build_and_deploy
+          project: ${{ inputs.branch }}
 
-      - name: 📝 Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: edumserrano/find-create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.build_and_deploy.outputs.project_id }} -->'
-          comment-author: 'github-actions[bot]'
-          body: |
-            <!-- continuous-deploy-fingerprint-projectId:${{ steps.build_and_deploy.outputs.project_id }} -->
-            🚀 Expo continuous deployment (Preview) is ready for **${{ matrix.project }}**!
+      # - name: Check and Start Build
+      #   uses: ./.github/actions/check_and_start_build
+      #   with:
+      #     project: 'betterangels'
+      #     profile: preview
+      #     branch: ${{ inputs.branch }}
 
-            - Project → **${{ matrix.project }}**
-            - Environment → **Preview**
-            - Platforms → **android**, **ios**
-            - Scheme → **${{ steps.build_and_deploy.outputs.slug }}**
+      # - name: Perform EAS Update
+      #   uses: ./.github/actions/eas_update
+      #   with:
+      #     project: ${{ matrix.project }}
+      #     branch: ${{ inputs.branch }}
+      #     slug: ${{ steps.check_and_start_build.outputs.slug }}
+      #     project_id: ${{ steps.check_and_start_build.outputs.project_id }}
 
-            &nbsp; | 🤖 Android | 🍎 iOS
-            --- | --- | ---
-            Runtime Version | `${{ steps.build_and_deploy.outputs.android_runtime_version }}` | `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`
-            Build Details | [Build Permalink](${{ steps.build_and_deploy.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.build_and_deploy.outputs.android_distribution }}`<br />Build profile: `${{ steps.build_and_deploy.outputs.android_build_profile }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.android_runtime_version }}`<br />App version: `${{ steps.build_and_deploy.outputs.android_app_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.android_git_commit }}`</details> | [Build Permalink](${{ steps.build_and_deploy.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.build_and_deploy.outputs.ios_distribution }}`<br />Build profile: `${{ steps.build_and_deploy.outputs.ios_build_profile }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`<br />App version: `${{ steps.build_and_deploy.outputs.ios_app_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.ios_git_commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.build_and_deploy.outputs.android_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.build_and_deploy.outputs.android_branch }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.android_runtime_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.android_update_commit }}`</details> | [Update Permalink](${{ steps.build_and_deploy.outputs.ios_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.build_and_deploy.outputs.ios_branch }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.ios_update_commit }}`</details>
-            Update QR   | <a href="${{ steps.build_and_deploy.outputs.android_update_qr_url }}"><img src="${{ steps.build_and_deploy.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.build_and_deploy.outputs.ios_update_qr_url }}"><img src="${{ steps.build_and_deploy.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
-          edit-mode: replace
+      # - name: 📝 Comment on PR
+      #   if: github.event_name == 'pull_request'
+      #   uses: edumserrano/find-create-or-update-comment@v1
+      #   with:
+      #     issue-number: ${{ github.event.pull_request.number }}
+      #     body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.build_and_deploy.outputs.project_id }} -->'
+      #     comment-author: 'github-actions[bot]'
+      #     body: |
+      #       <!-- continuous-deploy-fingerprint-projectId:${{ steps.build_and_deploy.outputs.project_id }} -->
+      #       🚀 Expo continuous deployment (Preview) is ready for **${{ matrix.project }}**!
 
-      - name: Post to Slack (Preview)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "channel": "#tech-outreach-main",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*New preview code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.build_and_deploy.outputs.commit_id }}`\n*Message:* ${{ steps.build_and_deploy.outputs.commit_message }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*📱 iOS (Preview)*\n\n<${{ steps.build_and_deploy.outputs.ios_update_qr_url }}|Update>\n<${{ steps.build_and_deploy.outputs.ios_build_link }}|Build>"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🤖 Android (Preview)*\n\n<${{ steps.build_and_deploy.outputs.android_update_qr_url }}|Update>\n<${{ steps.build_and_deploy.outputs.android_build_link }}|Build>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      #       - Project → **${{ matrix.project }}**
+      #       - Environment → **Preview**
+      #       - Platforms → **android**, **ios**
+      #       - Scheme → **${{ steps.build_and_deploy.outputs.slug }}**
+
+      #       &nbsp; | 🤖 Android | 🍎 iOS
+      #       --- | --- | ---
+      #       Runtime Version | `${{ steps.build_and_deploy.outputs.android_runtime_version }}` | `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`
+      #       Build Details | [Build Permalink](${{ steps.build_and_deploy.outputs.android_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.build_and_deploy.outputs.android_distribution }}`<br />Build profile: `${{ steps.build_and_deploy.outputs.android_build_profile }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.android_runtime_version }}`<br />App version: `${{ steps.build_and_deploy.outputs.android_app_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.android_git_commit }}`</details> | [Build Permalink](${{ steps.build_and_deploy.outputs.ios_build_link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.build_and_deploy.outputs.ios_distribution }}`<br />Build profile: `${{ steps.build_and_deploy.outputs.ios_build_profile }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`<br />App version: `${{ steps.build_and_deploy.outputs.ios_app_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.ios_git_commit }}`</details>
+      #       Update Details | [Update Permalink](${{ steps.build_and_deploy.outputs.android_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.build_and_deploy.outputs.android_branch }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.android_runtime_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.android_update_commit }}`</details> | [Update Permalink](${{ steps.build_and_deploy.outputs.ios_update_permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.build_and_deploy.outputs.ios_branch }}`<br />Runtime version: `${{ steps.build_and_deploy.outputs.ios_runtime_version }}`<br />Git commit: `${{ steps.build_and_deploy.outputs.ios_update_commit }}`</details>
+      #       Update QR   | <a href="${{ steps.build_and_deploy.outputs.android_update_qr_url }}"><img src="${{ steps.build_and_deploy.outputs.android_update_qr_url }}" width="250px" height="250px" /></a> | <a href="${{ steps.build_and_deploy.outputs.ios_update_qr_url }}"><img src="${{ steps.build_and_deploy.outputs.ios_update_qr_url }}" width="250px" height="250px" /></a>
+      #     edit-mode: replace
+
+      # - name: Post to Slack (Preview)
+      #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "channel": "#tech-outreach-main",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*New preview code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.build_and_deploy.outputs.commit_id }}`\n*Message:* ${{ steps.build_and_deploy.outputs.commit_message }}"
+      #             }
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*📱 iOS (Preview)*\n\n<${{ steps.build_and_deploy.outputs.ios_update_qr_url }}|Update>\n<${{ steps.build_and_deploy.outputs.ios_build_link }}|Build>"
+      #             }
+      #           },
+      #           {
+      #             "type": "divider"
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*🤖 Android (Preview)*\n\n<${{ steps.build_and_deploy.outputs.android_update_qr_url }}|Update>\n<${{ steps.build_and_deploy.outputs.android_build_link }}|Build>"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   # production_build:
   #   needs: prepare

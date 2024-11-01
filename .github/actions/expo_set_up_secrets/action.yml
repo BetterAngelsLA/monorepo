@@ -1,0 +1,36 @@
+name: 'Setup Secrets'
+description: 'Load secrets into .env file'
+
+inputs:
+  project:
+    required: true
+    type: string
+  profile:
+    required: true
+    type: string
+
+defaults:
+  run:
+    working-directory: apps/${{ inputs.project }}
+    shell: bash
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Clear All .env files and load eas.json
+      run: |
+        find . -name '*.env*' -delete
+        cat eas.json | jq -r '.build["'"${{ inputs.profile }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+
+    - name: Load Application Secrets
+      run: |
+        echo "Loading secrets prefixed with 'EXPO_PUBLIC_'"
+        printenv
+        for var in $(printenv | grep '^EXPO_PUBLIC_'); do
+          echo "$var" >> .env
+        done
+
+    - name: Delete .env file at end of job
+      if: always()
+      run: |
+        rm -f .env
