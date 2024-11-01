@@ -12,7 +12,6 @@ inputs:
 defaults:
   run:
     working-directory: apps/${{ inputs.project }}
-    shell: bash
 
 runs:
   using: 'composite'
@@ -21,6 +20,7 @@ runs:
       run: |
         find . -name '*.env*' -delete
         cat eas.json | jq -r '.build["'"${{ inputs.profile }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+      shell: bash
 
     - name: Load Application Secrets
       run: |
@@ -29,8 +29,10 @@ runs:
         for var in $(printenv | grep '^EXPO_PUBLIC_'); do
           echo "$var" >> .env
         done
+      shell: bash
 
     - name: Delete .env file at end of job
       if: always()
       run: |
         rm -f .env
+      shell: bash
