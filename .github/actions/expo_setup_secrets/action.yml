@@ -28,14 +28,14 @@ runs:
         # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
         # but include items such as API keys and configurations (e.g., Google API keys)
         # that we prefer not to commit directly into our GitHub repository.
-        echo "${{ inputs.secrets }}"
         secrets=$(echo '${{ inputs.secrets }}' | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
 
+        echo "secrets"
         # Write the filtered secrets to the .env file
         while IFS= read -r line; do
+          echo "$line"
           echo "$line" >> .env
         done <<< "$secrets"
-        cat .env
       shell: bash
       working-directory: apps/${{ inputs.project }}
 
