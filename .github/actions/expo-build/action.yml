@@ -8,6 +8,10 @@ inputs:
   profile:
     required: true
     type: string
+  runtime_version:
+    required: true
+    type: string
+    default: 'Build runtime version'
   platforms:
     required: false
     type: string
@@ -37,17 +41,18 @@ runs:
         project_ids=()
 
         for platform in "${platforms[@]}"; do
+          # Check for existing builds for the platform
           build_output=$(eas build:list --platform "$platform" \
             --status new --status in-progress --status finished \
-            --buildProfile "${{ inputs.profile }}" \
+            --buildProfile preview --runtimeVersion "${{ inputs.runtime_version }}" \
             --limit 1 --json --non-interactive 2>&1)
 
           if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
-            echo "No existing $platform build found. Starting a new build."
+            echo "No existing $platform build found for runtime version ${{ inputs.runtime_version }}. Starting a new build."
             build_output=$(eas build --profile "${{ inputs.profile }}" --platform "$platform" \
               --freeze-credentials --non-interactive --no-wait --json)
           else
-            echo "$platform build found."
+            echo "$platform build found for runtime version ${{ inputs.runtime_version }}."
           fi
 
           slug=$(echo "$build_output" | jq -r '.[0].project.slug')

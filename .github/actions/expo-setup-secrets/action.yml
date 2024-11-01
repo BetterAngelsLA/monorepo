@@ -12,6 +12,10 @@ inputs:
     required: true
     type: string
 
+output:
+  runtime_version:
+    description: 'Runtime version for build.'
+
 runs:
   using: 'composite'
   steps:
@@ -36,6 +40,18 @@ runs:
         done <<< "$secrets"
       shell: bash
       working-directory: apps/${{ inputs.project }}
+
+    - name: Check fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/fingerprint@main
+      with:
+        working-directory: apps/${{ inputs.project }}
+
+    - name: Check for Existing Builds or Start New Build
+      run: |
+        runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+        echo "RUNTIME_VERSION=$runtime_version" >> .env
+        echo "$runtime_version=$runtime_version" >> $GITHUB_OUTPUT
 
     - name: Delete .env file at end of job
       if: always()
