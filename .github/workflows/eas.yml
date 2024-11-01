@@ -109,8 +109,8 @@ jobs:
           secrets: ${{ toJson(secrets) }}
 
       - name: Preview Build
-        uses: ./.github/actions/expo-build
         id: preview-build
+        uses: ./.github/actions/expo-build
         with:
           profile: preview
           project: ${{ matrix.project }}
@@ -125,6 +125,7 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: Perform EAS Update
+        id: expo-update
         uses: ./.github/actions/expo-update
         with:
           project: ${{ matrix.project }}
