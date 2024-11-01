@@ -171,7 +171,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Post to Slack
-        if: ${{ env.BRANCH_NAME == 'main' }}
+        # if: ${{ env.BRANCH_NAME == 'main' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
