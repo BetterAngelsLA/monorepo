@@ -74,7 +74,25 @@ jobs:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # https://github.com/expo/expo-github-action/issues/229
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+      - run: |
+          corepack enable
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Set up Secrets
         uses: ./.github/actions/expo-setup-secrets
