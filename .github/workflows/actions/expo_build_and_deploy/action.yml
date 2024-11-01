@@ -8,11 +8,11 @@ inputs:
   project:
     required: true
     type: string
-  expo-token:
+  branch:
     required: true
     type: string
-  expo-apple-app-specific-password:
-    required: false
+  expo-token:
+    required: true
     type: string
 
 outputs:
@@ -111,11 +111,11 @@ runs:
       run: |
         if [ "${{ inputs.environment }}" == "preview" ]; then
           PROFILE="preview"
-          BRANCH="pr-${{ github.event.pull_request.number || github.run_id }}"
         else
           PROFILE="production"
-          BRANCH="main"
         fi
+
+        BRANCH="${{ inputs.branch }}"
 
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
