@@ -213,54 +213,54 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-production_build:
-  if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
-  needs: prepare
-  environment: production
-  runs-on: ubuntu-latest
-  strategy:
-    matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-  permissions:
-    pull-requests: write # Allow comments on PRs
-    actions: write # Allow updating fingerprint in action caches
-  steps:
-    - name: 🏗 Check out repo
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+  production_build:
+    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+    needs: prepare
+    environment: production
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    permissions:
+      pull-requests: write # Allow comments on PRs
+      actions: write # Allow updating fingerprint in action caches
+    steps:
+      - name: 🏗 Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: 🔧 Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.12.2
-    - run: |
-        corepack enable
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.12.2
+      - run: |
+          corepack enable
 
-    - name: Setup Yarn in Node
-      uses: actions/setup-node@v4
-      with:
-        cache: 'yarn'
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
 
-    - name: 🔧 Setup EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ secrets.EXPO_TOKEN }}
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-    - name: 📦 Install dependencies
-      run: yarn install
+      - name: 📦 Install dependencies
+        run: yarn install
 
-    - name: Set up Secrets
-      id: setup-secrets
-      uses: ./.github/actions/expo-setup-secrets
-      with:
-        profile: production
-        project: ${{ matrix.project }}
-        secrets: ${{ toJson(secrets) }}
+      - name: Set up Secrets
+        id: setup-secrets
+        uses: ./.github/actions/expo-setup-secrets
+        with:
+          profile: production
+          project: ${{ matrix.project }}
+          secrets: ${{ toJson(secrets) }}
 
-    - name: Production Build
-      uses: ./.github/actions/expo-build
-      with:
-        profile: production
-        project: ${{ matrix.project }}
-        runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+      - name: Production Build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: production
+          project: ${{ matrix.project }}
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
