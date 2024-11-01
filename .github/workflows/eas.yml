@@ -76,7 +76,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build and Deploy (Preview)
-        uses: ./.github/actions/build_and_deploy
+        uses: ./.github/actions/expo_build_and_deploy
         with:
           environment: 'preview'
           project: ${{ matrix.project }}
