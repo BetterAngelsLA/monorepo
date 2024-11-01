@@ -62,8 +62,6 @@ runs:
         platforms=("android" "ios")
         eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
 
-        echo $eas_update_output
-
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
           branch=$(echo "$update_info" | jq -r '.branch')

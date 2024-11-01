@@ -14,7 +14,7 @@ jobs:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Checks out all branches and tags. Maybe we can make this better in the future?
 
       - name: 🔀 Track main if PR
         if: github.ref != 'refs/heads/main'
@@ -61,7 +61,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       is_matrix_empty: ${{ steps.set-matrix.outputs.is_matrix_empty }}
 
-  preview-build:
+  preview:
     needs: prepare
     environment: preview
     env:
@@ -213,7 +213,13 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-  production_build:
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
+
+  production:
     if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
     needs: prepare
     environment: production
@@ -264,3 +270,18 @@ jobs:
           profile: production
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+
+      - name: Perform EAS Update
+        id: expo-update
+        uses: ./.github/actions/expo-update
+        with:
+          project: ${{ matrix.project }}
+          branch: main
+          slug: ${{ steps.preview-build.outputs.slug }}
+          project-id: ${{ steps.preview-build.outputs.project-id }}
+
+      - name: 🧼 Cleanup .env file
+        if: always()
+        run: |
+          rm -f .env
+        working-directory: apps/${{ matrix.project }}
