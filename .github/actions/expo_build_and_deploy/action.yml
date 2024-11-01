@@ -138,44 +138,98 @@ runs:
     - name: 🍏 Check for Existing Builds, Start New Builds if Needed, and Perform EAS Update
       id: check_and_start_builds
       run: |
-        # existing script
-      working-directory: apps/${{ inputs.project }}
+        if [ "${{ inputs.environment }}" == "preview" ]; then
+          PROFILE="preview"
+        else
+          PROFILE="production"
+        fi
 
-    - name: Set Outputs
-      id: set_outputs
-      run: |
-        echo "android_build_id=${{ steps.check_and_start_builds.outputs.android_build_id }}" >> $GITHUB_OUTPUT
-        echo "android_build_link=${{ steps.check_and_start_builds.outputs.android_build_link }}" >> $GITHUB_OUTPUT
-        echo "android_distribution=${{ steps.check_and_start_builds.outputs.android_distribution }}" >> $GITHUB_OUTPUT
-        echo "android_build_profile=${{ steps.check_and_start_builds.outputs.android_build_profile }}" >> $GITHUB_OUTPUT
-        echo "android_runtime_version=${{ steps.check_and_start_builds.outputs.android_runtime_version }}" >> $GITHUB_OUTPUT
-        echo "android_app_version=${{ steps.check_and_start_builds.outputs.android_app_version }}" >> $GITHUB_OUTPUT
-        echo "android_git_commit=${{ steps.check_and_start_builds.outputs.android_git_commit }}" >> $GITHUB_OUTPUT
-        echo "android_branch=${{ steps.check_and_start_builds.outputs.android_branch }}" >> $GITHUB_OUTPUT
-        echo "android_update_id=${{ steps.check_and_start_builds.outputs.android_update_id }}" >> $GITHUB_OUTPUT
-        echo "android_group_id=${{ steps.check_and_start_builds.outputs.android_group_id }}" >> $GITHUB_OUTPUT
-        echo "android_update_permalink=${{ steps.check_and_start_builds.outputs.android_update_permalink }}" >> $GITHUB_OUTPUT
-        echo "android_update_qr_url=${{ steps.check_and_start_builds.outputs.android_update_qr_url }}" >> $GITHUB_OUTPUT
-        echo "android_update_commit=${{ steps.check_and_start_builds.outputs.android_update_commit }}" >> $GITHUB_OUTPUT
-        echo "ios_build_id=${{ steps.check_and_start_builds.outputs.ios_build_id }}" >> $GITHUB_OUTPUT
-        echo "ios_build_link=${{ steps.check_and_start_builds.outputs.ios_build_link }}" >> $GITHUB_OUTPUT
-        echo "ios_distribution=${{ steps.check_and_start_builds.outputs.ios_distribution }}" >> $GITHUB_OUTPUT
-        echo "ios_build_profile=${{ steps.check_and_start_builds.outputs.ios_build_profile }}" >> $GITHUB_OUTPUT
-        echo "ios_runtime_version=${{ steps.check_and_start_builds.outputs.ios_runtime_version }}" >> $GITHUB_OUTPUT
-        echo "ios_app_version=${{ steps.check_and_start_builds.outputs.ios_app_version }}" >> $GITHUB_OUTPUT
-        echo "ios_git_commit=${{ steps.check_and_start_builds.outputs.ios_git_commit }}" >> $GITHUB_OUTPUT
-        echo "ios_branch=${{ steps.check_and_start_builds.outputs.ios_branch }}" >> $GITHUB_OUTPUT
-        echo "ios_update_id=${{ steps.check_and_start_builds.outputs.ios_update_id }}" >> $GITHUB_OUTPUT
-        echo "ios_group_id=${{ steps.check_and_start_builds.outputs.ios_group_id }}" >> $GITHUB_OUTPUT
-        echo "ios_update_permalink=${{ steps.check_and_start_builds.outputs.ios_update_permalink }}" >> $GITHUB_OUTPUT
-        echo "ios_update_qr_url=${{ steps.check_and_start_builds.outputs.ios_update_qr_url }}" >> $GITHUB_OUTPUT
-        echo "ios_update_commit=${{ steps.check_and_start_builds.outputs.ios_update_commit }}" >> $GITHUB_OUTPUT
-        echo "slug=${{ steps.check_and_start_builds.outputs.slug }}" >> $GITHUB_OUTPUT
-        echo "project_id=${{ steps.check_and_start_builds.outputs.project_id }}" >> $GITHUB_OUTPUT
-        echo "commit_id=${{ steps.set_commit_info.outputs.commit_id }}" >> $GITHUB_OUTPUT
-        echo "commit_message=${{ steps.set_commit_info.outputs.commit_message }}" >> $GITHUB_OUTPUT
+        BRANCH="${{ inputs.branch }}"
 
-    - name: 🧼 Cleanup .env file
-      if: always()
-      run: rm -f .env
-      working-directory: apps/${{ inputs.project }}
+        runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+        echo "RUNTIME_VERSION=$runtime_version" >> .env
+
+        platforms=("android" "ios")
+        slugs=()
+        project_ids=()
+
+        for platform in "${platforms[@]}"; do
+          build_output=$(eas build:list --platform "$platform" \
+            --status new --status in-progress --status finished \
+            --buildProfile "$PROFILE" --runtimeVersion "$runtime_version" \
+            --limit 1 --json --non-interactive 2>&1)
+
+          echo $build_output
+
+          if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
+            echo "No existing $platform build found for runtime version $runtime_version. Starting a new build."
+            build_output=$(eas build --profile "$PROFILE" --platform "$platform" \
+              --freeze-credentials --non-interactive --no-wait --json)
+          else
+            echo "$platform build found for runtime version $runtime_version."
+          fi
+
+          # Handle both array and single object response
+          if [[ "$(echo "$build_output" | jq 'type')" == "array" ]]; then
+            build_info=$(echo "$build_output" | jq '.[0]')
+          else
+            build_info="$build_output"
+          fi
+
+          slug=$(echo "$build_info" | jq -r '.project.slug')
+          project_id=$(echo "$build_info" | jq -r '.project.id')
+          build_id=$(echo "$build_info" | jq -r '.id')
+          distribution=$(echo "$build_info" | jq -r '.distribution')
+          build_profile=$(echo "$build_info" | jq -r '.buildProfile')
+          runtime_version_from_build=$(echo "$build_info" | jq -r '.runtimeVersion')
+          app_version=$(echo "$build_info" | jq -r '.appVersion')
+          git_commit=$(echo "$build_info" | jq -r '.gitCommitHash')
+          build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+
+          echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+          echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+          echo "${platform}_distribution=$distribution" >> $GITHUB_OUTPUT
+          echo "${platform}_build_profile=$build_profile" >> $GITHUB_OUTPUT
+          echo "${platform}_runtime_version=$runtime_version_from_build" >> $GITHUB_OUTPUT
+          echo "${platform}_app_version=$app_version" >> $GITHUB_OUTPUT
+          echo "${platform}_git_commit=$git_commit" >> $GITHUB_OUTPUT
+
+          slugs+=("$slug")
+          project_ids+=("$project_id")
+        done
+
+        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+        if [ ${#unique_slugs[@]} -ne 1 ]; then
+          echo "Error: Different slugs found for platforms: ${slugs[*]}"
+          exit 1
+        fi
+
+        if [ ${#unique_project_ids[@]} -ne 1 ]; then
+          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
+          exit 1
+        fi
+
+        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
+        echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+
+        eas_update_output=$(eas update --branch $BRANCH --non-interactive --auto --json)
+        echo $eas_update_output
+
+        for platform in "${platforms[@]}"; do
+          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+          update_id=$(echo "$update_info" | jq -r '.id')
+          branch=$(echo "$update_info" | jq -r '.branch')
+          group_id=$(echo "$update_info" | jq -r '.group')
+          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+          update_permalink="https://expo.dev/projects/${unique_project_ids[0]}/updates/${update_id}"
+          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${slug}&projectId=${unique_project_ids[0]}&groupId=${group_id}"
+
+          echo "${platform}_update_id=$update_id" >> $GITHUB_OUTPUT
+          echo "${platform}_branch=$branch" >> $GITHUB_OUTPUT
+          echo "${platform}_group_id=$group_id" >> $GITHUB_OUTPUT
+          echo "${platform}_update_permalink=$update_permalink" >> $GITHUB_OUTPUT
+          echo "${platform}_update_qr_url=$update_qr_url" >> $GITHUB_OUTPUT
+          echo "${platform}_update_commit=$update_commit" >> $GITHUB_OUTPUT
+        done
