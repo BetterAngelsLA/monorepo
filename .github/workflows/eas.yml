@@ -127,6 +127,14 @@ jobs:
           slug: ${{ steps.check_and_start_build.outputs.slug }}
           project_id: ${{ steps.preview_build.outputs.project_id }}
 
+      - name: Delete .env file at end of job
+        if: always()
+        run: |
+          rm -f .env
+        post: true
+        shell: bash
+        working-directory: apps/${{ inputs.project }}
+
       # - name: 📝 Comment on PR
       #   if: github.event_name == 'pull_request'
       #   uses: edumserrano/find-create-or-update-comment@v1

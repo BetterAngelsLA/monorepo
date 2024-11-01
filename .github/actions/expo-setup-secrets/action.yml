@@ -54,11 +54,3 @@ runs:
         echo "runtime_version=$runtime_version" >> $GITHUB_OUTPUT
       shell: bash
       working-directory: apps/${{ inputs.project }}
-
-    - name: Delete .env file at end of job
-      if: always()
-      run: |
-        rm -f .env
-      post: true
-      shell: bash
-      working-directory: apps/${{ inputs.project }}
