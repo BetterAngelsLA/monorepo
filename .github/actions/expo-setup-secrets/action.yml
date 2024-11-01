@@ -15,7 +15,7 @@ inputs:
 output:
   runtime-version:
     description: 'Runtime version for build.'
-    value: ${{ steps.set_runtime_version.outputs.runtime_version }}
+    value: ${{ steps.set-runtime-version.outputs.runtime-version }}
 
 runs:
   using: 'composite'
@@ -49,7 +49,7 @@ runs:
         working-directory: apps/${{ inputs.project }}
 
     - name: Set Runtime Version
-      id: set_runtime_version
+      id: set-runtime-version
       run: |
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
