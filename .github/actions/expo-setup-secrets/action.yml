@@ -34,7 +34,6 @@ runs:
         while IFS= read -r line; do
           echo "$line" >> .env
         done <<< "$secrets"
-        cat .env
       shell: bash
       working-directory: apps/${{ inputs.project }}
 

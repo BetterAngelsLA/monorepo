@@ -77,17 +77,23 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Secrets
-        uses: ./.github/actions/expo_setup_secrets
+        uses: ./.github/actions/expo-setup-secrets
         with:
+          profile: preview
           project: ${{ matrix.project }}
           secrets: ${{ toJson(secrets) }}
 
-      # - name: Check and Start Build
-      #   uses: ./.github/actions/check_and_start_build
-      #   with:
-      #     project: 'betterangels'
-      #     profile: preview
-      #     branch: ${{ inputs.branch }}
+      - name: Preview Build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: preview
+          project: ${{ matrix.project }}
+
+      - name: Simulator Build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: development-simulator
+          project: ${{ matrix.project }}
 
       # - name: Perform EAS Update
       #   uses: ./.github/actions/eas_update

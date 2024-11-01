@@ -1,0 +1,80 @@
+name: 'Check and Start Build'
+description: 'Check for existing builds or start a new one if needed'
+
+inputs:
+  project:
+    required: true
+    type: string
+  profile:
+    required: true
+    type: string
+
+outputs:
+  android_build_id:
+    description: 'Android build ID for tracking the build.'
+  android_build_link:
+    description: 'Link to the Android build.'
+  ios_build_id:
+    description: 'iOS build ID for tracking the build.'
+  ios_build_link:
+    description: 'Link to the iOS build.'
+  slug:
+    description: 'Project slug for Expo tracking.'
+  project_id:
+    description: 'Project ID for tracking purposes.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check for Existing Builds or Start New Build
+      run: |
+        platforms=("android" "ios")
+        slugs=()
+        project_ids=()
+
+        for platform in "${platforms[@]}"; do
+          build_output=$(eas build:list --platform "$platform" \
+            --status new --status in-progress --status finished \
+            --buildProfile "${{ inputs.profile }}" \
+            --limit 1 --json --non-interactive 2>&1)
+
+          echo $build_output
+
+          if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
+            echo "No existing $platform build found. Starting a new build."
+            build_output=$(eas build --profile "${{ inputs.profile }}" --platform "$platform" \
+              --freeze-credentials --non-interactive --no-wait --json)
+          else
+            echo "$platform build found."
+          fi
+
+          slug=$(echo "$build_output" | jq -r '.[0].project.slug')
+          project_id=$(echo "$build_output" | jq -r '.[0].project.id')
+          build_id=$(echo "$build_output" | jq -r '.[0].id')
+          build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+
+          echo "${platform}_build_id=$build_id" >> $GITHUB_OUTPUT
+          echo "${platform}_build_link=$build_link" >> $GITHUB_OUTPUT
+
+          slugs+=("$slug")
+          project_ids+=("$project_id")
+        done
+
+        # Check for consistent slugs and project IDs
+        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+        if [ ${#unique_slugs[@]} -ne 1 ]; then
+          echo "Error: Different slugs found for platforms: ${slugs[*]}"
+          exit 1
+        fi
+
+        if [ ${#unique_project_ids[@]} -ne 1 ]; then
+          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
+          exit 1
+        fi
+
+        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
+        echo "project_id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+      working-directory: apps/${{ inputs.project }}
+      shell: bash
