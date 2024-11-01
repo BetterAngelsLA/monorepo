@@ -119,6 +119,7 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: Simulator Build
+        id: simulator-build
         uses: ./.github/actions/expo-build
         with:
           profile: development-simulator
@@ -151,12 +152,12 @@ jobs:
             - Platforms → **android**, **ios**
             - Scheme → **${{ steps.preview-build.outputs.slug }}**
 
-            &nbsp; | 🤖 Android | 🍎 iOS
-            --- | --- | ---
-            Runtime Version | `${{ steps.preview-build.outputs.android-runtime-version }}` | `${{ steps.preview-build.outputs.ios-runtime-version }}`
-            Build Details | [Build Permalink](${{ steps.preview-build.outputs.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.android-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.android-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.android-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.android-git-commit }}`</details> | [Build Permalink](${{ steps.preview-build.outputs.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.ios-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.ios-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.ios-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.ios-git-commit }}`</details>
-            Update Details | [Update Permalink](${{ steps.expo-update.outputs.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.android-branch }}`<br />Runtime version: `${{ steps.expo-update.outputs.android-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.android-update-commit }}`</details> | [Update Permalink](${{ steps.expo-update.outputs.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.ios-branch }}`<br />Runtime version: `${{ steps.expo-update.outputs.ios-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.ios-update-commit }}`</details>
-            Update QR   | <a href="${{ steps.expo-update.outputs.android-update-qr-url }}"><img src="${{ steps.expo-update.outputs.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ steps.expo-update.outputs.ios-update-qr-url }}"><img src="${{ steps.expo-update.outputs.ios-update-qr-url }}" width="250px" height="250px" /></a>
+            &nbsp; | 🤖 Android | 🍎 iOS | 🍏 iOS Simulator
+            --- | --- | --- | ---
+            Runtime Version | `${{ steps.preview-build.outputs.android-runtime-version }}` | `${{ steps.preview-build.outputs.ios-runtime-version }}` | `${{ steps.simulator-build.outputs.ios-runtime-version }}`
+            Build Details | [Build Permalink](${{ steps.preview-build.outputs.android-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.android-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.android-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.android-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.android-git-commit }}`</details> | [Build Permalink](${{ steps.preview-build.outputs.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.preview-build.outputs.ios-distribution }}`<br />Build profile: `${{ steps.preview-build.outputs.ios-build-profile }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />App version: `${{ steps.preview-build.outputs.ios-app-version }}`<br />Git commit: `${{ steps.preview-build.outputs.ios-git-commit }}`</details> | [Simulator Build Details](${{ steps.simulator-build.outputs.ios-build-link }})<br /><details><summary>Details</summary>Distribution: `${{ steps.simulator-build.outputs.ios-distribution }}`<br />Build profile: `${{ steps.simulator-build.outputs.ios-build-profile }}`<br />Runtime version: `${{ steps.simulator-build.outputs.ios-runtime-version }}`<br />App version: `${{ steps.simulator-build.outputs.ios-app-version }}`<br />Git commit: `${{ steps.simulator-build.outputs.ios-git-commit }}`</details>
+            Update Details | [Update Permalink](${{ steps.expo-update.outputs.android-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.android-branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.android-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.android-update-commit }}`</details> | [Update Permalink](${{ steps.expo-update.outputs.ios-update-permalink }})<br /><details><summary>Details</summary>Branch: `${{ steps.expo-update.outputs.ios-branch }}`<br />Runtime version: `${{ steps.preview-build.outputs.ios-runtime-version }}`<br />Git commit: `${{ steps.expo-update.outputs.ios-update-commit }}`</details> | N/A
+            Update QR   | <a href="${{ steps.expo-update.outputs.android-update-qr-url }}"><img src="${{ steps.expo-update.outputs.android-update-qr-url }}" width="250px" height="250px" /></a> | <a href="${{ steps.expo-update.outputs.ios-update-qr-url }}"><img src="${{ steps.expo-update.outputs.ios-update-qr-url }}" width="250px" height="250px" /></a> | N/A
           edit-mode: replace
 
       - name: Set Git Variables
@@ -176,20 +177,20 @@ jobs:
         with:
           payload: |
             {
-              "channel": "#tech-outreach-main-test",
+              "channel": "#tech-outreach-main",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New preview code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
+                    "text": "*New code has landed in main for project ${{ matrix.project }}!* \n*Commit:* `${{ steps.set-git-vars.outputs.commit-id }}`\n*Message:* ${{ steps.set-git-vars.outputs.commit-message }}"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📱 iOS (Preview)*\n\n<${{ steps.expo-update.outputs.ios-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.ios-build-link }}|Build>"
+                    "text": "*📱 iOS*\n\n<${{ steps.expo-update.outputs.ios-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.ios-build-link }}|Build>\n<${{ steps.simulator-build.outputs.ios-build-link }}|Simulator Build>"
                   }
                 },
                 {
@@ -199,7 +200,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🤖 Android (Preview)*\n\n<${{ steps.expo-update.outputs.android-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.android-build-link }}|Build>"
+                    "text": "*🤖 Android*\n\n<${{ steps.expo-update.outputs.android-update-qr-url }}|Update>\n<${{ steps.preview-build.outputs.android-build-link }}|Build>"
                   }
                 }
               ]
@@ -207,6 +208,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
   # production_build:
   #   needs: prepare
   #   runs-on: ubuntu-latest
