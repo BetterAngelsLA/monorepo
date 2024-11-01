@@ -78,7 +78,7 @@ jobs:
       - name: Set up Secrets
         uses: ./.github/actions/expo_setup_secrets
         with:
-          project: ${{ inputs.branch }}
+          project: ${{ matrix.project }}
 
       # - name: Check and Start Build
       #   uses: ./.github/actions/check_and_start_build
