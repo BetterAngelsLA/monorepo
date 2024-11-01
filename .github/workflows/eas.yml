@@ -109,7 +109,7 @@ jobs:
         with:
           profile: preview
           project: ${{ matrix.project }}
-          runtime_version: ${{ steps.setup-secrets.outputs.runtime_version }}
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: Simulator Build
         uses: ./.github/actions/expo-build
@@ -117,7 +117,7 @@ jobs:
           profile: development-simulator
           project: ${{ matrix.project }}
           platforms: ios
-          runtime_version: ${{ steps.setup-secrets.outputs.runtime_version }}
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: Perform EAS Update
         uses: ./.github/actions/expo-update

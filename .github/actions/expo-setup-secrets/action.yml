@@ -13,8 +13,9 @@ inputs:
     type: string
 
 output:
-  runtime_version:
+  runtime-version:
     description: 'Runtime version for build.'
+    value: ${{ steps.set_runtime_version.outputs.runtime_version }}
 
 runs:
   using: 'composite'
@@ -47,10 +48,11 @@ runs:
       with:
         working-directory: apps/${{ inputs.project }}
 
-    - name: Check for Existing Builds or Start New Build
+    - name: Set Runtime Version
+      id: set_runtime_version
       run: |
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
-        echo "runtime_version=$runtime_version" >> $GITHUB_OUTPUT
+        echo "runtime-version=$runtime_version" >> $GITHUB_OUTPUT
       shell: bash
       working-directory: apps/${{ inputs.project }}
