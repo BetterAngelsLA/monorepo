@@ -114,14 +114,10 @@ runs:
       id: filter-secrets
       shell: bash
       run: |
-        echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
-        secrets=$(echo "$SECRETS_CONTEXT" | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
-
-        while IFS= read -r line; do
-          echo "$line" >> .env
-        done <<< "$secrets"
-      env:
-        SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        echo "Loading secrets prefixed with 'EXPO_PUBLIC_'"
+        for var in $(printenv | grep '^EXPO_PUBLIC_'); do
+          echo "$var" >> .env
+        done
       working-directory: apps/${{ inputs.project }}
 
     - name: Check fingerprint
