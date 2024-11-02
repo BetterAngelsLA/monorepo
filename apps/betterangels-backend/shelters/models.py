@@ -1,3 +1,4 @@
+import pghistory
 from common.models import Address, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -135,6 +136,11 @@ class SleepingOption(models.Model):
         return str(self.name)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter.add"),
+    pghistory.UpdateEvent("shelter.update"),
+    pghistory.DeleteEvent("shelter.delete"),
+)
 class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
@@ -199,3 +205,156 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+# proxy objects to track history on through models
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_shelter_types.add"),
+    pghistory.DeleteEvent("shelter_shelter_types.delete"),
+    obj_field=None,
+)
+class ShelterShelterTypes(Shelter.shelter_types.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_populations.add"),
+    pghistory.DeleteEvent("shelter_populations.delete"),
+    obj_field=None,
+)
+class ShelterPopulations(Shelter.populations.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_immediate_needs.add"),
+    pghistory.DeleteEvent("shelter_immediate_needs.delete"),
+    obj_field=None,
+)
+class ShelterImmediateNeeds(Shelter.immediate_needs.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_general_services.add"),
+    pghistory.DeleteEvent("shelter_general_services.delete"),
+    obj_field=None,
+)
+class ShelterGeneralServices(Shelter.general_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_health_services.add"),
+    pghistory.DeleteEvent("shelter_health_services.delete"),
+    obj_field=None,
+)
+class ShelterHealthServices(Shelter.health_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_career_services.add"),
+    pghistory.DeleteEvent("shelter_career_services.delete"),
+    obj_field=None,
+)
+class ShelterCareerServices(Shelter.career_services.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_funders.add"),
+    pghistory.DeleteEvent("shelter_funders.delete"),
+    obj_field=None,
+)
+class ShelterFunders(Shelter.funders.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_accessibility.add"),
+    pghistory.DeleteEvent("shelter_accessibility.delete"),
+    obj_field=None,
+)
+class ShelterAccessibility(Shelter.accessibility.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_storage.add"),
+    pghistory.DeleteEvent("shelter_storage.delete"),
+    obj_field=None,
+)
+class ShelterStorage(Shelter.storage.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_parking.add"),
+    pghistory.DeleteEvent("shelter_parking.delete"),
+    obj_field=None,
+)
+class ShelterParking(Shelter.parking.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_entry_requirements.add"),
+    pghistory.DeleteEvent("shelter_entry_requirements.delete"),
+    obj_field=None,
+)
+class ShelterEntryRequirements(Shelter.entry_requirements.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_cities.add"),
+    pghistory.DeleteEvent("shelter_cities.delete"),
+    obj_field=None,
+)
+class ShelterCities(Shelter.cities.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_spa.add"),
+    pghistory.DeleteEvent("shelter_spa.delete"),
+    obj_field=None,
+)
+class ShelterSPA(Shelter.spa.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_pets.add"),
+    pghistory.DeleteEvent("shelter_pets.delete"),
+    obj_field=None,
+)
+class ShelterPets(Shelter.pets.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter_sleeping_options.add"),
+    pghistory.DeleteEvent("shelter_sleeping_options.delete"),
+    obj_field=None,
+)
+class ShelterSleepingOptions(Shelter.sleeping_options.through):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
