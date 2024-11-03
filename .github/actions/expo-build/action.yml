@@ -79,7 +79,6 @@ runs:
         for platform in "${platforms[@]}"; do
           # Check for existing builds for the platform
           build_output=$(eas build:list --platform "$platform" \
-            --status new --status in-progress --status finished \
             --buildProfile "${{ inputs.profile }}" --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --non-interactive 2>&1)
 
