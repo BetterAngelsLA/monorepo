@@ -10,6 +10,7 @@ type TAutocompleteInput<T> = {
   label?: string;
   onChangeText: (input: string) => void;
   onReset?: () => void;
+  onFocus?: () => void;
   onBlur?: () => void;
   maxResults?: number;
   placeholder?: string;
@@ -24,6 +25,7 @@ export function AutocompleteInput<T>(props: TAutocompleteInput<T>) {
     predictions,
     onChangeText,
     onReset,
+    onFocus,
     onBlur,
     placeholder,
     label,
@@ -41,6 +43,7 @@ export function AutocompleteInput<T>(props: TAutocompleteInput<T>) {
         onChangeText={onChangeText}
         onDelete={onReset}
         placeholder={placeholder}
+        onFocus={onFocus}
         onBlur={onBlur}
         autoCorrect={false}
         errorMessage={errorMessage}

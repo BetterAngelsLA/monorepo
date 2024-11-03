@@ -1,5 +1,7 @@
 import { CardWrapper } from '@monorepo/expo/shared/ui-components';
+import { RefObject, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
@@ -10,7 +12,14 @@ const FIELD_NAME = 'mailingAddress';
 
 type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
-export default function MailingAddress() {
+type TProps = {
+  scrollRef: RefObject<ScrollView>;
+};
+
+export default function MailingAddress(props: TProps) {
+  const { scrollRef } = props;
+
+  const parentRef = useRef(null);
   const { control, setValue } = useFormContext<TForm>();
 
   const onReset = () => {
@@ -18,12 +27,18 @@ export default function MailingAddress() {
   };
 
   return (
-    <CardWrapper onReset={onReset} title="Personal Mailing Address">
-      <AddressAutocomplete<TForm>
-        name={FIELD_NAME}
-        control={control}
-        placeholder="Enter mailing address"
-      />
-    </CardWrapper>
+    <View ref={parentRef}>
+      <CardWrapper onReset={onReset} title="Personal Mailing Address">
+        <AddressAutocomplete<TForm>
+          name={FIELD_NAME}
+          control={control}
+          placeholder="Enter mailing address"
+          focusScroll={{
+            scrollViewRef: scrollRef,
+            targetRef: parentRef,
+          }}
+        />
+      </CardWrapper>
+    </View>
   );
 }

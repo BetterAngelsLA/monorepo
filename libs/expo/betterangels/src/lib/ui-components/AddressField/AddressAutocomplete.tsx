@@ -1,8 +1,10 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { AutocompleteInput } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useCallback, useState } from 'react';
+import { RefObject, useCallback, useRef, useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
+import { ScrollView, View } from 'react-native';
+import { useScrollToScreenTop } from '../../hooks';
 import {
   TPlaceResult,
   TPlacesPrediction,
@@ -15,10 +17,16 @@ const DEFAULT_DEBOUNCE_MS = 300;
 
 type TAddressAutocomplete<TForm extends FieldValues> = {
   name: Path<TForm>;
+  control: Control<TForm>;
   label?: string;
   placeholder?: string;
-  control: Control<TForm>;
   debounceMs?: number;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  focusScroll?: {
+    scrollViewRef: RefObject<ScrollView>;
+    targetRef?: RefObject<View>;
+  };
 };
 
 export function AddressAutocomplete<TForm extends FieldValues>(
@@ -28,9 +36,18 @@ export function AddressAutocomplete<TForm extends FieldValues>(
     name,
     control,
     label,
+    onFocus,
+    onBlur,
     placeholder,
     debounceMs = DEFAULT_DEBOUNCE_MS,
+    focusScroll,
   } = props;
+
+  const { scrollViewRef, targetRef } = focusScroll || {};
+
+  const { scrollToTop } = useScrollToScreenTop(scrollViewRef);
+
+  const addressViewRef = useRef<View>(null);
 
   const { baseUrl } = useApiConfig();
 
@@ -62,43 +79,59 @@ export function AddressAutocomplete<TForm extends FieldValues>(
     []
   );
 
+  function handleScrollToTop() {
+    const targetScrollRef = targetRef || addressViewRef;
+
+    if (!scrollToTop || !targetScrollRef) {
+      return;
+    }
+
+    scrollToTop(targetScrollRef);
+  }
+
+  function handleFocus() {
+    handleScrollToTop();
+
+    onFocus && onFocus();
+  }
+
   return (
     <Controller
       name={name}
       control={control}
-      render={({
-        field: { onChange, onBlur, value },
-        fieldState: { error },
-      }) => {
+      render={({ field: { onChange, value }, fieldState: { error } }) => {
         const handleChange = (input: string) => {
           getPredictions(input);
           onChange(input);
         };
 
         return (
-          <AutocompleteInput<TPlacesPrediction>
-            value={value || ''}
-            placeholder={placeholder}
-            label={label}
-            predictions={predictions}
-            onChangeText={handleChange}
-            onBlur={onBlur}
-            onReset={() => onChange('')}
-            errorMessage={error?.message}
-            renderItem={(item) => (
-              <AddressOption
-                key={item.place_id}
-                item={item}
-                onPress={async () => {
-                  setPredictions([]);
+          <View ref={addressViewRef}>
+            <AutocompleteInput<TPlacesPrediction>
+              value={value || ''}
+              placeholder={placeholder}
+              label={label}
+              predictions={predictions}
+              onChangeText={handleChange}
+              onFocus={handleFocus}
+              onBlur={onBlur}
+              onReset={() => onChange('')}
+              errorMessage={error?.message}
+              renderItem={(item) => (
+                <AddressOption
+                  key={item.place_id}
+                  item={item}
+                  onPress={async () => {
+                    setPredictions([]);
 
-                  const detailAddress = await getDetailAddress(item, baseUrl);
+                    const detailAddress = await getDetailAddress(item, baseUrl);
 
-                  onChange(detailAddress);
-                }}
-              />
-            )}
-          />
+                    onChange(detailAddress);
+                  }}
+                />
+              )}
+            />
+          </View>
         );
       }}
     />
