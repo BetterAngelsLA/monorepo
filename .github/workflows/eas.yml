@@ -10,6 +10,9 @@ on:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read # Required to find the last successful workflow run
+      contents: read # Required for actions/checkout
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
@@ -73,10 +76,8 @@ jobs:
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
-      # REQUIRED: Allow comments on PRs
-      pull-requests: write
-      # REQUIRED: Allow updating fingerprint in action caches
-      actions: write
+      pull-requests: write # REQUIRED: Allow comments on PRs
+      actions: write # REQUIRED: Allow updating fingerprint in action caches
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
@@ -230,10 +231,8 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
-      # REQUIRED: Allow comments on PRs
-      pull-requests: write
-      # REQUIRED: Allow updating fingerprint in action caches
-      actions: write
+      pull-requests: write # REQUIRED: Allow comments on PRs
+      actions: write # REQUIRED: Allow updating fingerprint in action caches
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
