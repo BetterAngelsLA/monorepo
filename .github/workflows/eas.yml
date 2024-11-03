@@ -143,7 +143,7 @@ jobs:
 
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'
-        uses: edumserrano/find-create-or-update-comment@v1
+        uses: edumserrano/find-create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: '<!-- continuous-deploy-fingerprint-projectId:${{ steps.preview-build.outputs.project-id }} -->'
