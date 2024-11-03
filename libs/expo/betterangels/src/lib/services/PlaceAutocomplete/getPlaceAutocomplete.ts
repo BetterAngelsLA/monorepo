@@ -4,14 +4,14 @@ import { LA_COUNTY_CENTER } from './constants.google.maps';
 import { formatAutocompleteParams } from './formatParams';
 import { TPlaceLatLng, TPlacesPrediction } from './types';
 
-type TgetPlaceAutocomplete = {
+type TGetPlaceAutocomplete = {
   baseUrl: string;
   query: string;
   boundsCenter?: TPlaceLatLng;
   boundsRadiusMiles?: number;
 };
 
-export async function getPlaceAutocomplete(props: TgetPlaceAutocomplete) {
+export async function getPlaceAutocomplete(props: TGetPlaceAutocomplete) {
   const {
     baseUrl,
     query,
@@ -37,8 +37,6 @@ export async function getPlaceAutocomplete(props: TgetPlaceAutocomplete) {
 
   const autocompleteParams = formatAutocompleteParams({
     input: query,
-    language: 'en-US',
-    region: 'us',
     locationBias: areaBounds,
   });
 
