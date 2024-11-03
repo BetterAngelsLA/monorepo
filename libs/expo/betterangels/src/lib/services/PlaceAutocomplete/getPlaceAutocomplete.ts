@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { LA_COUNTY_CENTER } from './constants.google.maps';
+import { formatAutocompleteParams } from './formatParams';
 import { TPlaceLatLng, TPlacesPrediction } from './types';
 
 type TgetPlaceAutocomplete = {
@@ -25,23 +26,24 @@ export async function getPlaceAutocomplete(props: TgetPlaceAutocomplete) {
   // 1 degree of lat/long is approximately 69 miles
   const boundsRadiusDegrees = boundsRadiusMiles / 69;
 
-  const defaultBounds = {
+  const areaBounds: google.maps.LatLngBoundsLiteral = {
     north: boundsCenter.lat + boundsRadiusDegrees,
     south: boundsCenter.lat - boundsRadiusDegrees,
     east: boundsCenter.lng + boundsRadiusDegrees,
     west: boundsCenter.lng - boundsRadiusDegrees,
   };
 
-  const url = `${baseUrl}/proxy/maps/api/place/autocomplete/json`;
+  const proxyUrl = `${baseUrl}/proxy/maps/api/place/autocomplete/json`;
 
-  const response = await axios.get(url, {
-    params: {
-      bounds: defaultBounds,
-      input: query,
-      components: 'country:us',
-      strictBounds: true,
-      withCredentials: true,
-    },
+  const autocompleteParams = formatAutocompleteParams({
+    input: query,
+    language: 'en-US',
+    region: 'us',
+    locationBias: areaBounds,
+  });
+
+  const response = await axios.get(proxyUrl, {
+    params: autocompleteParams,
   });
 
   return response.data.predictions as TPlacesPrediction[];
