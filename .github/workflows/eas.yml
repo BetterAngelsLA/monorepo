@@ -31,7 +31,7 @@ jobs:
       - run: |
           corepack enable
 
-      - name: Setup Yarn in Node
+      - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
           cache: 'yarn'
@@ -74,7 +74,7 @@ jobs:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
       # REQUIRED: Allow comments on PRs
-      pull-requests: write # Allow comments on PRs
+      pull-requests: write
       # REQUIRED: Allow updating fingerprint in action caches
       actions: write
     steps:
@@ -92,7 +92,7 @@ jobs:
           node-version: 20.12.2
       - run: |
           corepack enable
-      - name: Setup Yarn in Node
+      - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
           cache: 'yarn'
@@ -106,7 +106,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Set up Secrets
+      - name: 🔑 Set up Secrets
         id: setup-secrets
         uses: ./.github/actions/expo-setup-secrets
         with:
@@ -114,7 +114,7 @@ jobs:
           project: ${{ matrix.project }}
           secrets: ${{ toJson(secrets) }}
 
-      - name: Preview Build
+      - name: 🔍 Preview Build
         id: preview-build
         uses: ./.github/actions/expo-build
         with:
@@ -122,7 +122,7 @@ jobs:
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: Simulator Build
+      - name: 📱 Simulator Build
         id: simulator-build
         uses: ./.github/actions/expo-build
         with:
@@ -131,7 +131,7 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: Perform EAS Update
+      - name: 🚀 Perform EAS Update
         id: expo-update
         uses: ./.github/actions/expo-update
         with:
@@ -166,7 +166,7 @@ jobs:
             **iOS Simulator Build:** [Simulator Build Link](${{ steps.simulator-build.outputs.ios-build-link }})
           edit-mode: replace
 
-      - name: Set Git Variables
+      - name: 📝 Set Git Variables
         id: set-git-vars
         run: |
           COMMIT_ID=$(git rev-parse HEAD)
@@ -177,7 +177,7 @@ jobs:
             echo "commit-message=${COMMIT_MESSAGE}"
           } >> $GITHUB_OUTPUT
 
-      - name: Post to Slack
+      - name: 📣 Post to Slack
         if: ${{ env.BRANCH_NAME == 'main' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
@@ -230,8 +230,10 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
-      pull-requests: write # Allow comments on PRs
-      actions: write # Allow updating fingerprint in action caches
+      # REQUIRED: Allow comments on PRs
+      pull-requests: write
+      # REQUIRED: Allow updating fingerprint in action caches
+      actions: write
     steps:
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
@@ -245,7 +247,7 @@ jobs:
       - run: |
           corepack enable
 
-      - name: Setup Yarn in Node
+      - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
           cache: 'yarn'
@@ -259,7 +261,7 @@ jobs:
       - name: 📦 Install dependencies
         run: yarn install
 
-      - name: Set up Secrets
+      - name: 🔑 Set up Secrets
         id: setup-secrets
         uses: ./.github/actions/expo-setup-secrets
         with:
@@ -267,14 +269,14 @@ jobs:
           project: ${{ matrix.project }}
           secrets: ${{ toJson(secrets) }}
 
-      - name: Production Build
+      - name: 🚀 Production Build
         uses: ./.github/actions/expo-build
         with:
           profile: production
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: Perform EAS Update
+      - name: 🚀 Perform EAS Update
         id: expo-update
         uses: ./.github/actions/expo-update
         with:
