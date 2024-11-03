@@ -222,7 +222,7 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
   production:
-    # if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
     needs: prepare
     environment: production
     runs-on: ubuntu-latest
