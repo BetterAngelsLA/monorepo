@@ -54,7 +54,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
       value: client?.clientProfile.nickname,
     },
     {
-      label: 'DoB',
+      label: 'Date of Birth',
       value: displayDob,
     },
     {
