@@ -1,0 +1,84 @@
+name: 'EAS Update'
+description: 'Perform EAS Update for the project'
+
+inputs:
+  project:
+    required: true
+    type: string
+  branch:
+    required: true
+    type: string
+  slug:
+    required: true
+    type: string
+  project-id:
+    required: true
+    type: string
+
+outputs:
+  android-update-id:
+    description: 'Android update ID.'
+    value: ${{ steps.perform-eas-update.outputs.android-update-id }}
+  android-update-permalink:
+    description: 'Permalink for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-update-permalink }}
+  android-update-qr-url:
+    description: 'QR URL for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-update-qr-url }}
+  android-branch:
+    description: 'Branch for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-branch }}
+  android-update-commit:
+    description: 'Commit hash for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-update-commit }}
+  android-runtime-version:
+    description: 'Runtime version for Android update.'
+    value: ${{ steps.perform-eas-update.outputs.android-runtime-version }}
+  ios-update-id:
+    description: 'iOS update ID.'
+    value: ${{ steps.perform-eas-update.outputs.ios-update-id }}
+  ios-update-permalink:
+    description: 'Permalink for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-update-permalink }}
+  ios-update-qr-url:
+    description: 'QR URL for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-update-qr-url }}
+  ios-branch:
+    description: 'Branch for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-branch }}
+  ios-update-commit:
+    description: 'Commit hash for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-update-commit }}
+  ios-runtime-version:
+    description: 'Runtime version for iOS update.'
+    value: ${{ steps.perform-eas-update.outputs.ios-runtime-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Perform EAS Update
+      id: perform-eas-update
+      run: |
+        platforms=("android" "ios")
+        eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
+
+        for platform in "${platforms[@]}"; do
+          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+          branch=$(echo "$update_info" | jq -r '.branch')
+          update_id=$(echo "$update_info" | jq -r '.id')
+          group_id=$(echo "$update_info" | jq -r '.group')
+          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
+          runtime_version=$(echo "$update_info" | jq -r '.runtimeVersion')
+          update_permalink="https://expo.dev/projects/${{ inputs.project-id }}/updates/${update_id}"
+          update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project-id }}&groupId=${group_id}"
+
+          # Set platform-specific outputs
+          echo "${platform}-branch=$branch" >> $GITHUB_OUTPUT
+          echo "${platform}-update-id=$update_id" >> $GITHUB_OUTPUT
+          echo "${platform}-update-permalink=$update_permalink" >> $GITHUB_OUTPUT
+          echo "${platform}-update-qr-url=$update_qr_url" >> $GITHUB_OUTPUT
+          echo "${platform}-update-commit=$update_commit" >> $GITHUB_OUTPUT
+          echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
+        done
+      working-directory: apps/${{ inputs.project }}
+      shell: bash
