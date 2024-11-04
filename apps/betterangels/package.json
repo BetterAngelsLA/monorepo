@@ -80,7 +80,8 @@
     "expo-sharing": "*",
     "@teovilla/react-native-web-maps": "*",
     "react-native-paper": "*",
-    "dotenv": "*"
+    "dotenv": "*",
+    "@react-native-picker/picker": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
