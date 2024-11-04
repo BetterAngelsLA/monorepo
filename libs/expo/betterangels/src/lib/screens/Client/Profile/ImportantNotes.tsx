@@ -20,7 +20,7 @@ export default function ImportantNotes(props: IProfileSectionProps) {
       mb="xs"
       title="Important Notes"
     >
-      {isImportantNotes && (
+      {isImportantNotes && !!client?.clientProfile.importantNotes && (
         <View
           style={{
             height: isImportantNotes ? 'auto' : 0,
