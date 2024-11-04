@@ -20,6 +20,7 @@ export default function Docs({
     expanded,
     setExpanded,
   };
+
   return (
     <ScrollView
       contentContainerStyle={{ paddingVertical: Spacings.lg }}
