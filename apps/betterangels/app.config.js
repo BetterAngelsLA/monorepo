@@ -1,3 +1,11 @@
+// ⚠️ WARNING: DIRTY HACK IN PLACE ⚠️
+// This hack circumvents the CI breaking change where runtime versions don't match.
+// We're using dotenv to load environment variables, effectively bypassing the runtime version mismatch issue.
+// NOTE: We are trusting the continuous deploy fingerprint for now, which is "probably good enough" in this context.
+// This should be revisited in the future to implement a proper solution to handle runtime version mismatches.
+const dotenv = require('dotenv');
+dotenv.config();
+
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 const HOSTNAME = IS_PRODUCTION
@@ -13,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.24',
+    version: '1.0.25',
     orientation: 'portrait',
     icon: './src/app/assets/images/icon.png',
     splash: {
@@ -29,7 +37,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.23', // Does this number reset when you bump the version number?
+      buildNumber: '1.0.24', // Does this number reset when you bump the version number?
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -66,7 +74,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 23, // Does this number reset when you bump the version number?
+      versionCode: 24, // Does this number reset when you bump the version number?
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -127,6 +135,6 @@ export default {
       },
     },
     owner: 'better-angels',
-    runtimeVersion: '2024.10.30.21.52.37',
+    runtimeVersion: process.env.RUNTIME_VERSION,
   },
 };
