@@ -38,11 +38,11 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
-  const displayDob = client?.clientProfile.dateOfBirth
-    ? `${format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')} (${
-        client?.clientProfile.age
-      })`
-    : null;
+  const formattedDob =
+    format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy') || null;
+  const clientAge = client?.clientProfile.age;
+  const displayDob =
+    formattedDob && clientAge ? `${formattedDob} (${clientAge})` : null;
 
   const personalData = [
     {
@@ -108,7 +108,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                 <InfoRow
                   label="Living Situation"
                   value={
-                    client?.clientProfile.livingSituation &&
+                    client.clientProfile.livingSituation &&
                     enumDisplayLivingSituation[
                       client.clientProfile.livingSituation
                     ]

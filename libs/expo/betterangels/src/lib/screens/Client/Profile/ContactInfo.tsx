@@ -112,7 +112,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
                     <TextRegular size="sm">Phone Number(s)</TextRegular>
                     <TextBold size="sm">Primary</TextBold>
                   </View>
-                  {client?.clientProfile.phoneNumbers?.map((phoneNumber) => (
+                  {client.clientProfile.phoneNumbers?.map((phoneNumber) => (
                     <View
                       style={{
                         flexDirection: 'row',
@@ -133,7 +133,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
                 <InfoCol
                   row
                   label="Email"
-                  value={client?.clientProfile.user.email}
+                  value={client.clientProfile.user.email}
                 />
               )}
               {!!client?.clientProfile.socialMediaProfiles?.length && (
