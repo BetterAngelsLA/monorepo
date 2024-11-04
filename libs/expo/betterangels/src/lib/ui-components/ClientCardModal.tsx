@@ -7,7 +7,7 @@ import MainModal from './MainModal';
 interface IMainPlusModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  client: ClientProfileType | undefined;
+  client: ClientProfileType;
 }
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
@@ -41,7 +41,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Add Interaction',
       Icon: FilePlusIcon,
-      route: `/add-interaction/${client?.id}`,
+      route: `/add-interaction/${client.id}`,
       onPress: () => {
         if (client) {
           createNoteFunction(client.user.id, client.user.firstName);
