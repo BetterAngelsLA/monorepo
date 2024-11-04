@@ -1,0 +1,136 @@
+name: 'Check and Start Build'
+description: 'Check for existing builds or start a new one if needed'
+
+inputs:
+  project:
+    required: true
+    type: string
+  profile:
+    required: true
+    type: string
+  runtime-version:
+    required: true
+    type: string
+  platforms:
+    required: false
+    type: string
+    default: 'android ios'
+
+outputs:
+  android-build-id:
+    description: 'Android build ID for tracking the build.'
+    value: ${{ steps.check-builds.outputs.android-build-id }}
+  android-build-link:
+    description: 'Link to the Android build.'
+    value: ${{ steps.check-builds.outputs.android-build-link }}
+  android-distribution:
+    description: 'Distribution channel for the Android build.'
+    value: ${{ steps.check-builds.outputs.android-distribution }}
+  android-build-profile:
+    description: 'Build profile used for Android.'
+    value: ${{ steps.check-builds.outputs.android-build-profile }}
+  android-runtime-version:
+    description: 'Runtime version for Android build.'
+    value: ${{ steps.check-builds.outputs.android-runtime-version }}
+  android-app-version:
+    description: 'App version for Android.'
+    value: ${{ steps.check-builds.outputs.android-app-version }}
+  android-git-commit:
+    description: 'Git commit hash for the Android build.'
+    value: ${{ steps.check-builds.outputs.android-git-commit }}
+  ios-build-id:
+    description: 'iOS build ID for tracking the build.'
+    value: ${{ steps.check-builds.outputs.ios-build-id }}
+  ios-build-link:
+    description: 'Link to the iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-build-link }}
+  ios-distribution:
+    description: 'Distribution channel for the iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-distribution }}
+  ios-build-profile:
+    description: 'Build profile used for iOS.'
+    value: ${{ steps.check-builds.outputs.ios-build-profile }}
+  ios-runtime-version:
+    description: 'Runtime version for iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-runtime-version }}
+  ios-app-version:
+    description: 'App version for iOS.'
+    value: ${{ steps.check-builds.outputs.ios-app-version }}
+  ios-git-commit:
+    description: 'Git commit hash for the iOS build.'
+    value: ${{ steps.check-builds.outputs.ios-git-commit }}
+  slug:
+    description: 'Project slug for Expo tracking.'
+    value: ${{ steps.check-builds.outputs.slug }}
+  project-id:
+    description: 'Project ID for tracking purposes.'
+    value: ${{ steps.check-builds.outputs.project-id }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check for Existing Builds or Start New Build
+      id: check-builds
+      run: |
+        platforms=(${{ inputs.platforms }})
+        slugs=()
+        project_ids=()
+
+        for platform in "${platforms[@]}"; do
+          # Check for existing builds for the platform
+          build_output=$(eas build:list --platform "$platform" \
+            --buildProfile "${{ inputs.profile }}" --runtimeVersion "${{ inputs.runtime-version }}" \
+            --limit 1 --json --non-interactive 2>&1)
+
+          if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
+            echo "No existing $platform build found for runtime version ${{ inputs.runtime-version }}. Starting a new build."
+            build_output=$(eas build --profile "${{ inputs.profile }}" --platform "$platform" \
+              --freeze-credentials --non-interactive --no-wait --json)
+          else
+            echo "$platform build found for runtime version ${{ inputs.runtime-version }}."
+          fi
+
+          slug=$(echo "$build_output" | jq -r '.[0].project.slug')
+          project_id=$(echo "$build_output" | jq -r '.[0].project.id')
+          build_id=$(echo "$build_output" | jq -r '.[0].id')
+          distribution=$(echo "$build_output" | jq -r '.[0].distribution')
+          build_profile=$(echo "$build_output" | jq -r '.[0].buildProfile')
+          runtime_version_from_build=$(echo "$build_output" | jq -r '.[0].runtimeVersion')
+          app_version=$(echo "$build_output" | jq -r '.[0].appVersion')
+          git_commit=$(echo "$build_output" | jq -r '.[0].gitCommitHash')
+          build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
+
+          # Assign outputs for each platform
+          echo "${platform}-build-id=$build_id" >> $GITHUB_OUTPUT
+          echo "${platform}-build-link=$build_link" >> $GITHUB_OUTPUT
+          echo "${platform}-distribution=$distribution" >> $GITHUB_OUTPUT
+          echo "${platform}-build-profile=$build_profile" >> $GITHUB_OUTPUT
+          echo "${platform}-runtime-version=$runtime_version_from_build" >> $GITHUB_OUTPUT
+          echo "${platform}-app-version=$app_version" >> $GITHUB_OUTPUT
+          echo "${platform}-git-commit=$git_commit" >> $GITHUB_OUTPUT
+
+          slugs+=("$slug")
+          project_ids+=("$project_id")
+        done
+
+        # Ensure slugs and project IDs are consistent
+        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+        if [ ${#unique_slugs[@]} -ne 1 ]; then
+          echo "Error: Different slugs found for platforms: ${slugs[*]}"
+          exit 1
+        fi
+
+        if [ ${#unique_project_ids[@]} -ne 1 ]; then
+          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
+          exit 1
+        fi
+
+        # Set common outputs
+        commit_message=$(git log -1 --pretty=format:"%s" HEAD)
+        echo "commit-message=${commit_message}" >> $GITHUB_OUTPUT
+        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
+        echo "project-id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+      working-directory: apps/${{ inputs.project }}
+      shell: bash
