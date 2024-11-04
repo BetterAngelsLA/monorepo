@@ -72,13 +72,17 @@ jobs:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.is_matrix_empty == 'false'
-    concurrency: continuous-deploy-fingerprint-${{ github.event_name != 'pull_request' && 'main' || github.run_id }}
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
       pull-requests: write # REQUIRED: Allow comments on PRs
       actions: write # REQUIRED: Allow updating fingerprint in action caches
     steps:
+      - name: 🚦 Turnstyle
+        uses: softprops/turnstyle@master
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
         with:
@@ -227,13 +231,17 @@ jobs:
     needs: prepare
     environment: production
     runs-on: ubuntu-latest
-    concurrency: continuous-deploy-fingerprint-main
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     permissions:
       pull-requests: write # REQUIRED: Allow comments on PRs
       actions: write # REQUIRED: Allow updating fingerprint in action caches
     steps:
+      - name: 🚦 Turnstyle
+        uses: softprops/turnstyle@master
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 🏗 Check out repo
         uses: actions/checkout@v4
         with:
