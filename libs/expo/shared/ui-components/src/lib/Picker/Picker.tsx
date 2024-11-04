@@ -1,4 +1,6 @@
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
+import { StyleSheet, View } from 'react-native';
 
 interface IPickerProps {
   setSelectedValue: (value: string | null) => void;
@@ -12,15 +14,46 @@ export default function Picker(props: IPickerProps) {
   const { setSelectedValue, error, value, placeholder, items } = props;
 
   return (
-    <RNPicker
-      style={{ color: error ? 'red' : 'black' }}
-      placeholder={placeholder}
-      selectedValue={value}
-      onValueChange={(itemValue) => setSelectedValue(itemValue)}
+    <View
+      style={[
+        styles.pickerContainer,
+        {
+          borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+        },
+      ]}
     >
-      {items.map((item) => (
-        <RNPicker.Item key={item.value} label={item.label} value={item.value} />
-      ))}
-    </RNPicker>
+      <RNPicker
+        style={styles.picker}
+        placeholder={placeholder}
+        selectedValue={value}
+        onValueChange={(itemValue) => setSelectedValue(itemValue)}
+      >
+        {items.map((item) => (
+          <RNPicker.Item
+            style={styles.itemStyle}
+            key={item.value}
+            label={item.label}
+            value={item.value}
+          />
+        ))}
+      </RNPicker>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  pickerContainer: {
+    borderWidth: 1,
+    backgroundColor: Colors.WHITE,
+    borderRadius: Radiuses.xs,
+    borderColor: Colors.NEUTRAL_LIGHT,
+  },
+  picker: {
+    height: 56,
+    paddingHorizontal: Spacings.sm,
+    color: Colors.PRIMARY_EXTRA_DARK,
+  },
+  itemStyle: {
+    color: Colors.PRIMARY_EXTRA_DARK,
+  },
+});

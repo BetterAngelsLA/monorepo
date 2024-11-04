@@ -1,6 +1,7 @@
 import {
   enumDisplaySelahTeam,
   SelahTeamEnum,
+  useSnackbar,
   useUpdateNoteMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
@@ -20,6 +21,7 @@ export default function Team(props: ITeamProps) {
   );
 
   const [updateNote] = useUpdateNoteMutation();
+  const { showSnackbar } = useSnackbar();
 
   const updateNoteFunction = async (value: SelahTeamEnum) => {
     if (!noteId || !value) return;
@@ -35,7 +37,11 @@ export default function Team(props: ITeamProps) {
         },
       });
     } catch (err) {
-      console.error('Failed to update note:', err);
+      showSnackbar({
+        message: 'Failed to update interaction.',
+        type: 'error',
+      });
+      console.error('Failed to update interaction:', err);
     }
   };
 
@@ -48,7 +54,7 @@ export default function Team(props: ITeamProps) {
           label: enumDisplaySelahTeam[item],
           value: item,
         }))}
-        setSelectedValue={(e) => updateNoteFunction(e as SelahTeamEnum)}
+        setSelectedValue={(t) => updateNoteFunction(t as SelahTeamEnum)}
       />
     </View>
   );
