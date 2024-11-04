@@ -139,41 +139,12 @@ export default function UploadModal(props: IUploadModalProps) {
         item.namespace === ClientDocumentNamespaceEnum.DriversLicenseBack
     )?.file as ReactNativeFile | undefined;
 
-    const ConsentForm = client?.clientProfile.consentFormDocuments
-      ?.filter(
-        (item) => item.namespace === ClientDocumentNamespaceEnum.ConsentForm
-      )
-      .map((item) => item.file) as ReactNativeFile[] | undefined;
-    const HmisForm = client?.clientProfile.consentFormDocuments
-      ?.filter(
-        (item) => item.namespace === ClientDocumentNamespaceEnum.HmisForm
-      )
-      .map((item) => item.file) as ReactNativeFile[] | undefined;
-
-    const IncomeForm = client?.clientProfile.consentFormDocuments
-      ?.filter(
-        (item) => item.namespace === ClientDocumentNamespaceEnum.IncomeForm
-      )
-      .map((item) => item.file) as ReactNativeFile[] | undefined;
-
-    const OtherClientDocument = client?.clientProfile.otherDocuments
-      ?.filter(
-        (item) =>
-          item.namespace === ClientDocumentNamespaceEnum.OtherClientDocument
-      )
-      .map((item) => item.file) as ReactNativeFile[] | undefined;
-
     setDocs({
-      ...docs,
       DriversLicenseFront,
       DriversLicenseBack,
       SocialSecurityCard,
       PhotoId,
       BirthCertificate,
-      ConsentForm,
-      HmisForm,
-      IncomeForm,
-      OtherClientDocument,
     });
   }, [client]);
 
