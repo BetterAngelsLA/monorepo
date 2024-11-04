@@ -27,9 +27,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const relationship = watch(
-    `householdMembers${index}.relationshipToClient` as `householdMembers.${number}.relationshipToClient`
-  );
+  const relationship = watch(`householdMembers.${index}.relationshipToClient`);
 
   const householdMembers = watch('householdMembers') || [];
 
