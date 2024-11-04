@@ -51,7 +51,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Upload Documents',
       Icon: UploadIcon,
-      route: `/client/${client?.id}?newTab=Docs`,
+      route: `/client/${client.id}?newTab=Docs`,
     },
   ];
   return (

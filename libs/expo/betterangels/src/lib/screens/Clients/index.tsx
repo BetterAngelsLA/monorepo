@@ -256,7 +256,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           />
         )}
       </View>
-      {hasClients && currentClient && (
+      {currentClient && (
         <ClientCardModal
           isModalVisible={modalIsOpen}
           closeModal={() => setModalIsOpen(false)}
