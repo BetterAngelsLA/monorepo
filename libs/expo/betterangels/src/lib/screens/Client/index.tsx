@@ -4,12 +4,13 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
   ComponentType,
   ForwardRefExoticComponent,
   ReactElement,
   RefObject,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -29,7 +30,6 @@ import {
   ClientProfileQuery,
   useClientProfileQuery,
 } from './__generated__/Client.generated';
-
 interface ProfileRef {
   scrollToRelevantContacts: () => void;
 }
@@ -81,6 +81,13 @@ export default function Client({
 
   const navigation = useNavigation();
   const router = useRouter();
+  const { newTab } = useLocalSearchParams<{ newTab?: string }>();
+
+  useEffect(() => {
+    if (newTab) {
+      setTab(newTab);
+    }
+  }, [newTab]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
