@@ -1,0 +1,58 @@
+name: 'Setup Secrets'
+description: 'Load secrets into .env file'
+
+inputs:
+  project:
+    required: true
+    type: string
+  profile:
+    required: true
+    type: string
+  secrets:
+    required: true
+    type: string
+
+outputs:
+  runtime-version:
+    description: 'Runtime version for build.'
+    value: ${{ steps.set-runtime-version.outputs.runtime-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Clear All .env files and load eas.json
+      run: |
+        find . -name '*.env*' -delete
+        cat eas.json | jq -r '.build["'"${{ inputs.profile }}"'"].env | select(. != null) | to_entries | .[] | "\(.key)=\(.value)"' >> .env
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
+
+    - name: Load Application Secrets
+      run: |
+        echo "Filtering secrets with prefix 'EXPO_PUBLIC'"
+        # Filter secrets with the prefix 'EXPO_PUBLIC' which are not necessarily real secrets
+        # but include items such as API keys and configurations (e.g., Google API keys)
+        # that we prefer not to commit directly into our GitHub repository.
+        secrets=$(echo '${{ inputs.secrets }}' | jq -r 'to_entries | map(select(.key | startswith("EXPO_PUBLIC"))) | .[] | "\(.key)=\(.value)"')
+
+        # Write the filtered secrets to the .env file
+        while IFS= read -r line; do
+          echo "$line" >> .env
+        done <<< "$secrets"
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
+
+    - name: Check fingerprint
+      id: fingerprint
+      uses: expo/expo-github-action/fingerprint@main
+      with:
+        working-directory: apps/${{ inputs.project }}
+
+    - name: Set Runtime Version
+      id: set-runtime-version
+      run: |
+        runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
+        echo "RUNTIME_VERSION=$runtime_version" >> .env
+        echo "runtime-version=$runtime_version" >> $GITHUB_OUTPUT
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
