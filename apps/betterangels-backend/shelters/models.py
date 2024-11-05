@@ -1,3 +1,5 @@
+from typing import Any
+
 import pghistory
 from common.models import Address, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
@@ -139,7 +141,7 @@ class SleepingOption(models.Model):
 @pghistory.track(
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
-    pghistory.DeleteEvent("shelter.delete"),
+    pghistory.DeleteEvent("shelter.remove"),
 )
 class Shelter(BaseModel):
     # Basic Information
@@ -212,149 +214,314 @@ class Shelter(BaseModel):
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_shelter_types.add"),
-    pghistory.DeleteEvent("shelter_shelter_types.delete"),
+    pghistory.DeleteEvent("shelter_shelter_types.remove"),
     obj_field=None,
 )
 class ShelterShelterTypes(Shelter.shelter_types.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, shelter_type_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        shelter_type = ShelterType.objects.get(id=shelter_type_id)
+
+        if action == "add":
+            shelter.shelter_types.remove(shelter_type)
+
+        elif action == "remove":
+            shelter.shelter_types.add(shelter_type)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_populations.add"),
-    pghistory.DeleteEvent("shelter_populations.delete"),
+    pghistory.DeleteEvent("shelter_populations.remove"),
     obj_field=None,
 )
 class ShelterPopulations(Shelter.populations.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, population_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        population = Population.objects.get(id=population_id)
+
+        if action == "add":
+            shelter.populations.remove(population)
+
+        elif action == "remove":
+            shelter.populations.add(population)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_immediate_needs.add"),
-    pghistory.DeleteEvent("shelter_immediate_needs.delete"),
+    pghistory.DeleteEvent("shelter_immediate_needs.remove"),
     obj_field=None,
 )
 class ShelterImmediateNeeds(Shelter.immediate_needs.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, immediate_need_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        immediate_need = ImmediateNeed.objects.get(id=immediate_need_id)
+
+        if action == "add":
+            shelter.immediate_needs.remove(immediate_need)
+
+        elif action == "remove":
+            shelter.immediate_needs.add(immediate_need)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_general_services.add"),
-    pghistory.DeleteEvent("shelter_general_services.delete"),
+    pghistory.DeleteEvent("shelter_general_services.remove"),
     obj_field=None,
 )
 class ShelterGeneralServices(Shelter.general_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, general_service_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        general_service = GeneralService.objects.get(id=general_service_id)
+
+        if action == "add":
+            shelter.general_services.remove(general_service)
+
+        elif action == "remove":
+            shelter.general_services.add(general_service)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_health_services.add"),
-    pghistory.DeleteEvent("shelter_health_services.delete"),
+    pghistory.DeleteEvent("shelter_health_services.remove"),
     obj_field=None,
 )
 class ShelterHealthServices(Shelter.health_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, health_service_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        health_service = HealthService.objects.get(id=health_service_id)
+
+        if action == "add":
+            shelter.health_services.remove(health_service)
+
+        elif action == "remove":
+            shelter.health_services.add(health_service)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_career_services.add"),
-    pghistory.DeleteEvent("shelter_career_services.delete"),
+    pghistory.DeleteEvent("shelter_career_services.remove"),
     obj_field=None,
 )
 class ShelterCareerServices(Shelter.career_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, career_service_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        career_service = CareerService.objects.get(id=career_service_id)
+
+        if action == "add":
+            shelter.career_services.remove(career_service)
+
+        elif action == "remove":
+            shelter.career_services.add(career_service)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_funders.add"),
-    pghistory.DeleteEvent("shelter_funders.delete"),
+    pghistory.DeleteEvent("shelter_funders.remove"),
     obj_field=None,
 )
 class ShelterFunders(Shelter.funders.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, funder_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        funder = Funder.objects.get(id=funder_id)
+
+        if action == "add":
+            shelter.funders.remove(funder)
+
+        elif action == "remove":
+            shelter.funders.add(funder)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_accessibility.add"),
-    pghistory.DeleteEvent("shelter_accessibility.delete"),
+    pghistory.DeleteEvent("shelter_accessibility.remove"),
     obj_field=None,
 )
 class ShelterAccessibility(Shelter.accessibility.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, accessibility_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        accessibility = Accessibility.objects.get(id=accessibility_id)
+
+        if action == "add":
+            shelter.accessibility.remove(accessibility)
+
+        elif action == "remove":
+            shelter.accessibility.add(accessibility)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_storage.add"),
-    pghistory.DeleteEvent("shelter_storage.delete"),
+    pghistory.DeleteEvent("shelter_storage.remove"),
     obj_field=None,
 )
 class ShelterStorage(Shelter.storage.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, storage_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        storage = Storage.objects.get(id=storage_id)
+
+        if action == "add":
+            shelter.storage.remove(storage)
+
+        elif action == "remove":
+            shelter.storage.add(storage)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_parking.add"),
-    pghistory.DeleteEvent("shelter_parking.delete"),
+    pghistory.DeleteEvent("shelter_parking.remove"),
     obj_field=None,
 )
 class ShelterParking(Shelter.parking.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, parking_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        parking = Parking.objects.get(id=parking_id)
+
+        if action == "add":
+            shelter.parking.remove(parking)
+
+        elif action == "remove":
+            shelter.parking.add(parking)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_entry_requirements.add"),
-    pghistory.DeleteEvent("shelter_entry_requirements.delete"),
+    pghistory.DeleteEvent("shelter_entry_requirements.remove"),
     obj_field=None,
 )
 class ShelterEntryRequirements(Shelter.entry_requirements.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, entry_requirement_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        entry_requirement = EntryRequirement.objects.get(id=entry_requirement_id)
+
+        if action == "add":
+            shelter.entry_requirements.remove(entry_requirement)
+
+        elif action == "remove":
+            shelter.entry_requirements.add(entry_requirement)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_cities.add"),
-    pghistory.DeleteEvent("shelter_cities.delete"),
+    pghistory.DeleteEvent("shelter_cities.remove"),
     obj_field=None,
 )
 class ShelterCities(Shelter.cities.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, city_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        city = City.objects.get(id=city_id)
+
+        if action == "add":
+            shelter.cities.remove(city)
+
+        elif action == "remove":
+            shelter.cities.add(city)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_spa.add"),
-    pghistory.DeleteEvent("shelter_spa.delete"),
+    pghistory.DeleteEvent("shelter_spa.remove"),
     obj_field=None,
 )
 class ShelterSPA(Shelter.spa.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, spa_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        spa = SPA.objects.get(id=spa_id)
+
+        if action == "add":
+            shelter.spa.remove(spa)
+
+        elif action == "remove":
+            shelter.spa.add(spa)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_pets.add"),
-    pghistory.DeleteEvent("shelter_pets.delete"),
+    pghistory.DeleteEvent("shelter_pets.remove"),
     obj_field=None,
 )
 class ShelterPets(Shelter.pets.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, pet_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        pet = Pet.objects.get(id=pet_id)
+
+        if action == "add":
+            shelter.pets.remove(pet)
+
+        elif action == "remove":
+            shelter.pets.add(pet)
+
 
 @pghistory.track(
     pghistory.InsertEvent("shelter_sleeping_options.add"),
-    pghistory.DeleteEvent("shelter_sleeping_options.delete"),
+    pghistory.DeleteEvent("shelter_sleeping_options.remove"),
     obj_field=None,
 )
 class ShelterSleepingOptions(Shelter.sleeping_options.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
+
+    @staticmethod
+    def revert_action(action: str, shelter_id: int, sleeping_option_id: int, *args: Any, **kwargs: Any) -> None:
+        shelter = Shelter.objects.get(id=shelter_id)
+        sleeping_option = SleepingOption.objects.get(id=sleeping_option_id)
+
+        if action == "add":
+            shelter.sleeping_options.remove(sleeping_option)
+
+        elif action == "remove":
+            shelter.sleeping_options.add(sleeping_option)
