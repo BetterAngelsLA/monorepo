@@ -84,6 +84,11 @@ export default function DemographicInfo(props: IProfileSectionProps) {
     },
   ];
 
+  const hasContent =
+    demographicData.some(({ value }) => value) ||
+    !!client?.clientProfile.physicalDescription ||
+    !!client?.clientProfile.adaAccommodation?.length;
+
   return (
     <Accordion
       expanded={expanded}
@@ -93,7 +98,7 @@ export default function DemographicInfo(props: IProfileSectionProps) {
       mb="xs"
       title="Demographic Info"
     >
-      {isDemographicInfo && (
+      {isDemographicInfo && hasContent && (
         <View
           style={{
             height: isDemographicInfo ? 'auto' : 0,
@@ -108,15 +113,16 @@ export default function DemographicInfo(props: IProfileSectionProps) {
                   <InfoRow key={label} label={label} value={value} />
                 ))}
 
-              <View>
-                <TextRegular mb="xs" size="sm">
-                  Physical Description
-                </TextRegular>
-                <TextBold size="sm">
-                  {client?.clientProfile.physicalDescription || ''}
-                </TextBold>
-              </View>
-
+              {!!client?.clientProfile.physicalDescription && (
+                <View>
+                  <TextRegular mb="xs" size="sm">
+                    Physical Description
+                  </TextRegular>
+                  <TextBold size="sm">
+                    {client?.clientProfile.physicalDescription || ''}
+                  </TextBold>
+                </View>
+              )}
               {!!client?.clientProfile.adaAccommodation?.length && (
                 <View>
                   <TextRegular mb="xs" size="sm">
