@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 import pghistory
 from common.models import Address, BaseModel
@@ -201,6 +201,16 @@ class Shelter(BaseModel):
 
     # Administration
     is_reviewed = models.BooleanField(default=False)
+
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
