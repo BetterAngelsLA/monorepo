@@ -73,6 +73,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
 
   const hasContent =
     addresses.some(({ value }) => value) ||
+    !!client?.clientProfile.user?.email ||
     !!client?.clientProfile.socialMediaProfiles?.length ||
     !!client?.clientProfile.phoneNumbers?.length ||
     !!client?.clientProfile.preferredCommunication?.length;
