@@ -186,6 +186,9 @@ export function Button(props: IButtonProps) {
     weight = 'bold',
     containerStyle,
   } = props;
+
+  const loadingButtonWidth = loading ? 90 : SIZES[size];
+
   return (
     <View
       style={[
@@ -193,6 +196,7 @@ export function Button(props: IButtonProps) {
         containerStyle,
         {
           height: HEIGHT[height],
+          width: loadingButtonWidth,
         },
       ]}
     >
@@ -206,7 +210,7 @@ export function Button(props: IButtonProps) {
           styles.button,
           style,
           {
-            width: SIZES[size],
+            width: loadingButtonWidth,
             borderRadius,
             borderWidth,
             alignItems: align,
