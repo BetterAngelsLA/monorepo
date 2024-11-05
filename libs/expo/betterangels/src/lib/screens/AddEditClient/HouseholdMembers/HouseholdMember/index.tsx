@@ -62,25 +62,6 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
         placeholder="Select Relationship"
         value={relationship}
       />
-      // <Select
-      //   boldLabel
-      //   labelMarginLeft="xs"
-      //   label="Type of Relationship"
-      //   placeholder="Select Relationship"
-      //   defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
-      //   onValueChange={(enumValue) =>
-      //     setValue(
-      //       `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-      //       enumValue as RelationshipTypeEnum
-      //     )
-      //   }
-      //   items={Object.entries(clientHouseholdMemberEnumDisplay).map(
-      //     ([enumValue, displayValue]) => ({
-      //       displayValue: displayValue,
-      //       value: enumValue,
-      //     })
-      //   )}
-      // />
     );
   }
 
@@ -116,7 +97,8 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
         name={`householdMembers[${index}].name`}
         control={control}
       />
-      {householdMembers[index].relationshipToClient !== RelationshipTypeEnum.Pet && (
+      {householdMembers[index].relationshipToClient !==
+        RelationshipTypeEnum.Pet && (
         <>
           <Gender index={index} />
           <DateOfBirth index={index} />
