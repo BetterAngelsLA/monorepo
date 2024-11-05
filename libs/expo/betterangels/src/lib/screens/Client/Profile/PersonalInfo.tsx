@@ -6,6 +6,8 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
+
+import { format } from 'date-fns';
 import {
   enumDisplayHmisAgency,
   enumDisplayLanguage,
@@ -23,7 +25,7 @@ const InfoRow = ({
 }) => (
   <View style={styles.flexRow}>
     <TextRegular size="sm">{label}</TextRegular>
-    <TextBold size="sm">{value || 'N/A'}</TextBold>
+    <TextBold size="sm">{value}</TextBold>
   </View>
 );
 
@@ -36,6 +38,13 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
+  const formattedDob = client?.clientProfile.dateOfBirth
+    ? format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')
+    : null;
+  const clientAge = client?.clientProfile.age;
+  const displayDob =
+    formattedDob && clientAge ? `${formattedDob} (${clientAge})` : null;
+
   const personalData = [
     {
       label: 'Full Name',
@@ -46,8 +55,8 @@ export default function PersonalInfo(props: IProfileSectionProps) {
       value: client?.clientProfile.nickname,
     },
     {
-      label: 'DoB',
-      value: client?.clientProfile.dateOfBirth,
+      label: 'Date of Birth',
+      value: displayDob,
     },
     {
       label: 'Preferred Language',
@@ -96,16 +105,17 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                   value={hmisProfile.hmisId}
                 />
               ))}
-
-              <InfoRow
-                label="Living Situation"
-                value={
-                  client?.clientProfile.livingSituation &&
-                  enumDisplayLivingSituation[
-                    client.clientProfile.livingSituation
-                  ]
-                }
-              />
+              {!!client?.clientProfile.livingSituation && (
+                <InfoRow
+                  label="Living Situation"
+                  value={
+                    client.clientProfile.livingSituation &&
+                    enumDisplayLivingSituation[
+                      client.clientProfile.livingSituation
+                    ]
+                  }
+                />
+              )}
             </View>
           </CardWrapper>
         </View>
