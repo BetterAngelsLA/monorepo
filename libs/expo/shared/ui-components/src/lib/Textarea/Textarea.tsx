@@ -52,7 +52,6 @@ interface ITextareaProps extends TextInputProps {
   ml?: TSpacing;
   mr?: TSpacing;
   height?: number | 'auto';
-  textAlignVertical?: 'top' | 'center' | 'bottom';
   onFocus?: () => void;
 }
 
@@ -112,6 +111,7 @@ export function Textarea(props: ITextareaProps) {
             ]}
           >
             <TextInput
+              textAlignVertical={textAlignVertical}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
@@ -123,7 +123,6 @@ export function Textarea(props: ITextareaProps) {
                 fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,
-                textAlignVertical: textAlignVertical,
                 minHeight: 40,
                 height,
                 overflow: 'scroll',
