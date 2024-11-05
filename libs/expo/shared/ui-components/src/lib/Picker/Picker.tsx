@@ -2,7 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { StyleSheet, View } from 'react-native';
 
-interface IPickerProps {
+export interface IPickerProps {
   setSelectedValue: (value: string | null) => void;
   error?: boolean;
   value?: string | null;
@@ -18,7 +18,7 @@ export default function Picker(props: IPickerProps) {
       style={[
         styles.pickerContainer,
         {
-          borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+          borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
         },
       ]}
     >

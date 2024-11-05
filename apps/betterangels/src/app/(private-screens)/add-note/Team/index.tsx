@@ -16,8 +16,8 @@ interface ITeamProps {
 
 export default function Team(props: ITeamProps) {
   const { team, noteId } = props;
-  const [localTeam, setLocalTeam] = useState<string>(
-    team ? enumDisplaySelahTeam[team] : ''
+  const [localTeam, setLocalTeam] = useState<SelahTeamEnum | null | undefined>(
+    team
   );
 
   const [updateNote] = useUpdateNoteMutation();
@@ -25,7 +25,7 @@ export default function Team(props: ITeamProps) {
 
   const updateNoteFunction = async (value: SelahTeamEnum) => {
     if (!noteId || !value) return;
-    setLocalTeam(enumDisplaySelahTeam[value]);
+    setLocalTeam(value);
 
     try {
       await updateNote({

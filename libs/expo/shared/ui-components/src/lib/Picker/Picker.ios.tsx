@@ -7,14 +7,7 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
-
-interface IPickerProps {
-  setSelectedValue: (value: string | null) => void;
-  error?: boolean;
-  value?: string | null;
-  placeholder: string;
-  items: { label: string; value: string }[];
-}
+import { IPickerProps } from './Picker';
 
 export default function Picker(props: IPickerProps) {
   const { setSelectedValue, error, value, placeholder, items } = props;
