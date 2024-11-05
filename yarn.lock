@@ -4434,7 +4434,7 @@ __metadata:
     "@nxlv/python": "npm:17.0.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-community/datetimepicker": "npm:8.0.1"
-    "@react-native-picker/picker": "npm:2.9.0"
+    "@react-native-picker/picker": "npm:2.7.5"
     "@storybook/addon-essentials": "npm:^7.6.20"
     "@storybook/addon-react-native-web": "npm:^0.0.24"
     "@storybook/core-server": "npm:^7.6.20"
@@ -6381,13 +6381,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-picker/picker@npm:2.9.0":
-  version: 2.9.0
-  resolution: "@react-native-picker/picker@npm:2.9.0"
+"@react-native-picker/picker@npm:2.7.5":
+  version: 2.7.5
+  resolution: "@react-native-picker/picker@npm:2.7.5"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/a2442d55b9fc239eb9109cfcfc9d6b749619bc0e79c0f43d2ced618e27f485b26bde84ba6965f1e172242bf479566c17ae39e5de7b3f2e782bde81c9e61e2fd9
+  checksum: 10/fb2111753ef46365799e5a7ef0f4a542244788054de4145cb982bd2b15a86daf4e0794503fb69918d7cbcb67e2f9719f984143764ae79d858f6bee9bd6cad473
   languageName: node
   linkType: hard
 

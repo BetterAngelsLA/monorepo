@@ -116,8 +116,12 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
         name={`householdMembers[${index}].name`}
         control={control}
       />
-      <Gender index={index} />
-      <DateOfBirth index={index} />
+      {householdMembers[index].relationshipToClient !== RelationshipTypeEnum.Pet && (
+        <>
+          <Gender index={index} />
+          <DateOfBirth index={index} />
+        </>
+      )}
       <View
         style={{
           marginTop: Spacings.sm,
