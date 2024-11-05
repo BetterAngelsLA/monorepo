@@ -79,8 +79,7 @@
     "expo-file-system": "*",
     "expo-sharing": "*",
     "@teovilla/react-native-web-maps": "*",
-    "react-native-paper": "*",
-    "@types/google.maps": "*"
+    "react-native-paper": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
@@ -143,6 +142,7 @@
     "@swc-node/register": "*",
     "@swc/core": "*",
     "@swc/helpers": "*",
-    "jest-environment-node": "*"
+    "jest-environment-node": "*",
+    "@types/google.maps": "*"
   }
 }
