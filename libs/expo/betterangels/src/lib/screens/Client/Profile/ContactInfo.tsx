@@ -16,6 +16,7 @@ import {
 import { ReactNode } from 'react';
 import { View, ViewStyle } from 'react-native';
 import { SocialMediaEnum } from '../../../apollo';
+import formatPhoneNumber from '../../../helpers/formatPhoneNumber'
 import {
   enumDisplayPreferredCommunication,
   enumDisplaySocialMedia,
@@ -115,7 +116,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
                       }}
                       key={phoneNumber.id}
                     >
-                      <TextBold size="sm">{phoneNumber.number}</TextBold>
+                      <TextBold size="sm">{formatPhoneNumber(phoneNumber.number)}</TextBold>
                       {phoneNumber.isPrimary && (
                         <StarIcon color={Colors.WARNING} />
                       )}
