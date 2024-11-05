@@ -9,6 +9,10 @@ import { Picker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+const valueAsSelahTeamEnum = Object.fromEntries(
+  Object.entries(enumDisplaySelahTeam).map(([key, value]) => [value, key])
+);
+
 interface ITeamProps {
   team?: SelahTeamEnum | null;
   noteId: string;
@@ -16,14 +20,14 @@ interface ITeamProps {
 
 export default function Team(props: ITeamProps) {
   const { team, noteId } = props;
-  const [localTeam, setLocalTeam] = useState<SelahTeamEnum | null | undefined>(
-    team
+  const [localTeam, setLocalTeam] = useState<string | null | undefined>(
+    team ? enumDisplaySelahTeam[team] : null
   );
 
   const [updateNote] = useUpdateNoteMutation();
   const { showSnackbar } = useSnackbar();
 
-  const updateNoteFunction = async (value: SelahTeamEnum) => {
+  const updateNoteFunction = async (value: string) => {
     if (!noteId || !value) return;
     setLocalTeam(value);
 
@@ -32,7 +36,7 @@ export default function Team(props: ITeamProps) {
         variables: {
           data: {
             id: noteId,
-            team: value,
+            team: valueAsSelahTeamEnum[value] as SelahTeamEnum,
           },
         },
       });
@@ -52,7 +56,7 @@ export default function Team(props: ITeamProps) {
         value={localTeam}
         items={Object.values(SelahTeamEnum).map((item) => ({
           label: enumDisplaySelahTeam[item],
-          value: item,
+          value: enumDisplaySelahTeam[item],
         }))}
         setSelectedValue={(t) => updateNoteFunction(t as SelahTeamEnum)}
       />
