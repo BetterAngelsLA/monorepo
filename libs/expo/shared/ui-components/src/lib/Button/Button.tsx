@@ -187,7 +187,9 @@ export function Button(props: IButtonProps) {
     containerStyle,
   } = props;
 
-  const loadingButtonWidth = loading ? 90 : SIZES[size];
+  const loadingButtonWidth = loading && typeof SIZES[size] === 'number'
+    ? SIZES[size] * 2.5
+    : SIZES[size];
 
   return (
     <View
