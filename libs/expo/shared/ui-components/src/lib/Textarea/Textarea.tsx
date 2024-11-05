@@ -144,7 +144,7 @@ export function Textarea(props: ITextareaProps) {
                 accessibilityRole="button"
                 accessibilityLabel="delete icon"
                 accessibilityHint="deletes input's value"
-                onPress={() => onChange('')}
+                onPress={() => onChange(null)}
                 style={styles.pressable}
               >
                 <View style={styles.icon}>
