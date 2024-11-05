@@ -219,7 +219,7 @@ class Shelter(BaseModel):
         return self.name
 
 
-# proxy objects to track history on through models
+# proxy classes to track history on through models
 
 
 @pghistory.track(
