@@ -40,7 +40,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             genderOther
             hairColor
             heightInInches
-            hmisId
             importantNotes
             livingSituation
             mailingAddress
@@ -71,7 +70,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
             hmisProfiles {
                 id
-                hmisId
                 agency
             }
             householdMembers {
@@ -155,11 +153,9 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_contact_2,
         ]
         self.client_profile_1_hmis_profile_1 = {
-            "hmisId": "HMISidLAHSA1",
             "agency": HmisAgencyEnum.LAHSA.name,
         }
         self.client_profile_1_hmis_profile_2 = {
-            "hmisId": "HMISidPASADENA1",
             "agency": HmisAgencyEnum.PASADENA.name,
         }
         self.client_1_hmis_profiles = [
@@ -219,7 +215,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
-                "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
                 "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
@@ -256,7 +251,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
-                "hmisId": "HMISidPASADENA2",
                 "hmisProfiles": [],
                 "householdMembers": [],
                 "livingSituation": None,

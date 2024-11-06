@@ -46,7 +46,6 @@ query ClientProfiles(
       hmisProfiles {
         id
         agency
-        hmisId
       }
       profilePhoto {
         height

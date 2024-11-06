@@ -90,7 +90,6 @@ class ClientProfileFilter:
         q_objects = []
         combined_q_search = []
         searchable_fields = [
-            "hmis_id",
             "nickname",
             "user__first_name",
             "user__last_name",
@@ -113,7 +112,6 @@ class ClientProfileFilter:
 @strawberry_django.type(HmisProfile)
 class HmisProfileType:
     id: auto
-    hmis_id: auto
     agency: auto
 
 
@@ -151,7 +149,6 @@ class ClientProfileBaseType:
     gender_other: auto
     hair_color: auto
     height_in_inches: auto
-    hmis_id: auto
     important_notes: auto
     living_situation: Optional[LivingSituationEnum]
     marital_status: auto

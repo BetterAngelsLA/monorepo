@@ -102,7 +102,6 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                   label={
                     enumDisplayHmisAgency[hmisProfile.agency] || 'HMIS Agency'
                   }
-                  value={hmisProfile.hmisId}
                 />
               ))}
               {!!client?.clientProfile.livingSituation && (

@@ -175,7 +175,6 @@ type ClientProfileType {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
@@ -226,7 +225,6 @@ input CreateClientProfileInput {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
@@ -434,13 +432,11 @@ enum HmisAgencyEnum {
 
 input HmisProfileInput {
   id: ID
-  hmisId: String!
   agency: HmisAgencyEnum!
 }
 
 type HmisProfileType {
   id: ID!
-  hmisId: String!
   agency: HmisAgencyEnum!
 }
 
@@ -947,7 +943,6 @@ input UpdateClientProfileInput {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum

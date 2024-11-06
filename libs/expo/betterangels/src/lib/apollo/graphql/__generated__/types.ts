@@ -189,7 +189,6 @@ export type ClientProfileType = {
   genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
-  hmisId?: Maybe<Scalars['String']['output']>;
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
@@ -250,7 +249,6 @@ export type CreateClientProfileInput = {
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
-  hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   importantNotes?: InputMaybe<Scalars['String']['input']>;
@@ -457,14 +455,12 @@ export enum HmisAgencyEnum {
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['input'];
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type HmisProfileType = {
   __typename?: 'HmisProfileType';
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
 };
 
@@ -1235,7 +1231,6 @@ export type UpdateClientProfileInput = {
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
-  hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];

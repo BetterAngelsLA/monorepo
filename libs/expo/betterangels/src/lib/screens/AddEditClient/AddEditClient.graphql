@@ -43,7 +43,6 @@ query GetClientProfile($id: ID!) {
       }
       hmisProfiles {
         agency
-        hmisId
         id
       }
       nickname

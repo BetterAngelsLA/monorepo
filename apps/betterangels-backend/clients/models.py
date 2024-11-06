@@ -74,12 +74,10 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
 
 class HmisProfile(models.Model):
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
-    hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["hmis_id", "agency"], name="unique_hmis_id_agency")]
-
+        pass
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
@@ -94,7 +92,6 @@ class ClientProfile(models.Model):
     gender_other = models.CharField(max_length=100, null=True, blank=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
-    hmis_id = models.CharField(max_length=50, blank=True, null=True, db_index=True, unique=True)
     important_notes = models.TextField(blank=True, null=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
