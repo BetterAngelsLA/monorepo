@@ -31,6 +31,8 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   auto: 'auto',
 };
 
+const LOADING_WIDTH_MULTIPLIER = 2.2;
+
 const PRESSED_HEIGHT = {
   sm: 30,
   md: 38,
@@ -187,8 +189,11 @@ export function Button(props: IButtonProps) {
     containerStyle,
   } = props;
 
-  const loadingButtonWidth = loading && typeof SIZES[size] === 'number'
-    ? SIZES[size] * 2.5
+
+  const loadingButtonWidth = loading
+    ? typeof SIZES[size] === 'number'
+      ? (SIZES[size] as number) * LOADING_WIDTH_MULTIPLIER
+      : SIZES[size]
     : SIZES[size];
 
   return (
