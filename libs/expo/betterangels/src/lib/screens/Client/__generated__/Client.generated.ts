@@ -66,6 +66,7 @@ export const ClientProfileDocument = gql`
       }
       hmisProfiles {
         agency
+        hmisId
         id
       }
       nickname

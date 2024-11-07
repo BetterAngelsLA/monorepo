@@ -455,12 +455,14 @@ export enum HmisAgencyEnum {
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
+  hmisId: Scalars['String']['input'];
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type HmisProfileType = {
   __typename?: 'HmisProfileType';
   agency: HmisAgencyEnum;
+  hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
 };
 

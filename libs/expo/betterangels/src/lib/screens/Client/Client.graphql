@@ -31,6 +31,7 @@ query ClientProfile($id: ID!) {
       }
       hmisProfiles {
         agency
+        hmisId
         id
       }
       nickname
