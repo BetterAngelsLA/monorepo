@@ -278,14 +278,13 @@ class ShelterResource(resources.ModelResource):
                 )
                 try:
                     addy_formatted_data = addy_data.json()["results"][0]["formatted_address"]
-                    if addy_formatted_data.count(",") < 3:
-                        raise IndexError
                     addy_for_location_method = addy_data.json()["results"][0]
                     addy_for_location_method["address_components"] = json.dumps(
                         addy_for_location_method["address_components"]
                     )
                     addy_address = Location.get_or_create_address(addy_for_location_method)
-                    print(str(addy_address)[0:0], end="")  # Useless variable to get mypy to stop crying
+                    if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
+                        raise IndexError
                     row["address"] = addy_formatted_data
                 except IndexError:
                     print(f"Address at {self.count} bad")
