@@ -82,6 +82,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("height_in_inches", models.FloatField(blank=True, null=True)),
+                ("hmis_id", models.CharField(blank=True, db_index=True, max_length=50, null=True, unique=True)),
                 (
                     "living_situation",
                     django_choices_field.fields.TextChoicesField(
@@ -347,6 +348,7 @@ class Migration(migrations.Migration):
             name="HmisProfile",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("hmis_id", models.CharField(max_length=50)),
                 (
                     "agency",
                     django_choices_field.fields.TextChoicesField(
@@ -370,6 +372,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+             options={
+                "constraints": [models.UniqueConstraint(fields=("hmis_id", "agency"), name="unique_hmis_id_agency")],
+            },
         ),
     ]
 

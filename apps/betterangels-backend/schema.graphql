@@ -432,11 +432,13 @@ enum HmisAgencyEnum {
 
 input HmisProfileInput {
   id: ID
+  hmisId: String!
   agency: HmisAgencyEnum!
 }
 
 type HmisProfileType {
   id: ID!
+  hmisId: String!
   agency: HmisAgencyEnum!
 }
 

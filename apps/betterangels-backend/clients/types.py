@@ -112,6 +112,7 @@ class ClientProfileFilter:
 @strawberry_django.type(HmisProfile)
 class HmisProfileType:
     id: auto
+    hmis_id: auto
     agency: auto
 
 

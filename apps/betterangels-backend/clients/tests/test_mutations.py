@@ -46,6 +46,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClientOther": "bestie",
         }
         hmis_profile = {
+            "hmisId": "12345678",
             "agency": HmisAgencyEnum.LAHSA.name,
         }
         household_member = {

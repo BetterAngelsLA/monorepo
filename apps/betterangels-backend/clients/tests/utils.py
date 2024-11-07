@@ -70,6 +70,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
             hmisProfiles {
                 id
+                hmisId
                 agency
             }
             householdMembers {
@@ -153,9 +154,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_profile_1_contact_2,
         ]
         self.client_profile_1_hmis_profile_1 = {
+            "hmisId": "HMISidLAHSA1",
             "agency": HmisAgencyEnum.LAHSA.name,
         }
         self.client_profile_1_hmis_profile_2 = {
+            "hmisId": "HMISidPASADENA1",
             "agency": HmisAgencyEnum.PASADENA.name,
         }
         self.client_1_hmis_profiles = [

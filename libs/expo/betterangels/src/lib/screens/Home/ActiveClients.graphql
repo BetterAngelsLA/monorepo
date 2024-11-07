@@ -45,6 +45,7 @@ query ClientProfiles(
       residenceAddress
       hmisProfiles {
         id
+        hmisId
         agency
       }
       profilePhoto {

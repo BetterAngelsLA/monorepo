@@ -90,6 +90,7 @@ export const ClientProfilesDocument = gql`
       residenceAddress
       hmisProfiles {
         id
+        hmisId
         agency
       }
       profilePhoto {

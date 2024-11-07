@@ -7,6 +7,20 @@ from django.db import migrations, models
 from django.db.models.query import Q
 
 
+def add_hmis_profile(apps, schema_editor):
+    ClientProfile = apps.get_model("accounts", "ClientProfile")
+    HmisProfile = apps.get_model("accounts", "HmisProfile")
+
+    client_profiles_with_hmis_id = ClientProfile.objects.exclude(Q(hmis_id=None) | Q(hmis_id=""))
+
+    for client_profile in client_profiles_with_hmis_id:
+        HmisProfile.objects.create(
+            client_profile=client_profile,
+            hmis_id=client_profile.hmis_id,
+            agency=clients.enums.HmisAgencyEnum.LAHSA,
+        )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -18,6 +32,7 @@ class Migration(migrations.Migration):
             name="HmisProfile",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("hmis_id", models.CharField(max_length=50)),
                 (
                     "agency",
                     django_choices_field.fields.TextChoicesField(
@@ -42,4 +57,9 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
+            migrations.AddConstraint(
+            model_name="hmisprofile",
+            constraint=models.UniqueConstraint(fields=("hmis_id", "agency"), name="unique_hmis_id_agency"),
+        ),
+        migrations.RunPython(add_hmis_profile),
     ]
