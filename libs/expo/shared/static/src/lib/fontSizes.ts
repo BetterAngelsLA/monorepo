@@ -12,6 +12,11 @@ export const FontSizes = {
     lineHeight: 26,
   },
 
+  ms: {
+    fontSize: 15,
+    lineHeight: 23,
+  },
+
   md: {
     fontSize: 16,
     lineHeight: 24,
