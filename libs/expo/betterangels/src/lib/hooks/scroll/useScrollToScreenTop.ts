@@ -1,9 +1,13 @@
-import { RefObject, useCallback } from 'react';
+import { RefObject, useCallback, useEffect, useRef } from 'react';
 import { Keyboard, ScrollView, View, findNodeHandle } from 'react-native';
+
+type TListener = { remove: () => void };
 
 export default function useScrollToScreenTop<T extends View>(
   parentScrollViewRef?: RefObject<ScrollView>
 ) {
+  const keyboardDidShowListenerRef = useRef<TListener | null>(null);
+
   const scrollToTop = useCallback(
     (fieldRef: RefObject<T>) => {
       const parentScrollView = parentScrollViewRef?.current;
@@ -37,16 +41,25 @@ export default function useScrollToScreenTop<T extends View>(
 
       measureAndScroll();
 
-      const keyboardDidShowListener = Keyboard.addListener(
+      keyboardDidShowListenerRef.current?.remove();
+
+      keyboardDidShowListenerRef.current = Keyboard.addListener(
         'keyboardDidShow',
         () => {
           measureAndScroll();
-          keyboardDidShowListener.remove();
+          keyboardDidShowListenerRef.current?.remove();
+          keyboardDidShowListenerRef.current = null;
         }
       );
     },
     [parentScrollViewRef]
   );
+
+  useEffect(() => {
+    return () => {
+      keyboardDidShowListenerRef.current?.remove();
+    };
+  }, [parentScrollViewRef]);
 
   return { scrollToTop };
 }
