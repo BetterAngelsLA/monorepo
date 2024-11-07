@@ -23,6 +23,7 @@ export { default as Input } from './Input';
 export { default as InteractionCamera } from './InteractionCamera';
 export { default as Loading } from './Loading';
 export { default as MediaPickerModal } from './MediaPickerModal';
+export { default as Picker } from './Picker';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
 export { default as Radio } from './Radio';
