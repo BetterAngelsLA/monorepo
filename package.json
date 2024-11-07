@@ -93,6 +93,7 @@
     "@testing-library/jest-native": "5.4.3",
     "@testing-library/react-native": "12.5.1",
     "@types/apollo-upload-client": "^18.0.0",
+    "@types/google.maps": "^3.58.1",
     "@types/jest": "^29.4.0",
     "@types/node": "18.19.14",
     "@types/react": "18.2.79",
