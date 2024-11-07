@@ -4,6 +4,8 @@ import { LA_COUNTY_CENTER } from './constants.google.maps';
 import { formatAutocompleteParams } from './formatParams';
 import { TPlaceLatLng, TPlacesPrediction } from './types';
 
+const MILES_TO_DEGREES_AT_EQUATOR = 69.172;
+
 type TGetPlaceAutocomplete = {
   baseUrl: string;
   query: string;
@@ -23,8 +25,7 @@ export async function getPlaceAutocomplete(props: TGetPlaceAutocomplete) {
     return [];
   }
 
-  // 1 degree of lat/long is approximately 69 miles
-  const boundsRadiusDegrees = boundsRadiusMiles / 69;
+  const boundsRadiusDegrees = boundsRadiusMiles / MILES_TO_DEGREES_AT_EQUATOR;
 
   const areaBounds: google.maps.LatLngBoundsLiteral = {
     north: boundsCenter.lat + boundsRadiusDegrees,
