@@ -13,7 +13,7 @@ import {
 } from '../../services';
 import { AddressOption } from './AddressOption';
 
-const DEFAULT_DEBOUNCE_MS = 300;
+const DEFAULT_DEBOUNCE_MS = 100;
 
 type TAddressAutocomplete<TForm extends FieldValues> = {
   name: Path<TForm>;
