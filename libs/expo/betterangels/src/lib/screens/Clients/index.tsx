@@ -178,7 +178,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
-          placeholder="Search by name"
+          placeholder="Search by name or HMIS ID"
           autoCorrect={false}
           onChangeText={onChange}
           onDelete={() => {
