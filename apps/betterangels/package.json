@@ -144,6 +144,7 @@
     "@swc-node/register": "*",
     "@swc/core": "*",
     "@swc/helpers": "*",
-    "jest-environment-node": "*"
+    "jest-environment-node": "*",
+    "@types/google.maps": "*"
   }
 }
