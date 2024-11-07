@@ -4,6 +4,7 @@ import {
   KeyboardToolbarProvider,
   SnackbarProvider,
   UserProvider,
+  FeatureFlagProvider,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
@@ -61,6 +62,7 @@ function RootLayoutNav() {
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
+        <FeatureFlagProvider>
         <KeyboardProvider>
           <KeyboardToolbarProvider>
             <UserProvider>
@@ -125,6 +127,7 @@ function RootLayoutNav() {
             </UserProvider>
           </KeyboardToolbarProvider>
         </KeyboardProvider>
+        </FeatureFlagProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
   );
