@@ -10,8 +10,9 @@ import {
   TextBold,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
+import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   RelationshipTypeEnum,
@@ -25,10 +26,11 @@ type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 interface IContactProps {
   index: number;
   remove: (index: number) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function Contact(props: IContactProps) {
-  const { index, remove } = props;
+  const { index, remove, scrollRef } = props;
   const {
     control,
     setValue,
@@ -162,6 +164,9 @@ export default function Contact(props: IContactProps) {
         control={control}
         label="Mailing Address"
         placeholder="Mailing Address"
+        focusScroll={{
+          scrollViewRef: scrollRef,
+        }}
       />
 
       {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
