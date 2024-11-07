@@ -44,6 +44,7 @@ django-structlog = "^8.1.0"
 deepdiff = "^8.0.1"
 django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.0.0" }
 django-ckeditor-5 = "^0.2.13"
+newrelic = "^10.2.0"
 
 [build-system]
 requires = ["poetry-core"]
