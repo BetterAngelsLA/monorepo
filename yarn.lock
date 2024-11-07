@@ -2472,8 +2472,8 @@ __metadata:
   linkType: hard
 
 "@expo/fingerprint@npm:^0.10.2":
-  version: 0.10.2
-  resolution: "@expo/fingerprint@npm:0.10.2"
+  version: 0.10.3
+  resolution: "@expo/fingerprint@npm:0.10.3"
   dependencies:
     "@expo/spawn-async": "npm:^1.7.2"
     chalk: "npm:^4.1.2"
@@ -2485,7 +2485,7 @@ __metadata:
     semver: "npm:^7.6.0"
   bin:
     fingerprint: bin/cli.js
-  checksum: 10/639f95e02814f76009399421d182097646296a9dbefeec6f3c14f52d55da4153655ed89d1176aea93b690a73c913138e12327bd3bf393ca71fdb144815590522
+  checksum: 10/fc39ed83ac9e2c9f9c9903f85ca5bb3b920740ffaa6b2a742af6563c1bec431b4c56c20f595c0b9931cf645e952dcc2f5deba948b60deacde510e695f27000f6
   languageName: node
   linkType: hard
 
@@ -4434,6 +4434,7 @@ __metadata:
     "@nxlv/python": "npm:17.0.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-community/datetimepicker": "npm:8.0.1"
+    "@react-native-picker/picker": "npm:2.7.5"
     "@storybook/addon-essentials": "npm:^7.6.20"
     "@storybook/addon-react-native-web": "npm:^0.0.24"
     "@storybook/core-server": "npm:^7.6.20"
@@ -6377,6 +6378,16 @@ __metadata:
     react-native-windows:
       optional: true
   checksum: 10/d6ec07197ad12ca49188c17b5dc5c62626f55381b20f474a36314ce4b8a3705e366244f8a565f38525730834c48dfe59c5b3b5ae17dafc82618ec2a8c05d1b32
+  languageName: node
+  linkType: hard
+
+"@react-native-picker/picker@npm:2.7.5":
+  version: 2.7.5
+  resolution: "@react-native-picker/picker@npm:2.7.5"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/fb2111753ef46365799e5a7ef0f4a542244788054de4145cb982bd2b15a86daf4e0794503fb69918d7cbcb67e2f9719f984143764ae79d858f6bee9bd6cad473
   languageName: node
   linkType: hard
 

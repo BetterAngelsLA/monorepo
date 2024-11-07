@@ -68,10 +68,10 @@ export type Docs = {
   BirthCertificate: ReactNativeFile | undefined;
   PhotoId: ReactNativeFile | undefined;
   SocialSecurityCard: ReactNativeFile | undefined;
-  ConsentForm: ReactNativeFile[] | undefined;
-  HmisForm: ReactNativeFile[] | undefined;
-  IncomeForm: ReactNativeFile[] | undefined;
-  OtherClientDocument: ReactNativeFile[] | undefined;
+  ConsentForm?: ReactNativeFile[];
+  HmisForm?: ReactNativeFile[];
+  IncomeForm?: ReactNativeFile[];
+  OtherClientDocument?: ReactNativeFile[];
 };
 
 export type ITab =
