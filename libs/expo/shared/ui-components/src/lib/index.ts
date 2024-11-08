@@ -1,5 +1,6 @@
 export { default as Accordion } from './Accordion';
 export { default as Alert } from './Alert';
+export { default as AutocompleteInput } from './AutocompleteInput';
 export { default as Avatar } from './Avatar';
 export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
@@ -33,9 +34,9 @@ export { default as Select } from './Select';
 export { default as Snackbar } from './Snackbar';
 export { default as StatusBadge } from './StatusBadge';
 export { default as Tag } from './Tag';
-export { default as Textarea } from './Textarea';
 export { default as TextBold } from './TextBold';
 export { default as TextButton } from './TextButton';
 export { default as TextMedium } from './TextMedium';
 export { default as TextRegular } from './TextRegular';
+export { default as Textarea } from './Textarea';
 export * from './types';

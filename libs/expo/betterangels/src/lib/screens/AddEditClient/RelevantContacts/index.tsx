@@ -71,7 +71,12 @@ export default function RelevantContacts(props: IRelevantContactsProps) {
           }}
         >
           {sortedContacts.map((_, index) => (
-            <Contact remove={remove} key={index} index={index} />
+            <Contact
+              remove={remove}
+              scrollRef={scrollRef}
+              key={index}
+              index={index}
+            />
           ))}
           <View style={{ alignItems: 'flex-start' }}>
             <TextButton

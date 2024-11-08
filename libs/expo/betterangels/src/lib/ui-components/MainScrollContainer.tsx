@@ -9,6 +9,7 @@ const androidToolbarHeightApprox = 50;
 
 const keyboardToolbarHeight =
   Platform.OS === 'ios' ? iOSToolbarHeightApprox : androidToolbarHeightApprox;
+
 interface IMainScrollContainerProps {
   children: ReactNode;
   bg?: string;
