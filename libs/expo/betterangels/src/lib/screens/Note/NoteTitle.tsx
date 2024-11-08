@@ -15,7 +15,8 @@ export default function NoteTitle({
         {note?.purpose}
       </TextBold>
       <TextRegular size="sm" mb="sm">
-        {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
+        {!!note?.interactedAt &&
+          format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
       </TextRegular>
       {!!note?.team && (
         <>

@@ -38,9 +38,19 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     client?.clientProfile.user.lastName ?? ''
   }`.trim();
 
-  const formattedDob = client?.clientProfile.dateOfBirth
-    ? format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')
-    : null;
+  const clientDateOfBirth = client?.clientProfile.dateOfBirth;
+  let formattedDob: string | null = '';
+
+  try {
+    if (clientDateOfBirth) {
+      formattedDob = format(clientDateOfBirth, 'MM/dd/yyyy');
+    }
+  } catch (e) {
+    console.warn(
+      `invalid dateOfBirth [${clientDateOfBirth}] for clientProfile ${client?.clientProfile.id}`
+    );
+  }
+
   const clientAge = client?.clientProfile.age;
   const displayDob =
     formattedDob && clientAge ? `${formattedDob} (${clientAge})` : null;
