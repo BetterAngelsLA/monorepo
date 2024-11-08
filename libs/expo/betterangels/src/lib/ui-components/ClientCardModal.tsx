@@ -38,7 +38,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
       console.error(err);
 
       showSnackbar({
-        message: `Sorry, there was an error creatign a new interaction.`,
+        message: `Sorry, there was an error creating a new interaction.`,
         type: 'error',
       });
     }

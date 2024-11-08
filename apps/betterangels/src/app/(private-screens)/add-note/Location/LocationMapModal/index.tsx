@@ -311,7 +311,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         },
       });
       if (!locationData) {
-        throw new Error('Error updating interaction location', updateError);
+        throw new Error(`Error updating interaction location: ${updateError}`);
       }
     } catch (err) {
       console.error(err);
