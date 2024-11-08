@@ -39,7 +39,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
   }`.trim();
 
   const clientDateOfBirth = client?.clientProfile.dateOfBirth;
-  let formattedDob: string | null = '';
+  let formattedDob: string | null = null;
 
   try {
     if (clientDateOfBirth) {
