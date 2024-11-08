@@ -8,10 +8,10 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useSnackbar } from 'libs/expo/betterangels/src/lib/hooks';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
 import {
   ClientProfileDocument,
   ClientProfileQuery,
