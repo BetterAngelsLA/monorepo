@@ -1,3 +1,5 @@
+from os import name
+
 from django.test import TestCase
 from pghistory.models import Events
 from shelters.enums import GeneralServiceChoices, PopulationChoices, ShelterChoices
@@ -67,5 +69,4 @@ class ShelterModelTestCase(TestCase):
         shelter.shelter_types.add(shelter_type)
         shelter.populations.add(population)
         shelter.general_services.add(general_service_1, general_service_2)
-        shelter.save()
         return shelter
