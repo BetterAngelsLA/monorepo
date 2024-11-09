@@ -4,5 +4,6 @@ export * from './hooks';
 export * from './maps';
 export * from './providers';
 export * from './screens';
+export * from './services';
 export * from './static';
 export * from './ui-components';
