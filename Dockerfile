@@ -1,4 +1,4 @@
-FROM python:3.12.2-bullseye AS base
+FROM python:3.13.0-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -92,7 +92,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 # Python
-RUN pip install poetry==1.8.3
+RUN pip install poetry==1.8.4
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
