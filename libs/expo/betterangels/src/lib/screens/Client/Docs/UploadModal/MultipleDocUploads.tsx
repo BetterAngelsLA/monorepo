@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { useSnackbar } from '../../../../hooks';
 import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
@@ -30,6 +31,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     ],
   });
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const uploadDocuments = async () => {
     const documents = docs?.[docType];
@@ -59,6 +61,11 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
       await Promise.all(uploads);
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
+
+      showSnackbar({
+        message: `Sorry, there was an error with the file upload.`,
+        type: 'error',
+      });
     }
 
     setTab(undefined);
