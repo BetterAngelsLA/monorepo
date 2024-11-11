@@ -27,6 +27,7 @@ import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import SubmittedModal from './SubmittedModal';
+import Team from './Team';
 
 const renderModal = (
   isRevert: string | undefined,
@@ -248,6 +249,7 @@ export default function AddNote() {
       >
         <Purpose purpose={data.note.purpose} {...props} />
         <DateAndTime interactedAt={data.note.interactedAt} {...props} />
+        <Team team={data.note.team} {...props} />
         <Location
           address={data.note.location?.address}
           point={data.note.location?.point}
