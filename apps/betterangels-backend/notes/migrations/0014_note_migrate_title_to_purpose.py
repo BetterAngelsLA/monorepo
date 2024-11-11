@@ -6,7 +6,7 @@ from django.db.models.query import Q
 
 def migrate_title_to_purpose(apps, schema_editor):
     Note = apps.get_model("notes", "Note")
-    notes = Note.objects.exclude(Q(purpose__isnull=True) | Q(purpose__exact=""))
+    notes = Note.objects.filter(Q(purpose__isnull=True) | Q(purpose__exact=""))
     for note in notes:
         note.purpose = note.title
         note.save()
