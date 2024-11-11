@@ -378,7 +378,6 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
-            submitTitle="Submit"
             cancel={
               <TextButton
                 onPress={router.back}
