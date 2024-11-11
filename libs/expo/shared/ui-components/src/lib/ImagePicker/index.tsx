@@ -127,7 +127,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
-      console.log(err);
+      console.error(err);
     }
   };
 
