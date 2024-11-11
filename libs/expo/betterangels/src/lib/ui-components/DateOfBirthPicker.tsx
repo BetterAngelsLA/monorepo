@@ -18,9 +18,9 @@ export default function DateOfBirthPicker(props: IDateOfBirthPickerProps) {
       minDate={new Date('1900-01-01')}
       mode="date"
       format="MM/dd/yyyy"
-      placeholder="MM/DD/YYYY"
+      placeholder="Enter Date of Birth"
       mt="xs"
-      value={value || new Date()}
+      value={value}
       setValue={setValue}
     />
   );
