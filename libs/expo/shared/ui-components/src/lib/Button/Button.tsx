@@ -31,8 +31,6 @@ const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
   auto: 'auto',
 };
 
-const LOADING_WIDTH_MULTIPLIER = 2.2;
-
 const PRESSED_HEIGHT = {
   sm: 30,
   md: 38,
@@ -188,14 +186,6 @@ export function Button(props: IButtonProps) {
     weight = 'bold',
     containerStyle,
   } = props;
-
-
-  const loadingButtonWidth = loading
-    ? typeof SIZES[size] === 'number'
-      ? (SIZES[size] as number) * LOADING_WIDTH_MULTIPLIER
-      : SIZES[size]
-    : SIZES[size];
-
   return (
     <View
       style={[
@@ -203,7 +193,6 @@ export function Button(props: IButtonProps) {
         containerStyle,
         {
           height: HEIGHT[height],
-          width: loadingButtonWidth,
         },
       ]}
     >
@@ -217,7 +206,7 @@ export function Button(props: IButtonProps) {
           styles.button,
           style,
           {
-            width: loadingButtonWidth,
+            width: SIZES[size],
             borderRadius,
             borderWidth,
             alignItems: align,
