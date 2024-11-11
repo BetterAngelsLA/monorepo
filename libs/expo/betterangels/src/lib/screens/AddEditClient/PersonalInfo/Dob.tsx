@@ -20,10 +20,10 @@ export default function Dob() {
         pattern={Regex.date}
         mode="date"
         format="MM/dd/yyyy"
-        placeholder="MM/DD/YYYY"
+        placeholder="Enter Date of Birth"
         minDate={new Date('1900-01-01')}
         mt="xs"
-        value={dateOfBirth || new Date()}
+        value={dateOfBirth}
         setValue={(date) => setValue('dateOfBirth', date)}
       />
     </CardWrapper>
