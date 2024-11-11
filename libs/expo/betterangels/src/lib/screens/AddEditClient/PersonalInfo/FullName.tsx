@@ -1,25 +1,57 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { CardWrapper, Input } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import {
+  CardWrapper,
+  Input,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Text } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
 
+type TFullNameForm = (UpdateClientProfileInput | CreateClientProfileInput) & {
+  emptyFormError: string;
+};
+
 export default function FullName() {
   const {
     control,
     formState: { errors },
+    setError,
     setValue,
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+    clearErrors,
+  } = useFormContext<TFullNameForm>();
 
   const onReset = () => {
     setValue('user.firstName', '');
     setValue('user.middleName', '');
     setValue('user.lastName', '');
     setValue('nickname', '');
+    clearErrors('emptyFormError');
   };
+
+  const [firstName, middleName, lastName, nickname] = useWatch({
+    control,
+    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
+  });
+
+  useEffect(() => {
+    const hasValue = firstName || middleName || lastName || nickname;
+
+    if (hasValue) {
+      clearErrors('emptyFormError');
+
+      return;
+    }
+
+    setError('emptyFormError', {
+      type: 'manual',
+      message: 'Filling out one of the fields is required',
+    });
+  }, [firstName, middleName, lastName, nickname, setError, clearErrors]);
 
   return (
     <CardWrapper
@@ -29,16 +61,22 @@ export default function FullName() {
           Full Name<Text style={{ color: Colors.ERROR }}>*</Text>
         </>
       }
-      subtitle="(Filling out one of the fields is required)"
     >
+      {!errors.emptyFormError && (
+        <TextRegular size="sm" mb="xs">
+          (Filling out one of the fields is required)
+        </TextRegular>
+      )}
+
+      {errors.emptyFormError && (
+        <TextRegular size="sm" mb="xs" color={Colors.ERROR}>
+          {errors.emptyFormError.message}
+        </TextRegular>
+      )}
+
       <Input
         placeholder="Enter First Name"
         autoCorrect={false}
-        required
-        error={!!errors.user?.firstName}
-        rules={{
-          required: true,
-        }}
         label="First Name"
         name="user.firstName"
         control={control}
