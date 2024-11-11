@@ -9,6 +9,7 @@ import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import {
   ClientProfileQuery,
   useCreateNoteMutation,
@@ -26,6 +27,7 @@ interface IInteractionsSortingProps {
 export default function InteractionsSorting(props: IInteractionsSortingProps) {
   const { notes, sort, setSort, client } = props;
   const [createNote] = useCreateNoteMutation();
+  const { showSnackbar } = useSnackbar();
   function onSort(sorting: 'list' | 'location' | 'sort') {
     setSort(sorting);
   }
@@ -52,6 +54,11 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
       }
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     }
   }
 

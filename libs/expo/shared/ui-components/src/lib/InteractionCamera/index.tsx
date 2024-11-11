@@ -85,7 +85,7 @@ export default function InteractionCamera(props: IInteractionCameraProps) {
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
-      console.log(err);
+      console.error(err);
     }
   };
 
