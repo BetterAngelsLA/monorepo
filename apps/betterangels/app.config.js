@@ -37,7 +37,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.25', // Does this number reset when you bump the version number?
+      buildNumber: '1.0.25',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -74,7 +74,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 25, // Does this number reset when you bump the version number?
+      versionCode: 25,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
