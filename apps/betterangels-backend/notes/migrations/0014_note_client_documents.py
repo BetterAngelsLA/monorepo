@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="note",
             name="client_documents",
-            field=models.ManyToManyField(blank=True, related_name="client_documents", to="common.attachment"),
+            field=models.ManyToManyField(blank=True, related_name="notes", to="common.attachment"),
         ),
     ]
