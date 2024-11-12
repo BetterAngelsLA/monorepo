@@ -8,6 +8,7 @@ import HmisProfiles from './HmisProfiles';
 import LivingSituation from './LivingSituation';
 import PreferredLanguage from './PreferredLanguage';
 import VeteranStatus from '../VeteranStatus';
+import CaliforniaId from './CaliforniaId';
 
 interface IPersonalInfoProps {
   expanded: undefined | string | null;
@@ -39,6 +40,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
         >
           <FullName />
           <Dob />
+          <CaliforniaId />
           <HmisProfiles />
           <PreferredLanguage />
           <VeteranStatus />

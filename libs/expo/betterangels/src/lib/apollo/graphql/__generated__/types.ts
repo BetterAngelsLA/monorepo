@@ -177,6 +177,7 @@ export type ClientProfileType = {
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  californiaId?: Maybe<Scalars['String']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
@@ -243,6 +244,7 @@ export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
@@ -850,7 +852,7 @@ export type NoteTypeRequestedServicesArgs = {
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 
@@ -1228,6 +1230,7 @@ export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
