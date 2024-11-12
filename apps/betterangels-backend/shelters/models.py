@@ -10,8 +10,8 @@ from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
-    CareerServiceChoices,
     CityChoices,
+    DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
     GeneralServiceChoices,
@@ -19,15 +19,32 @@ from .enums import (
     ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
-    PopulationChoices,
+    RoomStyleChoices,
     ShelterChoices,
-    SleepingChoices,
+    ShelterProgramChoices,
     SPAChoices,
+    SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
+    TrainingServiceChoices,
 )
 
 
-# Advanced Info
+# Summary Info
+class Demographic(models.Model):
+    name = TextChoicesField(choices_enum=DemographicChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class SpecialSituationRestriction(models.Model):
+    name = TextChoicesField(choices_enum=SpecialSituationRestrictionChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class ShelterType(models.Model):
     name = TextChoicesField(choices_enum=ShelterChoices, unique=True, blank=True, null=True)
 
@@ -35,13 +52,44 @@ class ShelterType(models.Model):
         return str(self.name)
 
 
-class Population(models.Model):
-    name = TextChoicesField(choices_enum=PopulationChoices, unique=True, blank=True, null=True)
+# Sleeping Details
+class RoomStyle(models.Model):
+    name = TextChoicesField(choices_enum=RoomStyleChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
+# Shelter Details
+class Accessibility(models.Model):
+    name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Storage(models.Model):
+    name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Pet(models.Model):
+    name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Parking(models.Model):
+    name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+# Services Offered
 class ImmediateNeed(models.Model):
     name = TextChoicesField(choices_enum=ImmediateNeedChoices, unique=True, blank=True, null=True)
 
@@ -63,42 +111,14 @@ class HealthService(models.Model):
         return str(self.name)
 
 
-class CareerService(models.Model):
-    name = TextChoicesField(choices_enum=CareerServiceChoices, unique=True, blank=True, null=True)
+class TrainingService(models.Model):
+    name = TextChoicesField(choices_enum=TrainingServiceChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
-class Funder(models.Model):
-    name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Accessibility(models.Model):
-    name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Storage(models.Model):
-    name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Parking(models.Model):
-    name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-# Restrictions
+# Entry Requirements
 class EntryRequirement(models.Model):
     name = TextChoicesField(choices_enum=EntryRequirementChoices, unique=True, blank=True, null=True)
 
@@ -106,6 +126,7 @@ class EntryRequirement(models.Model):
         return str(self.name)
 
 
+# Ecosystem Information
 class City(models.Model):
     name = TextChoicesField(choices_enum=CityChoices, unique=True, blank=True, null=True)
 
@@ -120,16 +141,15 @@ class SPA(models.Model):
         return str(self.name)
 
 
-class Pet(models.Model):
-    name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
+class ShelterProgram(models.Model):
+    name = TextChoicesField(choices_enum=ShelterProgramChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
-# Sleeping Info
-class SleepingOption(models.Model):
-    name = TextChoicesField(choices_enum=SleepingChoices, unique=True, blank=True, null=True)
+class Funder(models.Model):
+    name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
@@ -139,34 +159,50 @@ class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
     email = models.EmailField(max_length=254, null=True, blank=True)
     phone = PhoneNumberField()
     website = models.URLField(null=True, blank=True)
 
-    # Other Information
+    # Summary Information
     description = CKEditor5Field(null=True)
-    how_to_enter = CKEditor5Field(blank=True, null=True)
-    mandatory_worship_attendance = models.BooleanField(null=True, blank=True)
-
-    # Location Fields
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-
-    # Advanced Info
+    demographics = models.ManyToManyField(Demographic)
+    special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
     shelter_types = models.ManyToManyField(ShelterType)
-    populations = models.ManyToManyField(Population)
-    immediate_needs = models.ManyToManyField(ImmediateNeed)
-    general_services = models.ManyToManyField(GeneralService)
-    health_services = models.ManyToManyField(HealthService)
-    career_services = models.ManyToManyField(CareerService)
-    funders = models.ManyToManyField(Funder)
+
+    # Sleeping Details
+    total_beds = models.PositiveIntegerField(blank=True, null=True)
+    room_styles = models.ManyToManyField(RoomStyle)
+
+    # Shelter Details
     accessibility = models.ManyToManyField(Accessibility)
     storage = models.ManyToManyField(Storage)
+    pets = models.ManyToManyField(Pet)
     parking = models.ManyToManyField(Parking)
 
     # Restrictions
+    max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
+    curfew = models.TimeField(null=True, blank=True)
+    on_site_security = models.BooleanField(null=True, blank=True)
+    other_rules = CKEditor5Field(null=True)
+
+    # Services Offered
+    immediate_needs = models.ManyToManyField(ImmediateNeed)
+    general_services = models.ManyToManyField(GeneralService)
+    health_services = models.ManyToManyField(HealthService)
+    training_services = models.ManyToManyField(TrainingService)
+    other_services = CKEditor5Field(null=True)
+
+    # Entry Requirements
+    entry_info = CKEditor5Field(null=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
+    bed_fees = models.TextField(null=True, blank=True)
+    program_fees = models.TextField(null=True, blank=True)
+
+    # Ecosystem Information
     cities = models.ManyToManyField(City)
-    city_district = models.PositiveSmallIntegerField(
+    spa = models.ManyToManyField(SPA)
+    city_council_district = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(15)],
         null=True,
         blank=True,
@@ -178,21 +214,12 @@ class Shelter(BaseModel):
         blank=True,
         verbose_name="Supervisorial District (1-5)",
     )
-    spa = models.ManyToManyField(SPA)
-    pets = models.ManyToManyField(Pet)
-    curfew = models.TimeField(null=True, blank=True)
-    max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
-    security = models.BooleanField(null=True, blank=True)
-    drugs = models.BooleanField(null=True, blank=True)
-    program_fees = models.BooleanField(null=True, blank=True)
+    funders = models.ManyToManyField(Funder)
 
-    # Bed Information
-    fees = CKEditor5Field(blank=True, null=True)
-    total_beds = models.PositiveIntegerField(blank=True, null=True)
-    sleeping_options = models.ManyToManyField(SleepingOption)
-
-    # Administration
-    is_reviewed = models.BooleanField(default=False)
+    # Admin Fields
+    status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
+    # last_action =
+    # contact_info =
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
