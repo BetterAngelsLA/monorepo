@@ -57,7 +57,7 @@ class ClientProfileOrder:
 
 
 @strawberry.input
-class UserSearchInput:
+class ClientSearchInput:
     first_name: str
     last_name: str
     middle_name: str | None = None
@@ -114,11 +114,11 @@ class ClientProfileFilter:
         return (queryset, Q())
 
     @strawberry_django.filter_field
-    def full_name_search(
+    def search_client(
         self,
         queryset: QuerySet,
         info: Info,
-        value: UserSearchInput,
+        value: ClientSearchInput,
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
         """

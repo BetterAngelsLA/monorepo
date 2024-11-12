@@ -220,7 +220,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("Todd Gustav", "Chavez", None, 1),  # exact match on first & last name
         ],
     )
-    def test_client_profiles_query_full_name_search(
+    def test_client_profiles_query_search_client(
         self, first_name: str, last_name: str, middle_name: str | None, expected_client_profile_count: int
     ) -> None:
         """
@@ -241,8 +241,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
         query = """
-            query ClientProfiles($fullNameSearch: UserSearchInput) {
-                clientProfiles(filters: {fullNameSearch: $fullNameSearch}) {
+            query ClientProfiles($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
                     id
                 }
             }
@@ -250,7 +250,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         response = self.execute_graphql(
             query,
-            variables={"fullNameSearch": {"firstName": first_name, "lastName": last_name, "middleName": middle_name}},
+            variables={"searchClient": {"firstName": first_name, "lastName": last_name, "middleName": middle_name}},
         )
 
         client_profiles = response["data"]["clientProfiles"]

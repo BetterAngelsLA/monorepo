@@ -157,9 +157,9 @@ export type ClientProfileFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ClientProfileFilter>;
   OR?: InputMaybe<ClientProfileFilter>;
-  fullNameSearch?: InputMaybe<UserSearchInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  searchClient?: InputMaybe<ClientSearchInput>;
 };
 
 export type ClientProfileOrder = {
@@ -230,6 +230,12 @@ export type ClientProfileTypeDocReadyDocumentsArgs = {
 
 export type ClientProfileTypeOtherDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ClientSearchInput = {
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateClientDocumentInput = {
@@ -1325,12 +1331,6 @@ export type UpdateUserInput = {
   hasAcceptedTos?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
-  middleName?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type UserSearchInput = {
-  firstName: Scalars['String']['input'];
-  lastName: Scalars['String']['input'];
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
