@@ -157,7 +157,7 @@ export type ClientProfileFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ClientProfileFilter>;
   OR?: InputMaybe<ClientProfileFilter>;
-  fullNameSearch?: InputMaybe<Scalars['String']['input']>;
+  fullNameSearch?: InputMaybe<UserSearchInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1325,6 +1325,12 @@ export type UpdateUserInput = {
   hasAcceptedTos?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UserSearchInput = {
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 

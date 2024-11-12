@@ -56,6 +56,13 @@ class ClientProfileOrder:
     id: auto
 
 
+@strawberry.input
+class UserSearchInput:
+    first_name: str
+    last_name: str
+    middle_name: str | None = None
+
+
 @filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
@@ -111,25 +118,25 @@ class ClientProfileFilter:
         self,
         queryset: QuerySet,
         info: Info,
-        value: Optional[str],
+        value: UserSearchInput,
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
         """
         Returns only exact match on first and last name (case insensitive).
-        Requires a "," delimiter to accommodate spaces in first/last names:
-        "{FIRST NAME},{LAST NAME}"
-
-        Ignores middle names and partial first name matches, e.g., "Marc,Ramirez" != "Marc Anthony,Ramirez"
+        Accepts optional middle name param. If middle name is passed, middle name must be an exact match as well.
         """
-        if not value:
+        if not value.first_name or not value.last_name:
             return (queryset.none(), Q())
 
-        try:
-            (first_name, last_name) = (i.strip() for i in value.split(","))
-        except ValueError:
-            return (queryset.none(), Q())
+        name_filters = {
+            "user__first_name__iexact": value.first_name.strip(),
+            "user__last_name__iexact": value.last_name.strip(),
+        }
 
-        queryset = queryset.filter(user__first_name__iexact=first_name, user__last_name__iexact=last_name)
+        if value.middle_name:
+            name_filters["user__middle_name__iexact"] = value.middle_name.strip()
+
+        queryset = queryset.filter(**name_filters)
 
         return (queryset, Q())
 

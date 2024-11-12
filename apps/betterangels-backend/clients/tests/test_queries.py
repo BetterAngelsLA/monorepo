@@ -207,19 +207,22 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(len(client_profiles), expected_client_profile_count)
 
     @parametrize(
-        ("full_name, expected_client_profile_count"),
+        ("first_name, last_name, middle_name, expected_client_profile_count"),
         [
-            ("", 0),  # no filters
-            ("Todd", 0),  # too few search fields
-            ("Todd,Gustav,Chavez", 0),  # too many search fields
-            ("Tod,Chavez", 0),  # inexact match on first name
-            ("Todd,Chave", 0),  # inexact match on last name
-            ("Todd,Chavez", 1),  # exact match on first & last name
-            ("Todd , Chavez", 1),  # exact match on first & last name
-            ("Todd Gustav,Chavez", 1),  # exact match on first & last name
+            ("", "", None, 0),  # no filters
+            ("Todd", "", None, 0),  # missing last name
+            ("Tod", "Chavez", None, 0),  # inexact match on first name
+            ("Todd", "Chave", None, 0),  # inexact match on last name
+            ("Todd", "Chavez", "Eleanor", 0),  # inexact match on middle name
+            ("Todd", "Chavez", None, 1),  # exact match on first & last name
+            (" Todd ", " Chavez ", None, 1),  # exact match on first & last name (whitespace stripped)
+            ("Todd", "Chavez", "Gustav", 1),  # exact match on first & last name & middle name
+            ("Todd Gustav", "Chavez", None, 1),  # exact match on first & last name
         ],
     )
-    def test_client_profiles_query_full_name_search(self, full_name: str, expected_client_profile_count: int) -> None:
+    def test_client_profiles_query_full_name_search(
+        self, first_name: str, last_name: str, middle_name: str | None, expected_client_profile_count: int
+    ) -> None:
         """
         Assert that when using the full name client search, only exact first & last name matches are returned.
         """
@@ -238,14 +241,17 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
         query = """
-            query ClientProfiles($fullNameSearch: String) {
+            query ClientProfiles($fullNameSearch: UserSearchInput) {
                 clientProfiles(filters: {fullNameSearch: $fullNameSearch}) {
                     id
                 }
             }
         """
 
-        response = self.execute_graphql(query, variables={"fullNameSearch": full_name})
+        response = self.execute_graphql(
+            query,
+            variables={"fullNameSearch": {"firstName": first_name, "lastName": last_name, "middleName": middle_name}},
+        )
 
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
