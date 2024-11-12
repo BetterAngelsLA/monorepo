@@ -368,9 +368,9 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 client_profile_id=self.client_profile_1["id"],
-                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
                 file_content=file_content,
                 file_name=file_name,
+                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
                 note_id=str(note.id) if create_with_note_id else None,
             )
 

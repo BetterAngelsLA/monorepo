@@ -73,7 +73,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                         attachmentType
                         originalFilename
                         namespace
-                        createdAt
                     }
                     client {
                         id
@@ -139,28 +138,25 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "title": "Updated Note",
             "clientDocuments": [
                 {
-                    "id": ANY,
-                    "file": {"name": ANY},
+                    "id": str(self.client_document_1.pk),
                     "attachmentType": AttachmentType.DOCUMENT.name,
-                    "originalFilename": "file_name.txt",
+                    "file": {"name": ANY},
                     "namespace": ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                    "createdAt": ANY,
+                    "originalFilename": "file_name.txt",
                 },
                 {
-                    "id": ANY,
-                    "file": {"name": ANY},
+                    "id": str(self.client_document_2.pk),
                     "attachmentType": AttachmentType.DOCUMENT.name,
-                    "originalFilename": "file_name.txt",
+                    "file": {"name": ANY},
                     "namespace": ClientDocumentNamespaceEnum.HMIS_FORM.name,
-                    "createdAt": ANY,
+                    "originalFilename": "file_name.txt",
                 },
                 {
-                    "id": ANY,
-                    "file": {"name": ANY},
+                    "id": str(self.client_document_3.pk),
                     "attachmentType": AttachmentType.DOCUMENT.name,
-                    "originalFilename": "file_name.txt",
+                    "file": {"name": ANY},
                     "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-                    "createdAt": ANY,
+                    "originalFilename": "file_name.txt",
                 },
             ],
             "location": {
@@ -217,7 +213,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             expected_note,
             note,
             ignore_order=True,
-            exclude_regex_paths=[r"\['(id|name|createdAt)'\]$"],
+            exclude_regex_paths=[r"\['name'\]$"],
         )
         self.assertFalse(note_differences)
 
