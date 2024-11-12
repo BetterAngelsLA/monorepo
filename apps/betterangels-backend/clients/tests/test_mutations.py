@@ -364,7 +364,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             user = ClientProfile.objects.get(id=self.client_profile_1["id"]).user
             note = baker.make(Note, organization=organization, client=user)
 
-        expected_query_count = 23
+        expected_query_count = 25 if create_with_note_id else 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 client_profile_id=self.client_profile_1["id"],
@@ -384,6 +384,27 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             Attachment.objects.filter(id=client_document_id).exists(),
             "The client document should have been created and persisted in the database.",
         )
+
+        if create_with_note_id:
+            query = """
+                query ViewNote($id: ID!) {
+                    note(pk: $id) {
+                        id
+                        clientDocuments {
+                            id
+                            file {
+                                name
+                            }
+                            attachmentType
+                            originalFilename
+                            namespace
+                        }
+                    }
+                }
+            """
+            result = self.execute_graphql(query, {"id": str(note.id)})["data"]["note"]
+            self.assertEqual(len(result["clientDocuments"]), 1)
+            self.assertEqual(result["clientDocuments"][0]["id"], client_document_id)
 
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]
