@@ -342,8 +342,8 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         file = SimpleUploadedFile(content=file_content, name=file_name)
         response = self.execute_graphql(
             """
-            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
-                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
+            mutation CreateClientDocument($clientProfileId: ID!, $noteId: ID, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
+                createClientDocument(data: { clientProfile: $clientProfileId, noteId: $noteId, namespace: $namespace, file: $file }) {
                     ... on OperationInfo {
                         messages {
                             kind
