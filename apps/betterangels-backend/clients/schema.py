@@ -173,8 +173,8 @@ class Mutation:
 
             if note_id := data.note_id:
                 Note = apps.get_model("notes", "Note")
-                note = Note.objects.get(id=note_id)
-                note.client_documents.add(client_document)
+                if note := Note.objects.filter(id=note_id, client=client_profile.user).first():
+                    note.client_documents.add(client_document)
 
             permissions = [
                 AttachmentPermissions.VIEW,
@@ -195,7 +195,6 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
