@@ -211,6 +211,7 @@ type ClientProfileType {
 input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
+  noteId: ID
   namespace: ClientDocumentNamespaceEnum!
 }
 
@@ -617,22 +618,23 @@ input NoteOrder {
 
 type NoteType {
   id: ID!
-  purpose: String
-  team: SelahTeamEnum
-  title: String
-  location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
-  moods: [MoodType!]!
-  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  publicDetails: String!
-  isSubmitted: Boolean!
   client: UserType
+  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
+  isSubmitted: Boolean!
+  location: LocationType
+  moods: [MoodType!]!
+  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  publicDetails: String!
+  purpose: String
+  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  team: SelahTeamEnum
+  title: String
   privateDetails: String
 }
 

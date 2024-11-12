@@ -1,4 +1,3 @@
-from typing import Optional
 from unittest.mock import ANY
 
 from accounts.models import User
@@ -27,7 +26,6 @@ from deepdiff import DeepDiff
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
-from pytest import param
 from unittest_parametrize import parametrize
 
 

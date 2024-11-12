@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from clients.enums import ClientDocumentNamespaceEnum
 from clients.models import ClientProfile
@@ -20,7 +20,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self._setup_note()
         self._setup_note_tasks()
-        self._setup_client()
+        self._setup_client_profile()
         self._setup_client_documents()
         self._setup_location()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
@@ -39,8 +39,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             },
         )["data"]["createNote"]
 
-    def _setup_client(self) -> None:
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+    def _setup_client_profile(self) -> None:
+        self.client_profile = baker.make(ClientProfile, user=self.client_user_1)
 
     def _setup_client_documents(self) -> None:
         file = SimpleUploadedFile(content=b"file_content", name="file_name.txt")
@@ -48,35 +48,24 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
 
         namespaces = [
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
             ClientDocumentNamespaceEnum.HMIS_FORM,
             ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT,
         ]
 
-        [
-            self.client_profile_1_document_1,
-            self.client_profile_1_document_2,
-            self.client_profile_1_document_3,
-            self.client_profile_1_document_4,
-        ] = [
+        self.client_document_1, self.client_document_2, self.client_document_3 = [
             baker.make(
                 Attachment,
                 content_type=content_type,
                 file=file,
                 namespace=namespace,
-                object_id=self.client_profile_1.pk,
+                object_id=self.client_profile.pk,
                 uploaded_by=self.org_1_case_manager_1,
             )
             for namespace in namespaces
         ]
 
         note = Note.objects.get(id=self.note["id"])
-        note.client_documents.add(
-            self.client_profile_1_document_1,
-            self.client_profile_1_document_2,
-            self.client_profile_1_document_3,
-            self.client_profile_1_document_4,
-        )
+        note.client_documents.add(self.client_document_1, self.client_document_2, self.client_document_3)
 
     def _setup_note_tasks(self) -> None:
         self.purpose_1 = self._create_task_for_note_fixture(
