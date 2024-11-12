@@ -11,6 +11,7 @@ from django.db.models import ForeignKey
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
+from strawberry_django.descriptors import model_property
 
 
 class BaseModel(models.Model):

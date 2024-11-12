@@ -692,14 +692,19 @@ scalar PhoneNumber
 
 input PhoneNumberInput {
   id: ID
-  number: PhoneNumber
+  number: PhoneNumberNumberInput
   isPrimary: Boolean = false
+}
+
+input PhoneNumberNumberInput {
+  phoneNumber: String!
+  region: String
 }
 
 type PhoneNumberType {
   id: ID!
-  number: PhoneNumber
   isPrimary: Boolean
+  number: PhoneNumber
 }
 
 """Represents a point as `(x, y, z)` or `(x, y)`."""

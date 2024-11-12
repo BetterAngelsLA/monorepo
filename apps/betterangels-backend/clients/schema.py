@@ -15,6 +15,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import Prefetch
 from guardian.shortcuts import assign_perm
+from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -212,7 +213,10 @@ class Mutation:
                 PhoneNumber.objects.create(
                     content_type=content_type,
                     object_id=client_profile.id,
-                    number=phone_number["number"],
+                    number=DjangoPhoneNumber.from_string(
+                        phone_number=phone_number["number"]["phone_number"],
+                        region=phone_number["number"]["region"],
+                    ),
                     is_primary=phone_number["is_primary"],
                 )
 
