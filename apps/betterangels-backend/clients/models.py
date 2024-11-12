@@ -83,11 +83,11 @@ class HmisProfile(models.Model):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
-    address = models.TextField(blank=True, null=True)
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
-    california_id = models.CharField(max_length=10, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    california_id = models.CharField(max_length=10, unique=True, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
