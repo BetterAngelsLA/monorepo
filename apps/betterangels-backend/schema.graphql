@@ -636,7 +636,7 @@ type NoteType {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int! = -1
+  limit: Int = null
 }
 
 input OneToManyInput {
