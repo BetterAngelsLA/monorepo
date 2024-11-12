@@ -1,11 +1,10 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from clients.types import ClientDocumentType
-from django.test import Client
 import strawberry
 import strawberry_django
 from accounts.types import UserType
+from clients.types import ClientDocumentType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
