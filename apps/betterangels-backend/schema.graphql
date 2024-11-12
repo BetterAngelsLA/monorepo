@@ -211,8 +211,8 @@ type ClientProfileType {
 }
 
 input ClientSearchInput {
-  firstName: String!
-  lastName: String!
+  firstName: String = null
+  lastName: String = null
   middleName: String = null
 }
 

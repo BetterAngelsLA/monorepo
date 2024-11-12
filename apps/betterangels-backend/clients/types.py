@@ -58,8 +58,8 @@ class ClientProfileOrder:
 
 @strawberry.input
 class ClientSearchInput:
-    first_name: str
-    last_name: str
+    first_name: str | None = None
+    last_name: str | None = None
     middle_name: str | None = None
 
 
@@ -122,21 +122,18 @@ class ClientProfileFilter:
         prefix: str,
     ) -> Tuple[QuerySet[ClientProfile], Q]:
         """
-        Returns only exact match on first and last name (case insensitive).
-        Accepts optional middle name param. If middle name is passed, middle name must be an exact match as well.
+        Returns client profiles with exact match on all provided search fields (case insensitive).
+        All search fields are optional.
         """
-        if not value.first_name or not value.last_name:
-            return (queryset.none(), Q())
+        filters = {}
 
-        name_filters = {
-            "user__first_name__iexact": value.first_name.strip(),
-            "user__last_name__iexact": value.last_name.strip(),
-        }
+        user_fields = ["first_name", "middle_name", "last_name"]
 
-        if value.middle_name:
-            name_filters["user__middle_name__iexact"] = value.middle_name.strip()
+        for field in user_fields:
+            if field_value := getattr(value, field):
+                filters[f"user__{field}__iexact"] = field_value.strip()
 
-        queryset = queryset.filter(**name_filters)
+        queryset = queryset.filter(**filters)
 
         return (queryset, Q())
 

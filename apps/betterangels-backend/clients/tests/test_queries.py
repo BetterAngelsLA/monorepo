@@ -209,8 +209,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         ("first_name, last_name, middle_name, expected_client_profile_count"),
         [
-            ("", "", None, 0),  # no filters
-            ("Todd", "", None, 0),  # missing last name
+            ("", "", "", 3),  # no filters
+            ("Todd", None, None, 1),  # exact match on first name only
+            (None, "Chavez", None, 2),  # exact match on last name only
             ("Tod", "Chavez", None, 0),  # inexact match on first name
             ("Todd", "Chave", None, 0),  # inexact match on last name
             ("Todd", "Chavez", "Eleanor", 0),  # inexact match on middle name
@@ -223,9 +224,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def test_client_profiles_query_search_client(
         self, first_name: str, last_name: str, middle_name: str | None, expected_client_profile_count: int
     ) -> None:
-        """
-        Assert that when using the full name client search, only exact first & last name matches are returned.
-        """
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         # create a new client with similar name to client 1, with space in first name
@@ -248,10 +246,13 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        response = self.execute_graphql(
-            query,
-            variables={"searchClient": {"firstName": first_name, "lastName": last_name, "middleName": middle_name}},
-        )
+        search_fields = {
+            **({"firstName": first_name} if first_name else {}),
+            **({"lastName": last_name} if last_name else {}),
+            **({"middleName": middle_name} if middle_name else {}),
+        }
+
+        response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
