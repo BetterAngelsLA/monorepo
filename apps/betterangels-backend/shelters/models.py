@@ -1,6 +1,6 @@
+import pghistory
 from common.models import Address, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -155,6 +155,7 @@ class Funder(models.Model):
         return str(self.name)
 
 
+@pghistory.track()
 class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
@@ -184,17 +185,17 @@ class Shelter(BaseModel):
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)
-    other_rules = CKEditor5Field(null=True)
+    other_rules = CKEditor5Field(null=True, blank=True)
 
     # Services Offered
     immediate_needs = models.ManyToManyField(ImmediateNeed)
     general_services = models.ManyToManyField(GeneralService)
     health_services = models.ManyToManyField(HealthService)
     training_services = models.ManyToManyField(TrainingService)
-    other_services = CKEditor5Field(null=True)
+    other_services = CKEditor5Field(null=True, blank=True)
 
     # Entry Requirements
-    entry_info = CKEditor5Field(null=True)
+    entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
     bed_fees = models.TextField(null=True, blank=True)
     program_fees = models.TextField(null=True, blank=True)
@@ -203,23 +204,26 @@ class Shelter(BaseModel):
     cities = models.ManyToManyField(City)
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(15)],
+        choices=[(i, str(i)) for i in range(1, 16)],
         null=True,
         blank=True,
-        verbose_name="LA City Council District (1-15)",
+        verbose_name="LA City Council District",
     )
     supervisorial_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        choices=[(i, str(i)) for i in range(1, 6)],
         null=True,
         blank=True,
-        verbose_name="Supervisorial District (1-5)",
+        verbose_name="Supervisorial District",
     )
+    shelter_programs = models.ManyToManyField(ShelterProgram)
     funders = models.ManyToManyField(Funder)
 
-    # Admin Fields
+    # Better Angels Review
+    overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
+    subjective_review = CKEditor5Field(null=True, blank=True)
+
+    # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
-    # last_action =
-    # contact_info =
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
