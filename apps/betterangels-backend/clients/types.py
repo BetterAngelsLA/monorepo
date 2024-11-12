@@ -130,8 +130,11 @@ class ClientProfileFilter:
         user_fields = ["first_name", "middle_name", "last_name"]
 
         for field in user_fields:
-            if field_value := getattr(value, field):
-                filters[f"user__{field}__iexact"] = field_value.strip()
+            if field_value := (getattr(value, field) or "").strip():
+                filters[f"user__{field}__iexact"] = field_value
+
+        if not filters:
+            return (queryset.none(), Q())
 
         queryset = queryset.filter(**filters)
 

@@ -209,7 +209,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         ("first_name, last_name, middle_name, expected_client_profile_count"),
         [
-            ("", "", "", 3),  # no filters
+            (" ", " ", " ", 0),  # no filters
             ("Todd", None, None, 1),  # exact match on first name only
             (None, "Chavez", None, 2),  # exact match on last name only
             ("Tod", "Chavez", None, 0),  # inexact match on first name
