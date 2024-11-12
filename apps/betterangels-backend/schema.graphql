@@ -169,6 +169,7 @@ type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -221,6 +222,7 @@ input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -943,6 +945,7 @@ input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum

@@ -146,6 +146,7 @@ class ClientProfileBaseType:
     ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
     age: auto
+    california_id: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
