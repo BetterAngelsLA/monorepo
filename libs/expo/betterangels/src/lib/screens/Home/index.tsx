@@ -150,11 +150,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
       />
-      <ClientCardModal
-        isModalVisible={modalIsOpen}
-        closeModal={() => setModalIsOpen(false)}
-        client={currentClient}
-      />
+      {currentClient && (
+        <ClientCardModal
+          isModalVisible={modalIsOpen}
+          closeModal={() => setModalIsOpen(false)}
+          client={currentClient}
+        />
+      )}
     </View>
   );
 }

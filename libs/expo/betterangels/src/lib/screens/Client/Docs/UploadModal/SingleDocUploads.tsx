@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { useSnackbar } from '../../../../hooks';
 import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
@@ -21,6 +22,7 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
   const { setTab, client, setDocs, docs, title, docType, thumbnailSize } =
     props;
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const { showSnackbar } = useSnackbar();
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -55,6 +57,11 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
       setTab(undefined);
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
+
+      showSnackbar({
+        message: `Sorry, there was an error updating the file.`,
+        type: 'error',
+      });
     }
   };
 
