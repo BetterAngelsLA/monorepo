@@ -30,9 +30,6 @@ export function ImagesWithZoom(props: ImagesWithZoomProps) {
       <Modal
         style={{
           backgroundColor: Colors.WHITE,
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
         visible={isVisible}
       >

@@ -37,48 +37,38 @@ export default function FileScreenComponent({ id }: { id: string }) {
 
     if (ID_STYLE.includes(data.clientDocument.namespace)) {
       return (
-        <ImagesWithZoom
-          title={data.clientDocument.originalFilename}
-          imageUrls={[{ url: data.clientDocument.file.url }]}
-        >
-          <View
-            style={{
-              borderWidth: 1,
-              borderColor: Colors.NEUTRAL_LIGHT,
-              borderRadius: Radiuses.xs,
-              marginBottom: Spacings.md,
-              padding: Spacings.xxs,
-              width: 129,
-              height: 86.5,
-            }}
-          >
-            <Image
-              style={{
-                width: '100%',
-                height: '100%',
-
-                borderRadius: Radiuses.xs,
-              }}
-              source={{ uri: data.clientDocument.file.url }}
-              resizeMode="cover"
-              accessibilityIgnoresInvertColors
-            />
-          </View>
-        </ImagesWithZoom>
-      );
-    } else {
-      return (
-        <ImagesWithZoom
-          title={data.clientDocument.originalFilename}
-          imageUrls={[{ url: data.clientDocument.file.url }]}
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: Colors.NEUTRAL_LIGHT,
+            borderRadius: Radiuses.xs,
+            marginBottom: Spacings.md,
+            padding: Spacings.xxs,
+            width: 129,
+            height: 86.5,
+          }}
         >
           <Image
-            style={{ width: 207, height: 346, marginBottom: Spacings.md }}
+            style={{
+              width: '100%',
+              height: '100%',
+
+              borderRadius: Radiuses.xs,
+            }}
             source={{ uri: data.clientDocument.file.url }}
             resizeMode="cover"
             accessibilityIgnoresInvertColors
           />
-        </ImagesWithZoom>
+        </View>
+      );
+    } else {
+      return (
+        <Image
+          style={{ width: 207, height: 346, marginBottom: Spacings.md }}
+          source={{ uri: data.clientDocument.file.url }}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
       );
     }
   }, [data]);
@@ -96,7 +86,12 @@ export default function FileScreenComponent({ id }: { id: string }) {
         {enumDisplayDocumentType[data.clientDocument.namespace]}
       </TextBold>
       <View style={styles.fileContainer}>
-        {ImageComponent}
+        <ImagesWithZoom
+          title={data.clientDocument.originalFilename}
+          imageUrls={[{ url: data.clientDocument.file.url }]}
+        >
+          {ImageComponent}
+        </ImagesWithZoom>
         <TextBold size="sm">File Name</TextBold>
         <TextRegular size="sm">
           {data.clientDocument.originalFilename}
