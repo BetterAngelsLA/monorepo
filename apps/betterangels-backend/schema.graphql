@@ -169,6 +169,7 @@ type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -220,6 +221,7 @@ input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -638,7 +640,7 @@ type NoteType {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int! = -1
+  limit: Int = null
 }
 
 input OneToManyInput {
@@ -941,6 +943,7 @@ input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum

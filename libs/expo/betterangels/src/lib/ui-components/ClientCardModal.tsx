@@ -1,6 +1,7 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
 import { ClientProfileType } from '../apollo';
+import { useSnackbar } from '../hooks';
 import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
 import MainModal from './MainModal';
 
@@ -14,6 +15,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal, client } = props;
   const [createNote] = useCreateNoteMutation();
   const router = useRouter();
+  const { showSnackbar } = useSnackbar();
 
   async function createNoteFunction(
     id: string,
@@ -33,7 +35,12 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         closeModal();
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     }
   }
 

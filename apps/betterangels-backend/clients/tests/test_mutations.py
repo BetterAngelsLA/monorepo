@@ -69,6 +69,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables = {
             "adaAccommodation": [AdaAccommodationEnum.VISUAL.name],
             "address": "1234 Main St",
+            "californiaId": "L7654321",
             "contacts": [contact],
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.BROWN.name,
@@ -202,6 +203,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "id": self.client_profile_1["id"],
             "adaAccommodation": [AdaAccommodationEnum.VISUAL.name, AdaAccommodationEnum.HEARING.name],
             "address": "1234 Main St",
+            "californiaId": "L7654321",
             "contacts": contacts,
             "dateOfBirth": self.date_of_birth,
             "eyeColor": EyeColorEnum.GRAY.name,

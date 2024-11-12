@@ -17,7 +17,7 @@ license = "Proprietary"
 include = "betterangels_backend"
 
 [tool.poetry.dependencies]
-python = "3.12.2"
+python = "3.13.0"
 psycopg = "^3.2.1"
 django = "^5.1.2"
 django-environ = "^0.11.2"
@@ -34,7 +34,7 @@ hiredis = "^3.0.0"
 django-jazzmin = { git = "https://github.com/farridav/django-jazzmin.git", rev = "097720dd9131719b1b6b41af072c5bd27a9c8763" }
 django-organizations = "^2.4.1"
 django-sesame = "^3.2.2"
-strawberry-graphql-django = "^0.48.0"
+strawberry-graphql-django = "^0.50.0"
 django-guardian = "^2.4.0"
 django-choices-field = "^2.3.0"
 django-pghistory = "^3.4.4"
@@ -44,6 +44,7 @@ django-structlog = "^8.1.0"
 deepdiff = "^8.0.1"
 django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.0.0" }
 django-ckeditor-5 = "^0.2.13"
+newrelic = "^10.2.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -65,6 +65,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
+            "californiaId": "L1234567",
             "consentFormDocuments": [self.client_profile_1_document_3],
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),

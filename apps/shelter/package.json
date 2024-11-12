@@ -55,6 +55,8 @@
     "react-native-reanimated": "*",
     "react-native-modal": "*",
     "react-native-select-dropdown": "*",
+    "@react-native-picker/picker": "*",
+    "react-native-safe-area-context": "*",
     "react-native-paper": "*"
   },
   "scripts": {
