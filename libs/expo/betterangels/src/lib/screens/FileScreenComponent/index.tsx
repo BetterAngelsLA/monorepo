@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
+  ImagesWithZoom,
   Loading,
   TextBold,
   TextRegular,
@@ -36,38 +37,48 @@ export default function FileScreenComponent({ id }: { id: string }) {
 
     if (ID_STYLE.includes(data.clientDocument.namespace)) {
       return (
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: Colors.NEUTRAL_LIGHT,
-            borderRadius: Radiuses.xs,
-            marginBottom: Spacings.md,
-            padding: Spacings.xxs,
-            width: 129,
-            height: 86.5,
-          }}
+        <ImagesWithZoom
+          title={data.clientDocument.originalFilename}
+          imageUrls={[{ url: data.clientDocument.file.url }]}
+        >
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: Colors.NEUTRAL_LIGHT,
+              borderRadius: Radiuses.xs,
+              marginBottom: Spacings.md,
+              padding: Spacings.xxs,
+              width: 129,
+              height: 86.5,
+            }}
+          >
+            <Image
+              style={{
+                width: '100%',
+                height: '100%',
+
+                borderRadius: Radiuses.xs,
+              }}
+              source={{ uri: data.clientDocument.file.url }}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+          </View>
+        </ImagesWithZoom>
+      );
+    } else {
+      return (
+        <ImagesWithZoom
+          title={data.clientDocument.originalFilename}
+          imageUrls={[{ url: data.clientDocument.file.url }]}
         >
           <Image
-            style={{
-              width: '100%',
-              height: '100%',
-
-              borderRadius: Radiuses.xs,
-            }}
+            style={{ width: 207, height: 346, marginBottom: Spacings.md }}
             source={{ uri: data.clientDocument.file.url }}
             resizeMode="cover"
             accessibilityIgnoresInvertColors
           />
-        </View>
-      );
-    } else {
-      return (
-        <Image
-          style={{ width: 207, height: 346, marginBottom: Spacings.md }}
-          source={{ uri: data.clientDocument.file.url }}
-          resizeMode="cover"
-          accessibilityIgnoresInvertColors
-        />
+        </ImagesWithZoom>
       );
     }
   }, [data]);
