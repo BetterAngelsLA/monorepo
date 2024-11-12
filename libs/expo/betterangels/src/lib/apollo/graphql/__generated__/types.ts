@@ -157,6 +157,7 @@ export type ClientProfileFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ClientProfileFilter>;
   OR?: InputMaybe<ClientProfileFilter>;
+  fullNameSearch?: InputMaybe<Scalars['String']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -850,7 +851,7 @@ export type NoteTypeRequestedServicesArgs = {
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 

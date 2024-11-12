@@ -152,6 +152,7 @@ input ClientProfileFilter {
   DISTINCT: Boolean
   isActive: Boolean
   search: String
+  fullNameSearch: String
 }
 
 input ClientProfileOrder {

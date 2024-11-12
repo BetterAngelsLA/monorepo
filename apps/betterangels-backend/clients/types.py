@@ -104,10 +104,34 @@ class ClientProfileFilter:
 
         queryset = queryset.filter(reduce(and_, q_objects))
 
-        return (
-            queryset,
-            Q(),
-        )
+        return (queryset, Q())
+
+    @strawberry_django.filter_field
+    def full_name_search(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
+        """
+        Returns only exact match on first and last name (case insensitive).
+        Requires a "," delimiter to accommodate spaces in first/last names:
+        "{FIRST NAME},{LAST NAME}"
+
+        Ignores middle names and partial first name matches, e.g., "Marc,Ramirez" != "Marc Anthony,Ramirez"
+        """
+        if not value:
+            return (queryset.none(), Q())
+
+        try:
+            (first_name, last_name) = (i.strip() for i in value.split(","))
+        except ValueError:
+            return (queryset.none(), Q())
+
+        queryset = queryset.filter(user__first_name__iexact=first_name, user__last_name__iexact=last_name)
+
+        return (queryset, Q())
 
 
 @strawberry_django.type(HmisProfile)

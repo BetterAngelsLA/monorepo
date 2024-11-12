@@ -206,6 +206,50 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
 
+    @parametrize(
+        ("full_name, expected_client_profile_count"),
+        [
+            ("", 0),  # no filters
+            ("Todd", 0),  # too few search fields
+            ("Todd,Gustav,Chavez", 0),  # too many search fields
+            ("Tod,Chavez", 0),  # inexact match on first name
+            ("Todd,Chave", 0),  # inexact match on last name
+            ("Todd,Chavez", 1),  # exact match on first & last name
+            ("Todd , Chavez", 1),  # exact match on first & last name
+            ("Todd Gustav,Chavez", 1),  # exact match on first & last name
+        ],
+    )
+    def test_client_profiles_query_full_name_search(self, full_name: str, expected_client_profile_count: int) -> None:
+        """
+        Assert that when using the full name client search, only exact first & last name matches are returned.
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # create a new client with similar name to client 1, with space in first name
+        self._create_client_profile_fixture(
+            {
+                "user": {
+                    "firstName": "TODD GUSTAV",
+                    "lastName": "CHAVEZ",
+                    "middleName": None,
+                    "email": "tchavez@pblivin.com",
+                }
+            }
+        )
+
+        query = """
+            query ClientProfiles($fullNameSearch: String) {
+                clientProfiles(filters: {fullNameSearch: $fullNameSearch}) {
+                    id
+                }
+            }
+        """
+
+        response = self.execute_graphql(query, variables={"fullNameSearch": full_name})
+
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(len(client_profiles), expected_client_profile_count)
+
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
 class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
