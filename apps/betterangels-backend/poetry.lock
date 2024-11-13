@@ -525,6 +525,20 @@ files = [
 ]
 
 [[package]]
+name = "dj-places"
+version = "5.2.1"
+description = "A django app for store places using Google Maps API"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "dj_places-5.2.1-py3-none-any.whl", hash = "sha256:89cd3ddd11d5c3b3e895ac4d80cbc2f0320a38ada571a2a0eccebbed17764b42"},
+    {file = "dj_places-5.2.1.tar.gz", hash = "sha256:2004d3db0cee2490aff0479c25867b5b334c4cf9147d74b045e349277dca48f8"},
+]
+
+[package.dependencies]
+django = ">=3.0"
+
+[[package]]
 name = "dj-rest-auth"
 version = "6.0.0"
 description = "Authentication and Registration in Django Rest Framework"
@@ -1921,4 +1935,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.13.0"
-content-hash = "a4e64dbf02fbbe898e449e9e80f223cd06674895dd6352c101192a2151cd18d8"
+content-hash = "e9c9cb7147032df641e0c1bdc5d4f485b8cdc3f06e0cda001ece8b34654ec5a2"

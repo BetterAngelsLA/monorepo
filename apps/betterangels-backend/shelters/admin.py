@@ -166,7 +166,7 @@ class ShelterAdmin(admin.ModelAdmin):
         (
             "Basic Information",
             {
-                "fields": ("name", "organization", "address", "email", "phone", "website"),
+                "fields": ("name", "organization", "location", "email", "phone", "website"),
             },
         ),
         (

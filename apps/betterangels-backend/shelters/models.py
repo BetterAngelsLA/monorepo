@@ -1,3 +1,4 @@
+import black
 import pghistory
 from common.models import Address, BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
@@ -6,6 +7,7 @@ from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
+from places.fields import PlacesField
 from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
@@ -160,10 +162,10 @@ class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-    email = models.EmailField(max_length=254, null=True, blank=True)
+    location = PlacesField(blank=True, null=True)
+    email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField()
-    website = models.URLField(null=True, blank=True)
+    website = models.URLField(blank=True, null=True)
 
     # Summary Information
     description = CKEditor5Field(null=True)

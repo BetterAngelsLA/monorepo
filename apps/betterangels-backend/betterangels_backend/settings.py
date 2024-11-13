@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "django_structlog",
     "guardian",
+    "places",
     "post_office",
     "rest_framework",
     "organizations",
@@ -386,6 +387,10 @@ GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
+PLACES_MAPS_API_KEY = GOOGLE_MAPS_API_KEY
+PLACES_MAP_WIDGET_HEIGHT = 480
+PLACES_MAP_OPTIONS = '{"center": { "lat": 34.0549, "lng": -118.2426 }, "zoom": 10}'
+PLACES_MARKER_OPTIONS = '{"draggable": true}'
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html
