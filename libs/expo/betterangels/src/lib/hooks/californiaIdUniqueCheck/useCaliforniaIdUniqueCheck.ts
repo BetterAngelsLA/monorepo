@@ -1,11 +1,12 @@
+import { Regex } from '@monorepo/expo/shared/static';
 import { useClientProfilesQuery } from '../../screens/Clients/__generated__/Clients.generated';
 
-export default function useCaliforniaIdValidation(
+export default function useCaliforniaIdUniqueCheck(
   californiaId: string,
   clientProfileId?: string
 ) {
   const { data } = useClientProfilesQuery({
-    skip: !californiaId || californiaId.length !== 8,
+    skip: !californiaId || !Regex.californiaId.test(californiaId),
     variables: {
       filters: {
         searchClient: {

@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { RefObject, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { useCaliforniaIdValidation } from '../../../hooks';
+import { useCaliforniaIdUniqueCheck } from '../../../hooks';
 import CaliforniaId from './CaliforniaId';
 import Dob from './Dob';
 import FullName from './FullName';
@@ -25,7 +25,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
   const { watch, setError, clearErrors } = useFormContext();
   const californiaId = watch('californiaId');
 
-  const validationError = useCaliforniaIdValidation(
+  const validationError = useCaliforniaIdUniqueCheck(
     californiaId,
     clientProfileId as string
   );

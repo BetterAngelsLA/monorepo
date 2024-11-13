@@ -15,6 +15,7 @@ export default function CaliforniaId() {
   return (
     <CardWrapper title="CA ID #">
       <Input
+        autoCapitalize="characters"
         autoCorrect={false}
         control={control}
         error={!!errors.californiaId}

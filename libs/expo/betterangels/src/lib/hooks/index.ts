@@ -1,4 +1,4 @@
-export { default as useCaliforniaIdValidation } from './californiaIdValidation/useCaliforniaIdValidation';
+export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck/useCaliforniaIdUniqueCheck';
 export { default as useKeyboardToolbar } from './keyboardToolbar/useKeyboardToolbar';
 export { default as useScrollToScreenTop } from './scroll/useScrollToScreenTop';
 export { default as useSnackbar } from './snackbar/useSnackbar';
