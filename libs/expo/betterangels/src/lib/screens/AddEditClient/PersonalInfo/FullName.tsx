@@ -11,31 +11,52 @@ import {
   UpdateClientProfileInput,
 } from '../../../apollo';
 
+type TFullNameForm = (UpdateClientProfileInput | CreateClientProfileInput) & {
+  emptyFormError: string;
+};
+
 export default function FullName() {
   const {
+    clearErrors,
     control,
     getValues,
     formState: { errors },
+    setError,
     setValue,
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  } = useFormContext<TFullNameForm>();
 
   const onReset = () => {
-    setValue('user.firstName', '', { shouldValidate: true });
+    setValue('user.firstName', '');
     setValue('user.middleName', '');
     setValue('user.lastName', '');
     setValue('nickname', '');
+    clearErrors('emptyFormError');
   };
 
   function oneValueExists() {
     const values = getValues();
 
-    const hasValue =
-      values.user?.firstName ||
-      values.user?.lastName ||
-      values.user?.middleName ||
-      values.nickname;
+    const validatable = [
+      values.user?.firstName,
+      values.user?.lastName,
+      values.user?.middleName,
+      values.nickname,
+    ];
 
-    return !!hasValue;
+    const hasRequired = validatable.some((v) => !!v?.trim());
+
+    if (hasRequired) {
+      clearErrors('emptyFormError');
+
+      return true;
+    }
+
+    setError('emptyFormError', {
+      type: 'manual',
+      message: 'Filling out one of the fields is required',
+    });
+
+    return false;
   }
 
   return (
@@ -47,15 +68,15 @@ export default function FullName() {
         </>
       }
     >
-      {!errors.user?.firstName && (
+      {!errors.emptyFormError && (
         <TextRegular size="sm" mb="xs">
           (Filling out one of the fields is required)
         </TextRegular>
       )}
 
-      {errors.user?.firstName && (
+      {errors.emptyFormError && (
         <TextRegular size="sm" mb="xs" color={Colors.ERROR}>
-          Filling out one of the fields is required
+          {errors.emptyFormError.message}
         </TextRegular>
       )}
 
@@ -66,7 +87,7 @@ export default function FullName() {
         name="user.firstName"
         control={control}
         rules={{
-          required: !oneValueExists(),
+          validate: oneValueExists,
         }}
       />
       <Input
@@ -75,6 +96,9 @@ export default function FullName() {
         label="Middle Name"
         name="user.middleName"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
       <Input
         placeholder="Enter Last Name"
@@ -82,6 +106,9 @@ export default function FullName() {
         label="Last Name"
         name="user.lastName"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
       <Input
         placeholder="Enter Nickname"
@@ -89,6 +116,9 @@ export default function FullName() {
         label="Nickname"
         name="nickname"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
     </CardWrapper>
   );
