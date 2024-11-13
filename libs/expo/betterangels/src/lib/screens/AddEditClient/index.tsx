@@ -214,7 +214,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         router.replace('/');
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
       showSnackbar({
         message: 'Sorry, there was an error updating this profile.',
@@ -378,7 +378,6 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
-            submitTitle="Update"
             cancel={
               <TextButton
                 onPress={router.back}

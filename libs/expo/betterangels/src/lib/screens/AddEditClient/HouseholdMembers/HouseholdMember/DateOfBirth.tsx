@@ -21,7 +21,7 @@ export default function DateOfBirth({ index }: { index: number }) {
         };
         setValue('householdMembers', updatedHouseholdMembers);
       }}
-      value={householdMembers[index].dateOfBirth || new Date()}
+      value={householdMembers[index].dateOfBirth}
     />
   );
 }
