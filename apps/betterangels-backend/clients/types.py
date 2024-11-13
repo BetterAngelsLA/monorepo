@@ -128,7 +128,8 @@ class ClientProfileFilter:
         Returns client profiles with exact match on all provided search fields (case insensitive).
         All search fields are optional.
 
-        Accepts an excluded_client_profile_id param, to prevent the client profile being edited
+        Accepts an excluded_client_profile_id param to exclude from result set.
+        In the context of client deduplication, this prevents the client profile being edited
         from being flagged as a duplicate entry.
         """
         filters = {}
