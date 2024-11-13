@@ -1,7 +1,6 @@
 from unittest.mock import ANY
 
 from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -24,8 +23,6 @@ from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import override_settings
-from model_bakery import baker
-from notes.models import Note
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
@@ -300,7 +297,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 42
+        expected_query_count = 41
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -359,10 +356,10 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
-                client_profile_id=self.client_profile_1["id"],
-                file_content=file_content,
-                file_name=file_name,
-                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                self.client_profile_1["id"],
+                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content,
+                file_name,
             )
 
         client_document_id = response["data"]["createClientDocument"]["id"]
@@ -376,50 +373,11 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "The client document should have been created and persisted in the database.",
         )
 
-    def test_create_client_documentvia_interaction(self) -> None:
-        file_content = b"Test client document content"
-        file_name = "test_client_document.txt"
-
-        organization = organization_recipe.make()
-        user = ClientProfile.objects.get(id=self.client_profile_1["id"]).user
-        note = baker.make(Note, organization=organization, client=user)
-
-        expected_query_count = 25
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_client_document_fixture(
-                client_profile_id=self.client_profile_1["id"],
-                file_content=file_content,
-                file_name=file_name,
-                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                note_id=str(note.id),
-            )
-
-        client_document_id = response["data"]["createClientDocument"]["id"]
-        query = """
-            query ViewNote($id: ID!) {
-                note(pk: $id) {
-                    id
-                    clientDocuments {
-                        id
-                        file {
-                            name
-                        }
-                        attachmentType
-                        originalFilename
-                        namespace
-                    }
-                }
-            }
-        """
-        result = self.execute_graphql(query, {"id": str(note.id)})["data"]["note"]
-        self.assertEqual(len(result["clientDocuments"]), 1)
-        self.assertEqual(result["clientDocuments"][0]["id"], client_document_id)
-
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 

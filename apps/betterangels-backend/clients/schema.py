@@ -153,13 +153,13 @@ class Mutation:
     def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
-            permission_group = get_user_permission_group(user)
-
             client_profile = filter_for_user(
                 ClientProfile.objects.all(),
                 user,
                 [ClientProfilePermissions.CHANGE],
             ).get(id=data.client_profile)
+
+            permission_group = get_user_permission_group(user)
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(
@@ -170,11 +170,6 @@ class Mutation:
                 uploaded_by=user,
                 associated_with=client_profile.user,
             )
-
-            if note_id := data.note_id:
-                Note = apps.get_model("notes", "Note")
-                if note := Note.objects.filter(id=note_id, client=client_profile.user).first():
-                    note.client_documents.add(client_document)
 
             permissions = [
                 AttachmentPermissions.VIEW,
@@ -197,11 +192,11 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             permission_group = get_user_permission_group(user)
-
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
+
             client_profile = resolvers.create(
                 info,
                 ClientProfile,

@@ -93,11 +93,11 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
-
             # TODO: Handle creating Notes without existing Client.
             # if not data.client:
             #     User.create_client()
+
+            permission_group = get_user_permission_group(user)
 
             note_data = asdict(data)
             note = resolvers.create(
@@ -199,22 +199,22 @@ class Mutation:
     def create_note_attachment(self, info: Info, data: CreateNoteAttachmentInput) -> NoteAttachmentType:
         with transaction.atomic():
             user = cast(User, get_current_user(info))
-            permission_group = get_user_permission_group(user)
-
             note = filter_for_user(
                 Note.objects.all(),
                 user,
                 [NotePermissions.CHANGE],
             ).get(id=data.note)
 
+            permission_group = get_user_permission_group(user)
+
             content_type = ContentType.objects.get_for_model(Note)
             attachment = Attachment.objects.create(
-                associated_with=note.client,
-                content_type=content_type,
                 file=data.file,
                 namespace=data.namespace,
+                content_type=content_type,
                 object_id=note.id,
                 uploaded_by=user,
+                associated_with=note.client,
             )
 
             permissions = [
@@ -383,8 +383,6 @@ class Mutation:
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
         ):
             user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
-
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
             note_id = str(service_request_data.pop("note_id"))
@@ -396,6 +394,8 @@ class Mutation:
                 ).get(id=note_id)
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
+
+            permission_group = get_user_permission_group(user)
 
             service_request = resolvers.create(
                 info,
@@ -530,8 +530,6 @@ class Mutation:
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
         ):
             user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
-
             task_data = asdict(data)
             task_type = str(task_data.pop("task_type"))
             note_id = str(task_data.pop("note_id"))
@@ -543,6 +541,8 @@ class Mutation:
                 ).get(id=note_id)
             except Note.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this note.")
+
+            permission_group = get_user_permission_group(user)
 
             task = resolvers.create(
                 info,
