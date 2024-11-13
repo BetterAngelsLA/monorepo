@@ -221,7 +221,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("Todd Gustav", "Chavez", None, 1),  # exact match on first & last name
         ],
     )
-    def test_client_profiles_query_search_client(
+    def test_client_profiles_query_search_client_by_name(
         self, first_name: str, last_name: str, middle_name: str | None, expected_client_profile_count: int
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -251,6 +251,41 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             **({"lastName": last_name} if last_name else {}),
             **({"middleName": middle_name} if middle_name else {}),
         }
+
+        response = self.execute_graphql(query, variables={"searchClient": search_fields})
+
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(len(client_profiles), expected_client_profile_count)
+
+    @parametrize(
+        ("california_id, excluded_client_profile, expected_client_profile_count"),
+        [
+            ("X0000000", None, 0),  # no match
+            ("L1234567", None, 1),  # match exists
+            ("L1234567", "client_profile_1", 0),  # match exists only on current client
+            ("L123456", None, 0),  # no match on partial id
+        ],
+    )
+    def test_client_profiles_query_search_client_by_california_id(
+        self,
+        california_id: str,
+        excluded_client_profile: Optional[str],
+        expected_client_profile_count: int,
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ClientProfiles($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
+                    id
+                }
+            }
+        """
+
+        search_fields = {"californiaId": california_id}
+
+        if excluded_client_profile:
+            search_fields["excludedClientProfileId"] = getattr(self, excluded_client_profile)["id"]
 
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
