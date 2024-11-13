@@ -26,7 +26,6 @@ from deepdiff import DeepDiff
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
-from unittest_parametrize import parametrize
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
