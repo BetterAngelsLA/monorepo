@@ -165,6 +165,7 @@ export type ClientProfileFilter = {
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   searchCaliforniaId?: InputMaybe<CaliforniaIdSearchInput>;
+  searchClient?: InputMaybe<ClientSearchInput>;
 };
 
 export type ClientProfileOrder = {
@@ -236,6 +237,12 @@ export type ClientProfileTypeDocReadyDocumentsArgs = {
 
 export type ClientProfileTypeOtherDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type ClientSearchInput = {
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateClientDocumentInput = {
