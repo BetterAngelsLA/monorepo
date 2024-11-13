@@ -353,27 +353,17 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
 
-    @parametrize(
-        ("create_with_note_id"),
-        [(True,), (False,)],
-    )
-    def test_create_client_document(self, create_with_note_id: bool) -> None:
+    def test_create_client_document(self) -> None:
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
 
-        if create_with_note_id:
-            organization = organization_recipe.make()
-            user = ClientProfile.objects.get(id=self.client_profile_1["id"]).user
-            note = baker.make(Note, organization=organization, client=user)
-
-        expected_query_count = 25 if create_with_note_id else 23
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 client_profile_id=self.client_profile_1["id"],
                 file_content=file_content,
                 file_name=file_name,
                 namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                note_id=str(note.id) if create_with_note_id else None,
             )
 
         client_document_id = response["data"]["createClientDocument"]["id"]
@@ -387,26 +377,44 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "The client document should have been created and persisted in the database.",
         )
 
-        if create_with_note_id:
-            query = """
-                query ViewNote($id: ID!) {
-                    note(pk: $id) {
+    def test_create_client_documentvia_interaction(self) -> None:
+        file_content = b"Test client document content"
+        file_name = "test_client_document.txt"
+
+        organization = organization_recipe.make()
+        user = ClientProfile.objects.get(id=self.client_profile_1["id"]).user
+        note = baker.make(Note, organization=organization, client=user)
+
+        expected_query_count = 25
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._create_client_document_fixture(
+                client_profile_id=self.client_profile_1["id"],
+                file_content=file_content,
+                file_name=file_name,
+                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                note_id=str(note.id),
+            )
+
+        client_document_id = response["data"]["createClientDocument"]["id"]
+        query = """
+            query ViewNote($id: ID!) {
+                note(pk: $id) {
+                    id
+                    clientDocuments {
                         id
-                        clientDocuments {
-                            id
-                            file {
-                                name
-                            }
-                            attachmentType
-                            originalFilename
-                            namespace
+                        file {
+                            name
                         }
+                        attachmentType
+                        originalFilename
+                        namespace
                     }
                 }
-            """
-            result = self.execute_graphql(query, {"id": str(note.id)})["data"]["note"]
-            self.assertEqual(len(result["clientDocuments"]), 1)
-            self.assertEqual(result["clientDocuments"][0]["id"], client_document_id)
+            }
+        """
+        result = self.execute_graphql(query, {"id": str(note.id)})["data"]["note"]
+        self.assertEqual(len(result["clientDocuments"]), 1)
+        self.assertEqual(result["clientDocuments"][0]["id"], client_document_id)
 
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]
