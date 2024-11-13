@@ -1,5 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
+import { useLocalSearchParams } from 'expo-router';
 import { RefObject, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
@@ -20,6 +21,7 @@ interface IPersonalInfoProps {
 
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
+  const { id: clientProfileId } = useLocalSearchParams();
   const {
     formState: { errors },
     watch,
@@ -29,12 +31,14 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
   const [checkForDuplicates, setCheckForDuplicates] = useState(false);
   const californiaId = watch('californiaId');
   const californiaIdLength = 8;
-
   const { data } = useClientProfilesQuery({
     skip: !checkForDuplicates,
     variables: {
       filters: {
-        search: californiaId,
+        searchCaliforniaId: {
+          clientProfileId: (clientProfileId as string) || null,
+          californiaId: californiaId,
+        },
       },
     },
     fetchPolicy: 'network-only',
@@ -42,15 +46,12 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
   });
 
   useEffect(() => {
-    if (
+    const shouldCheck =
       californiaId &&
       californiaId.length === californiaIdLength &&
-      !errors['californiaId']
-    ) {
-      setCheckForDuplicates(true);
-    } else {
-      setCheckForDuplicates(false);
-    }
+      !errors['californiaId'];
+
+    setCheckForDuplicates(shouldCheck);
   }, [californiaId, errors]);
 
   useEffect(() => {

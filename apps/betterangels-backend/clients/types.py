@@ -56,6 +56,12 @@ class ClientProfileOrder:
     id: auto
 
 
+@strawberry.input
+class CaliforniaIDSearchInput:
+    client_profile_id: Optional[str]
+    california_id: str
+
+
 @filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
@@ -109,6 +115,21 @@ class ClientProfileFilter:
             queryset,
             Q(),
         )
+
+    @strawberry_django.filter_field
+    def search_california_id(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: CaliforniaIDSearchInput,
+        prefix: str,
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
+        """
+        Returns client profiles with exact match on california ID.
+        Excludes the client profile with the provided ID.
+        """
+
+        return (queryset.filter(california_id__iexact=value.california_id).exclude(id=value.client_profile_id), Q())
 
 
 @strawberry_django.type(HmisProfile)

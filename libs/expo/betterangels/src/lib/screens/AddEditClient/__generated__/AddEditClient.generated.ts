@@ -15,7 +15,7 @@ export type GetClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, age?: number | null, address?: string | null, californiaId?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, race?: Types.RaceEnum | null, placeOfBirth?: string | null, heightInInches?: number | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, physicalDescription?: string | null, displayCaseManager: string, maritalStatus?: Types.MaritalStatusEnum | null, mailingAddress?: string | null, residenceAddress?: string | null, importantNotes?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, displayPronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null } };
+export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: any | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, eyeColor?: Types.EyeColorEnum | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, nickname?: string | null, phoneNumber?: any | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null } } };
 
 export type CreateClientProfileMutationVariables = Types.Exact<{
   data: Types.CreateClientProfileInput;
@@ -79,55 +79,47 @@ export const GetClientProfileDocument = gql`
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      age
+      adaAccommodation
       address
+      age
       californiaId
       dateOfBirth
+      displayCaseManager
+      displayGender
+      displayPronouns
+      eyeColor
       gender
       genderOther
-      displayGender
-      race
-      placeOfBirth
-      heightInInches
-      eyeColor
       hairColor
-      physicalDescription
-      displayCaseManager
-      maritalStatus
-      mailingAddress
-      residenceAddress
+      heightInInches
       importantNotes
+      livingSituation
+      mailingAddress
+      maritalStatus
+      nickname
+      phoneNumber
+      physicalDescription
+      placeOfBirth
       preferredCommunication
-      socialMediaProfiles {
+      preferredLanguage
+      pronouns
+      pronounsOther
+      race
+      residenceAddress
+      veteranStatus
+      contacts {
         id
-        platform
-        platformUserId
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
       hmisProfiles {
         agency
         hmisId
         id
-      }
-      nickname
-      phoneNumber
-      phoneNumbers {
-        id
-        number
-        isPrimary
-      }
-      preferredLanguage
-      pronouns
-      pronounsOther
-      displayPronouns
-      veteranStatus
-      livingSituation
-      adaAccommodation
-      user {
-        id
-        email
-        firstName
-        middleName
-        lastName
       }
       householdMembers {
         dateOfBirth
@@ -138,14 +130,22 @@ export const GetClientProfileDocument = gql`
         relationshipToClientOther
         id
       }
-      contacts {
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
+      }
+      user {
         id
         email
-        mailingAddress
-        name
-        phoneNumber
-        relationshipToClient
-        relationshipToClientOther
+        firstName
+        middleName
+        lastName
       }
     }
   }
