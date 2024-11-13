@@ -24,7 +24,7 @@ interface IFieldCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   error?: string | undefined;
-  expanded: string | undefined | null;
+  expanded?: string | null;
   setExpanded: () => void;
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
@@ -145,6 +145,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    rowGap: Spacings.sm,
+    gap: Spacings.xs,
   },
 });

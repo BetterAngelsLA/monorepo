@@ -1,6 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ClientCard,
   Loading,
   TextBold,
   TextButton,
@@ -13,7 +12,7 @@ import { FlatList, View } from 'react-native';
 
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientProfileType } from '../../apollo';
-import { ClientCardModal, Header } from '../../ui-components';
+import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -137,15 +136,12 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           clients ? (
             <ClientCard
               arrivedFrom="/"
-              id={clientProfile.id}
               onPress={() => {
                 setCurrentClient(clientProfile);
                 setModalIsOpen(true);
               }}
               mb="sm"
-              firstName={clientProfile.user.firstName}
-              lastName={clientProfile.user.lastName}
-              nickname={clientProfile.nickname}
+              client={clientProfile}
             />
           ) : null
         }
@@ -154,11 +150,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
       />
-      <ClientCardModal
-        isModalVisible={modalIsOpen}
-        closeModal={() => setModalIsOpen(false)}
-        client={currentClient}
-      />
+      {currentClient && (
+        <ClientCardModal
+          isModalVisible={modalIsOpen}
+          closeModal={() => setModalIsOpen(false)}
+          client={currentClient}
+        />
+      )}
     </View>
   );
 }

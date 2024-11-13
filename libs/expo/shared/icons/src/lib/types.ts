@@ -10,7 +10,7 @@ export interface IIconProps {
   mr?: TSpacing;
 }
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type TSpacing = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 

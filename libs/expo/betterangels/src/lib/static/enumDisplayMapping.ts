@@ -1,4 +1,5 @@
 import {
+  AdaAccommodationEnum,
   ClientDocumentNamespaceEnum,
   EyeColorEnum,
   GenderEnum,
@@ -7,9 +8,14 @@ import {
   LanguageEnum,
   LivingSituationEnum,
   MaritalStatusEnum,
+  PreferredCommunicationEnum,
   PronounEnum,
   RaceEnum,
   RelationshipTypeEnum,
+  SelahTeamEnum,
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+  SocialMediaEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
 
@@ -59,6 +65,13 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Other]: 'Other',
 };
 
+export const enumDisplayYesNoPreferNot: {
+  [key in YesNoPreferNotToSayEnum]: string;
+} = {
+  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+  [YesNoPreferNotToSayEnum.No]: 'No',
+  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+};
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
   [PronounEnum.SheHerHers]: 'She/Her/Hers',
@@ -157,4 +170,108 @@ export const clientHouseholdMemberEnumDisplay: Partial<{
 }> = {
   ...clientRelationshipEnumDisplay,
   [RelationshipTypeEnum.Pet]: 'Pet',
+};
+
+export const enumDisplayServices: { [key in ServiceEnum]: string } = {
+  [ServiceEnum.Blanket]: 'Blanket',
+  [ServiceEnum.Bicycle]: 'Bicycle',
+  [ServiceEnum.BirthCertificate]: 'Birth Certificate',
+  [ServiceEnum.Book]: 'Book',
+  [ServiceEnum.CaliforniaLifelinePhone]: 'California Lifeline Phone',
+  [ServiceEnum.Clothes]: 'Clothes',
+  [ServiceEnum.ContactDpss]: 'Contact DPSS',
+  [ServiceEnum.ContactFriend]: 'Contact Friend',
+  [ServiceEnum.Dental]: 'Dental',
+  [ServiceEnum.DiscountScooterRides]: 'Discount Scooter Rides',
+  [ServiceEnum.DmhEvaluation]: 'DMH Evaluation',
+  [ServiceEnum.DmvNoFeeIdForm]: 'DMV No Fee ID Form',
+  [ServiceEnum.FamilyReunification]: 'Family Reunification',
+  [ServiceEnum.Food]: 'Food',
+  [ServiceEnum.HarmReduction]: 'Harm Reduction',
+  [ServiceEnum.HygieneKit]: 'Hygiene Kit',
+  [ServiceEnum.InternetAccess]: 'Internet Access',
+  [ServiceEnum.LegalCounsel]: 'Legal Counsel',
+  [ServiceEnum.MailPickUp]: 'Mail Pick Up',
+  [ServiceEnum.Medical]: 'Medical',
+  [ServiceEnum.MetroLifeTap]: 'Metro LIFE Tap',
+  [ServiceEnum.PetCare]: 'Pet Care',
+  [ServiceEnum.PetFood]: 'Pet Food',
+  [ServiceEnum.PublicBenefitsPrograms]: 'Public Benefits Programs',
+  [ServiceEnum.Ride]: 'Ride',
+  [ServiceEnum.SafeParking]: 'Safe Parking',
+  [ServiceEnum.Shelter]: 'Shelter',
+  [ServiceEnum.Shoes]: 'Shoes',
+  [ServiceEnum.SocialSecurityCardReplacement]:
+    'Social Security Card Replacement',
+  [ServiceEnum.Shower]: 'Shower',
+  [ServiceEnum.Stabilize]: 'Stabilize',
+  [ServiceEnum.StimulusAssistance]: 'Stimulus Assistance',
+  [ServiceEnum.Storage]: 'Storage',
+  [ServiceEnum.StorageBelongings]: 'Storage Belongings',
+  [ServiceEnum.StorageDocuments]: 'Storage Documents',
+  [ServiceEnum.Tent]: 'Tent',
+  [ServiceEnum.TherapistAppointment]: 'Therapist Appointment',
+  [ServiceEnum.Transport]: 'Transport',
+  [ServiceEnum.UnemploymentCertification]: 'Unemployment Certification',
+  [ServiceEnum.VaccinePassport]: 'Vaccine Passport',
+  [ServiceEnum.Water]: 'Water',
+  [ServiceEnum.Other]: 'Other',
+};
+
+export const enumDisplaySocialMedia: { [key in SocialMediaEnum]: string } = {
+  [SocialMediaEnum.Facebook]: 'Facebook',
+  [SocialMediaEnum.Instagram]: 'Instagram',
+  [SocialMediaEnum.Linkedin]: 'Linkedin',
+  [SocialMediaEnum.Snapchat]: 'Snapchat',
+  [SocialMediaEnum.Tiktok]: 'Tiktok',
+  [SocialMediaEnum.Twitter]: 'Twitter',
+  [SocialMediaEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayPreferredCommunication: {
+  [key in PreferredCommunicationEnum]: string;
+} = {
+  [PreferredCommunicationEnum.Call]: 'Call',
+  [PreferredCommunicationEnum.Email]: 'Email',
+  [PreferredCommunicationEnum.Facebook]: 'Facebook',
+  [PreferredCommunicationEnum.Instagram]: 'Instagram',
+  [PreferredCommunicationEnum.Linkedin]: 'Linkedin',
+  [PreferredCommunicationEnum.Text]: 'Text',
+  [PreferredCommunicationEnum.Whatsapp]: 'Whatsapp',
+};
+
+export const enumDisplayServiceType: {
+  [key in ServiceRequestTypeEnum]: string;
+} = {
+  [ServiceRequestTypeEnum.Provided]: 'Provided',
+  [ServiceRequestTypeEnum.Requested]: 'Requested',
+};
+
+export const enumDisplayAdaAccommodationEnum: {
+  [key in AdaAccommodationEnum]: string;
+} = {
+  [AdaAccommodationEnum.Hearing]: 'Hearing',
+  [AdaAccommodationEnum.Mobility]: 'Mobility',
+  [AdaAccommodationEnum.Visual]: 'Visual',
+  [AdaAccommodationEnum.Other]: 'Other',
+};
+
+export const enumDisplaySelahTeam: {
+  [key in SelahTeamEnum]: string;
+} = {
+  [SelahTeamEnum.BowtieRiversideOutreach]: 'Bowtie & Riverside Outreach',
+  [SelahTeamEnum.EchoParkOnSite]: 'Echo Park On-site',
+  [SelahTeamEnum.EchoParkOutreach]: 'Echo Park Outreach',
+  [SelahTeamEnum.HollywoodOnSite]: 'Hollywood On-site',
+  [SelahTeamEnum.HollywoodOutreach]: 'Hollywood Outreach',
+  [SelahTeamEnum.LaRiverOutreach]: 'LA River Outreach',
+  [SelahTeamEnum.LosFelizOutreach]: 'Los Feliz Outreach',
+  [SelahTeamEnum.NortheastHollywoodOutreach]: 'Northeast Hollywood Outreach',
+  [SelahTeamEnum.SilverLakeOutreach]: 'Silver Lake Outreach',
+  [SelahTeamEnum.SlccOnSite]: 'SLCC On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOnSite]: 'Sunday Social / Atwater On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOutreach]:
+    'Sunday Social / Atwater Outreach',
+  [SelahTeamEnum.WdiOnSite]: 'WDI On-site',
+  [SelahTeamEnum.WdiOutreach]: 'WDI Outreach',
 };

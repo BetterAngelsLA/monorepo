@@ -6,8 +6,11 @@ query ClientProfile($id: ID!) {
       dateOfBirth
       gender
       displayGender
+      displayCaseManager
+      displayPronouns
       displayPronouns
       displayCaseManager
+      residenceAddress
       placeOfBirth
       heightInInches
       eyeColor
@@ -15,8 +18,17 @@ query ClientProfile($id: ID!) {
       maritalStatus
       physicalDescription
       genderOther
+      mailingAddress
+      residenceAddress
       race
       age
+      importantNotes
+      preferredCommunication
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
+      }
       hmisProfiles {
         agency
         hmisId
@@ -33,6 +45,7 @@ query ClientProfile($id: ID!) {
       pronouns
       veteranStatus
       livingSituation
+      adaAccommodation
       profilePhoto {
         height
         name
@@ -128,6 +141,37 @@ mutation DeleteClientDocument($id: ID!) {
     }
     ... on ClientDocumentType {
       id
+    }
+  }
+}
+
+mutation CreateNote($data: CreateNoteInput!) {
+  createNote(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on NoteType {
+      id
+      title
+      publicDetails
+      client {
+        id
+        username
+        firstName
+        lastName
+        email
+      }
+      createdAt
+      createdBy {
+        id
+        username
+        email
+      }
     }
   }
 }

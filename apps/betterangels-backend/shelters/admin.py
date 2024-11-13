@@ -2,15 +2,19 @@ from typing import Optional, Tuple, Type, TypeVar, Union
 
 from django import forms
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html
+from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
     AccessibilityChoices,
-    CareerServiceChoices,
     CityChoices,
+    DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
     GeneralServiceChoices,
@@ -18,17 +22,19 @@ from .enums import (
     ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
-    PopulationChoices,
+    RoomStyleChoices,
     ShelterChoices,
-    SleepingChoices,
+    ShelterProgramChoices,
     SPAChoices,
+    SpecialSituationRestrictionChoices,
     StorageChoices,
+    TrainingServiceChoices,
 )
 from .models import (
     SPA,
     Accessibility,
-    CareerService,
     City,
+    Demographic,
     EntryRequirement,
     Funder,
     GeneralService,
@@ -36,22 +42,48 @@ from .models import (
     ImmediateNeed,
     Parking,
     Pet,
-    Population,
+    RoomStyle,
     Shelter,
+    ShelterProgram,
     ShelterType,
-    SleepingOption,
+    SpecialSituationRestriction,
     Storage,
+    TrainingService,
 )
 
 T = TypeVar("T", bound=models.Model)
+User = get_user_model()
+
+
+class OtherChoiceEntry(models.Model):
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="other_choices")
+    field_name = models.CharField(max_length=50)
+    other_value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ShelterForm(forms.ModelForm):
     curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
-    # Advanced Info
-    populations = forms.MultipleChoiceField(choices=PopulationChoices, widget=CheckboxSelectMultiple(), required=True)
+    # Summary Info
+    demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
+    special_situation_restrictions = forms.MultipleChoiceField(
+        choices=SpecialSituationRestrictionChoices, widget=CheckboxSelectMultiple(), required=True
+    )
     shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
+
+    # Sleeping Details
+    room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=CheckboxSelectMultiple(), required=False)
+
+    # Shelter Details
+    accessibility = forms.MultipleChoiceField(
+        choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
+    )
+    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=False)
+    pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
+    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=False)
+
+    # Services Offered
     immediate_needs = forms.MultipleChoiceField(
         choices=ImmediateNeedChoices, widget=CheckboxSelectMultiple(), required=False
     )
@@ -61,27 +93,21 @@ class ShelterForm(forms.ModelForm):
     health_services = forms.MultipleChoiceField(
         choices=HealthServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    career_services = forms.MultipleChoiceField(
-        choices=CareerServiceChoices, widget=CheckboxSelectMultiple(), required=False
+    training_services = forms.MultipleChoiceField(
+        choices=TrainingServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=CheckboxSelectMultiple(), required=False)
-    accessibility = forms.MultipleChoiceField(
-        choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
-    )
-    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=False)
-    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=False)
 
-    # Restrictions
+    # Entry Requirements
     entry_requirements = forms.MultipleChoiceField(
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
+    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=CheckboxSelectMultiple(), required=False)
+
+    # Ecosystem Information
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
     spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
-    pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
-
-    # Sleeping Information
-    sleeping_options = forms.MultipleChoiceField(
-        choices=SleepingChoices, widget=CheckboxSelectMultiple(), required=False
+    shelter_programs = forms.MultipleChoiceField(
+        choices=ShelterProgramChoices, widget=CheckboxSelectMultiple(), required=False
     )
 
     class Meta:
@@ -91,21 +117,30 @@ class ShelterForm(forms.ModelForm):
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
         fields_to_clean = {
-            "populations": Population,
+            # Summary Info
+            "demographics": Demographic,
+            "special_situation_restrictions": SpecialSituationRestriction,
             "shelter_types": ShelterType,
+            # Sleeping Details
+            "room_styles": RoomStyle,
+            # Shelter Details
+            "accessibility": Accessibility,
+            "storage": Storage,
+            "pets": Pet,
+            "parking": Parking,
+            # Services Offered
             "immediate_needs": ImmediateNeed,
             "general_services": GeneralService,
             "health_services": HealthService,
-            "career_services": CareerService,
-            "funders": Funder,
-            "accessibility": Accessibility,
-            "storage": Storage,
-            "parking": Parking,
+            "training_services": TrainingService,
+            # Entry Requirements
             "entry_requirements": EntryRequirement,
+            # Ecosystem Information
             "cities": City,
             "spa": SPA,
-            "pets": Pet,
-            "sleeping_options": SleepingOption,
+            "shelter_programs": ShelterProgram,
+            "funders": Funder,
+            # Better Angels Admin
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
@@ -138,76 +173,97 @@ class ShelterAdmin(admin.ModelAdmin):
         (
             "Basic Information",
             {
-                "fields": ("name", "organization", "email", "phone", "website"),
+                "fields": ("name", "organization", "location", "email", "phone", "website"),
             },
         ),
         (
-            "Other Details",
-            {"fields": ("description", "how_to_enter", "mandatory_worship_attendance")},
+            "Summary Info",
+            {"fields": ("description", "demographics", "special_situation_restrictions", "shelter_types")},
         ),
+        ("Sleeping Details", {"fields": ("total_beds", "room_styles")}),
         (
-            "Location",
-            {"fields": ("address",)},
+            "Shelter Details",
+            {"fields": ("accessibility", "storage", "pets", "parking")},
         ),
+        ("Restrictions", {"fields": ("max_stay", "curfew", "on_site_security", "other_rules")}),
         (
-            "Advanced Info",
+            "Services Offered",
             {
                 "fields": (
-                    "shelter_types",
-                    "populations",
                     "immediate_needs",
                     "general_services",
                     "health_services",
-                    "career_services",
-                    "funders",
-                    "accessibility",
-                    "storage",
-                    "parking",
+                    "training_services",
+                    "other_services",
                 )
             },
         ),
         (
-            "Restrictions",
+            "Entry Requirements",
             {
                 "fields": (
+                    "entry_info",
                     "entry_requirements",
-                    "cities",
-                    "city_district",
-                    "supervisorial_district",
-                    "spa",
-                    "pets",
-                    "curfew",
-                    "max_stay",
-                    "security",
-                    "drugs",
+                    "bed_fees",
                     "program_fees",
                 )
             },
         ),
         (
-            "Beds",
+            "Ecosystem Information",
             {
                 "fields": (
-                    "fees",
-                    "total_beds",
-                    "sleeping_options",
+                    "cities",
+                    "spa",
+                    "city_council_district",
+                    "supervisorial_district",
+                    "shelter_programs",
+                    "funders",
                 )
             },
         ),
-        ("BA Administration", {"fields": ("is_reviewed",)}),
+        (
+            "Better Angels Review",
+            {"fields": ("overall_rating", "subjective_review")},
+        ),
+        (
+            "Better Angels Administration",
+            {"fields": ("status", "updated_at", "updated_by")},
+        ),
     )
 
-    list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
-    list_filter = ("is_reviewed",)
+    # list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
+    # list_filter = ("is_reviewed",)
     search_fields = ("name", "organization__name")
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
+        readonly_fields = (*readonly_fields, "updated_at", "updated_by")
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
         return readonly_fields
+
+    def updated_by(self, obj: Shelter) -> str:
+        last_event = (
+            MiddlewareEvents.objects.filter(
+                pgh_obj_id=obj.id,
+            )
+            .select_related("user")
+            .order_by("-pgh_created_at")
+            .first()
+        )
+
+        if last_event and last_event.user:
+            user_admin_url = reverse(
+                f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[last_event.user.id]
+            )
+            return format_html(
+                '<a href="{}">{}</a>', user_admin_url, last_event.user.full_name or last_event.user.username
+            )
+
+        return "No updates yet"
 
 
 admin.site.register(Shelter, ShelterAdmin)

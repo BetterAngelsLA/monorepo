@@ -1,10 +1,10 @@
 import {
   MainScrollContainer,
-  NoteNamespaceEnum,
   NotesDocument,
   Ordering,
   useDeleteNoteMutation,
   useRevertNoteMutation,
+  useSnackbar,
   useUpdateNoteMutation,
   useUser,
   useViewNoteQuery,
@@ -18,17 +18,16 @@ import {
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import DateAndTime from './DateAndTime';
 import Location from './Location';
-import Mood from './Mood';
-import NextStep from './NextStep';
 import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import SubmittedModal from './SubmittedModal';
-import Title from './Title';
+import Team from './Team';
 
 const renderModal = (
   isRevert: string | undefined,
@@ -72,6 +71,7 @@ const renderModal = (
 export default function AddNote() {
   const router = useRouter();
   const { user } = useUser();
+  const { showSnackbar } = useSnackbar();
   const { noteId, revertBeforeTimestamp, arrivedFrom } = useLocalSearchParams<{
     noteId: string;
     revertBeforeTimestamp: string;
@@ -81,7 +81,11 @@ export default function AddNote() {
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
-  const { data, loading: isLoading } = useViewNoteQuery({
+  const {
+    data,
+    loading: isLoading,
+    refetch,
+  } = useViewNoteQuery({
     variables: { id: noteId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -102,7 +106,7 @@ export default function AddNote() {
   const [revertNote] = useRevertNoteMutation();
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const [errors, setErrors] = useState({
-    title: false,
+    purpose: false,
     location: false,
     date: false,
     time: false,
@@ -114,7 +118,7 @@ export default function AddNote() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
+      purpose: revertBeforeTimestamp ? `Edit Interaction` : 'Add Interaction',
       headerLeft: () =>
         revertBeforeTimestamp ? (
           <RevertModal
@@ -160,6 +164,11 @@ export default function AddNote() {
       arrivedFrom ? router.replace(arrivedFrom) : router.back();
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to delete interaction.',
+        type: 'error',
+      });
     }
   }
 
@@ -186,7 +195,10 @@ export default function AddNote() {
     scrollRef,
     errors,
     setErrors,
+    refetch,
   };
+  const getClientProfileUrl = (clientProfileId: string | undefined) =>
+    clientProfileId ? `/client/${clientProfileId}` : '/';
 
   async function submitNote() {
     if (Object.values(errors).some((error) => error)) {
@@ -202,38 +214,27 @@ export default function AddNote() {
         },
       });
       if (!result.data) {
-        console.error(`Failed to update interaction: ${updateError}`);
-        return;
+        throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      if (revertBeforeTimestamp) {
-        return router.replace('/');
-      }
-      setSubmitted(true);
+      return router.replace(
+        getClientProfileUrl(data?.note.client?.clientProfile?.id)
+      );
     } catch (err) {
       console.error(err);
+
+      showSnackbar({
+        message: 'Failed to update interaction.',
+        type: 'error',
+      });
     }
   }
 
-  const filterAttachments = (namespace: NoteNamespaceEnum) => {
-    return (
-      data?.note?.attachments?.filter((item) => item.namespace === namespace) ||
-      []
-    );
-  };
-
-  const MoodAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
-    [data]
-  );
-  const RequestedAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.RequestedServices),
-    [data]
-  );
-  const ProvidedAttachments = useMemo(
-    () => filterAttachments(NoteNamespaceEnum.ProvidedServices),
-    [data]
-  );
+  // TODO: Will be back with moods
+  // const MoodAttachments = useMemo(
+  //   () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
+  //   [data]
+  // );
 
   if (!data || isLoading) {
     return null;
@@ -246,33 +247,23 @@ export default function AddNote() {
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         pt="sm"
       >
-        <Title
-          noteTitle={data.note.title}
-          noteDate={data.note.interactedAt}
-          {...props}
-        />
+        <Purpose purpose={data.note.purpose} {...props} />
+        <DateAndTime interactedAt={data.note.interactedAt} {...props} />
+        <Team team={data.note.team} {...props} />
         <Location
           address={data.note.location?.address}
           point={data.note.location?.point}
           {...props}
         />
-        <Purpose purposes={data.note.purposes} {...props} />
-        <Mood
+
+        {/* TODO: Will be back later */}
+        {/* <Mood
           attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
-        />
-        <ProvidedServices
-          attachments={ProvidedAttachments}
-          services={data.note.providedServices}
-          {...props}
-        />
-        <RequestedServices
-          attachments={RequestedAttachments}
-          services={data.note.requestedServices}
-          {...props}
-        />
-        <NextStep nextSteps={data.note.nextSteps} {...props} />
+        /> */}
+        <ProvidedServices services={data.note.providedServices} {...props} />
+        <RequestedServices services={data.note.requestedServices} {...props} />
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}
@@ -308,7 +299,11 @@ export default function AddNote() {
             <TextButton
               mr="sm"
               fontSize="sm"
-              onPress={router.back}
+              onPress={() =>
+                router.navigate(
+                  getClientProfileUrl(data?.note.client?.clientProfile?.id)
+                )
+              }
               accessibilityHint="saves the interaction for later"
               title="Save for later"
             />
@@ -321,7 +316,9 @@ export default function AddNote() {
         firstName={data.note.client?.firstName}
         closeModal={() => {
           setSubmitted(false);
-          router.navigate('/');
+          router.navigate(
+            getClientProfileUrl(data?.note.client?.clientProfile?.id)
+          );
         }}
         isModalVisible={isSubmitted}
       />

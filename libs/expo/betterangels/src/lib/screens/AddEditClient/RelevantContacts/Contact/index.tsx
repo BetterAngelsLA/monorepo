@@ -1,29 +1,42 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Regex,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   Input,
   Select,
   TextBold,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
+import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
+import AddressAutocomplete from '../../../../ui-components/AddressField';
+
+type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
 interface IContactProps {
   index: number;
   remove: (index: number) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function Contact(props: IContactProps) {
-  const { index, remove } = props;
-  const { control, setValue, watch } = useFormContext<
-    UpdateClientProfileInput | CreateClientProfileInput
-  >();
+  const { index, remove, scrollRef } = props;
+  const {
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<TForm>();
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
@@ -108,22 +121,54 @@ export default function Contact(props: IContactProps) {
         label="Email"
         keyboardType="email-address"
         name={`contacts[${index}].email`}
+        error={!!errors.contacts?.[index]?.email}
+        errorMessage={
+          (errors.contacts?.[index]?.email?.message as string) || undefined
+        }
+        rules={{
+          validate: (value: string) => {
+            if (value && !Regex.email.test(value)) {
+              return 'Enter a valid email address';
+            }
+            return true;
+          },
+        }}
         control={control}
       />
       <Input
         placeholder="Phone Number"
         label="Phone Number"
         keyboardType="phone-pad"
-        maxLength={12}
+        maxLength={10}
+        error={!!errors.contacts?.[index]?.phoneNumber}
+        errorMessage={
+          (errors.contacts?.[index]?.phoneNumber?.message as string) ||
+          undefined
+        }
+        rules={{
+          validate: (value: string) => {
+            if (value && !Regex.phoneNumber.test(value)) {
+              return 'Enter a 10-digit phone number without space or special characters';
+            }
+            return true;
+          },
+        }}
         name={`contacts[${index}].phoneNumber`}
         control={control}
       />
-      <Input
-        placeholder="Mailing Address"
-        label="Mailing Address"
-        name={`contacts[${index}].mailingAddress`}
+
+      <AddressAutocomplete<TForm>
+        name={
+          `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`
+        }
         control={control}
+        label="Mailing Address"
+        placeholder="Mailing Address"
+        focusScroll={{
+          scrollViewRef: scrollRef,
+        }}
       />
+
       {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
         <Input
           placeholder="Relationship to Client Other"

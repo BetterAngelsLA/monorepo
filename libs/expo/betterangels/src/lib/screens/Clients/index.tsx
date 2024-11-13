@@ -2,7 +2,6 @@ import { SearchIcon, UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
-  ClientCard,
   Loading,
   TextBold,
   TextRegular,
@@ -12,7 +11,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
 import { ClientProfileType, Ordering } from '../../apollo';
-import { ClientCardModal, Header } from '../../ui-components';
+import { useSnackbar } from '../../hooks';
+import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -52,6 +52,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [clients, setClients] = useState<IGroupedClients>({});
   const [currentClient, setCurrentClient] = useState<ClientProfileType>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const { showSnackbar } = useSnackbar();
 
   const router = useRouter();
 
@@ -68,7 +69,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       const { data } = await createNote({
         variables: {
           data: {
-            title: `Session with ${firstName || 'Client'}`,
+            purpose: `Session with ${firstName || 'Client'}`,
             client: id,
           },
         },
@@ -77,7 +78,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         router.navigate(`/add-note/${data?.createNote.id}`);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     }
   }
 
@@ -156,6 +162,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   }, [data, offset]);
 
   const sections = useMemo(() => Object.values(clients || {}), [clients]);
+  const hasClients = !loading && !!sections.length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -178,7 +185,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
-          placeholder="Search by name or HMIS ID"
+          placeholder="Search by name"
           autoCorrect={false}
           onChangeText={onChange}
           onDelete={() => {
@@ -188,7 +195,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setClients({});
           }}
         />
-        {search && !loading && sections.length < 1 && (
+        {search && !hasClients && (
           <View
             style={{
               flexGrow: 1,
@@ -217,52 +224,52 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             </TextRegular>
           </View>
         )}
-        <SectionList
-          style={{
-            flex: 1,
-          }}
-          sections={sections}
-          renderItem={({ item: clientProfile }) =>
-            clients ? (
-              <ClientCard
-                imageUrl={clientProfile.profilePhoto?.url}
-                arrivedFrom="/clients"
-                select={select as string}
-                id={clientProfile.id}
-                onPress={() => {
-                  if (select === 'true') {
-                    createNoteFunction(
-                      clientProfile.id,
-                      clientProfile.user.firstName
-                    );
-                  } else {
-                    setCurrentClient(clientProfile);
-                    setModalIsOpen(true);
-                  }
-                }}
-                mb="sm"
-                firstName={clientProfile.user.firstName}
-                lastName={clientProfile.user.lastName}
-                nickname={clientProfile.nickname}
-              />
-            ) : null
-          }
-          renderSectionHeader={({ section: { title } }) => (
-            <TextBold mb="xs" size="sm">
-              {title}
-            </TextBold>
-          )}
-          keyExtractor={(clientProfile) => clientProfile.id}
-          onEndReached={loadMoreClients}
-          onEndReachedThreshold={0.05}
-          ListFooterComponent={renderFooter}
-        />
+        {hasClients && (
+          <SectionList
+            style={{
+              flex: 1,
+            }}
+            sections={sections}
+            renderItem={({ item: clientProfile }) =>
+              clients ? (
+                <ClientCard
+                  client={clientProfile}
+                  arrivedFrom="/clients"
+                  select={select as string}
+                  onPress={() => {
+                    if (select === 'true') {
+                      createNoteFunction(
+                        clientProfile.user.id,
+                        clientProfile.user.firstName
+                      );
+                    } else {
+                      setCurrentClient(clientProfile);
+                      setModalIsOpen(true);
+                    }
+                  }}
+                  mb="sm"
+                />
+              ) : null
+            }
+            renderSectionHeader={({ section: { title } }) => (
+              <TextBold mb="xs" size="sm">
+                {title}
+              </TextBold>
+            )}
+            keyExtractor={(clientProfile) => clientProfile.id}
+            onEndReached={loadMoreClients}
+            onEndReachedThreshold={0.05}
+            ListFooterComponent={renderFooter}
+          />
+        )}
       </View>
-      <ClientCardModal
-        isModalVisible={modalIsOpen}
-        closeModal={() => setModalIsOpen(false)}
-        client={currentClient}
-      />
+      {currentClient && (
+        <ClientCardModal
+          isModalVisible={modalIsOpen}
+          closeModal={() => setModalIsOpen(false)}
+          client={currentClient}
+        />
+      )}
     </View>
   );
 }

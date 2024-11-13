@@ -51,6 +51,8 @@ interface ITextareaProps extends TextInputProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
+  height?: number | 'auto';
+  onFocus?: () => void;
 }
 
 export function Textarea(props: ITextareaProps) {
@@ -69,6 +71,9 @@ export function Textarea(props: ITextareaProps) {
     mx,
     ml,
     mr,
+    height,
+    onFocus,
+    textAlignVertical = 'top',
     ...rest
   } = props;
 
@@ -106,17 +111,21 @@ export function Textarea(props: ITextareaProps) {
             ]}
           >
             <TextInput
+              textAlignVertical={textAlignVertical}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
 
+                paddingVertical: Spacings.sm,
                 paddingLeft: Spacings.sm,
                 paddingRight: Spacings.lg,
                 fontFamily: 'Poppins-Regular',
                 fontSize: FontSizes.md.fontSize,
                 lineHeight: FontSizes.md.lineHeight,
                 minHeight: 40,
+                height,
+                overflow: 'scroll',
                 ...Platform.select({
                   web: {
                     outline: 'none',
@@ -126,6 +135,7 @@ export function Textarea(props: ITextareaProps) {
               multiline
               value={value}
               onBlur={onBlur}
+              onFocus={onFocus}
               onChangeText={onChange}
               editable={!disabled}
               {...rest}

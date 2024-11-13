@@ -77,6 +77,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 IS_LOCAL_DEV = env("IS_LOCAL_DEV")
 if IS_LOCAL_DEV:
     environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env"))
+    environ.Env.read_env(env_file=os.path.join(BASE_DIR, ".env.local"), overwrite=True)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -109,6 +111,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "django_structlog",
     "guardian",
+    "places",
     "post_office",
     "rest_framework",
     "organizations",
@@ -139,6 +142,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
 ]
@@ -388,6 +392,10 @@ GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
+PLACES_MAPS_API_KEY = GOOGLE_MAPS_API_KEY
+PLACES_MAP_WIDGET_HEIGHT = 480
+PLACES_MAP_OPTIONS = '{"center": { "lat": 34.0549, "lng": -118.2426 }, "zoom": 10}'
+PLACES_MARKER_OPTIONS = '{"draggable": true}'
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

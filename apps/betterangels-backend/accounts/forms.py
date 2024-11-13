@@ -5,14 +5,28 @@ from typing import Any, cast
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
-from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.contrib.sites.models import Site
 from organizations.backends import invitation_backend
 
 from .models import User
 
+# isort: off
+# We ignore this type check because there's an issue with django-stubs not recognizing
+# AdminUserCreationForm in Django 5.1. Upgrading django-stubs to the latest version
+# introduces additional type-related bugs are referenced in the below Github issues.
+# As a workaround, we use `# type: ignore[attr-defined]` to suppress the type checker error.
+# We also prevent isort from moving this import line to ensure the comment stays effective.
+# References:
+# - https://github.com/typeddjango/django-stubs/issues/1354
+# - https://github.com/typeddjango/django-stubs/issues/2341
+from django.contrib.auth.forms import (  # type: ignore[attr-defined]
+    AdminUserCreationForm as BaseAdminUserCreationForm,
+)
 
-class UserCreationForm(BaseUserCreationForm):
+# isort: on
+
+
+class UserCreationForm(BaseAdminUserCreationForm):
     class Meta:
         model = User
         fields = ("email", "username")

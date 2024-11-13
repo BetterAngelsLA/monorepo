@@ -20,6 +20,7 @@ export default function Docs({
     expanded,
     setExpanded,
   };
+
   return (
     <ScrollView
       contentContainerStyle={{ paddingVertical: Spacings.lg }}
@@ -78,8 +79,7 @@ export default function Docs({
               title="Other"
               {...props}
               data={
-                client?.clientProfile
-                  .consentFormDocuments as ClientDocumentType[]
+                client?.clientProfile.otherDocuments as ClientDocumentType[]
               }
               clientId={client?.clientProfile.id}
             />

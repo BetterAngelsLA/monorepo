@@ -53,7 +53,7 @@ interface IDatePickerProps {
   pickerMode?: 'countdown' | 'date' | 'time' | 'datetime';
   setValue: (e: Date) => void;
   initialDate?: Date;
-  value: Date;
+  value?: Date | null;
 }
 
 export function DatePicker(props: IDatePickerProps) {
@@ -129,7 +129,7 @@ export function DatePicker(props: IDatePickerProps) {
               },
             }),
           }}
-          value={dateFnsFormat(value, format)}
+          value={value ? dateFnsFormat(value, format) : undefined}
           editable={!disabled}
           {...rest}
         />
@@ -154,8 +154,7 @@ export function DatePicker(props: IDatePickerProps) {
       {picker && (
         <View style={{ marginTop: Spacings.xs }}>
           <DateTimePicker
-            locale={mode === 'time' ? 'en_GB' : 'en_US'}
-            is24Hour
+            locale={'en_US'}
             onChange={(event, date) => {
               if (event.type === 'dismissed' || !date) {
                 return setPicker(false);
@@ -173,7 +172,7 @@ export function DatePicker(props: IDatePickerProps) {
             mode={mode}
             minimumDate={minDate}
             maximumDate={maxDate}
-            value={value}
+            value={value || new Date()}
           />
           {Platform.OS === 'ios' && (
             <View style={{ marginTop: Spacings.xs }}>

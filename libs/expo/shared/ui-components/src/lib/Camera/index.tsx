@@ -1,4 +1,4 @@
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import {
   BoltIcon,
   BoltSlashIcon,
@@ -55,7 +55,7 @@ export default function Camera(props: ICameraProps) {
       setIsCameraOpen(false);
       setModalVisible(false);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

@@ -6,6 +6,10 @@
 
 The betterangels_frontend is built in [React Native](https://reactnative.dev/). It uses [Expo](https://docs.expo.dev/) to build and run the application across devices.
 
+If you are a volunteer be sure to also read the [Volunteer Contributors](#volunteer-contributors) section
+
+
+
 ### Installation Guide
 
 **Prerequisites:**
@@ -19,7 +23,11 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 **Setup:**
 
-Run the following on the host machine (not in the container):
+Run the following on the host machine—**not in the container**:
+
+> [!WARNING]
+> If you run the following commands inside the Docker container, they will not function
+> correctly. Use your **System Terminal** instead.
 
 1. Install [NVM](https://github.com/nvm-sh/nvm)
 
@@ -52,6 +60,7 @@ Run the following on the host machine (not in the container):
    > ```
 
 1. Reload your shell profile or restart your terminal for the changes to take effect
+
    ```bash
    source ~/.zshrc
    ```
@@ -64,10 +73,13 @@ Run the following on the host machine (not in the container):
 
 1. Clone the monorepo
    a. [Setup SSH (optional)](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
-      ```bash
-      git clone git@github.com:BetterAngelsLA/monorepo.git
-      ```
+
+   ```bash
+   git clone git@github.com:BetterAngelsLA/monorepo.git
+   ```
+
    b. Alternatively use https
+
    ```bash
    git clone https://github.com/BetterAngelsLA/monorepo.git
    ```
@@ -85,17 +97,23 @@ Run the following on the host machine (not in the container):
    nvm install node && nvm alias default node
    ```
 
+1. Optional: add a `.env.local` file:
+   - See `.env.local.sample` file for refernce
+   - .env.local file should override the .env values on your local machine
+     - usage example: seting ` EXPO_PUBLIC_API_URL`` and  `EXPO_PUBLIC_DEMO_API_URL` to same domain to avoid CORS issues
+   - NX docs on [Environment Variables](https://nx.dev/recipes/tips-n-tricks/define-environment-variables)
+
 ### Running the Frontend: Nx Workspace with Expo Application
 
 #### Starting Expo
 
 1. Open a new integrated terminal (local) and run the following to start Expo in your local environment
-   *Note: You should have development builds (linked above) installed on your device*
+   _Note: You should have development builds (linked above) installed on your device_
 
    Start the Outreach app
 
    ```bash
-   yarn nx start betterangels
+   yarn nx run betterangels:start
    ```
 
    Start the Shelter app
@@ -201,6 +219,105 @@ This will update the TypeScript types in the gql-types folder. If there are any 
 #### Keeping Types Up-to-Date
 
 Our CI pipeline checks if the generated GraphQL schema and types are up-to-date. If there's a discrepancy, the pipeline will fail, prompting you to regenerate and commit these files.
+
+<br>
+<br>
+
+## Volunteer Contributors
+
+This section provides guidelines to help new volunteer contributors get set up and aligned with our development process.
+
+---
+
+### Getting Started
+
+Follow these steps to get started as a contributor. Begin by following the [Installation Guide](#installation-guide) up to but not including **Step 6: Clone the monorepo**. Complete steps 1-3 below, then continue with the installation guide from **Step 7: Go to the monorepo and run yarn install**.
+
+#### 1. Forking the Repository
+
+To start, **fork** the Better Angels repository:
+
+1. Go to the [Better Angels GitHub repository](https://github.com/BetterAngelsLA/monorepo).
+2. Click the **Fork** button in the top right to create a personal copy of the repository under your GitHub account.
+
+#### 2. Cloning Your Fork
+
+Once your fork is created, clone it to your local machine:
+
+```bash
+git clone https://github.com/<your-username>/monorepo.git
+cd monorepo
+```
+
+Replace `<your-username>` with your GitHub username.
+
+#### 3. Adding the Original Repository as an Upstream Remote
+
+This step allows you to pull updates from the original repository and stay in sync with the main project.
+
+```bash
+git remote add upstream https://github.com/BetterAngelsLA/monorepo.git
+```
+
+### Creating a feature branch and pull requests
+
+#### 1. Keeping Your Fork Updated
+
+To keep your fork up-to-date with the latest changes from the main repository:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+```
+
+#### 2. Creating a Feature Branch
+
+Check the Jira board for tickets and assign one to yourself, move it to the ***In Progress*** column. Always create a new branch for each feature or bug fix you’re working on. This keeps your work organized and helps with code reviews.
+
+
+Follow this naming convention when creating branches: **DEV-ticketNumber/short-description**
+
+- Example: `DEV-749/hide_dob`
+
+Using this convention helps everyone identify the purpose of each branch and the related ticket or task.
+
+To create a new branch:
+
+```bash
+git checkout -b feature-branch-name
+```
+
+#### 3. Committing and Pushing Changes
+
+Stage and commit your changes with a meaningful commit message:
+
+```bash
+git add .
+git commit -m "Describe your changes here"
+git push origin feature-branch-name
+```
+#### 4. Creating a Pull Request
+
+1. Go to your forked repo on GitHub.
+2. You should see an option to **Compare & pull request**. Click it to open a pull request from your branch to the `main` branch of the original repository.
+3. Add a description of your changes, why they're necessary, and any context for reviewers.
+4. On the Jira board move your ticket from **In Progress** to **Review**
+5. In Betterangels' Slack let one of the staff engineers know you have made a pull request with a link and @ them on the #tech-volunteers-engineering channel.
+
+#### 5. After the Pull Request is Merged
+
+Once your PR is approved and merged, delete your local and remote feature branches to keep your workspace clean:
+
+```bash
+# Delete the local branch
+git branch -d feature-branch-name
+
+# Delete the remote branch
+git push origin --delete feature-branch-name
+```
+
+Thank you for contributing! Feel free to reach out if you have any questions or need assistance during onboarding.
 
 <br>
 <br>

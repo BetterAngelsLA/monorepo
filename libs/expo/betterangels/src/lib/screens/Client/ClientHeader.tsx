@@ -1,7 +1,8 @@
 import {
-  BirthdayIcon,
-  GenderIcon,
   GlobeIcon,
+  LocationDotIcon,
+  PersonIcon,
+  UserIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -9,33 +10,17 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ScrollView, View } from 'react-native';
-import { GenderEnum, LanguageEnum } from '../../apollo';
-import {
-  enumDisplayGender,
-  enumDisplayLanguage,
-} from '../../static/enumDisplayMapping';
+import { View } from 'react-native';
+import { enumDisplayLanguage } from '../../static/enumDisplayMapping';
+import { ClientProfileQuery } from './__generated__/Client.generated';
 
 interface IClientHeaderProps {
-  firstName: string | null | undefined;
-  lastName: string | null | undefined;
-  gender: GenderEnum | null | undefined;
-  nickname: string | null | undefined;
-  preferredLanguage: LanguageEnum | null | undefined;
-  dateOfBirth: string | null | undefined;
-  age: number | null | undefined;
+  client: ClientProfileQuery['clientProfile'] | undefined;
+  onCaseManagerPress: () => void;
 }
 
 export default function ClientHeader(props: IClientHeaderProps) {
-  const {
-    age,
-    dateOfBirth,
-    firstName,
-    gender,
-    lastName,
-    nickname,
-    preferredLanguage,
-  } = props;
+  const { client, onCaseManagerPress } = props;
 
   return (
     <View
@@ -43,52 +28,93 @@ export default function ClientHeader(props: IClientHeaderProps) {
         paddingHorizontal: Spacings.sm,
         backgroundColor: Colors.WHITE,
         paddingVertical: Spacings.md,
+        gap: Spacings.xs,
       }}
     >
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginBottom: Spacings.sm,
+          marginBottom: Spacings.xxs,
         }}
       >
         <Avatar
           mr="xs"
           size="lg"
-          accessibilityLabel={`${firstName} ${lastName} avatar`}
+          imageUrl={client?.profilePhoto?.url}
+          accessibilityLabel={`${client?.user.firstName} ${client?.user.lastName} avatar`}
           accessibilityHint={'clients avatar'}
         />
         <TextMedium size="lg">
-          {firstName} {lastName} {nickname && `(${nickname})`}
+          {client?.user.firstName} {client?.user.lastName}{' '}
+          {client?.nickname && `(${client.nickname})`}
         </TextMedium>
       </View>
-      <ScrollView
-        contentContainerStyle={{ alignItems: 'center', gap: Spacings.sm }}
-        horizontal
-        style={{ flexDirection: 'row' }}
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacings.xs }}
       >
-        {gender && (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <GenderIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-            <TextRegular>{enumDisplayGender[gender]}</TextRegular>
-          </View>
-        )}
-        {preferredLanguage && (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <GlobeIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
-
-            <TextRegular>{enumDisplayLanguage[preferredLanguage]}</TextRegular>
-          </View>
-        )}
-        {dateOfBirth && (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <BirthdayIcon mr="xs" color={Colors.PRIMARY_EXTRA_DARK} />
+        {client?.preferredLanguage && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacings.xxs,
+            }}
+          >
+            <GlobeIcon color={Colors.PRIMARY_EXTRA_DARK} />
             <TextRegular>
-              {dateOfBirth} ({age})
+              {enumDisplayLanguage[client.preferredLanguage]}
             </TextRegular>
           </View>
         )}
-      </ScrollView>
+        {client?.pronouns && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: Spacings.xxs,
+            }}
+          >
+            <UserIcon color={Colors.PRIMARY_EXTRA_DARK} />
+
+            <TextRegular>{client.displayPronouns}</TextRegular>
+          </View>
+        )}
+      </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: Spacings.xxs,
+        }}
+      >
+        <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
+        <TextRegular>
+          Current Case Manager:{' '}
+          {client?.displayCaseManager !== 'Not Assigned' ? (
+            <TextRegular
+              onPress={onCaseManagerPress}
+              textDecorationLine="underline"
+            >
+              {client?.displayCaseManager}
+            </TextRegular>
+          ) : (
+            <TextRegular>{client?.displayCaseManager}</TextRegular>
+          )}
+        </TextRegular>
+      </View>
+      {client?.residenceAddress && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacings.xxs,
+          }}
+        >
+          <LocationDotIcon color={Colors.PRIMARY_EXTRA_DARK} />
+          <TextRegular>{client.residenceAddress}</TextRegular>
+        </View>
+      )}
     </View>
   );
 }

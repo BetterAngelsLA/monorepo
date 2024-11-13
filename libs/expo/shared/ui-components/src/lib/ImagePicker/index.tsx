@@ -1,5 +1,5 @@
 import { gql, useMutation } from '@apollo/client';
-import { ReactNativeFile } from '@monorepo/expo/shared/apollo';
+import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { ImagesIcon } from '@monorepo/expo/shared/icons';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import * as ImagePicker from 'expo-image-picker';
@@ -127,7 +127,7 @@ export default function ImagePickerComponent(props: IImagePickerProps) {
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
-      console.log(err);
+      console.error(err);
     }
   };
 

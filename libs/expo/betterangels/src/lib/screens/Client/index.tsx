@@ -4,8 +4,17 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useNavigation, useRouter } from 'expo-router';
-import { ReactElement, useLayoutEffect, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import {
+  ComponentType,
+  ForwardRefExoticComponent,
+  ReactElement,
+  RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Pressable, View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
@@ -21,15 +30,17 @@ import {
   ClientProfileQuery,
   useClientProfileQuery,
 } from './__generated__/Client.generated';
+interface ProfileRef {
+  scrollToRelevantContacts: () => void;
+}
 
 const getTabComponent = (
   key: string,
-  client: ClientProfileQuery | undefined
-): ReactElement => {
+  client: ClientProfileQuery | undefined,
+  profileRef?: RefObject<ProfileRef>
+): ReactElement | null => {
   const components: {
-    [key: string]: (props: {
-      client: ClientProfileQuery | undefined;
-    }) => JSX.Element;
+    [key: string]: ForwardRefExoticComponent<any> | ComponentType<any>;
   } = {
     Docs,
     Interactions,
@@ -41,7 +52,14 @@ const getTabComponent = (
   };
 
   const Component = components[key];
-  return <Component client={client} />;
+
+  if (!Component) return null;
+
+  return key === 'Profile' ? (
+    <Component ref={profileRef} client={client} />
+  ) : (
+    <Component client={client} />
+  );
 };
 
 export default function Client({
@@ -54,8 +72,22 @@ export default function Client({
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Profile');
 
+  const profileRef = useRef<ProfileRef | null>(null);
+
+  const handleScrollToRelevantContacts = async () => {
+    await setTab('Profile');
+    profileRef.current?.scrollToRelevantContacts();
+  };
+
   const navigation = useNavigation();
   const router = useRouter();
+  const { newTab } = useLocalSearchParams<{ newTab?: string }>();
+
+  useEffect(() => {
+    if (newTab) {
+      setTab(newTab);
+    }
+  }, [newTab]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -105,16 +137,11 @@ export default function Client({
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
-        age={data?.clientProfile.age}
-        dateOfBirth={data?.clientProfile.dateOfBirth}
-        firstName={data?.clientProfile.user.firstName}
-        gender={data?.clientProfile.gender}
-        lastName={data?.clientProfile.user.lastName}
-        nickname={data?.clientProfile.nickname}
-        preferredLanguage={data?.clientProfile.preferredLanguage}
+        onCaseManagerPress={handleScrollToRelevantContacts}
+        client={data?.clientProfile}
       />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, data)}
+      {getTabComponent(tab, data, profileRef)}
     </MainContainer>
   );
 }
