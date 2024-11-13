@@ -263,6 +263,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("X0000000", None, 0),  # no match
             ("L1234567", None, 1),  # match exists
             ("L1234567", "client_profile_1", 0),  # match exists only on current client
+            ("L123456", None, 0),  # no match on partial id
         ],
     )
     def test_client_profiles_query_search_client_by_california_id(
