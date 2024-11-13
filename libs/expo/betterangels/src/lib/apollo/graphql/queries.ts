@@ -82,6 +82,15 @@ export const GET_NOTE = gql`
           name
         }
       }
+      clientDocuments {
+        id
+        namespace
+        attachmentType
+        file {
+          url
+          name
+        }
+      }
       moods {
         id
         descriptor
