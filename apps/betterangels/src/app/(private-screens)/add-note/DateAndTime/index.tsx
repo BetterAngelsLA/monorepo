@@ -77,7 +77,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
           },
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }, 500)
   ).current;

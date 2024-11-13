@@ -10,28 +10,33 @@ import {
   TextBold,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
+import { RefObject } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import {
   CreateClientProfileInput,
   RelationshipTypeEnum,
   UpdateClientProfileInput,
 } from '../../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../../static/enumDisplayMapping';
+import AddressAutocomplete from '../../../../ui-components/AddressField';
+
+type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
 interface IContactProps {
   index: number;
   remove: (index: number) => void;
+  scrollRef: RefObject<ScrollView>;
 }
 
 export default function Contact(props: IContactProps) {
-  const { index, remove } = props;
+  const { index, remove, scrollRef } = props;
   const {
     control,
     setValue,
     watch,
     formState: { errors },
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  } = useFormContext<TForm>();
 
   const relationship = watch(
     `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
@@ -151,12 +156,19 @@ export default function Contact(props: IContactProps) {
         name={`contacts[${index}].phoneNumber`}
         control={control}
       />
-      <Input
-        placeholder="Mailing Address"
-        label="Mailing Address"
-        name={`contacts[${index}].mailingAddress`}
+
+      <AddressAutocomplete<TForm>
+        name={
+          `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`
+        }
         control={control}
+        label="Mailing Address"
+        placeholder="Mailing Address"
+        focusScroll={{
+          scrollViewRef: scrollRef,
+        }}
       />
+
       {contacts[index].relationshipToClient === RelationshipTypeEnum.Other && (
         <Input
           placeholder="Relationship to Client Other"

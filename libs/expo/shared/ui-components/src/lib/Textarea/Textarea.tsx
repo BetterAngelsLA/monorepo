@@ -73,6 +73,7 @@ export function Textarea(props: ITextareaProps) {
     mr,
     height,
     onFocus,
+    textAlignVertical = 'top',
     ...rest
   } = props;
 
@@ -110,11 +111,13 @@ export function Textarea(props: ITextareaProps) {
             ]}
           >
             <TextInput
+              textAlignVertical={textAlignVertical}
               style={{
                 color: disabled
                   ? Colors.NEUTRAL_LIGHT
                   : Colors.PRIMARY_EXTRA_DARK,
 
+                paddingVertical: Spacings.sm,
                 paddingLeft: Spacings.sm,
                 paddingRight: Spacings.lg,
                 fontFamily: 'Poppins-Regular',

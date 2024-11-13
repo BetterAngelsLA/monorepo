@@ -56,6 +56,13 @@ class ClientProfileOrder:
     id: auto
 
 
+@strawberry.input
+class ClientSearchInput:
+    first_name: str | None = None
+    last_name: str | None = None
+    middle_name: str | None = None
+
+
 @filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
@@ -105,10 +112,34 @@ class ClientProfileFilter:
 
         queryset = queryset.filter(reduce(and_, q_objects))
 
-        return (
-            queryset,
-            Q(),
-        )
+        return (queryset, Q())
+
+    @strawberry_django.filter_field
+    def search_client(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: ClientSearchInput,
+        prefix: str,
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
+        """
+        Returns client profiles with exact match on all provided search fields (case insensitive).
+        All search fields are optional.
+        """
+        filters = {}
+
+        user_fields = ["first_name", "middle_name", "last_name"]
+
+        for field in user_fields:
+            if field_value := (getattr(value, field) or "").strip():
+                filters[f"user__{field}__iexact"] = field_value
+
+        if not filters:
+            return (queryset.none(), Q())
+
+        queryset = queryset.filter(**filters)
+
+        return (queryset, Q())
 
 
 @strawberry_django.type(HmisProfile)
