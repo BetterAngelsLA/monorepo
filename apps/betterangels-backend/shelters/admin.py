@@ -55,11 +55,18 @@ T = TypeVar("T", bound=models.Model)
 User = get_user_model()
 
 
+class OtherChoiceEntry(models.Model):
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="other_choices")
+    field_name = models.CharField(max_length=50)
+    other_value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class ShelterForm(forms.ModelForm):
     curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
     # Summary Info
-    demographics = forms.MultipleChoiceField(choices=DemographicChoices, widget=CheckboxSelectMultiple(), required=True)
+    demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
     special_situation_restrictions = forms.MultipleChoiceField(
         choices=SpecialSituationRestrictionChoices, widget=CheckboxSelectMultiple(), required=True
     )

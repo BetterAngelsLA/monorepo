@@ -11,7 +11,7 @@ class DemographicChoices(models.TextChoices):
     SENIORS = "seniors", _("Seniors")
     FAMILIES = "families", _("Families")
     SINGLE_MOMS = "single_moms", _("Single Moms")
-    OTHER = "other", _("Other")
+    OTHER = "other", _("Other, Please Specify:")
 
 
 class SpecialSituationRestrictionChoices(models.TextChoices):
@@ -31,7 +31,7 @@ class ShelterChoices(models.TextChoices):
     SAFE_PARKING = "safe_parking", _("Safe Parking")
     SINGLE_FAMILY_HOUSE = "single_family_house", _("Single Family House")
     TINY_HOMES = "tiny_homes", _("Tiny Homes")
-    OTHER = "other", _("Other")
+    OTHER = "other", _("Other, Please Specify:")
 
 
 # Sleeping Details
@@ -42,7 +42,7 @@ class RoomStyleChoices(models.TextChoices):
     SHARED_ROOMS = "shared_rooms", _("Shared Rooms")
     SINGLE_ROOM = "single_room", _("Single Room")
     MOTEL_ROOM = "motel_room", _("Motel Room")
-    OTHER = "other", _("Other")
+    OTHER = "other", _("Other, Please Specify:")
 
 
 # Shelter Details
@@ -238,7 +238,7 @@ class ShelterProgramChoices(models.TextChoices):
     TINY_HOME_VILLAGE = "tiny_home_village", _("Tiny Home Village")
     TRANSITIONAL_HOUSING = "transitional_housing", _("Transitional Housing")
     WINTER_SHELTER = "winter_shelter", _("Winter Shelter")
-    OTHER = "other", _("Other")
+    OTHER = "other", _("Other, Please Specify:")
 
 
 class FunderChoices(models.TextChoices):
@@ -249,7 +249,7 @@ class FunderChoices(models.TextChoices):
     HOPWA = "hopwa", _("HOPWA")
     LAHSA = "lahsa", _("LAHSA")
     PRIVATE = "private", _("Private")
-    OTHER = "other", _("Other")
+    OTHER = "other", _("Other, Please Specify:")
 
 
 # Better Angels Admin
