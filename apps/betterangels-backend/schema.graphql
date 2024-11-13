@@ -211,6 +211,8 @@ type ClientProfileType {
 }
 
 input ClientSearchInput {
+  excludedClientProfileId: String = null
+  californiaId: String = null
   firstName: String = null
   lastName: String = null
   middleName: String = null

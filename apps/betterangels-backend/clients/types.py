@@ -58,9 +58,11 @@ class ClientProfileOrder:
 
 @strawberry.input
 class ClientSearchInput:
-    first_name: str | None = None
-    last_name: str | None = None
-    middle_name: str | None = None
+    excluded_client_profile_id: Optional[str] = None
+    california_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
 
 
 @filter(ClientProfile)
@@ -97,6 +99,7 @@ class ClientProfileFilter:
         q_objects = []
         combined_q_search = []
         searchable_fields = [
+            "california_id",
             "hmis_id",
             "nickname",
             "user__first_name",
@@ -124,10 +127,19 @@ class ClientProfileFilter:
         """
         Returns client profiles with exact match on all provided search fields (case insensitive).
         All search fields are optional.
+
+        Accepts an excluded_client_profile_id param to exclude from result set.
+        In the context of client deduplication, this prevents the client profile being edited
+        from being flagged as a duplicate entry.
         """
         filters = {}
 
+        client_profile_fields = ["california_id"]
         user_fields = ["first_name", "middle_name", "last_name"]
+
+        for field in client_profile_fields:
+            if field_value := (getattr(value, field) or "").strip():
+                filters[f"{field}__iexact"] = field_value
 
         for field in user_fields:
             if field_value := (getattr(value, field) or "").strip():
@@ -137,6 +149,9 @@ class ClientProfileFilter:
             return (queryset.none(), Q())
 
         queryset = queryset.filter(**filters)
+
+        if excluded_id := value.excluded_client_profile_id:
+            queryset = queryset.exclude(id=excluded_id)
 
         return (queryset, Q())
 
