@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
+  ImagesWithZoom,
   Loading,
   TextBold,
   TextRegular,
@@ -85,7 +86,12 @@ export default function FileScreenComponent({ id }: { id: string }) {
         {enumDisplayDocumentType[data.clientDocument.namespace]}
       </TextBold>
       <View style={styles.fileContainer}>
-        {ImageComponent}
+        <ImagesWithZoom
+          title={data.clientDocument.originalFilename}
+          imageUrls={[{ url: data.clientDocument.file.url }]}
+        >
+          {ImageComponent}
+        </ImagesWithZoom>
         <TextBold size="sm">File Name</TextBold>
         <TextRegular size="sm">
           {data.clientDocument.originalFilename}
