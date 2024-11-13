@@ -152,6 +152,7 @@ input ClientProfileFilter {
   DISTINCT: Boolean
   isActive: Boolean
   search: String
+  searchClient: ClientSearchInput
 }
 
 input ClientProfileOrder {
@@ -207,6 +208,12 @@ type ClientProfileType {
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType!
   displayCaseManager: String!
+}
+
+input ClientSearchInput {
+  firstName: String = null
+  lastName: String = null
+  middleName: String = null
 }
 
 input CreateClientDocumentInput {
