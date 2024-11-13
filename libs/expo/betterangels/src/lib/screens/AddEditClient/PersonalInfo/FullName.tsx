@@ -4,58 +4,39 @@ import {
   Input,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Text } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
 
-type TFullNameForm = (UpdateClientProfileInput | CreateClientProfileInput) & {
-  emptyFormError: string;
-};
-
 export default function FullName() {
   const {
     control,
-    formState: { errors, isDirty },
-    setError,
+    getValues,
+    formState: { errors },
     setValue,
-    clearErrors,
-  } = useFormContext<TFullNameForm>();
+  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const onReset = () => {
-    setValue('user.firstName', '');
+    setValue('user.firstName', '', { shouldValidate: true });
     setValue('user.middleName', '');
     setValue('user.lastName', '');
     setValue('nickname', '');
-    clearErrors('emptyFormError');
   };
 
-  const [firstName, middleName, lastName, nickname] = useWatch({
-    control,
-    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
-  });
+  function oneValueExists() {
+    const values = getValues();
 
-  useEffect(() => {
-    if (!isDirty) {
-      return;
-    }
+    const hasValue =
+      values.user?.firstName ||
+      values.user?.lastName ||
+      values.user?.middleName ||
+      values.nickname;
 
-    const hasValue = firstName || middleName || lastName || nickname;
-
-    if (hasValue) {
-      clearErrors('emptyFormError');
-
-      return;
-    }
-
-    setError('emptyFormError', {
-      type: 'manual',
-      message: 'Filling out one of the fields is required',
-    });
-  }, [firstName, middleName, lastName, nickname, setError, clearErrors]);
+    return !!hasValue;
+  }
 
   return (
     <CardWrapper
@@ -66,15 +47,15 @@ export default function FullName() {
         </>
       }
     >
-      {!errors.emptyFormError && (
+      {!errors.user?.firstName && (
         <TextRegular size="sm" mb="xs">
           (Filling out one of the fields is required)
         </TextRegular>
       )}
 
-      {errors.emptyFormError && (
+      {errors.user?.firstName && (
         <TextRegular size="sm" mb="xs" color={Colors.ERROR}>
-          {errors.emptyFormError.message}
+          Filling out one of the fields is required
         </TextRegular>
       )}
 
@@ -84,6 +65,9 @@ export default function FullName() {
         label="First Name"
         name="user.firstName"
         control={control}
+        rules={{
+          required: !oneValueExists(),
+        }}
       />
       <Input
         placeholder="Enter Middle Name"
