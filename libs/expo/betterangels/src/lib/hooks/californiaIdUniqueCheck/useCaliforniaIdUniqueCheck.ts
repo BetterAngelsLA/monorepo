@@ -6,7 +6,7 @@ export default function useCaliforniaIdUniqueCheck(
   clientProfileId?: string
 ) {
   const { data } = useClientCaliforniaUniqueCheckQuery({
-    skip: !californiaId || !Regex.californiaId.test(californiaId),
+    skip: !Regex.californiaId.test(californiaId),
     variables: {
       filters: {
         searchClient: {

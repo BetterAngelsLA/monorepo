@@ -202,7 +202,11 @@ export default function AddEditClient({ id }: { id?: string }) {
             type: 'manual',
             message: 'User with this Email already exists.',
           });
-        } else if (
+
+          return;
+        }
+
+        if (
           resultMessage ===
           'Client profile with this California id already exists.'
         ) {
@@ -210,7 +214,11 @@ export default function AddEditClient({ id }: { id?: string }) {
             type: 'manual',
             message: 'This is the same CA ID as another client.',
           });
-        } else if (
+
+          return;
+        }
+
+        if (
           resultMessage ===
           'California ID must be 1 letter followed by 7 numbers'
         ) {
@@ -218,18 +226,11 @@ export default function AddEditClient({ id }: { id?: string }) {
             type: 'manual',
             message: 'CA ID must be 1 letter followed by 7 numbers',
           });
-        } else {
-          throw new Error(
-            `Failed to update a client profile: ${resultMessage}`
-          );
-        }
-        return;
-      }
 
-      if (id) {
-        router.replace(`/client/${id}`);
-      } else {
-        router.replace('/');
+          return;
+        }
+
+        throw new Error(`Failed to update a client profile: ${resultMessage}`);
       }
     } catch (err) {
       console.error(err);
