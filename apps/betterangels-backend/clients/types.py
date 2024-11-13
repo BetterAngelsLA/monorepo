@@ -57,6 +57,12 @@ class ClientProfileOrder:
 
 
 @strawberry.input
+class CaliforniaIDSearchInput:
+    client_profile_id: str
+    california_id: str
+
+
+@strawberry.input
 class ClientSearchInput:
     first_name: str | None = None
     last_name: str | None = None
@@ -138,6 +144,23 @@ class ClientProfileFilter:
             return (queryset.none(), Q())
 
         queryset = queryset.filter(**filters)
+
+        return (queryset, Q())
+
+    @strawberry_django.filter_field
+    def search_california_id(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: CaliforniaIDSearchInput,
+        prefix: str,
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
+        """
+        Returns client profiles with exact match on all provided search fields (case insensitive).
+        All search fields are optional.
+        """
+
+        queryset = queryset.exclude(id=value.client_profile_id).filter(california_id=value.california_id)
 
         return (queryset, Q())
 
