@@ -1,10 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
-import { RefObject, useEffect, useState } from 'react';
+import { RefObject, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
-import { useClientProfilesQuery } from '../../Clients/__generated__/Clients.generated';
+import { useCaliforniaIdValidation } from '../../../hooks';
 import CaliforniaId from './CaliforniaId';
 import Dob from './Dob';
 import FullName from './FullName';
@@ -22,48 +22,24 @@ interface IPersonalInfoProps {
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
   const { id: clientProfileId } = useLocalSearchParams();
-  const {
-    formState: { errors },
-    watch,
-    setError,
-    clearErrors,
-  } = useFormContext();
-  const [checkForDuplicates, setCheckForDuplicates] = useState(false);
+  const { watch, setError, clearErrors } = useFormContext();
   const californiaId = watch('californiaId');
-  const californiaIdLength = 8;
-  const { data } = useClientProfilesQuery({
-    skip: !checkForDuplicates,
-    variables: {
-      filters: {
-        searchClient: {
-          excludedClientProfileId: (clientProfileId as string) || null,
-          californiaId: californiaId,
-        },
-      },
-    },
-    fetchPolicy: 'network-only',
-    nextFetchPolicy: 'network-only',
-  });
+
+  const validationError = useCaliforniaIdValidation(
+    californiaId,
+    clientProfileId as string
+  );
 
   useEffect(() => {
-    const shouldCheck =
-      californiaId &&
-      californiaId.length === californiaIdLength &&
-      !errors['californiaId'];
-
-    setCheckForDuplicates(shouldCheck);
-  }, [californiaId, errors]);
-
-  useEffect(() => {
-    if (data && data?.clientProfiles?.length > 0) {
+    if (validationError) {
       setError('californiaId', {
         type: 'manual',
-        message: 'This is the same CA ID as another client.',
+        message: validationError,
       });
     } else {
       clearErrors('californiaId');
     }
-  }, [data, setError, clearErrors]);
+  }, [validationError, setError, clearErrors]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (

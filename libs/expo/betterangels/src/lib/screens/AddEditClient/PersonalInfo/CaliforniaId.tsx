@@ -6,7 +6,7 @@ import {
   UpdateClientProfileInput,
 } from '../../../apollo';
 
-export default function PlaceOfBirth() {
+export default function CaliforniaId() {
   const {
     control,
     formState: { errors },
