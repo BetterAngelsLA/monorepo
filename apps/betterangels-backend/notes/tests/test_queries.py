@@ -1,9 +1,6 @@
 from typing import Any, Optional
-from unittest.mock import ANY
 
 import time_machine
-from clients.enums import ClientDocumentNamespaceEnum
-from common.enums import AttachmentType
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
@@ -65,15 +62,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     purpose
                     team
                     title
-                    clientDocuments {
-                        id
-                        file {
-                            name
-                        }
-                        attachmentType
-                        originalFilename
-                        namespace
-                    }
                     client {
                         id
                     }
@@ -119,7 +107,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 9
+        expected_query_count = 8
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -136,29 +124,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "purpose": "Updated Note",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "title": "Updated Note",
-            "clientDocuments": [
-                {
-                    "id": str(self.client_document_1.pk),
-                    "attachmentType": AttachmentType.DOCUMENT.name,
-                    "file": {"name": ANY},
-                    "namespace": ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                    "originalFilename": "file_name.txt",
-                },
-                {
-                    "id": str(self.client_document_2.pk),
-                    "attachmentType": AttachmentType.DOCUMENT.name,
-                    "file": {"name": ANY},
-                    "namespace": ClientDocumentNamespaceEnum.HMIS_FORM.name,
-                    "originalFilename": "file_name.txt",
-                },
-                {
-                    "id": str(self.client_document_3.pk),
-                    "attachmentType": AttachmentType.DOCUMENT.name,
-                    "file": {"name": ANY},
-                    "namespace": ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-                    "originalFilename": "file_name.txt",
-                },
-            ],
             "location": {
                 "id": str(self.location.pk),
                 "address": {
@@ -208,13 +173,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 },
             ],
         }
-
-        note_differences = DeepDiff(
-            expected_note,
-            note,
-            ignore_order=True,
-            exclude_regex_paths=[r"\['name'\]$"],
-        )
+        note_differences = DeepDiff(expected_note, note, ignore_order=True)
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:

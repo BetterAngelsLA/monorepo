@@ -505,7 +505,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -1620,7 +1620,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         attachment_id = create_response["data"]["createNoteAttachment"]["id"]
         self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_note_attachment_fixture(attachment_id)
 

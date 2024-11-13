@@ -1,35 +1,26 @@
 from typing import Any, Dict
 
-from clients.enums import ClientDocumentNamespaceEnum
-from clients.models import ClientProfile
-from common.models import Address, Attachment, Location
+from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
-from notes.models import Note, ServiceRequest
+from notes.models import ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
 
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-
-        # Force login the case manager to create note fixtures
-        self.graphql_client.force_login(self.org_1_case_manager_1)
         self._setup_note()
         self._setup_note_tasks()
-        self._setup_client_profile()
-        self._setup_client_documents()
         self._setup_location()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
 
-        # Logout after setting up note fixtures
-        self.graphql_client.logout()
-
     def _setup_note(self) -> None:
+        # Force login the case manager to create a note
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note = self._create_note_fixture(
             {
                 "title": f"Session with {self.client_user_1.full_name}",
@@ -38,36 +29,12 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "client": self.client_user_1.pk,
             },
         )["data"]["createNote"]
-
-    def _setup_client_profile(self) -> None:
-        self.client_profile = baker.make(ClientProfile, user=self.client_user_1)
-
-    def _setup_client_documents(self) -> None:
-        file = SimpleUploadedFile(content=b"file_content", name="file_name.txt")
-        content_type = ContentType.objects.get_for_model(ClientProfile)
-
-        namespaces = [
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
-            ClientDocumentNamespaceEnum.HMIS_FORM,
-            ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT,
-        ]
-
-        self.client_document_1, self.client_document_2, self.client_document_3 = [
-            baker.make(
-                Attachment,
-                content_type=content_type,
-                file=file,
-                namespace=namespace,
-                object_id=self.client_profile.pk,
-                uploaded_by=self.org_1_case_manager_1,
-            )
-            for namespace in namespaces
-        ]
-
-        note = Note.objects.get(id=self.note["id"])
-        note.client_documents.add(self.client_document_1, self.client_document_2, self.client_document_3)
+        # Logout after setting up the note
+        self.graphql_client.logout()
 
     def _setup_note_tasks(self) -> None:
+        # Force login the case manager to create tasks
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.purpose_1 = self._create_task_for_note_fixture(
             {
                 "title": f"Purpose 1 for {self.note['id']}",
@@ -92,6 +59,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "status": "TO_DO",
             },
         )["data"]["createTask"]
+        # Logout after setting up the tasks
+        self.graphql_client.logout()
 
     def _setup_location(self) -> None:
         self.address = baker.make(

@@ -46,7 +46,6 @@ class ClientDocumentType(AttachmentInterface):
 class CreateClientDocumentInput:
     client_profile: ID
     file: Upload
-    note_id: Optional[ID]
     namespace: ClientDocumentNamespaceEnum
 
 
