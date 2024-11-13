@@ -2,7 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
 import { RefObject, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import { useCaliforniaIdUniqueCheck } from '../../../hooks';
 import CaliforniaId from './CaliforniaId';
@@ -22,8 +22,11 @@ interface IPersonalInfoProps {
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
   const { id: clientProfileId } = useLocalSearchParams();
-  const { watch, setError, clearErrors } = useFormContext();
-  const californiaId = watch('californiaId');
+  const { control, setError, clearErrors } = useFormContext();
+  const [californiaId] = useWatch({
+    control,
+    name: ['californiaId'],
+  });
 
   const validationError = useCaliforniaIdUniqueCheck(
     californiaId,
