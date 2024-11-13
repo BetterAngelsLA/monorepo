@@ -201,6 +201,15 @@ export default function AddEditClient({ id }: { id?: string }) {
             message: 'User with this Email already exists.',
           });
           return;
+        } else if (
+          operationResult.messages[0].message ===
+          'Client profile with this California id already exists.'
+        ) {
+          methods.setError('californiaId', {
+            type: 'manual',
+            message: 'This is the same CA ID as another client.',
+          });
+          return;
         } else {
           throw new Error(
             `Failed to update a client profile: ${operationResult.messages[0].message}`

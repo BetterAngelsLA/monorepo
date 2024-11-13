@@ -1,7 +1,9 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
+import { RefObject, useEffect } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
+import { useClientProfilesQuery } from '../../Clients/__generated__/Clients.generated';
 import CaliforniaId from './CaliforniaId';
 import Dob from './Dob';
 import FullName from './FullName';
@@ -18,6 +20,46 @@ interface IPersonalInfoProps {
 
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
+  const {
+    // register,
+    formState: { errors },
+    watch,
+  } = useFormContext();
+
+  // useEffect(() => {
+  //   register('californiaId');
+  // }, [register]);
+
+  const californiaId = watch('californiaId');
+
+  // const { data, loading } = useClientProfilesQuery({
+  //   variables: {
+  //     filters: {
+  //       search: californiaId,
+  //     },
+  //   },
+  //   fetchPolicy: 'cache-and-network',
+  //   nextFetchPolicy: 'cache-first',
+  // });
+
+  const { data, loading } = useClientProfilesQuery({
+    variables: {
+      filters: {
+        search: californiaId,
+      },
+    },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
+
+  useEffect(() => {
+    if (!errors['californiaId']) {
+      // if (!loading) {
+      //   console.log(data);
+      // }
+      console.log('californiaId', californiaId);
+    }
+  }, [californiaId, errors]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (

@@ -24,7 +24,7 @@ export default function PlaceOfBirth() {
         rules={{
           validate: (value: string) => {
             if (value && !Regex.californiaId.test(value)) {
-              return 'California ID must be 1 letter followed by 7 digits';
+              return 'CA ID must be 1 letter followed by 7 digits';
             }
             return true;
           },
