@@ -35,8 +35,8 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
     skip: !checkForDuplicates,
     variables: {
       filters: {
-        searchCaliforniaId: {
-          clientProfileId: (clientProfileId as string) || null,
+        searchClient: {
+          excludedClientProfileId: (clientProfileId as string) || null,
           californiaId: californiaId,
         },
       },

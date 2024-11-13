@@ -82,11 +82,6 @@ export type AuthResponse = {
   status_code: Scalars['String']['output'];
 };
 
-export type CaliforniaIdSearchInput = {
-  californiaId: Scalars['String']['input'];
-  clientProfileId?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type ClientContactInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -164,7 +159,6 @@ export type ClientProfileFilter = {
   OR?: InputMaybe<ClientProfileFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
-  searchCaliforniaId?: InputMaybe<CaliforniaIdSearchInput>;
   searchClient?: InputMaybe<ClientSearchInput>;
 };
 
@@ -240,6 +234,8 @@ export type ClientProfileTypeOtherDocumentsArgs = {
 };
 
 export type ClientSearchInput = {
+  californiaId?: InputMaybe<Scalars['String']['input']>;
+  excludedClientProfileId?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;

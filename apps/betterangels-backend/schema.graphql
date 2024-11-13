@@ -78,11 +78,6 @@ type AuthResponse {
   status_code: String!
 }
 
-input CaliforniaIDSearchInput {
-  clientProfileId: String
-  californiaId: String!
-}
-
 input ClientContactInput {
   name: String
   email: String
@@ -158,7 +153,6 @@ input ClientProfileFilter {
   isActive: Boolean
   search: String
   searchClient: ClientSearchInput
-  searchCaliforniaId: CaliforniaIDSearchInput
 }
 
 input ClientProfileOrder {
@@ -217,6 +211,8 @@ type ClientProfileType {
 }
 
 input ClientSearchInput {
+  excludedClientProfileId: String = null
+  californiaId: String = null
   firstName: String = null
   lastName: String = null
   middleName: String = null
