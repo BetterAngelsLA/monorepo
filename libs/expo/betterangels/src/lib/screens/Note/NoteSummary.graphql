@@ -1,0 +1,55 @@
+query NoteSummary($id: ID!) {
+  note(pk: $id) {
+    ... on NoteType {
+      id
+      createdAt
+      interactedAt
+      isSubmitted
+      publicDetails
+      purpose
+      team
+      attachments {
+        id
+        namespace
+        attachmentType
+        file {
+          url
+          name
+        }
+      }
+      client {
+        id
+        email
+        firstName
+        lastName
+        clientProfile {
+          id: pk
+        }
+      }
+      createdBy {
+        id
+      }
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      providedServices {
+        id
+        service
+        serviceOther
+      }
+      requestedServices {
+        id
+        service
+        serviceOther
+      }
+    }
+  }
+}

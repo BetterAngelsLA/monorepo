@@ -234,6 +234,8 @@ export type ClientProfileTypeOtherDocumentsArgs = {
 };
 
 export type ClientSearchInput = {
+  californiaId?: InputMaybe<Scalars['String']['input']>;
+  excludedClientProfileId?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   middleName?: InputMaybe<Scalars['String']['input']>;
