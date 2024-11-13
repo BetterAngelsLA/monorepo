@@ -19,7 +19,7 @@ type TFullNameForm = (UpdateClientProfileInput | CreateClientProfileInput) & {
 export default function FullName() {
   const {
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
     setError,
     setValue,
     clearErrors,
@@ -39,6 +39,10 @@ export default function FullName() {
   });
 
   useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+
     const hasValue = firstName || middleName || lastName || nickname;
 
     if (hasValue) {
