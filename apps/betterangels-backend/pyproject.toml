@@ -46,6 +46,7 @@ django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.0.0" }
 django-ckeditor-5 = "^0.2.13"
 newrelic = "^10.2.0"
 dj-places = "^5.2.1"
+django-admin-async-upload = {git = "https://github.com/BetterAngelsLA/django-admin-async-upload.git", rev = "master"}
 
 [build-system]
 requires = ["poetry-core"]

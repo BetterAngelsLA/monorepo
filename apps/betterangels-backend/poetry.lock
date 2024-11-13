@@ -577,6 +577,24 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-admin-async-upload"
+version = "3.0.4"
+description = "A Django app for the uploading of large files from the django admin site."
+optional = false
+python-versions = "*"
+files = []
+develop = false
+
+[package.dependencies]
+Django = ">=5.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/BetterAngelsLA/django-admin-async-upload.git"
+reference = "master"
+resolved_reference = "acf522080717c44607fa9b5b1828ccf33e0b43dc"
+
+[[package]]
 name = "django-allauth"
 version = "0.61.1"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
@@ -1935,4 +1953,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.13.0"
-content-hash = "e9c9cb7147032df641e0c1bdc5d4f485b8cdc3f06e0cda001ece8b34654ec5a2"
+content-hash = "d78936e638789339e691077f6b16702fdf505225ac6dc0175e9f8f979655bc94"
