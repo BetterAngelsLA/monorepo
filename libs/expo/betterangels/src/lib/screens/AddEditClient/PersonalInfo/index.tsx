@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useEffect } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import { useClientProfilesQuery } from '../../Clients/__generated__/Clients.generated';
@@ -21,45 +21,48 @@ interface IPersonalInfoProps {
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
   const {
-    // register,
     formState: { errors },
     watch,
+    setError,
+    clearErrors,
   } = useFormContext();
-
-  // useEffect(() => {
-  //   register('californiaId');
-  // }, [register]);
-
+  const [checkForDuplicates, setCheckForDuplicates] = useState(false);
   const californiaId = watch('californiaId');
+  const californiaIdLength = 8;
 
-  // const { data, loading } = useClientProfilesQuery({
-  //   variables: {
-  //     filters: {
-  //       search: californiaId,
-  //     },
-  //   },
-  //   fetchPolicy: 'cache-and-network',
-  //   nextFetchPolicy: 'cache-first',
-  // });
-
-  const { data, loading } = useClientProfilesQuery({
+  const { data } = useClientProfilesQuery({
+    skip: !checkForDuplicates,
     variables: {
       filters: {
         search: californiaId,
       },
     },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
   });
 
   useEffect(() => {
-    if (!errors['californiaId']) {
-      // if (!loading) {
-      //   console.log(data);
-      // }
-      console.log('californiaId', californiaId);
+    if (
+      californiaId &&
+      californiaId.length === californiaIdLength &&
+      !errors['californiaId']
+    ) {
+      setCheckForDuplicates(true);
+    } else {
+      setCheckForDuplicates(false);
     }
   }, [californiaId, errors]);
+
+  useEffect(() => {
+    if (data && data?.clientProfiles?.length > 0) {
+      setError('californiaId', {
+        type: 'manual',
+        message: 'This is the same CA ID as another client.',
+      });
+    } else {
+      clearErrors('californiaId');
+    }
+  }, [data, setError, clearErrors]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (
