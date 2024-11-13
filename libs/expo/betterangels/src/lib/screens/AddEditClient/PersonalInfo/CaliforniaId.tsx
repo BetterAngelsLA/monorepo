@@ -15,12 +15,12 @@ export default function PlaceOfBirth() {
   return (
     <CardWrapper title="CA ID #">
       <Input
-        name="californiaId"
         autoCorrect={false}
-        placeholder="Enter CA ID #"
         control={control}
         error={!!errors.californiaId}
         errorMessage={(errors.californiaId?.message as string) || undefined}
+        name="californiaId"
+        placeholder="Enter CA ID #"
         rules={{
           validate: (value: string) => {
             if (value && !Regex.californiaId.test(value)) {
