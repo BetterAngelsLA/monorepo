@@ -232,6 +232,11 @@ export default function AddEditClient({ id }: { id?: string }) {
 
         throw new Error(`Failed to update a client profile: ${resultMessage}`);
       }
+      if (id) {
+        router.replace(`/client/${id}`);
+      } else {
+        router.replace('/');
+      }
     } catch (err) {
       console.error(err);
 
