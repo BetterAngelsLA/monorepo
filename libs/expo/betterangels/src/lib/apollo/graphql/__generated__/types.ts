@@ -159,6 +159,7 @@ export type ClientProfileFilter = {
   OR?: InputMaybe<ClientProfileFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  searchClient?: InputMaybe<ClientSearchInput>;
 };
 
 export type ClientProfileOrder = {
@@ -177,6 +178,7 @@ export type ClientProfileType = {
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  californiaId?: Maybe<Scalars['String']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
@@ -231,6 +233,12 @@ export type ClientProfileTypeOtherDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type ClientSearchInput = {
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
@@ -243,6 +251,7 @@ export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
@@ -850,7 +859,7 @@ export type NoteTypeRequestedServicesArgs = {
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 
@@ -1228,6 +1237,7 @@ export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;

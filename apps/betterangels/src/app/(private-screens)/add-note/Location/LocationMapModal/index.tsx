@@ -1,5 +1,9 @@
 import {
   TMapView,
+  TPlaceLatLng,
+  TPlacesPrediction,
+  getPlaceAutocomplete,
+  getPlaceDetailsById,
   useUpdateNoteLocationMutation,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
@@ -72,7 +76,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
   const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
-  const [suggestions, setSuggestions] = useState<any>([]);
+  const [suggestions, setSuggestions] = useState<TPlacesPrediction[]>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
   const [userLocation, setUserLocation] =
@@ -104,56 +108,39 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const searchPlacesInCalifornia = async (query: string) => {
-    const url = `${baseUrl}/proxy/maps/api/place/autocomplete/json`;
     if (query.length < 3) return;
 
-    // geocode for approx center of LA COUNTY
-    const center = { lat: 34.04499, lng: -118.251601 };
-    const defaultBounds = {
-      north: center.lat + 0.1,
-      south: center.lat - 0.1,
-      east: center.lng + 0.1,
-      west: center.lng - 0.1,
-    };
-
     try {
-      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
-      const response = await axios.get(url, {
-        params: {
-          bounds: defaultBounds,
-          input: query,
-          components: 'country:us',
-          strictBounds: true,
-          withCredentials: true,
-        },
+      const predictions = await getPlaceAutocomplete({
+        baseUrl,
+        query,
       });
 
       setIsSearch(true);
 
-      setSuggestions(response.data.predictions);
+      setSuggestions(predictions);
     } catch (err) {
       console.error('Error fetching place data:', err);
       return [];
     }
   };
-  const onSuggestionsSelect = async (place: any) => {
+  const onSuggestionsSelect = async (place: TPlacesPrediction) => {
     try {
       if (chooseDirections) {
         setChooseDirections(false);
       }
       setLocation(undefined);
-      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
-      const response = await axios.get(
-        `${baseUrl}/proxy/maps/api/place/details/json`,
-        {
-          params: {
-            place_id: place.place_id,
-            fields: 'geometry,address_component',
-            withCredentials: true,
-          },
-        }
-      );
-      const { location: responseLocation } = response.data.result.geometry;
+
+      const placeResult = await getPlaceDetailsById({
+        baseUrl,
+        placeId: place.place_id,
+        fields: 'geometry,address_component',
+        withCredentials: true,
+      });
+
+      const geometry = placeResult.geometry as google.maps.places.PlaceGeometry;
+      const responseLocation = geometry.location as unknown as TPlaceLatLng;
+
       setIsSearch(false);
       setSuggestions([]);
 
@@ -181,7 +168,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setAddress({
         short: place.description,
         full: place.description,
-        addressComponents: response.data.result.address_components,
+        addressComponents: placeResult.address_components || [],
       });
       setMinimizeModal(false);
       setSelected(true);
@@ -311,7 +298,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         },
       });
       if (!locationData) {
-        console.error('Error updating interaction location', updateError);
+        throw new Error(`Error updating interaction location: ${updateError}`);
       }
     } catch (err) {
       console.error(err);

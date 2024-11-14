@@ -201,6 +201,17 @@ export default function AddNote() {
     clientProfileId ? `/client/${clientProfileId}` : '/';
 
   async function submitNote() {
+    if (!data?.note.location) {
+      setErrors((prev) => {
+        return {
+          ...prev,
+          location: true,
+        };
+      });
+
+      return;
+    }
+
     if (Object.values(errors).some((error) => error)) {
       return;
     }

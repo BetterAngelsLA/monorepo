@@ -68,7 +68,7 @@ export default function Purpose(props: IPurposeProps) {
           },
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }, 500)
   ).current;

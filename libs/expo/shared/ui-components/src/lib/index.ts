@@ -1,5 +1,6 @@
 export { default as Accordion } from './Accordion';
 export { default as Alert } from './Alert';
+export { default as AutocompleteInput } from './AutocompleteInput';
 export { default as Avatar } from './Avatar';
 export { default as BasicInput } from './BasicInput';
 export { default as BasicModal } from './BasicModal';
@@ -19,6 +20,7 @@ export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
 export { default as IconButton } from './IconButton';
 export { default as ImagePicker } from './ImagePicker';
+export { default as ImagesWithZoom } from './ImagesWithZoom';
 export { default as Input } from './Input';
 export { default as InteractionCamera } from './InteractionCamera';
 export { default as Loading } from './Loading';
