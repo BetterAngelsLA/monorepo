@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { gql, useQuery } from "@apollo/client";
 import { FeatureFlagContext, FeatureFlags } from "./featureFlagContext";
+import { View, Text } from "react-native";
 
 const FEATURE_FLAGS_QUERY = gql`
     query GetFeatureFlags {
@@ -34,11 +35,19 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
     const memoizedFlags = useMemo(() => featureFlags, [featureFlags]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <View>
+                <Text>Loading...</Text>
+            </View>
+        );
     }
 
     if (error) {
-        return <div>Error</div>
+        return (
+            <View>
+                <Text>Error</Text>
+            </View>
+        );
     }
 
     return (
