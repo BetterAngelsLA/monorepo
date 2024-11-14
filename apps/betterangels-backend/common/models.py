@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict, Optional
 
-import magic
 from common.enums import AttachmentType
 from common.utils import get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -89,8 +88,7 @@ class Attachment(BaseModel):
             self.original_filename = self.file.name
 
             # Determine the MIME type of the file
-            self.file.seek(0)
-            mime_type = magic.from_buffer(self.file.read(), mime=True)
+            mime_type = self.file.file.content_type
             self.mime_type = mime_type
             # Map MIME type to AttachmentType enum
             if mime_type.startswith("image"):
