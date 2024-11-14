@@ -87,6 +87,7 @@ DEBUG = env("DEBUG")
 
 # Application definition
 INSTALLED_APPS = [
+    "admin_async_upload",
     "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -314,6 +315,10 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
         },
     }
 
+ADMIN_RESUMABLE_CHUNKSIZE = 1 * 1024 * 1024
+ADMIN_RESUMABLE_CHUNK_STORAGE = "django.core.files.storage.InMemoryStorage"
+ADMIN_RESUMABLE_SHOW_THUMB = False
+ADMIN_SIMULTANEOUS_UPLOADS = 5
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/

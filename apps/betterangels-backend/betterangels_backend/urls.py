@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+import admin_async_upload.views  # type: ignore
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -40,6 +41,7 @@ urlpatterns = [
     ),
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
+    path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
 ]
 
 
