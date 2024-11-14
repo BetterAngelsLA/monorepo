@@ -26,6 +26,8 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
                 return acc;
             }, {});
             setFeatureFlags(flags);
+
+            console.log("Fetched feature flags:", flags);
         }
     }, [data]);
 
