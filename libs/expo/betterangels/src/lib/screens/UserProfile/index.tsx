@@ -9,10 +9,11 @@ import {
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useDeleteCurrentUserMutation } from '../../apollo';
-import { useSignOut, useUser } from '../../hooks';
+import { useSignOut, useSnackbar, useUser } from '../../hooks';
 import InfoCard from './InfoCard';
 export default function UserProfile() {
   const { user } = useUser();
+  const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
 
@@ -35,7 +36,12 @@ export default function UserProfile() {
       router.navigate('/auth');
       signOut();
     } catch (err) {
-      console.log(err);
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error logging you out.`,
+        type: 'error',
+      });
     }
   }
 

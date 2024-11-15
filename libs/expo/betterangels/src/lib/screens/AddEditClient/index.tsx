@@ -145,6 +145,11 @@ export default function AddEditClient({ id }: { id?: string }) {
       values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
     }
 
+    // passing an empty string to the backend will violate unique constraint
+    if (typeof values.user?.email === 'string') {
+      values.user.email = values.user.email || null;
+    }
+
     values.householdMembers = values.householdMembers?.map((member) => {
       if (member.dateOfBirth) {
         member.dateOfBirth = member.dateOfBirth.toISOString().split('T')[0];
@@ -378,7 +383,6 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
-            submitTitle="Update"
             cancel={
               <TextButton
                 onPress={router.back}

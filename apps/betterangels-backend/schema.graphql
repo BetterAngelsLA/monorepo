@@ -152,6 +152,7 @@ input ClientProfileFilter {
   DISTINCT: Boolean
   isActive: Boolean
   search: String
+  searchClient: ClientSearchInput
 }
 
 input ClientProfileOrder {
@@ -169,6 +170,7 @@ type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -208,6 +210,14 @@ type ClientProfileType {
   displayCaseManager: String!
 }
 
+input ClientSearchInput {
+  excludedClientProfileId: String = null
+  californiaId: String = null
+  firstName: String = null
+  lastName: String = null
+  middleName: String = null
+}
+
 input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
@@ -220,6 +230,7 @@ input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -638,7 +649,7 @@ type NoteType {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int! = -1
+  limit: Int = null
 }
 
 input OneToManyInput {
@@ -941,6 +952,7 @@ input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
