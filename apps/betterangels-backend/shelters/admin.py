@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any, Optional, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import quote
 
@@ -61,6 +62,8 @@ from .models import (
 )
 
 T = TypeVar("T", bound=models.Model)
+
+logger = logging.getLogger(__name__)
 
 
 class ShelterForm(forms.ModelForm):
@@ -215,25 +218,86 @@ class ShelterResource(resources.ModelResource):
         )
         exclude = ("id", "created_at", "updated_at")
 
+    def process_spa_import(self, row: Any, skip_row_not_val_error: bool, spa_row: str) -> None:
+        spa_names = [v.strip() for v in spa_row.split(",")]
+        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
+        for spa_name in spa_names:
+            try:
+                if int(spa_name) in spa_choices:
+                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                else:
+                    raise ValueError
+            except ValueError:
+                logger.warning(f"Row {self.count}: Bad SPA value")
+                if skip_row_not_val_error:
+                    row["spa"] = None
+                    row["jumpthis"] = True
+                else:
+                    raise ValidationError(f"Value in row {self.count} column spa must have a value between 1 and 8")
+
+    def process_address_import(self, row: Any, skip_row_not_val_error: bool, address_row: str) -> None:
+        addy_data = requests.get(
+            f"https://maps.googleapis.com/maps/api/geocode/json?address={quote(address_row)}&key={quote(settings.GOOGLE_MAPS_API_KEY)}"
+        )
+        try:
+            addy_formatted_data = addy_data.json()["results"][0]["formatted_address"]
+            addy_for_location_method = addy_data.json()["results"][0]
+            addy_for_location_method["address_components"] = json.dumps(addy_for_location_method["address_components"])
+            addy_address = Location.get_or_create_address(addy_for_location_method)
+            if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
+                raise IndexError
+            row["address"] = addy_formatted_data
+        except IndexError:
+            logger.warning(f"Address at {self.count} bad")
+            if skip_row_not_val_error:
+                row["address"] = None
+                row["jumpthis"] = True
+            else:
+                raise ValidationError(f"Invalid Address at {self.count}")
+
+    def process_many_to_many_import(self, row: Any, skip_row_not_val_error: bool, rowInDict: dict, column: str) -> None:
+        fieldModel = cast(Type[Model], Shelter._meta.get_field(column).related_model)
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
+        columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
+        row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
+        for i, indVal in enumerate(columnSeparateVals):
+            try:
+                if indVal in row_vals_choices:
+                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
+                        name=row_vals_choices[indVal]
+                    )
+                    columnSeparateVals[i] = row_vals_choices[indVal]
+                else:
+                    raise ValueError
+            except ValueError:
+                logger.warning(f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}")
+                if skip_row_not_val_error:
+                    row[column] = None
+                    row["jumpthis"] = True
+                else:
+                    raise ValidationError(
+                        f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}"
+                    )
+        row[column] = ",".join(columnSeparateVals)
+
     def before_import_row(self, row: Any, **kwargs: Any) -> None:
         self.count += 1
         skip_row_not_val_error = True
         if skip_row_not_val_error:
             row["jumpthis"] = False
+
+        # This for loop checks for fields that have exceeded their max length
         for field in Shelter._meta.get_fields():
             if hasattr(field, "max_length") and field.max_length:
                 fieldname = field.name
                 value = row.get(fieldname)
                 if value and (len(value) > field.max_length):
-                    print(f"Change {value} in row {self.count} col {fieldname}")
+                    logger.warning(f"Change {value} in row {self.count} col {fieldname}")
                     if skip_row_not_val_error:
                         row[fieldname] = ""
                         row["jumpthis"] = True
                     else:
                         raise ValidationError(f"Change {value} in row {self.count} col {fieldname}")
-        org_name = row.get("organization")
-        spa_name = row.get("spa")
-        addy_name = row.get("address")
         customFields = [
             "populations",
             "general_services",
@@ -245,88 +309,36 @@ class ShelterResource(resources.ModelResource):
             "health_services",
             "entry_requirements",
             "storage",
+            "pets",
+            "cities",
+            "accessibility",
+            "parking",
         ]  # in this case, the many to many fields
         rowInDict = {}
         for column in row.keys():
             rowInDict[column] = row.get(column)
-        if org_name:
-            org, created = Organization.objects.get_or_create(name=org_name)
+        if rowInDict["organization"]:
+            org, created = Organization.objects.get_or_create(name=rowInDict["organization"])
             # This process SPA name considering the ManyToMany nature of the field
             # Gets existing object or makes it if one doesn't exist
-            if spa_name:
-                spa_names = [v.strip() for v in spa_name.split(",")]
-                spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
-                for spa_name in spa_names:
-                    try:
-                        if int(spa_name) in spa_choices:
-                            sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
-                        else:
-                            raise ValueError
-                    except ValueError:
-                        print(f"Row {self.count}: Bad SPA value")
-                        if skip_row_not_val_error:
-                            row["spa"] = None
-                            row["jumpthis"] = True
-                        else:
-                            raise ValidationError(
-                                f"Value in row {self.count} column spa must have a value between 1 and 8"
-                            )
+            if rowInDict["spa"]:
+                self.process_spa_import(row, skip_row_not_val_error, rowInDict["spa"])
             # Same idea as the handling for SPA, but uses existing get_or_create_address method in Location class to handle Address creation
-            if addy_name:
-                addy_data = requests.get(
-                    f"https://maps.googleapis.com/maps/api/geocode/json?address={quote(addy_name)}&key={quote(settings.GOOGLE_MAPS_API_KEY)}"
-                )
-                try:
-                    addy_formatted_data = addy_data.json()["results"][0]["formatted_address"]
-                    addy_for_location_method = addy_data.json()["results"][0]
-                    addy_for_location_method["address_components"] = json.dumps(
-                        addy_for_location_method["address_components"]
-                    )
-                    addy_address = Location.get_or_create_address(addy_for_location_method)
-                    if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
-                        raise IndexError
-                    row["address"] = addy_formatted_data
-                except IndexError:
-                    print(f"Address at {self.count} bad")
-                    if skip_row_not_val_error:
-                        row["address"] = None
-                        row["jumpthis"] = True
-                    else:
-                        raise ValidationError(f"Invalid Address at {self.count}")
+            if rowInDict["address"]:
+                self.process_address_import(row, skip_row_not_val_error, rowInDict["address"])
             # This is to process the ManyToMany fields, grabs the data within the CSV and matches it to the proper choice for that column
             for column in customFields:
                 if rowInDict[column]:
-                    fieldModel = cast(Type[Model], Shelter._meta.get_field(column).related_model)
-                    fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
-                    columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
-                    row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
-                    for i, indVal in enumerate(columnSeparateVals):
-                        try:
-                            if indVal in row_vals_choices:
-                                brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
-                                    name=row_vals_choices[indVal]
-                                )
-                                columnSeparateVals[i] = row_vals_choices[indVal]
-                            else:
-                                print(i, indVal, columnSeparateVals)
-                                raise ValueError
-                        except ValueError:
-                            print(f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}")
-                            if skip_row_not_val_error:
-                                row[column] = None
-                                row["jumpthis"] = True
-                            else:
-                                raise ValidationError(
-                                    f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}"
-                                )
-                    row[column] = ",".join(columnSeparateVals)
+                    self.process_many_to_many_import(row, skip_row_not_val_error, rowInDict, column)
         else:
-            print(f"No org name: {self.count} {row}")
+            logger.warning(f"No org name: {self.count} {row}")
             if skip_row_not_val_error:
                 row["jumpthis"] = True
             else:
                 raise ValidationError(f"Row {self.count} is missing an Organization")
 
+    # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
+    # import, and also whether or not skip_row_not_val_error boolean is True or False
     def skip_row(self, instance: Any, original: Any, row: Any, import_validation_errors: Any | None = None) -> bool:
         if row.get("jumpthis"):
             return True
@@ -419,11 +431,9 @@ class ShelterAdmin(ImportExportModelAdmin):
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
         for import_type, _instances in rows.items():
-            print(f"Hello import_type is here {import_type}")
             if import_type not in logentry_map:
                 continue
             action_flag = logentry_map[import_type]
-            print(f"{action_flag} and {logentry_map}")
             self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
 
 

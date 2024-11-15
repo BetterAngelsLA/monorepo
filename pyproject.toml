@@ -25,6 +25,7 @@ skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
 python = "3.13.0"
+django-import-export = "^4.2.1"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
