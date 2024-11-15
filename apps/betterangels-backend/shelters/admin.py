@@ -63,14 +63,25 @@ class ShelterForm(forms.ModelForm):
 
     # Summary Info
     demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
+    demographics_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+    )
+
     special_situation_restrictions = forms.MultipleChoiceField(
         choices=SpecialSituationRestrictionChoices, widget=SelectMultiple(), required=True
     )
     shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=SelectMultiple(), required=False)
-
+    shelter_types_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+    )
     # Sleeping Details
     room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=SelectMultiple(), required=False)
-
+    room_styles_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+    )
     # Shelter Details
     accessibility = forms.MultipleChoiceField(
         choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
@@ -95,16 +106,30 @@ class ShelterForm(forms.ModelForm):
     entry_requirements = forms.MultipleChoiceField(
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=SelectMultiple(), required=False)
 
     # Ecosystem Information
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
     spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
     shelter_programs = forms.MultipleChoiceField(choices=ShelterProgramChoices, widget=SelectMultiple(), required=False)
+    shelter_programs_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+    )
+    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=SelectMultiple(), required=False)
+    funders_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+    )
 
     class Meta:
         model = Shelter
         fields = "__all__"
+
+    class Media:
+        js = (
+            "admin/js/jquery.init.js",
+            "admin/js/dynamic_fields.js",
+        )  # Include the reusable JavaScript
 
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
@@ -136,6 +161,24 @@ class ShelterForm(forms.ModelForm):
         }
         for field_name, model_class in fields_to_clean.items():
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
+
+        # Detect fields with "_other" dynamically
+        other_fields = [
+            field_name.removesuffix("_other") for field_name in self.fields.keys() if field_name.endswith("_other")
+        ]
+
+        # Validate each dynamically detected pair
+        for multi_field in other_fields:
+            text_field = f"{multi_field}_other"
+            multi_values = cleaned_data.get(multi_field, [])
+            multi_values = [str(m.name) for m in multi_values] if multi_values else []
+            text_value = cleaned_data.get(text_field)
+
+            if "other" in multi_values and not text_value:
+                self.add_error(
+                    text_field,
+                    f"This field is required when 'Other' is selected in {multi_field}.",
+                )
 
         return cleaned_data
 
@@ -181,19 +224,61 @@ class ShelterAdmin(admin.ModelAdmin):
         (
             "Basic Information",
             {
-                "fields": ("name", "organization", "location", "email", "phone", "website"),
+                "fields": (
+                    "name",
+                    "organization",
+                    "location",
+                    "email",
+                    "phone",
+                    "website",
+                ),
             },
         ),
         (
             "Summary Info",
-            {"fields": ("description", "demographics", "special_situation_restrictions", "shelter_types")},
+            {
+                "fields": (
+                    "description",
+                    "demographics",
+                    "demographics_other",
+                    "special_situation_restrictions",
+                    "shelter_types",
+                    "shelter_types_other",
+                )
+            },
         ),
-        ("Sleeping Details", {"fields": ("total_beds", "room_styles")}),
+        (
+            "Sleeping Details",
+            {
+                "fields": (
+                    "total_beds",
+                    "room_styles",
+                    "room_styles_other",
+                )
+            },
+        ),
         (
             "Shelter Details",
-            {"fields": ("accessibility", "storage", "pets", "parking")},
+            {
+                "fields": (
+                    "accessibility",
+                    "storage",
+                    "pets",
+                    "parking",
+                )
+            },
         ),
-        ("Restrictions", {"fields": ("max_stay", "curfew", "on_site_security", "other_rules")}),
+        (
+            "Restrictions",
+            {
+                "fields": (
+                    "max_stay",
+                    "curfew",
+                    "on_site_security",
+                    "other_rules",
+                )
+            },
+        ),
         (
             "Services Offered",
             {
@@ -226,17 +311,30 @@ class ShelterAdmin(admin.ModelAdmin):
                     "city_council_district",
                     "supervisorial_district",
                     "shelter_programs",
+                    "shelter_programs_other",
                     "funders",
+                    "funders_other",
                 )
             },
         ),
         (
             "Better Angels Review",
-            {"fields": ("overall_rating", "subjective_review")},
+            {
+                "fields": (
+                    "overall_rating",
+                    "subjective_review",
+                )
+            },
         ),
         (
             "Better Angels Administration",
-            {"fields": ("status", "updated_at", "updated_by")},
+            {
+                "fields": (
+                    "status",
+                    "updated_at",
+                    "updated_by",
+                )
+            },
         ),
     )
 

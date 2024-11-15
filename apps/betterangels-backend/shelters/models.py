@@ -170,16 +170,16 @@ class Shelter(BaseModel):
     # Summary Information
     description = CKEditor5Field(null=True)
     demographics = models.ManyToManyField(Demographic)
-    # demographic_other = models.CharField(max_length=255, blank=True, null=True)
+    demographics_other = models.CharField(max_length=255, blank=True, null=True)
 
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
     shelter_types = models.ManyToManyField(ShelterType)
-    # shelter_type_other = models.CharField(max_length=255, blank=True, null=True)
+    shelter_types_other = models.CharField(max_length=255, blank=True, null=True)
 
     # Sleeping Details
     total_beds = models.PositiveIntegerField(blank=True, null=True)
     room_styles = models.ManyToManyField(RoomStyle)
-    # room_style_other = models.CharField(max_length=255, blank=True, null=True)
+    room_styles_other = models.CharField(max_length=255, blank=True, null=True)
 
     # Shelter Details
     accessibility = models.ManyToManyField(Accessibility)
@@ -222,10 +222,10 @@ class Shelter(BaseModel):
         verbose_name="Supervisorial District",
     )
     shelter_programs = models.ManyToManyField(ShelterProgram)
-    # shelter_program_other = models.CharField(max_length=255, blank=True, null=True)
+    shelter_programs_other = models.CharField(max_length=255, blank=True, null=True)
 
     funders = models.ManyToManyField(Funder)
-    # funder_other = models.CharField(max_length=255, blank=True, null=True)
+    funders_other = models.CharField(max_length=255, blank=True, null=True)
 
     # Better Angels Review
     overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
