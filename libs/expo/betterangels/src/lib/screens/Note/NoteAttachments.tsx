@@ -2,7 +2,7 @@ import { Radiuses } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
+import { ViewNoteQuery } from '../../apollo';
 
 const BASE_MARGIN = 5;
 const NUM_COLUMNS = 3;
@@ -10,7 +10,7 @@ const NUM_COLUMNS = 3;
 export default function NoteAttachments({
   note,
 }: {
-  note: NoteSummaryQuery['note'] | undefined;
+  note: ViewNoteQuery['note'] | undefined;
 }) {
   const attachments = note?.attachments;
   const [containerWidth, setContainerWidth] = useState(0);

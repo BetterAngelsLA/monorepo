@@ -4,8 +4,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
-import { useNoteSummaryQuery } from './__generated__/NoteSummary.generated';
 import NoteAttachments from './NoteAttachments';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
@@ -19,7 +19,7 @@ export default function Note({
   id: string;
   arrivedFrom?: string;
 }) {
-  const { data, loading, error } = useNoteSummaryQuery({
+  const { data, loading, error } = useViewNoteQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
