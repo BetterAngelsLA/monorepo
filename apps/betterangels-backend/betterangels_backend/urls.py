@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-import admin_async_upload.views  # type: ignore
+import admin_async_upload.views
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin

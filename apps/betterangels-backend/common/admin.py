@@ -1,7 +1,7 @@
 from typing import Any
 
 import django.db.models
-from admin_async_upload.fields import make_resumable_admin_file_fields  # type : ignore
+from admin_async_upload.fields import make_resumable_admin_file_fields
 from common.models import Address, Attachment, Location
 from django.apps import apps
 from django.contrib import admin
