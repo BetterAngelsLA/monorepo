@@ -1,4 +1,5 @@
 import pghistory
+from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.db import models
@@ -202,8 +203,8 @@ class Shelter(BaseModel):
     # Entry Requirements
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
-    bed_fees = models.TextField(null=True, blank=True)
-    program_fees = models.TextField(null=True, blank=True)
+    bed_fees = CKEditor5Field(null=True, blank=True)
+    program_fees = CKEditor5Field(null=True, blank=True)
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)
@@ -238,3 +239,18 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class IteriorPhoto(models.Model):
+    file = AsyncFileField(upload_to="test_files/")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
+
+
+class ExteriorPhoto(models.Model):
+    file = AsyncFileField(upload_to="test_files/")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
+
+
+class Video(models.Model):
+    file = AsyncFileField(upload_to="test_files/")
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")

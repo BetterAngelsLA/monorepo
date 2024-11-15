@@ -36,10 +36,12 @@ from .models import (
     City,
     Demographic,
     EntryRequirement,
+    ExteriorPhoto,
     Funder,
     GeneralService,
     HealthService,
     ImmediateNeed,
+    IteriorPhoto,
     Parking,
     Pet,
     RoomStyle,
@@ -49,17 +51,11 @@ from .models import (
     SpecialSituationRestriction,
     Storage,
     TrainingService,
+    Video,
 )
 
 T = TypeVar("T", bound=models.Model)
 User = get_user_model()
-
-
-class OtherChoiceEntry(models.Model):
-    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="other_choices")
-    field_name = models.CharField(max_length=50)
-    other_value = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ShelterForm(forms.ModelForm):
@@ -68,28 +64,26 @@ class ShelterForm(forms.ModelForm):
     # Summary Info
     demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
     special_situation_restrictions = forms.MultipleChoiceField(
-        choices=SpecialSituationRestrictionChoices, widget=CheckboxSelectMultiple(), required=True
+        choices=SpecialSituationRestrictionChoices, widget=SelectMultiple(), required=True
     )
-    shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=CheckboxSelectMultiple(), required=False)
+    shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=SelectMultiple(), required=False)
 
     # Sleeping Details
-    room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=CheckboxSelectMultiple(), required=False)
+    room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=SelectMultiple(), required=False)
 
     # Shelter Details
     accessibility = forms.MultipleChoiceField(
         choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
     )
     storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=False)
-    pets = forms.MultipleChoiceField(choices=PetChoices, widget=CheckboxSelectMultiple(), required=False)
+    pets = forms.MultipleChoiceField(choices=PetChoices, widget=SelectMultiple(), required=False)
     parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=False)
 
     # Services Offered
     immediate_needs = forms.MultipleChoiceField(
         choices=ImmediateNeedChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    general_services = forms.MultipleChoiceField(
-        choices=GeneralServiceChoices, widget=CheckboxSelectMultiple(), required=False
-    )
+    general_services = forms.MultipleChoiceField(choices=GeneralServiceChoices, widget=SelectMultiple(), required=False)
     health_services = forms.MultipleChoiceField(
         choices=HealthServiceChoices, widget=CheckboxSelectMultiple(), required=False
     )
@@ -101,14 +95,12 @@ class ShelterForm(forms.ModelForm):
     entry_requirements = forms.MultipleChoiceField(
         choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=CheckboxSelectMultiple(), required=False)
+    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=SelectMultiple(), required=False)
 
     # Ecosystem Information
     cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
     spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
-    shelter_programs = forms.MultipleChoiceField(
-        choices=ShelterProgramChoices, widget=CheckboxSelectMultiple(), required=False
-    )
+    shelter_programs = forms.MultipleChoiceField(choices=ShelterProgramChoices, widget=SelectMultiple(), required=False)
 
     class Meta:
         model = Shelter
@@ -166,9 +158,25 @@ class ShelterForm(forms.ModelForm):
         return existing_objects
 
 
+class ExteriorPhotoInline(admin.TabularInline):
+    model = ExteriorPhoto
+    extra = 1
+
+
+class InterPhotoInline(admin.TabularInline):
+    model = IteriorPhoto
+    extra = 1
+
+
+class VideoInline(admin.TabularInline):
+    model = Video
+    extra = 1
+
+
 class ShelterAdmin(admin.ModelAdmin):
     form = ShelterForm
 
+    inlines = [ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
