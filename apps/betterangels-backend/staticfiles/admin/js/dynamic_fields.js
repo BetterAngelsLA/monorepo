@@ -2,7 +2,17 @@
   $(document).ready(function () {
     console.log('Dynamic fields script loaded.');
 
-    // Function to toggle visibility and required status of dependent "other" fields
+    /**
+     * Toggles visibility and required status of dependent "other" fields.
+     *
+     * - For each multi-select field (`<select multiple>`):
+     *   - If the "other" option is selected:
+     *     - Show the associated `_other` field.
+     *     - Set the `_other` field as required.
+     *   - If the "other" option is not selected:
+     *     - Hide the `_other` field.
+     *     - Remove its `required` status and clear its value.
+     */
     function toggleDependentFields() {
       console.log('Toggling dependent fields...');
 
