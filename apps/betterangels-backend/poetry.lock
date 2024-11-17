@@ -590,9 +590,9 @@ Django = ">=5.1"
 
 [package.source]
 type = "git"
-url = "https://github.com/BetterAngelsLA/django-admin-async-upload.git"
-reference = "68926d12d70b36a2cb01bbe13fda876e4114c611"
-resolved_reference = "68926d12d70b36a2cb01bbe13fda876e4114c611"
+url = "https://github.com/BetterAngelsLA/django-admin-async-upload"
+reference = "474e59695c72c60aeadc8179a3df8b3b32529178"
+resolved_reference = "474e59695c72c60aeadc8179a3df8b3b32529178"
 
 [[package]]
 name = "django-allauth"
@@ -1964,4 +1964,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.13.0"
-content-hash = "1b80e002ebcf4aecb5d3b37db7851bd965a7518bb68eacbc1b9fc40579660905"
+content-hash = "54669364bb75bb9c89b03b45a049aa20135780cfe78d0881cf3dfc8d7dc7700c"
