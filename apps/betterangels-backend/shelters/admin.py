@@ -41,7 +41,7 @@ from .models import (
     GeneralService,
     HealthService,
     ImmediateNeed,
-    IteriorPhoto,
+    InteriorPhoto,
     Parking,
     Pet,
     RoomStyle,
@@ -207,7 +207,7 @@ class ExteriorPhotoInline(admin.TabularInline):
 
 
 class InterPhotoInline(admin.TabularInline):
-    model = IteriorPhoto
+    model = InteriorPhoto
     extra = 1
 
 

@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 import pghistory
 from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
@@ -241,16 +243,23 @@ class Shelter(BaseModel):
         return self.name
 
 
-class IteriorPhoto(models.Model):
-    file = AsyncFileField(upload_to="test_files/")
+def upload_path(instance: Optional[Shelter], filename: str) -> str:
+    """
+    Generate a flat upload path for all files.
+    """
+    return f"shelters/{filename}"
+
+
+class InteriorPhoto(models.Model):
+    file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
 
 
 class ExteriorPhoto(models.Model):
-    file = AsyncFileField(upload_to="test_files/")
+    file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
 
 
 class Video(models.Model):
-    file = AsyncFileField(upload_to="test_files/")
+    file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
