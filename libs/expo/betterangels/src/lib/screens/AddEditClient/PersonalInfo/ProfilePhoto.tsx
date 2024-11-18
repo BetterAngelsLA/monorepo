@@ -16,7 +16,7 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
 
   const photo = watch('profilePhoto');
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [updatePhoto] = useUpdateClientProfilePhotoMutation({
+  const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
     refetchQueries: [
       {
         query: ClientProfileDocument,
@@ -55,6 +55,7 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
       title="Profile Photo"
     >
       <Avatar
+        loading={loading}
         size="lg"
         imageUrl={photo?.url}
         accessibilityLabel={`client profile avatar`}

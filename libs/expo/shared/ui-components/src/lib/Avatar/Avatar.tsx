@@ -1,6 +1,7 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
+import Loading from '../Loading';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -22,6 +23,7 @@ interface IAvatarProps {
   accessibilityLabel: string;
   accessibilityHint: string;
   borderColor?: string;
+  loading?: boolean;
 }
 
 export const SIZE = {
@@ -44,6 +46,7 @@ export function Avatar(props: IAvatarProps) {
     accessibilityHint,
     hasBorder,
     borderColor,
+    loading,
   } = props;
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg' | 'xl') => {
@@ -86,7 +89,9 @@ export function Avatar(props: IAvatarProps) {
           justifyContent: 'center',
         }}
       >
-        {imageUrl ? (
+        {loading ? (
+          <Loading />
+        ) : imageUrl ? (
           <Image
             accessible
             accessibilityLabel={accessibilityLabel}
