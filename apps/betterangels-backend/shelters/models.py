@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
@@ -170,10 +170,9 @@ class Shelter(BaseModel):
     website = models.URLField(blank=True, null=True)
 
     # Summary Information
-    description = CKEditor5Field(null=True)
+    description = CKEditor5Field()
     demographics = models.ManyToManyField(Demographic)
     demographics_other = models.CharField(max_length=255, blank=True, null=True)
-
     special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
     shelter_types = models.ManyToManyField(ShelterType)
     shelter_types_other = models.CharField(max_length=255, blank=True, null=True)
@@ -216,16 +215,17 @@ class Shelter(BaseModel):
         null=True,
         blank=True,
         verbose_name="LA City Council District",
+        db_index=True,
     )
     supervisorial_district = models.PositiveSmallIntegerField(
         choices=[(i, str(i)) for i in range(1, 6)],
         null=True,
         blank=True,
         verbose_name="Supervisorial District",
+        db_index=True,
     )
     shelter_programs = models.ManyToManyField(ShelterProgram)
     shelter_programs_other = models.CharField(max_length=255, blank=True, null=True)
-
     funders = models.ManyToManyField(Funder)
     funders_other = models.CharField(max_length=255, blank=True, null=True)
 
@@ -248,6 +248,15 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     Generate a flat upload path for all files.
     """
     return f"shelters/{filename}"
+
+
+class ContactInfo(models.Model):
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
+    contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
+    contact_number = PhoneNumberField(verbose_name="Contact Number")
+
+    def __str__(self) -> str:
+        return f"{self.contact_name} - {self.contact_number}"
 
 
 class InteriorPhoto(models.Model):

@@ -2,12 +2,19 @@ from typing import Optional, Tuple, Type, TypeVar, Union
 
 from django import forms
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.contrib.admin.filters import FieldListFilter
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
+from more_admin_filters import (
+    ChoicesDropdownFilter,
+    MultiSelectDropdownFilter,
+    MultiSelectFilter,
+)
 from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
@@ -30,44 +37,19 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from .models import (
-    SPA,
-    Accessibility,
-    City,
-    Demographic,
-    EntryRequirement,
-    ExteriorPhoto,
-    Funder,
-    GeneralService,
-    HealthService,
-    ImmediateNeed,
-    InteriorPhoto,
-    Parking,
-    Pet,
-    RoomStyle,
-    Shelter,
-    ShelterProgram,
-    ShelterType,
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-    Video,
-)
+from .models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter, Video
 
 T = TypeVar("T", bound=models.Model)
 User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
-    curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
-
     # Summary Info
     demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
     demographics_other = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
     )
-
     special_situation_restrictions = forms.MultipleChoiceField(
         choices=SpecialSituationRestrictionChoices, widget=SelectMultiple(), required=True
     )
@@ -76,19 +58,24 @@ class ShelterForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
     )
+
     # Sleeping Details
     room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=SelectMultiple(), required=False)
     room_styles_other = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
     )
+
     # Shelter Details
     accessibility = forms.MultipleChoiceField(
         choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
     )
-    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=False)
-    pets = forms.MultipleChoiceField(choices=PetChoices, widget=SelectMultiple(), required=False)
-    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=False)
+    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=True)
+    pets = forms.MultipleChoiceField(choices=PetChoices, widget=SelectMultiple(), required=True)
+    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=True)
+
+    # Restrictions
+    curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
     # Services Offered
     immediate_needs = forms.MultipleChoiceField(
@@ -133,33 +120,14 @@ class ShelterForm(forms.ModelForm):
 
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
-        fields_to_clean = {
-            # Summary Info
-            "demographics": Demographic,
-            "special_situation_restrictions": SpecialSituationRestriction,
-            "shelter_types": ShelterType,
-            # Sleeping Details
-            "room_styles": RoomStyle,
-            # Shelter Details
-            "accessibility": Accessibility,
-            "storage": Storage,
-            "pets": Pet,
-            "parking": Parking,
-            # Services Offered
-            "immediate_needs": ImmediateNeed,
-            "general_services": GeneralService,
-            "health_services": HealthService,
-            "training_services": TrainingService,
-            # Entry Requirements
-            "entry_requirements": EntryRequirement,
-            # Ecosystem Information
-            "cities": City,
-            "spa": SPA,
-            "shelter_programs": ShelterProgram,
-            "funders": Funder,
-            # Better Angels Admin
-        }
-        for field_name, model_class in fields_to_clean.items():
+
+        # Dynamically detect all ManyToManyField attributes in the model
+        many_to_many_fields = [
+            field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
+        ]
+
+        for field_name in many_to_many_fields:
+            model_class = self._meta.model._meta.get_field(field_name).related_model
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
         # Detect fields with "_other" dynamically
@@ -183,7 +151,11 @@ class ShelterForm(forms.ModelForm):
         return cleaned_data
 
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
-        choices: list[str] = self.cleaned_data.get(field_name, [])
+        """
+        Handles the cleaning of ManyToMany fields by ensuring all selected choices
+        exist in the related model.
+        """
+        choices = self.cleaned_data.get(field_name, [])
 
         if not choices:
             return []
@@ -199,6 +171,14 @@ class ShelterForm(forms.ModelForm):
             existing_objects.extend(new_objects)
 
         return existing_objects
+
+
+class ContactInfoInline(admin.TabularInline):
+    model = ContactInfo
+    extra = 1
+    fields = ["contact_name", "contact_number"]
+    verbose_name = "Additional Contact"
+    verbose_name_plural = "Additional Contacts"
 
 
 class ExteriorPhotoInline(admin.TabularInline):
@@ -219,7 +199,7 @@ class VideoInline(admin.TabularInline):
 class ShelterAdmin(admin.ModelAdmin):
     form = ShelterForm
 
-    inlines = [ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
@@ -338,9 +318,56 @@ class ShelterAdmin(admin.ModelAdmin):
         ),
     )
 
-    # list_display = ("name", "organization", "address", "phone", "email", "website", "is_reviewed")
-    # list_filter = ("is_reviewed",)
-    search_fields = ("name", "organization__name")
+    list_display = (
+        "name",
+        "organization",
+        "location",
+        "phone",
+        "email",
+        "website",
+        "total_beds",
+        "max_stay",
+        "status",
+        "updated_at",
+        "updated_by",
+    )
+    list_filter = (
+        # Basic Information
+        "organization",
+        # Summary Info
+        "demographics",
+        "special_situation_restrictions",
+        "shelter_types",
+        # Sleeping Details
+        "room_styles",
+        # Shelter Details
+        "accessibility",
+        "storage",
+        "pets",
+        "parking",
+        # Restrictions
+        "max_stay",
+        "on_site_security",
+        # Services Offered
+        "immediate_needs",
+        "general_services",
+        "health_services",
+        "training_services",
+        # Entry Requirements
+        "entry_requirements",
+        # Ecosystem Information
+        "cities",
+        "spa",
+        "city_council_district",
+        "supervisorial_district",
+        "shelter_programs",
+        "funders",
+        # Better Angels Review
+        "overall_rating",
+        # Better Angels Administration
+        "status",
+    )
+    search_fields = ("name", "organization__name", "description", "subjective_review")
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None

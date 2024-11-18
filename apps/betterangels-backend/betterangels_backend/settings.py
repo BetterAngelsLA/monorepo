@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "django_structlog",
     "guardian",
+    "more_admin_filters",
     "places",
     "post_office",
     "rest_framework",
