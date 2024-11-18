@@ -47,7 +47,6 @@ export function Avatar(props: IAvatarProps) {
   } = props;
 
   const getTextComponent = (size: 'sm' | 'md' | 'lg' | 'xl') => {
-    console.log(size);
     switch (size) {
       case 'sm':
         return <UserOutlineIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;

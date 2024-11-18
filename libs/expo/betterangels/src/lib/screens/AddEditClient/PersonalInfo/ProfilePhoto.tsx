@@ -15,7 +15,6 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
   const { watch } = useFormContext<UpdateClientProfileInput>();
 
   const photo = watch('profilePhoto');
-  console.log(photo);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [updatePhoto] = useUpdateClientProfilePhotoMutation({
     refetchQueries: [
