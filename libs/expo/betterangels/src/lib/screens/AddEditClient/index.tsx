@@ -208,18 +208,6 @@ export default function AddEditClient({ id }: { id?: string }) {
 
         if (
           resultMessage ===
-          'Client profile with this California id already exists.'
-        ) {
-          methods.setError('californiaId', {
-            type: 'manual',
-            message: 'This is the same CA ID as another client.',
-          });
-
-          return;
-        }
-
-        if (
-          resultMessage ===
           'California ID must be 1 letter followed by 7 numbers'
         ) {
           methods.setError('californiaId', {
