@@ -47,12 +47,8 @@ query ClientProfile($id: ID!) {
       livingSituation
       adaAccommodation
       profilePhoto {
-        height
         name
-        path
         url
-        size
-        width
       }
       user {
         id

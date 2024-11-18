@@ -65,6 +65,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": self.client_profile_1["address"],
             "age": self.EXPECTED_CLIENT_AGE,
+            "californiaId": "L1234567",
             "consentFormDocuments": [self.client_profile_1_document_3],
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
@@ -201,6 +202,92 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             expected_query_count = 3
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
+
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(len(client_profiles), expected_client_profile_count)
+
+    @parametrize(
+        ("first_name, last_name, middle_name, expected_client_profile_count"),
+        [
+            (" ", " ", " ", 0),  # no filters
+            ("Todd", None, None, 1),  # exact match on first name only
+            (None, "Chavez", None, 2),  # exact match on last name only
+            ("Tod", "Chavez", None, 0),  # inexact match on first name
+            ("Todd", "Chave", None, 0),  # inexact match on last name
+            ("Todd", "Chavez", "Eleanor", 0),  # inexact match on middle name
+            ("Todd", "Chavez", None, 1),  # exact match on first & last name
+            (" Todd ", " Chavez ", None, 1),  # exact match on first & last name (whitespace stripped)
+            ("Todd", "Chavez", "Gustav", 1),  # exact match on first & last name & middle name
+            ("Todd Gustav", "Chavez", None, 1),  # exact match on first & last name
+        ],
+    )
+    def test_client_profiles_query_search_client_by_name(
+        self, first_name: str, last_name: str, middle_name: str | None, expected_client_profile_count: int
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # create a new client with similar name to client 1, with space in first name
+        self._create_client_profile_fixture(
+            {
+                "user": {
+                    "firstName": "TODD GUSTAV",
+                    "lastName": "CHAVEZ",
+                    "middleName": None,
+                    "email": "tchavez@pblivin.com",
+                }
+            }
+        )
+
+        query = """
+            query ClientProfiles($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
+                    id
+                }
+            }
+        """
+
+        search_fields = {
+            **({"firstName": first_name} if first_name else {}),
+            **({"lastName": last_name} if last_name else {}),
+            **({"middleName": middle_name} if middle_name else {}),
+        }
+
+        response = self.execute_graphql(query, variables={"searchClient": search_fields})
+
+        client_profiles = response["data"]["clientProfiles"]
+        self.assertEqual(len(client_profiles), expected_client_profile_count)
+
+    @parametrize(
+        ("california_id, excluded_client_profile, expected_client_profile_count"),
+        [
+            ("X0000000", None, 0),  # no match
+            ("L1234567", None, 1),  # match exists
+            ("L1234567", "client_profile_1", 0),  # match exists only on current client
+            ("L123456", None, 0),  # no match on partial id
+        ],
+    )
+    def test_client_profiles_query_search_client_by_california_id(
+        self,
+        california_id: str,
+        excluded_client_profile: Optional[str],
+        expected_client_profile_count: int,
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ClientProfiles($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
+                    id
+                }
+            }
+        """
+
+        search_fields = {"californiaId": california_id}
+
+        if excluded_client_profile:
+            search_fields["excludedClientProfileId"] = getattr(self, excluded_client_profile)["id"]
+
+        response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
         client_profiles = response["data"]["clientProfiles"]
         self.assertEqual(len(client_profiles), expected_client_profile_count)
