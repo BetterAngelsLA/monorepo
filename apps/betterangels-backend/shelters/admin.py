@@ -2,19 +2,12 @@ from typing import Optional, Tuple, Type, TypeVar, Union
 
 from django import forms
 from django.contrib import admin
-from django.contrib.admin import SimpleListFilter
-from django.contrib.admin.filters import FieldListFilter
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
-from more_admin_filters import (
-    ChoicesDropdownFilter,
-    MultiSelectDropdownFilter,
-    MultiSelectFilter,
-)
 from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
