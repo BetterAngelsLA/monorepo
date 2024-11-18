@@ -5,7 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
-import { Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
@@ -68,17 +68,19 @@ export default function FullName() {
         </>
       }
     >
-      {!errors.emptyFormError && (
-        <TextRegular size="sm" mb="xs">
-          (Filling out one of the fields is required)
-        </TextRegular>
-      )}
+      <View style={styles.subtitle}>
+        {!errors.emptyFormError && (
+          <TextRegular size="sm">
+            (Filling out one of the fields is required)
+          </TextRegular>
+        )}
 
-      {errors.emptyFormError && (
-        <TextRegular size="sm" mb="xs" color={Colors.ERROR}>
-          {errors.emptyFormError.message}
-        </TextRegular>
-      )}
+        {errors.emptyFormError && (
+          <TextRegular size="sm" color={Colors.ERROR}>
+            {errors.emptyFormError.message}
+          </TextRegular>
+        )}
+      </View>
 
       <Input
         placeholder="Enter First Name"
@@ -123,3 +125,9 @@ export default function FullName() {
     </CardWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  subtitle: {
+    marginTop: -14,
+  },
+});
