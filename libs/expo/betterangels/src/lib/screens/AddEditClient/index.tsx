@@ -359,7 +359,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             bg={Colors.NEUTRAL_EXTRA_LIGHT}
             keyboardAware={true}
           >
-            <PersonalInfo {...props} />
+            <PersonalInfo clientId={id} {...props} />
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />
             <ContactInfo {...props} />

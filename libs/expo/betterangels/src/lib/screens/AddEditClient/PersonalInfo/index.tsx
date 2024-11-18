@@ -2,21 +2,23 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
+import VeteranStatus from '../VeteranStatus';
 import Dob from './Dob';
 import FullName from './FullName';
 import HmisProfiles from './HmisProfiles';
 import LivingSituation from './LivingSituation';
 import PreferredLanguage from './PreferredLanguage';
-import VeteranStatus from '../VeteranStatus';
+import ProfilePhoto from './ProfilePhoto';
 
 interface IPersonalInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
+  clientId?: string;
 }
 
 export default function PersonalInfo(props: IPersonalInfoProps) {
-  const { scrollRef, expanded, setExpanded } = props;
+  const { scrollRef, expanded, setExpanded, clientId } = props;
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (
@@ -37,6 +39,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
             gap: Spacings.xs,
           }}
         >
+          {clientId && <ProfilePhoto clientId={clientId} />}
           <FullName />
           <Dob />
           <HmisProfiles />

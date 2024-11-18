@@ -14,6 +14,22 @@ mutation UpdateClientProfile($data: UpdateClientProfileInput!) {
   }
 }
 
+mutation UpdateClientProfilePhoto($data: ClientProfilePhotoInput!) {
+  updateClientProfilePhoto(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientProfileType {
+      id
+    }
+  }
+}
+
 query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
@@ -31,6 +47,14 @@ query GetClientProfile($id: ID!) {
       hairColor
       physicalDescription
       displayCaseManager
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       maritalStatus
       mailingAddress
       residenceAddress

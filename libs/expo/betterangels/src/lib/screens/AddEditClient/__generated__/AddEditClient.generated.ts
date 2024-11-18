@@ -10,12 +10,19 @@ export type UpdateClientProfileMutationVariables = Types.Exact<{
 
 export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
+export type UpdateClientProfilePhotoMutationVariables = Types.Exact<{
+  data: Types.ClientProfilePhotoInput;
+}>;
+
+
+export type UpdateClientProfilePhotoMutation = { __typename?: 'Mutation', updateClientProfilePhoto: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
 export type GetClientProfileQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, age?: number | null, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, race?: Types.RaceEnum | null, placeOfBirth?: string | null, heightInInches?: number | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, physicalDescription?: string | null, displayCaseManager: string, maritalStatus?: Types.MaritalStatusEnum | null, mailingAddress?: string | null, residenceAddress?: string | null, importantNotes?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, displayPronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null } };
+export type GetClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, age?: number | null, address?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, race?: Types.RaceEnum | null, placeOfBirth?: string | null, heightInInches?: number | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, physicalDescription?: string | null, displayCaseManager: string, maritalStatus?: Types.MaritalStatusEnum | null, mailingAddress?: string | null, residenceAddress?: string | null, importantNotes?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, displayPronouns?: string | null, veteranStatus?: Types.YesNoPreferNotToSayEnum | null, livingSituation?: Types.LivingSituationEnum | null, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, profilePhoto?: { __typename?: 'DjangoImageType', height: number, name: string, path: string, url: string, size: number, width: number } | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null } };
 
 export type CreateClientProfileMutationVariables = Types.Exact<{
   data: Types.CreateClientProfileInput;
@@ -74,6 +81,48 @@ export function useUpdateClientProfileMutation(baseOptions?: Apollo.MutationHook
 export type UpdateClientProfileMutationHookResult = ReturnType<typeof useUpdateClientProfileMutation>;
 export type UpdateClientProfileMutationResult = Apollo.MutationResult<UpdateClientProfileMutation>;
 export type UpdateClientProfileMutationOptions = Apollo.BaseMutationOptions<UpdateClientProfileMutation, UpdateClientProfileMutationVariables>;
+export const UpdateClientProfilePhotoDocument = gql`
+    mutation UpdateClientProfilePhoto($data: ClientProfilePhotoInput!) {
+  updateClientProfilePhoto(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientProfileType {
+      id
+    }
+  }
+}
+    `;
+export type UpdateClientProfilePhotoMutationFn = Apollo.MutationFunction<UpdateClientProfilePhotoMutation, UpdateClientProfilePhotoMutationVariables>;
+
+/**
+ * __useUpdateClientProfilePhotoMutation__
+ *
+ * To run a mutation, you first call `useUpdateClientProfilePhotoMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateClientProfilePhotoMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateClientProfilePhotoMutation, { data, loading, error }] = useUpdateClientProfilePhotoMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateClientProfilePhotoMutation(baseOptions?: Apollo.MutationHookOptions<UpdateClientProfilePhotoMutation, UpdateClientProfilePhotoMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateClientProfilePhotoMutation, UpdateClientProfilePhotoMutationVariables>(UpdateClientProfilePhotoDocument, options);
+      }
+export type UpdateClientProfilePhotoMutationHookResult = ReturnType<typeof useUpdateClientProfilePhotoMutation>;
+export type UpdateClientProfilePhotoMutationResult = Apollo.MutationResult<UpdateClientProfilePhotoMutation>;
+export type UpdateClientProfilePhotoMutationOptions = Apollo.BaseMutationOptions<UpdateClientProfilePhotoMutation, UpdateClientProfilePhotoMutationVariables>;
 export const GetClientProfileDocument = gql`
     query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
@@ -92,6 +141,14 @@ export const GetClientProfileDocument = gql`
       hairColor
       physicalDescription
       displayCaseManager
+      profilePhoto {
+        height
+        name
+        path
+        url
+        size
+        width
+      }
       maritalStatus
       mailingAddress
       residenceAddress
