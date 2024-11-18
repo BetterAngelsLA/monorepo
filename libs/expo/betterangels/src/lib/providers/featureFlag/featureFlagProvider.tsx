@@ -23,8 +23,14 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({});
     const { data, loading, error } = useQuery(FEATURE_FLAGS_QUERY);
 
+    console.log("Raw Feature Flag Response:", data);
+
     useEffect(() => {
         if (data && data.featureControls && data.featureControls.flags) {
+
+            console.log("Fetched Feature Flags:", data.featureFlags);
+            console.log("Raw flags:", data.featureControls.flags);
+
             const flags = data.featureControls.flags.reduce(
                 (acc: FeatureFlags, flag: { name: string; isActive: boolean }) => {
                     acc[flag.name] = flag.isActive;
@@ -32,7 +38,7 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
                 }, {}
             );
             setFeatureFlags(flags);
-            console.log("Fetched feature flags:", flags);
+            console.log("Mapped feature flags:", flags);
         }
     }, [data]);
 

@@ -17,6 +17,13 @@ export default function UserProfile() {
   const { showSnackbar } = useSnackbar();
   const featureFlags = useFeatureFlags();
 
+  console.log("Feature Flags:", featureFlags);
+
+  const showDeleteModal = featureFlags["show_delete_modal"] ?? false; // Default to false
+
+  console.log("showDeleteModal:", showDeleteModal); // Debug whether the flag is working
+
+
   if (!user) throw new Error('Something went wrong');
 
   const [deleteCurrentUser] = useDeleteCurrentUserMutation();
@@ -46,8 +53,6 @@ export default function UserProfile() {
       });
     }
   }
-
-  const showDeleteModal = featureFlags["show_delete_modal"];
 
   return (
     <View style={styles.container}>
