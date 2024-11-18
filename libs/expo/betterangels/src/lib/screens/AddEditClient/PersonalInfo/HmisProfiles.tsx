@@ -22,17 +22,24 @@ export default function HmisProfiles() {
     watch,
     control,
     formState: { errors },
+    resetField,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: 'hmisProfiles',
+    keyName: 'keyId',
   });
 
   const hmisProfiles = watch('hmisProfiles') || [];
 
   const onReset = () => {
     setValue('hmisProfiles', []);
+  };
+
+  const onItemReset = (index: number) => {
+    resetField(`hmisProfiles.${index}.agency`);
+    resetField(`hmisProfiles.${index}.hmisId`);
   };
 
   return (
@@ -42,7 +49,7 @@ export default function HmisProfiles() {
       subtitle={hmisProfiles.length ? 'Fill in both HMIS ID Type and ID #' : ''}
     >
       {fields.map((_, index) => (
-        <View style={{ gap: Spacings.sm }} key={index}>
+        <View style={{ gap: Spacings.sm }} key={_.keyId}>
           <View style={{ gap: Spacings.xs }}>
             <TextBold size="sm">Select the type of HMIS ID</TextBold>
             {Object.entries(enumDisplayHmisAgency).map(
@@ -85,6 +92,27 @@ export default function HmisProfiles() {
               rules={{
                 required: true,
               }}
+            />
+          </View>
+          <View
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              gap: Spacings.md,
+            }}
+          >
+            <TextButton
+              color={Colors.PRIMARY}
+              onPress={() => remove(index)}
+              accessibilityHint="removes hmis profile"
+              title="Remove"
+            />
+            <TextButton
+              color={Colors.PRIMARY}
+              onPress={() => onItemReset(index)}
+              accessibilityHint="resets hmis profile"
+              title="Reset"
             />
           </View>
         </View>
