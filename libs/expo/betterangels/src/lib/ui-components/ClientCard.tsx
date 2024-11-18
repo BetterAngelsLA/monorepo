@@ -111,7 +111,8 @@ export default function ClientCard(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {format(client.dateOfBirth, 'MM/dd/yyyy')} ({client.age})
+                {format(new Date(client.dateOfBirth), 'MM/dd/yyyy')} (
+                {client.age})
               </TextRegular>
             )}
             {!!client.dateOfBirth && !!client.heightInInches && (
