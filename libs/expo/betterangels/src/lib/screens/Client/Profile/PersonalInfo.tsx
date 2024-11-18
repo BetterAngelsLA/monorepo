@@ -1,6 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import {
   Accordion,
+  Avatar,
   CardWrapper,
   TextBold,
   TextRegular,
@@ -90,6 +91,16 @@ export default function PersonalInfo(props: IProfileSectionProps) {
         >
           <CardWrapper>
             <View style={{ gap: Spacings.lg }}>
+              <View style={styles.flexRow}>
+                <TextRegular size="sm">Profile Photo</TextRegular>
+                <Avatar
+                  mr="xs"
+                  size="md"
+                  imageUrl={client?.clientProfile.profilePhoto?.url}
+                  accessibilityLabel={`${client?.clientProfile.user.firstName} ${client?.clientProfile.user.lastName} avatar`}
+                  accessibilityHint={'clients avatar'}
+                />
+              </View>
               {personalData
                 .filter(({ value }) => value)
                 .map(({ label, value }) => (

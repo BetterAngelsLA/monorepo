@@ -46,13 +46,15 @@ export function Avatar(props: IAvatarProps) {
     borderColor,
   } = props;
 
-  const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
+  const getTextComponent = (size: 'sm' | 'md' | 'lg' | 'xl') => {
+    console.log(size);
     switch (size) {
       case 'sm':
         return <UserOutlineIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
       case 'md':
+        return <UserOutlineIcon size="lg" color={Colors.PRIMARY_EXTRA_DARK} />;
       case 'lg':
-        return <UserOutlineIcon color={Colors.PRIMARY_EXTRA_DARK} />;
+        return <UserOutlineIcon size="xl" color={Colors.PRIMARY_EXTRA_DARK} />;
       default:
         return null;
     }

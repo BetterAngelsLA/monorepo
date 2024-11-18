@@ -1,14 +1,12 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import {
+  Avatar,
   CardWrapper,
   MediaPickerModal,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../apollo';
 import { ClientProfileDocument } from '../../Client/__generated__/Client.generated';
 import { useUpdateClientProfilePhotoMutation } from '../__generated__/AddEditClient.generated';
@@ -50,16 +48,19 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
       action={
         <TextButton
           fontSize="sm"
-          title="Add"
+          title={photo?.url ? 'Edit' : 'Add'}
           accessibilityHint={'adds profile photo'}
           onPress={() => setIsModalVisible(true)}
         />
       }
       title="Profile Photo"
     >
-      <View style={styles.profilePhoto}>
-        <UserOutlineIcon size="xl" />
-      </View>
+      <Avatar
+        size="lg"
+        imageUrl={photo?.url}
+        accessibilityLabel={`client profile avatar`}
+        accessibilityHint={'client profile avatar'}
+      />
       <MediaPickerModal
         onCapture={(file) => onUpload(file)}
         allowMultiple={false}
@@ -70,14 +71,3 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
     </CardWrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  profilePhoto: {
-    height: 60,
-    width: 60,
-    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-    borderRadius: Radiuses.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

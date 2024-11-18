@@ -48,12 +48,8 @@ query GetClientProfile($id: ID!) {
       physicalDescription
       displayCaseManager
       profilePhoto {
-        height
         name
-        path
         url
-        size
-        width
       }
       maritalStatus
       mailingAddress
