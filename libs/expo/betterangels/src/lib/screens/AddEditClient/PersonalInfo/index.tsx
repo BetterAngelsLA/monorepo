@@ -1,7 +1,8 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Regex, Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
+import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams } from 'expo-router';
-import { RefObject, useEffect } from 'react';
+import { RefObject, useCallback, useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { ScrollView, View } from 'react-native';
 import { useCaliforniaIdUniqueCheck } from '../../../hooks';
@@ -28,21 +29,34 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
     name: ['californiaId'],
   });
 
-  const validationError = useCaliforniaIdUniqueCheck(
-    californiaId,
-    clientProfileId as string
+  const checkCaliforniaIdUnique = useCaliforniaIdUniqueCheck;
+
+  const validateCaliforniaId = useCallback(
+    debounce(async (id) => {
+      if (!id || !Regex.californiaId.test(id)) {
+        clearErrors('californiaId');
+        return;
+      }
+
+      const validationError = await checkCaliforniaIdUnique(
+        id,
+        clientProfileId as string
+      );
+      if (validationError) {
+        setError('californiaId', {
+          type: 'manual',
+          message: validationError,
+        });
+      } else {
+        clearErrors('californiaId');
+      }
+    }, 500),
+    [checkCaliforniaIdUnique, setError, clearErrors]
   );
 
   useEffect(() => {
-    if (validationError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: validationError,
-      });
-    } else {
-      clearErrors('californiaId');
-    }
-  }, [validationError, setError, clearErrors]);
+    validateCaliforniaId(californiaId);
+  }, [californiaId, validateCaliforniaId]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (
