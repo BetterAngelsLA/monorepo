@@ -56,7 +56,7 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
     >
       <Avatar
         loading={loading}
-        size="lg"
+        size="xl"
         imageUrl={photo?.url}
         accessibilityLabel={`client profile avatar`}
         accessibilityHint={'client profile avatar'}

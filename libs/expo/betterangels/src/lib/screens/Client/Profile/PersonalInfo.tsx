@@ -95,7 +95,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
                 <TextRegular size="sm">Profile Photo</TextRegular>
                 <Avatar
                   mr="xs"
-                  size="md"
+                  size="lg"
                   imageUrl={client?.clientProfile.profilePhoto?.url}
                   accessibilityLabel={`${client?.clientProfile.user.firstName} ${client?.clientProfile.user.lastName} avatar`}
                   accessibilityHint={'clients avatar'}
