@@ -1,5 +1,4 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { useFeatureFlags } from '../../providers/featureFlag/featureFlagContext';
 
 import {
   Avatar,
@@ -15,14 +14,6 @@ import InfoCard from './InfoCard';
 export default function UserProfile() {
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
-  const featureFlags = useFeatureFlags();
-
-  console.log("Feature Flags:", featureFlags);
-
-  const showDeleteModal = featureFlags["show_delete_modal"] ?? false; // Default to false
-
-  console.log("showDeleteModal:", showDeleteModal); // Debug whether the flag is working
-
 
   if (!user) throw new Error('Something went wrong');
 
@@ -79,7 +70,7 @@ export default function UserProfile() {
         {userInfo.map((item, index) => (
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
-        {showDeleteModal && (
+
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
@@ -94,7 +85,6 @@ export default function UserProfile() {
             />
           }
         />
-        )}
       </View>
     </View>
   );
