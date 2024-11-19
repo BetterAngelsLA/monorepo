@@ -47,10 +47,10 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
     }
 
     if (error) {
-        console.error("FeatureFlagProvider Error:", error);
+        console.error("FeatureFlagProvider encountered an error:", error.message);
         return (
             <View>
-                <Text>Error: {error.message}</Text>
+                <Text>Something went wrong. Please try again later.</Text>
             </View>
         );
     }
