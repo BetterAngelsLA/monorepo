@@ -8,11 +8,13 @@ import {
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import { ClientProfileDocument } from '../../Client/__generated__/Client.generated';
 import { useUpdateClientProfilePhotoMutation } from '../__generated__/AddEditClient.generated';
 
 export default function ProfilePhoto({ clientId }: { clientId: string }) {
   const { watch } = useFormContext<UpdateClientProfileInput>();
+  const { showSnackbar } = useSnackbar();
 
   const photo = watch('profilePhoto');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -37,8 +39,13 @@ export default function ProfilePhoto({ clientId }: { clientId: string }) {
           },
         },
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+
+      showSnackbar({
+        message: 'Sorry, there was an error uploading profile photo.',
+        type: 'error',
+      });
     }
   };
 
