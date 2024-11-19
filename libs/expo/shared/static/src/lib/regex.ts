@@ -4,4 +4,5 @@ export const Regex = {
   time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
   email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
+  californiaId: /^[A-Z]\d{7}$/,
 } as const;

@@ -87,7 +87,9 @@ DEBUG = env("DEBUG")
 
 # Application definition
 INSTALLED_APPS = [
-    "jazzmin",
+    "admin_async_upload",
+    "admin_interface",
+    "colorfield",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -110,15 +112,17 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "django_structlog",
     "guardian",
+    "places",
     "post_office",
     "rest_framework",
     "organizations",
     "phonenumber_field",
     "pghistory",
+    "pghistory.admin",
     "pgtrigger",
+    "django_select2",
     "strawberry_django",
     "waffle",
-    "pghistory.admin",
     # Our Apps
     "accounts",
     "clients",
@@ -141,6 +145,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
 ]
@@ -314,6 +319,10 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
     }
 
 
+ADMIN_RESUMABLE_CHUNKSIZE = 10 * 1024 * 1024
+ADMIN_RESUMABLE_SHOW_THUMB = True
+ADMIN_SIMULTANEOUS_UPLOADS = 5
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -386,6 +395,10 @@ GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
 
 # Google Maps
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY")
+PLACES_MAPS_API_KEY = GOOGLE_MAPS_API_KEY
+PLACES_MAP_WIDGET_HEIGHT = 480
+PLACES_MAP_OPTIONS = '{"center": { "lat": 34.0549, "lng": -118.2426 }, "zoom": 10}'
+PLACES_MARKER_OPTIONS = '{"draggable": true}'
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html
@@ -428,27 +441,6 @@ structlog.configure(
     logger_factory=structlog.stdlib.LoggerFactory(),
     cache_logger_on_first_use=True,
 )
-
-# Jazzmin
-JAZZMIN_SETTINGS = {
-    "changeform_format": "single",
-    "site_title": "BetterAngels Dashboard",
-    "site_header": "BetterAngels",
-    "site_brand": "BetterAngels",
-    "show_ui_builder": True,
-    "site_logo": "images/favicon.png",
-    "site_icon": "images/icon.png",
-    "site_logo_classes": "",
-    "related_modal_active": True,
-    "custom_css": "css/betterangels.css",
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly",
-    "navbar": "ba-navbar navbar-light",
-    "sidebar_nav_small_text": True,
-    "sidebar": "ba-sidebar sidebar-dark-primary",
-}
 
 # Markdown Settings
 CKEDITOR_5_CONFIGS = {

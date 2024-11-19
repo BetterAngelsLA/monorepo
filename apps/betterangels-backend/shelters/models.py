@@ -1,20 +1,24 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pghistory
-from common.models import Address, BaseModel
+from admin_async_upload.models import AsyncFileField
+from common.history import RevertibleTrackedModel
+from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
 from phonenumber_field.modelfields import PhoneNumberField
+from places.fields import PlacesField
 from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
+    CITY_COUNCIL_DISTRICT_CHOICES,
+    SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
-    CareerServiceChoices,
     CityChoices,
+    DemographicChoices,
     EntryRequirementChoices,
     FunderChoices,
     GeneralServiceChoices,
@@ -22,15 +26,32 @@ from .enums import (
     ImmediateNeedChoices,
     ParkingChoices,
     PetChoices,
-    PopulationChoices,
+    RoomStyleChoices,
     ShelterChoices,
-    SleepingChoices,
+    ShelterProgramChoices,
     SPAChoices,
+    SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
+    TrainingServiceChoices,
 )
 
 
-# Advanced Info
+# Summary Info
+class Demographic(models.Model):
+    name = TextChoicesField(choices_enum=DemographicChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class SpecialSituationRestriction(models.Model):
+    name = TextChoicesField(choices_enum=SpecialSituationRestrictionChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class ShelterType(models.Model):
     name = TextChoicesField(choices_enum=ShelterChoices, unique=True, blank=True, null=True)
 
@@ -38,13 +59,44 @@ class ShelterType(models.Model):
         return str(self.name)
 
 
-class Population(models.Model):
-    name = TextChoicesField(choices_enum=PopulationChoices, unique=True, blank=True, null=True)
+# Sleeping Details
+class RoomStyle(models.Model):
+    name = TextChoicesField(choices_enum=RoomStyleChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
+# Shelter Details
+class Accessibility(models.Model):
+    name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Storage(models.Model):
+    name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Pet(models.Model):
+    name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class Parking(models.Model):
+    name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+# Services Offered
 class ImmediateNeed(models.Model):
     name = TextChoicesField(choices_enum=ImmediateNeedChoices, unique=True, blank=True, null=True)
 
@@ -66,42 +118,14 @@ class HealthService(models.Model):
         return str(self.name)
 
 
-class CareerService(models.Model):
-    name = TextChoicesField(choices_enum=CareerServiceChoices, unique=True, blank=True, null=True)
+class TrainingService(models.Model):
+    name = TextChoicesField(choices_enum=TrainingServiceChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
-class Funder(models.Model):
-    name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Accessibility(models.Model):
-    name = TextChoicesField(choices_enum=AccessibilityChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Storage(models.Model):
-    name = TextChoicesField(choices_enum=StorageChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class Parking(models.Model):
-    name = TextChoicesField(choices_enum=ParkingChoices, unique=True, blank=True, null=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-# Restrictions
+# Entry Requirements
 class EntryRequirement(models.Model):
     name = TextChoicesField(choices_enum=EntryRequirementChoices, unique=True, blank=True, null=True)
 
@@ -109,6 +133,7 @@ class EntryRequirement(models.Model):
         return str(self.name)
 
 
+# Ecosystem Information
 class City(models.Model):
     name = TextChoicesField(choices_enum=CityChoices, unique=True, blank=True, null=True)
 
@@ -123,16 +148,15 @@ class SPA(models.Model):
         return str(self.name)
 
 
-class Pet(models.Model):
-    name = TextChoicesField(choices_enum=PetChoices, unique=True, blank=True, null=True)
+class ShelterProgram(models.Model):
+    name = TextChoicesField(choices_enum=ShelterProgramChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
 
-# Sleeping Info
-class SleepingOption(models.Model):
-    name = TextChoicesField(choices_enum=SleepingChoices, unique=True, blank=True, null=True)
+class Funder(models.Model):
+    name = TextChoicesField(choices_enum=FunderChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
@@ -147,60 +171,77 @@ class Shelter(BaseModel):
     # Basic Information
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
-    email = models.EmailField(max_length=254, null=True, blank=True)
+    location = PlacesField(blank=True, null=True)
+    email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField()
-    website = models.URLField(null=True, blank=True)
+    website = models.URLField(blank=True, null=True)
 
-    # Other Information
-    description = CKEditor5Field(null=True)
-    how_to_enter = CKEditor5Field(blank=True, null=True)
-    mandatory_worship_attendance = models.BooleanField(null=True, blank=True)
-
-    # Location Fields
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True, blank=True, related_name="shelter")
-
-    # Advanced Info
+    # Summary Information
+    description = CKEditor5Field()
+    demographics = models.ManyToManyField(Demographic)
+    demographics_other = models.CharField(max_length=255, blank=True, null=True)
+    special_situation_restrictions = models.ManyToManyField(SpecialSituationRestriction)
     shelter_types = models.ManyToManyField(ShelterType)
-    populations = models.ManyToManyField(Population)
-    immediate_needs = models.ManyToManyField(ImmediateNeed)
-    general_services = models.ManyToManyField(GeneralService)
-    health_services = models.ManyToManyField(HealthService)
-    career_services = models.ManyToManyField(CareerService)
-    funders = models.ManyToManyField(Funder)
+    shelter_types_other = models.CharField(max_length=255, blank=True, null=True)
+
+    # Sleeping Details
+    total_beds = models.PositiveIntegerField(blank=True, null=True)
+    room_styles = models.ManyToManyField(RoomStyle)
+    room_styles_other = models.CharField(max_length=255, blank=True, null=True)
+
+    # Shelter Details
     accessibility = models.ManyToManyField(Accessibility)
     storage = models.ManyToManyField(Storage)
+    pets = models.ManyToManyField(Pet)
     parking = models.ManyToManyField(Parking)
 
     # Restrictions
+    max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
+    curfew = models.TimeField(null=True, blank=True)
+    on_site_security = models.BooleanField(null=True, blank=True)
+    other_rules = CKEditor5Field(null=True, blank=True)
+
+    # Services Offered
+    immediate_needs = models.ManyToManyField(ImmediateNeed)
+    general_services = models.ManyToManyField(GeneralService)
+    health_services = models.ManyToManyField(HealthService)
+    training_services = models.ManyToManyField(TrainingService)
+    other_services = CKEditor5Field(null=True, blank=True)
+
+    # Entry Requirements
+    entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
+    bed_fees = CKEditor5Field(null=True, blank=True)
+    program_fees = CKEditor5Field(null=True, blank=True)
+
+    # Ecosystem Information
     cities = models.ManyToManyField(City)
-    city_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(15)],
+    spa = models.ManyToManyField(SPA)
+    city_council_district = models.PositiveSmallIntegerField(
+        choices=CITY_COUNCIL_DISTRICT_CHOICES,
         null=True,
         blank=True,
-        verbose_name="LA City Council District (1-15)",
+        verbose_name="LA City Council District",
+        db_index=True,
     )
     supervisorial_district = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        choices=SUPERVISORIAL_DISTRICT_CHOICES,
         null=True,
         blank=True,
-        verbose_name="Supervisorial District (1-5)",
+        verbose_name="Supervisorial District",
+        db_index=True,
     )
-    spa = models.ManyToManyField(SPA)
-    pets = models.ManyToManyField(Pet)
-    curfew = models.TimeField(null=True, blank=True)
-    max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
-    security = models.BooleanField(null=True, blank=True)
-    drugs = models.BooleanField(null=True, blank=True)
-    program_fees = models.BooleanField(null=True, blank=True)
+    shelter_programs = models.ManyToManyField(ShelterProgram)
+    shelter_programs_other = models.CharField(max_length=255, blank=True, null=True)
+    funders = models.ManyToManyField(Funder)
+    funders_other = models.CharField(max_length=255, blank=True, null=True)
 
-    # Bed Information
-    fees = CKEditor5Field(blank=True, null=True)
-    total_beds = models.PositiveIntegerField(blank=True, null=True)
-    sleeping_options = models.ManyToManyField(SleepingOption)
+    # Better Angels Review
+    overall_rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
+    subjective_review = CKEditor5Field(null=True, blank=True)
 
-    # Administration
-    is_reviewed = models.BooleanField(default=False)
+    # Better Angels Admin
+    status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
@@ -219,319 +260,203 @@ class Shelter(BaseModel):
         return self.name
 
 
-# proxy classes to track history on through models
+def upload_path(instance: Optional[Shelter], filename: str) -> str:
+    """
+    Generate a flat upload path for all files.
+    """
+    return f"shelters/{filename}"
 
 
+class ContactInfo(models.Model):
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
+    contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
+    contact_number = PhoneNumberField(verbose_name="Contact Number")
+
+    def __str__(self) -> str:
+        return f"{self.contact_name} - {self.contact_number}"
+
+
+class InteriorPhoto(models.Model):
+    file = AsyncFileField(upload_to=upload_path)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
+
+
+class ExteriorPhoto(models.Model):
+    file = AsyncFileField(upload_to=upload_path)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
+
+
+class Video(models.Model):
+    file = AsyncFileField(upload_to=upload_path)
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
+
+
+# Proxy models for tracking ManyToManyField through tables
 @pghistory.track(
-    pghistory.InsertEvent("shelter_shelter_types.add"),
-    pghistory.DeleteEvent("shelter_shelter_types.remove"),
+    pghistory.InsertEvent("shelter.demographic.add"),
+    pghistory.DeleteEvent("shelter.demographic.remove"),
     obj_field=None,
 )
-class ShelterShelterTypes(Shelter.shelter_types.through):  # type: ignore[name-defined]
+class TrackedDemographic(Shelter.demographics.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, shelter_type_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        shelter_type = ShelterType.objects.get(id=shelter_type_id)
-
-        if action == "add":
-            shelter.shelter_types.remove(shelter_type)
-
-        elif action == "remove":
-            shelter.shelter_types.add(shelter_type)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_populations.add"),
-    pghistory.DeleteEvent("shelter_populations.remove"),
+    pghistory.InsertEvent("shelter.special_restriction.add"),
+    pghistory.DeleteEvent("shelter.special_restriction.remove"),
     obj_field=None,
 )
-class ShelterPopulations(Shelter.populations.through):  # type: ignore[name-defined]
+class TrackedSpecialSituationRestriction(Shelter.special_situation_restrictions.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, population_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        population = Population.objects.get(id=population_id)
-
-        if action == "add":
-            shelter.populations.remove(population)
-
-        elif action == "remove":
-            shelter.populations.add(population)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_immediate_needs.add"),
-    pghistory.DeleteEvent("shelter_immediate_needs.remove"),
+    pghistory.InsertEvent("shelter.shelter_type.add"),
+    pghistory.DeleteEvent("shelter.shelter_type.remove"),
     obj_field=None,
 )
-class ShelterImmediateNeeds(Shelter.immediate_needs.through):  # type: ignore[name-defined]
+class TrackedShelterType(Shelter.shelter_types.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, immediate_need_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        immediate_need = ImmediateNeed.objects.get(id=immediate_need_id)
-
-        if action == "add":
-            shelter.immediate_needs.remove(immediate_need)
-
-        elif action == "remove":
-            shelter.immediate_needs.add(immediate_need)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_general_services.add"),
-    pghistory.DeleteEvent("shelter_general_services.remove"),
+    pghistory.InsertEvent("shelter.room_style.add"),
+    pghistory.DeleteEvent("shelter.room_style.remove"),
     obj_field=None,
 )
-class ShelterGeneralServices(Shelter.general_services.through):  # type: ignore[name-defined]
+class TrackedRoomStyle(Shelter.room_styles.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, general_service_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        general_service = GeneralService.objects.get(id=general_service_id)
-
-        if action == "add":
-            shelter.general_services.remove(general_service)
-
-        elif action == "remove":
-            shelter.general_services.add(general_service)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_health_services.add"),
-    pghistory.DeleteEvent("shelter_health_services.remove"),
+    pghistory.InsertEvent("shelter.accessibility.add"),
+    pghistory.DeleteEvent("shelter.accessibility.remove"),
     obj_field=None,
 )
-class ShelterHealthServices(Shelter.health_services.through):  # type: ignore[name-defined]
+class TrackedAccessibility(Shelter.accessibility.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, health_service_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        health_service = HealthService.objects.get(id=health_service_id)
-
-        if action == "add":
-            shelter.health_services.remove(health_service)
-
-        elif action == "remove":
-            shelter.health_services.add(health_service)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_career_services.add"),
-    pghistory.DeleteEvent("shelter_career_services.remove"),
+    pghistory.InsertEvent("shelter.storage.add"),
+    pghistory.DeleteEvent("shelter.storage.remove"),
     obj_field=None,
 )
-class ShelterCareerServices(Shelter.career_services.through):  # type: ignore[name-defined]
+class TrackedStorage(Shelter.storage.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, career_service_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        career_service = CareerService.objects.get(id=career_service_id)
-
-        if action == "add":
-            shelter.career_services.remove(career_service)
-
-        elif action == "remove":
-            shelter.career_services.add(career_service)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_funders.add"),
-    pghistory.DeleteEvent("shelter_funders.remove"),
+    pghistory.InsertEvent("shelter.pet.add"),
+    pghistory.DeleteEvent("shelter.pet.remove"),
     obj_field=None,
 )
-class ShelterFunders(Shelter.funders.through):  # type: ignore[name-defined]
+class TrackedPet(Shelter.pets.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, funder_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        funder = Funder.objects.get(id=funder_id)
-
-        if action == "add":
-            shelter.funders.remove(funder)
-
-        elif action == "remove":
-            shelter.funders.add(funder)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_accessibility.add"),
-    pghistory.DeleteEvent("shelter_accessibility.remove"),
+    pghistory.InsertEvent("shelter.parking.add"),
+    pghistory.DeleteEvent("shelter.parking.remove"),
     obj_field=None,
 )
-class ShelterAccessibility(Shelter.accessibility.through):  # type: ignore[name-defined]
+class TrackedParking(Shelter.parking.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, accessibility_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        accessibility = Accessibility.objects.get(id=accessibility_id)
-
-        if action == "add":
-            shelter.accessibility.remove(accessibility)
-
-        elif action == "remove":
-            shelter.accessibility.add(accessibility)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_storage.add"),
-    pghistory.DeleteEvent("shelter_storage.remove"),
+    pghistory.InsertEvent("shelter.immediate_need.add"),
+    pghistory.DeleteEvent("shelter.immediate_need.remove"),
     obj_field=None,
 )
-class ShelterStorage(Shelter.storage.through):  # type: ignore[name-defined]
+class TrackedImmediateNeed(Shelter.immediate_needs.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, storage_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        storage = Storage.objects.get(id=storage_id)
-
-        if action == "add":
-            shelter.storage.remove(storage)
-
-        elif action == "remove":
-            shelter.storage.add(storage)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_parking.add"),
-    pghistory.DeleteEvent("shelter_parking.remove"),
+    pghistory.InsertEvent("shelter.general_service.add"),
+    pghistory.DeleteEvent("shelter.general_service.remove"),
     obj_field=None,
 )
-class ShelterParking(Shelter.parking.through):  # type: ignore[name-defined]
+class TrackedGeneralService(Shelter.general_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, parking_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        parking = Parking.objects.get(id=parking_id)
-
-        if action == "add":
-            shelter.parking.remove(parking)
-
-        elif action == "remove":
-            shelter.parking.add(parking)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_entry_requirements.add"),
-    pghistory.DeleteEvent("shelter_entry_requirements.remove"),
+    pghistory.InsertEvent("shelter.health_service.add"),
+    pghistory.DeleteEvent("shelter.health_service.remove"),
     obj_field=None,
 )
-class ShelterEntryRequirements(Shelter.entry_requirements.through):  # type: ignore[name-defined]
+class TrackedHealthService(Shelter.health_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, entry_requirement_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        entry_requirement = EntryRequirement.objects.get(id=entry_requirement_id)
-
-        if action == "add":
-            shelter.entry_requirements.remove(entry_requirement)
-
-        elif action == "remove":
-            shelter.entry_requirements.add(entry_requirement)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_cities.add"),
-    pghistory.DeleteEvent("shelter_cities.remove"),
+    pghistory.InsertEvent("shelter.training_service.add"),
+    pghistory.DeleteEvent("shelter.training_service.remove"),
     obj_field=None,
 )
-class ShelterCities(Shelter.cities.through):  # type: ignore[name-defined]
+class TrackedTrainingService(Shelter.training_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, city_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        city = City.objects.get(id=city_id)
-
-        if action == "add":
-            shelter.cities.remove(city)
-
-        elif action == "remove":
-            shelter.cities.add(city)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_spa.add"),
-    pghistory.DeleteEvent("shelter_spa.remove"),
+    pghistory.InsertEvent("shelter.entry_requirement.add"),
+    pghistory.DeleteEvent("shelter.entry_requirement.remove"),
     obj_field=None,
 )
-class ShelterSPA(Shelter.spa.through):  # type: ignore[name-defined]
+class TrackedEntryRequirement(Shelter.entry_requirements.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, spa_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        spa = SPA.objects.get(id=spa_id)
-
-        if action == "add":
-            shelter.spa.remove(spa)
-
-        elif action == "remove":
-            shelter.spa.add(spa)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_pets.add"),
-    pghistory.DeleteEvent("shelter_pets.remove"),
+    pghistory.InsertEvent("shelter.city.add"),
+    pghistory.DeleteEvent("shelter.city.remove"),
     obj_field=None,
 )
-class ShelterPets(Shelter.pets.through):  # type: ignore[name-defined]
+class TrackedCity(Shelter.cities.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, pet_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        pet = Pet.objects.get(id=pet_id)
-
-        if action == "add":
-            shelter.pets.remove(pet)
-
-        elif action == "remove":
-            shelter.pets.add(pet)
-
 
 @pghistory.track(
-    pghistory.InsertEvent("shelter_sleeping_options.add"),
-    pghistory.DeleteEvent("shelter_sleeping_options.remove"),
+    pghistory.InsertEvent("shelter.spa.add"),
+    pghistory.DeleteEvent("shelter.spa.remove"),
     obj_field=None,
 )
-class ShelterSleepingOptions(Shelter.sleeping_options.through):  # type: ignore[name-defined]
+class TrackedSPA(Shelter.spa.through, RevertibleTrackedModel):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
-    @staticmethod
-    def revert_action(action: str, shelter_id: int, sleeping_option_id: int, *args: Any, **kwargs: Any) -> None:
-        shelter = Shelter.objects.get(id=shelter_id)
-        sleeping_option = SleepingOption.objects.get(id=sleeping_option_id)
 
-        if action == "add":
-            shelter.sleeping_options.remove(sleeping_option)
+@pghistory.track(
+    pghistory.InsertEvent("shelter.shelter_program.add"),
+    pghistory.DeleteEvent("shelter.shelter_program.remove"),
+    obj_field=None,
+)
+class TrackedShelterProgram(Shelter.shelter_programs.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True
 
-        elif action == "remove":
-            shelter.sleeping_options.add(sleeping_option)
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter.funder.add"),
+    pghistory.DeleteEvent("shelter.funder.remove"),
+    obj_field=None,
+)
+class TrackedFunder(Shelter.funders.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+    class Meta:
+        proxy = True

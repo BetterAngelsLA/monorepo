@@ -45,6 +45,7 @@ export default function BottomActions(props: IBottomActionsProps) {
           fontSize="sm"
           height="md"
           variant="primary"
+          style={{ minWidth: 90 }}
           accessibilityHint="submit the form"
           title={submitTitle}
           onPress={onSubmit}

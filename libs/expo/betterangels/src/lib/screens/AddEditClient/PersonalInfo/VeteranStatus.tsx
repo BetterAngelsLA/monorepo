@@ -11,8 +11,8 @@ import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
   YesNoPreferNotToSayEnum,
-} from '../../apollo';
-import { enumDisplayVeteran } from '../../static/enumDisplayMapping';
+} from '../../../apollo';
+import { enumDisplayVeteran } from '../../../static/enumDisplayMapping';
 
 export default function VeteranStatus() {
   const { setValue, watch } = useFormContext<

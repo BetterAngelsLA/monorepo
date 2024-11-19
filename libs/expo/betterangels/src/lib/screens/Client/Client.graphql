@@ -3,6 +3,7 @@ query ClientProfile($id: ID!) {
     ... on ClientProfileType {
       id
       address
+      californiaId
       dateOfBirth
       gender
       displayGender
@@ -47,12 +48,8 @@ query ClientProfile($id: ID!) {
       livingSituation
       adaAccommodation
       profilePhoto {
-        height
         name
-        path
         url
-        size
-        width
       }
       user {
         id

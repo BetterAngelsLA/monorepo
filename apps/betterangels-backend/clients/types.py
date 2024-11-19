@@ -56,6 +56,15 @@ class ClientProfileOrder:
     id: auto
 
 
+@strawberry.input
+class ClientSearchInput:
+    excluded_client_profile_id: Optional[str] = None
+    california_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+
+
 @filter(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
@@ -90,6 +99,7 @@ class ClientProfileFilter:
         q_objects = []
         combined_q_search = []
         searchable_fields = [
+            "california_id",
             "hmis_id",
             "nickname",
             "user__first_name",
@@ -104,10 +114,46 @@ class ClientProfileFilter:
 
         queryset = queryset.filter(reduce(and_, q_objects))
 
-        return (
-            queryset,
-            Q(),
-        )
+        return (queryset, Q())
+
+    @strawberry_django.filter_field
+    def search_client(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: ClientSearchInput,
+        prefix: str,
+    ) -> Tuple[QuerySet[ClientProfile], Q]:
+        """
+        Returns client profiles with exact match on all provided search fields (case insensitive).
+        All search fields are optional.
+
+        Accepts an excluded_client_profile_id param to exclude from result set.
+        In the context of client deduplication, this prevents the client profile being edited
+        from being flagged as a duplicate entry.
+        """
+        filters = {}
+
+        client_profile_fields = ["california_id"]
+        user_fields = ["first_name", "middle_name", "last_name"]
+
+        for field in client_profile_fields:
+            if field_value := (getattr(value, field) or "").strip():
+                filters[f"{field}__iexact"] = field_value
+
+        for field in user_fields:
+            if field_value := (getattr(value, field) or "").strip():
+                filters[f"user__{field}__iexact"] = field_value
+
+        if not filters:
+            return (queryset.none(), Q())
+
+        queryset = queryset.filter(**filters)
+
+        if excluded_id := value.excluded_client_profile_id:
+            queryset = queryset.exclude(id=excluded_id)
+
+        return (queryset, Q())
 
 
 @strawberry_django.type(HmisProfile)
@@ -145,6 +191,7 @@ class ClientProfileBaseType:
     ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
     age: auto
+    california_id: auto
     date_of_birth: auto
     eye_color: auto
     gender: auto
