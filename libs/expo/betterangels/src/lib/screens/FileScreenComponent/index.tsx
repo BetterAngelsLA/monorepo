@@ -98,7 +98,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
         </TextRegular>
       </View>
       <TextRegular textAlign="right" size="sm">
-        Uploaded on {format(data.clientDocument.createdAt, 'MM/dd/yyyy')}
+        Uploaded on {format(new Date(data.clientDocument.createdAt), 'MM/dd/yyyy')}
       </TextRegular>
     </MainContainer>
   );

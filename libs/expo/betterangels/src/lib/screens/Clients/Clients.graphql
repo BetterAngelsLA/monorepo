@@ -49,12 +49,8 @@ query ClientProfiles(
         hmisId
       }
       profilePhoto {
-        height
         name
-        path
         url
-        size
-        width
       }
       user {
         id
