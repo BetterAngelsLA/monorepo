@@ -5,9 +5,15 @@ describe('BetterAngels', () => {
     await device.reloadReactNative();
   });
 
-  it('should display welcome message', async () => {
-    await expect(element(by.id('heading'))).toHaveText(
-      'Welcome BetterAngels 👋'
-    );
+  describe('when signed out', () => {
+    it('should navigate to the login screen when the Get Started button is tapped', async () => {
+      await waitFor(element(by.text('Get Started')))
+        .toBeVisible()
+        .withTimeout(5000);
+
+      await element(by.text('Get Started')).tap();
+
+      await expect(element(by.text('Welcome!'))).toBeVisible();
+    });
   });
 });

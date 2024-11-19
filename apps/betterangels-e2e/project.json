@@ -15,6 +15,9 @@
         "bare": {
           "detoxConfiguration": "ios.sim.debug"
         },
+        "test": {
+          "detoxConfiguration": "ios.sim.test"
+        },
         "production": {
           "detoxConfiguration": "ios.sim.release"
         }
@@ -23,7 +26,7 @@
     "test-ios": {
       "executor": "@nx/detox:test",
       "options": {
-        "detoxConfiguration": "ios.sim.local",
+        "detoxConfiguration": "ios.sim.test",
         "buildTarget": "betterangels-e2e:build-ios"
       },
       "configurations": {
