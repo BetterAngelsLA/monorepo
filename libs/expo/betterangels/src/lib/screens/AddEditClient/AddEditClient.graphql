@@ -34,58 +34,51 @@ query GetClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
-      age
+      adaAccommodation
       address
+      age
+      californiaId
       dateOfBirth
+      displayCaseManager
+      displayGender
+      displayPronouns
+      eyeColor
       gender
       genderOther
-      displayGender
-      race
-      placeOfBirth
-      heightInInches
-      eyeColor
       hairColor
+      heightInInches
+      importantNotes
+      livingSituation
+      mailingAddress
+      maritalStatus
+      nickname
+      phoneNumber
       physicalDescription
-      displayCaseManager
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      race
+      residenceAddress
+      veteranStatus
       profilePhoto {
         name
         url
       }
-      maritalStatus
-      mailingAddress
-      residenceAddress
-      importantNotes
-      preferredCommunication
-      socialMediaProfiles {
+      contacts {
         id
-        platform
-        platformUserId
+        email
+        mailingAddress
+        name
+        phoneNumber
+        relationshipToClient
+        relationshipToClientOther
       }
       hmisProfiles {
         agency
         hmisId
         id
-      }
-      nickname
-      phoneNumber
-      phoneNumbers {
-        id
-        number
-        isPrimary
-      }
-      preferredLanguage
-      pronouns
-      pronounsOther
-      displayPronouns
-      veteranStatus
-      livingSituation
-      adaAccommodation
-      user {
-        id
-        email
-        firstName
-        middleName
-        lastName
       }
       householdMembers {
         dateOfBirth
@@ -96,14 +89,22 @@ query GetClientProfile($id: ID!) {
         relationshipToClientOther
         id
       }
-      contacts {
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
+      }
+      user {
         id
         email
-        mailingAddress
-        name
-        phoneNumber
-        relationshipToClient
-        relationshipToClientOther
+        firstName
+        middleName
+        lastName
       }
     }
   }

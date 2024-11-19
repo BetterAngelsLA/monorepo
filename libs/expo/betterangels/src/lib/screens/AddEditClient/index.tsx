@@ -192,27 +192,34 @@ export default function AddEditClient({ id }: { id?: string }) {
         });
         operationResult = createResponse.data?.createClientProfile;
       }
-
       if (
         operationResult?.__typename === 'OperationInfo' &&
-        operationResult.messages
+        operationResult.messages.length > 0
       ) {
-        if (
-          operationResult.messages[0].message ===
-          'User with this Email already exists.'
-        ) {
+        const resultMessage = operationResult.messages[0].message;
+        if (resultMessage === 'User with this Email already exists.') {
           methods.setError('user.email', {
             type: 'manual',
             message: 'User with this Email already exists.',
           });
-          return;
-        } else {
-          throw new Error(
-            `Failed to update a client profile: ${operationResult.messages[0].message}`
-          );
-        }
-      }
 
+          return;
+        }
+
+        if (
+          resultMessage ===
+          'California ID must be 1 letter followed by 7 numbers'
+        ) {
+          methods.setError('californiaId', {
+            type: 'manual',
+            message: 'CA ID must be 1 letter followed by 7 numbers',
+          });
+
+          return;
+        }
+
+        throw new Error(`Failed to update a client profile: ${resultMessage}`);
+      }
       if (id) {
         router.replace(`/client/${id}`);
       } else {

@@ -6,6 +6,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useViewNoteQuery } from '../../apollo';
 import { MainScrollContainer } from '../../ui-components';
+import NoteAttachments from './NoteAttachments';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
 import NoteServices from './NoteServices';
@@ -78,6 +79,9 @@ export default function Note({
           <NoteServices type="requestedServices" data={data} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data?.note} />}
+        {!!data?.note.attachments.length && (
+          <NoteAttachments note={data?.note} />
+        )}
       </View>
     </MainScrollContainer>
   );

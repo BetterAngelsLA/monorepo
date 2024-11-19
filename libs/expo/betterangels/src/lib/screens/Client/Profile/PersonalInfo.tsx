@@ -60,6 +60,10 @@ export default function PersonalInfo(props: IProfileSectionProps) {
       value: displayDob,
     },
     {
+      label: 'CA ID #',
+      value: client?.clientProfile.californiaId,
+    },
+    {
       label: 'Preferred Language',
       value:
         client?.clientProfile.preferredLanguage &&

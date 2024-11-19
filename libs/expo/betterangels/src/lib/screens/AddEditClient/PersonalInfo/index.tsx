@@ -3,6 +3,7 @@ import { Accordion } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import VeteranStatus from '../VeteranStatus';
+import CaliforniaId from './CaliforniaId';
 import Dob from './Dob';
 import FullName from './FullName';
 import HmisProfiles from './HmisProfiles';
@@ -21,6 +22,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded, clientId } = props;
 
   const isPersonalInfo = expanded === 'Personal Info';
+
   return (
     <Accordion
       scrollRef={scrollRef}
@@ -42,6 +44,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
           {clientId && <ProfilePhoto clientId={clientId} />}
           <FullName />
           <Dob />
+          <CaliforniaId />
           <HmisProfiles />
           <PreferredLanguage />
           <VeteranStatus />
