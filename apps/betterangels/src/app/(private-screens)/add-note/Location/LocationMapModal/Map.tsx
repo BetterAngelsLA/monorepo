@@ -101,7 +101,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
       setMinimizeModal(false);
       setSelected(true);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 

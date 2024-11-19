@@ -55,7 +55,7 @@ export default function Camera(props: ICameraProps) {
       setIsCameraOpen(false);
       setModalVisible(false);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

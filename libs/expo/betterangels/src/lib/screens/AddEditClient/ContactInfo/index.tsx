@@ -37,8 +37,8 @@ export default function ContactInfo(props: IContactInfoProps) {
             gap: Spacings.xs,
           }}
         >
-          <ResidenceAddress />
-          <MailingAddress />
+          <ResidenceAddress scrollRef={scrollRef} />
+          <MailingAddress scrollRef={scrollRef} />
           <PhoneNumbers />
           <EmailAddress />
           <SocialMedia />
