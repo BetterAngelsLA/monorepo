@@ -1,7 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Input,
-  Select,
+  Picker,
   TextBold,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
@@ -27,9 +27,7 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const relationship = watch(
-    `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`
-  );
+  const relationship = watch(`householdMembers.${index}.relationshipToClient`);
 
   const householdMembers = watch('householdMembers') || [];
 
@@ -38,52 +36,31 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
   };
 
   const handleReset = () => {
-    setValue(
-      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].name` as `householdMembers.${number}.name`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].gender` as `householdMembers.${number}.gender`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].genderOther` as `householdMembers.${number}.genderOther`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].dateOfBirth` as `householdMembers.${number}.dateOfBirth`,
-      null
-    );
-    setValue(
-      `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-      null
-    );
+    setValue(`householdMembers.${index}.relationshipToClient`, null);
+    setValue(`householdMembers.${index}.name`, null);
+    setValue(`householdMembers.${index}.gender`, null);
+    setValue(`householdMembers.${index}.genderOther`, null);
+    setValue(`householdMembers.${index}.dateOfBirth`, null);
+    setValue(`householdMembers.${index}.relationshipToClientOther`, null);
   };
 
   if (!relationship) {
     return (
-      <Select
-        boldLabel
-        labelMarginLeft="xs"
-        label="Type of Relationship"
-        placeholder="Select Relationship"
-        defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
-        onValueChange={(enumValue) =>
-          setValue(
-            `householdMembers[${index}].relationshipToClient` as `householdMembers.${number}.relationshipToClient`,
-            enumValue as RelationshipTypeEnum
-          )
-        }
+      <Picker
         items={Object.entries(clientHouseholdMemberEnumDisplay).map(
           ([enumValue, displayValue]) => ({
-            displayValue: displayValue,
+            label: displayValue,
             value: enumValue,
           })
         )}
+        setSelectedValue={(e) =>
+          setValue(
+            `householdMembers.${index}.relationshipToClient`,
+            e as RelationshipTypeEnum
+          )
+        }
+        placeholder="Select Relationship"
+        value={relationship}
       />
     );
   }
@@ -120,8 +97,13 @@ export default function HouseholdMember(props: IHouseholdMemberProps) {
         name={`householdMembers[${index}].name`}
         control={control}
       />
-      <Gender index={index} />
-      <DateOfBirth index={index} />
+      {householdMembers[index].relationshipToClient !==
+        RelationshipTypeEnum.Pet && (
+        <>
+          <Gender index={index} />
+          <DateOfBirth index={index} />
+        </>
+      )}
       <View
         style={{
           marginTop: Spacings.sm,

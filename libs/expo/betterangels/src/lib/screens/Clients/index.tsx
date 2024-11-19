@@ -10,7 +10,8 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
-import { ClientProfileType, Ordering } from '../../apollo';
+import { Ordering } from '../../apollo';
+import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -49,8 +50,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>({});
-  const [currentClient, setCurrentClient] = useState<ClientProfileType>();
+  const [currentClient, setCurrentClient] =
+    useState<ClientProfilesQuery['clientProfiles'][number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const { showSnackbar } = useSnackbar();
 
   const router = useRouter();
 
@@ -76,7 +79,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         router.navigate(`/add-note/${data?.createNote.id}`);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     }
   }
 
@@ -178,7 +186,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
-          placeholder="Search by name or HMIS ID"
+          placeholder="Search by name"
           autoCorrect={false}
           onChangeText={onChange}
           onDelete={() => {
@@ -256,11 +264,13 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           />
         )}
       </View>
-      <ClientCardModal
-        isModalVisible={modalIsOpen}
-        closeModal={() => setModalIsOpen(false)}
-        client={currentClient}
-      />
+      {currentClient && (
+        <ClientCardModal
+          isModalVisible={modalIsOpen}
+          closeModal={() => setModalIsOpen(false)}
+          client={currentClient}
+        />
+      )}
     </View>
   );
 }
