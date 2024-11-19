@@ -28,18 +28,20 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
     name: ['californiaId'],
   });
 
-  const validationError = useCaliforniaIdUniqueCheck(
+  const uniqueCheckError = useCaliforniaIdUniqueCheck(
     californiaId,
     clientProfileId as string
   );
   useEffect(() => {
-    if (validationError) {
+    if (uniqueCheckError) {
       setError('californiaId', {
         type: 'manual',
-        message: validationError,
+        message: uniqueCheckError,
       });
+    } else {
+      clearErrors('californiaId');
     }
-  }, [validationError, setError]);
+  }, [uniqueCheckError, setError, clearErrors]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (
@@ -62,7 +64,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
         >
           <FullName />
           <Dob />
-          <CaliforniaId validationError={validationError} />
+          <CaliforniaId uniqueCheckError={uniqueCheckError} />
           <HmisProfiles />
           <PreferredLanguage />
           <VeteranStatus />

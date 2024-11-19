@@ -7,7 +7,7 @@ import {
 } from '../../../apollo';
 
 interface ICaliforniaIdProps {
-  validationError: string | null;
+  uniqueCheckError: string | undefined;
 }
 
 export default function CaliforniaId(props: ICaliforniaIdProps) {
@@ -16,7 +16,7 @@ export default function CaliforniaId(props: ICaliforniaIdProps) {
     formState: { errors },
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
-  const { validationError } = props;
+  const { uniqueCheckError } = props;
 
   return (
     <CardWrapper title="CA ID #">
@@ -33,8 +33,8 @@ export default function CaliforniaId(props: ICaliforniaIdProps) {
             if (value && !Regex.californiaId.test(value)) {
               return 'CA ID must be 1 letter followed by 7 digits';
             }
-            if (validationError) {
-              return 'This is the same CA ID as another client';
+            if (uniqueCheckError) {
+              return uniqueCheckError;
             }
             return true;
           },
