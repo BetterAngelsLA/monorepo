@@ -88,7 +88,8 @@ DEBUG = env("DEBUG")
 # Application definition
 INSTALLED_APPS = [
     "admin_async_upload",
-    "jazzmin",
+    "admin_interface",
+    "colorfield",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -118,6 +119,7 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "pghistory",
     "pgtrigger",
+    "django_select2",
     "strawberry_django",
     "waffle",
     # Our Apps
@@ -438,20 +440,6 @@ structlog.configure(
     logger_factory=structlog.stdlib.LoggerFactory(),
     cache_logger_on_first_use=True,
 )
-
-# Jazzmin
-JAZZMIN_SETTINGS = {
-    "changeform_format": "single",
-    "site_title": "BetterAngels Dashboard",
-    "site_header": "BetterAngels",
-    "site_brand": "BetterAngels",
-    "show_ui_builder": True,
-    "site_logo": "images/favicon.png",
-    "site_icon": "images/icon.png",
-    "site_logo_classes": "",
-    "related_modal_active": True,
-    "custom_css": "css/betterangels.css",
-}
 
 JAZZMIN_UI_TWEAKS = {
     "theme": "flatly",

@@ -8,6 +8,7 @@ from django.forms import CheckboxSelectMultiple, SelectMultiple, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
+from django_select2.forms import Select2AdminMixin, Select2MultipleWidget, Select2Widget
 from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
@@ -37,68 +38,219 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
+    template_name = "admin/shelters/change_form.html"  # Specify your custom template path
+
     # Summary Info
-    demographics = forms.MultipleChoiceField(choices=DemographicChoices, required=True)
+    demographics = forms.MultipleChoiceField(
+        choices=DemographicChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select demographics...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
     demographics_other = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
     )
     special_situation_restrictions = forms.MultipleChoiceField(
-        choices=SpecialSituationRestrictionChoices, widget=SelectMultiple(), required=True
+        choices=SpecialSituationRestrictionChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select special situation restrictions...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
     )
-    shelter_types = forms.MultipleChoiceField(choices=ShelterChoices, widget=SelectMultiple(), required=False)
+    shelter_types = forms.MultipleChoiceField(
+        choices=ShelterChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select shelter types...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
     shelter_types_other = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
     )
 
     # Sleeping Details
-    room_styles = forms.MultipleChoiceField(choices=RoomStyleChoices, widget=SelectMultiple(), required=False)
+    room_styles = forms.MultipleChoiceField(
+        choices=RoomStyleChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select room style...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
     room_styles_other = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+        widget=forms.TextInput(attrs={"placeholder": "Please specify..."}),
     )
 
     # Shelter Details
     accessibility = forms.MultipleChoiceField(
-        choices=AccessibilityChoices, widget=CheckboxSelectMultiple(), required=False
+        choices=AccessibilityChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select accessibility...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
-    storage = forms.MultipleChoiceField(choices=StorageChoices, widget=CheckboxSelectMultiple(), required=True)
-    pets = forms.MultipleChoiceField(choices=PetChoices, widget=SelectMultiple(), required=True)
-    parking = forms.MultipleChoiceField(choices=ParkingChoices, widget=CheckboxSelectMultiple(), required=True)
+    storage = forms.MultipleChoiceField(
+        choices=StorageChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select storage...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
+    pets = forms.MultipleChoiceField(
+        choices=PetChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select pets...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
+    parking = forms.MultipleChoiceField(
+        choices=ParkingChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select parking...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=True,
+    )
 
     # Restrictions
     curfew = forms.TimeField(widget=TimeInput(attrs={"type": "time"}), required=False)
 
     # Services Offered
     immediate_needs = forms.MultipleChoiceField(
-        choices=ImmediateNeedChoices, widget=CheckboxSelectMultiple(), required=False
+        choices=ImmediateNeedChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select immediate needs...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
-    general_services = forms.MultipleChoiceField(choices=GeneralServiceChoices, widget=SelectMultiple(), required=False)
+    general_services = forms.MultipleChoiceField(
+        choices=GeneralServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select general services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
     health_services = forms.MultipleChoiceField(
-        choices=HealthServiceChoices, widget=CheckboxSelectMultiple(), required=False
+        choices=HealthServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select health services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
     training_services = forms.MultipleChoiceField(
-        choices=TrainingServiceChoices, widget=CheckboxSelectMultiple(), required=False
+        choices=TrainingServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select training services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
 
     # Entry Requirements
     entry_requirements = forms.MultipleChoiceField(
-        choices=EntryRequirementChoices, widget=CheckboxSelectMultiple(), required=False
+        choices=EntryRequirementChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select entry requirements...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
 
     # Ecosystem Information
-    cities = forms.MultipleChoiceField(choices=CityChoices, widget=SelectMultiple(), required=False)
-    spa = forms.MultipleChoiceField(choices=SPAChoices, widget=SelectMultiple(), required=False)
-    shelter_programs = forms.MultipleChoiceField(choices=ShelterProgramChoices, widget=SelectMultiple(), required=False)
+    cities = forms.MultipleChoiceField(
+        choices=CityChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select cities...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    spa = forms.MultipleChoiceField(
+        choices=SPAChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select SPA...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    shelter_programs = forms.MultipleChoiceField(
+        choices=ShelterProgramChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select shelter programs...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
     shelter_programs_other = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
     )
-    funders = forms.MultipleChoiceField(choices=FunderChoices, widget=SelectMultiple(), required=False)
+    funders = forms.MultipleChoiceField(
+        choices=FunderChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select funders...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
     funders_other = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"placeholder": 'Please specify if "Other" is selected'}),
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
     )
 
     class Meta:
@@ -109,7 +261,7 @@ class ShelterForm(forms.ModelForm):
         js = (
             "admin/js/jquery.init.js",
             "admin/js/dynamic_fields.js",
-        )  # Include the reusable JavaScript
+        )
 
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
@@ -304,6 +456,7 @@ class ShelterAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "status",
+                    # "contact_info",
                     "updated_at",
                     "updated_by",
                 )
@@ -393,3 +546,4 @@ class ShelterAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Shelter, ShelterAdmin)
+admin.site.register(ContactInfo)

@@ -31,7 +31,6 @@ celery-redbeat = "^2.2.0"
 celery = { extras = ["redis"], version = "^5.4.0" }
 django-ses = "^4.1.1"
 hiredis = "^3.0.0"
-django-jazzmin = { git = "https://github.com/farridav/django-jazzmin.git", rev = "097720dd9131719b1b6b41af072c5bd27a9c8763" }
 django-organizations = "^2.4.1"
 django-sesame = "^3.2.2"
 strawberry-graphql-django = "^0.50.0"
@@ -48,6 +47,8 @@ newrelic = "^10.2.0"
 dj-places = "^5.2.1"
 python-magic = "^0.4.27"
 django-admin-async-upload = {git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd"}
+django-admin-interface = "^0.29.1"
+django-select2 = "^8.2.1"
 
 [build-system]
 requires = ["poetry-core"]
