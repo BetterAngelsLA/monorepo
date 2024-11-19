@@ -32,17 +32,14 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
     californiaId,
     clientProfileId as string
   );
-
   useEffect(() => {
     if (validationError) {
       setError('californiaId', {
         type: 'manual',
         message: validationError,
       });
-    } else {
-      clearErrors('californiaId');
     }
-  }, [validationError, setError, clearErrors]);
+  }, [validationError, setError]);
 
   const isPersonalInfo = expanded === 'Personal Info';
   return (
@@ -65,7 +62,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
         >
           <FullName />
           <Dob />
-          <CaliforniaId />
+          <CaliforniaId validationError={validationError} />
           <HmisProfiles />
           <PreferredLanguage />
           <VeteranStatus />

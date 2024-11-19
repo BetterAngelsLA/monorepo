@@ -6,11 +6,17 @@ import {
   UpdateClientProfileInput,
 } from '../../../apollo';
 
-export default function CaliforniaId() {
+interface ICaliforniaIdProps {
+  validationError: string | null;
+}
+
+export default function CaliforniaId(props: ICaliforniaIdProps) {
   const {
     control,
     formState: { errors },
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+
+  const { validationError } = props;
 
   return (
     <CardWrapper title="CA ID #">
@@ -26,6 +32,9 @@ export default function CaliforniaId() {
           validate: (value: string) => {
             if (value && !Regex.californiaId.test(value)) {
               return 'CA ID must be 1 letter followed by 7 digits';
+            }
+            if (validationError) {
+              return 'This is the same CA ID as another client';
             }
             return true;
           },

@@ -20,6 +20,6 @@ export default function useCaliforniaIdUniqueCheck(
   });
 
   return data?.clientProfiles?.length
-    ? 'This is the same CA ID as another client.'
+    ? 'This is the same CA ID as another client'
     : undefined;
 }
