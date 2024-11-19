@@ -441,13 +441,6 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly",
-    "navbar": "ba-navbar navbar-light",
-    "sidebar_nav_small_text": True,
-    "sidebar": "ba-sidebar sidebar-dark-primary",
-}
-
 # Markdown Settings
 CKEDITOR_5_CONFIGS = {
     "default": {

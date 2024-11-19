@@ -117,6 +117,10 @@ class EntryRequirementChoices(models.TextChoices):
 
 
 # Ecosystem Information
+CITY_COUNCIL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 16)]
+SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
+
+
 class CityChoices(models.TextChoices):
     AGOURA_HILLS = "agoura_hills", _("Agoura Hills")
     ALHAMBRA = "alhambra", _("Alhambra")

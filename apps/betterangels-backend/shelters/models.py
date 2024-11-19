@@ -13,6 +13,8 @@ from places.fields import PlacesField
 from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
+    CITY_COUNCIL_DISTRICT_CHOICES,
+    SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
     CityChoices,
     DemographicChoices,
@@ -211,14 +213,14 @@ class Shelter(BaseModel):
     cities = models.ManyToManyField(City)
     spa = models.ManyToManyField(SPA)
     city_council_district = models.PositiveSmallIntegerField(
-        choices=[(i, str(i)) for i in range(1, 16)],
+        choices=CITY_COUNCIL_DISTRICT_CHOICES,
         null=True,
         blank=True,
         verbose_name="LA City Council District",
         db_index=True,
     )
     supervisorial_district = models.PositiveSmallIntegerField(
-        choices=[(i, str(i)) for i in range(1, 6)],
+        choices=SUPERVISORIAL_DISTRICT_CHOICES,
         null=True,
         blank=True,
         verbose_name="Supervisorial District",
