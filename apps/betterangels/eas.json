@@ -26,6 +26,19 @@
       },
       "node": "20.12.2"
     },
+    "test": {
+      "withoutCredentials": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
+        "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
+        "EXPO_PUBLIC_REDIRECT_URL": "https://api.dev.betterangels.la/auth-redirect",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "1066399826613-bu41lbb5ha9fpgen895kic4bgebkn223.apps.googleusercontent.com"
+      },
+      "node": "20.12.2",
+      "ios": {
+        "simulator": true
+      }
+    },
     "production": {
       "android": {
         "buildType": "app-bundle"

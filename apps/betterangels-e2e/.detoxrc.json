@@ -26,6 +26,11 @@
       "binaryPath": "../../apps/betterangels/dist/BetterAngels.app"
     },
 
+    "ios.test": {
+      "type": "ios.app",
+      "build": "npx nx run betterangels:build --platform ios --profile test --wait --local --no-interactive --output=../../apps/betterangels/dist/BetterAngels.tar.gz && tar -xzf ../../apps/betterangels/dist/BetterAngels.tar.gz -C ../../apps/betterangels/dist/",
+      "binaryPath": "../../apps/betterangels/dist/BetterAngelsDev.app"
+    },
     "android.debug": {
       "type": "android.apk",
       "build": "cd ../../apps/betterangels/android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug",
@@ -70,6 +75,10 @@
     "ios.sim.local": {
       "device": "simulator",
       "app": "ios.local"
+    },
+    "ios.sim.test": {
+      "device": "simulator",
+      "app": "ios.test"
     },
 
     "android.emu.release": {
