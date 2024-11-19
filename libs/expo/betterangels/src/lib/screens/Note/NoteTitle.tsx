@@ -1,13 +1,13 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
-import { ViewNoteQuery } from '../../apollo';
 import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
+import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteTitle({
   note,
 }: {
-  note: ViewNoteQuery['note'] | undefined;
+  note: NoteSummaryQuery['note'] | undefined;
 }) {
   return (
     <View>
