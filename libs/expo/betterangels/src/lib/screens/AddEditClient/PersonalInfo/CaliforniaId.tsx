@@ -1,22 +1,43 @@
 import { Regex } from '@monorepo/expo/shared/static';
 import { CardWrapper, Input } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
+import { useCaliforniaIdUniqueCheck } from '../../../hooks';
 
-interface ICaliforniaIdProps {
-  uniqueCheckError: string | undefined;
-}
-
-export default function CaliforniaId(props: ICaliforniaIdProps) {
+export default function CaliforniaId() {
   const {
     control,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
-  const { uniqueCheckError } = props;
+  const { id: clientProfileId } = useLocalSearchParams();
+  const [californiaId] = useWatch({
+    control,
+    name: ['californiaId'],
+  });
+
+  const uniqueCheckError = useCaliforniaIdUniqueCheck(
+    californiaId as string,
+    clientProfileId as string
+  );
+
+  useEffect(() => {
+    if (uniqueCheckError) {
+      setError('californiaId', {
+        type: 'manual',
+        message: uniqueCheckError,
+      });
+    } else {
+      clearErrors('californiaId');
+    }
+  }, [uniqueCheckError, setError, clearErrors]);
 
   return (
     <CardWrapper title="CA ID #">

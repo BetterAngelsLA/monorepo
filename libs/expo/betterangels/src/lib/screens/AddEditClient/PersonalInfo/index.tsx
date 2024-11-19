@@ -1,10 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams } from 'expo-router';
-import { RefObject, useEffect } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import { useCaliforniaIdUniqueCheck } from '../../../hooks';
 import CaliforniaId from './CaliforniaId';
 import Dob from './Dob';
 import FullName from './FullName';
@@ -21,29 +18,8 @@ interface IPersonalInfoProps {
 
 export default function PersonalInfo(props: IPersonalInfoProps) {
   const { scrollRef, expanded, setExpanded } = props;
-  const { id: clientProfileId } = useLocalSearchParams();
-  const { control, setError, clearErrors } = useFormContext();
-  const [californiaId] = useWatch({
-    control,
-    name: ['californiaId'],
-  });
-
-  const uniqueCheckError = useCaliforniaIdUniqueCheck(
-    californiaId,
-    clientProfileId as string
-  );
-  useEffect(() => {
-    if (uniqueCheckError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: uniqueCheckError,
-      });
-    } else {
-      clearErrors('californiaId');
-    }
-  }, [uniqueCheckError, setError, clearErrors]);
-
   const isPersonalInfo = expanded === 'Personal Info';
+
   return (
     <Accordion
       scrollRef={scrollRef}
@@ -64,7 +40,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
         >
           <FullName />
           <Dob />
-          <CaliforniaId uniqueCheckError={uniqueCheckError} />
+          <CaliforniaId />
           <HmisProfiles />
           <PreferredLanguage />
           <VeteranStatus />
