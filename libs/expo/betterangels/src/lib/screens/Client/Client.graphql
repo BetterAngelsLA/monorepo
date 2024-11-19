@@ -3,6 +3,7 @@ query ClientProfile($id: ID!) {
     ... on ClientProfileType {
       id
       address
+      californiaId
       dateOfBirth
       gender
       displayGender
