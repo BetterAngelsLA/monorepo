@@ -34,6 +34,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             adaAccommodation
             address
             age
+            californiaId
             dateOfBirth
             eyeColor
             gender
@@ -212,6 +213,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
+                "californiaId": "L1234567",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
                 "eyeColor": EyeColorEnum.BROWN.name,

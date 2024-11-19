@@ -39,7 +39,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
   }`.trim();
 
   const formattedDob = client?.clientProfile.dateOfBirth
-    ? format(client?.clientProfile.dateOfBirth, 'MM/dd/yyyy')
+    ? format(new Date(client?.clientProfile.dateOfBirth), 'MM/dd/yyyy')
     : null;
   const clientAge = client?.clientProfile.age;
   const displayDob =
@@ -57,6 +57,10 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     {
       label: 'Date of Birth',
       value: displayDob,
+    },
+    {
+      label: 'CA ID #',
+      value: client?.clientProfile.californiaId,
     },
     {
       label: 'Preferred Language',

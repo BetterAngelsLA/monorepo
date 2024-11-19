@@ -10,7 +10,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { SectionList, View } from 'react-native';
-import { ClientProfileType, Ordering } from '../../apollo';
+import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
@@ -50,7 +50,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>({});
-  const [currentClient, setCurrentClient] = useState<ClientProfileType>();
+  const [currentClient, setCurrentClient] =
+    useState<ClientProfilesQuery['clientProfiles'][number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { showSnackbar } = useSnackbar();
 

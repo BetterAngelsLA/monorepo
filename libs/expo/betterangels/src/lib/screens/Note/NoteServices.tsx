@@ -1,14 +1,15 @@
 import { PillContainer, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ServiceEnum, ViewNoteQuery } from '../../apollo';
+import { ServiceEnum } from '../../apollo';
 import { enumDisplayServices } from '../../static';
+import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteServices({
   data,
   type,
 }: {
   type: 'providedServices' | 'requestedServices';
-  data: ViewNoteQuery;
+  data: NoteSummaryQuery;
 }) {
   return (
     <View>

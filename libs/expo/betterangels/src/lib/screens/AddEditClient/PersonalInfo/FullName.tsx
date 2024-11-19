@@ -1,25 +1,63 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { CardWrapper, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  CardWrapper,
+  Input,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
-import { Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
 } from '../../../apollo';
 
+type TFullNameForm = (UpdateClientProfileInput | CreateClientProfileInput) & {
+  emptyFormError: string;
+};
+
 export default function FullName() {
   const {
+    clearErrors,
     control,
+    getValues,
     formState: { errors },
+    setError,
     setValue,
-  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  } = useFormContext<TFullNameForm>();
 
   const onReset = () => {
     setValue('user.firstName', '');
     setValue('user.middleName', '');
     setValue('user.lastName', '');
     setValue('nickname', '');
+    clearErrors('emptyFormError');
   };
+
+  function oneValueExists() {
+    const values = getValues();
+
+    const validatable = [
+      values.user?.firstName,
+      values.user?.lastName,
+      values.user?.middleName,
+      values.nickname,
+    ];
+
+    const hasRequired = validatable.some((v) => !!v?.trim());
+
+    if (hasRequired) {
+      clearErrors('emptyFormError');
+
+      return true;
+    }
+
+    setError('emptyFormError', {
+      type: 'manual',
+      message: 'Filling out one of the fields is required',
+    });
+
+    return false;
+  }
 
   return (
     <CardWrapper
@@ -29,19 +67,30 @@ export default function FullName() {
           Full Name<Text style={{ color: Colors.ERROR }}>*</Text>
         </>
       }
-      subtitle="(Filling out one of the fields is required)"
     >
+      <View style={styles.subtitle}>
+        {!errors.emptyFormError && (
+          <TextRegular size="sm">
+            (Filling out one of the fields is required)
+          </TextRegular>
+        )}
+
+        {errors.emptyFormError && (
+          <TextRegular size="sm" color={Colors.ERROR}>
+            {errors.emptyFormError.message}
+          </TextRegular>
+        )}
+      </View>
+
       <Input
         placeholder="Enter First Name"
         autoCorrect={false}
-        required
-        error={!!errors.user?.firstName}
-        rules={{
-          required: true,
-        }}
         label="First Name"
         name="user.firstName"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
       <Input
         placeholder="Enter Middle Name"
@@ -49,6 +98,9 @@ export default function FullName() {
         label="Middle Name"
         name="user.middleName"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
       <Input
         placeholder="Enter Last Name"
@@ -56,6 +108,9 @@ export default function FullName() {
         label="Last Name"
         name="user.lastName"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
       <Input
         placeholder="Enter Nickname"
@@ -63,7 +118,16 @@ export default function FullName() {
         label="Nickname"
         name="nickname"
         control={control}
+        rules={{
+          validate: oneValueExists,
+        }}
       />
     </CardWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  subtitle: {
+    marginTop: -14,
+  },
+});

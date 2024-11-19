@@ -4,6 +4,8 @@ import django.contrib.gis.db.models.fields
 from django.db import migrations, models
 import django.db.models.deletion
 import django_choices_field.fields
+
+from ..deprecated import deprecated_enums
 import shelters.enums
 
 
@@ -240,7 +242,7 @@ class Migration(migrations.Migration):
                             ("Veterans", "Veterans"),
                             ("LGBTQ", "LGBTQ"),
                         ],
-                        choices_enum=shelters.enums.PopulationChoices,
+                        choices_enum=deprecated_enums.PopulationChoices,
                         max_length=8,
                     ),
                 ),

@@ -4,6 +4,8 @@ import django_choices_field.fields
 import shelters.enums
 from django.db import migrations, models
 
+from ..deprecated import deprecated_enums
+
 
 def update_enum_values_forward(apps, schema_editor):
     # Use raw SQL to update the enum values directly in the database
@@ -100,7 +102,7 @@ class Migration(migrations.Migration):
                     ("Women", "Women"),
                     ("Youth (TAY)", "Youth (TAY)"),
                 ],
-                choices_enum=shelters.enums.PopulationChoices,
+                choices_enum=deprecated_enums.PopulationChoices,
                 max_length=26,
                 null=True,
                 unique=True,

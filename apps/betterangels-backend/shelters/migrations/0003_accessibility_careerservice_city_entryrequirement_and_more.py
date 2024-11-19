@@ -8,6 +8,8 @@ import phonenumber_field.modelfields
 import shelters.enums
 from django.db import migrations, models
 
+from ..deprecated import deprecated_enums
+
 
 class Migration(migrations.Migration):
 
@@ -50,7 +52,7 @@ class Migration(migrations.Migration):
                             ("Life Skills Training", "Life Skills Training"),
                             ("Tutoring", "Tutoring"),
                         ],
-                        choices_enum=shelters.enums.CareerServiceChoices,
+                        choices_enum=shelters.enums.TrainingServiceChoices,
                         max_length=20,
                         null=True,
                         unique=True,
@@ -312,7 +314,7 @@ class Migration(migrations.Migration):
                             ("Shared Rooms", "Shared Rooms"),
                             ("Single Room", "Single Room"),
                         ],
-                        choices_enum=shelters.enums.SleepingChoices,
+                        choices_enum=deprecated_enums.SleepingChoices,
                         max_length=12,
                         null=True,
                         unique=True,
@@ -447,7 +449,7 @@ class Migration(migrations.Migration):
                     ("Women", "Women"),
                     ("Youth (TAY)", "Youth (TAY)"),
                 ],
-                choices_enum=shelters.enums.PopulationChoices,
+                choices_enum=deprecated_enums.PopulationChoices,
                 max_length=13,
                 null=True,
                 unique=True,

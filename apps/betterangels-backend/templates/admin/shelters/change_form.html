@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% block content %}
+    <style>
+    /* Inline styles for the places-widget */
+    .places-widget > input:first-child {
+        width: 100% !important;
+    }
+    </style>
+    {{ block.super }}
+{% endblock %}

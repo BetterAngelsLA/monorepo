@@ -1,12 +1,12 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ViewNoteQuery } from '../../apollo';
+import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NotePublicNote({
   note,
 }: {
-  note: ViewNoteQuery['note'] | undefined;
+  note: NoteSummaryQuery['note'] | undefined;
 }) {
   return (
     <View>

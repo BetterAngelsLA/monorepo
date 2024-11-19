@@ -46,3 +46,7 @@ body {
   color: #052b73;
   background-color: #f2fafc;
 }
+
+.places-widget {
+  width: 100%; /* or a suitable width, e.g., 300px */
+}

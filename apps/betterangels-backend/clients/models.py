@@ -24,6 +24,7 @@ from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Model
 from django.utils import timezone
@@ -83,9 +84,18 @@ class HmisProfile(models.Model):
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
-    address = models.TextField(blank=True, null=True)
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
+    )
+    address = models.TextField(blank=True, null=True)
+    california_id = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        null=True,
+        validators=[
+            RegexValidator(regex=r"^[A-Z]\d{7}$", message="California ID must be 1 letter followed by 7 numbers")
+        ],
     )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)

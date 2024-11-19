@@ -4,6 +4,8 @@ import django_choices_field.fields
 import shelters.enums
 from django.db import migrations
 
+from ..deprecated import deprecated_enums
+
 
 class Migration(migrations.Migration):
 
@@ -56,7 +58,7 @@ class Migration(migrations.Migration):
                     ("women", "Women"),
                     ("youth", "Youth (TAY)"),
                 ],
-                choices_enum=shelters.enums.PopulationChoices,
+                choices_enum=deprecated_enums.PopulationChoices,
                 max_length=36,
                 null=True,
                 unique=True,

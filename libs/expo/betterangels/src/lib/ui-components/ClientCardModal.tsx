@@ -1,14 +1,16 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
-import { ClientProfileType } from '../apollo';
 import { useSnackbar } from '../hooks';
-import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
+import {
+  ClientProfilesQuery,
+  useCreateNoteMutation,
+} from '../screens/Home/__generated__/ActiveClients.generated';
 import MainModal from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  client: ClientProfileType;
+  client: ClientProfilesQuery['clientProfiles'][number];
 }
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
