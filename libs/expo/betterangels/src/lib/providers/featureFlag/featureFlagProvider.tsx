@@ -33,7 +33,6 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
                 }, {}
             );
             setFeatureFlags(flags);
-            console.log("Mapped feature flags:", flags);
         }
     }, [data]);
 
