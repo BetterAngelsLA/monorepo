@@ -1,7 +1,11 @@
 import { Regex } from '@monorepo/expo/shared/static';
-import { CardWrapper, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  ActionModal,
+  CardWrapper,
+  Input,
+} from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import {
   CreateClientProfileInput,
@@ -16,6 +20,7 @@ export default function CaliforniaId() {
     setError,
     clearErrors,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  const [visible, setVisible] = useState(false);
 
   const { id: clientProfileId } = useLocalSearchParams();
   const [californiaId] = useWatch({
@@ -34,6 +39,7 @@ export default function CaliforniaId() {
         type: 'manual',
         message: uniqueCheckError,
       });
+      setVisible(true);
     } else {
       clearErrors('californiaId');
     }
@@ -41,6 +47,15 @@ export default function CaliforniaId() {
 
   return (
     <CardWrapper title="CA ID #">
+      <ActionModal
+        title="Duplicate Name Detected"
+        subtitle="Would you like to see a list of clients with the same name?"
+        secondaryButtonTitle="No"
+        primaryButtonTitle="Yes"
+        onPrimaryPress={() => console.log('primary pressed')}
+        visible={visible}
+        setVisible={setVisible}
+      />
       <Input
         autoCapitalize="characters"
         autoCorrect={false}

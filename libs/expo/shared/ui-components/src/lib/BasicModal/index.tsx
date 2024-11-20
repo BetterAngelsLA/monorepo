@@ -1,13 +1,14 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { hexToRGBA } from '@monorepo/expo/shared/utils';
+import { Dispatch, SetStateAction } from 'react';
 import { Modal, Pressable, TouchableWithoutFeedback, View } from 'react-native';
 import IconButton from '../IconButton';
 
 interface IBasicModalProps {
   children: React.ReactNode;
   visible: boolean;
-  setVisible: (visible: boolean) => void;
+  setVisible: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function BasicModal(props: IBasicModalProps) {
