@@ -1,15 +1,16 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
+import Loading from '../Loading';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IAvatarProps {
   /**
    * size:
-   * sm(24) md(40) lg(60)
+   * sm(24) lg(40) xl(60)
    */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'lg' | 'xl';
   imageUrl?: string;
   hasBorder?: boolean;
   mb?: TSpacing;
@@ -22,17 +23,18 @@ interface IAvatarProps {
   accessibilityLabel: string;
   accessibilityHint: string;
   borderColor?: string;
+  loading?: boolean;
 }
 
 export const SIZE = {
   sm: 24,
-  md: 40,
-  lg: 60,
+  lg: 40,
+  xl: 60,
 } as const;
 
 export function Avatar(props: IAvatarProps) {
   const {
-    size = 'md',
+    size = 'lg',
     imageUrl,
     mb,
     mt,
@@ -44,15 +46,17 @@ export function Avatar(props: IAvatarProps) {
     accessibilityHint,
     hasBorder,
     borderColor,
+    loading,
   } = props;
 
-  const getTextComponent = (size: 'sm' | 'md' | 'lg') => {
+  const getTextComponent = (size: 'sm' | 'lg' | 'xl') => {
     switch (size) {
       case 'sm':
         return <UserOutlineIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />;
-      case 'md':
       case 'lg':
-        return <UserOutlineIcon color={Colors.PRIMARY_EXTRA_DARK} />;
+        return <UserOutlineIcon size="lg" color={Colors.PRIMARY_EXTRA_DARK} />;
+      case 'xl':
+        return <UserOutlineIcon size="xl" color={Colors.PRIMARY_EXTRA_DARK} />;
       default:
         return null;
     }
@@ -85,7 +89,9 @@ export function Avatar(props: IAvatarProps) {
           justifyContent: 'center',
         }}
       >
-        {imageUrl ? (
+        {!!loading && <Loading />}
+        {!loading && !imageUrl && getTextComponent(size)}
+        {!loading && !!imageUrl && (
           <Image
             accessible
             accessibilityLabel={accessibilityLabel}
@@ -102,8 +108,6 @@ export function Avatar(props: IAvatarProps) {
               uri: imageUrl,
             }}
           />
-        ) : (
-          getTextComponent(size)
         )}
       </View>
     </View>
