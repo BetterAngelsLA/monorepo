@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "organizations",
     "phonenumber_field",
     "pghistory",
+    "pghistory.admin",
     "pgtrigger",
     "django_select2",
     "strawberry_django",
