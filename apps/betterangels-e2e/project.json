@@ -49,6 +49,9 @@
         "bare": {
           "detoxConfiguration": "android.emu.debug"
         },
+        "test": {
+          "detoxConfiguration": "android.emu.test"
+        },
         "production": {
           "detoxConfiguration": "android.emu.release"
         }
@@ -57,7 +60,7 @@
     "test-android": {
       "executor": "@nx/detox:test",
       "options": {
-        "detoxConfiguration": "android.emu.local",
+        "detoxConfiguration": "android.emu.test",
         "buildTarget": "betterangels-e2e:build-android"
       },
       "configurations": {
