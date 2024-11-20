@@ -1,8 +1,7 @@
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
-from common.history import RevertibleTrackedModel
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.db import models
@@ -243,16 +242,6 @@ class Shelter(BaseModel):
     # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
 
-    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
-        match action:
-            case "update":
-                for field, changes in diff.items():
-                    setattr(self, field, changes[0])
-
-                self.save()
-            case _:
-                raise Exception(f"Action {action} is not revertable")
-
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
 
@@ -267,6 +256,11 @@ def upload_path(instance: Optional[Shelter], filename: str) -> str:
     return f"shelters/{filename}"
 
 
+@pghistory.track(
+    pghistory.InsertEvent("shelter.contact_info.add"),
+    pghistory.UpdateEvent("shelter.contact_info.update"),
+    pghistory.DeleteEvent("shelter.contact_info.remove"),
+)
 class ContactInfo(models.Model):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="additional_contacts")
     contact_name = models.CharField(max_length=255, verbose_name="Contact Name")
@@ -297,7 +291,7 @@ class Video(models.Model):
     pghistory.DeleteEvent("shelter.demographic.remove"),
     obj_field=None,
 )
-class TrackedDemographic(Shelter.demographics.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedDemographic(Shelter.demographics.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -307,7 +301,7 @@ class TrackedDemographic(Shelter.demographics.through, RevertibleTrackedModel): 
     pghistory.DeleteEvent("shelter.special_restriction.remove"),
     obj_field=None,
 )
-class TrackedSpecialSituationRestriction(Shelter.special_situation_restrictions.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedSpecialSituationRestriction(Shelter.special_situation_restrictions.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -317,7 +311,7 @@ class TrackedSpecialSituationRestriction(Shelter.special_situation_restrictions.
     pghistory.DeleteEvent("shelter.shelter_type.remove"),
     obj_field=None,
 )
-class TrackedShelterType(Shelter.shelter_types.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedShelterType(Shelter.shelter_types.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -327,7 +321,7 @@ class TrackedShelterType(Shelter.shelter_types.through, RevertibleTrackedModel):
     pghistory.DeleteEvent("shelter.room_style.remove"),
     obj_field=None,
 )
-class TrackedRoomStyle(Shelter.room_styles.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedRoomStyle(Shelter.room_styles.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -337,7 +331,7 @@ class TrackedRoomStyle(Shelter.room_styles.through, RevertibleTrackedModel):  # 
     pghistory.DeleteEvent("shelter.accessibility.remove"),
     obj_field=None,
 )
-class TrackedAccessibility(Shelter.accessibility.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedAccessibility(Shelter.accessibility.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -347,7 +341,7 @@ class TrackedAccessibility(Shelter.accessibility.through, RevertibleTrackedModel
     pghistory.DeleteEvent("shelter.storage.remove"),
     obj_field=None,
 )
-class TrackedStorage(Shelter.storage.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedStorage(Shelter.storage.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -357,7 +351,7 @@ class TrackedStorage(Shelter.storage.through, RevertibleTrackedModel):  # type: 
     pghistory.DeleteEvent("shelter.pet.remove"),
     obj_field=None,
 )
-class TrackedPet(Shelter.pets.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedPet(Shelter.pets.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -367,7 +361,7 @@ class TrackedPet(Shelter.pets.through, RevertibleTrackedModel):  # type: ignore[
     pghistory.DeleteEvent("shelter.parking.remove"),
     obj_field=None,
 )
-class TrackedParking(Shelter.parking.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedParking(Shelter.parking.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -377,7 +371,7 @@ class TrackedParking(Shelter.parking.through, RevertibleTrackedModel):  # type: 
     pghistory.DeleteEvent("shelter.immediate_need.remove"),
     obj_field=None,
 )
-class TrackedImmediateNeed(Shelter.immediate_needs.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedImmediateNeed(Shelter.immediate_needs.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -387,7 +381,7 @@ class TrackedImmediateNeed(Shelter.immediate_needs.through, RevertibleTrackedMod
     pghistory.DeleteEvent("shelter.general_service.remove"),
     obj_field=None,
 )
-class TrackedGeneralService(Shelter.general_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedGeneralService(Shelter.general_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -397,7 +391,7 @@ class TrackedGeneralService(Shelter.general_services.through, RevertibleTrackedM
     pghistory.DeleteEvent("shelter.health_service.remove"),
     obj_field=None,
 )
-class TrackedHealthService(Shelter.health_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedHealthService(Shelter.health_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -407,7 +401,7 @@ class TrackedHealthService(Shelter.health_services.through, RevertibleTrackedMod
     pghistory.DeleteEvent("shelter.training_service.remove"),
     obj_field=None,
 )
-class TrackedTrainingService(Shelter.training_services.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedTrainingService(Shelter.training_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -417,7 +411,7 @@ class TrackedTrainingService(Shelter.training_services.through, RevertibleTracke
     pghistory.DeleteEvent("shelter.entry_requirement.remove"),
     obj_field=None,
 )
-class TrackedEntryRequirement(Shelter.entry_requirements.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedEntryRequirement(Shelter.entry_requirements.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -427,7 +421,7 @@ class TrackedEntryRequirement(Shelter.entry_requirements.through, RevertibleTrac
     pghistory.DeleteEvent("shelter.city.remove"),
     obj_field=None,
 )
-class TrackedCity(Shelter.cities.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedCity(Shelter.cities.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -437,7 +431,7 @@ class TrackedCity(Shelter.cities.through, RevertibleTrackedModel):  # type: igno
     pghistory.DeleteEvent("shelter.spa.remove"),
     obj_field=None,
 )
-class TrackedSPA(Shelter.spa.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedSPA(Shelter.spa.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -447,7 +441,7 @@ class TrackedSPA(Shelter.spa.through, RevertibleTrackedModel):  # type: ignore[n
     pghistory.DeleteEvent("shelter.shelter_program.remove"),
     obj_field=None,
 )
-class TrackedShelterProgram(Shelter.shelter_programs.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedShelterProgram(Shelter.shelter_programs.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
@@ -457,6 +451,6 @@ class TrackedShelterProgram(Shelter.shelter_programs.through, RevertibleTrackedM
     pghistory.DeleteEvent("shelter.funder.remove"),
     obj_field=None,
 )
-class TrackedFunder(Shelter.funders.through, RevertibleTrackedModel):  # type: ignore[name-defined]
+class TrackedFunder(Shelter.funders.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True

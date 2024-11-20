@@ -28,20 +28,6 @@ class ShelterModelTestCase(TestCase):
         self.assertEqual(1, event_labels.count("shelter.demographic.add"))
         self.assertEqual(2, event_labels.count("shelter.general_service.add"))
 
-    def test_update_shelter_events(self) -> None:
-        # Update shelter and verify event
-        self.shelter.name = "Updated Shelter"
-        self.shelter.save()
-
-        events = Events.objects.filter(pgh_label="shelter.update")
-        self.assertEqual(events.count(), 1)
-
-        # Revert the update
-        action = events[0].pgh_label.split(".")[1]
-        diff = events[0].pgh_diff
-        self.shelter.revert_action(action=action, diff=diff)
-        self.assertEqual(self.shelter.name, "Test Shelter")
-
     def test_delete_shelter_events(self) -> None:
         # Delete shelter and verify events
         self.shelter.delete()
