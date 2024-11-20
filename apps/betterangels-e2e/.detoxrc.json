@@ -46,6 +46,12 @@
       "type": "android.apk",
       "build": "npx nx run betterangels:build --platform android --profile preview --wait --local --no-interactive --output=../../apps/betterangels/dist/BetterAngels.apk",
       "binaryPath": "../../apps/betterangels/dist/BetterAngels.apk"
+    },
+    "android.test": {
+      "type": "android.apk",
+      "build": "npx nx run betterangels:build --platform android --profile test --wait --local --no-interactive --output=../../apps/betterangels/dist/apk-build.tar.gz && mkdir -p ../../apps/betterangels/dist/apk-build/ && tar -xzf ../../apps/betterangels/dist/apk-build.tar.gz -C ../../apps/betterangels/dist/apk-build/",
+      "binaryPath": "../../apps/betterangels/dist/apk-build/release/app-release.apk",
+      "testBinaryPath": "../../apps/betterangels/dist/apk-build/androidTest/debug/app-debug-androidTest.apk"
     }
   },
   "devices": {
@@ -58,7 +64,7 @@
     "emulator": {
       "type": "android.emulator",
       "device": {
-        "avdName": "Pixel_4a_API_30"
+        "avdName": "TestDevice"
       }
     }
   },
@@ -93,6 +99,10 @@
     "android.emu.local": {
       "device": "emulator",
       "app": "android.local"
+    },
+    "android.emu.test": {
+      "device": "emulator",
+      "app": "android.test"
     }
   }
 }
