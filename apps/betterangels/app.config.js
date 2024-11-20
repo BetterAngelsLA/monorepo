@@ -23,7 +23,9 @@ export default {
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
     version: '1.0.28',
     orientation: 'portrait',
-    icon: './src/app/assets/images/icon.png',
+    icon: IS_PRODUCTION
+      ? './src/app/assets/images/icon.png'
+      : './src/app/assets/images/preview-icon.png',
     splash: {
       image: './src/app/assets/images/splash.png',
       resizeMode: 'contain',
@@ -47,7 +49,9 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './src/app/assets/images/adaptive-icon.png',
+        foregroundImage: IS_PRODUCTION
+          ? './src/app/assets/images/adaptive-icon.png'
+          : './src/app/assets/images/preview-adaptive-icon.png',
         backgroundColor: '#1E3342',
       },
       blockedPermissions: [
