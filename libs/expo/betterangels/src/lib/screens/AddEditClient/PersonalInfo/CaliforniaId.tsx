@@ -20,7 +20,7 @@ export default function CaliforniaId() {
     setError,
     clearErrors,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
-  const [visible, setVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const { id: clientProfileId } = useLocalSearchParams();
   const [californiaId] = useWatch({
@@ -39,7 +39,7 @@ export default function CaliforniaId() {
         type: 'manual',
         message: uniqueCheckError,
       });
-      setVisible(true);
+      setModalVisible(true);
     } else {
       clearErrors('californiaId');
     }
@@ -53,8 +53,8 @@ export default function CaliforniaId() {
         secondaryButtonTitle="No"
         primaryButtonTitle="Yes"
         onPrimaryPress={() => console.log('primary pressed')}
-        visible={visible}
-        setVisible={setVisible}
+        visible={modalVisible}
+        setVisible={setModalVisible}
       />
       <Input
         autoCapitalize="characters"
