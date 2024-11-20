@@ -90,7 +90,7 @@ export default function NavModal(props: INavModalProps) {
                 <View style={{ marginRight: Spacings.sm }}>
                   <Avatar
                     imageUrl={image}
-                    size="md"
+                    size="lg"
                     accessibilityHint="my avatar"
                     accessibilityLabel="My Avatar"
                   />

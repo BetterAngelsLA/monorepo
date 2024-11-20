@@ -40,7 +40,7 @@ export default function ClientHeader(props: IClientHeaderProps) {
       >
         <Avatar
           mr="xs"
-          size="lg"
+          size="xl"
           imageUrl={client?.profilePhoto?.url}
           accessibilityLabel={`${client?.user.firstName} ${client?.user.lastName} avatar`}
           accessibilityHint={'clients avatar'}
