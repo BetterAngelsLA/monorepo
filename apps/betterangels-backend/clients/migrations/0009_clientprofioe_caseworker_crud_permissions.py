@@ -14,9 +14,9 @@ def update_caseworker_permission_template(apps, schema_editor):
     perm_map = [
         perm.split(".")[1]
         for perm in [
-            "accounts.change_clientprofile",
-            "accounts.delete_clientprofile",
-            "accounts.view_clientprofile",
+            "clients.change_clientprofile",
+            "clients.delete_clientprofile",
+            "clients.view_clientprofile",
         ]
     ]
 
