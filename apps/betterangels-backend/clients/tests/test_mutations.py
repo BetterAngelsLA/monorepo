@@ -320,7 +320,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
         photo_name = "profile_photo.jpg"
 
-        expected_query_count = 10
+        expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_client_profile_photo_fixture(
                 client_profile_id,
