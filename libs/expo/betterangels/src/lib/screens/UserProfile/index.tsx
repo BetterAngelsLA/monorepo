@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { useDeleteCurrentUserMutation } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
 import InfoCard from './InfoCard';
+
 export default function UserProfile() {
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
@@ -58,7 +59,7 @@ export default function UserProfile() {
       >
         <Avatar
           mb="xs"
-          size="lg"
+          size="xl"
           accessibilityLabel="user profile image"
           accessibilityHint="user profile image"
         />
