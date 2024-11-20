@@ -158,6 +158,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     });
     // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
     delete values.displayPronouns;
+    delete values.profilePhoto;
 
     try {
       let operationResult;
@@ -366,7 +367,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             bg={Colors.NEUTRAL_EXTRA_LIGHT}
             keyboardAware={true}
           >
-            <PersonalInfo {...props} />
+            <PersonalInfo clientId={id} {...props} />
             <ImportantNotes {...props} />
             <DemographicInfo {...props} />
             <ContactInfo {...props} />
