@@ -19,6 +19,7 @@ from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
@@ -138,11 +139,19 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
+    client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+    )
+
     client_document: ClientDocumentType = strawberry_django.field(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
     client_documents: List[ClientDocumentType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+    )
+
+    client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
@@ -172,7 +181,6 @@ class Mutation:
             )
 
             permissions = [
-                AttachmentPermissions.VIEW,
                 AttachmentPermissions.DELETE,
             ]
             for perm in permissions:

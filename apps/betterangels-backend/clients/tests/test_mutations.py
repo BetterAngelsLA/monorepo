@@ -353,7 +353,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
 
-        expected_query_count = 23
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],
