@@ -1676,7 +1676,7 @@ class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
         file_content = b"Test attachment content"
         file_name = "test_attachment.txt"
 
-        expected_query_count = 23
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             create_response = self._create_note_attachment_fixture(
                 self.note["id"],
