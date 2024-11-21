@@ -26,11 +26,6 @@ export default {
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
       : './src/app/assets/images/preview-icon.png',
-    splash: {
-      image: './src/app/assets/images/splash.png',
-      resizeMode: 'contain',
-      backgroundColor: '#216AF8',
-    },
     updates: {
       fallbackToCacheTimeout: 0,
       url: 'https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8',
@@ -127,6 +122,14 @@ export default {
         {
           locationWhenInUsePermission:
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
+        },
+      ],
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#216AF8',
+          image: './src/app/assets/images/splash.png',
+          resize,
         },
       ],
     ],
