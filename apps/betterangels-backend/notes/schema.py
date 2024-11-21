@@ -223,7 +223,6 @@ class Mutation:
             )
 
             permissions = [
-                AttachmentPermissions.VIEW,
                 AttachmentPermissions.DELETE,
             ]
             for perm in permissions:
