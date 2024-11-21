@@ -46,7 +46,7 @@ export default function BasicModal(props: IBasicModalProps) {
             <IconButton
               style={{ alignSelf: 'flex-end' }}
               variant="transparent"
-              onPress={hideModal}
+              onPress={onClose}
               accessibilityLabel="close modal"
               accessibilityHint="closing public note information modal"
             >
