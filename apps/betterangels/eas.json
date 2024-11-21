@@ -40,7 +40,7 @@
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease :app:assembleAndroidTest"
+        "gradleCommand": ":app:assembleRelease :app:assembleAndroidTest -DtestBuildType=release"
       }
     },
     "production": {
