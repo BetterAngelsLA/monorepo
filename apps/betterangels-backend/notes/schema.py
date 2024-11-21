@@ -1,5 +1,6 @@
 from typing import Dict, List, cast
 
+from strawberry_django.pagination import OffsetPaginated
 import pghistory
 import strawberry
 import strawberry_django
@@ -62,6 +63,10 @@ class Query:
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
     notes: List[NoteType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 

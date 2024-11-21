@@ -4,7 +4,7 @@ import time_machine
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum, ServiceEnum
+from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -51,59 +51,18 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
-        query = """
-            query ViewNote($id: ID!) {
-                note(pk: $id) {
-                    id
-                    interactedAt
-                    isSubmitted
-                    privateDetails
-                    publicDetails
-                    purpose
-                    team
-                    title
-                    client {
+        query = f"""
+            query ViewNote($id: ID!) {{
+                note(pk: $id) {{
+                    client {{
                         id
-                    }
-                    createdBy {
+                    }}
+                    createdBy {{
                         id
-                    }
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    moods {
-                        descriptor
-                    }
-                    purposes {
-                        id
-                        title
-                    }
-                    nextSteps {
-                        id
-                        title
-                    }
-                    providedServices {
-                        id
-                        service
-                        serviceOther
-                        customService
-                    }
-                    requestedServices {
-                        id
-                        service
-                        serviceOther
-                        customService
-                    }
-                }
-            }
+                    }}
+                    {self.note_fields}
+                }}
+            }}
         """
 
         variables = {"id": note_id}
@@ -141,8 +100,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 {"id": self.purpose_2["id"], "title": self.purpose_2["title"]},
             ],
             "nextSteps": [
-                {"id": self.next_step_1["id"], "title": self.next_step_1["title"]},
-                {"id": self.next_step_2["id"], "title": self.next_step_2["title"]},
+                {"id": self.next_step_1["id"], "title": self.next_step_1["title"], "location": None},
+                {"id": self.next_step_2["id"], "title": self.next_step_2["title"], "location": None},
             ],
             "providedServices": [
                 {
@@ -150,12 +109,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "service": ServiceEnum(self.provided_services[0].service).name,
                     "serviceOther": self.provided_services[0].service_other,
                     "customService": self.provided_services[0].custom_service,
+                    "dueBy": self.provided_services[0].due_by,
+                    "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
                 },
                 {
                     "id": str(self.provided_services[1].id),
                     "service": ServiceEnum(self.provided_services[1].service).name,
                     "serviceOther": self.provided_services[1].service_other,
                     "customService": self.provided_services[1].custom_service,
+                    "dueBy": self.provided_services[1].due_by,
+                    "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
                 },
             ],
             "requestedServices": [
@@ -164,12 +127,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "service": ServiceEnum(self.requested_services[0].service).name,
                     "serviceOther": self.requested_services[0].service_other,
                     "customService": self.requested_services[0].custom_service,
+                    "dueBy": self.requested_services[0].due_by,
+                    "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
                 },
                 {
                     "id": str(self.requested_services[1].id),
                     "service": ServiceEnum(self.requested_services[1].service).name,
                     "serviceOther": self.requested_services[1].service_other,
                     "customService": self.requested_services[1].custom_service,
+                    "dueBy": self.requested_services[1].due_by,
+                    "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
                 },
             ],
         }
@@ -177,59 +144,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
-        query = """
-            {
-                notes {
-                    id
-                    interactedAt
-                    isSubmitted
-                    privateDetails
-                    publicDetails
-                    purpose
-                    team
-                    title
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    moods {
-                        descriptor
-                    }
-                    purposes {
-                        id
-                        title
-                    }
-                    nextSteps {
-                        id
-                        title
-                    }
-                    providedServices {
-                        id
-                        service
-                        serviceOther
-                        customService
-                    }
-                    requestedServices {
-                        id
-                        service
-                        serviceOther
-                        customService
-                    }
-                }
-            }
+        query = f"""
+            query ViewNotes {{
+                notes {{
+                    {self.note_fields}
+                }}
+            }}
         """
         expected_query_count = 8
         with self.assertNumQueriesWithoutCache(expected_query_count):
