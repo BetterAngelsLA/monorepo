@@ -2,6 +2,7 @@ from typing import Any, Dict, List, cast
 
 import strawberry
 import strawberry_django
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.models import ClientContact, ClientProfile
@@ -191,7 +192,7 @@ class Mutation:
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
             user = get_current_user(info)
-            get_user_permission_group(user)
+            permission_group = get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
@@ -215,6 +216,16 @@ class Mutation:
                     number=phone_number["number"],
                     is_primary=phone_number["is_primary"],
                 )
+
+            # NOTE: Don't need to add permissions for caseworkers because the caseworker template already has them
+            if permission_group.name != GroupTemplateNames.CASEWORKER:
+                permissions = [
+                    ClientProfilePermissions.VIEW,
+                    ClientProfilePermissions.CHANGE,
+                    ClientProfilePermissions.DELETE,
+                ]
+                for perm in permissions:
+                    assign_perm(perm, permission_group.group, client_profile)
 
             return cast(ClientProfileType, client_profile)
 

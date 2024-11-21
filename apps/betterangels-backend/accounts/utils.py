@@ -12,11 +12,14 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    default_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
-        # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
-        # we will want to have a default template selected for orgs on the org model.
-        name=GroupTemplateNames.CASEWORKER
-    )
+    # TODO 2024.11.20: This is a hack for MVP. Once we have more permission group templates,
+    # we'll need to store each org's default template.
+    if user.email and "+demo@example.com" in user.email:
+        template_name = GroupTemplateNames.DEMO
+    else:
+        template_name = GroupTemplateNames.CASEWORKER
+
+    default_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(name=template_name)
     org_permission_group, _ = PermissionGroup.objects.get_or_create(
         organization=organization, template=default_permission_group
     )
@@ -36,7 +39,7 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
             organization__users=user,
-            name=GroupTemplateNames.CASEWORKER,
+            name__in=[GroupTemplateNames.CASEWORKER, GroupTemplateNames.DEMO],
         )
         .first()
     )

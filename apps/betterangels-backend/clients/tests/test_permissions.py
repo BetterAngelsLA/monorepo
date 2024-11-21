@@ -53,6 +53,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
+            ("demo_user", False),  # Demo user should not succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],

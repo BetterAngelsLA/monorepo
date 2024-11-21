@@ -29,6 +29,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             "org_1_case_manager_1",
             "org_1_case_manager_2",
             "org_2_case_manager_1",
+            "demo_user",
             # Calling these client_users because they're note Client instances,
             # but ordinary users created to facilitate testing.
             "client_user_1",
@@ -40,6 +41,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
         self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
         self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
+        self.demo_user = self.user_map["demo_user"]
         self.client_user_1 = self.user_map["client_user_1"]
         self.client_user_1.first_name = "Dale"
         self.client_user_1.last_name = "Cooper"
@@ -48,16 +50,25 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.client_user_2.first_name = "Harry"
         self.client_user_2.last_name = "Truman"
         self.client_user_2.save()
+        self.demo_user = self.user_map["demo_user"]
+        self.demo_user.email = "test+demo@example.com"
+        self.demo_user.save()
 
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
-        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
-        perm_group.organization.add_user(self.org_1_case_manager_1)
-        perm_group.organization.add_user(self.org_1_case_manager_2)
+        caseworker_perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
+        caseworker_perm_group.organization.add_user(self.org_1_case_manager_1)
+        caseworker_perm_group.organization.add_user(self.org_1_case_manager_2)
+
+        demo_permission_group_template = PermissionGroupTemplate.objects.get(name="Demo")
+        demo_perm_group = permission_group_recipe.make(template=demo_permission_group_template)
+        demo_perm_group.organization.name = "Demo Org"
+        demo_perm_group.organization.save()
+        demo_perm_group.organization.add_user(self.demo_user)
 
         # Create Another Org
-        perm_group_2 = permission_group_recipe.make()
-        perm_group_2.organization.add_user(self.org_2_case_manager_1)
+        caseworked_perm_group_2 = permission_group_recipe.make()
+        caseworked_perm_group_2.organization.add_user(self.org_2_case_manager_1)
 
     def _get_address_inputs(
         self,
