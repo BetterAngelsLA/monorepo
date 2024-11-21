@@ -45,7 +45,7 @@ export default function CaliforniaId() {
     <CardWrapper title="CA ID #">
       <ActionModal
         title="This client has the same CA ID as another client."
-        subtitle="Would you like to see a list of clients with the same name?"
+        subtitle="Would you like to see a list of clients with the same CA ID?"
         secondaryButtonTitle="No"
         primaryButtonTitle="Yes"
         onPrimaryPress={() => console.log('primary pressed')}
