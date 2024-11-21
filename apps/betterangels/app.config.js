@@ -89,7 +89,8 @@ export default {
         'expo-build-properties',
         {
           android: {
-            kotlinVersion: '1.6.21',
+            minSdkVersion: 24,
+            // kotlinVersion: '1.6.21',
           },
         },
       ],
@@ -129,6 +130,7 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      ['newrelic-react-native-agent'],
     ],
     extra: {
       router: {

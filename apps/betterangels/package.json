@@ -82,7 +82,8 @@
     "react-native-paper": "*",
     "dotenv": "*",
     "@react-native-picker/picker": "*",
-    "react-native-image-zoom-viewer": "*"
+    "react-native-image-zoom-viewer": "*",
+    "newrelic-react-native-agent": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
