@@ -85,14 +85,7 @@ export default {
       bundler: 'metro',
     },
     plugins: [
-      [
-        'expo-build-properties',
-        {
-          android: {
-            kotlinVersion: '1.6.21',
-          },
-        },
-      ],
+      ['expo-build-properties'],
       [
         'expo-dev-launcher',
         {
