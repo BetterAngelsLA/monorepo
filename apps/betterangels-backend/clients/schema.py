@@ -191,7 +191,7 @@ class Mutation:
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
             user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
+            get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
@@ -215,14 +215,6 @@ class Mutation:
                     number=phone_number["number"],
                     is_primary=phone_number["is_primary"],
                 )
-
-            permissions = [
-                ClientProfilePermissions.VIEW,
-                ClientProfilePermissions.CHANGE,
-                ClientProfilePermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, client_profile)
 
             return cast(ClientProfileType, client_profile)
 
