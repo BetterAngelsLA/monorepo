@@ -4,7 +4,13 @@ import time_machine
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
+from notes.enums import (
+    DueByGroupEnum,
+    NoteNamespaceEnum,
+    SelahTeamEnum,
+    ServiceEnum,
+    ServiceRequestStatusEnum,
+)
 from notes.models import Note
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -54,12 +60,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         query = f"""
             query ViewNote($id: ID!) {{
                 note(pk: $id) {{
-                    client {{
-                        id
-                    }}
-                    createdBy {{
-                        id
-                    }}
                     {self.note_fields}
                 }}
             }}
@@ -144,6 +144,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
+        """
+        NOTE: This query is deprecated in favor of notesPaginated
+        """
+
         query = f"""
             query ViewNotes {{
                 notes {{
@@ -157,6 +161,32 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         notes = response["data"]["notes"]
         self.assertEqual(len(notes), 1)
+        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
+        self.assertFalse(note_differences)
+
+    def test_notes_paginated_query(self) -> None:
+        query = f"""
+            query ViewNotes($offset: Int, $limit: Int) {{
+                notes: notesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{
+                        limit
+                        offset
+                    }}
+                    results {{
+                        {self.note_fields}
+                    }}
+                }}
+            }}
+        """
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], 1)
+        self.assertEqual(response["data"]["notes"]["pageInfo"], {"limit": 10, "offset": 0})
+
+        notes = response["data"]["notes"]["results"]
         # TODO: Add more validations once sort is implemented
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
@@ -216,8 +246,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes(filters: $filters) {
-                    id
+                notes: notesPaginated(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
                 }
             }
         """
@@ -236,12 +269,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
 
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
-        notes = response["data"]["notes"]
-        self.assertEqual(len(notes), expected_results_count)
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
 
         if returned_note_label_1:
             self.assertEqual(notes[0]["id"], getattr(self, returned_note_label_1)["id"])
@@ -275,8 +308,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($order: NoteOrder) {
-                notes(order: $order) {
-                    id
+                notes: notesPaginated(order: $order) {
+                    results{
+                        id
+                    }
                 }
             }
         """
@@ -287,7 +322,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
 
         self.assertEqual(
-            [n["id"] for n in response["data"]["notes"]], [self.note["id"], older_note["id"], oldest_note["id"]]
+            [n["id"] for n in response["data"]["notes"]["results"]],
+            [self.note["id"], older_note["id"], oldest_note["id"]],
         )
 
         # Test ascending order
@@ -295,7 +331,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
 
         self.assertEqual(
-            [n["id"] for n in response["data"]["notes"]], [oldest_note["id"], older_note["id"], self.note["id"]]
+            [n["id"] for n in response["data"]["notes"]["results"]],
+            [oldest_note["id"], older_note["id"], self.note["id"]],
         )
 
 

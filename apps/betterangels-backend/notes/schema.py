@@ -1,6 +1,5 @@
 from typing import Dict, List, cast
 
-from strawberry_django.pagination import OffsetPaginated
 import pghistory
 import strawberry
 import strawberry_django
@@ -29,6 +28,7 @@ from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 

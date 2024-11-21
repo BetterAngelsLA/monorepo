@@ -14,6 +14,12 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.note_fields = """
             id
+            client {
+                id
+            }
+            createdBy {
+                id
+            }
             interactedAt
             isSubmitted
             privateDetails
@@ -161,54 +167,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 }}
             }}
         """
-        # id
-        # interactedAt
-        # isSubmitted
-        # privateDetails
-        # publicDetails
-        # purpose
-        # team
-        # title
-        # client {{
-        #     id
-        # }}
-        # createdBy {{
-        #     id
-        # }}
-        # location {{
-        #     id
-        #     address {{
-        #         street
-        #         city
-        #         state
-        #         zipCode
-        #     }}
-        #     point
-        #     pointOfInterest
-        # }}
-        # moods {{
-        #     descriptor
-        # }}
-        # purposes {{
-        #     id
-        #     title
-        # }}
-        # nextSteps {{
-        #     id
-        #     title
-        # }}
-        # providedServices {{
-        #     id
-        #     service
-        #     serviceOther
-        #     customService
-        # }}
-        # requestedServices {{
-        #     id
-        #     service
-        #     serviceOther
-        #     customService
-        # }}
         return self.execute_graphql(mutation, {"data": variables})
 
     def _create_task_for_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
