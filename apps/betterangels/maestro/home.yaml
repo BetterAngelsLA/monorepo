@@ -1,0 +1,4 @@
+appId: la.betterangels.dev.app # This is an example app id. Replace it with your app id.
+---
+- launchApp
+- assertVisible: 'Welcome!'

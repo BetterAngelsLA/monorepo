@@ -39,6 +39,20 @@
       },
       "channel": "production",
       "node": "20.12.2"
+    },
+    "build-and-maestro-test": {
+      "yarn": "4.2.2",
+      "env": {
+        "EXPO_USE_WORKSPACES": "true",
+        "EXPO_YARN_WORKSPACES_ROOT": "../../",
+        "YARN_ENABLE_IMMUTABLE_INSTALLS": "false"
+      },
+      "withoutCredentials": true,
+      "config": "build-and-maestro-test.yml",
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      }
     }
   },
   "submit": {
