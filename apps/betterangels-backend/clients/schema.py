@@ -151,6 +151,10 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+    )
+
 
 @strawberry.type
 class Mutation:
