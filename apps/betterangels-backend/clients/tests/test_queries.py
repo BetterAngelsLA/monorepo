@@ -107,6 +107,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_client_profiles_query(self) -> None:
+        """
+        NOTE: This query is deprecated in favor of clientProfilesPaginated
+        """
+
         query = f"""
             query ViewClientProfiles {{
                 clientProfiles{{
@@ -123,25 +127,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile_count, len(client_profiles))
 
     def test_client_profiles_paginated_query(self) -> None:
-        # clientProfilesPaginated as clientProfiles{{
-        # query ViewClientProfile($id: ID!) {{
-        # clientProfile(pk: $id) {{
-        # query ViewClientProfiles {{
-        #     clientProfilesPaginated(pagination: {offset: 0, limit: 2}) {{
-        #         totalCount
-        #         pageInfo {
-        #             limit
-        #             offset
-        #         }
-        #         results {
-        #             {self.client_profile_fields}
-        #         }
-        #     }
-        # }}
-        # clientProfilesPaginated as clientProfiles {
         query = f"""
-            query ViewClientProfiles {{
-                clientProfiles: clientProfilesPaginated {{
+            query ViewClientProfiles($offset: Int, $limit: Int) {{
+                clientProfiles: clientProfilesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -156,12 +144,12 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
         client_profiles = response["data"]["clientProfiles"]
         client_profile_count = ClientProfile.objects.count()
-        self.assertEqual(client_profile_count, client_profiles["totalCount"])
-        # self.assertEqual(client_profile_count, len(client_profiles))
+        self.assertEqual(client_profiles["totalCount"], client_profile_count)
+        self.assertEqual(client_profiles["pageInfo"], {"limit": 10, "offset": 0})
 
     @parametrize(
         ("sort_order, expected_first_name"),
@@ -170,21 +158,24 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def test_client_profiles_query_order(self, sort_order: Optional[str], expected_first_name: str) -> None:
         query = """
             query ViewClientProfiles($order: ClientProfileOrder) {
-                clientProfiles(order: $order) {
-                    id
-                    user {
-                        firstName
+                clientProfiles: clientProfilesPaginated(order: $order) {
+                    totalCount
+                    results {
+                        id
+                        user {
+                            firstName
+                        }
                     }
                 }
             }
         """
-        expected_query_count = 3
+        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"order": {"user_FirstName": sort_order}})
 
-        client_profiles = response["data"]["clientProfiles"]
+        client_profiles = response["data"]["clientProfiles"]["results"]
         self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
-        self.assertEqual(len(client_profiles), ClientProfile.objects.count())
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], ClientProfile.objects.count())
 
     @parametrize(
         ("search_value, is_active, expected_client_profile_count"),
@@ -222,8 +213,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         query = """
             query ClientProfiles($isActive: Boolean, $search: String) {
-                clientProfiles(filters: {isActive: $isActive, search: $search}) {
-                    id
+                clientProfiles: clientProfilesPaginated(filters: {isActive: $isActive, search: $search}) {
+                    totalCount
+                    results {
+                        id
+                    }
                 }
             }
         """
@@ -240,12 +234,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 client=client_profile_2.user,
             )
 
-            expected_query_count = 3
+            expected_query_count = 4
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
 
-        client_profiles = response["data"]["clientProfiles"]
-        self.assertEqual(len(client_profiles), expected_client_profile_count)
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
     @parametrize(
         ("first_name, last_name, middle_name, expected_client_profile_count"),
@@ -281,8 +274,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         query = """
             query ClientProfiles($searchClient: ClientSearchInput) {
-                clientProfiles(filters: {searchClient: $searchClient}) {
-                    id
+                clientProfiles: clientProfilesPaginated(filters: {searchClient: $searchClient}) {
+                    totalCount
+                    results {
+                        id
+                    }
                 }
             }
         """
@@ -295,8 +291,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
-        client_profiles = response["data"]["clientProfiles"]
-        self.assertEqual(len(client_profiles), expected_client_profile_count)
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
     @parametrize(
         ("california_id, excluded_client_profile, expected_client_profile_count"),
@@ -317,8 +312,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         query = """
             query ClientProfiles($searchClient: ClientSearchInput) {
-                clientProfiles(filters: {searchClient: $searchClient}) {
-                    id
+                clientProfiles: clientProfilesPaginated(filters: {searchClient: $searchClient}) {
+                    totalCount
+                    results {
+                        id
+                    }
                 }
             }
         """
@@ -330,8 +328,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
-        client_profiles = response["data"]["clientProfiles"]
-        self.assertEqual(len(client_profiles), expected_client_profile_count)
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
