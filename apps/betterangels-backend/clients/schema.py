@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, cast
+from strawberry_django.pagination import OffsetPaginated
 
 import strawberry
 import strawberry_django
@@ -135,6 +136,10 @@ class Query:
         return cast(ClientProfileType, client_profile)
 
     client_profiles: List[ClientProfileType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+    )
+
+    client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
