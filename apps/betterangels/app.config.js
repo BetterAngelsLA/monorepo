@@ -129,6 +129,7 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      ['newrelic-react-native-agent'],
     ],
     extra: {
       router: {

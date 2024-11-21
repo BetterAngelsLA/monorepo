@@ -41,6 +41,7 @@
     "expo-updates": "~0.25.27",
     "expo-web-browser": "~13.0.3",
     "graphql": "^16.9.0",
+    "newrelic-react-native-agent": "^1.4.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.52.1",
