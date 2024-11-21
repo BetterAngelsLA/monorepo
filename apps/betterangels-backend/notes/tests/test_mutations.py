@@ -523,6 +523,24 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
+        self.task_note_fields = """
+            purposes {
+                id
+                title
+            }
+            nextSteps {
+                id
+                title
+            }
+        """
+        self.service_note_fields = """
+            providedServices {
+                id
+            }
+            requestedServices {
+                id
+            }
+        """
 
     def test_revert_note_mutation_restores_note_details_to_creation(self) -> None:
         """
@@ -555,10 +573,18 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            purpose
+            title
+            publicDetails
+            location {
+                id
+            }
+        """
 
-        expected_query_count = 34
+        expected_query_count = 29
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
@@ -569,9 +595,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 19
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
@@ -621,9 +647,19 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 36
+        note_fields = """
+            purpose
+            title
+            publicDetails
+            location {
+                address {
+                    street
+                }
+            }
+        """
+        expected_query_count = 31
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["title"], "Updated Title")
@@ -634,9 +670,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 31
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
         self.assertEqual(reverted_note["title"], "Updated Title")
@@ -685,6 +721,15 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             "id": note_id,
             "location": location,
         }
+        note_fields = """
+            location {
+                address {
+                    street
+                }
+                point
+                pointOfInterest
+            }
+        """
 
         # Update - should be discarded
         note_location_to_discard = self._update_note_location_fixture(variables)["data"]["updateNoteLocation"]
@@ -695,9 +740,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(discarded_point, note_location_to_discard["location"]["point"])
         self.assertEqual(discarded_point_of_interest, note_location_to_discard["location"]["pointOfInterest"])
 
-        expected_query_count = 26
+        expected_query_count = 21
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["location"]["address"]["street"], self.street)
         self.assertEqual(reverted_note["location"]["point"], self.point)
@@ -725,10 +770,15 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_mood_fixture({"descriptor": "EUTHYMIC", "noteId": note_id})
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            moods {
+                descriptor
+            }
+        """
 
-        expected_query_count = 24
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["moods"]), 1)
 
@@ -757,10 +807,15 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._delete_mood_fixture(mood_id=mood_to_delete_id)
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            moods {
+                descriptor
+            }
+        """
 
-        expected_query_count = 31
+        expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["moods"]), 2)
 
@@ -826,9 +881,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 41
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["purposes"]), 1)
         self.assertEqual(len(reverted_note["nextSteps"]), 1)
@@ -897,7 +952,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["purposes"]), 1)
         self.assertEqual(len(reverted_note["nextSteps"]), 1)
@@ -976,9 +1031,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 41
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["providedServices"]), 1)
         self.assertEqual(len(reverted_note["requestedServices"]), 1)
@@ -1057,9 +1112,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 41
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["providedServices"]), 1)
         self.assertEqual(len(reverted_note["requestedServices"]), 1)
@@ -1125,9 +1180,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 53
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["purposes"]), 2)
         self.assertEqual(len(reverted_note["nextSteps"]), 2)
@@ -1213,7 +1268,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         expected_query_count = 27
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["purposes"]), 2)
         self.assertEqual(len(reverted_note["nextSteps"]), 2)
@@ -1293,9 +1348,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 53
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["providedServices"]), 2)
         self.assertEqual(len(reverted_note["requestedServices"]), 2)
@@ -1375,9 +1430,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 53
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(reverted_note["providedServices"]), 2)
         self.assertEqual(len(reverted_note["requestedServices"]), 2)
@@ -1428,9 +1483,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 27
+        expected_query_count = 24
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, self.task_note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
         self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
@@ -1481,10 +1536,26 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            nextSteps {
+                id
+                title
+                location {
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
+                    point
+                    pointOfInterest
+                }
+            }
+        """
 
-        expected_query_count = 24
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         next_step = reverted_note["nextSteps"][0]
         self.assertEqual(next_step["location"]["address"]["street"], self.street)
@@ -1544,10 +1615,22 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            providedServices {
+                id
+                serviceOther
+                customService
+            }
+            requestedServices {
+                id
+                status
+                dueBy
+            }
+        """
 
-        expected_query_count = 27
+        expected_query_count = 24
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["providedServices"][0]["serviceOther"], "Other Provided Service")
         self.assertEqual(reverted_note["providedServices"][0]["customService"], "Other Provided Service")
@@ -1569,9 +1652,15 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
+        note_fields = """
+            title
+            moods {
+                descriptor
+            }
+        """
 
         with patch("notes.models.Mood.revert_action", side_effect=Exception("oops")):
-            not_reverted_note = self._revert_note_fixture(variables)["data"]["revertNote"]
+            not_reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["title"], "Discarded Title")
