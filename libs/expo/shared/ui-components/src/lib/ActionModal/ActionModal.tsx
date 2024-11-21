@@ -12,6 +12,7 @@ export interface IActionModalProps {
   setVisible: Dispatch<SetStateAction<boolean>>;
   onPrimaryPress: () => void;
   onSecondaryPress?: () => void;
+  onClose?: () => void;
 }
 
 export function ActionModal(props: IActionModalProps) {
@@ -24,10 +25,18 @@ export function ActionModal(props: IActionModalProps) {
     onSecondaryPress,
     secondaryButtonTitle,
     primaryButtonTitle,
+    onClose,
   } = props;
 
+  const handleOnClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    setVisible(false);
+  };
+
   return (
-    <BasicModal visible={visible} setVisible={setVisible}>
+    <BasicModal visible={visible} onClose={handleOnClose}>
       <Header title={title} subtitle={subtitle} />
       <Body
         setVisible={setVisible}

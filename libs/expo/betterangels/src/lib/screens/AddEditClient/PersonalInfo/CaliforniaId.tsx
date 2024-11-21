@@ -55,6 +55,12 @@ export default function CaliforniaId() {
             message: uniqueCheckError,
           })
         }
+        onClose={() =>
+          setError('californiaId', {
+            type: 'manual',
+            message: uniqueCheckError,
+          })
+        }
         visible={modalVisible}
         setVisible={setModalVisible}
       />

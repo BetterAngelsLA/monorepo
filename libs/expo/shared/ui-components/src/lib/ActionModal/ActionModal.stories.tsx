@@ -29,6 +29,7 @@ const ActionModalStoryComponent = (args: IActionModalProps) => {
         subtitle="subtitle"
         primaryButtonTitle="p title"
         secondaryButtonTitle="s title"
+        onClose={() => setVisible(false)}
         visible={visible}
         setVisible={setVisible}
         onPrimaryPress={() => {
