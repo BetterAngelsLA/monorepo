@@ -47,8 +47,7 @@
     "android.test": {
       "type": "android.apk",
       "build": "npx nx run betterangels:build --platform android --profile test --wait --local --no-interactive --output=../../apps/betterangels/.build/detox/apk-build.tar.gz && mkdir -p ../../apps/betterangels/.build/detox/apk-build/ && tar -xzf ../../apps/betterangels/.build/detox/apk-build.tar.gz -C ../../apps/betterangels/.build/detox/apk-build/",
-      "binaryPath": "../../apps/betterangels/.build/detox/apk-build/release/app-release.apk",
-      "testBinaryPath": "../../apps/betterangels/.build/detox/apk-build/androidTest/release/app-release-androidTest.apk"
+      "binaryPath": "../../apps/betterangels/.build/detox/apk-build/release/app-release.apk"
     }
   },
   "devices": {
