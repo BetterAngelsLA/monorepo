@@ -189,12 +189,12 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _revert_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _revert_note_fixture(self, variables: Dict[str, Any], note_fields: str) -> Dict[str, Any]:
         mutation = f"""
             mutation RevertNote($data: RevertNoteInput!) {{
                 revertNote(data: $data) {{
                     ... on NoteType {{
-                        {self.note_fields}
+                        {note_fields}
                     }}
                 }}
             }}
