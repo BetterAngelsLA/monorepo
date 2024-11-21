@@ -35,10 +35,6 @@ export default function CaliforniaId() {
 
   useEffect(() => {
     if (uniqueCheckError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: uniqueCheckError,
-      });
       setModalVisible(true);
     } else {
       clearErrors('californiaId');
@@ -48,11 +44,17 @@ export default function CaliforniaId() {
   return (
     <CardWrapper title="CA ID #">
       <ActionModal
-        title="Duplicate Name Detected"
+        title="This client has the same CA ID as another client."
         subtitle="Would you like to see a list of clients with the same name?"
         secondaryButtonTitle="No"
         primaryButtonTitle="Yes"
         onPrimaryPress={() => console.log('primary pressed')}
+        onSecondaryPress={() =>
+          setError('californiaId', {
+            type: 'manual',
+            message: uniqueCheckError,
+          })
+        }
         visible={modalVisible}
         setVisible={setModalVisible}
       />
