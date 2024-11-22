@@ -75,5 +75,6 @@
       "{workspaceRoot}/docker-pyproject.toml"
     ]
   },
-  "plugins": ["@nxlv/python"]
+  "plugins": ["@nxlv/python"],
+  "useLegacyCache": true
 }
