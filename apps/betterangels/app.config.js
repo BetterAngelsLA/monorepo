@@ -26,11 +26,6 @@ export default {
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
       : './src/app/assets/images/preview-icon.png',
-    splash: {
-      image: './src/app/assets/images/splash.png',
-      resizeMode: 'contain',
-      backgroundColor: '#216AF8',
-    },
     updates: {
       fallbackToCacheTimeout: 0,
       url: 'https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8',
@@ -86,27 +81,12 @@ export default {
     },
     plugins: [
       [
-        'expo-build-properties',
-        {
-          android: {
-            kotlinVersion: '1.6.21',
-          },
-        },
-      ],
-      [
         'expo-dev-launcher',
         {
           launchMode: 'launcher',
         },
       ],
       'expo-apple-authentication',
-      [
-        '@config-plugins/detox',
-        {
-          skipProguard: false,
-          subdomains: IS_PRODUCTION ? ['10.0.2.2', 'localhost'] : '*',
-        },
-      ],
       'expo-router',
       [
         'expo-image-picker',
@@ -129,6 +109,16 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      [
+        "expo-splash-screen",
+        {
+          "android": {
+            "resizeMode": "native",
+          },
+          "backgroundColor": "#216AF8",
+          "image": "./src/app/assets/images/splash.png",
+        }
+      ]
     ],
     extra: {
       router: {
