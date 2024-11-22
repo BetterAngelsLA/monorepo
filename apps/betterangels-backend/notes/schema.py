@@ -33,12 +33,10 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
-    AddNoteTaskInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
     CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
-    CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
     MoodType,
@@ -46,7 +44,6 @@ from .types import (
     NoteFilter,
     NoteType,
     RemoveNoteServiceRequestInput,
-    RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
     TaskType,
@@ -236,70 +233,6 @@ class Mutation:
             HasRetvalPerm(perms=AttachmentPermissions.DELETE),
         ],
     )
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-            try:
-                task = filter_for_user(
-                    Task.objects.all(),
-                    user,
-                    [TaskPermissions.CHANGE],
-                ).get(id=data.task_id)
-            except Task.DoesNotExist:
-                raise PermissionError("You do not have permission to access that task.")
-
-            if data.task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.add(task)
-            elif data.task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.add(task)
-            else:
-                raise NotImplementedError
-
-            return cast(NoteType, note)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-            try:
-                task = filter_for_user(
-                    Task.objects.all(),
-                    user,
-                    [TaskPermissions.CHANGE],
-                ).get(id=data.task_id)
-            except Task.DoesNotExist:
-                raise PermissionError("You do not have permission to access that task.")
-
-            if data.task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.remove(task)
-            elif data.task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.remove(task)
-            else:
-                raise NotImplementedError
-
-            return cast(NoteType, note)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
@@ -525,53 +458,6 @@ class Mutation:
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, task)
-
-            return cast(TaskType, task)
-
-    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
-    def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            task_data = asdict(data)
-            task_type = str(task_data.pop("task_type"))
-            note_id = str(task_data.pop("note_id"))
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-
-            permission_group = get_user_permission_group(user)
-
-            task = resolvers.create(
-                info,
-                Task,
-                {
-                    **task_data,
-                    "client": note.client,
-                    "created_by": user,
-                },
-            )
-
-            permissions = [
-                TaskPermissions.VIEW,
-                TaskPermissions.CHANGE,
-                TaskPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, task)
-
-            if task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.add(task)
-            elif task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.add(task)
-            else:
-                raise NotImplementedError
 
             return cast(TaskType, task)
 
