@@ -4818,15 +4818,15 @@ __metadata:
     expo-constants: "npm:~17.0.3"
     expo-dev-client: "npm:~5.0.3"
     expo-image-manipulator: "npm:~13.0.5"
-    expo-image-picker: "npm:~16.0.2"
+    expo-image-picker: "npm:~16.0.3"
     expo-linking: "npm:~7.0.3"
     expo-location: "npm:~18.0.2"
     expo-router: "npm:~4.0.7"
     expo-secure-store: "npm:~14.0.0"
     expo-sharing: "npm:~13.0.0"
-    expo-splash-screen: "npm:~0.29.12"
+    expo-splash-screen: "npm:~0.29.13"
     expo-status-bar: "npm:~2.0.0"
-    expo-updates: "npm:~0.26.8"
+    expo-updates: "npm:~0.26.9"
     expo-web-browser: "npm:~14.0.1"
     graphql: "npm:^16.9.0"
     jest: "npm:^29.4.1"
@@ -14156,14 +14156,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-picker@npm:~16.0.2":
-  version: 16.0.2
-  resolution: "expo-image-picker@npm:16.0.2"
+"expo-image-picker@npm:~16.0.3":
+  version: 16.0.3
+  resolution: "expo-image-picker@npm:16.0.3"
   dependencies:
     expo-image-loader: "npm:~5.0.0"
   peerDependencies:
     expo: "*"
-  checksum: 10/957e2557304ee499e9d2077f028dfccb4d210580df3339544e0f6a81a904d52a6ea7ba0c4a4e3db11a382470deea21afbc4225f963e611f44b0c3eedf7f4d3b1
+  checksum: 10/c034070753774dd2cb996256382f9e721b302cea473ca681fb2de2fae12c7bf8ce0e14539a94fab7ed4770081f211775196269f520202e448613c32d16a06be7
   languageName: node
   linkType: hard
 
@@ -14308,14 +14308,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-splash-screen@npm:~0.29.12":
-  version: 0.29.12
-  resolution: "expo-splash-screen@npm:0.29.12"
+"expo-splash-screen@npm:~0.29.13":
+  version: 0.29.13
+  resolution: "expo-splash-screen@npm:0.29.13"
   dependencies:
     "@expo/prebuild-config": "npm:^8.0.17"
   peerDependencies:
     expo: "*"
-  checksum: 10/8b564ce019c8a0dd2a510d3452a8fc9eb515cad9bdc3505b5e6cb34a0e25c911ac9b9a54bee87c40a4459c73a99649b8a25e2121b6d837a32cc53e0b33e2a8f9
+  checksum: 10/ae5159f45865594970ceb29cdeffb084cb823a24b36a110a7854a889e9124b35c468144130dfc3aeeb8e8f0b760823d29bc702c72626b3665734e0e1244d234e
   languageName: node
   linkType: hard
 
@@ -14345,9 +14345,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-updates@npm:~0.26.8":
-  version: 0.26.8
-  resolution: "expo-updates@npm:0.26.8"
+"expo-updates@npm:~0.26.9":
+  version: 0.26.9
+  resolution: "expo-updates@npm:0.26.9"
   dependencies:
     "@expo/code-signing-certificates": "npm:0.0.5"
     "@expo/config": "npm:~10.0.4"
@@ -14368,7 +14368,7 @@ __metadata:
     react: "*"
   bin:
     expo-updates: bin/cli.js
-  checksum: 10/fe36e81f3f4bcca2922eedbc95ef5f3db785087c26aefa971b7eb3b29513a7d2dab67884668b32850b3aa4e0becfe9f08b33679a4c8ce8e1edf9543bc6a4d0d4
+  checksum: 10/5644a73c0cdce83eb6aea22a3bcc48302a4841f96639f063cf5fd5e9bf4e3becc2ae2b7c0b2705605bcfcecd5370fe0e65fbf604ddc4e73b5f50f3ba40f96058
   languageName: node
   linkType: hard
 
