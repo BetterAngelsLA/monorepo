@@ -21105,16 +21105,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-screens@npm:^4.0.0":
-  version: 4.3.0
-  resolution: "react-native-screens@npm:4.3.0"
+"react-native-screens@npm:~4.1.0":
+  version: 4.1.0
+  resolution: "react-native-screens@npm:4.1.0"
   dependencies:
     react-freeze: "npm:^1.0.0"
     warn-once: "npm:^0.1.0"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10/3c33d282712f1b7274a88a1bfcaa8de1f012b0a1afd0b3de04714579ec37d803bc22f5bc78b72c0a6f6743e349d77744f7201f6f94f3ab1a6e82aa149e495b9a
+  checksum: 10/b3758288be667cd265ec958a6c4f8d75fc93c80624ae05b054e8645e12db5e68e1ccb376017aa392a950304bb220c937e4d819ccf0eb579a125bccb6ef4b919a
   languageName: node
   linkType: hard
 
