@@ -12,7 +12,6 @@ from notes.enums import (
     NoteNamespaceEnum,
     SelahTeamEnum,
     ServiceRequestTypeEnum,
-    TaskTypeEnum,
 )
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto

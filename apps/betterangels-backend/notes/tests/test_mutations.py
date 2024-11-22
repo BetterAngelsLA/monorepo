@@ -1,4 +1,3 @@
-from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
@@ -26,7 +25,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 37
+        expected_query_count = 35
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -45,8 +44,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": "New note title",
             "location": None,
             "moods": [],
-            "purposes": [],
-            "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "New public details",
@@ -72,7 +69,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 25
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -94,8 +91,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 "pointOfInterest": self.point_of_interest,
             },
             "moods": [],
-            "purposes": [],
-            "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",
@@ -115,7 +110,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -127,8 +122,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "title": f"Session with {self.client_user_1.full_name}",
             "location": None,
             "moods": [],
-            "purposes": [],
-            "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": f"{self.client_user_1.full_name}'s public details",
@@ -372,7 +365,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 22
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -390,16 +383,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
-        self.task_note_fields = """
-            purposes {
-                id
-                title
-            }
-            nextSteps {
-                id
-                title
-            }
-        """
         self.service_note_fields = """
             providedServices {
                 id
@@ -1326,7 +1309,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "client": self.client_user_1.pk,
         }
 
-        expected_query_count = 20
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1359,7 +1342,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "title": "Updated task title",
         }
 
-        expected_query_count = 15
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1389,7 +1372,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 23
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_location_fixture(variables)
 
@@ -1419,7 +1402,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         self.assertEqual(task, location.tasks.first())
 
     def test_delete_task_mutation(self) -> None:
-        expected_query_count = 9
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_task_fixture(self.task["id"])
 

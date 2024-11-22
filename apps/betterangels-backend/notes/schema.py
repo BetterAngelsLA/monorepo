@@ -14,7 +14,7 @@ from django.db import transaction
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
