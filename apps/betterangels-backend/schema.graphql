@@ -29,14 +29,6 @@ enum AdaAccommodationEnum {
   OTHER
 }
 
-input AddNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union AddNoteTaskPayload = NoteType | OperationInfo
-
 input AddressInput {
   addressComponents: JSON
   formattedAddress: String
@@ -320,16 +312,6 @@ input CreateNoteServiceRequestInput {
 
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
-input CreateNoteTaskInput {
-  title: String!
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union CreateNoteTaskPayload = TaskType | OperationInfo
-
 input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
@@ -589,8 +571,6 @@ type Mutation {
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
-  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
@@ -599,7 +579,6 @@ type Mutation {
   removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
@@ -654,8 +633,6 @@ type NoteType {
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
-  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -823,14 +800,6 @@ input RemoveNoteServiceRequestInput {
 
 union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
 
-input RemoveNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union RemoveNoteTaskPayload = NoteType | OperationInfo
-
 input RevertNoteInput {
   id: ID!
   revertBeforeTimestamp: DateTime!
@@ -979,11 +948,6 @@ type TaskType {
   client: UserType
   createdAt: DateTime!
   createdBy: UserType!
-}
-
-enum TaskTypeEnum {
-  PURPOSE
-  NEXT_STEP
 }
 
 input UpdateClientProfileInput {
