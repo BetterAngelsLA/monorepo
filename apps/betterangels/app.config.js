@@ -129,7 +129,6 @@ export default {
         {
           backgroundColor: '#216AF8',
           image: './src/app/assets/images/splash.png',
-          resize,
         },
       ],
     ],
