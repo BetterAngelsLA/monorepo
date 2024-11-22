@@ -466,16 +466,14 @@ class Mutation:
         with transaction.atomic():
             task_data = asdict(data)
             task = Task.objects.get(id=data.id)
-            note_id = task.get_note_id()
 
-            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-                task = resolvers.update(
-                    info,
-                    task,
-                    {
-                        **task_data,
-                    },
-                )
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    **task_data,
+                },
+            )
 
             return cast(TaskType, task)
 
@@ -496,18 +494,15 @@ class Mutation:
             except Task.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this task.")
 
-            note_id = task.get_note_id()
-
-            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-                location_data: Dict = strawberry.asdict(data)
-                location = Location.get_or_create_location(location_data["location"])
-                task = resolvers.update(
-                    info,
-                    task,
-                    {
-                        "location": location,
-                    },
-                )
+            location_data: Dict = strawberry.asdict(data)
+            location = Location.get_or_create_location(location_data["location"])
+            task = resolvers.update(
+                info,
+                task,
+                {
+                    "location": location,
+                },
+            )
 
             return cast(TaskType, task)
 
@@ -529,9 +524,6 @@ class Mutation:
             raise PermissionError("You do not have permission to modify this task.")
 
         task_id = task.id
-        note_id = task.get_note_id()
-
-        with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-            task.delete()
+        task.delete()
 
         return DeletedObjectType(id=task_id)

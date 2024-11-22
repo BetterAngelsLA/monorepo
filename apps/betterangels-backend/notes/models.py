@@ -124,15 +124,6 @@ class Task(BaseModel):
             case _:
                 raise Exception(f"Action {action} is not revertable")
 
-    def get_note_id(self) -> int | None:
-        """
-        NOTE: this function will have to change once Tasks can be associated with multiple Notes
-        """
-        if note := Note.objects.filter(Q(purposes__id=self.id) | Q(next_steps__id=self.id)).first():
-            return note.id
-
-        return None
-
     @model_property
     def due_by_group(self) -> Optional[str]:
         DAYS_IN_A_WEEK = 7
