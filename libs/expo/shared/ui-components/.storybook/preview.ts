@@ -8,7 +8,7 @@ const preview: Preview = {
     layout: 'centered',
   },
 
-  tags: ['autodocs', 'autodocs']
+  tags: ['autodocs', 'autodocs', 'autodocs']
 };
 
 export default preview;
