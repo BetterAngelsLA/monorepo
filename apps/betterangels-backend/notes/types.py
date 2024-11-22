@@ -207,8 +207,6 @@ class NoteType:
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
     provided_services: List[ServiceRequestType]
     requested_services: List[ServiceRequestType]
     public_details: auto

@@ -175,12 +175,10 @@ class Note(BaseModel):
     interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
     is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
-    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
     title = models.CharField(max_length=100, blank=True, null=True)
@@ -231,48 +229,6 @@ class Note(BaseModel):
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
         ordering = ["-interacted_at"]
-
-
-@pghistory.track(
-    pghistory.InsertEvent("note_purposes.add"),
-    pghistory.DeleteEvent("note_purposes.remove"),
-    obj_field=None,
-)
-class NotePurposes(Note.purposes.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-    @staticmethod
-    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
-        note = Note.objects.get(id=note_id)
-        task = Task.objects.get(id=task_id)
-
-        if action == "add":
-            note.purposes.remove(task)
-
-        elif action == "remove":
-            note.purposes.add(task)
-
-
-@pghistory.track(
-    pghistory.InsertEvent("note_next_steps.add"),
-    pghistory.DeleteEvent("note_next_steps.remove"),
-    obj_field=None,
-)
-class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-    @staticmethod
-    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
-        note = Note.objects.get(id=note_id)
-        task = Task.objects.get(id=task_id)
-
-        if action == "add":
-            note.next_steps.remove(task)
-
-        elif action == "remove":
-            note.next_steps.add(task)
 
 
 @pghistory.track(
