@@ -18206,14 +18206,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"metro-resolver@npm:0.80.9, metro-resolver@npm:~0.80.4":
-  version: 0.80.9
-  resolution: "metro-resolver@npm:0.80.9"
-  checksum: 10/a851686e1b96f1d7298ba5a954db9d47775583d28874e4893fe1974888df1530d9be1136bea25e1a2ec2472bdcba82909e2f31415e75a3a3c6f80a5fdd100413
-  languageName: node
-  linkType: hard
-
-"metro-resolver@npm:0.81.0":
+"metro-resolver@npm:>=0.81.0":
   version: 0.81.0
   resolution: "metro-resolver@npm:0.81.0"
   dependencies:
