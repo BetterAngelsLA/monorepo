@@ -111,11 +111,11 @@ export default {
         },
       ],
       [
-        "expo-splash-screen",
+        'expo-splash-screen',
         {
-          "backgroundColor": "#216AF8",
-          "image": "./src/app/assets/images/splash.png",
-          "imageWidth": 750,
+          'backgroundColor': '#216AF8',
+          'image': './src/app/assets/images/splash.png',
+          'imageWidth': 750,
         }
       ]
     ],
