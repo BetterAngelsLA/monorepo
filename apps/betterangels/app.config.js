@@ -80,6 +80,7 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      'expo-build-properties',
       [
         'expo-dev-launcher',
         {

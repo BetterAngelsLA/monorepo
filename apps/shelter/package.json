@@ -60,7 +60,7 @@
     "react-native-paper": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/betterangels && corepack enable",
+    "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/shelter"
   },
   "devDependencies": {
