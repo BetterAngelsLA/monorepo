@@ -4456,6 +4456,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:7.17.0"
     "@typescript-eslint/parser": "npm:7.17.0"
     "@yarnpkg/sdks": "npm:^3.0.0-rc.48"
+    aamva-parser: "npm:^1.3.0"
     apollo-link-rest: "npm:^0.9.0"
     apollo-upload-client: "npm:^18.0.1"
     axios: "npm:^1.7.3"
@@ -9610,6 +9611,15 @@ __metadata:
   version: 0.9.0
   resolution: "@zxing/text-encoding@npm:0.9.0"
   checksum: 10/268e4ef64b8eaa32b990240bdfd1f7b3e2b501a6ed866a565f7c9747f04ac884fbe0537fe12bb05d9241b98fb111270c0fd0023ef0a02d23a6619b4589e98f6b
+  languageName: node
+  linkType: hard
+
+"aamva-parser@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "aamva-parser@npm:1.3.0"
+  dependencies:
+    ts-node: "npm:^10.9.2"
+  checksum: 10/3ca09c6ab71278c0d43ebbd86d23e13dbb8b73f536770345cbf269a343c29070ab8fbcb3290ded5678e603c288e25ec202bc08c90c8e6363c09d2367dfe46fad
   languageName: node
   linkType: hard
 
@@ -24574,6 +24584,44 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: 10/bee56d4dc96ccbafc99dfab7b73fbabc62abab2562af53cdea91c874a301b9d11e42bc33c0a032a6ed6d813dbdc9295ec73dde7b73ea4ebde02b0e22006f7e04
+  languageName: node
+  linkType: hard
+
+"ts-node@npm:^10.9.2":
+  version: 10.9.2
+  resolution: "ts-node@npm:10.9.2"
+  dependencies:
+    "@cspotcode/source-map-support": "npm:^0.8.0"
+    "@tsconfig/node10": "npm:^1.0.7"
+    "@tsconfig/node12": "npm:^1.0.7"
+    "@tsconfig/node14": "npm:^1.0.0"
+    "@tsconfig/node16": "npm:^1.0.2"
+    acorn: "npm:^8.4.1"
+    acorn-walk: "npm:^8.1.1"
+    arg: "npm:^4.1.0"
+    create-require: "npm:^1.1.0"
+    diff: "npm:^4.0.1"
+    make-error: "npm:^1.1.1"
+    v8-compile-cache-lib: "npm:^3.0.1"
+    yn: "npm:3.1.1"
+  peerDependencies:
+    "@swc/core": ">=1.2.50"
+    "@swc/wasm": ">=1.2.50"
+    "@types/node": "*"
+    typescript: ">=2.7"
+  peerDependenciesMeta:
+    "@swc/core":
+      optional: true
+    "@swc/wasm":
+      optional: true
+  bin:
+    ts-node: dist/bin.js
+    ts-node-cwd: dist/bin-cwd.js
+    ts-node-esm: dist/bin-esm.js
+    ts-node-script: dist/bin-script.js
+    ts-node-transpile-only: dist/bin-transpile.js
+    ts-script: dist/bin-script-deprecated.js
+  checksum: 10/a91a15b3c9f76ac462f006fa88b6bfa528130dcfb849dd7ef7f9d640832ab681e235b8a2bc58ecde42f72851cc1d5d4e22c901b0c11aa51001ea1d395074b794
   languageName: node
   linkType: hard
 
