@@ -58,6 +58,7 @@
     "react-native-select-dropdown": "^4.0.1",
     "react-native-svg": "15.2.0",
     "react-native-svg-transformer": "1.3.0",
+    "react-native-vision-camera": "^4.6.1",
     "react-native-web": "0.19.12",
     "tslib": "^2.3.0"
   },

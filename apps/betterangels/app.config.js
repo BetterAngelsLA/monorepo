@@ -129,6 +129,13 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      [
+        'react-native-vision-camera',
+        {
+          cameraPermissionText: '$(PRODUCT_NAME) needs access to your Camera.',
+          enableCodeScanner: true,
+        },
+      ],
     ],
     extra: {
       router: {
