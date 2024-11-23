@@ -533,6 +533,9 @@ class ShelterResource(resources.ModelResource):
         for i, indVal in enumerate(columnSeparateVals):
             try:
                 if indVal in row_vals_choices:
+                    if row_vals_choices[indVal] == "other":
+                        if not rowInDict[f"{column}_other"]:
+                            raise ValueError
                     brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
                         name=row_vals_choices[indVal]
                     )
