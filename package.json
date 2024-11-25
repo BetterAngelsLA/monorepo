@@ -13,6 +13,7 @@
   "dependencies": {
     "@apollo/client": "^3.11.1",
     "@expo/metro-config": "~0.18.11",
+    "@likashefqet/react-native-image-zoom": "^4.2.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
     "@react-native-picker/picker": "2.7.5",
@@ -46,7 +47,6 @@
     "react-hook-form": "^7.52.1",
     "react-native": "0.74.5",
     "react-native-gesture-handler": "~2.16.1",
-    "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-keyboard-controller": "^1.13.0",
     "react-native-maps": "1.14.0",
     "react-native-modal": "^13.0.1",
@@ -143,5 +143,6 @@
   },
   "engines": {
     "node": "20.12.2"
-  }
+  },
+  "packageManager": "yarn@4.2.2+sha256.1aa43a5304405be7a7cb9cb5de7b97de9c4e8ddd3273e4dad00d6ae3eb39f0ef"
 }
