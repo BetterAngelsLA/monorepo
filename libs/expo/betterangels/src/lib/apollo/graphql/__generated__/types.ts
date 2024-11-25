@@ -479,6 +479,7 @@ export enum HairColorEnum {
 export enum HmisAgencyEnum {
   Champ = 'CHAMP',
   Lahsa = 'LAHSA',
+  LongBeach = 'LONG_BEACH',
   Pasadena = 'PASADENA',
   Vash = 'VASH'
 }

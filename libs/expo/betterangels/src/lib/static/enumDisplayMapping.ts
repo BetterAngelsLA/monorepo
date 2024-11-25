@@ -51,6 +51,7 @@ export const enumDisplayHmisAgency: {
   [key in HmisAgencyEnum]: string;
 } = {
   [HmisAgencyEnum.Lahsa]: 'LAHSA',
+  [HmisAgencyEnum.LongBeach]: 'Long Beach',
   [HmisAgencyEnum.Pasadena]: 'Pasadena',
   [HmisAgencyEnum.Champ]: 'CHAMP',
   [HmisAgencyEnum.Vash]: 'VASH',

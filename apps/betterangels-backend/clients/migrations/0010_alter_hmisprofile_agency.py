@@ -30,14 +30,19 @@ class Migration(migrations.Migration):
               );
             """,
         ),
-        # Remove 'santa_monica' from the field choices
         migrations.AlterField(
             model_name="hmisprofile",
             name="agency",
             field=django_choices_field.fields.TextChoicesField(
-                choices=[("lahsa", "LAHSA"), ("pasadena", "Pasadena"), ("champ", "CHAMP"), ("vash", "VASH")],
+                choices=[
+                    ("lahsa", "LAHSA"),
+                    ("long_beach", "Long Beach"),
+                    ("pasadena", "Pasadena"),
+                    ("champ", "CHAMP"),
+                    ("vash", "VASH"),
+                ],
                 choices_enum=clients.enums.HmisAgencyEnum,
-                max_length=8,
+                max_length=10,
             ),
         ),
     ]
