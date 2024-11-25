@@ -28,6 +28,7 @@ from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
@@ -62,6 +63,10 @@ class Query:
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
     notes: List[NoteType] = strawberry_django.field(
+        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
@@ -218,7 +223,6 @@ class Mutation:
             )
 
             permissions = [
-                AttachmentPermissions.VIEW,
                 AttachmentPermissions.DELETE,
             ]
             for perm in permissions:

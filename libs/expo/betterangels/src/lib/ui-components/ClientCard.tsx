@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
+
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
   client: ClientProfilesQuery['clientProfiles'][number] | undefined;
@@ -96,7 +97,7 @@ export default function ClientCard(props: IClientCardProps) {
         accessibilityHint={`shows avatar of ${client.user.firstName} ${client.user.lastName} if available`}
         accessibilityLabel={`Avatar of ${client.user.firstName} ${client.user.lastName} client`}
         imageUrl={client.profilePhoto?.url}
-        size="lg"
+        size="xl"
         mr="xs"
       />
 

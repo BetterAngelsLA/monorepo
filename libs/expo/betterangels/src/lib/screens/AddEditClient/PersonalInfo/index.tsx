@@ -8,16 +8,19 @@ import FullName from './FullName';
 import HmisProfiles from './HmisProfiles';
 import LivingSituation from './LivingSituation';
 import PreferredLanguage from './PreferredLanguage';
+import ProfilePhoto from './ProfilePhoto';
 import VeteranStatus from './VeteranStatus';
 
 interface IPersonalInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
   scrollRef: RefObject<ScrollView>;
+  clientId?: string;
 }
 
 export default function PersonalInfo(props: IPersonalInfoProps) {
-  const { scrollRef, expanded, setExpanded } = props;
+  const { scrollRef, expanded, setExpanded, clientId } = props;
+
   const isPersonalInfo = expanded === 'Personal Info';
 
   return (
@@ -38,6 +41,7 @@ export default function PersonalInfo(props: IPersonalInfoProps) {
             gap: Spacings.xs,
           }}
         >
+          {clientId && <ProfilePhoto clientId={clientId} />}
           <FullName />
           <Dob />
           <CaliforniaId />

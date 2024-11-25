@@ -12,6 +12,70 @@ from test_utils.mixins import HasGraphQLProtocol
 class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.note_fields = """
+            id
+            client {
+                id
+            }
+            createdBy {
+                id
+            }
+            interactedAt
+            isSubmitted
+            privateDetails
+            publicDetails
+            purpose
+            team
+            title
+            location {
+                id
+                address {
+                    street
+                    city
+                    state
+                    zipCode
+                }
+                point
+                pointOfInterest
+            }
+            moods {
+                descriptor
+            }
+            purposes {
+                id
+                title
+            }
+            nextSteps {
+                id
+                title
+                location {
+                    address {
+                        street
+                        city
+                        state
+                        zipCode
+                    }
+                    point
+                    pointOfInterest
+                }
+            }
+            providedServices {
+                id
+                service
+                serviceOther
+                customService
+                dueBy
+                status
+            }
+            requestedServices {
+                id
+                service
+                serviceOther
+                customService
+                dueBy
+                status
+            }
+        """
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -98,54 +162,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }}
                     }}
                     ... on NoteType {{
-                        id
-                        interactedAt
-                        isSubmitted
-                        privateDetails
-                        publicDetails
-                        purpose
-                        team
-                        title
-                        client {{
-                            id
-                        }}
-                        createdBy {{
-                            id
-                        }}
-                        location {{
-                            id
-                            address {{
-                                street
-                                city
-                                state
-                                zipCode
-                            }}
-                            point
-                            pointOfInterest
-                        }}
-                        moods {{
-                            descriptor
-                        }}
-                        purposes {{
-                            id
-                            title
-                        }}
-                        nextSteps {{
-                            id
-                            title
-                        }}
-                        providedServices {{
-                            id
-                            service
-                            serviceOther
-                            customService
-                        }}
-                        requestedServices {{
-                            id
-                            service
-                            serviceOther
-                            customService
-                        }}
+                        {self.note_fields}
                     }}
                 }}
             }}
@@ -172,69 +189,15 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _revert_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        mutation = """
-            mutation RevertNote($data: RevertNoteInput!) {
-                revertNote(data: $data) {
-                    ... on NoteType {
-                        id
-                        interactedAt
-                        isSubmitted
-                        privateDetails
-                        publicDetails
-                        purpose
-                        team
-                        title
-                        location {
-                            address {
-                                street
-                                city
-                                state
-                                zipCode
-                            }
-                            point
-                            pointOfInterest
-                        }
-                        moods {
-                            descriptor
-                        }
-                        purposes {
-                            id
-                            title
-                        }
-                        nextSteps {
-                            id
-                            title
-                            location {
-                                address {
-                                    street
-                                    city
-                                    state
-                                    zipCode
-                                }
-                                point
-                                pointOfInterest
-                            }
-                        }
-                        providedServices {
-                            id
-                            service
-                            serviceOther
-                            customService
-                            dueBy
-                            status
-                        }
-                        requestedServices {
-                            id
-                            service
-                            serviceOther
-                            customService
-                            dueBy
-                            status
-                        }
-                    }
-                }
-            }
+    def _revert_note_fixture(self, variables: Dict[str, Any], note_fields: str) -> Dict[str, Any]:
+        mutation = f"""
+            mutation RevertNote($data: RevertNoteInput!) {{
+                revertNote(data: $data) {{
+                    ... on NoteType {{
+                        {note_fields}
+                    }}
+                }}
+            }}
         """
         return self.execute_graphql(mutation, {"data": variables})
 

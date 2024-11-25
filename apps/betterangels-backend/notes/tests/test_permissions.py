@@ -422,7 +422,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
             ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
-            ("org_2_case_manager_1", False),  # CM from a different org should not succeed
+            ("org_2_case_manager_1", True),  # CM in a different org should succeed
             ("client_user_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -455,7 +455,7 @@ class NoteAttachmentPermessionTestCase(NoteGraphQLBaseTestCase):
         [
             ("org_1_case_manager_1", True),  # Creator should succeed
             ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
-            ("org_2_case_manager_1", False),  # CM from a different org should not succeed
+            ("org_2_case_manager_1", True),  # CM in a different org should succeed
             ("client_user_1", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
