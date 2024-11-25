@@ -123,6 +123,7 @@ INSTALLED_APPS = [
     "django_select2",
     "strawberry_django",
     "waffle",
+    "import_export",
     # Our Apps
     "accounts",
     "clients",

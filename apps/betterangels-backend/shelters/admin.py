@@ -1,14 +1,32 @@
-from typing import Optional, Tuple, Type, TypeVar, Union
+import json
+import logging
+from typing import Any, Optional, Tuple, Type, TypeVar, Union, cast
+from urllib.parse import quote
 
+import places
+import requests
+from betterangels_backend import settings
+from common.models import Location
+
+# from betterangels_backend import settings
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
+from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
+from import_export import resources  # type: ignore
+from import_export.admin import ImportExportModelAdmin  # type: ignore
+from import_export.fields import Field  # type: ignore
+from import_export.results import RowResult  # type: ignore
+from import_export.widgets import ForeignKeyWidget, ManyToManyWidget  # type: ignore
+from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
@@ -28,12 +46,40 @@ from .enums import (
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
     TrainingServiceChoices,
 )
-from .models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter, Video
+from .models import (  # RoomStyle,; ShelterProgram,
+    SPA,
+    Accessibility,
+    City,
+    ContactInfo,
+    Demographic,
+    EntryRequirement,
+    ExteriorPhoto,
+    Funder,
+    GeneralService,
+    HealthService,
+    ImmediateNeed,
+    InteriorPhoto,
+    Parking,
+    Pet,
+    RoomStyle,
+    Shelter,
+    ShelterProgram,
+    ShelterType,
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+    Video,
+)
+
+# RoomStyle,
+# ShelterProgram,
 
 T = TypeVar("T", bound=models.Model)
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -341,7 +387,247 @@ class VideoInline(admin.TabularInline):
     extra = 1
 
 
-class ShelterAdmin(admin.ModelAdmin):
+class ShelterResource(resources.ModelResource):
+
+    organization = Field(
+        column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
+    )
+    spa = Field(column_name="spa", attribute="spa", widget=ManyToManyWidget(SPA, separator=",", field="name"))
+    # address = Field(column_name="address", attribute="address", widget=ForeignKeyWidget(Address, "formatted_address"))
+    demographics = Field(
+        column_name="demographics",
+        attribute="demographics",
+        widget=ManyToManyWidget(Demographic, separator=",", field="name"),
+    )
+    special_situation_restrictions = Field(
+        column_name="special_situation_restrictions",
+        attribute="special_situation_restrictions",
+        widget=ManyToManyWidget(SpecialSituationRestriction, separator=",", field="name"),
+    )
+    general_services = Field(
+        column_name="general_services",
+        attribute="general_services",
+        widget=ManyToManyWidget(GeneralService, separator=",", field="name"),
+    )
+    immediate_needs = Field(
+        column_name="immediate_needs",
+        attribute="immediate_needs",
+        widget=ManyToManyWidget(ImmediateNeed, separator=",", field="name"),
+    )
+    shelter_types = Field(
+        column_name="shelter_types",
+        attribute="shelter_types",
+        widget=ManyToManyWidget(ShelterType, separator=",", field="name"),
+    )
+    shelter_programs = Field(
+        column_name="shelter_programs",
+        attribute="shelter_programs",
+        widget=ManyToManyWidget(ShelterProgram, separator=",", field="name"),
+    )
+    room_styles = Field(
+        column_name="room_styles",
+        attribute="room_styles",
+        widget=ManyToManyWidget(RoomStyle, separator=",", field="name"),
+    )
+    accessibility = Field(
+        column_name="accessibility",
+        attribute="accessibility",
+        widget=ManyToManyWidget(Accessibility, separator=",", field="name"),
+    )
+    pets = Field(
+        column_name="pets",
+        attribute="pets",
+        widget=ManyToManyWidget(Pet, separator=",", field="name"),
+    )
+    parking = Field(
+        column_name="parking",
+        attribute="parking",
+        widget=ManyToManyWidget(Parking, separator=",", field="name"),
+    )
+    training_services = Field(
+        column_name="training_services",
+        attribute="training_services",
+        widget=ManyToManyWidget(TrainingService, separator=",", field="name"),
+    )
+    cities = Field(
+        column_name="cities",
+        attribute="cities",
+        widget=ManyToManyWidget(City, separator=",", field="name"),
+    )
+    funders = Field(
+        column_name="funders",
+        attribute="funders",
+        widget=ManyToManyWidget(Funder, separator=",", field="name"),
+    )
+    health_services = Field(
+        column_name="health_services",
+        attribute="health_services",
+        widget=ManyToManyWidget(HealthService, separator=",", field="name"),
+    )
+    entry_requirements = Field(
+        column_name="entry_requirements",
+        attribute="entry_requirements",
+        widget=ManyToManyWidget(EntryRequirement, separator=",", field="name"),
+    )
+    storage = Field(
+        column_name="storage",
+        attribute="storage",
+        widget=ManyToManyWidget(Storage, separator=",", field="name"),
+    )
+    count = 0
+
+    class Meta:
+        model = Shelter
+        import_id_fields = (
+            "name",
+            "organization",
+        )
+        exclude = ("id", "created_at", "updated_at")
+
+    def process_spa_import(self, row: Any, skip_row_not_val_error: bool, spa_row: str) -> None:
+        spa_names = [v.strip() for v in spa_row.split(",")]
+        spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
+        for spa_name in spa_names:
+            try:
+                if int(spa_name) in spa_choices:
+                    sp, createdSpa = SPA.objects.get_or_create(name=spa_name)
+                else:
+                    raise ValueError
+            except ValueError:
+                logger.warning(f"Row {self.count}: Bad SPA value")
+                if skip_row_not_val_error:
+                    row["spa"] = None
+                    row["jumpthis"] = True
+                else:
+                    raise ValidationError(f"Value in row {self.count} column spa must have a value between 1 and 8")
+
+    def process_address_import(self, row: Any, skip_row_not_val_error: bool, address_row: str) -> None:
+        addy_data = requests.get(
+            f"https://maps.googleapis.com/maps/api/geocode/json?address={quote(address_row)}&key={quote(settings.GOOGLE_MAPS_API_KEY)}"
+        )
+        try:
+            addy_formatted_data = addy_data.json()["results"][0]["formatted_address"]
+            addy_formatted_coords = addy_data.json()["results"][0]["geometry"]["location"]
+            addy_to_places_object = places.Places(
+                addy_formatted_data, addy_formatted_coords["lat"], addy_formatted_coords["lng"]
+            )
+            addy_for_location_method = addy_data.json()["results"][0]
+            addy_for_location_method["address_components"] = json.dumps(addy_for_location_method["address_components"])
+            addy_address = Location.get_or_create_address(addy_for_location_method)
+            if None in [addy_address.street, addy_address.city, addy_address.state, addy_address.zip_code]:
+                raise IndexError
+            row["location"] = addy_to_places_object
+        except IndexError:
+            logger.warning(f"Address at {self.count} bad")
+            if skip_row_not_val_error:
+                row["location"] = None
+                row["jumpthis"] = True
+            else:
+                raise ValidationError(f"Invalid Location at {self.count}")
+
+    def process_many_to_many_import(self, row: Any, skip_row_not_val_error: bool, rowInDict: dict, column: str) -> None:
+        fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
+        fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
+        columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
+        row_vals_choices = {j: i for i, j in fieldModelChoices}  # type: ignore
+        for i, indVal in enumerate(columnSeparateVals):
+            try:
+                if indVal in row_vals_choices:
+                    if row_vals_choices[indVal] == "other":
+                        if not rowInDict[f"{column}_other"]:
+                            raise ValueError
+                    brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
+                        name=row_vals_choices[indVal]
+                    )
+                    columnSeparateVals[i] = row_vals_choices[indVal]
+                else:
+                    raise ValueError
+            except ValueError:
+                logger.warning(f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}")
+                if skip_row_not_val_error:
+                    row[column] = None
+                    row["jumpthis"] = True
+                else:
+                    raise ValidationError(
+                        f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}"
+                    )
+        row[column] = ",".join(columnSeparateVals)
+
+    def before_import_row(self, row: Any, **kwargs: Any) -> None:
+        self.count += 1
+        skip_row_not_val_error = True
+        if skip_row_not_val_error:
+            row["jumpthis"] = False
+
+        # This for loop checks for fields that have exceeded their max length
+        for field in Shelter._meta.get_fields():
+            if hasattr(field, "max_length") and field.max_length:
+                fieldname = field.name
+                value = row.get(fieldname)
+                if value and (len(value) > field.max_length):
+                    logger.warning(f"Change {value} in row {self.count} col {fieldname}")
+                    if skip_row_not_val_error:
+                        row[fieldname] = ""
+                        row["jumpthis"] = True
+                    else:
+                        raise ValidationError(f"Change {value} in row {self.count} col {fieldname}")
+        customFields = [
+            "demographics",
+            "special_situation_restrictions",
+            "general_services",
+            "immediate_needs",
+            "shelter_types",
+            "shelter_programs",
+            "training_services",
+            "room_styles",
+            "funders",
+            "health_services",
+            "entry_requirements",
+            "storage",
+            "pets",
+            "cities",
+            "accessibility",
+            "parking",
+        ]  # in this case, the many to many fields
+        rowInDict = {}
+        for column in row.keys():
+            rowInDict[column] = row.get(column)
+        if rowInDict["organization"]:
+            org, created = Organization.objects.get_or_create(name=rowInDict["organization"])
+            # This process SPA name considering the ManyToMany nature of the field
+            # Gets existing object or makes it if one doesn't exist
+            if rowInDict["status"]:
+                if rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
+                    if skip_row_not_val_error:
+                        row[fieldname] = ""
+                        row["jumpthis"] = True
+                    else:
+                        raise ValidationError(f"Change {value} in row {self.count} col {fieldname}")
+            if rowInDict["spa"]:
+                self.process_spa_import(row, skip_row_not_val_error, rowInDict["spa"])
+            # Same idea as the handling for SPA, but uses existing get_or_create_address method in Location class to handle Address creation
+            if rowInDict["location"]:
+                self.process_address_import(row, skip_row_not_val_error, rowInDict["location"])
+            # This is to process the ManyToMany fields, grabs the data within the CSV and matches it to the proper choice for that column
+            for column in customFields:
+                if rowInDict[column]:
+                    self.process_many_to_many_import(row, skip_row_not_val_error, rowInDict, column)
+        else:
+            logger.warning(f"No org name: {self.count} {row}")
+            if skip_row_not_val_error:
+                row["jumpthis"] = True
+            else:
+                raise ValidationError(f"Row {self.count} is missing an Organization")
+
+    # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
+    # import, and also whether or not skip_row_not_val_error boolean is True or False
+    def skip_row(self, instance: Any, original: Any, row: Any, import_validation_errors: Any | None = None) -> bool:
+        if row.get("jumpthis"):
+            return True
+        return bool(super().skip_row(instance, original, row, import_validation_errors))
+
+
+class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
@@ -514,6 +800,7 @@ class ShelterAdmin(admin.ModelAdmin):
         "status",
     )
     search_fields = ("name", "organization__name", "description", "subjective_review")
+    resource_class = ShelterResource
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
@@ -523,6 +810,18 @@ class ShelterAdmin(admin.ModelAdmin):
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
         return readonly_fields
+
+    def _create_log_entries(self, user_pk, rows):  # type: ignore
+        logentry_map = {
+            RowResult.IMPORT_TYPE_NEW: ADDITION,
+            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+            RowResult.IMPORT_TYPE_DELETE: DELETION,
+        }
+        for import_type, _instances in rows.items():
+            if import_type not in logentry_map:
+                continue
+            action_flag = logentry_map[import_type]
+            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
 
     def updated_by(self, obj: Shelter) -> str:
         last_event = (
