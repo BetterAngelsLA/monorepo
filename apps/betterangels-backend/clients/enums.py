@@ -58,7 +58,6 @@ class HairColorEnum(models.TextChoices):
 
 class HmisAgencyEnum(models.TextChoices):
     LAHSA = "lahsa", _("LAHSA")
-    SANTA_MONICA = "santa_monica", _("Santa Monica")
     PASADENA = "pasadena", _("Pasadena")
     CHAMP = "champ", _("CHAMP")
     VASH = "vash", _("VASH")
