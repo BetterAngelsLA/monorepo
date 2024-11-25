@@ -50,7 +50,7 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from .models import (  # RoomStyle,; ShelterProgram,
+from .models import (
     SPA,
     Accessibility,
     City,
@@ -74,9 +74,6 @@ from .models import (  # RoomStyle,; ShelterProgram,
     TrainingService,
     Video,
 )
-
-# RoomStyle,
-# ShelterProgram,
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
