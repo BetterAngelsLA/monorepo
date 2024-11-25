@@ -81,7 +81,8 @@
     "@teovilla/react-native-web-maps": "*",
     "react-native-paper": "*",
     "dotenv": "*",
-    "@react-native-picker/picker": "*"
+    "@react-native-picker/picker": "*",
+    "react-native-image-zoom-viewer": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
@@ -144,6 +145,7 @@
     "@swc-node/register": "*",
     "@swc/core": "*",
     "@swc/helpers": "*",
-    "jest-environment-node": "*"
+    "jest-environment-node": "*",
+    "@types/google.maps": "*"
   }
 }

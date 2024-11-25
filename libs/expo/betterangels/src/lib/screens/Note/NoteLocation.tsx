@@ -3,12 +3,12 @@ import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
-import { ViewNoteQuery } from '../../apollo';
+import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteLocation({
   note,
 }: {
-  note: ViewNoteQuery['note'] | undefined;
+  note: NoteSummaryQuery['note'] | undefined;
 }) {
   return (
     <View>
