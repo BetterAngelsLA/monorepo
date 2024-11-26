@@ -1,5 +1,4 @@
 <h1 align="center">
-  <br>
   <a href="https://www.betterangels.la/" target="_blank" rel="noreferrer"><img alt="Better Angels Logo" src="https://avatars.githubusercontent.com/u/137959057?s=100&v=4" width="100"></a>
   <br>
   Better Angels Monorepo
