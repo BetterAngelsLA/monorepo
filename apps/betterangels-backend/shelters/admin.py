@@ -469,6 +469,7 @@ class ShelterResource(resources.ModelResource):
         widget=ManyToManyWidget(Storage, separator=",", field="name"),
     )
     count = 0
+    skip_row_not_val_error = True
 
     class Meta:
         model = Shelter
@@ -478,7 +479,15 @@ class ShelterResource(resources.ModelResource):
         )
         exclude = ("id", "created_at", "updated_at")
 
-    def process_spa_import(self, row: Any, skip_row_not_val_error: bool, spa_row: str) -> None:
+    def skip_or_raise(self, row: Any, col_of_choice: str) -> None:
+        logger.warning(f"Row {self.count}: Bad {col_of_choice} value")
+        if self.skip_row_not_val_error:
+            row[col_of_choice] = None
+            row["jumpthis"] = True
+        else:
+            raise ValidationError(f"Row {self.count}: Bad {col_of_choice} value")
+
+    def process_spa_import(self, row: Any, spa_row: str) -> None:
         spa_names = [v.strip() for v in spa_row.split(",")]
         spa_choices = {i for i in range(1, len(SPAChoices.choices) + 1)}
         for spa_name in spa_names:
@@ -488,14 +497,9 @@ class ShelterResource(resources.ModelResource):
                 else:
                     raise ValueError
             except ValueError:
-                logger.warning(f"Row {self.count}: Bad SPA value")
-                if skip_row_not_val_error:
-                    row["spa"] = None
-                    row["jumpthis"] = True
-                else:
-                    raise ValidationError(f"Value in row {self.count} column spa must have a value between 1 and 8")
+                self.skip_or_raise(row, "spa")
 
-    def process_address_import(self, row: Any, skip_row_not_val_error: bool, address_row: str) -> None:
+    def process_address_import(self, row: Any, address_row: str) -> None:
         addy_data = requests.get(
             f"https://maps.googleapis.com/maps/api/geocode/json?address={quote(address_row)}&key={quote(settings.GOOGLE_MAPS_API_KEY)}"
         )
@@ -512,14 +516,9 @@ class ShelterResource(resources.ModelResource):
                 raise IndexError
             row["location"] = addy_to_places_object
         except IndexError:
-            logger.warning(f"Address at {self.count} bad")
-            if skip_row_not_val_error:
-                row["location"] = None
-                row["jumpthis"] = True
-            else:
-                raise ValidationError(f"Invalid Location at {self.count}")
+            self.skip_or_raise(row, "location")
 
-    def process_many_to_many_import(self, row: Any, skip_row_not_val_error: bool, rowInDict: dict, column: str) -> None:
+    def process_many_to_many_import(self, row: Any, rowInDict: dict, column: str) -> None:
         fieldModel = cast(Type[models.Model], Shelter._meta.get_field(column).related_model)
         fieldModelChoices = cast(TextChoicesField, fieldModel._meta.get_field("name")).choices
         columnSeparateVals = [v.strip() for v in rowInDict[column].split(",")]
@@ -527,9 +526,8 @@ class ShelterResource(resources.ModelResource):
         for i, indVal in enumerate(columnSeparateVals):
             try:
                 if indVal in row_vals_choices:
-                    if row_vals_choices[indVal] == "other":
-                        if not rowInDict[f"{column}_other"]:
-                            raise ValueError
+                    if row_vals_choices[indVal] == "other" and not rowInDict[f"{column}_other"]:
+                        raise ValueError
                     brand_new_obj, createdNewObjectInModel = fieldModel.objects.get_or_create(  # type: ignore
                         name=row_vals_choices[indVal]
                     )
@@ -537,32 +535,19 @@ class ShelterResource(resources.ModelResource):
                 else:
                     raise ValueError
             except ValueError:
-                logger.warning(f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}")
-                if skip_row_not_val_error:
-                    row[column] = None
-                    row["jumpthis"] = True
-                else:
-                    raise ValidationError(
-                        f"Row {self.count}: Bad {column} value, {indVal} is not in {row_vals_choices}"
-                    )
+                self.skip_or_raise(row, column)
         row[column] = ",".join(columnSeparateVals)
 
-    def process_contact_info(self, row: Any, skip_row_not_val_error: bool, contact_info_row: str) -> None:
+    def process_contact_info(self, row: Any, contact_info_row: str) -> None:
         try:
             columnSeparateVals = [(v.strip()).split(":") for v in contact_info_row.split(",")]
         except ValueError:
-            logger.warning(f"Row {self.count}: Bad additional_contacts value")
-            if skip_row_not_val_error:
-                row["additional_contacts"] = None
-                row["jumpthis"] = True
-            else:
-                raise ValidationError(f"Row {self.count}: Bad additional_contacts value")
+            self.skip_or_raise(row, "additional_contacts")
         row["additional_contacts"] = columnSeparateVals
 
     def before_import_row(self, row: Any, **kwargs: Any) -> None:
         self.count += 1
-        skip_row_not_val_error = True
-        if skip_row_not_val_error:
+        if self.skip_row_not_val_error:
             row["jumpthis"] = False
 
         # This for loop checks for fields that have exceeded their max length
@@ -571,12 +556,7 @@ class ShelterResource(resources.ModelResource):
                 fieldname = field.name
                 value = row.get(fieldname)
                 if value and (len(value) > field.max_length):
-                    logger.warning(f"Change {value} in row {self.count} col {fieldname}")
-                    if skip_row_not_val_error:
-                        row[fieldname] = ""
-                        row["jumpthis"] = True
-                    else:
-                        raise ValidationError(f"Change {value} in row {self.count} col {fieldname}")
+                    self.skip_or_raise(row, fieldname)
         customFields = [
             "demographics",
             "special_situation_restrictions",
@@ -602,27 +582,22 @@ class ShelterResource(resources.ModelResource):
             org, created = Organization.objects.get_or_create(name=rowInDict["organization"])
             # This process SPA name considering the ManyToMany nature of the field
             # Gets existing object or makes it if one doesn't exist
-            if rowInDict["status"]:
-                if rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
-                    if skip_row_not_val_error:
-                        row[fieldname] = ""
-                        row["jumpthis"] = True
-                    else:
-                        raise ValidationError(f"Change {value} in row {self.count} col {fieldname}")
+            if rowInDict["status"] and rowInDict["status"] not in [j for _, j in StatusChoices.choices]:
+                self.skip_or_raise(row, "status")
             if rowInDict["spa"]:
-                self.process_spa_import(row, skip_row_not_val_error, rowInDict["spa"])
+                self.process_spa_import(row, rowInDict["spa"])
             # Same idea as the handling for SPA, but uses existing get_or_create_address method in Location class to handle Address creation
             if rowInDict["location"]:
-                self.process_address_import(row, skip_row_not_val_error, rowInDict["location"])
+                self.process_address_import(row, rowInDict["location"])
             # This is to process the ManyToMany fields, grabs the data within the CSV and matches it to the proper choice for that column
             for column in customFields:
                 if rowInDict[column]:
-                    self.process_many_to_many_import(row, skip_row_not_val_error, rowInDict, column)
+                    self.process_many_to_many_import(row, rowInDict, column)
             if rowInDict["additional_contacts"]:
-                self.process_contact_info(row, skip_row_not_val_error, rowInDict["additional_contacts"])
+                self.process_contact_info(row, rowInDict["additional_contacts"])
         else:
             logger.warning(f"No org name: {self.count} {row}")
-            if skip_row_not_val_error:
+            if self.skip_row_not_val_error:
                 row["jumpthis"] = True
             else:
                 raise ValidationError(f"Row {self.count} is missing an Organization")
