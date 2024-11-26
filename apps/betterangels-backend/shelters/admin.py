@@ -7,8 +7,6 @@ import places
 import requests
 from betterangels_backend import settings
 from common.models import Location
-
-# from betterangels_backend import settings
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -21,11 +19,11 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
-from import_export import resources  # type: ignore
-from import_export.admin import ImportExportModelAdmin  # type: ignore
-from import_export.fields import Field  # type: ignore
-from import_export.results import RowResult  # type: ignore
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget  # type: ignore
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+from import_export.fields import Field
+from import_export.results import RowResult
+from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
 from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
@@ -390,7 +388,6 @@ class ShelterResource(resources.ModelResource):
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
     spa = Field(column_name="spa", attribute="spa", widget=ManyToManyWidget(SPA, separator=",", field="name"))
-    # address = Field(column_name="address", attribute="address", widget=ForeignKeyWidget(Address, "formatted_address"))
     demographics = Field(
         column_name="demographics",
         attribute="demographics",
@@ -550,6 +547,18 @@ class ShelterResource(resources.ModelResource):
                     )
         row[column] = ",".join(columnSeparateVals)
 
+    def process_contact_info(self, row: Any, skip_row_not_val_error: bool, contact_info_row: str) -> None:
+        try:
+            columnSeparateVals = [(v.strip()).split(":") for v in contact_info_row.split(",")]
+        except ValueError:
+            logger.warning(f"Row {self.count}: Bad additional_contacts value")
+            if skip_row_not_val_error:
+                row["additional_contacts"] = None
+                row["jumpthis"] = True
+            else:
+                raise ValidationError(f"Row {self.count}: Bad additional_contacts value")
+        row["additional_contacts"] = columnSeparateVals
+
     def before_import_row(self, row: Any, **kwargs: Any) -> None:
         self.count += 1
         skip_row_not_val_error = True
@@ -609,12 +618,22 @@ class ShelterResource(resources.ModelResource):
             for column in customFields:
                 if rowInDict[column]:
                     self.process_many_to_many_import(row, skip_row_not_val_error, rowInDict, column)
+            if rowInDict["additional_contacts"]:
+                self.process_contact_info(row, skip_row_not_val_error, rowInDict["additional_contacts"])
         else:
             logger.warning(f"No org name: {self.count} {row}")
             if skip_row_not_val_error:
                 row["jumpthis"] = True
             else:
                 raise ValidationError(f"Row {self.count} is missing an Organization")
+
+    def after_save_instance(self, instance: Any, row: Any, **kwargs: Any) -> None:
+        add_contact = row.get("additional_contacts")
+        dry_run = kwargs.get("dry_run", False)
+        if add_contact:
+            for name, number in add_contact:
+                if not dry_run:
+                    ContactInfo.objects.get_or_create(shelter=instance, contact_name=name, contact_number=number)
 
     # Skips any row that has an error, based on whether or not "jumpthis" columns was set to True during
     # import, and also whether or not skip_row_not_val_error boolean is True or False
