@@ -89,7 +89,7 @@ export default function TabLayout() {
             },
             headerShadowVisible: false,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <HouseSolidIcon color={color} />
                 ) : (
@@ -109,7 +109,7 @@ export default function TabLayout() {
             href: null,
             title: 'Appointment',
             tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <CalendarSolidIcon color={color} />
                 ) : (
@@ -176,7 +176,7 @@ export default function TabLayout() {
             },
             title: '',
             tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <UsersSolidIcon color={color} />
                 ) : (
@@ -195,7 +195,7 @@ export default function TabLayout() {
             title: 'Map',
             href: null,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <MapSolidIcon color={color} />
                 ) : (
@@ -214,7 +214,7 @@ export default function TabLayout() {
             href: null,
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <SitemapSolidIcon color={color} />
                 ) : (
@@ -233,7 +233,7 @@ export default function TabLayout() {
             title: 'Calendar',
             href: null,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
                 {focused ? (
                   <CalendarSolidIcon color={color} />
                 ) : (
