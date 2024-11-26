@@ -82,8 +82,8 @@
     "react-native-paper": "*",
     "dotenv": "*",
     "@react-native-picker/picker": "*",
-    "react-native-image-zoom-viewer": "*",
-    "picocolors": "*"
+    "picocolors": "*",
+    "@likashefqet/react-native-image-zoom": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
