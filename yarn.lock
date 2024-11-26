@@ -4236,6 +4236,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@likashefqet/react-native-image-zoom@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "@likashefqet/react-native-image-zoom@npm:4.2.1"
+  peerDependencies:
+    react: ">=16.x.x"
+    react-native: ">=0.62.x"
+    react-native-gesture-handler: ">=2.x.x"
+    react-native-reanimated: ">=2.x.x"
+  checksum: 10/a4e13096e36f95065671c3e862e0ebd4146b6e5d7b0ed4be61f88fbce2c2774cbf30945aa544d81f87a22501ad024efd24f4af90a8496870f786f3ee34592384
+  languageName: node
+  linkType: hard
+
 "@mdx-js/react@npm:^2.1.5":
   version: 2.3.0
   resolution: "@mdx-js/react@npm:2.3.0"
@@ -4421,6 +4433,7 @@ __metadata:
     "@graphql-codegen/typescript-react-apollo": "npm:^4.3.0"
     "@graphql-eslint/eslint-plugin": "npm:^3.20.1"
     "@iarna/toml": "npm:^2.2.5"
+    "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
     "@nx-tools/container-metadata": "npm:^5.0.3"
     "@nx-tools/nx-container": "npm:5.1.0"
     "@nx/detox": "npm:19.5.3"
@@ -4507,7 +4520,6 @@ __metadata:
     react-hook-form: "npm:^7.52.1"
     react-native: "npm:0.74.5"
     react-native-gesture-handler: "npm:~2.16.1"
-    react-native-image-zoom-viewer: "npm:^3.0.1"
     react-native-keyboard-controller: "npm:^1.13.0"
     react-native-maps: "npm:1.14.0"
     react-native-modal: "npm:^13.0.1"
@@ -21704,28 +21716,6 @@ __metadata:
   peerDependencies:
     react: ^16.6.0 || ^17.0.0 || ^18.0.0
   checksum: 10/217bd0eaa61d426a512634369c70c44ce8b92127ec626dc40c65b72b1be1534ed3ed00ba2dd1a9ad77d1716ce8fd1e6db3f7209534303a652d9932a962d2c830
-  languageName: node
-  linkType: hard
-
-"react-native-image-pan-zoom@npm:^2.1.12":
-  version: 2.1.12
-  resolution: "react-native-image-pan-zoom@npm:2.1.12"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/b26bf5d9e98ab616f26fcaea2cd7229285f5d79df6ce5464034c4539159a7ad67cec046389d091f9c4aee9975078e12290367e29cd0e545c30407e1f44ca7d0e
-  languageName: node
-  linkType: hard
-
-"react-native-image-zoom-viewer@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "react-native-image-zoom-viewer@npm:3.0.1"
-  dependencies:
-    react-native-image-pan-zoom: "npm:^2.1.12"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10/d373a7dec0d99e8be0f35273f6634e9a896e86e9334dd154d4c83eab798cb46dcf690ce3dca83c6ec143badbfd7d874387704bcb3084b491a73bca7d422b9fdb
   languageName: node
   linkType: hard
 
