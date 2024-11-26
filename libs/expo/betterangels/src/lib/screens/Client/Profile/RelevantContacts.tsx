@@ -6,12 +6,12 @@ import {
   TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { forwardRef, useMemo } from 'react';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import { clientRelevantContactEnumDisplay } from '../../../static/enumDisplayMapping';
 import { IProfileSectionProps } from './types';
-import formatPhoneNumber from '../../../helpers/formatPhoneNumber'
 
 const InfoRow = ({
   label,
@@ -79,7 +79,10 @@ const RelevantContacts = forwardRef<View, IProfileSectionProps>(
               const contactData = [
                 { label: 'Name', value: contact.name },
                 { label: 'Email Address', value: contact.email },
-                { label: 'Phone Number', value:  formatPhoneNumber(contact.phoneNumber) },
+                {
+                  label: 'Phone Number',
+                  value: formatPhoneNumber(contact.phoneNumber),
+                },
                 { label: 'Mailing Address', value: contact.mailingAddress },
               ];
 

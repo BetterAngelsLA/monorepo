@@ -13,10 +13,10 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactNode } from 'react';
 import { View, ViewStyle } from 'react-native';
 import { SocialMediaEnum } from '../../../apollo';
-import formatPhoneNumber from '../../../helpers/formatPhoneNumber'
 import {
   enumDisplayPreferredCommunication,
   enumDisplaySocialMedia,
@@ -123,7 +123,9 @@ export default function ContactInfo(props: IProfileSectionProps) {
                       }}
                       key={phoneNumber.id}
                     >
-                      <TextBold size="sm">{formatPhoneNumber(phoneNumber.number)}</TextBold>
+                      <TextBold size="sm">
+                        {formatPhoneNumber(phoneNumber.number)}
+                      </TextBold>
                       {phoneNumber.isPrimary && (
                         <StarIcon color={Colors.WARNING} />
                       )}
