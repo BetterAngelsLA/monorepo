@@ -850,7 +850,7 @@ export type NoteTypeRequestedServicesArgs = {
 };
 
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 

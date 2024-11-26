@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FeatureFlagContext, FeatureFlags } from "./featureFlagContext";
-import { useGetFeatureFlagsQuery } from "./__generated__/queries.generated";
+import { View, Text } from "react-native";
+import { useGetFeatureFlagsQuery } from "./__generated__/featureFlagProvider.generated"
 
 
 interface FeatureFlagProviderProps {
@@ -13,10 +14,12 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
 
     useEffect(() => {
         if (data?.featureControls?.flags) {
+
             const flags = data.featureControls.flags.reduce((acc: FeatureFlags, flag) => {
                 acc[flag.name] = flag.isActive ?? false;
-                return acc;
-            }, {});
+                    return acc;
+                }, {}
+            );
             setFeatureFlags(flags);
         }
     }, [data]);
@@ -24,11 +27,20 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
     const memoizedFlags = useMemo(() => featureFlags, [featureFlags]);
 
     if (loading) {
-        return <Text>Loading...</Text>
+        return (
+            <View>
+                <Text>Loading...</Text>
+            </View>
+        );
     }
 
     if (error) {
-        return <Text>Error loading feature flags</Text>
+        console.error("FeatureFlagProvider encountered an error:", error.message);
+        return (
+            <View>
+                <Text>Something went wrong. Please try again later.</Text>
+            </View>
+        );
     }
 
     return (
