@@ -11,6 +11,7 @@ import {
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../../apollo';
+import useSnackbar from '../../../../../hooks/snackbar/useSnackbar';
 import {
   ClientProfileDocument,
   ClientProfileQuery,
@@ -32,6 +33,7 @@ export default function DriverLicense({
 }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [uploadingType, setUploadingType] = useState<'front' | 'back'>('front');
+  const { showSnackbar } = useSnackbar();
   const [createDocument, { loading }] = useCreateClientDocumentMutation({
     refetchQueries: [
       {
@@ -90,6 +92,11 @@ export default function DriverLicense({
       setTab(undefined);
     } catch (err) {
       console.error('error uploading driver license', err);
+
+      showSnackbar({
+        message: `Sorry, there was an error with the file upload.`,
+        type: 'error',
+      });
     }
   };
 

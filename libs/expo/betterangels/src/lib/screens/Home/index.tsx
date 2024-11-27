@@ -11,7 +11,6 @@ import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
-import { ClientProfileType } from '../../apollo';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
@@ -21,7 +20,8 @@ import {
 const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
-  const [currentClient, setCurrentClient] = useState<ClientProfileType>();
+  const [currentClient, setCurrentClient] =
+    useState<ClientProfilesQuery['clientProfiles'][number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -150,11 +150,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         onEndReachedThreshold={0.05}
         ListFooterComponent={renderFooter}
       />
-      <ClientCardModal
-        isModalVisible={modalIsOpen}
-        closeModal={() => setModalIsOpen(false)}
-        client={currentClient}
-      />
+      {currentClient && (
+        <ClientCardModal
+          isModalVisible={modalIsOpen}
+          closeModal={() => setModalIsOpen(false)}
+          client={currentClient}
+        />
+      )}
     </View>
   );
 }

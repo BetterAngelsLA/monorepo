@@ -129,6 +129,15 @@ export type ClientDocumentType = AttachmentInterface & {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type ClientDocumentTypeOffsetPaginated = {
+  __typename?: 'ClientDocumentTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientDocumentType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ClientHouseholdMemberInput = {
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
@@ -159,6 +168,7 @@ export type ClientProfileFilter = {
   OR?: InputMaybe<ClientProfileFilter>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  searchClient?: InputMaybe<ClientSearchInput>;
 };
 
 export type ClientProfileOrder = {
@@ -177,6 +187,7 @@ export type ClientProfileType = {
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  californiaId?: Maybe<Scalars['String']['output']>;
   consentFormDocuments?: Maybe<Array<ClientDocumentType>>;
   contacts?: Maybe<Array<ClientContactType>>;
   dateOfBirth?: Maybe<Scalars['Date']['output']>;
@@ -231,6 +242,23 @@ export type ClientProfileTypeOtherDocumentsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type ClientProfileTypeOffsetPaginated = {
+  __typename?: 'ClientProfileTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientProfileType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ClientSearchInput = {
+  californiaId?: InputMaybe<Scalars['String']['input']>;
+  excludedClientProfileId?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
@@ -243,6 +271,7 @@ export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
@@ -450,8 +479,8 @@ export enum HairColorEnum {
 export enum HmisAgencyEnum {
   Champ = 'CHAMP',
   Lahsa = 'LAHSA',
+  LongBeach = 'LONG_BEACH',
   Pasadena = 'PASADENA',
-  SantaMonica = 'SANTA_MONICA',
   Vash = 'VASH'
 }
 
@@ -849,8 +878,23 @@ export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
+export type NoteTypeOffsetPaginated = {
+  __typename?: 'NoteTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<NoteType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type OffsetPaginationInfo = {
+  __typename?: 'OffsetPaginationInfo';
+  limit?: Maybe<Scalars['Int']['output']>;
+  offset: Scalars['Int']['output'];
+};
+
 export type OffsetPaginationInput = {
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
 };
 
@@ -941,14 +985,17 @@ export type Query = {
   __typename?: 'Query';
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
+  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
+  clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
   notes: Array<NoteType>;
+  notesPaginated: NoteTypeOffsetPaginated;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
   task: TaskType;
@@ -966,12 +1013,24 @@ export type QueryClientDocumentsArgs = {
 };
 
 
+export type QueryClientDocumentsPaginatedArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
 export type QueryClientProfilesArgs = {
+  filters?: InputMaybe<ClientProfileFilter>;
+  order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -995,6 +1054,13 @@ export type QueryNoteAttachmentsArgs = {
 
 
 export type QueryNotesArgs = {
+  filters?: InputMaybe<NoteFilter>;
+  order?: InputMaybe<NoteOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryNotesPaginatedArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1228,6 +1294,7 @@ export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
   age?: InputMaybe<Scalars['Int']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;

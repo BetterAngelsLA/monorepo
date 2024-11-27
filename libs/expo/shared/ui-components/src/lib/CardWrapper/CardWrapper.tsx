@@ -10,18 +10,29 @@ export function CardWrapper({
   title,
   subtitle,
   onReset,
+  action,
 }: {
   children: ReactNode;
   title?: string | ReactNode;
   subtitle?: string;
   onReset?: () => void;
+  action?: ReactNode;
 }) {
   return (
     <View style={styles.container}>
       {title && (
-        <View>
-          <TextBold size="lg">{title}</TextBold>
-          {subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
+        <View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexDirection: 'row',
+          }}
+        >
+          <View>
+            <TextBold size="lg">{title}</TextBold>
+            {subtitle && <TextRegular size="sm">{subtitle}</TextRegular>}
+          </View>
+          {action}
         </View>
       )}
       {children}

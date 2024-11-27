@@ -1,19 +1,23 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
-import { ClientProfileType } from '../apollo';
-import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
+import { useSnackbar } from '../hooks';
+import {
+  ClientProfilesQuery,
+  useCreateNoteMutation,
+} from '../screens/Home/__generated__/ActiveClients.generated';
 import MainModal from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  client: ClientProfileType | undefined;
+  client: ClientProfilesQuery['clientProfiles'][number];
 }
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal, client } = props;
   const [createNote] = useCreateNoteMutation();
   const router = useRouter();
+  const { showSnackbar } = useSnackbar();
 
   async function createNoteFunction(
     id: string,
@@ -33,7 +37,12 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         closeModal();
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     }
   }
 
@@ -41,7 +50,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Add Interaction',
       Icon: FilePlusIcon,
-      route: `/add-interaction/${client?.id}`,
+      route: `/add-interaction/${client.id}`,
       onPress: () => {
         if (client) {
           createNoteFunction(client.user.id, client.user.firstName);
@@ -51,7 +60,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Upload Documents',
       Icon: UploadIcon,
-      route: '/add-client',
+      route: `/client/${client.id}?newTab=Docs`,
     },
   ];
   return (

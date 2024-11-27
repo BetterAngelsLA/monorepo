@@ -54,7 +54,10 @@
     "@react-native-async-storage/async-storage": "*",
     "react-native-reanimated": "*",
     "react-native-modal": "*",
-    "react-native-select-dropdown": "*"
+    "react-native-select-dropdown": "*",
+    "@react-native-picker/picker": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-paper": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter",

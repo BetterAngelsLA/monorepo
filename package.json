@@ -13,8 +13,10 @@
   "dependencies": {
     "@apollo/client": "^3.11.1",
     "@expo/metro-config": "~0.18.11",
+    "@likashefqet/react-native-image-zoom": "^4.2.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
+    "@react-native-picker/picker": "2.7.5",
     "@teovilla/react-native-web-maps": "^0.9.5",
     "apollo-link-rest": "^0.9.0",
     "apollo-upload-client": "^18.0.1",
@@ -92,6 +94,7 @@
     "@testing-library/jest-native": "5.4.3",
     "@testing-library/react-native": "12.5.1",
     "@types/apollo-upload-client": "^18.0.0",
+    "@types/google.maps": "^3.58.1",
     "@types/jest": "^29.4.0",
     "@types/node": "18.19.14",
     "@types/react": "18.2.79",

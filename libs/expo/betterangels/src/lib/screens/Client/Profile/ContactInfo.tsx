@@ -13,6 +13,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactNode } from 'react';
 import { View, ViewStyle } from 'react-native';
 import { SocialMediaEnum } from '../../../apollo';
@@ -70,6 +71,13 @@ export default function ContactInfo(props: IProfileSectionProps) {
     },
   ];
 
+  const hasContent =
+    addresses.some(({ value }) => value) ||
+    !!client?.clientProfile.user?.email ||
+    !!client?.clientProfile.socialMediaProfiles?.length ||
+    !!client?.clientProfile.phoneNumbers?.length ||
+    !!client?.clientProfile.preferredCommunication?.length;
+
   return (
     <Accordion
       expanded={expanded}
@@ -79,7 +87,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
       mb="xs"
       title="Contact Info"
     >
-      {isContactInfo && (
+      {isContactInfo && hasContent && (
         <View
           style={{
             height: isContactInfo ? 'auto' : 0,
@@ -106,7 +114,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
                     <TextRegular size="sm">Phone Number(s)</TextRegular>
                     <TextBold size="sm">Primary</TextBold>
                   </View>
-                  {client?.clientProfile.phoneNumbers?.map((phoneNumber) => (
+                  {client.clientProfile.phoneNumbers?.map((phoneNumber) => (
                     <View
                       style={{
                         flexDirection: 'row',
@@ -115,7 +123,9 @@ export default function ContactInfo(props: IProfileSectionProps) {
                       }}
                       key={phoneNumber.id}
                     >
-                      <TextBold size="sm">{phoneNumber.number}</TextBold>
+                      <TextBold size="sm">
+                        {formatPhoneNumber(phoneNumber.number)}
+                      </TextBold>
                       {phoneNumber.isPrimary && (
                         <StarIcon color={Colors.WARNING} />
                       )}
@@ -123,12 +133,13 @@ export default function ContactInfo(props: IProfileSectionProps) {
                   ))}
                 </View>
               )}
-
-              <InfoCol
-                row
-                label="Email"
-                value={client?.clientProfile.user.email}
-              />
+              {!!client?.clientProfile.user.email && (
+                <InfoCol
+                  row
+                  label="Email"
+                  value={client.clientProfile.user.email}
+                />
+              )}
               {!!client?.clientProfile.socialMediaProfiles?.length && (
                 <View>
                   <TextRegular size="sm" mb="sm">

@@ -12,6 +12,7 @@ import {
   PronounEnum,
   RaceEnum,
   RelationshipTypeEnum,
+  SelahTeamEnum,
   ServiceEnum,
   ServiceRequestTypeEnum,
   SocialMediaEnum,
@@ -50,7 +51,7 @@ export const enumDisplayHmisAgency: {
   [key in HmisAgencyEnum]: string;
 } = {
   [HmisAgencyEnum.Lahsa]: 'LAHSA',
-  [HmisAgencyEnum.SantaMonica]: 'Santa Monica',
+  [HmisAgencyEnum.LongBeach]: 'Long Beach',
   [HmisAgencyEnum.Pasadena]: 'Pasadena',
   [HmisAgencyEnum.Champ]: 'CHAMP',
   [HmisAgencyEnum.Vash]: 'VASH',
@@ -253,4 +254,24 @@ export const enumDisplayAdaAccommodationEnum: {
   [AdaAccommodationEnum.Mobility]: 'Mobility',
   [AdaAccommodationEnum.Visual]: 'Visual',
   [AdaAccommodationEnum.Other]: 'Other',
+};
+
+export const enumDisplaySelahTeam: {
+  [key in SelahTeamEnum]: string;
+} = {
+  [SelahTeamEnum.BowtieRiversideOutreach]: 'Bowtie & Riverside Outreach',
+  [SelahTeamEnum.EchoParkOnSite]: 'Echo Park On-site',
+  [SelahTeamEnum.EchoParkOutreach]: 'Echo Park Outreach',
+  [SelahTeamEnum.HollywoodOnSite]: 'Hollywood On-site',
+  [SelahTeamEnum.HollywoodOutreach]: 'Hollywood Outreach',
+  [SelahTeamEnum.LaRiverOutreach]: 'LA River Outreach',
+  [SelahTeamEnum.LosFelizOutreach]: 'Los Feliz Outreach',
+  [SelahTeamEnum.NortheastHollywoodOutreach]: 'Northeast Hollywood Outreach',
+  [SelahTeamEnum.SilverLakeOutreach]: 'Silver Lake Outreach',
+  [SelahTeamEnum.SlccOnSite]: 'SLCC On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOnSite]: 'Sunday Social / Atwater On-site',
+  [SelahTeamEnum.SundaySocialAtwaterOutreach]:
+    'Sunday Social / Atwater Outreach',
+  [SelahTeamEnum.WdiOnSite]: 'WDI On-site',
+  [SelahTeamEnum.WdiOutreach]: 'WDI Outreach',
 };
