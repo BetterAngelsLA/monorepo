@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import {
   CreateClientProfileInput,
+  InputMaybe,
   UpdateClientProfileInput,
 } from '../../../apollo';
 import { useCaliforniaIdUniqueCheck } from '../../../hooks';
@@ -33,13 +34,20 @@ export default function CaliforniaId() {
     clientProfileId as string
   );
 
+  // TODO: replace with Feature Flag
+  function featureAvailable(californiaId?: string | InputMaybe<string>) {
+    const FEATURE_ENABLED_FOR_ID = 'A1111111';
+
+    return californiaId && californiaId === FEATURE_ENABLED_FOR_ID;
+  }
+
   useEffect(() => {
-    if (uniqueCheckError) {
+    if (featureAvailable(californiaId) && uniqueCheckError) {
       setModalVisible(true);
     } else {
       clearErrors('californiaId');
     }
-  }, [uniqueCheckError, setError, clearErrors]);
+  }, [californiaId, uniqueCheckError, setError, clearErrors]);
 
   return (
     <CardWrapper title="CA ID #">
