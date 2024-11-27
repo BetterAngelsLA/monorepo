@@ -123,6 +123,16 @@ type ClientDocumentType implements AttachmentInterface {
   namespace: ClientDocumentNamespaceEnum!
 }
 
+type ClientDocumentTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientDocumentType!]!
+}
+
 input ClientHouseholdMemberInput {
   name: String
   dateOfBirth: Date
@@ -152,6 +162,7 @@ input ClientProfileFilter {
   DISTINCT: Boolean
   isActive: Boolean
   search: String
+  searchClient: ClientSearchInput
 }
 
 input ClientProfileOrder {
@@ -169,6 +180,7 @@ type ClientProfileType {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -208,6 +220,24 @@ type ClientProfileType {
   displayCaseManager: String!
 }
 
+type ClientProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientProfileType!]!
+}
+
+input ClientSearchInput {
+  excludedClientProfileId: String = null
+  californiaId: String = null
+  firstName: String = null
+  lastName: String = null
+  middleName: String = null
+}
+
 input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
@@ -220,6 +250,7 @@ input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum
@@ -636,6 +667,21 @@ type NoteType {
   privateDetails: String
 }
 
+type NoteTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [NoteType!]!
+}
+
+type OffsetPaginationInfo {
+  offset: Int!
+  limit: Int
+}
+
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int = null
@@ -725,12 +771,15 @@ enum PronounEnum {
 type Query {
   currentUser: UserType!
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
@@ -941,6 +990,7 @@ input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
+  californiaId: String
   dateOfBirth: Date
   eyeColor: EyeColorEnum
   gender: GenderEnum

@@ -15,10 +15,12 @@ import {
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import { ClientProfileType, HmisProfileType, Maybe } from '../apollo';
+import { HmisProfileType, Maybe } from '../apollo';
+import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
+
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
-  client: ClientProfileType | undefined;
+  client: ClientProfilesQuery['clientProfiles'][number] | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -95,7 +97,7 @@ export default function ClientCard(props: IClientCardProps) {
         accessibilityHint={`shows avatar of ${client.user.firstName} ${client.user.lastName} if available`}
         accessibilityLabel={`Avatar of ${client.user.firstName} ${client.user.lastName} client`}
         imageUrl={client.profilePhoto?.url}
-        size="lg"
+        size="xl"
         mr="xs"
       />
 
@@ -109,7 +111,8 @@ export default function ClientCard(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {format(client.dateOfBirth, 'MM/dd/yyyy')} ({client.age})
+                {format(new Date(client.dateOfBirth), 'MM/dd/yyyy')} (
+                {client.age})
               </TextRegular>
             )}
             {!!client.dateOfBirth && !!client.heightInInches && (

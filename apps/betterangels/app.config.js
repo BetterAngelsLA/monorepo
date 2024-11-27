@@ -21,9 +21,11 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.26',
+    version: '1.0.28',
     orientation: 'portrait',
-    icon: './src/app/assets/images/icon.png',
+    icon: IS_PRODUCTION
+      ? './src/app/assets/images/icon.png'
+      : './src/app/assets/images/preview-icon.png',
     splash: {
       image: './src/app/assets/images/splash.png',
       resizeMode: 'contain',
@@ -37,7 +39,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.25',
+      buildNumber: '1.0.27',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -47,7 +49,9 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './src/app/assets/images/adaptive-icon.png',
+        foregroundImage: IS_PRODUCTION
+          ? './src/app/assets/images/adaptive-icon.png'
+          : './src/app/assets/images/preview-adaptive-icon.png',
         backgroundColor: '#1E3342',
       },
       blockedPermissions: [
@@ -74,7 +78,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 25,
+      versionCode: 27,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
