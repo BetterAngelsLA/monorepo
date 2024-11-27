@@ -84,8 +84,9 @@ runs:
 
           if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
             echo "No existing $platform build found for runtime version ${{ inputs.runtime-version }}. Starting a new build."
+            # Pipe these logs to /dev/null since we don't want to display UDIDs
             build_output=$(eas build --profile "${{ inputs.profile }}" --platform "$platform" \
-              --freeze-credentials --non-interactive --no-wait --json)
+              --freeze-credentials --non-interactive --no-wait --json > /dev/null 2>&1)
           else
             echo "$platform build found for runtime version ${{ inputs.runtime-version }}."
           fi
