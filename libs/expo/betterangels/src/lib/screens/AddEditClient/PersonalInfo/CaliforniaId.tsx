@@ -7,6 +7,7 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { Keyboard } from 'react-native';
 import {
   CreateClientProfileInput,
   InputMaybe,
@@ -43,6 +44,8 @@ export default function CaliforniaId() {
 
   useEffect(() => {
     if (featureAvailable(californiaId) && uniqueCheckError) {
+      // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+      Keyboard.dismiss();
       setModalVisible(true);
     } else {
       clearErrors('californiaId');
