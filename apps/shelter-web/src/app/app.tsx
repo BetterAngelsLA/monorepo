@@ -6,6 +6,7 @@ export function App() {
   return (
     <div className="px-24">
       <div role="navigation">
+        <h1>hello shelter-app</h1>
         <ul>
           <li className="my-4">
             <Link to="/">Home link</Link>
@@ -20,7 +21,7 @@ export function App() {
 
       <Routes>
         {routeChildren.map((route) => (
-          <Route path={route.path} element={route.element} />
+          <Route key={route.path} path={route.path} element={route.element} />
         ))}
       </Routes>
     </div>
