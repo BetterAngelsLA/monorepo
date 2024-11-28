@@ -133,7 +133,9 @@ export default function PublicNote({ noteId }: { noteId: string }) {
               textAlignVertical="top"
               accessibilityLabel="HMIS input"
               style={styles.input}
-              placeholder={"Enter a GIRP note or you can tap on Regenerate button below to regenerate the GIRP format interaction"}
+              placeholder={
+                'Enter a GIRP note or you can tap on Regenerate button below to regenerate the GIRP format interaction'
+              }
             />
           </View>
         </View>
