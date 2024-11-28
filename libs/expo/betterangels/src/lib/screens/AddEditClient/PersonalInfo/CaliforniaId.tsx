@@ -46,7 +46,11 @@ export default function CaliforniaId() {
     if (featureAvailable(californiaId) && uniqueCheckError) {
       // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
       Keyboard.dismiss();
-      setModalVisible(true);
+
+      // TODO: confirm if it breaks on Android after upgrade to New Architecture
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 100);
     } else {
       clearErrors('californiaId');
     }
