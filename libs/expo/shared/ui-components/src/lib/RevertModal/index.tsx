@@ -32,7 +32,7 @@ export default function RevertModal({
   return (
     <>
       {clonedButton}
-      <BasicModal visible={visible} setVisible={setVisible}>
+      <BasicModal visible={visible} onClose={() => setVisible(false)}>
         <TextBold size="lg">{title}</TextBold>
         <TextRegular mt="sm">{body}</TextRegular>
         <View
