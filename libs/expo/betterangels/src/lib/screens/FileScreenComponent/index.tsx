@@ -88,7 +88,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
       <View style={styles.fileContainer}>
         <ImagesWithZoom
           title={data.clientDocument.originalFilename}
-          imageUrls={[{ url: data.clientDocument.file.url }]}
+          imageUrl={data.clientDocument.file.url}
         >
           {ImageComponent}
         </ImagesWithZoom>
@@ -98,7 +98,8 @@ export default function FileScreenComponent({ id }: { id: string }) {
         </TextRegular>
       </View>
       <TextRegular textAlign="right" size="sm">
-        Uploaded on {format(new Date(data.clientDocument.createdAt), 'MM/dd/yyyy')}
+        Uploaded on{' '}
+        {format(new Date(data.clientDocument.createdAt), 'MM/dd/yyyy')}
       </TextRegular>
     </MainContainer>
   );
