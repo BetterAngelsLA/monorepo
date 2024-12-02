@@ -78,7 +78,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "genderOther": None,
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
-            "hmisId": self.client_profile_1["hmisId"],
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
             "importantNotes": "I am very important",

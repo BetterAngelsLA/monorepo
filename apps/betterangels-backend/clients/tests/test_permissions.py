@@ -64,7 +64,6 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             query ViewClientProfile($id: ID!) {
                 clientProfile(pk: $id) {
                     id
-                    hmisId
                     user {
                         firstName
                         lastName

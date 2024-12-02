@@ -41,7 +41,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             genderOther
             hairColor
             heightInInches
-            hmisId
             importantNotes
             livingSituation
             mailingAddress
@@ -221,7 +220,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
-                "hmisId": "HMISidLAHSA0",
                 "hmisProfiles": self.client_1_hmis_profiles,
                 "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
@@ -258,7 +256,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
-                "hmisId": "HMISidPASADENA2",
                 "hmisProfiles": [],
                 "householdMembers": [],
                 "livingSituation": None,
