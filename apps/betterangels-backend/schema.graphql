@@ -933,7 +933,47 @@ enum ServiceRequestTypeEnum {
 
 type ShelterType {
   id: ID!
+  accessibility: [DjangoModelType!]!
+  bedFees: String!
+  cities: [DjangoModelType!]!
+  cityCouncilDistrict: Int
+  curfew: Time
+  demographics: [DjangoModelType!]!
+  demographicsOther: String
+  description: String!
+  email: String
+  entryInfo: String!
+  entryRequirements: [DjangoModelType!]!
+  funders: [DjangoModelType!]!
+  fundersOther: String
+  generalServices: [DjangoModelType!]!
+  healthServices: [DjangoModelType!]!
+  immediateNeeds: [DjangoModelType!]!
+  maxStay: Int
   name: String!
+  onSiteSecurity: Boolean
+  organization: DjangoModelType
+  otherRules: String!
+  otherServices: String!
+  overallRating: Int
+  parking: [DjangoModelType!]!
+  pets: [DjangoModelType!]!
+  programFees: String!
+  roomStyles: [DjangoModelType!]!
+  roomStylesOther: String
+  shelterPrograms: [DjangoModelType!]!
+  shelterProgramsOther: String
+  shelterTypes: [DjangoModelType!]!
+  shelterTypesOther: String
+  spa: [DjangoModelType!]!
+  specialSituationRestrictions: [DjangoModelType!]!
+  status: StatusChoices!
+  storage: [DjangoModelType!]!
+  subjectiveReview: String!
+  supervisorialDistrict: Int
+  totalBeds: Int
+  trainingServices: [DjangoModelType!]!
+  website: String
 }
 
 type ShelterTypeOffsetPaginated {
@@ -970,6 +1010,13 @@ type SocialMediaProfileType {
   platformUserId: String!
 }
 
+enum StatusChoices {
+  DRAFT
+  PENDING
+  APPROVED
+  INACTIVE
+}
+
 type SwitchType {
   name: String!
   isActive: Boolean!
@@ -1002,6 +1049,9 @@ enum TaskTypeEnum {
   PURPOSE
   NEXT_STEP
 }
+
+"""Time (isoformat)"""
+scalar Time
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]

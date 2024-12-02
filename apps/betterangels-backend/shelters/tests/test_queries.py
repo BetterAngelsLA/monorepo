@@ -48,7 +48,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "id": str(shelter.pk),
             "name": shelter.name,
         }
-
         self.assertEqual(response_shelter, expected_shelter)
 
     def test_shelters_query(self) -> None:
