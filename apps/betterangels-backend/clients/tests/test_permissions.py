@@ -25,7 +25,6 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             "email": "firsty_lasty@example.com",
         }
         variables = {
-            "hmisId": "12345678",
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
@@ -135,7 +134,6 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             query ViewClientProfiles {
                 clientProfiles {
                     id
-                    hmisId
                     user {
                         firstName
                         lastName

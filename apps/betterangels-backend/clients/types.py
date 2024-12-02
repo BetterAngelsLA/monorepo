@@ -100,7 +100,7 @@ class ClientProfileFilter:
         combined_q_search = []
         searchable_fields = [
             "california_id",
-            "hmis_id",  # needs to be updated to support client profiles?
+            "hmis_profiles__hmis_id",
             "nickname",
             "user__first_name",
             "user__last_name",
