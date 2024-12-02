@@ -134,7 +134,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
               accessibilityLabel="HMIS input"
               style={styles.input}
               placeholder={
-                'Enter a GIRP note or you can tap on Regenerate button below to regenerate the GIRP format interaction'
+                'Manually describe your interaction, or tap Regenerate to start a note in GIRP format'
               }
             />
           </View>
