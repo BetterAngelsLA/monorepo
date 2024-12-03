@@ -26,7 +26,7 @@ export default function InfoModal() {
       >
         <InfoIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
       </Pressable>
-      <BasicModal visible={visible} setVisible={setVisible}>
+      <BasicModal visible={visible} onClose={() => setVisible(false)}>
         <TextBold size="xl" mb="sm">
           About Public Note
         </TextBold>

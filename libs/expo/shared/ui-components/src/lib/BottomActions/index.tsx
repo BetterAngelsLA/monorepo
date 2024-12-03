@@ -9,6 +9,7 @@ interface IBottomActionsProps {
   submitTitle?: string;
   onSubmit: () => void;
   isLoading?: boolean;
+  disabled?: boolean;
   /**
    * Optional action to be displayed on the right side of the bottom actions.
    */
@@ -21,6 +22,7 @@ export default function BottomActions(props: IBottomActionsProps) {
     onSubmit,
     submitTitle = 'Submit',
     isLoading,
+    disabled,
   } = props;
 
   return (
@@ -41,7 +43,7 @@ export default function BottomActions(props: IBottomActionsProps) {
         {optionalAction}
         <Button
           loading={isLoading}
-          disabled={isLoading}
+          disabled={isLoading || disabled}
           fontSize="sm"
           height="md"
           variant="primary"
