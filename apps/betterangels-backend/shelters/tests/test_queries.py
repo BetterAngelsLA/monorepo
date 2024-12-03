@@ -1,7 +1,28 @@
+from typing import Any
+
+from django.apps import apps
 from django.test import TestCase
 from model_bakery import baker
 from places import Places
-from shelters.enums import StatusChoices
+from shelters.enums import (
+    AccessibilityChoices,
+    CityChoices,
+    DemographicChoices,
+    EntryRequirementChoices,
+    FunderChoices,
+    GeneralServiceChoices,
+    HealthServiceChoices,
+    ImmediateNeedChoices,
+    ParkingChoices,
+    PetChoices,
+    RoomStyleChoices,
+    ShelterChoices,
+    ShelterProgramChoices,
+    SPAChoices,
+    SpecialSituationRestrictionChoices,
+    StorageChoices,
+    TrainingServiceChoices,
+)
 from shelters.models import Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
@@ -30,6 +51,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             phone
             programFees
             roomStylesOther
+            shelterPrograms {
+                name
+            }
             shelterProgramsOther
             shelterTypesOther
             status
@@ -44,6 +68,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }
         """
 
+        self.setup_shelters()
+        self.setup_related_objects()
+
+    def setup_shelters(self) -> None:
         shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
 
         self.shelters = baker.make(
@@ -58,6 +86,38 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             program_fees="program_fees",
             _quantity=self.shelter_count,
         )
+
+    def setup_related_objects(self) -> None:
+        shelter_related_objects_map: dict[str, dict[str, Any]] = {
+            "accessibility": {"model_name": "Accessibility", "choice": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE},
+            "cities": {"model_name": "City", "choice": CityChoices.AGOURA_HILLS},
+            "demographics": {"model_name": "Demographic", "choice": DemographicChoices.ALL},
+            "entry_requirements": {"model_name": "EntryRequirement", "choice": EntryRequirementChoices.PHOTO_ID},
+            "funders": {"model_name": "Funder", "choice": FunderChoices.CITY_OF_LOS_ANGELES},
+            "general_services": {"model_name": "GeneralService", "choice": GeneralServiceChoices.CASE_MANAGEMENT},
+            "health_services": {"model_name": "HealthService", "choice": HealthServiceChoices.DENTAL},
+            "immediate_needs": {"model_name": "ImmediateNeed", "choice": ImmediateNeedChoices.CLOTHING},
+            "parking": {"model_name": "Parking", "choice": ParkingChoices.BICYCLE},
+            "pets": {"model_name": "Pet", "choice": PetChoices.CATS},
+            "room_styles": {"model_name": "RoomStyle", "choice": RoomStyleChoices.CONGREGANT},
+            "shelter_programs": {"model_name": "ShelterProgram", "choice": ShelterProgramChoices.BRIDGE_HOME},
+            "shelter_types": {"model_name": "ShelterType", "choice": ShelterChoices.BUILDING},
+            "spa": {"model_name": "SPA", "choice": SPAChoices.ONE},
+            "special_situation_restrictions": {
+                "model_name": "SpecialSituationRestriction",
+                "choice": SpecialSituationRestrictionChoices.NONE,
+            },
+            "storage": {"model_name": "Storage", "choice": StorageChoices.AMNESTY_LOCKERS},
+            "training_services": {"model_name": "TrainingService", "choice": TrainingServiceChoices.JOB_TRAINING},
+        }
+
+        for related_name, related_object_info in shelter_related_objects_map.items():
+            model_cls = apps.get_model("shelters", related_object_info["model_name"])
+            related_object = baker.make(model_cls, name=related_object_info["choice"])
+
+            for shelter in self.shelters:
+                related_manager = getattr(shelter, related_name)
+                related_manager.add(related_object)
 
     def test_shelter_query(self) -> None:
         shelter = self.shelters[0]
@@ -75,7 +135,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             response = self.execute_graphql(query, variables)
 
         response_shelter = response["data"]["shelter"]
+        from IPython import embed
 
+        embed()
         expected_shelter = {
             "id": str(shelter.pk),
             "bedFees": shelter.bed_fees,
