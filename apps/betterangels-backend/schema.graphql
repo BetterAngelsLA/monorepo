@@ -22,6 +22,15 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+enum AccessibilityChoices {
+  MEDICAL_EQUIPMENT_PERMITTED
+  WHEELCHAIR_ACCESSIBLE
+}
+
+type AccessibilityType {
+  name: AccessibilityChoices
+}
+
 enum AdaAccommodationEnum {
   HEARING
   MOBILITY
@@ -76,6 +85,104 @@ input AuthInput {
 
 type AuthResponse {
   status_code: String!
+}
+
+enum CityChoices {
+  AGOURA_HILLS
+  ALHAMBRA
+  ARCADIA
+  ARTESIA
+  AVALON
+  AZUSA
+  BALDWIN_PARK
+  BELL
+  BELLFLOWER
+  BELL_GARDENS
+  BEVERLY_HILLS
+  BRADBURY
+  BURBANK
+  CALABASAS
+  CARSON
+  CERRITOS
+  CLAREMONT
+  COMMERCE
+  COMPTON
+  COVINA
+  CUDAHY
+  CULVER_CITY
+  DIAMOND_BAR
+  DOWNEY
+  DUARTE
+  EL_MONTE
+  EL_SEGUNDO
+  GARDENA
+  GLENDALE
+  GLENDORA
+  HAWAIIAN_GARDENS
+  HAWTHORNE
+  HERMOSA_BEACH
+  HIDDEN_HILLS
+  HOLLYWOOD
+  HUNTINGTON_PARK
+  INDUSTRY
+  INGLEWOOD
+  IRWINDALE
+  LA_CANADA_FLINTRIDGE
+  LA_HABRA_HEIGHTS
+  LA_MIRADA
+  LA_PUENTE
+  LA_VERNE
+  LAKEWOOD
+  LANCASTER
+  LAWNDALE
+  LOMITA
+  LONG_BEACH
+  LOS_ANGELES
+  LYNWOOD
+  MALIBU
+  MANHATTAN_BEACH
+  MAYWOOD
+  MONROVIA
+  MONTEBELLO
+  MONTEREY_PARK
+  NORWALK
+  PALMDALE
+  PALOS_VERDES_ESTATES
+  PARAMOUNT
+  PASADENA
+  PICO_RIVERA
+  POMONA
+  RANCHO_PALOS_VERDES
+  REDONDO_BEACH
+  ROLLING_HILLS
+  ROLLING_HILLS_ESTATES
+  ROSEMEAD
+  SAN_DIMAS
+  SAN_FERNANDO
+  SAN_GABRIEL
+  SAN_MARINO
+  SANTA_CLARITA
+  SANTA_FE_SPRINGS
+  SANTA_MONICA
+  SIERRA_MADRE
+  SIGNAL_HILL
+  SOUTH_EL_MONTE
+  SOUTH_GATE
+  SOUTH_PASADENA
+  TEMPLE_CITY
+  TORRANCE
+  VERNON
+  VENICE
+  WALNUT
+  WEST_COVINA
+  WEST_HOLLYWOOD
+  WESTLAKE_VILLAGE
+  WEST_LOS_ANGELES
+  WHITTIER
+}
+
+type CityType {
+  name: CityChoices
 }
 
 input ClientContactInput {
@@ -386,6 +493,21 @@ type DeletedObjectType {
   id: Int!
 }
 
+enum DemographicChoices {
+  ALL
+  SINGLE_MEN
+  SINGLE_WOMEN
+  TAY_TEEN
+  SENIORS
+  FAMILIES
+  SINGLE_MOMS
+  OTHER
+}
+
+type DemographicType {
+  name: DemographicChoices
+}
+
 type DjangoFileType {
   name: String!
   path: String!
@@ -415,6 +537,17 @@ enum DueByGroupEnum {
   NO_DUE_DATE
 }
 
+enum EntryRequirementChoices {
+  MEDICAID_OR_MEDICARE
+  PHOTO_ID
+  REFERRAL
+  RESERVATION
+}
+
+type EntryRequirementType {
+  name: EntryRequirementChoices
+}
+
 enum EyeColorEnum {
   BLUE
   BROWN
@@ -436,12 +569,44 @@ type FlagType {
   lastModified: DateTime
 }
 
+enum FunderChoices {
+  CITY_OF_LOS_ANGELES
+  DHS
+  DMH
+  FEDERAL_FUNDING
+  HOPWA
+  LAHSA
+  PRIVATE
+  OTHER
+}
+
+type FunderType {
+  name: FunderChoices
+}
+
 enum GenderEnum {
   MALE
   FEMALE
   NON_BINARY
   OTHER
   PREFER_NOT_TO_SAY
+}
+
+enum GeneralServiceChoices {
+  CASE_MANAGEMENT
+  CHILDCARE
+  COMPUTER_ACCESS
+  EMPLOYMENT_SERVICES
+  FINANCIAL_LITERACY_ASSISTANCE
+  HOUSING_NAVIGATION
+  LEGAL_ASSISTANCE
+  MAIL
+  PHONE
+  TRANSPORTATION
+}
+
+type GeneralServiceType {
+  name: GeneralServiceChoices
 }
 
 enum HairColorEnum {
@@ -453,6 +618,17 @@ enum HairColorEnum {
   WHITE
   BALD
   OTHER
+}
+
+enum HealthServiceChoices {
+  DENTAL
+  MEDICAL
+  MENTAL_HEALTH
+  SUBSTANCE_USE_TREATMENT
+}
+
+type HealthServiceType {
+  name: HealthServiceChoices
 }
 
 enum HmisAgencyEnum {
@@ -473,6 +649,16 @@ type HmisProfileType {
   id: ID!
   hmisId: String!
   agency: HmisAgencyEnum!
+}
+
+enum ImmediateNeedChoices {
+  CLOTHING
+  FOOD
+  SHOWERS
+}
+
+type ImmediateNeedType {
+  name: ImmediateNeedChoices
 }
 
 """
@@ -734,6 +920,31 @@ type OrganizationType {
   name: String!
 }
 
+enum ParkingChoices {
+  BICYCLE
+  MOTORCYCLE
+  AUTOMOBILE
+  RV
+  NO_PARKING
+}
+
+type ParkingType {
+  name: ParkingChoices
+}
+
+enum PetChoices {
+  CATS
+  DOGS_UNDER_25_LBS
+  DOGS_OVER_25_LBS
+  EXOTICS
+  SERVICE_ANIMALS
+  NO_PETS_ALLOWED
+}
+
+type PetType {
+  name: PetChoices
+}
+
 scalar PhoneNumber
 
 input PhoneNumberInput {
@@ -840,6 +1051,35 @@ input RevertNoteInput {
 
 union RevertNotePayload = NoteType | OperationInfo
 
+enum RoomStyleChoices {
+  CONGREGANT
+  CUBICLE_LOW_WALLS
+  CUBICLE_HIGH_WALLS
+  SHARED_ROOMS
+  SINGLE_ROOM
+  MOTEL_ROOM
+  OTHER
+}
+
+type RoomStyleType {
+  name: RoomStyleChoices
+}
+
+enum SPAChoices {
+  ONE
+  TWO
+  THREE
+  FOUR
+  FIVE
+  SIX
+  SEVEN
+  EIGHT
+}
+
+type SPAType {
+  name: SPAChoices
+}
+
 type SampleType {
   name: String!
   isActive: Boolean!
@@ -931,30 +1171,67 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+enum ShelterChoices {
+  BUILDING
+  CHURCH
+  HOTEL_MOTEL
+  SAFE_PARKING
+  SINGLE_FAMILY_HOUSE
+  TINY_HOMES
+  OTHER
+}
+
+type ShelterKindType {
+  name: ShelterChoices
+}
+
 type ShelterLocationType {
   place: String!
   latitude: Float!
   longitude: Float!
 }
 
+enum ShelterProgramChoices {
+  BRIDGE_HOME
+  CRISIS_HOUSING
+  EMERGENCY_SHELTER
+  FAITH_BASED
+  INTERIM_HOUSING
+  PERMANENT_HOUSING
+  PROJECT_HOME_KEY
+  RAPID_REHOUSING
+  RECUPERATIVE_CARE
+  ROADMAP_HOME
+  SAFE_PARK_LA
+  SOBER_LIVING
+  TINY_HOME_VILLAGE
+  TRANSITIONAL_HOUSING
+  WINTER_SHELTER
+  OTHER
+}
+
+type ShelterProgramType {
+  name: ShelterProgramChoices
+}
+
 type ShelterType {
   id: ID!
-  accessibility: [DjangoModelType!]!
+  accessibility: AccessibilityType!
   bedFees: String
-  cities: [DjangoModelType!]!
+  cities: CityType!
   cityCouncilDistrict: Int
   curfew: Time
-  demographics: [DjangoModelType!]!
+  demographics: DemographicType!
   demographicsOther: String
   description: String!
   email: String
   entryInfo: String
-  entryRequirements: [DjangoModelType!]!
-  funders: [DjangoModelType!]!
+  entryRequirements: EntryRequirementType!
+  funders: FunderType!
   fundersOther: String
-  generalServices: [DjangoModelType!]!
-  healthServices: [DjangoModelType!]!
-  immediateNeeds: [DjangoModelType!]!
+  generalServices: GeneralServiceType!
+  healthServices: HealthServiceType!
+  immediateNeeds: ImmediateNeedType!
   location: ShelterLocationType!
   maxStay: Int
   name: String!
@@ -963,24 +1240,24 @@ type ShelterType {
   otherRules: String
   otherServices: String
   overallRating: Int
-  parking: [DjangoModelType!]!
-  pets: [DjangoModelType!]!
+  parking: ParkingType!
+  pets: PetType!
   phone: PhoneNumber!
   programFees: String
-  roomStyles: [DjangoModelType!]!
+  roomStyles: RoomStyleType!
   roomStylesOther: String
-  shelterPrograms: [DjangoModelType!]!
+  shelterPrograms: ShelterProgramType!
   shelterProgramsOther: String
-  shelterTypes: [DjangoModelType!]!
+  shelterTypes: ShelterKindType!
   shelterTypesOther: String
-  spa: [DjangoModelType!]!
-  specialSituationRestrictions: [DjangoModelType!]!
+  spa: SPAType!
+  specialSituationRestrictions: SpecialSituationRestrictionType!
   status: StatusChoices!
-  storage: [DjangoModelType!]!
+  storage: StorageType!
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: [DjangoModelType!]!
+  trainingServices: TrainingServiceType!
   website: String
 }
 
@@ -1018,11 +1295,36 @@ type SocialMediaProfileType {
   platformUserId: String!
 }
 
+enum SpecialSituationRestrictionChoices {
+  NONE
+  DOMESTIC_VIOLENCE
+  HIV_AIDS
+  HUMAN_TRAFFICKING
+  LGBTQ_PLUS
+  JUSTICE_SYSTEMS
+  VETERANS
+}
+
+type SpecialSituationRestrictionType {
+  name: SpecialSituationRestrictionChoices
+}
+
 enum StatusChoices {
   DRAFT
   PENDING
   APPROVED
   INACTIVE
+}
+
+enum StorageChoices {
+  AMNESTY_LOCKERS
+  STANDARD_LOCKERS
+  SHARED_STORAGE
+  NO_STORAGE
+}
+
+type StorageType {
+  name: StorageChoices
 }
 
 type SwitchType {
@@ -1060,6 +1362,16 @@ enum TaskTypeEnum {
 
 """Time (isoformat)"""
 scalar Time
+
+enum TrainingServiceChoices {
+  JOB_TRAINING
+  LIFE_SKILLS_TRAINING
+  TUTORING
+}
+
+type TrainingServiceType {
+  name: TrainingServiceChoices
+}
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
