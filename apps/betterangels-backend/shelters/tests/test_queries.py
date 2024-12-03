@@ -1,6 +1,7 @@
 from django.test import TestCase
 from model_bakery import baker
 from places import Places
+from shelters.enums import StatusChoices
 from shelters.models import Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
@@ -13,13 +14,29 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.shelter_fields = """
             id
             bedFees
+            cityCouncilDistrict
+            curfew
+            demographicsOther
             description
+            email
             entryInfo
+            fundersOther
+            maxStay
             name
+            onSiteSecurity
             otherRules
             otherServices
+            overallRating
             phone
             programFees
+            roomStylesOther
+            shelterProgramsOther
+            shelterTypesOther
+            status
+            subjectiveReview
+            supervisorialDistrict
+            totalBeds
+            website
             location {
                 latitude
                 longitude
@@ -62,19 +79,36 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         expected_shelter = {
             "id": str(shelter.pk),
             "bedFees": shelter.bed_fees,
+            "cityCouncilDistrict": shelter.city_council_district,
+            "curfew": shelter.curfew,
+            "demographicsOther": shelter.demographics_other,
             "description": shelter.description,
+            "email": shelter.email,
             "entryInfo": shelter.entry_info,
+            "fundersOther": shelter.funders_other,
+            "maxStay": shelter.max_stay,
             "name": shelter.name,
+            "onSiteSecurity": shelter.on_site_security,
             "otherRules": shelter.other_rules,
             "otherServices": shelter.other_services,
+            "overallRating": shelter.overall_rating,
             "phone": str(shelter.phone.national_number),
             "programFees": shelter.program_fees,
+            "roomStylesOther": shelter.room_styles_other,
+            "shelterProgramsOther": shelter.shelter_programs_other,
+            "shelterTypesOther": shelter.shelter_types_other,
+            "status": shelter.status.name,
+            "subjectiveReview": shelter.subjective_review,
+            "supervisorialDistrict": shelter.supervisorial_district,
+            "totalBeds": shelter.total_beds,
+            "website": shelter.website,
             "location": {
                 "latitude": float(shelter.location.latitude),
                 "longitude": float(shelter.location.longitude),
                 "place": shelter.location.place,
             },
         }
+
         self.assertEqual(response_shelter, expected_shelter)
 
     def test_shelters_query(self) -> None:

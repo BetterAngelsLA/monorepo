@@ -1,3 +1,4 @@
+from typing import Optional
 import strawberry
 import strawberry_django
 from common.graphql.types import PhoneNumberScalar
@@ -16,7 +17,7 @@ class ShelterLocationType:
 class ShelterType:
     id: ID
     accessibility: auto
-    bed_fees: str
+    bed_fees: Optional[str]
     cities: auto
     city_council_district: auto
     curfew: auto
@@ -24,7 +25,7 @@ class ShelterType:
     demographics_other: auto
     description: str
     email: auto
-    entry_info: str
+    entry_info: Optional[str]
     entry_requirements: auto
     funders: auto
     funders_other: auto
@@ -36,13 +37,13 @@ class ShelterType:
     name: auto
     on_site_security: auto
     organization: auto
-    other_rules: str
-    other_services: str
+    other_rules: Optional[str]
+    other_services: Optional[str]
     overall_rating: auto
     parking: auto
     pets: auto
     phone: PhoneNumberScalar  # type: ignore
-    program_fees: str
+    program_fees: Optional[str]
     room_styles: auto
     room_styles_other: auto
     shelter_programs: auto
@@ -53,7 +54,7 @@ class ShelterType:
     special_situation_restrictions: auto
     status: auto
     storage: auto
-    subjective_review: str
+    subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
     training_services: auto

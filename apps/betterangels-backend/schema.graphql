@@ -940,7 +940,7 @@ type ShelterLocationType {
 type ShelterType {
   id: ID!
   accessibility: [DjangoModelType!]!
-  bedFees: String!
+  bedFees: String
   cities: [DjangoModelType!]!
   cityCouncilDistrict: Int
   curfew: Time
@@ -948,7 +948,7 @@ type ShelterType {
   demographicsOther: String
   description: String!
   email: String
-  entryInfo: String!
+  entryInfo: String
   entryRequirements: [DjangoModelType!]!
   funders: [DjangoModelType!]!
   fundersOther: String
@@ -960,13 +960,13 @@ type ShelterType {
   name: String!
   onSiteSecurity: Boolean
   organization: DjangoModelType
-  otherRules: String!
-  otherServices: String!
+  otherRules: String
+  otherServices: String
   overallRating: Int
   parking: [DjangoModelType!]!
   pets: [DjangoModelType!]!
   phone: PhoneNumber!
-  programFees: String!
+  programFees: String
   roomStyles: [DjangoModelType!]!
   roomStylesOther: String
   shelterPrograms: [DjangoModelType!]!
@@ -977,7 +977,7 @@ type ShelterType {
   specialSituationRestrictions: [DjangoModelType!]!
   status: StatusChoices!
   storage: [DjangoModelType!]!
-  subjectiveReview: String!
+  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   trainingServices: [DjangoModelType!]!
