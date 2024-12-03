@@ -68,7 +68,6 @@ export default function AddEditClient({ id }: { id?: string }) {
   >();
 
   const [expanded, setExpanded] = useState<undefined | string | null>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteClient] = useDeleteClientProfileMutation({
     refetchQueries: [
       {
@@ -86,24 +85,25 @@ export default function AddEditClient({ id }: { id?: string }) {
       },
     ],
   });
-  const [updateClient] = useUpdateClientProfileMutation();
-  const [createClient] = useCreateClientProfileMutation({
-    refetchQueries: [
-      {
-        query: ClientProfilesDocument,
-        variables: {
-          pagination: { limit: 20 + 1, offset: 0 },
-          filters: {
-            search: '',
-          },
-          order: {
-            user_FirstName: Ordering.AscNullsFirst,
-            id: Ordering.Desc,
+  const [updateClient, { loading: isUpdating }] = useUpdateClientProfileMutation();
+  const [createClient, { loading: isCreating }] =
+    useCreateClientProfileMutation({
+      refetchQueries: [
+        {
+          query: ClientProfilesDocument,
+          variables: {
+            pagination: { limit: 20 + 1, offset: 0 },
+            filters: {
+              search: '',
+            },
+            order: {
+              user_FirstName: Ordering.AscNullsFirst,
+              id: Ordering.Desc,
+            },
           },
         },
-      },
-    ],
-  });
+      ],
+    });
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -129,8 +129,7 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (isCreating || isUpdating) return;
     try {
       if (values.contacts && values.contacts?.length > 0) {
         values.contacts = values.contacts.map((contact) => ({
@@ -236,8 +235,6 @@ export default function AddEditClient({ id }: { id?: string }) {
         message: 'Sorry, there was an error updating this profile.',
         type: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -396,7 +393,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
-            disabled={!!methods.formState.errors.californiaId}
+            disabled={!!methods.formState.errors.californiaId || isCreating || isUpdating}
             cancel={
               <TextButton
                 onPress={router.back}
@@ -406,7 +403,7 @@ export default function AddEditClient({ id }: { id?: string }) {
               />
             }
             onSubmit={methods.handleSubmit(onSubmit)}
-            isLoading={isSubmitting}
+            isLoading={isCreating || isUpdating}
           />
         </View>
       </TouchableWithoutFeedback>
