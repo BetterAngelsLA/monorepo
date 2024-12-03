@@ -931,6 +931,12 @@ enum ServiceRequestTypeEnum {
   REQUESTED
 }
 
+type ShelterLocationType {
+  place: String!
+  latitude: Float!
+  longitude: Float!
+}
+
 type ShelterType {
   id: ID!
   accessibility: [DjangoModelType!]!
@@ -949,6 +955,7 @@ type ShelterType {
   generalServices: [DjangoModelType!]!
   healthServices: [DjangoModelType!]!
   immediateNeeds: [DjangoModelType!]!
+  location: ShelterLocationType!
   maxStay: Int
   name: String!
   onSiteSecurity: Boolean
@@ -958,6 +965,7 @@ type ShelterType {
   overallRating: Int
   parking: [DjangoModelType!]!
   pets: [DjangoModelType!]!
+  phone: PhoneNumber!
   programFees: String!
   roomStyles: [DjangoModelType!]!
   roomStylesOther: String

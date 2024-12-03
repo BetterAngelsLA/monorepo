@@ -1,6 +1,15 @@
+import strawberry
 import strawberry_django
+from common.graphql.types import PhoneNumberScalar
 from shelters.models import Shelter
 from strawberry import ID, auto
+
+
+@strawberry.type
+class ShelterLocationType:
+    place: str
+    latitude: float
+    longitude: float
 
 
 @strawberry_django.type(Shelter)
@@ -22,7 +31,7 @@ class ShelterType:
     general_services: auto
     health_services: auto
     immediate_needs: auto
-    # location: auto
+    location: ShelterLocationType
     max_stay: auto
     name: auto
     on_site_security: auto
@@ -32,7 +41,7 @@ class ShelterType:
     overall_rating: auto
     parking: auto
     pets: auto
-    # phone: auto
+    phone: PhoneNumberScalar  # type: ignore
     program_fees: str
     room_styles: auto
     room_styles_other: auto

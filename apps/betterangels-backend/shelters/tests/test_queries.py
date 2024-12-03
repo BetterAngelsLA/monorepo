@@ -1,5 +1,6 @@
 from django.test import TestCase
 from model_bakery import baker
+from places import Places
 from shelters.models import Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
@@ -8,26 +9,41 @@ from unittest_parametrize import ParametrizedTestCase
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.shelter_count = 2
+        self.shelter_count = 3
         self.shelter_fields = """
             id
+            bedFees
+            description
+            entryInfo
             name
+            otherRules
+            otherServices
+            phone
+            programFees
+            location {
+                latitude
+                longitude
+                place
+            }
         """
 
-        self.shelter_1, self.shelter_2 = baker.make(
+        shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+
+        self.shelters = baker.make(
             Shelter,
-            phone="2125551212",
+            bed_fees="bed_fees",
             description="description",
+            entry_info="entry_info",
+            location=shelter_location,
             other_rules="other_rules",
             other_services="other_services",
-            entry_info="entry_info",
-            bed_fees="bed_fees",
+            phone="2125551212",
             program_fees="program_fees",
             _quantity=self.shelter_count,
         )
 
     def test_shelter_query(self) -> None:
-        shelter = self.shelter_1
+        shelter = self.shelters[0]
         query = f"""
             query ViewShelter($id: ID!) {{
                 shelter(pk: $id) {{
@@ -35,7 +51,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 }}
             }}
         """
-
         variables = {"id": shelter.pk}
         expected_query_count = 1
 
@@ -46,7 +61,19 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         expected_shelter = {
             "id": str(shelter.pk),
+            "bedFees": shelter.bed_fees,
+            "description": shelter.description,
+            "entryInfo": shelter.entry_info,
             "name": shelter.name,
+            "otherRules": shelter.other_rules,
+            "otherServices": shelter.other_services,
+            "phone": str(shelter.phone.national_number),
+            "programFees": shelter.program_fees,
+            "location": {
+                "latitude": float(shelter.location.latitude),
+                "longitude": float(shelter.location.longitude),
+                "place": shelter.location.place,
+            },
         }
         self.assertEqual(response_shelter, expected_shelter)
 
@@ -66,7 +93,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        response = self.execute_graphql(query)
+        expected_query_count = 2
+
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query)
 
         self.assertIsNotNone(response["data"])
         self.assertEqual(len(response["data"]["shelters"]["results"]), self.shelter_count)
