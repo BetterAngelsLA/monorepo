@@ -51,9 +51,23 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             phone
             programFees
             roomStylesOther
-            shelterPrograms {
-                name
-            }
+            accessibility {name}
+            cities {name}
+            demographics {name}
+            entryRequirements {name}
+            funders {name}
+            generalServices {name}
+            healthServices {name}
+            immediateNeeds {name}
+            parking {name}
+            pets {name}
+            roomStyles {name}
+            shelterPrograms {name}
+            shelterTypes {name}
+            spa {name}
+            specialSituationRestrictions {name}
+            storage {name}
+            trainingServices {name}
             shelterProgramsOther
             shelterTypesOther
             status
@@ -129,15 +143,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 1
+        expected_query_count = 35
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
 
         response_shelter = response["data"]["shelter"]
-        from IPython import embed
-
-        embed()
         expected_shelter = {
             "id": str(shelter.pk),
             "bedFees": shelter.bed_fees,
@@ -164,13 +175,29 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "supervisorialDistrict": shelter.supervisorial_district,
             "totalBeds": shelter.total_beds,
             "website": shelter.website,
+            "accessibility": {"name": shelter.accessibility.first().name.name},
+            "cities": {"name": shelter.cities.first().name.name},
+            "demographics": {"name": shelter.demographics.first().name.name},
+            "entryRequirements": {"name": shelter.entry_requirements.first().name.name},
+            "funders": {"name": shelter.funders.first().name.name},
+            "generalServices": {"name": shelter.general_services.first().name.name},
+            "healthServices": {"name": shelter.health_services.first().name.name},
+            "immediateNeeds": {"name": shelter.immediate_needs.first().name.name},
+            "parking": {"name": shelter.parking.first().name.name},
+            "pets": {"name": shelter.pets.first().name.name},
+            "roomStyles": {"name": shelter.room_styles.first().name.name},
+            "shelterPrograms": {"name": shelter.shelter_programs.first().name.name},
+            "shelterTypes": {"name": shelter.shelter_types.first().name.name},
+            "spa": {"name": shelter.spa.first().name.name},
+            "specialSituationRestrictions": {"name": shelter.special_situation_restrictions.first().name.name},
+            "storage": {"name": shelter.storage.first().name.name},
+            "trainingServices": {"name": shelter.training_services.first().name.name},
             "location": {
                 "latitude": float(shelter.location.latitude),
                 "longitude": float(shelter.location.longitude),
                 "place": shelter.location.place,
             },
         }
-
         self.assertEqual(response_shelter, expected_shelter)
 
     def test_shelters_query(self) -> None:
