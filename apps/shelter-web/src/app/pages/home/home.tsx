@@ -17,16 +17,11 @@ export function Home() {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error : {error.message}</p>;
 
-  // console.log();
-  // console.log('| -------------  FETCH CURRENT_USER data  ------------- |');
-  // console.log(data);
-  // console.log();
-
   return (
     <div>
       <h1>HELLO HOME PAGE component</h1>
 
-      {/* <div>{data}</div> */}
+      <div>{data}</div>
 
       <div className="mt-8">
         <div>ROOT page</div>
