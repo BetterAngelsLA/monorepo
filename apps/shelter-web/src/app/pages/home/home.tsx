@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { gql, useQuery } from '@apollo/client';
 
-const GET_CURRENT_USER = gql`
+export const GET_CURRENT_USER = gql`
   query GetCurrentUser {
     currentUser {
       email
@@ -21,7 +21,7 @@ export function Home() {
     <div>
       <h1>HELLO HOME PAGE component</h1>
 
-      <div>{data}</div>
+      {/* <div>{data}</div> */}
 
       <div className="mt-8">
         <div>ROOT page</div>

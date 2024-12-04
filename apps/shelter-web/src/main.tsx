@@ -8,6 +8,7 @@ import { ApolloClientProvider } from './app/shared/providers/apolloClient/apollo
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
 root.render(
   <StrictMode>
     <ApolloClientProvider>
