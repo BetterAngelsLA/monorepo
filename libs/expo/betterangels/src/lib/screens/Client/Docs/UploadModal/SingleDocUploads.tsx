@@ -164,6 +164,7 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
                 />
               </View>
               <BasicInput
+                placeholder={'Enter a file name'}
                 label="File Name"
                 value={docs?.[docType]?.name}
                 onDelete={() =>
