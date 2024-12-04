@@ -21,6 +21,7 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
                 }, {}
             );
             setFeatureFlags(flags);
+            console.log(data)
         }
     }, [data]);
 
