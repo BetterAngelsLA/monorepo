@@ -178,28 +178,111 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
 
     @parametrize(
-        ("search_value, is_active, expected_client_profile_count"),
+        ("is_active, expected_client_profile_count"),
         [
-            (None, None, 2),  # no filters
-            (None, False, 1),  # active filter false
-            (None, True, 1),  # active filter true
-            ("tod ch gust toa", None, 2),  # name search matching inactive client
-            ("tod", False, 1),  # first_name search matching inactive client + active filter false
-            ("tod", True, 0),  # first_name search matching inactive client + active filter true
-            ("pea mi tr", None, 0),  # name search matching matching no clients
-            ("pea", False, 0),  # last_name search matching active client + active filter false
-            ("pea", True, 1),  # last_name search matching active client + active filter true
-            ("tod pea", None, 0),  # no match first_name, last_name search + active filter false
-            ("HMISid", None, 2),  # hmis_id search matching both clients
-            ("HMISid", False, 1),  # hmis_id search matching both clients + active filter false
-            ("HMISid", True, 0),  # hmis_id search matching both clients + active filter true
-            ("HMISidL", False, 1),  # hmis_id search matching inactive client
-            ("HMISidL", True, 0),  # hmis_id search matching inactive client + active filter true
-            ("HMISidP", False, 1),  # hmis_id search matching active client + active filter false
-            ("HMISidP", True, 0),  # hmis_id search matching active client + active filter true
+            (None, 2),  # no filters
+            (False, 1),  # active filter false
+            (True, 1),  # active filter true
         ],
     )
-    def test_client_profiles_query_search(
+    def test_client_profiles_query_active_filter(
+        self, is_active: Optional[bool], expected_client_profile_count: int
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        organization = organization_recipe.make()
+        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+
+        # Make two notes for Client 1 (inactive)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+
+        query = """
+            query ClientProfiles($isActive: Boolean) {
+                clientProfiles: clientProfilesPaginated(filters: {isActive: $isActive}) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        # Advance time 91 days (active client threshold)
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
+
+            # Make two notes for Client 2 (active)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
+
+            expected_query_count = 4
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self.execute_graphql(query, variables={"isActive": is_active})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+    @parametrize(
+        ("search_value, expected_client_profile_count"),
+        [
+            ("tod ch gust toa", 1),  # name search matching inactive client
+            ("pea mi tr", 0),  # name search matching no clients
+            ("tod pea", 0),  # no match first_name, last_name search
+            ("HMISid", 1),  # hmis_id search matching one client
+            ("HMISidL", 1),  # hmis_id search matching inactive client
+            ("HMISidP", 1),  # hmis_id search matching active client
+        ],
+    )
+    def test_client_profiles_query_text_search(
+        self, search_value: Optional[str], expected_client_profile_count: int
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        organization = organization_recipe.make()
+        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
+        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+
+        # Make two notes for Client 1 (inactive)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client=client_profile_1.user)
+
+        query = """
+            query ClientProfiles($search: String) {
+                clientProfiles: clientProfilesPaginated(filters: {search: $search}) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        # Advance time 91 days (active client threshold)
+        with time_machine.travel(datetime.now(), tick=False) as traveller:
+            traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
+
+            # Make two notes for Client 2 (active)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
+            baker.make(Note, organization=organization, client=client_profile_2.user)
+            expected_query_count = 4
+            with self.assertNumQueriesWithoutCache(expected_query_count):
+                response = self.execute_graphql(query, variables={"search": search_value})
+
+        self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+    @parametrize(
+        ("search_value, is_active, expected_client_profile_count"),
+        [
+            ("tod", True, 0),  # first_name search for active clients, no match
+            ("tod", False, 1),  # first_name search for inactive clients, match
+            ("pea", True, 1),  # last_name search for active clients, match
+            ("pea", False, 0),  # last_name search for inactive clients, no match
+            ("HMISidL", True, 0),  # hmis_id search for active clients, no match
+            ("HMISidL", False, 1),  # hmis_id search for inactive clients, match
+        ],
+    )
+    def test_client_profiles_query_combined_filters(
         self, search_value: Optional[str], is_active: Optional[bool], expected_client_profile_count: int
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -207,7 +290,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         organization = organization_recipe.make()
         client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
         client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
-        # Make two notes for Client 1 (Chavez, inactive)
+
+        # Make two notes for Client 1 (inactive)
         baker.make(Note, organization=organization, client=client_profile_1.user)
         baker.make(Note, organization=organization, client=client_profile_1.user)
 
@@ -226,14 +310,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         with time_machine.travel(datetime.now(), tick=False) as traveller:
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
-            # Make two notes for Client 2 (Peanutbutter, active)
+            # Make two notes for Client 2 (active)
             baker.make(Note, organization=organization, client=client_profile_2.user)
-            baker.make(
-                Note,
-                organization=organization,
-                client=client_profile_2.user,
-            )
-
+            baker.make(Note, organization=organization, client=client_profile_2.user)
             expected_query_count = 4
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
