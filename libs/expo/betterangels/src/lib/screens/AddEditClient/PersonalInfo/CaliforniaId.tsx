@@ -1,10 +1,16 @@
 import { Regex } from '@monorepo/expo/shared/static';
-import { CardWrapper, Input } from '@monorepo/expo/shared/ui-components';
+import {
+  ActionModal,
+  CardWrapper,
+  Input,
+} from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { Keyboard } from 'react-native';
 import {
   CreateClientProfileInput,
+  InputMaybe,
   UpdateClientProfileInput,
 } from '../../../apollo';
 import { useCaliforniaIdUniqueCheck } from '../../../hooks';
@@ -16,6 +22,7 @@ export default function CaliforniaId() {
     setError,
     clearErrors,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const { id: clientProfileId } = useLocalSearchParams();
   const [californiaId] = useWatch({
@@ -28,19 +35,50 @@ export default function CaliforniaId() {
     clientProfileId as string
   );
 
+  // TODO: replace with Feature Flag
+  function featureAvailable(californiaId?: string | InputMaybe<string>) {
+    const FEATURE_ENABLED_FOR_ID = 'A1111111';
+
+    return californiaId && californiaId === FEATURE_ENABLED_FOR_ID;
+  }
+
   useEffect(() => {
-    if (uniqueCheckError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: uniqueCheckError,
-      });
+    if (featureAvailable(californiaId) && uniqueCheckError) {
+      // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+      Keyboard.dismiss();
+
+      // TODO: confirm if it breaks on Android after upgrade to New Architecture
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 100);
     } else {
       clearErrors('californiaId');
     }
-  }, [uniqueCheckError, setError, clearErrors]);
+  }, [californiaId, uniqueCheckError, setError, clearErrors]);
 
   return (
     <CardWrapper title="CA ID #">
+      <ActionModal
+        title="This client has the same CA ID as another client."
+        subtitle="Would you like to see a list of clients with the same CA ID?"
+        secondaryButtonTitle="No"
+        primaryButtonTitle="Yes"
+        onPrimaryPress={() => console.log('primary pressed')}
+        onSecondaryPress={() =>
+          setError('californiaId', {
+            type: 'manual',
+            message: uniqueCheckError,
+          })
+        }
+        onClose={() =>
+          setError('californiaId', {
+            type: 'manual',
+            message: uniqueCheckError,
+          })
+        }
+        visible={modalVisible}
+        setVisible={setModalVisible}
+      />
       <Input
         autoCapitalize="characters"
         autoCorrect={false}

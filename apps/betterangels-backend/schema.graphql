@@ -457,7 +457,7 @@ enum HairColorEnum {
 
 enum HmisAgencyEnum {
   LAHSA
-  SANTA_MONICA
+  LONG_BEACH
   PASADENA
   CHAMP
   VASH

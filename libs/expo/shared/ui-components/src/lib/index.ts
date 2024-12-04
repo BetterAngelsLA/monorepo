@@ -1,4 +1,5 @@
 export { default as Accordion } from './Accordion';
+export { default as ActionModal } from './ActionModal';
 export { default as Alert } from './Alert';
 export { default as AutocompleteInput } from './AutocompleteInput';
 export { default as Avatar } from './Avatar';

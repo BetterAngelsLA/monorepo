@@ -49,6 +49,7 @@ python-magic = "^0.4.27"
 django-admin-async-upload = { git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd" }
 django-admin-interface = "^0.29.1"
 django-select2 = "^8.2.1"
+django-import-export = "^4.3.1"
 
 [build-system]
 requires = ["poetry-core"]

@@ -7,19 +7,16 @@ import IconButton from '../IconButton';
 interface IBasicModalProps {
   children: React.ReactNode;
   visible: boolean;
-  setVisible: (visible: boolean) => void;
+  onClose: () => void;
 }
 
 export default function BasicModal(props: IBasicModalProps) {
-  const { children, visible, setVisible } = props;
+  const { children, visible, onClose } = props;
 
-  const hideModal = () => {
-    setVisible(false);
-  };
   return (
-    <Modal transparent visible={visible} onDismiss={hideModal}>
+    <Modal transparent visible={visible} onDismiss={onClose}>
       <Pressable
-        onPress={hideModal}
+        onPress={onClose}
         accessibilityRole="button"
         style={{
           flex: 1,
@@ -49,7 +46,7 @@ export default function BasicModal(props: IBasicModalProps) {
             <IconButton
               style={{ alignSelf: 'flex-end' }}
               variant="transparent"
-              onPress={hideModal}
+              onPress={onClose}
               accessibilityLabel="close modal"
               accessibilityHint="closing public note information modal"
             >

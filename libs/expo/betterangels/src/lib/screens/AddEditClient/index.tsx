@@ -391,6 +391,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
+            disabled={!!methods.formState.errors.californiaId}
             cancel={
               <TextButton
                 onPress={router.back}

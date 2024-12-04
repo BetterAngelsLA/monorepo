@@ -36,37 +36,26 @@ export default function Contact(props: IContactProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useFormContext<TForm>();
+    getValues,
+  } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
-  const relationship = watch(
-    `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`
-  );
+  const relationship = watch(`contacts.${index}.relationshipToClient`);
 
   const contacts = watch('contacts') || [];
 
   const handleRemove = () => {
     remove(index);
+
+    setValue('contacts', getValues('contacts'));
   };
 
   const handleReset = () => {
-    setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
-      null
-    );
-    setValue(`contacts[${index}].name` as `contacts.${number}.name`, null);
-    setValue(`contacts[${index}].email` as `contacts.${number}.email`, null);
-    setValue(
-      `contacts[${index}].phoneNumber` as `contacts.${number}.phoneNumber`,
-      null
-    );
-    setValue(
-      `contacts[${index}].mailingAddress` as `contacts.${number}.mailingAddress`,
-      null
-    );
-    setValue(
-      `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
-      null
-    );
+    setValue(`contacts.${index}.relationshipToClient`, null);
+    setValue(`contacts.${index}.name`, null);
+    setValue(`contacts.${index}.email`, null);
+    setValue(`contacts.${index}.phoneNumber`, null);
+    setValue(`contacts.${index}.mailingAddress`, null);
+    setValue(`contacts.${index}.relationshipToClientOther`, null);
   };
 
   if (!relationship) {
@@ -79,7 +68,7 @@ export default function Contact(props: IContactProps) {
         defaultValue={(relationship as RelationshipTypeEnum | undefined) ?? ''}
         onValueChange={(enumValue) =>
           setValue(
-            `contacts[${index}].relationshipToClient` as `contacts.${number}.relationshipToClient`,
+            `contacts.${index}.relationshipToClient`,
             enumValue as RelationshipTypeEnum
           )
         }
@@ -190,7 +179,7 @@ export default function Contact(props: IContactProps) {
         <TextButton
           color={Colors.PRIMARY}
           title="Remove"
-          onPress={() => handleRemove()}
+          onPress={handleRemove}
           accessibilityHint="Removes Relevant contact"
         />
 
