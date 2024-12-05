@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 from typing import List
@@ -22,6 +23,7 @@ from shelters.enums import (
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
+    StatusChoices,
     StorageChoices,
     TrainingServiceChoices,
 )
@@ -90,7 +92,43 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 place
             }
         """
-        self.shelter_related_objects: List[ShelterRelatedObject] = [
+
+        self._setup_shelter()
+        self._setup_shelter_related_objects()
+
+    def _setup_shelter(self) -> None:
+        self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+        self.shelters = baker.make(
+            Shelter,
+            bed_fees="bed fees",
+            city_council_district=1,
+            curfew=datetime.time(22, 00),
+            demographics_other="demographics other",
+            description="description",
+            email="shelter@example.com",
+            entry_info="entry info",
+            funders_other="funders other",
+            location=self.shelter_location,
+            max_stay=7,
+            name="name",
+            on_site_security=True,
+            other_rules="other rules",
+            other_services="other services",
+            overall_rating=3,
+            phone="2125551212",
+            program_fees="program fees",
+            room_styles_other="room styles other",
+            shelter_programs_other="shelter programs other",
+            shelter_types_other="shelter types other",
+            subjective_review="subjective review",
+            supervisorial_district=1,
+            total_beds=1,
+            website="shelter.com",
+            _quantity=self.shelter_count,
+        )
+
+    def _setup_shelter_related_objects(self) -> None:
+        shelter_related_objects: List[ShelterRelatedObject] = [
             ShelterRelatedObject(
                 field_name="accessibility", model_name="Accessibility", value=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE
             ),
@@ -128,27 +166,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             ),
         ]
 
-        self.setup_shelters()
-        self.setup_related_objects()
-
-    def setup_shelters(self) -> None:
-        shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
-
-        self.shelters = baker.make(
-            Shelter,
-            bed_fees="bed_fees",
-            description="description",
-            entry_info="entry_info",
-            location=shelter_location,
-            other_rules="other_rules",
-            other_services="other_services",
-            phone="2125551212",
-            program_fees="program_fees",
-            _quantity=self.shelter_count,
-        )
-
-    def setup_related_objects(self) -> None:
-        for i in self.shelter_related_objects:
+        for i in shelter_related_objects:
             model_cls = apps.get_model("shelters", i.model_name)
             related_object = baker.make(model_cls, name=i.value)
 
@@ -173,30 +191,30 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         response_shelter = response["data"]["shelter"]
         expected_shelter = {
             "id": str(shelter.pk),
-            "bedFees": shelter.bed_fees,
-            "cityCouncilDistrict": shelter.city_council_district,
-            "curfew": shelter.curfew,
-            "demographicsOther": shelter.demographics_other,
-            "description": shelter.description,
-            "email": shelter.email,
-            "entryInfo": shelter.entry_info,
-            "fundersOther": shelter.funders_other,
-            "maxStay": shelter.max_stay,
-            "name": shelter.name,
-            "onSiteSecurity": shelter.on_site_security,
-            "otherRules": shelter.other_rules,
-            "otherServices": shelter.other_services,
-            "overallRating": shelter.overall_rating,
-            "phone": str(shelter.phone.national_number),
-            "programFees": shelter.program_fees,
-            "roomStylesOther": shelter.room_styles_other,
-            "shelterProgramsOther": shelter.shelter_programs_other,
-            "shelterTypesOther": shelter.shelter_types_other,
-            "status": shelter.status.name,
-            "subjectiveReview": shelter.subjective_review,
-            "supervisorialDistrict": shelter.supervisorial_district,
-            "totalBeds": shelter.total_beds,
-            "website": shelter.website,
+            "bedFees": "bed fees",
+            "cityCouncilDistrict": 1,
+            "curfew": "22:00:00",
+            "demographicsOther": "demographics other",
+            "description": "description",
+            "email": "shelter@example.com",
+            "entryInfo": "entry info",
+            "fundersOther": "funders other",
+            "maxStay": 7,
+            "name": "name",
+            "onSiteSecurity": True,
+            "otherRules": "other rules",
+            "otherServices": "other services",
+            "overallRating": 3,
+            "phone": "2125551212",
+            "programFees": "program fees",
+            "roomStylesOther": "room styles other",
+            "shelterProgramsOther": "shelter programs other",
+            "shelterTypesOther": "shelter types other",
+            "status": StatusChoices.DRAFT.name,
+            "subjectiveReview": "subjective review",
+            "supervisorialDistrict": 1,
+            "totalBeds": 1,
+            "website": "shelter.com",
             "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
             "cities": [{"name": CityChoices.AGOURA_HILLS.name}],
             "demographics": [{"name": DemographicChoices.ALL.name}],
@@ -215,9 +233,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
             "location": {
-                "latitude": float(shelter.location.latitude),
-                "longitude": float(shelter.location.longitude),
-                "place": shelter.location.place,
+                "latitude": 34.0549,
+                "longitude": -118.2426,
+                "place": "123 Main Street",
             },
         }
         self.assertEqual(response_shelter, expected_shelter)
@@ -243,5 +261,4 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 
-        self.assertIsNotNone(response["data"])
         self.assertEqual(len(response["data"]["shelters"]["results"]), self.shelter_count)
