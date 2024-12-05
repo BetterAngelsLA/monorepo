@@ -1266,6 +1266,7 @@ type ShelterType {
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
   website: String
+  heroImage: String
 }
 
 type ShelterTypeOffsetPaginated {

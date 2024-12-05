@@ -190,3 +190,13 @@ class ShelterType:
     total_beds: auto
     training_services: List[TrainingServiceType]
     website: auto
+
+    @strawberry_django.field
+    def hero_image(self, root: Shelter) -> Optional[str]:
+        if exterior_photos := getattr(root, "prefetched_exterior_photos", None):
+            return str(exterior_photos.first().file.url)
+
+        if interior_photos := getattr(root, "prefetched_interior_photos", None):
+            return str(interior_photos.first().file.url)
+
+        return None

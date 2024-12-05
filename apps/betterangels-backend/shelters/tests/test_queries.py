@@ -5,6 +5,7 @@ from typing import List
 from unittest.mock import ANY
 
 from django.apps import apps
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
 from places import Places
@@ -28,7 +29,7 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import ContactInfo, Shelter
+from shelters.models import ContactInfo, ExteriorPhoto, Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -44,7 +45,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
     def setUp(self) -> None:
         super().setUp()
         self.maxDiff = None
-        self.shelter_count = 2
+        self.shelter_count = 5
         self.shelter_fields = """
             id
             bedFees
@@ -55,6 +56,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             email
             entryInfo
             fundersOther
+            heroImage
             maxStay
             name
             onSiteSecurity
@@ -103,6 +105,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self._setup_shelter()
         self._setup_shelter_related_objects()
         self._setup_shelter_contacts()
+        self._setup_shelter_images()
 
     def _setup_shelter(self) -> None:
         self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
@@ -183,13 +186,22 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 related_manager.add(related_object)
 
     def _setup_shelter_contacts(self) -> None:
-        for i in range(self.shelter_count):
+        for i in range(2):
             baker.make(
                 ContactInfo,
                 contact_name=f"shelter contact {i}",
                 contact_number=f"212555121{i}",
                 shelter=self.shelters[0],
             )
+
+    def _setup_shelter_images(self) -> None:
+        file_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
+        file = SimpleUploadedFile(name="file.jpg", content=file_content)
+
+        self.hero_image = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
 
     def test_shelter_query(self) -> None:
         shelter = Shelter.objects.get(pk=self.shelters[0].pk)
@@ -216,6 +228,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "email": "shelter@example.com",
             "entryInfo": "entry info",
             "fundersOther": "funders other",
+            "heroImage": self.hero_image.file.url,
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
@@ -277,7 +290,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 20
+        expected_query_count = 22
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
