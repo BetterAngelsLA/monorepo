@@ -202,12 +202,16 @@ class ShelterType:
     training_services: List[TrainingServiceType]
     website: auto
 
+    # NOTE: This is a temporary workaround because Shelter specced without a hero image.
+    # Will remove once we add a hero_image field to the Shelter model.
     @strawberry_django.field
     def hero_image(self, root: Shelter) -> Optional[str]:
-        if exterior_photos := getattr(root, "prefetched_exterior_photos", None):
-            return str(list(exterior_photos)[0].file.url)
+        from itertools import chain
 
-        if interior_photos := getattr(root, "prefetched_interior_photos", None):
-            return str(list(interior_photos)[0].file.url)
+        photos = chain(
+            getattr(root, "prefetched_exterior_photos", []),
+            getattr(root, "prefetched_interior_photos", []),
+        )
+        photo = next(photos, None)
 
-        return None
+        return str(photo.file.url) if photo else None

@@ -270,22 +270,19 @@ class ContactInfo(models.Model):
         return f"{self.contact_name} - {self.contact_number}"
 
 
-class InteriorPhoto(models.Model):
+class InteriorPhoto(BaseModel):
     file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
-class ExteriorPhoto(models.Model):
+class ExteriorPhoto(BaseModel):
     file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
-class Video(models.Model):
+class Video(BaseModel):
     file = AsyncFileField(upload_to=upload_path)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 # Proxy models for tracking ManyToManyField through tables
