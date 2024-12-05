@@ -1,51 +1,79 @@
-import { MutableRefObject, useEffect, useRef, useState } from 'react';
-import { minutesToMiliSeconds } from '../../shared/utils/time';
+import { MutableRefObject, useEffect, useRef } from 'react';
 
-const POSITION_TIMEOUT_MINUTES = 10;
+const POSITION_TIMEOUT_MS = 20 * 1000;
 
-type TCoordinates = {
+export type TLocationError =
+  | 'PERMISSION_DENIED'
+  | 'POSITION_UNAVAILABLE'
+  | 'TIMEOUT'
+  | 'FEATURE_UNAVAILABLE'
+  | 'UNKNOWN';
+
+const GeolocationErrorNames = {
+  1: 'PERMISSION_DENIED',
+  2: 'POSITION_UNAVAILABLE',
+  3: 'TIMEOUT',
+} as const;
+
+type GeolocationErrorKey = keyof typeof GeolocationErrorNames;
+
+function getGeolocationErrorName(
+  errorCode: GeolocationErrorKey
+): TLocationError {
+  return GeolocationErrorNames[errorCode];
+}
+
+export type TCoordinates = {
   latitude: number;
   longitude: number;
 };
 
-export function CurrentLocation() {
+type TLocationResult = {
+  location: TCoordinates;
+};
+
+type TErrorResult = {
+  error: TLocationError;
+};
+
+type TLoading = {
+  loading: boolean;
+};
+
+export type TCurrentLocationResult = TLocationResult | TErrorResult | TLoading;
+
+type ICurrentLocation = {
+  onChange: (result: TCurrentLocationResult) => void;
+};
+
+export function CurrentLocation(props: ICurrentLocation) {
+  const { onChange } = props;
   const stableRef: MutableRefObject<number> = useRef<number>(0);
 
-  const geolocationSupported = !!navigator.geolocation;
-
-  const [location, setLocation] = useState<TCoordinates | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-
   const onLocationSuccess = (position: GeolocationPosition): void => {
-    const { latitude, longitude } = position.coords;
-
-    setLocation({ latitude, longitude });
-    setLoading(false);
-    setError(null);
+    if (onChange) {
+      onChange({
+        location: position.coords,
+      });
+    }
   };
 
   const onLocationError = (err: GeolocationPositionError): void => {
-    setLoading(false);
-    setError(err.message);
-    setLocation(null);
+    onChange({
+      error: getGeolocationErrorName(err.code as GeolocationErrorKey),
+    });
   };
 
   const getLocation = (): void => {
-    if (!navigator.geolocation) {
-      setLoading(false);
-      setError('Geolocation is not supported by your browser.');
-
-      return;
-    }
-
     const options: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: minutesToMiliSeconds(POSITION_TIMEOUT_MINUTES),
+      timeout: POSITION_TIMEOUT_MS,
       maximumAge: 0,
     };
 
-    setLoading(true);
+    onChange({
+      loading: true,
+    });
 
     navigator.geolocation.getCurrentPosition(
       onLocationSuccess,
@@ -54,12 +82,12 @@ export function CurrentLocation() {
     );
   };
 
-  if (!geolocationSupported) {
-    return (
-      <p className="border mt-12 p-2">
-        Geolocation not supported in your browser (tempo notice only)
-      </p>
-    );
+  if (!navigator.geolocation) {
+    onChange({
+      error: 'FEATURE_UNAVAILABLE',
+    });
+
+    return null;
   }
 
   useEffect(() => {
@@ -72,17 +100,5 @@ export function CurrentLocation() {
     getLocation();
   }, [getLocation]);
 
-  return (
-    <div className="mt-8 p-2 bg-primary border-2 rounded">
-      {location && (
-        <p>
-          Latitude: {location.latitude}, Longitude: {location.longitude}
-        </p>
-      )}
-
-      {loading && <div>...checking location</div>}
-
-      {error && <p className="text-red-500">Error: {error}</p>}
-    </div>
-  );
+  return null;
 }
