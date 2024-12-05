@@ -1197,6 +1197,11 @@ type ShelterLocationType {
   longitude: Float!
 }
 
+type ShelterPhotoType {
+  id: ID!
+  file: DjangoFileType!
+}
+
 enum ShelterProgramChoices {
   BRIDGE_HOME
   CRISIS_HOUSING
@@ -1234,16 +1239,18 @@ type ShelterType {
   email: String
   entryInfo: String
   entryRequirements: [EntryRequirementType!]!
+  exteriorPhotos: [ShelterPhotoType!]!
   funders: [FunderType!]!
   fundersOther: String
   generalServices: [GeneralServiceType!]!
   healthServices: [HealthServiceType!]!
   immediateNeeds: [ImmediateNeedType!]!
+  interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType!
   maxStay: Int
   name: String!
   onSiteSecurity: Boolean
-  organization: DjangoModelType
+  organization: OrganizationType
   otherRules: String
   otherServices: String
   overallRating: Int

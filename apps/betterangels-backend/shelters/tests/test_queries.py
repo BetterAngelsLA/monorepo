@@ -4,6 +4,7 @@ from enum import IntEnum, StrEnum
 from typing import List
 from unittest.mock import ANY
 
+from accounts.tests.baker_recipes import organization_recipe
 from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -29,7 +30,7 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import ContactInfo, ExteriorPhoto, Shelter
+from shelters.models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -45,7 +46,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
     def setUp(self) -> None:
         super().setUp()
         self.maxDiff = None
-        self.shelter_count = 5
+        self.shelter_count = 2
         self.shelter_fields = """
             id
             bedFees
@@ -56,7 +57,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             email
             entryInfo
             fundersOther
-            heroImage
             maxStay
             name
             onSiteSecurity
@@ -100,6 +100,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 longitude
                 place
             }
+            organization {
+                id
+                name
+            }
         """
 
         self._setup_shelter()
@@ -109,6 +113,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def _setup_shelter(self) -> None:
         self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+        self.shelter_organization = organization_recipe.make()
         self.shelters = baker.make(
             Shelter,
             bed_fees="bed fees",
@@ -123,6 +128,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             max_stay=7,
             name="name",
             on_site_security=True,
+            organization=self.shelter_organization,
             other_rules="other rules",
             other_services="other services",
             overall_rating=3,
@@ -201,7 +207,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         )
         file = SimpleUploadedFile(name="file.jpg", content=file_content)
 
-        self.hero_image = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
 
     def test_shelter_query(self) -> None:
         shelter = Shelter.objects.get(pk=self.shelters[0].pk)
@@ -209,6 +217,20 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             query ViewShelter($id: ID!) {{
                 shelter(pk: $id) {{
                     {self.shelter_fields}
+                    exteriorPhotos {{
+                        id
+                        file {{
+                            name
+                            url
+                        }}
+                    }}
+                    interiorPhotos {{
+                        id
+                        file {{
+                            name
+                            url
+                        }}
+                    }}
                 }}
             }}
         """
@@ -217,6 +239,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
+
         response_shelter = response["data"]["shelter"]
         expected_shelter = {
             "id": str(shelter.pk),
@@ -228,7 +251,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "email": "shelter@example.com",
             "entryInfo": "entry info",
             "fundersOther": "funders other",
-            "heroImage": self.hero_image.file.url,
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
@@ -266,11 +288,30 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 {"id": ANY, "contactName": "shelter contact 0", "contactNumber": "2125551210"},
                 {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
             ],
+            "exteriorPhotos": [
+                {
+                    "id": ANY,
+                    "file": {
+                        "name": self.exterior_photo.file.name,
+                        "url": self.exterior_photo.file.url,
+                    },
+                }
+            ],
+            "interiorPhotos": [
+                {
+                    "id": ANY,
+                    "file": {
+                        "name": self.interior_photo.file.name,
+                        "url": self.interior_photo.file.url,
+                    },
+                }
+            ],
             "location": {
                 "latitude": 34.0549,
                 "longitude": -118.2426,
                 "place": "123 Main Street",
             },
+            "organization": {"id": ANY, "name": self.shelter_organization.name},
         }
         self.assertEqual(response_shelter, expected_shelter)
 
@@ -285,6 +326,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     }}
                     results {{
                         {self.shelter_fields}
+                        heroImage
                     }}
                 }}
             }}
@@ -295,4 +337,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
 
-        self.assertEqual(len(response["data"]["shelters"]["results"]), self.shelter_count)
+        shelters = response["data"]["shelters"]["results"]
+
+        self.assertEqual(len(shelters), self.shelter_count)
+        self.assertIsNotNone(shelters[0]["heroImage"])
+        self.assertIsNotNone(shelters[1]["heroImage"])

@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from accounts.types import OrganizationType
 import strawberry
 import strawberry_django
 from common.graphql.types import PhoneNumberScalar
@@ -56,6 +57,12 @@ class ShelterLocationType:
     place: str
     latitude: float
     longitude: float
+
+
+@strawberry.type
+class ShelterPhotoType:
+    id: ID
+    file: strawberry_django.DjangoFileType
 
 
 @strawberry_django.type(Demographic)
@@ -158,16 +165,18 @@ class ShelterType:
     email: auto
     entry_info: Optional[str]
     entry_requirements: List[EntryRequirementType]
+    exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
     general_services: List[GeneralServiceType]
     health_services: List[HealthServiceType]
     immediate_needs: List[ImmediateNeedType]
+    interior_photos: List[ShelterPhotoType]
     location: ShelterLocationType
     max_stay: auto
     name: auto
     on_site_security: auto
-    organization: auto
+    organization: Optional[OrganizationType]
     other_rules: Optional[str]
     other_services: Optional[str]
     overall_rating: auto
