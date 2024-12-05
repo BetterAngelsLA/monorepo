@@ -263,7 +263,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
-                "hmisProfiles": [],
+                "hmisProfiles": self.client_2_hmis_profiles,
                 "householdMembers": [],
                 "livingSituation": None,
                 "mailingAddress": None,

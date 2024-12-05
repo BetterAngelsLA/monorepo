@@ -230,12 +230,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ("tod pea", 0),  # no match first_name, last_name search
             ("HMISid", 2),  # hmis_id search matching two clients
             ("HMISidL", 1),  # hmis_id search matching one client
-            ("HMISidP", 1),  # hmis_id search matching one client
+            ("HMISidP", 2),  # hmis_id search matching two clients
         ],
     )
-    def test_client_profiles_query_text_search(
-        self, search_value: Optional[str], expected_client_profile_count: int
-    ) -> None:
+    def test_client_profiles_query_text_search(self, search_value: str, expected_client_profile_count: int) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """

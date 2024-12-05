@@ -106,7 +106,7 @@ class ClientProfileFilter:
 
         # Build queries for direct fields
         direct_queries = [
-            reduce(or_, [Q(**{f"{field}__icontains": term}) for field in searchable_fields]) for term in search_terms
+            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
         ]
         direct_query = reduce(and_, direct_queries) if direct_queries else Q()
 
@@ -114,7 +114,7 @@ class ClientProfileFilter:
         related_query = reduce(
             and_,
             [
-                Exists(HmisProfile.objects.filter(client_profile_id=OuterRef("pk"), hmis_id__icontains=term))
+                Exists(HmisProfile.objects.filter(client_profile_id=OuterRef("pk"), hmis_id__istartswith=term))
                 for term in search_terms
             ],
             Q(),
