@@ -1,7 +1,7 @@
 const DEFAULT_COOKIE_EXPIRY_DAYS = 30;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-const setCookie = (
+export const setCookie = (
   name: string,
   value: string,
   days = DEFAULT_COOKIE_EXPIRY_DAYS
@@ -17,7 +17,7 @@ const setCookie = (
   document.cookie = name + '=' + (value || '') + expires + '; path=/';
 };
 
-const getCookie = (name: string) => {
+export const getCookie = (name: string) => {
   const nameEQ = name + '=';
   const ca = document.cookie.split(';');
 
@@ -36,18 +36,6 @@ const getCookie = (name: string) => {
   return null;
 };
 
-const eraseCookie = (name: string) => {
+export const eraseCookie = (name: string) => {
   document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 };
-
-export async function getItem(key: string): Promise<string | null> {
-  return getCookie(key);
-}
-
-export async function setItem(key: string, value: string): Promise<void> {
-  setCookie(key, value);
-}
-
-export async function deleteItem(key: string): Promise<void> {
-  eraseCookie(key);
-}
