@@ -1198,6 +1198,7 @@ type ShelterLocationType {
 type ShelterPhotoType {
   id: ID!
   file: DjangoFileType!
+  createdAt: DateTime!
 }
 
 enum ShelterProgramChoices {

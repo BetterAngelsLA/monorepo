@@ -219,6 +219,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     {self.shelter_fields}
                     exteriorPhotos {{
                         id
+                        createdAt
                         file {{
                             name
                             url
@@ -226,6 +227,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     }}
                     interiorPhotos {{
                         id
+                        createdAt
                         file {{
                             name
                             url
@@ -291,6 +293,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "exteriorPhotos": [
                 {
                     "id": ANY,
+                    "createdAt": ANY,
                     "file": {
                         "name": self.exterior_photo.file.name,
                         "url": self.exterior_photo.file.url,
@@ -300,6 +303,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "interiorPhotos": [
                 {
                     "id": ANY,
+                    "createdAt": ANY,
                     "file": {
                         "name": self.interior_photo.file.name,
                         "url": self.interior_photo.file.url,

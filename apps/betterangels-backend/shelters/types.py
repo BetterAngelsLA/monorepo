@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 import strawberry
@@ -62,6 +63,7 @@ class ShelterLocationType:
 @strawberry.type
 class ShelterPhotoType:
     id: ID
+    created_at: datetime
     file: strawberry_django.DjangoFileType
 
 
