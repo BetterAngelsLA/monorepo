@@ -1,8 +1,8 @@
 from typing import List, Optional
 
-from accounts.types import OrganizationType
 import strawberry
 import strawberry_django
+from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from shelters.enums import (
     AccessibilityChoices,
