@@ -1,5 +1,5 @@
 import { ApolloLink, FetchResult, Observable } from '@apollo/client';
-import { getItem, setItem } from '../../utils/storage/cookies';
+import { getItem, setItem } from '../../utils/cookies';
 
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME;
 const CSRF_HEADER_NAME = import.meta.env.VITE_CSRF_HEADER_NAME;
