@@ -2,6 +2,7 @@ import datetime
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 from typing import List
+from unittest.mock import ANY
 
 from django.apps import apps
 from django.test import TestCase
@@ -27,7 +28,7 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import Shelter
+from shelters.models import ContactInfo, Shelter
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -42,6 +43,7 @@ class ShelterRelatedObject:
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
+        self.maxDiff = None
         self.shelter_count = 2
         self.shelter_fields = """
             id
@@ -86,6 +88,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             supervisorialDistrict
             totalBeds
             website
+            additionalContacts {
+                id
+                contactName
+                contactNumber
+            }
             location {
                 latitude
                 longitude
@@ -95,6 +102,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self._setup_shelter()
         self._setup_shelter_related_objects()
+        self._setup_shelter_contacts()
 
     def _setup_shelter(self) -> None:
         self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
@@ -174,6 +182,15 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 related_manager = getattr(shelter, i.field_name)
                 related_manager.add(related_object)
 
+    def _setup_shelter_contacts(self) -> None:
+        for i in range(self.shelter_count):
+            baker.make(
+                ContactInfo,
+                contact_name=f"shelter contact {i}",
+                contact_number=f"212555121{i}",
+                shelter=self.shelters[0],
+            )
+
     def test_shelter_query(self) -> None:
         shelter = Shelter.objects.get(pk=self.shelters[0].pk)
         query = f"""
@@ -184,7 +201,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 18
+        expected_query_count = 19
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -232,6 +249,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
+            "additionalContacts": [
+                {"id": ANY, "contactName": "shelter contact 0", "contactNumber": "2125551210"},
+                {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
+            ],
             "location": {
                 "latitude": 34.0549,
                 "longitude": -118.2426,
@@ -256,7 +277,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 19
+        expected_query_count = 20
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)

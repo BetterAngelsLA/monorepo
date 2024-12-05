@@ -345,6 +345,12 @@ input ClientSearchInput {
   middleName: String = null
 }
 
+type ContactInfoType {
+  id: ID!
+  contactName: String!
+  contactNumber: PhoneNumber!
+}
+
 input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
@@ -1216,22 +1222,23 @@ type ShelterProgramType {
 
 type ShelterType {
   id: ID!
-  accessibility: AccessibilityType!
+  accessibility: [AccessibilityType!]!
+  additionalContacts: [ContactInfoType!]!
   bedFees: String
-  cities: CityType!
+  cities: [CityType!]!
   cityCouncilDistrict: Int
   curfew: Time
-  demographics: DemographicType!
+  demographics: [DemographicType!]!
   demographicsOther: String
   description: String!
   email: String
   entryInfo: String
-  entryRequirements: EntryRequirementType!
-  funders: FunderType!
+  entryRequirements: [EntryRequirementType!]!
+  funders: [FunderType!]!
   fundersOther: String
-  generalServices: GeneralServiceType!
-  healthServices: HealthServiceType!
-  immediateNeeds: ImmediateNeedType!
+  generalServices: [GeneralServiceType!]!
+  healthServices: [HealthServiceType!]!
+  immediateNeeds: [ImmediateNeedType!]!
   location: ShelterLocationType!
   maxStay: Int
   name: String!
@@ -1240,24 +1247,24 @@ type ShelterType {
   otherRules: String
   otherServices: String
   overallRating: Int
-  parking: ParkingType!
-  pets: PetType!
+  parking: [ParkingType!]!
+  pets: [PetType!]!
   phone: PhoneNumber!
   programFees: String
-  roomStyles: RoomStyleType!
+  roomStyles: [RoomStyleType!]!
   roomStylesOther: String
-  shelterPrograms: ShelterProgramType!
+  shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
-  shelterTypes: ShelterKindType!
+  shelterTypes: [ShelterKindType!]!
   shelterTypesOther: String
-  spa: SPAType!
-  specialSituationRestrictions: SpecialSituationRestrictionType!
+  spa: [SPAType!]!
+  specialSituationRestrictions: [SpecialSituationRestrictionType!]!
   status: StatusChoices!
-  storage: StorageType!
+  storage: [StorageType!]!
   subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
-  trainingServices: TrainingServiceType!
+  trainingServices: [TrainingServiceType!]!
   website: String
 }
 

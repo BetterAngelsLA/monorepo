@@ -26,6 +26,7 @@ from shelters.models import (
     SPA,
     Accessibility,
     City,
+    ContactInfo,
     Demographic,
     EntryRequirement,
     Funder,
@@ -41,6 +42,13 @@ from shelters.models import (
 from shelters.models import ShelterType as ShelterKind
 from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, auto
+
+
+@strawberry_django.type(ContactInfo)
+class ContactInfoType:
+    id: ID
+    contact_name: auto
+    contact_number: PhoneNumberScalar  # type: ignore
 
 
 @strawberry.type
@@ -139,6 +147,7 @@ class FunderType:
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
+    additional_contacts: List[ContactInfoType]
     bed_fees: Optional[str]
     cities: List[CityType]
     city_council_district: auto
