@@ -194,9 +194,9 @@ class ShelterType:
     @strawberry_django.field
     def hero_image(self, root: Shelter) -> Optional[str]:
         if exterior_photos := getattr(root, "prefetched_exterior_photos", None):
-            return str(exterior_photos.first().file.url)
+            return str(list(exterior_photos)[0].file.url)
 
         if interior_photos := getattr(root, "prefetched_interior_photos", None):
-            return str(interior_photos.first().file.url)
+            return str(list(interior_photos)[0].file.url)
 
         return None

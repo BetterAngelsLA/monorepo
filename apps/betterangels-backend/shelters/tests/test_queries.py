@@ -213,7 +213,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 19
+        expected_query_count = 21
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
