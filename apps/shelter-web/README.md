@@ -13,4 +13,8 @@ To run the web app locally:
 
 - run this command from the project root: `yarn shelter`
   - `yarn shelter` is an alias for `nx serve shelter-web`
-  - app defaults to `http://localhost:4200/`
+  - app defaults to `http://localhost:8083/`
+
+## Tests
+
+Command to run `shelter-web` tests: `yarn nx test shelter-web`;
