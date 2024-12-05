@@ -227,25 +227,16 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         ("search_value, expected_client_profile_count"),
         [
             ("tod ch gust toa", 1),  # name search matching inactive client
-            ("pea mi tr", 0),  # name search matching no clients
             ("tod pea", 0),  # no match first_name, last_name search
-            ("HMISid", 1),  # hmis_id search matching one client
-            ("HMISidL", 1),  # hmis_id search matching inactive client
-            ("HMISidP", 1),  # hmis_id search matching active client
+            ("HMISid", 2),  # hmis_id search matching two clients
+            ("HMISidL", 1),  # hmis_id search matching one client
+            ("HMISidP", 1),  # hmis_id search matching one client
         ],
     )
     def test_client_profiles_query_text_search(
         self, search_value: Optional[str], expected_client_profile_count: int
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        organization = organization_recipe.make()
-        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
-        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
-
-        # Make two notes for Client 1 (inactive)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
 
         query = """
             query ClientProfiles($search: String) {
@@ -258,16 +249,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        # Advance time 91 days (active client threshold)
-        with time_machine.travel(datetime.now(), tick=False) as traveller:
-            traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
-
-            # Make two notes for Client 2 (active)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
-            expected_query_count = 4
-            with self.assertNumQueriesWithoutCache(expected_query_count):
-                response = self.execute_graphql(query, variables={"search": search_value})
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"search": search_value})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 

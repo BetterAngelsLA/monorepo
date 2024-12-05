@@ -162,9 +162,16 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "hmisId": "HMISidPASADENA1",
             "agency": HmisAgencyEnum.PASADENA.name,
         }
+        self.client_profile_2_hmis_profile_1 = {
+            "hmisId": "HMISidPASADENA2",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
         self.client_1_hmis_profiles = [
             self.client_profile_1_hmis_profile_1,
             self.client_profile_1_hmis_profile_2,
+        ]
+        self.client_2_hmis_profiles = [
+            self.client_profile_2_hmis_profile_1,
         ]
         self.client_profile_1_household_member_1 = {
             "name": "Daffodil",
