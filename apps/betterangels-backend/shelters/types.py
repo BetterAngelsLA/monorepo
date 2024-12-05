@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -138,22 +138,22 @@ class FunderType:
 @strawberry_django.type(Shelter)
 class ShelterType:
     id: ID
-    accessibility: AccessibilityType
+    accessibility: List[AccessibilityType]
     bed_fees: Optional[str]
-    cities: CityType
+    cities: List[CityType]
     city_council_district: auto
     curfew: auto
-    demographics: DemographicType
+    demographics: List[DemographicType]
     demographics_other: auto
     description: str
     email: auto
     entry_info: Optional[str]
-    entry_requirements: EntryRequirementType
-    funders: FunderType
+    entry_requirements: List[EntryRequirementType]
+    funders: List[FunderType]
     funders_other: auto
-    general_services: GeneralServiceType
-    health_services: HealthServiceType
-    immediate_needs: ImmediateNeedType
+    general_services: List[GeneralServiceType]
+    health_services: List[HealthServiceType]
+    immediate_needs: List[ImmediateNeedType]
     location: ShelterLocationType
     max_stay: auto
     name: auto
@@ -162,22 +162,22 @@ class ShelterType:
     other_rules: Optional[str]
     other_services: Optional[str]
     overall_rating: auto
-    parking: ParkingType
-    pets: PetType
+    parking: List[ParkingType]
+    pets: List[PetType]
     phone: PhoneNumberScalar  # type: ignore
     program_fees: Optional[str]
-    room_styles: RoomStyleType
+    room_styles: List[RoomStyleType]
     room_styles_other: auto
-    shelter_programs: ShelterProgramType
+    shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
-    shelter_types: ShelterKindType
+    shelter_types: List[ShelterKindType]
     shelter_types_other: auto
-    spa: SPAType
-    special_situation_restrictions: SpecialSituationRestrictionType
+    spa: List[SPAType]
+    special_situation_restrictions: List[SpecialSituationRestrictionType]
     status: auto
-    storage: StorageType
+    storage: List[StorageType]
     subjective_review: Optional[str]
     supervisorial_district: auto
     total_beds: auto
-    training_services: TrainingServiceType
+    training_services: List[TrainingServiceType]
     website: auto

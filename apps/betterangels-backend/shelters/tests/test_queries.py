@@ -1,4 +1,6 @@
-from typing import Any
+from dataclasses import dataclass
+from enum import IntEnum, StrEnum
+from typing import List
 
 from django.apps import apps
 from django.test import TestCase
@@ -28,10 +30,17 @@ from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
 
+@dataclass
+class ShelterRelatedObject:
+    field_name: str
+    model_name: str
+    value: StrEnum | IntEnum
+
+
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.shelter_count = 3
+        self.shelter_count = 2
         self.shelter_fields = """
             id
             bedFees
@@ -81,6 +90,43 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 place
             }
         """
+        self.shelter_related_objects: List[ShelterRelatedObject] = [
+            ShelterRelatedObject(
+                field_name="accessibility", model_name="Accessibility", value=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE
+            ),
+            ShelterRelatedObject(field_name="cities", model_name="City", value=CityChoices.AGOURA_HILLS),
+            ShelterRelatedObject(field_name="demographics", model_name="Demographic", value=DemographicChoices.ALL),
+            ShelterRelatedObject(
+                field_name="entry_requirements", model_name="EntryRequirement", value=EntryRequirementChoices.PHOTO_ID
+            ),
+            ShelterRelatedObject(field_name="funders", model_name="Funder", value=FunderChoices.CITY_OF_LOS_ANGELES),
+            ShelterRelatedObject(
+                field_name="general_services", model_name="GeneralService", value=GeneralServiceChoices.CASE_MANAGEMENT
+            ),
+            ShelterRelatedObject(
+                field_name="health_services", model_name="HealthService", value=HealthServiceChoices.DENTAL
+            ),
+            ShelterRelatedObject(
+                field_name="immediate_needs", model_name="ImmediateNeed", value=ImmediateNeedChoices.CLOTHING
+            ),
+            ShelterRelatedObject(field_name="parking", model_name="Parking", value=ParkingChoices.BICYCLE),
+            ShelterRelatedObject(field_name="pets", model_name="Pet", value=PetChoices.CATS),
+            ShelterRelatedObject(field_name="room_styles", model_name="RoomStyle", value=RoomStyleChoices.CONGREGANT),
+            ShelterRelatedObject(
+                field_name="shelter_programs", model_name="ShelterProgram", value=ShelterProgramChoices.BRIDGE_HOME
+            ),
+            ShelterRelatedObject(field_name="shelter_types", model_name="ShelterType", value=ShelterChoices.BUILDING),
+            ShelterRelatedObject(field_name="spa", model_name="SPA", value=SPAChoices.ONE),
+            ShelterRelatedObject(
+                field_name="special_situation_restrictions",
+                model_name="SpecialSituationRestriction",
+                value=SpecialSituationRestrictionChoices.NONE,
+            ),
+            ShelterRelatedObject(field_name="storage", model_name="Storage", value=StorageChoices.AMNESTY_LOCKERS),
+            ShelterRelatedObject(
+                field_name="training_services", model_name="TrainingService", value=TrainingServiceChoices.JOB_TRAINING
+            ),
+        ]
 
         self.setup_shelters()
         self.setup_related_objects()
@@ -102,39 +148,16 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         )
 
     def setup_related_objects(self) -> None:
-        shelter_related_objects_map: dict[str, dict[str, Any]] = {
-            "accessibility": {"model_name": "Accessibility", "choice": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE},
-            "cities": {"model_name": "City", "choice": CityChoices.AGOURA_HILLS},
-            "demographics": {"model_name": "Demographic", "choice": DemographicChoices.ALL},
-            "entry_requirements": {"model_name": "EntryRequirement", "choice": EntryRequirementChoices.PHOTO_ID},
-            "funders": {"model_name": "Funder", "choice": FunderChoices.CITY_OF_LOS_ANGELES},
-            "general_services": {"model_name": "GeneralService", "choice": GeneralServiceChoices.CASE_MANAGEMENT},
-            "health_services": {"model_name": "HealthService", "choice": HealthServiceChoices.DENTAL},
-            "immediate_needs": {"model_name": "ImmediateNeed", "choice": ImmediateNeedChoices.CLOTHING},
-            "parking": {"model_name": "Parking", "choice": ParkingChoices.BICYCLE},
-            "pets": {"model_name": "Pet", "choice": PetChoices.CATS},
-            "room_styles": {"model_name": "RoomStyle", "choice": RoomStyleChoices.CONGREGANT},
-            "shelter_programs": {"model_name": "ShelterProgram", "choice": ShelterProgramChoices.BRIDGE_HOME},
-            "shelter_types": {"model_name": "ShelterType", "choice": ShelterChoices.BUILDING},
-            "spa": {"model_name": "SPA", "choice": SPAChoices.ONE},
-            "special_situation_restrictions": {
-                "model_name": "SpecialSituationRestriction",
-                "choice": SpecialSituationRestrictionChoices.NONE,
-            },
-            "storage": {"model_name": "Storage", "choice": StorageChoices.AMNESTY_LOCKERS},
-            "training_services": {"model_name": "TrainingService", "choice": TrainingServiceChoices.JOB_TRAINING},
-        }
-
-        for related_name, related_object_info in shelter_related_objects_map.items():
-            model_cls = apps.get_model("shelters", related_object_info["model_name"])
-            related_object = baker.make(model_cls, name=related_object_info["choice"])
+        for i in self.shelter_related_objects:
+            model_cls = apps.get_model("shelters", i.model_name)
+            related_object = baker.make(model_cls, name=i.value)
 
             for shelter in self.shelters:
-                related_manager = getattr(shelter, related_name)
+                related_manager = getattr(shelter, i.field_name)
                 related_manager.add(related_object)
 
     def test_shelter_query(self) -> None:
-        shelter = self.shelters[0]
+        shelter = Shelter.objects.get(pk=self.shelters[0].pk)
         query = f"""
             query ViewShelter($id: ID!) {{
                 shelter(pk: $id) {{
@@ -143,11 +166,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 35
+        expected_query_count = 18
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
-
         response_shelter = response["data"]["shelter"]
         expected_shelter = {
             "id": str(shelter.pk),
@@ -175,23 +197,23 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "supervisorialDistrict": shelter.supervisorial_district,
             "totalBeds": shelter.total_beds,
             "website": shelter.website,
-            "accessibility": {"name": shelter.accessibility.first().name.name},
-            "cities": {"name": shelter.cities.first().name.name},
-            "demographics": {"name": shelter.demographics.first().name.name},
-            "entryRequirements": {"name": shelter.entry_requirements.first().name.name},
-            "funders": {"name": shelter.funders.first().name.name},
-            "generalServices": {"name": shelter.general_services.first().name.name},
-            "healthServices": {"name": shelter.health_services.first().name.name},
-            "immediateNeeds": {"name": shelter.immediate_needs.first().name.name},
-            "parking": {"name": shelter.parking.first().name.name},
-            "pets": {"name": shelter.pets.first().name.name},
-            "roomStyles": {"name": shelter.room_styles.first().name.name},
-            "shelterPrograms": {"name": shelter.shelter_programs.first().name.name},
-            "shelterTypes": {"name": shelter.shelter_types.first().name.name},
-            "spa": {"name": shelter.spa.first().name.name},
-            "specialSituationRestrictions": {"name": shelter.special_situation_restrictions.first().name.name},
-            "storage": {"name": shelter.storage.first().name.name},
-            "trainingServices": {"name": shelter.training_services.first().name.name},
+            "accessibility": [{"name": AccessibilityChoices.WHEELCHAIR_ACCESSIBLE.name}],
+            "cities": [{"name": CityChoices.AGOURA_HILLS.name}],
+            "demographics": [{"name": DemographicChoices.ALL.name}],
+            "entryRequirements": [{"name": EntryRequirementChoices.PHOTO_ID.name}],
+            "funders": [{"name": FunderChoices.CITY_OF_LOS_ANGELES.name}],
+            "generalServices": [{"name": GeneralServiceChoices.CASE_MANAGEMENT.name}],
+            "healthServices": [{"name": HealthServiceChoices.DENTAL.name}],
+            "immediateNeeds": [{"name": ImmediateNeedChoices.CLOTHING.name}],
+            "parking": [{"name": ParkingChoices.BICYCLE.name}],
+            "pets": [{"name": PetChoices.CATS.name}],
+            "roomStyles": [{"name": RoomStyleChoices.CONGREGANT.name}],
+            "shelterPrograms": [{"name": ShelterProgramChoices.BRIDGE_HOME.name}],
+            "shelterTypes": [{"name": ShelterChoices.BUILDING.name}],
+            "spa": [{"name": SPAChoices.ONE.name}],
+            "specialSituationRestrictions": [{"name": SpecialSituationRestrictionChoices.NONE.name}],
+            "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
+            "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
             "location": {
                 "latitude": float(shelter.location.latitude),
                 "longitude": float(shelter.location.longitude),
@@ -216,7 +238,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 2
+        expected_query_count = 19
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query)
