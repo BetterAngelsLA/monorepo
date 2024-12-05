@@ -187,7 +187,6 @@ type ClientProfileType {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
@@ -257,7 +256,6 @@ input CreateClientProfileInput {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
@@ -997,7 +995,6 @@ input UpdateClientProfileInput {
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
-  hmisId: String
   importantNotes: String
   livingSituation: LivingSituationEnum
   maritalStatus: MaritalStatusEnum
