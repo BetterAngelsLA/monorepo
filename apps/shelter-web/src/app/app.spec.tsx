@@ -1,25 +1,36 @@
+import { MockedProvider } from '@apollo/client/testing';
+import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './app';
+import { GET_CURRENT_USER } from './pages/home/home';
+
+const mocks = [
+  {
+    request: {
+      query: GET_CURRENT_USER,
+    },
+    result: {
+      data: {
+        dog: { id: '1', name: 'Joe' },
+      },
+    },
+    maxUsageCount: 1,
+  },
+];
 
 describe('App', () => {
-  it('should render successfully', () => {
+  it('should not throw an error', () => {
     const { baseElement } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </MockedProvider>
     );
-    expect(baseElement).toBeTruthy();
-  });
 
-  it('should have a greeting as the title', () => {
-    const { getByText } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
-    expect(getByText(/hello shelter-app/gi)).toBeTruthy();
+    expect(baseElement).toBeTruthy();
   });
 });

@@ -9,7 +9,7 @@
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
-    "shelter": "nx serve shelter-web"
+    "shelter": "nx serve shelter-web --port 8083"
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
