@@ -1203,7 +1203,24 @@ export enum ServiceEnum {
   Transport = 'TRANSPORT',
   UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
   VaccinePassport = 'VACCINE_PASSPORT',
-  Water = 'WATER'
+  Water = 'WATER',
+  Bag = 'BAG',
+  Batteries = 'BATTERIES',
+  ClothesSocks = 'CLOTHES_SOCKS',
+  FeminineHygiene = 'FEMININE_HYGIENE',
+  FirstAid = 'FIRST_AID',
+  HarmReductionSafeSmoking = 'HARM_REDUCTION_SAFE_SMOKING',
+  HarmReductionNarcan = 'HARM_REDUCTION_NARCAN',
+  HarmReductionTestKit = 'HARM_REDUCTION_TEST_KIT',
+  SleepingBag = 'SLEEPING_BAG',
+  Tarp = 'TARP',
+  Lahop = 'LAHOP',
+  HmisConsent = 'HMIS_CONSENT',
+  ConsenttoConnect = 'CONSENT_TO_CONNECT',
+  Ebt = 'EBT',
+  SsiSsdi = 'SSI_SSDI',
+  Medi_Cal = 'MEDI_CAL',
+  BicycleRepair = 'BICYCLE_REPAIR'
 }
 
 export enum ServiceRequestStatusEnum {
