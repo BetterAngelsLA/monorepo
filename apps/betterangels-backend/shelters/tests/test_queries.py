@@ -208,7 +208,18 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         file = SimpleUploadedFile(name="file.jpg", content=file_content)
 
         self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
         self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
+        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
         InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
 
     def test_shelter_query(self) -> None:
@@ -330,6 +341,22 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     }}
                     results {{
                         {self.shelter_fields}
+                        exteriorPhotos {{
+                            id
+                            createdAt
+                            file {{
+                                name
+                                url
+                            }}
+                        }}
+                        interiorPhotos {{
+                            id
+                            createdAt
+                            file {{
+                                name
+                                url
+                            }}
+                        }}
                         heroImage
                     }}
                 }}

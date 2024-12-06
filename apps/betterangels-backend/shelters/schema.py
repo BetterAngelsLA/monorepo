@@ -11,18 +11,4 @@ from strawberry_django.pagination import OffsetPaginated
 @strawberry.type
 class Query:
     shelter: ShelterType = strawberry_django.field()
-
-    @strawberry_django.offset_paginated()
-    def shelters(self) -> OffsetPaginated[ShelterType]:
-        shelters = Shelter.objects.prefetch_related(
-            Prefetch(
-                "exterior_photos",
-                queryset=ExteriorPhoto.objects.order_by("created_at"),
-            ),
-            Prefetch(
-                "interior_photos",
-                queryset=InteriorPhoto.objects.order_by("created_at"),
-            ),
-        )
-
-        return cast(OffsetPaginated[ShelterType], shelters)
+    shelters: OffsetPaginated[ShelterType] = strawberry_django.offset_paginated()
