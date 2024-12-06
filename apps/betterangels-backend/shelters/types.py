@@ -206,12 +206,6 @@ class ShelterType:
     # Will remove once we add a hero_image field to the Shelter model.
     @strawberry_django.field
     def hero_image(self, root: Shelter) -> Optional[str]:
-        from itertools import chain
-
-        photos = chain(
-            getattr(root, "prefetched_exterior_photos", []),
-            getattr(root, "prefetched_interior_photos", []),
-        )
-        photo = next(photos, None)
+        photo = root.exterior_photos.first() or root.interior_photos.first()
 
         return str(photo.file.url) if photo else None
