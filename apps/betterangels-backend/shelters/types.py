@@ -170,13 +170,13 @@ class ShelterType:
     email: auto
     entry_info: Optional[str]
     entry_requirements: List[EntryRequirementType]
-    # exterior_photos: List[ShelterPhotoType]
+    exterior_photos: List[ShelterPhotoType]
     funders: List[FunderType]
     funders_other: auto
     general_services: List[GeneralServiceType]
     health_services: List[HealthServiceType]
     immediate_needs: List[ImmediateNeedType]
-    # interior_photos: List[ShelterPhotoType]
+    interior_photos: List[ShelterPhotoType]
     location: ShelterLocationType
     max_stay: auto
     name: auto
@@ -205,42 +205,16 @@ class ShelterType:
     training_services: List[TrainingServiceType]
     website: auto
 
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda info: Prefetch(
-                "exterior_photos",
-                queryset=ExteriorPhoto.objects.filter(),
-                to_attr="_exterior_photos",
-            ),
-        ],
-    )
-    def exterior_photos(self) -> List[ShelterPhotoType]:
-        return self._exterior_photos
-        # return cast(List[ShelterPhotoType], self._exterior_photos)
-
-    @strawberry_django.field(
-        prefetch_related=[
-            lambda info: Prefetch(
-                "interior_photos",
-                queryset=InteriorPhoto.objects.filter(),
-                to_attr="_interior_photos",
-            ),
-        ],
-    )
-    def interior_photos(self) -> List[ShelterPhotoType]:
-        return self._interior_photos
-        # return cast(List[ShelterPhotoType], self._interior_photos)
-
     # NOTE: This is a temporary workaround because Shelter specced without a hero image.
     # Will remove once we add a hero_image field to the Shelter model.
     @strawberry_django.field(
         prefetch_related=[
-            lambda info: Prefetch(
+            lambda x: Prefetch(
                 "exterior_photos",
                 queryset=ExteriorPhoto.objects.filter(),
                 to_attr="_exterior_photos",
             ),
-            lambda info: Prefetch(
+            lambda x: Prefetch(
                 "interior_photos",
                 queryset=InteriorPhoto.objects.filter(),
                 to_attr="_interior_photos",
@@ -248,10 +222,9 @@ class ShelterType:
         ],
     )
     def hero_image(self, root: Shelter) -> Optional[str]:
-        photo = (
-            self._exterior_photos[0]
-            if self._exterior_photos
-            else self._interior_photos[0] if self._interior_photos else None
+        photo = next(
+            (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
+            None,
         )
 
         return str(photo.file.url) if photo else None

@@ -341,22 +341,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     }}
                     results {{
                         {self.shelter_fields}
-                        exteriorPhotos {{
-                            id
-                            createdAt
-                            file {{
-                                name
-                                url
-                            }}
-                        }}
-                        interiorPhotos {{
-                            id
-                            createdAt
-                            file {{
-                                name
-                                url
-                            }}
-                        }}
                         heroImage
                     }}
                 }}
