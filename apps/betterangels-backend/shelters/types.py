@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -204,6 +204,9 @@ class ShelterType:
     total_beds: auto
     training_services: List[TrainingServiceType]
     website: auto
+
+    _exterior_photos: Optional[List[ShelterPhotoType]] = None
+    _interior_photos: Optional[List[ShelterPhotoType]] = None
 
     # NOTE: This is a temporary workaround because Shelter specced without a hero image.
     # Will remove once we add a hero_image field to the Shelter model.

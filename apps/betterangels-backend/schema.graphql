@@ -1272,6 +1272,8 @@ type ShelterType {
   totalBeds: Int
   trainingServices: [TrainingServiceType!]!
   website: String
+  ExteriorPhotos: [ShelterPhotoType!]
+  InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
 }
 
