@@ -207,20 +207,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         )
         file = SimpleUploadedFile(name="file.jpg", content=file_content)
 
-        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.exterior_photo = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-        InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
+        self.exterior_photo_0 = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo_0 = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
+        self.interior_photo_1 = InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
 
     def test_shelter_query(self) -> None:
         shelter = Shelter.objects.get(pk=self.shelters[0].pk)
@@ -306,8 +295,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     "id": ANY,
                     "createdAt": ANY,
                     "file": {
-                        "name": self.exterior_photo.file.name,
-                        "url": self.exterior_photo.file.url,
+                        "name": self.exterior_photo_0.file.name,
+                        "url": self.exterior_photo_0.file.url,
                     },
                 }
             ],
@@ -316,8 +305,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     "id": ANY,
                     "createdAt": ANY,
                     "file": {
-                        "name": self.interior_photo.file.name,
-                        "url": self.interior_photo.file.url,
+                        "name": self.interior_photo_0.file.name,
+                        "url": self.interior_photo_0.file.url,
                     },
                 }
             ],
@@ -355,5 +344,5 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         shelters = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(shelters), self.shelter_count)
-        self.assertIsNotNone(shelters[0]["heroImage"])
-        self.assertIsNotNone(shelters[1]["heroImage"])
+        self.assertEqual(shelters[0]["heroImage"], self.exterior_photo_0.file.url)
+        self.assertEqual(shelters[1]["heroImage"], self.interior_photo_1.file.url)
