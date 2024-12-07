@@ -1,4 +1,8 @@
+const fallbackImgUrl =
+  'https://fastly.picsum.photos/id/649/800/800.jpg?hmac=rl1sdkgulWbrfyz-7hM8yyP5hsBHjC8IJmFC04XmvJM';
+
 export type TShelter = {
+  id: string;
   name: string;
   address: string;
   heroUrl?: string | null;
@@ -12,7 +16,7 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: { name, address, heroUrl, distance },
+    shelter: { name, heroUrl },
     className = '',
   } = props;
 
@@ -20,22 +24,18 @@ export function ShelterCard(props: TShelterCard) {
 
   return (
     <div className={cardCss}>
-      {!!heroUrl && (
-        <div className="mb-2">
-          <div></div>
-          <div></div>
-        </div>
-      )}
+      <div className="mb-4">
+        <img
+          src={heroUrl || fallbackImgUrl}
+          alt={`hero image for ${name}`}
+          loading="lazy"
+          className="aspect-[4/3] rounded-[20px]"
+        />
+      </div>
 
-      <div className="font-bold">{name}</div>
-
-      {!!address && (
-        <div className="flex items-center mt-2">
-          <div>{address}</div>
-
-          {!!distance && <div>({distance}) miles away</div>}
-        </div>
-      )}
+      <div className="font-semibold text-sm leading-[1.125rem] tracking-[.03125rem]">
+        {name}
+      </div>
     </div>
   );
 }

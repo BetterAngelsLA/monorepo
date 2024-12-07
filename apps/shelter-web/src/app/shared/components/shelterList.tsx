@@ -18,7 +18,7 @@ export function ShelterList(props: TShelterList) {
         return (
           <ShelterCard
             key={index}
-            className="mb-4 last:mb-0"
+            className="mb-8 last:mb-0"
             shelter={shelter}
           />
         );
