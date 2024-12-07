@@ -18,18 +18,14 @@ export const createApolloClient = (
 ): ApolloClient<NormalizedCacheObject> => {
   const { apiUrl } = props;
 
-  const headers = { Referer: apiUrl };
-
   const uploadLink = createUploadLink({
     uri: `${apiUrl}/graphql`,
     credentials: 'include',
-    headers,
   });
 
   const restLink = new RestLink({
     uri: apiUrl,
     credentials: 'include',
-    headers,
   });
 
   return new ApolloClient({

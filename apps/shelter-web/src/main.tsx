@@ -2,8 +2,13 @@ import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
+import { ApolloProvider } from '@apollo/client';
 import App from './app/app';
-import { ApolloClientProvider } from './app/shared/providers/apolloClient/apolloClientProvider';
+import { createApolloClient } from './app/shared/clients/apollo/client';
+
+const apolloClient = createApolloClient({
+  apiUrl: import.meta.env.VITE_API_URL,
+});
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -11,10 +16,10 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApolloClientProvider>
+    <ApolloProvider client={apolloClient}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </ApolloClientProvider>
+    </ApolloProvider>
   </StrictMode>
 );

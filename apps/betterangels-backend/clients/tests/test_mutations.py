@@ -77,7 +77,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "genderOther": "genderqueer",
             "hairColor": HairColorEnum.BROWN.name,
             "heightInInches": 71.75,
-            "hmisId": "12345678",
             "hmisProfiles": [hmis_profile],
             "householdMembers": [household_member],
             "importantNotes": "I am an important note",
@@ -211,7 +210,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "genderOther": None,
             "hairColor": HairColorEnum.GRAY.name,
             "heightInInches": 71.75,
-            "hmisId": "12345678",  # TODO: remove after fe implements hmis profiles
             "hmisProfiles": hmis_profiles,
             "importantNotes": "I am a very important note",
             "householdMembers": household_members,
