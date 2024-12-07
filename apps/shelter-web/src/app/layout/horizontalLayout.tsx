@@ -5,8 +5,8 @@ interface IParams extends PropsWithChildren {
   fullW?: boolean;
 }
 
-export function FullWidthLayout(props: IParams): ReactElement {
-  const { className = '', children } = props;
+export function HorizontalLayout(props: IParams): ReactElement {
+  const { className = '', fullW, children } = props;
 
   const parentCss = [
     className,
@@ -14,7 +14,7 @@ export function FullWidthLayout(props: IParams): ReactElement {
     'flex',
     'flex-col',
     'items-center',
-    'px-4',
+    fullW ? 'px-0' : 'px-4',
   ].join(' ');
 
   const innerCss = ['max-w-7xl', 'w-full', 'flex', 'flex-col'].join(' ');

@@ -1,8 +1,8 @@
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Footer } from './footer';
-import { FullWidthLayout } from './fullWidthLayout';
 import { Header } from './header';
+import { HorizontalLayout } from './horizontalLayout';
 
 type IParams = {
   className?: string;
@@ -17,19 +17,18 @@ export function ContentLayout(props: IParams): ReactElement {
     'flex',
     'flex-col',
     'items-center',
+    'min-h-screen',
   ].join(' ');
 
   return (
     <div className={parentCss}>
-      <FullWidthLayout className="bg-steel-blue">
+      <HorizontalLayout className="bg-steel-blue">
         <Header />
-      </FullWidthLayout>
-      <FullWidthLayout>
-        <Outlet />
-      </FullWidthLayout>
-      <FullWidthLayout className="bg-steel-blue">
+      </HorizontalLayout>
+      <Outlet />
+      <HorizontalLayout className="bg-steel-blue mt-auto">
         <Footer />
-      </FullWidthLayout>
+      </HorizontalLayout>
     </div>
   );
 }
