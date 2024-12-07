@@ -19,11 +19,16 @@ export function SheltersByLocation(props: TSheltersByLocation) {
 
   if (loading) return <p>Loading...</p>;
 
-  const shelters = data?.shelters?.results;
+  const shelters = data?.shelters?.results || [];
 
   return (
     <div className={className}>
-      {!!shelters && <ShelterList className="" shelters={shelters} />}
+      <div>
+        <div className="font-semibold">{shelters.length} locations</div>
+        <div>(based on your current location)</div>
+      </div>
+
+      <ShelterList className="mt-4" shelters={shelters} />
     </div>
   );
 }
