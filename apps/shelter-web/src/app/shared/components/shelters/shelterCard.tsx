@@ -7,7 +7,7 @@ export type TShelter = {
   id: string;
   name: string;
   address: string;
-  heroUrl?: string | null;
+  heroImage?: string | null;
   distance?: number | null;
   location: {
     latitude: number;
@@ -25,7 +25,7 @@ export function ShelterCard(props: TShelterCard) {
   const {
     shelter: {
       name,
-      heroUrl,
+      heroImage,
       location: { place },
     },
     className = '',
@@ -39,7 +39,7 @@ export function ShelterCard(props: TShelterCard) {
     <div className={cardCss}>
       <div className="mb-4">
         <img
-          src={heroUrl || fallbackImgUrl}
+          src={heroImage || fallbackImgUrl}
           alt={`hero image for ${name}`}
           loading="lazy"
           className="aspect-[4/3] rounded-[20px]"
