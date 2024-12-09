@@ -1,4 +1,5 @@
 import { MutableRefObject, useEffect, useRef } from 'react';
+import { TLatLng } from './maps/types.maps';
 
 const POSITION_TIMEOUT_MS = 20 * 1000;
 
@@ -23,13 +24,8 @@ function getGeolocationErrorName(
   return GeolocationErrorNames[errorCode];
 }
 
-export type TCoordinates = {
-  latitude: number;
-  longitude: number;
-};
-
 type TLocationResult = {
-  location: TCoordinates;
+  location: TLatLng;
 };
 
 type TErrorResult = {
@@ -53,7 +49,10 @@ export function CurrentLocation(props: ICurrentLocation) {
   const onLocationSuccess = (position: GeolocationPosition): void => {
     if (onChange) {
       onChange({
-        location: position.coords,
+        location: {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        },
       });
     }
   };

@@ -6,6 +6,8 @@
   --font-primary: 'Poppins', 'sans-serif';
   --color-primary-20: #052b73;
   --color-steel-blue: #375c76;
+  --color-neutral-40: #62676f;
+  --color-neutral-90: #d3d9e3;
 }
 
 * {
@@ -21,4 +23,39 @@ body {
   color: var(--color-primary-20);
   font-weight: 400;
   letter-spacing: 0.3px;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Google Maps autocomplete */
+.pac-container {
+  background-color: #fff;
+  font-family: var(--font-primary);
+  color: var(--color-primary-20);
+  font-weight: 400;
+  font-size: 0.875px;
+  letter-spacing: 0.3px;
+  box-shadow: none;
+  border: 0;
+  z-index: 1050;
+
+  margin-top: 5px;
+  margin-bottom: 24px;
+}
+
+.pac-container:after {
+  margin-top: 12px;
+}
+
+.pac-item {
+  padding: 8px;
+}
+
+.pac-item:first-child {
+  margin-top: 24px;
+  border-top: 0;
 }

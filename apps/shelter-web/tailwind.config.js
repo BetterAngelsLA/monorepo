@@ -23,6 +23,8 @@ module.exports = {
       colors: {
         'primary-20': 'var(--color-primary-20)',
         'steel-blue': 'var(--color-steel-blue)',
+        'neutral-40': 'var(--color-neutral-40)',
+        'neutral-90': 'var(--color-neutral-90)',
       },
     },
   },
