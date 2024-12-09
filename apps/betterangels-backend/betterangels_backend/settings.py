@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import re
 from pathlib import Path
 from typing import List
 
@@ -37,6 +38,7 @@ env = environ.Env(
     CELERY_REDBEAT_REDIS_URL=(str, ""),
     CONN_MAX_AGE=(int, 300),
     CSRF_TRUSTED_ORIGINS=(list, []),
+    CSRF_COOKIE_DOMAIN=(str, ""),
     CSRF_COOKIE_SECURE=(bool, True),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
@@ -470,7 +472,8 @@ ALLOWED_HOSTS: List[str] = env("ALLOWED_HOSTS")
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = env("CORS_ALLOW_ALL_ORIGINS")
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
-CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
+CORS_ALLOWED_ORIGIN_REGEXES = [re.compile(entry) for entry in env("CORS_ALLOWED_ORIGIN_REGEXES")]
+CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 LANGUAGE_COOKIE_SECURE = env("LANGUAGE_COOKIE_SECURE")
