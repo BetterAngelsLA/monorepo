@@ -4,10 +4,10 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
-  const branchName = process.env.BRANCH_NAME || '/';
+  const basePath = process.env.BRANCH_NAME || '/';
   return {
     root: __dirname,
-    base: branchName,
+    base: basePath,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
     server: {
