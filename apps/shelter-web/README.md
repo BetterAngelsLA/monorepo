@@ -9,7 +9,8 @@ Welcome to the BetterAngels Shelter DB project! Our goal is to facilitate the di
 To run the web app locally:
 
 1. Pull the repo (monorepo)
-2. To start server:
+2. add a .env file (see .env.sample)
+3. To start server:
 
 - run this command from the project root: `yarn shelter`
   - `yarn shelter` is an alias for `nx serve shelter-web`
