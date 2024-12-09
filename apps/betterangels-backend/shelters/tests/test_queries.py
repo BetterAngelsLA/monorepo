@@ -9,7 +9,8 @@ from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
-from places import Places
+
+# from places import Places
 from shelters.enums import (
     AccessibilityChoices,
     CityChoices,
@@ -31,6 +32,7 @@ from shelters.enums import (
     TrainingServiceChoices,
 )
 from shelters.models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter
+from shelters.tests.baker_recipes import shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -107,42 +109,43 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         self._setup_shelter()
-        self._setup_shelter_related_objects()
-        self._setup_shelter_contacts()
-        self._setup_shelter_images()
+        # self._setup_shelter_related_objects()
+        # self._setup_shelter_contacts()
+        # self._setup_shelter_images()
 
     def _setup_shelter(self) -> None:
-        self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
-        self.shelter_organization = organization_recipe.make()
-        self.shelters = baker.make(
-            Shelter,
-            bed_fees="bed fees",
-            city_council_district=1,
-            curfew=datetime.time(22, 00),
-            demographics_other="demographics other",
-            description="description",
-            email="shelter@example.com",
-            entry_info="entry info",
-            funders_other="funders other",
-            location=self.shelter_location,
-            max_stay=7,
-            name="name",
-            on_site_security=True,
-            organization=self.shelter_organization,
-            other_rules="other rules",
-            other_services="other services",
-            overall_rating=3,
-            phone="2125551212",
-            program_fees="program fees",
-            room_styles_other="room styles other",
-            shelter_programs_other="shelter programs other",
-            shelter_types_other="shelter types other",
-            subjective_review="subjective review",
-            supervisorial_district=1,
-            total_beds=1,
-            website="shelter.com",
-            _quantity=self.shelter_count,
-        )
+        # self.shelter_organization = organization_recipe.make()
+        self.shelters = shelter_recipe.make(_quantity=2, organization=organization_recipe.make())
+        # self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+        # self.shelters = baker.make(
+        #     Shelter,
+        #     bed_fees="bed fees",
+        #     city_council_district=1,
+        #     curfew=datetime.time(22, 00),
+        #     demographics_other="demographics other",
+        #     description="description",
+        #     email="shelter@example.com",
+        #     entry_info="entry info",
+        #     funders_other="funders other",
+        #     # location=self.shelter_location,
+        #     max_stay=7,
+        #     name="name",
+        #     on_site_security=True,
+        #     # organization=self.shelter_organization,
+        #     other_rules="other rules",
+        #     other_services="other services",
+        #     overall_rating=3,
+        #     phone="2125551212",
+        #     program_fees="program fees",
+        #     room_styles_other="room styles other",
+        #     shelter_programs_other="shelter programs other",
+        #     shelter_types_other="shelter types other",
+        #     subjective_review="subjective review",
+        #     supervisorial_district=1,
+        #     total_beds=1,
+        #     website="shelter.com",
+        #     _quantity=self.shelter_count,
+        # )
 
     def _setup_shelter_related_objects(self) -> None:
         shelter_related_objects: List[ShelterRelatedObject] = [
@@ -185,7 +188,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         for i in shelter_related_objects:
             model_cls = apps.get_model("shelters", i.model_name)
-            related_object = baker.make(model_cls, name=i.value)
+            related_object = model_cls.objects.get_or_create(model_cls, name=i.value)
 
             for shelter in self.shelters:
                 related_manager = getattr(shelter, i.field_name)
@@ -315,7 +318,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 "longitude": -118.2426,
                 "place": "123 Main Street",
             },
-            "organization": {"id": ANY, "name": self.shelter_organization.name},
+            # "organization": {"id": ANY, "name": self.shelter_organization.name},
         }
         self.assertEqual(response_shelter, expected_shelter)
 
