@@ -1,3 +1,5 @@
+import LocationIcon from '../../../../assets/icons/location.svg?react';
+
 const fallbackImgUrl =
   'https://fastly.picsum.photos/id/649/800/800.jpg?hmac=rl1sdkgulWbrfyz-7hM8yyP5hsBHjC8IJmFC04XmvJM';
 
@@ -7,6 +9,11 @@ export type TShelter = {
   address: string;
   heroUrl?: string | null;
   distance?: number | null;
+  location: {
+    latitude: number;
+    longitude: number;
+    place: string;
+  };
 };
 
 type TShelterCard = {
@@ -16,9 +23,15 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: { name, heroUrl },
+    shelter: {
+      name,
+      heroUrl,
+      location: { place },
+    },
     className = '',
   } = props;
+
+  const formattedAddress = place.replace(/, USA$/, '');
 
   const cardCss = [className].join(' ');
 
@@ -36,6 +49,13 @@ export function ShelterCard(props: TShelterCard) {
       <div className="font-semibold text-sm leading-[1.125rem] tracking-[.03125rem]">
         {name}
       </div>
+
+      {formattedAddress && (
+        <div className="text-xs mt-1.5 flex items-center">
+          <LocationIcon className="mr-2" />
+          {formattedAddress}
+        </div>
+      )}
     </div>
   );
 }
