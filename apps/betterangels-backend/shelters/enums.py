@@ -1,8 +1,10 @@
+import strawberry
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
 # Summary Info
+@strawberry.enum
 class DemographicChoices(models.TextChoices):
     ALL = "all", _("All")
     SINGLE_MEN = "single_men", _("Single Men")
@@ -14,6 +16,7 @@ class DemographicChoices(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class SpecialSituationRestrictionChoices(models.TextChoices):
     NONE = "none", _("None")
     DOMESTIC_VIOLENCE = "domestic_violence", _("Domestic Violence (DV/IPV)")
@@ -24,6 +27,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
     VETERANS = "veterans", _("Veterans")
 
 
+@strawberry.enum
 class ShelterChoices(models.TextChoices):
     BUILDING = "building", _("Building")
     CHURCH = "church", _("Church")
@@ -35,6 +39,7 @@ class ShelterChoices(models.TextChoices):
 
 
 # Sleeping Details
+@strawberry.enum
 class RoomStyleChoices(models.TextChoices):
     CONGREGANT = "congregant", _("Congregant (Open)")
     CUBICLE_LOW_WALLS = "cubicle_low_walls", _("Cubicle (Low Walls)")
@@ -46,11 +51,13 @@ class RoomStyleChoices(models.TextChoices):
 
 
 # Shelter Details
+@strawberry.enum
 class AccessibilityChoices(models.TextChoices):
     MEDICAL_EQUIPMENT_PERMITTED = "medical_equipment_permitted", _("Medical Equipment Permitted")
     WHEELCHAIR_ACCESSIBLE = "wheelchair_accessible", _("Wheelchair Accessible")
 
 
+@strawberry.enum
 class StorageChoices(models.TextChoices):
     AMNESTY_LOCKERS = "amnesty_lockers", _("Amnesty Lockers")
     STANDARD_LOCKERS = "standard_lockers", _("Standard Lockers")
@@ -58,6 +65,7 @@ class StorageChoices(models.TextChoices):
     NO_STORAGE = "no_storage", _("No Storage")
 
 
+@strawberry.enum
 class PetChoices(models.TextChoices):
     CATS = "cats", _("Cats")
     DOGS_UNDER_25_LBS = "dogs_under_25_lbs", _("Dogs (< 25 lbs)")
@@ -67,6 +75,7 @@ class PetChoices(models.TextChoices):
     NO_PETS_ALLOWED = "no_pets_allowed", _("No Pets Allowed")
 
 
+@strawberry.enum
 class ParkingChoices(models.TextChoices):
     BICYCLE = "bicycle", _("Bicycle")
     MOTORCYCLE = "motorcycle", _("Motorcycle")
@@ -76,12 +85,14 @@ class ParkingChoices(models.TextChoices):
 
 
 # Services Offered
+@strawberry.enum
 class ImmediateNeedChoices(models.TextChoices):
     CLOTHING = "clothing", _("Clothing")
     FOOD = "food", _("Food")
     SHOWERS = "showers", _("Showers")
 
 
+@strawberry.enum
 class GeneralServiceChoices(models.TextChoices):
     CASE_MANAGEMENT = "case_management", _("Case Management")
     CHILDCARE = "childcare", _("Childcare")
@@ -95,6 +106,7 @@ class GeneralServiceChoices(models.TextChoices):
     TRANSPORTATION = "transportation", _("Transportation")
 
 
+@strawberry.enum
 class HealthServiceChoices(models.TextChoices):
     DENTAL = "dental", _("Dental")
     MEDICAL = "medical", _("Medical")
@@ -102,6 +114,7 @@ class HealthServiceChoices(models.TextChoices):
     SUBSTANCE_USE_TREATMENT = "substance_use_treatment", _("Substance Use Treatment")
 
 
+@strawberry.enum
 class TrainingServiceChoices(models.TextChoices):
     JOB_TRAINING = "job_training", _("Job Training")
     LIFE_SKILLS_TRAINING = "life_skills_training", _("Life Skills Training")
@@ -109,6 +122,7 @@ class TrainingServiceChoices(models.TextChoices):
 
 
 # Entry Requirements
+@strawberry.enum
 class EntryRequirementChoices(models.TextChoices):
     MEDICAID_OR_MEDICARE = "medicaid_or_medicare", _("Medicaid or Medicare")
     PHOTO_ID = "photo_id", _("Photo ID")
@@ -121,6 +135,7 @@ CITY_COUNCIL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 16)]
 SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
 
+@strawberry.enum
 class CityChoices(models.TextChoices):
     AGOURA_HILLS = "agoura_hills", _("Agoura Hills")
     ALHAMBRA = "alhambra", _("Alhambra")
@@ -215,6 +230,7 @@ class CityChoices(models.TextChoices):
     WHITTIER = "whittier", _("Whittier")
 
 
+@strawberry.enum
 class SPAChoices(models.IntegerChoices):
     ONE = 1, _("1 - Antelope Valley")
     TWO = 2, _("2 - San Fernando")
@@ -226,6 +242,7 @@ class SPAChoices(models.IntegerChoices):
     EIGHT = 8, _("8 - South Bay/Harbor")
 
 
+@strawberry.enum
 class ShelterProgramChoices(models.TextChoices):
     BRIDGE_HOME = "bridge_home", _("Bridge Home")
     CRISIS_HOUSING = "crisis_housing", _("Crisis Housing")
@@ -245,6 +262,7 @@ class ShelterProgramChoices(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class FunderChoices(models.TextChoices):
     CITY_OF_LOS_ANGELES = "city_of_los_angeles", _("City of Los Angeles")
     DHS = "dhs", _("DHS")
@@ -257,6 +275,7 @@ class FunderChoices(models.TextChoices):
 
 
 # Better Angels Admin
+@strawberry.enum
 class StatusChoices(models.TextChoices):
     DRAFT = "draft", _("Draft")
     PENDING = "pending", _("Pending")
