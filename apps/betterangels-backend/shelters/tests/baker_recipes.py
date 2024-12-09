@@ -59,7 +59,7 @@ from shelters.models import (
     Video,
 )
 
-# Model = TypeVar("Model")
+Model = TypeVar("Model")
 T = TypeVar("T", bound=Enum)
 
 
@@ -83,8 +83,8 @@ def get_random_phone_number() -> str:
     return f"212555{random.randint(1000, 9999)}"
 
 
-class related_unique(related):
-    def __init__(self, related_model: Generic[Model], choices_enum: Enum) -> None:
+class related_m2m_unique(related):
+    def __init__(self, related_model: Model, choices_enum: Enum) -> None:
         self.related_model = related_model
         self.choices_enum = choices_enum
 
@@ -93,8 +93,8 @@ class related_unique(related):
 
         quantity = random.randint(0, len(self.choices_enum))
 
-        for _ in range(quantity):
-            related_object, _ = self.related_model.objects.get_or_create(name=random.choice(list(self.choices_enum)))
+        for i in range(quantity):
+            related_object, _ = self.related_model.objects.get_or_create(name=(list(self.choices_enum)[i]))
             related_objs.add(related_object)
 
         return related_objs
@@ -131,21 +131,21 @@ shelter_recipe = Recipe(
     supervisorial_district=random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
     total_beds=random.randint(10, 100),
     website=seq("shelter", suffix=".com"),
-    accessibility=related_unique(Accessibility, AccessibilityChoices),
-    cities=related_unique(City, CityChoices),
-    demographics=related_unique(Demographic, DemographicChoices),
-    entry_requirements=related_unique(EntryRequirement, EntryRequirementChoices),
-    funders=related_unique(Funder, FunderChoices),
-    general_services=related_unique(GeneralService, GeneralServiceChoices),
-    health_services=related_unique(HealthService, HealthServiceChoices),
-    immediate_needs=related_unique(ImmediateNeed, ImmediateNeedChoices),
-    parking=related_unique(Parking, ParkingChoices),
-    pets=related_unique(Pet, PetChoices),
-    room_styles=related_unique(RoomStyle, RoomStyleChoices),
-    shelter_programs=related_unique(ShelterProgram, ShelterProgramChoices),
-    shelter_types=related_unique(ShelterType, ShelterTypeChoices),
-    spa=related_unique(SPA, SPAChoices),
-    special_situation_restrictions=related_unique(SpecialSituationRestriction, SpecialSituationRestrictionChoices),
-    storage=related_unique(Storage, StorageChoices),
-    training_services=related_unique(TrainingService, TrainingServiceChoices),
+    accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
+    cities=related_m2m_unique(City, CityChoices),
+    demographics=related_m2m_unique(Demographic, DemographicChoices),
+    entry_requirements=related_m2m_unique(EntryRequirement, EntryRequirementChoices),
+    funders=related_m2m_unique(Funder, FunderChoices),
+    general_services=related_m2m_unique(GeneralService, GeneralServiceChoices),
+    health_services=related_m2m_unique(HealthService, HealthServiceChoices),
+    immediate_needs=related_m2m_unique(ImmediateNeed, ImmediateNeedChoices),
+    parking=related_m2m_unique(Parking, ParkingChoices),
+    pets=related_m2m_unique(Pet, PetChoices),
+    room_styles=related_m2m_unique(RoomStyle, RoomStyleChoices),
+    shelter_programs=related_m2m_unique(ShelterProgram, ShelterProgramChoices),
+    shelter_types=related_m2m_unique(ShelterType, ShelterTypeChoices),
+    spa=related_m2m_unique(SPA, SPAChoices),
+    special_situation_restrictions=related_m2m_unique(SpecialSituationRestriction, SpecialSituationRestrictionChoices),
+    storage=related_m2m_unique(Storage, StorageChoices),
+    training_services=related_m2m_unique(TrainingService, TrainingServiceChoices),
 )
