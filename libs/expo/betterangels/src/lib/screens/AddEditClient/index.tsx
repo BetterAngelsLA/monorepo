@@ -85,7 +85,8 @@ export default function AddEditClient({ id }: { id?: string }) {
       },
     ],
   });
-  const [updateClient, { loading: isUpdating }] = useUpdateClientProfileMutation();
+  const [updateClient, { loading: isUpdating }] =
+    useUpdateClientProfileMutation();
   const [createClient, { loading: isCreating }] =
     useCreateClientProfileMutation({
       refetchQueries: [
@@ -129,40 +130,38 @@ export default function AddEditClient({ id }: { id?: string }) {
   const onSubmit: SubmitHandler<
     UpdateClientProfileInput | CreateClientProfileInput
   > = async (values) => {
-    if (isCreating || isUpdating) return;
+    if (values.contacts && values.contacts?.length > 0) {
+      values.contacts = values.contacts.map((contact) => ({
+        ...contact,
+        phoneNumber: contact.phoneNumber === '' ? null : contact.phoneNumber,
+      }));
+    }
+
+    const filteredSocialMediaProfiles =
+      values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
+
+    const filteredPhoneNumbers =
+      values.phoneNumbers?.filter((item) => item.number) || [];
+
+    if (values.dateOfBirth) {
+      values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
+    }
+
+    // passing an empty string to the backend will violate unique constraint
+    if (typeof values.user?.email === 'string') {
+      values.user.email = values.user.email || null;
+    }
+
+    values.householdMembers = values.householdMembers?.map((member) => {
+      if (member.dateOfBirth) {
+        member.dateOfBirth = member.dateOfBirth.toISOString().split('T')[0];
+      }
+      return member;
+    });
+    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
+    delete values.displayPronouns;
+    delete values.profilePhoto;
     try {
-      if (values.contacts && values.contacts?.length > 0) {
-        values.contacts = values.contacts.map((contact) => ({
-          ...contact,
-          phoneNumber: contact.phoneNumber === '' ? null : contact.phoneNumber,
-        }));
-      }
-
-      const filteredSocialMediaProfiles =
-        values.socialMediaProfiles?.filter((item) => item.platformUserId) || [];
-
-      const filteredPhoneNumbers =
-        values.phoneNumbers?.filter((item) => item.number) || [];
-
-      if (values.dateOfBirth) {
-        values.dateOfBirth = values.dateOfBirth.toISOString().split('T')[0];
-      }
-
-      // passing an empty string to the backend will violate unique constraint
-      if (typeof values.user?.email === 'string') {
-        values.user.email = values.user.email || null;
-      }
-
-      values.householdMembers = values.householdMembers?.map((member) => {
-        if (member.dateOfBirth) {
-          member.dateOfBirth = member.dateOfBirth.toISOString().split('T')[0];
-        }
-        return member;
-      });
-      // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
-      delete values.displayPronouns;
-      delete values.profilePhoto;
-
       let operationResult;
       if (id) {
         const input = {
@@ -393,7 +392,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
-            disabled={!!methods.formState.errors.californiaId || isCreating || isUpdating}
+            disabled={!!methods.formState.errors.californiaId}
             cancel={
               <TextButton
                 onPress={router.back}
