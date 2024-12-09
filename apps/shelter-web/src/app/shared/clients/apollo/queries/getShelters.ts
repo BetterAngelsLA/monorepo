@@ -13,8 +13,6 @@ export const GET_SHELTERS_QUERY = gql`
         name
         heroImage
         location {
-          latitude
-          longitude
           place
         }
       }
