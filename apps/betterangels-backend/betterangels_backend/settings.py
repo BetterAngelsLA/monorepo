@@ -40,6 +40,7 @@ env = environ.Env(
     CSRF_COOKIE_SECURE=(bool, True),
     CORS_ALLOW_ALL_ORIGINS=(bool, False),
     CORS_ALLOWED_ORIGINS=(list, []),
+    CORS_ALLOWED_ORIGIN_REGEXES=(list, []),
     DEBUG=(bool, False),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
