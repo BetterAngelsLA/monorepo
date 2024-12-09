@@ -1,4 +1,4 @@
-import LocationIcon from '../../../../assets/icons/location.svg?react';
+import LocationIcon from '@assets/icons/locationIcon.svg?react';
 
 const fallbackImgUrl =
   'https://fastly.picsum.photos/id/649/800/800.jpg?hmac=rl1sdkgulWbrfyz-7hM8yyP5hsBHjC8IJmFC04XmvJM';
