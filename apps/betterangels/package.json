@@ -82,6 +82,7 @@
     "react-native-paper": "*",
     "dotenv": "*",
     "@react-native-picker/picker": "*",
+    "picocolors": "*",
     "@likashefqet/react-native-image-zoom": "*"
   },
   "scripts": {
