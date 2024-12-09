@@ -251,10 +251,9 @@ class Shelter(BaseModel):
     def __str__(self) -> str:
         return self.name
 
-    # todo: handle bulk update, which doesn't call save
     def save(self, *args: Any, **kwargs: Any) -> None:
-        latitude = self.location.latitude
-        longitude = self.location.longitude
+        latitude = self.location.latitude if self.location else None
+        longitude = self.location.longitude if self.location else None
 
         if latitude is not None and longitude is not None:
             self.geometry = Point(float(longitude), float(latitude), srid=4326)
