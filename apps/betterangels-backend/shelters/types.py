@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
-from django.db.models import Prefetch
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point
+from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
     AccessibilityChoices,
     CityChoices,
@@ -155,7 +157,25 @@ class FunderType:
     name: Optional[FunderChoices]
 
 
-@strawberry_django.type(Shelter)
+@strawberry.input
+class GeometryInput:
+    latitude: float
+    longitude: float
+
+
+@strawberry_django.filters.filter(Shelter)
+class ShelterLocationFilter:
+    @strawberry_django.filter_field
+    def geometry(self, queryset: QuerySet, value: Optional[GeometryInput], prefix: str) -> Tuple[QuerySet[Shelter], Q]:
+        if value is None:
+            return queryset, Q()
+
+        user_location = Point(x=value.longitude, y=value.latitude, srid=4326)
+
+        return queryset.annotate(distance=Distance("geometry", user_location)).order_by("distance"), Q()
+
+
+@strawberry_django.type(Shelter, filters=ShelterLocationFilter)
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]

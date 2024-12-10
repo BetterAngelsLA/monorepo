@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
-from typing import List
+from typing import Any, List
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
@@ -31,6 +31,7 @@ from shelters.enums import (
     TrainingServiceChoices,
 )
 from shelters.models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter
+from shelters.types import GeometryInput
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -346,3 +347,47 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(len(shelters), self.shelter_count)
         self.assertEqual(shelters[0]["heroImage"], self.exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], self.interior_photo_1.file.url)
+
+    def test_shelter_location_filter(self) -> None:
+        user_location = {
+            "latitude": 34.0549,
+            "longitude": -118.2426,
+        }
+
+        s1, s2, s3 = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    latitude=f"{user_location["latitude"]}{i}",
+                    longitude=f"{user_location["longitude"]}{i}",
+                )
+            )
+            for i in range(3, 0, -1)
+        ]
+
+        query = """
+            query ViewShelters($filters: ShelterLocationFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["geometry"] = {
+            "latitude": user_location["latitude"],
+            "longitude": user_location["longitude"],
+        }
+
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        results = response["data"]["shelters"]["results"]
+
+        # exclude shelters generated outside the test
+        filtered_results = [r["id"] for r in results if r["id"] in [str(s.pk) for s in [s1, s2, s3]]]
+        self.assertEqual(filtered_results, [str(s3.pk), str(s2.pk), str(s1.pk)])

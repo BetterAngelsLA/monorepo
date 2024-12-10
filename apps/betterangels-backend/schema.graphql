@@ -613,6 +613,11 @@ type GeneralServiceType {
   name: GeneralServiceChoices
 }
 
+input GeometryInput {
+  latitude: Float!
+  longitude: Float!
+}
+
 enum HairColorEnum {
   BLACK
   BLONDE
@@ -1002,7 +1007,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterLocationFilter): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1187,6 +1192,14 @@ enum ShelterChoices {
 
 type ShelterKindType {
   name: ShelterChoices
+}
+
+input ShelterLocationFilter {
+  AND: ShelterLocationFilter
+  OR: ShelterLocationFilter
+  NOT: ShelterLocationFilter
+  DISTINCT: Boolean
+  geometry: GeometryInput
 }
 
 type ShelterLocationType {

@@ -1,6 +1,6 @@
 import strawberry
 import strawberry_django
-from shelters.types import ShelterType
+from shelters.types import ShelterLocationFilter, ShelterType
 from strawberry_django.pagination import OffsetPaginated
 
 
