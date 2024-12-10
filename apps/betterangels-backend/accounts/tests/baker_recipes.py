@@ -4,7 +4,7 @@ from model_bakery.random_gen import gen_string
 from model_bakery.recipe import Recipe, foreign_key
 from organizations.models import Organization
 
-organization_recipe = Recipe(
+organization_recipe: Recipe[Organization] = Recipe(
     Organization,
     name=lambda: gen_string(50),
     slug=lambda: gen_string(50),

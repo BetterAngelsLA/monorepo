@@ -4,8 +4,7 @@ from unittest.mock import ANY
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from model_bakery import baker
-from model_bakery.recipe import Recipe, foreign_key, related, seq
+from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -31,7 +30,6 @@ from shelters.models import (
     SPA,
     Accessibility,
     City,
-    ContactInfo,
     Demographic,
     EntryRequirement,
     ExteriorPhoto,
@@ -128,12 +126,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         shelter_organization = organization_recipe.make()
 
         new_shelter = shelter_recipe.make(
-            additional_contacts=[
-                shelter_contact_recipe.make(
-                    contact_name="shelter contact",
-                    contact_number="2125551212",
-                )
-            ],
             bed_fees="bed fees",
             city_council_district=1,
             curfew=datetime.time(22, 00),
@@ -185,17 +177,15 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         shelter = Shelter.objects.get(pk=new_shelter.pk)
 
+        shelter_contacts = shelter_contact_recipe.make(
+            contact_number=seq("212555121"),  # type: ignore
+            shelter=shelter,
+            _quantity=2,
+        )
+        shelter.additional_contacts.set(shelter_contacts)
+
         exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
-
-        # ContactInfo.objects.filter(shelter=shelter).delete()
-
-        # for i in range(2):
-        #     shelter_contact_recipe.make(
-        #         contact_name=f"shelter contact {i}",
-        #         contact_number=f"212555121{i}",
-        #         shelter=shelter,
-        #     )
 
         query = f"""
             query ViewShelter($id: ID!) {{
@@ -271,8 +261,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
             "additionalContacts": [
-                {"id": ANY, "contactName": "shelter contact", "contactNumber": "2125551212"},
-                # {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
+                {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
+                {"id": ANY, "contactName": "shelter contact 2", "contactNumber": "2125551212"},
             ],
             "exteriorPhotos": [
                 {

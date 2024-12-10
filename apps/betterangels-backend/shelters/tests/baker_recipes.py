@@ -1,13 +1,14 @@
 import datetime
 import random
-from typing import Any, Optional
+from typing import Any
 
 from accounts.tests.baker_recipes import organization_recipe
 from django_ckeditor_5.fields import CKEditor5Field
-from model_bakery import baker, generators
+from model_bakery import generators
 from model_bakery.recipe import Recipe, foreign_key, related, seq
 from phonenumber_field.modelfields import PhoneNumberField
 from places import Places
+from places.fields import PlacesField
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
@@ -36,15 +37,12 @@ from shelters.models import (
     SPA,
     Accessibility,
     City,
-    ContactInfo,
     Demographic,
     EntryRequirement,
-    ExteriorPhoto,
     Funder,
     GeneralService,
     HealthService,
     ImmediateNeed,
-    InteriorPhoto,
     Parking,
     Pet,
     RoomStyle,
@@ -54,7 +52,6 @@ from shelters.models import (
     SpecialSituationRestriction,
     Storage,
     TrainingService,
-    Video,
 )
 
 
@@ -95,10 +92,6 @@ class related_m2m_unique(related):
         return related_objs
 
 
-# Register custom generators for unsupported fields
-generators.add(PhoneNumberField, get_random_phone_number)
-generators.add(CKEditor5Field, lambda: "text")
-
 shelter_contact_recipe = Recipe(
     "ContactInfo",
     contact_name=seq("shelter contact "),  # type: ignore
@@ -107,7 +100,6 @@ shelter_contact_recipe = Recipe(
 
 shelter_recipe = Recipe(
     Shelter,
-    additional_contacts=related(shelter_contact_recipe),
     bed_fees=seq("bed fees "),  # type: ignore
     city_council_district=random.choice(CITY_COUNCIL_DISTRICT_CHOICES)[0],
     curfew=datetime.time(random.randint(0, 23), random.randint(0, 59)),
