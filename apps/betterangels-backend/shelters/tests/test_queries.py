@@ -31,7 +31,6 @@ from shelters.enums import (
     TrainingServiceChoices,
 )
 from shelters.models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter
-from shelters.types import GeometryInput
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
