@@ -1,7 +1,8 @@
 import LocationIcon from '@assets/icons/locationIcon.svg?react';
 
-const fallbackImgUrl =
-  'https://fastly.picsum.photos/id/649/800/800.jpg?hmac=rl1sdkgulWbrfyz-7hM8yyP5hsBHjC8IJmFC04XmvJM';
+import { calcDistance } from '../../utils/distance/calcDistance';
+import { formatDistance } from '../../utils/distance/formatDistance';
+import { TLatLng } from '../maps/types.maps';
 
 export type TShelter = {
   id: string;
@@ -19,6 +20,7 @@ export type TShelter = {
 type TShelterCard = {
   className?: string;
   shelter: TShelter;
+  originCoordinates?: TLatLng | null;
 };
 
 export function ShelterCard(props: TShelterCard) {
@@ -26,10 +28,22 @@ export function ShelterCard(props: TShelterCard) {
     shelter: {
       name,
       heroImage,
-      location: { place },
+      location: { place, latitude: shelterLat, longitude: shelterLng },
     },
+    originCoordinates,
     className = '',
   } = props;
+
+  let formattedDistance;
+
+  if (originCoordinates && shelterLat && shelterLng) {
+    const shelterCoords = {
+      lat: shelterLat,
+      lng: shelterLng,
+    };
+
+    formattedDistance = getFormattedDistance(originCoordinates, shelterCoords);
+  }
 
   const formattedAddress = place.replace(/, USA$/, '');
 
@@ -37,25 +51,50 @@ export function ShelterCard(props: TShelterCard) {
 
   return (
     <div className={cardCss}>
-      <div className="mb-4">
-        <img
-          src={heroImage || fallbackImgUrl}
-          alt={`hero image for ${name}`}
-          loading="lazy"
-          className="aspect-[4/3] rounded-[20px]"
-        />
-      </div>
+      {heroImage && (
+        <div className="mb-4">
+          <img
+            src={heroImage}
+            alt={`hero image for ${name}`}
+            loading="lazy"
+            className="aspect-[4/3] rounded-[20px]"
+          />
+        </div>
+      )}
 
       <div className="font-semibold text-sm leading-[1.125rem] tracking-[.03125rem]">
         {name}
       </div>
 
       {formattedAddress && (
-        <div className="text-xs mt-1.5 flex items-center">
+        <div className="text-xs mt-1.5 flex items-start">
           <LocationIcon className="mr-2" />
-          {formattedAddress}
+
+          <div className="flex-inline flex-wrap">
+            <span>{formattedAddress}</span>
+
+            {!!formattedDistance && (
+              <span className="ml-1">({formattedDistance} away)</span>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
+}
+
+function getFormattedDistance(pointA?: TLatLng, pointB?: TLatLng) {
+  if (!pointA || !pointB) {
+    return '';
+  }
+
+  const distanceMiles = calcDistance({
+    pointA,
+    pointB,
+  });
+
+  return formatDistance({
+    distance: distanceMiles,
+    minimum: 0.1,
+  });
 }

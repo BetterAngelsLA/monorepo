@@ -4862,6 +4862,7 @@ __metadata:
     expo-updates: "npm:~0.25.27"
     expo-web-browser: "npm:~13.0.3"
     graphql: "npm:^16.9.0"
+    haversine-distance: "npm:^1.2.3"
     jest: "npm:^29.4.1"
     jest-circus: "npm:^29.4.1"
     jest-environment-jsdom: "npm:^29.4.1"
@@ -17136,6 +17137,13 @@ __metadata:
   dependencies:
     function-bind: "npm:^1.1.2"
   checksum: 10/7898a9c1788b2862cf0f9c345a6bec77ba4a0c0983c7f19d610c382343d4f98fa260686b225dfb1f88393a66679d2ec58ee310c1d6868c081eda7918f32cc70a
+  languageName: node
+  linkType: hard
+
+"haversine-distance@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "haversine-distance@npm:1.2.3"
+  checksum: 10/5617941b4d62d9ac59c145238565511f1af9d7eef8818ad6528fefff0d45d8847fff635407ce34f2ae4332d88cdd16cef4d173bbcb8810e351f0afae39ed3c2b
   languageName: node
   linkType: hard
 

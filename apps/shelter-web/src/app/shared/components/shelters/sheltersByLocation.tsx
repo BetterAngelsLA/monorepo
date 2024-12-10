@@ -28,7 +28,11 @@ export function SheltersByLocation(props: TSheltersByLocation) {
         <div>(based on your current location)</div>
       </div>
 
-      <ShelterList className="mt-4" shelters={shelters} />
+      <ShelterList
+        className="mt-4"
+        shelters={shelters}
+        originCoordinates={coordinates}
+      />
     </div>
   );
 }

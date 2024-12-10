@@ -1,12 +1,14 @@
+import { TLatLng } from '../maps/types.maps';
 import { ShelterCard, TShelter } from './shelterCard';
 
 type TShelterList = {
   className?: string;
   shelters: TShelter[];
+  originCoordinates?: TLatLng | null;
 };
 
 export function ShelterList(props: TShelterList) {
-  const { shelters, className = '' } = props;
+  const { shelters, originCoordinates, className = '' } = props;
 
   if (!shelters.length) {
     return null;
@@ -20,6 +22,7 @@ export function ShelterList(props: TShelterList) {
             key={index}
             className="mb-8 last:mb-0"
             shelter={shelter}
+            originCoordinates={originCoordinates}
           />
         );
       })}
