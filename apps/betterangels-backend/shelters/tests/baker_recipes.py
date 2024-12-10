@@ -104,6 +104,7 @@ shelter_contact_recipe = Recipe(
     contact_name=seq("shelter contact "),  # type: ignore
     contact_number=get_random_phone_number,
 )
+
 shelter_recipe = Recipe(
     Shelter,
     additional_contacts=related(shelter_contact_recipe),

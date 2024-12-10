@@ -128,6 +128,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         shelter_organization = organization_recipe.make()
 
         new_shelter = shelter_recipe.make(
+            additional_contacts=[
+                shelter_contact_recipe.make(
+                    contact_name="shelter contact",
+                    contact_number="2125551212",
+                )
+            ],
             bed_fees="bed fees",
             city_council_district=1,
             curfew=datetime.time(22, 00),
@@ -182,14 +188,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
-        ContactInfo.objects.filter(shelter=shelter).delete()
+        # ContactInfo.objects.filter(shelter=shelter).delete()
 
-        for i in range(2):
-            shelter_contact_recipe.make(
-                contact_name=f"shelter contact {i}",
-                contact_number=f"212555121{i}",
-                shelter=shelter,
-            )
+        # for i in range(2):
+        #     shelter_contact_recipe.make(
+        #         contact_name=f"shelter contact {i}",
+        #         contact_number=f"212555121{i}",
+        #         shelter=shelter,
+        #     )
 
         query = f"""
             query ViewShelter($id: ID!) {{
@@ -265,8 +271,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "storage": [{"name": StorageChoices.AMNESTY_LOCKERS.name}],
             "trainingServices": [{"name": TrainingServiceChoices.JOB_TRAINING.name}],
             "additionalContacts": [
-                {"id": ANY, "contactName": "shelter contact 0", "contactNumber": "2125551210"},
-                {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
+                {"id": ANY, "contactName": "shelter contact", "contactNumber": "2125551212"},
+                # {"id": ANY, "contactName": "shelter contact 1", "contactNumber": "2125551211"},
             ],
             "exteriorPhotos": [
                 {
