@@ -1,11 +1,7 @@
 import datetime
-from dataclasses import dataclass
-from enum import IntEnum, StrEnum
-from typing import List
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
-from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
@@ -53,23 +49,20 @@ from shelters.models import (
     Storage,
     TrainingService,
 )
-from shelters.tests.baker_recipes import related_m2m_unique, shelter_recipe
+from shelters.tests.baker_recipes import shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
-
-
-@dataclass
-class ShelterRelatedObject:
-    field_name: str
-    model_name: str
-    value: StrEnum | IntEnum
 
 
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.maxDiff = None
-        self.shelter_count = 2
+        file_content = (
+            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
+            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
+        )
+        self.file = SimpleUploadedFile(name="file.jpg", content=file_content)
+
         self.shelter_fields = """
             id
             bedFees
@@ -129,16 +122,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }
         """
 
-        self._setup_shelter()
-        # self._setup_shelter_related_objects()
-        self._setup_shelter_contacts()
-        self._setup_shelter_images()
+    def test_shelter_query(self) -> None:
+        shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+        shelter_organization = organization_recipe.make()
 
-    def _setup_shelter(self) -> None:
-        self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
-        self.shelter_organization = organization_recipe.make()
-
-        self.shelters = shelter_recipe.make(
+        new_shelter = shelter_recipe.make(
             bed_fees="bed fees",
             city_council_district=1,
             curfew=datetime.time(22, 00),
@@ -150,7 +138,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             max_stay=7,
             name="name",
             on_site_security=True,
-            organization=self.shelter_organization,
+            organization=shelter_organization,
             other_rules="other rules",
             other_services="other services",
             overall_rating=3,
@@ -164,7 +152,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             supervisorial_district=1,
             total_beds=1,
             website="shelter.com",
-            location=self.shelter_location,
+            location=shelter_location,
             accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
             cities=[City.objects.get_or_create(name=CityChoices.AGOURA_HILLS)[0]],
             demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
@@ -186,31 +174,21 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             ],
             storage=[Storage.objects.get_or_create(name=StorageChoices.AMNESTY_LOCKERS)[0]],
             training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]],
-            _quantity=2,
         )
 
-    def _setup_shelter_contacts(self) -> None:
+        shelter = Shelter.objects.get(pk=new_shelter.pk)
+
+        exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
+        interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
+
         for i in range(2):
             baker.make(
                 ContactInfo,
                 contact_name=f"shelter contact {i}",
                 contact_number=f"212555121{i}",
-                shelter=self.shelters[0],
+                shelter=shelter,
             )
 
-    def _setup_shelter_images(self) -> None:
-        file_content = (
-            b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04\x01\x0a\x00"
-            b"\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b"
-        )
-        file = SimpleUploadedFile(name="file.jpg", content=file_content)
-
-        self.exterior_photo_0 = ExteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo_0 = InteriorPhoto.objects.create(shelter=self.shelters[0], file=file)
-        self.interior_photo_1 = InteriorPhoto.objects.create(shelter=self.shelters[1], file=file)
-
-    def test_shelter_query(self) -> None:
-        shelter = Shelter.objects.get(pk=self.shelters[0].pk)
         query = f"""
             query ViewShelter($id: ID!) {{
                 shelter(pk: $id) {{
@@ -293,8 +271,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     "id": ANY,
                     "createdAt": ANY,
                     "file": {
-                        "name": self.exterior_photo_0.file.name,
-                        "url": self.exterior_photo_0.file.url,
+                        "name": exterior_photo.file.name,
+                        "url": exterior_photo.file.url,
                     },
                 }
             ],
@@ -303,8 +281,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     "id": ANY,
                     "createdAt": ANY,
                     "file": {
-                        "name": self.interior_photo_0.file.name,
-                        "url": self.interior_photo_0.file.url,
+                        "name": interior_photo.file.name,
+                        "url": interior_photo.file.url,
                     },
                 }
             ],
@@ -313,14 +291,21 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 "longitude": -118.2426,
                 "place": "123 Main Street",
             },
-            "organization": {"id": ANY, "name": self.shelter_organization.name},
+            "organization": {"id": ANY, "name": shelter_organization.name},
         }
         self.assertEqual(response_shelter, expected_shelter)
 
     def test_shelters_query(self) -> None:
+        shelter_count = 2
+        shelters = shelter_recipe.make(_quantity=shelter_count)
+
+        exterior_photo_0 = ExteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
+        InteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
+        interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
+
         query = f"""
-            query ViewShelters($offset: Int, $limit: Int) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ViewShelters($offset: Int, $limit: Int, $order: ShelterOrder) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -336,11 +321,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         expected_query_count = 22
 
+        variables = {"order": {"name": "ASC"}}
+
         with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(query)
+            response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
 
-        self.assertEqual(len(shelters), self.shelter_count)
-        self.assertEqual(shelters[0]["heroImage"], self.exterior_photo_0.file.url)
-        self.assertEqual(shelters[1]["heroImage"], self.interior_photo_1.file.url)
+        self.assertEqual(len(shelters), shelter_count)
+
+        self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
+        self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)

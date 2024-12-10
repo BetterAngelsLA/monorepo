@@ -155,7 +155,12 @@ class FunderType:
     name: Optional[FunderChoices]
 
 
-@strawberry_django.type(Shelter)
+@strawberry_django.ordering.order(Shelter)
+class ShelterOrder:
+    name: auto
+
+
+@strawberry_django.type(Shelter, order=ShelterOrder)  # type: ignore[literal-required]
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
