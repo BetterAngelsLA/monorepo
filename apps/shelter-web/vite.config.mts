@@ -46,6 +46,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@assets': path.resolve(__dirname, '../../libs/assets/src'),
+        '@svg': path.resolve(
+          __dirname,
+          '../../libs/expo/shared/icons/src/assets/third_party'
+        ),
       },
     },
 

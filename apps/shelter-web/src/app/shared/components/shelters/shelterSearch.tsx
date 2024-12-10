@@ -1,10 +1,11 @@
+import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
 import { useEffect, useState } from 'react';
-import {
-  CurrentLocation,
-  TCurrentLocationResult,
-} from '../../../shared/components/currentLocation';
-import { TLatLng } from '../../../shared/components/maps/types.maps';
+import { AddressAutocomplete } from '../address/AddressAutocomplete';
+import { CurrentLocation, TCurrentLocationResult } from '../currentLocation';
+import { TLatLng } from '../maps/types.maps';
 import { SheltersByLocation } from './sheltersByLocation';
+
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 export function ShelterSearch() {
   const [coordinates, setCoordinates] = useState<TLatLng | null>(null);
@@ -34,10 +35,32 @@ export function ShelterSearch() {
     }
   }
 
+  function onPlaceSelect(address: google.maps.places.PlaceResult | null) {
+    if (!address) {
+      return;
+    }
+
+    const { geometry } = address;
+
+    const lat = geometry?.location?.lat();
+    const lng = geometry?.location?.lng();
+
+    if (!lat || !lng) {
+      return;
+    }
+
+    setCoordinates({
+      lat,
+      lng,
+    });
+  }
+
   return (
-    <div>
+    <MapsApiProvider apiKey={googleMapsApiKey}>
       <CurrentLocation onChange={onLocationChange} />
+      <AddressAutocomplete onPlaceSelect={onPlaceSelect} />
+
       <SheltersByLocation className="mt-8" coordinates={coordinates} />
-    </div>
+    </MapsApiProvider>
   );
 }

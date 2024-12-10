@@ -1,4 +1,4 @@
-import { ShelterCard, TShelter } from './shelterCard';
+import { ShelterCard, TShelter } from '../shelter/shelterCard';
 
 type TShelterList = {
   className?: string;
