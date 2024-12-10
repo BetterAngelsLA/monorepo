@@ -79,7 +79,7 @@ class ServiceEnum(models.TextChoices):
     BATTERIES = "batteries", _("Batteries")
     BICYCLE_REPAIR = "bicycle_repair", _("Bicycle Repair")
     CLOTHES_SOCKS = "clothes_socks", _("Clothes - Socks")
-    CONSENT_TO_CONNECT = "consent_to_connect", ("Consent to Connect (CM or Council District)")
+    CONSENT_TO_CONNECT = "consent_to_connect", _("Consent to Connect (CM or Council District)")
     EBT = "ebt", _("EBT")
     FEMININE_HYGIENE = "feminine_hygiene", _("Feminine Hygiene")
     FIRST_AID = "first_aid", _("First Aid")
