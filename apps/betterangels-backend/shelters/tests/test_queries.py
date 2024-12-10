@@ -54,6 +54,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             curfew
             demographicsOther
             description
+            distanceInMiles
             email
             entryInfo
             fundersOther
@@ -250,6 +251,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "curfew": "22:00:00",
             "demographicsOther": "demographics other",
             "description": "description",
+            "distanceInMiles": None,
             "email": "shelter@example.com",
             "entryInfo": "entry info",
             "fundersOther": "funders other",
@@ -349,16 +351,16 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelter_location_filter(self) -> None:
         user_location = {
-            "latitude": 34.0549,
-            "longitude": -118.2426,
+            "latitude": 34,
+            "longitude": -118,
         }
 
         s1, s2, s3 = [
             Shelter.objects.create(
                 location=Places(
                     place=f"place {i}",
-                    latitude=f"{user_location["latitude"]}{i}",
-                    longitude=f"{user_location["longitude"]}{i}",
+                    latitude=f"{user_location["latitude"]}.{i}",
+                    longitude=f"{user_location["longitude"]}.{i}",
                 )
             )
             for i in range(3, 0, -1)
@@ -370,6 +372,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     totalCount
                     results {
                         id
+                        distanceInMiles
                     }
                 }
             }

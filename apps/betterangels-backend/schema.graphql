@@ -1288,6 +1288,7 @@ type ShelterType {
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
+  distanceInMiles: Float
 }
 
 type ShelterTypeOffsetPaginated {

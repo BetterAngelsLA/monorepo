@@ -253,3 +253,10 @@ class ShelterType:
         )
 
         return str(photo.file.url) if photo else None
+
+    @strawberry_django.field
+    def distance_in_miles(self, root: Shelter) -> Optional[float]:
+        if distance := getattr(root, "distance", None):
+            return float(distance.mi)
+
+        return None
