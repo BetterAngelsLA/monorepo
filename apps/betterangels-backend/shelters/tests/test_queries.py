@@ -376,7 +376,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         filters: dict[str, Any] = {}
-        filters["geometry"] = {
+        filters["geolocation"] = {
             "latitude": user_location["latitude"],
             "longitude": user_location["longitude"],
         }

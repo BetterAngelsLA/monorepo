@@ -613,7 +613,7 @@ type GeneralServiceType {
   name: GeneralServiceChoices
 }
 
-input GeometryInput {
+input GeolocationInput {
   latitude: Float!
   longitude: Float!
 }
@@ -1199,7 +1199,7 @@ input ShelterLocationFilter {
   OR: ShelterLocationFilter
   NOT: ShelterLocationFilter
   DISTINCT: Boolean
-  geometry: GeometryInput
+  geolocation: GeolocationInput
 }
 
 type ShelterLocationType {

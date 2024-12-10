@@ -158,7 +158,7 @@ class FunderType:
 
 
 @strawberry.input
-class GeometryInput:
+class GeolocationInput:
     latitude: float
     longitude: float
 
@@ -166,13 +166,15 @@ class GeometryInput:
 @strawberry_django.filters.filter(Shelter)
 class ShelterLocationFilter:
     @strawberry_django.filter_field
-    def geometry(self, queryset: QuerySet, value: Optional[GeometryInput], prefix: str) -> Tuple[QuerySet[Shelter], Q]:
+    def geolocation(
+        self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
+    ) -> Tuple[QuerySet[Shelter], Q]:
         if value is None:
             return queryset, Q()
 
         user_location = Point(x=value.longitude, y=value.latitude, srid=4326)
 
-        return queryset.annotate(distance=Distance("geometry", user_location)).order_by("distance"), Q()
+        return queryset.annotate(distance=Distance("geolocation", user_location)).order_by("distance"), Q()
 
 
 @strawberry_django.type(Shelter, filters=ShelterLocationFilter)

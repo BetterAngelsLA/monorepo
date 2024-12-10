@@ -30,21 +30,21 @@ class ShelterModelTestCase(TestCase):
         location = self._get_random_shelter_location()
         shelter = Shelter.objects.create(location=location)
 
-        assert shelter.geometry
-        self.assertEqual(str(shelter.location.latitude), str(shelter.geometry.coords[1]))
-        self.assertEqual(str(shelter.location.longitude), str(shelter.geometry.coords[0]))
+        assert shelter.geolocation
+        self.assertEqual(str(shelter.location.latitude), str(shelter.geolocation.coords[1]))
+        self.assertEqual(str(shelter.location.longitude), str(shelter.geolocation.coords[0]))
 
         shelter.location.latitude = "123.0"
         shelter.location.longitude = "-123.0"
         shelter.save()
 
-        self.assertEqual(str(shelter.geometry.coords[1]), "123.0")
-        self.assertEqual(str(shelter.geometry.coords[0]), "-123.0")
+        self.assertEqual(str(shelter.geolocation.coords[1]), "123.0")
+        self.assertEqual(str(shelter.geolocation.coords[0]), "-123.0")
 
         shelter.location = None
         shelter.save()
 
-        self.assertIsNone(shelter.geometry)
+        self.assertIsNone(shelter.geolocation)
 
     def test_create_shelter_events(self) -> None:
         # Verify shelter creation event
