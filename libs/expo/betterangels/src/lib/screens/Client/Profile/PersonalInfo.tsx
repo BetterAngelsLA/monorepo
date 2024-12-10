@@ -34,9 +34,15 @@ export default function PersonalInfo(props: IProfileSectionProps) {
 
   const isPersonalInfo = expanded === 'Personal Info';
 
-  const fullName = `${client?.clientProfile.user.firstName ?? ''} ${
-    client?.clientProfile.user.middleName ?? ''
-  } ${client?.clientProfile.user.lastName ?? ''}`.trim();
+  const {
+    firstName = '',
+    middleName = '',
+    lastName = '',
+  } = client?.clientProfile?.user || {};
+  const fullName = [firstName, middleName, lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
 
   const formattedDob = client?.clientProfile.dateOfBirth
     ? format(new Date(client?.clientProfile.dateOfBirth), 'MM/dd/yyyy')
