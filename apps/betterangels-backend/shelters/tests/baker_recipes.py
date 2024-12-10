@@ -3,12 +3,8 @@ import random
 from typing import Any
 
 from accounts.tests.baker_recipes import organization_recipe
-from django_ckeditor_5.fields import CKEditor5Field
-from model_bakery import generators
 from model_bakery.recipe import Recipe, foreign_key, related, seq
-from phonenumber_field.modelfields import PhoneNumberField
 from places import Places
-from places.fields import PlacesField
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
     SUPERVISORIAL_DISTRICT_CHOICES,
