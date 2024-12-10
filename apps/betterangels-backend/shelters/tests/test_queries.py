@@ -5,6 +5,7 @@ from accounts.tests.baker_recipes import organization_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
+from model_bakery.recipe import Recipe, foreign_key, related, seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -49,7 +50,7 @@ from shelters.models import (
     Storage,
     TrainingService,
 )
-from shelters.tests.baker_recipes import shelter_recipe
+from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -181,9 +182,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
+        ContactInfo.objects.filter(shelter=shelter).delete()
+
         for i in range(2):
-            baker.make(
-                ContactInfo,
+            shelter_contact_recipe.make(
                 contact_name=f"shelter contact {i}",
                 contact_number=f"212555121{i}",
                 shelter=shelter,

@@ -3,7 +3,10 @@ import random
 from typing import Any, Optional
 
 from accounts.tests.baker_recipes import organization_recipe
+from django_ckeditor_5.fields import CKEditor5Field
+from model_bakery import baker, generators
 from model_bakery.recipe import Recipe, foreign_key, related, seq
+from phonenumber_field.modelfields import PhoneNumberField
 from places import Places
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
@@ -92,8 +95,18 @@ class related_m2m_unique(related):
         return related_objs
 
 
+# Register custom generators for unsupported fields
+generators.add(PhoneNumberField, get_random_phone_number)
+generators.add(CKEditor5Field, lambda: "text")
+
+shelter_contact_recipe = Recipe(
+    "ContactInfo",
+    contact_name=seq("shelter contact "),  # type: ignore
+    contact_number=get_random_phone_number,
+)
 shelter_recipe = Recipe(
     Shelter,
+    additional_contacts=related(shelter_contact_recipe),
     bed_fees=seq("bed fees "),  # type: ignore
     city_council_district=random.choice(CITY_COUNCIL_DISTRICT_CHOICES)[0],
     curfew=datetime.time(random.randint(0, 23), random.randint(0, 59)),
@@ -102,7 +115,7 @@ shelter_recipe = Recipe(
     email=seq("shelter", suffix="@example.com"),  # type: ignore
     entry_info=seq("entry info "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
-    location=get_random_shelter_location(),
+    location=get_random_shelter_location,
     max_stay=random.randint(1, 7),
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
@@ -110,7 +123,7 @@ shelter_recipe = Recipe(
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore
     overall_rating=random.randint(1, 5),
-    phone=get_random_phone_number(),
+    phone=get_random_phone_number,
     program_fees=seq("program fees "),  # type: ignore
     room_styles_other=seq("room styles other "),  # type: ignore
     shelter_programs_other=seq("shelter programs other "),  # type: ignore
