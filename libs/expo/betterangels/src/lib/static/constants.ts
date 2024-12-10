@@ -6,24 +6,14 @@ export const ServicesByCategory = [
     items: [
       ServiceEnum.Food,
       ServiceEnum.Water,
-      ServiceEnum.Bag,
-      ServiceEnum.Batteries,
       ServiceEnum.Blanket,
       ServiceEnum.Book,
       ServiceEnum.Clothes,
-      ServiceEnum.ClothesSocks,
-      ServiceEnum.FeminineHygiene,
-      ServiceEnum.FirstAid,
-      ServiceEnum.HarmReductionSafeSmoking,
-      ServiceEnum.HarmReductionNarcan,
-      ServiceEnum.HarmReductionTestKit,
       ServiceEnum.HygieneKit,
       ServiceEnum.PetFood,
       ServiceEnum.Shoes,
       ServiceEnum.Shower,
-      ServiceEnum.SleepingBag,
-      ServiceEnum.Tarp,
-      ServiceEnum.Tent
+      ServiceEnum.Tent,
     ],
   },
   {
@@ -32,9 +22,6 @@ export const ServicesByCategory = [
       ServiceEnum.MailPickUp,
       ServiceEnum.CaliforniaLifelinePhone,
       ServiceEnum.InternetAccess,
-      ServiceEnum.Lahop,
-      ServiceEnum.HmisConsent,
-      ServiceEnum.ConsenttoConnect
     ],
   },
   {
@@ -49,10 +36,7 @@ export const ServicesByCategory = [
     title: 'Income',
     items: [
       ServiceEnum.StimulusAssistance,
-      ServiceEnum.Ebt,
-      ServiceEnum.SsiSsdi,
       ServiceEnum.PublicBenefitsPrograms,
-      ServiceEnum.Medi_Cal,
       ServiceEnum.UnemploymentCertification,
     ],
   },
@@ -90,7 +74,6 @@ export const ServicesByCategory = [
       ServiceEnum.DiscountScooterRides,
       ServiceEnum.Ride,
       ServiceEnum.Bicycle,
-      ServiceEnum.BicycleRepair
     ],
   },
   {
