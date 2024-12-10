@@ -1,0 +1,3 @@
+export const LA_COUNTY_CENTER_LAT = 34.04499;
+export const LA_COUNTY_CENTER_LNG = -118.251601;
+export const MILES_TO_DEGREES_AT_EQUATOR = 69.172;

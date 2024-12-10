@@ -8,4 +8,9 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/shelter-web',
+  moduleNameMapper: {
+    '^@assets/(.*)\\.svg\\?react$':
+      '<rootDir>/src/app/test/__mocks__/svgrMock.ts',
+    '^@assets/(.*)$': '<rootDir>/libs/assets/src/$1',
+  },
 };
